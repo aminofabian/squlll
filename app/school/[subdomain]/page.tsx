@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { Building2, Home, School, Globe, Check } from 'lucide-react'
+import { Building2, Home, School, Globe, Check, Sparkles } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
@@ -285,39 +285,32 @@ export default function SchoolHome() {
         }}
       />
       
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Hero Section */}
-        <div className="relative py-16 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#246a59]/10 to-transparent"></div>
-          <div className="relative">
-            <div className="text-center space-y-6">
-              <div className="inline-block">
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-[#246a59] to-[#2d8872] bg-clip-text text-transparent">
-                  Welcome to
-                </h1>
-                <h2 className="text-4xl md:text-6xl font-bold mt-2 text-gray-900">
-                  {subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </h2>
-              </div>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Begin your educational journey by selecting your school type and levels. 
-                Our platform is designed to support your unique educational needs.
-              </p>
-              <div className="flex justify-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <Check className="w-4 h-4 text-[#246a59] mr-2" />
-                  Personalized Learning
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-4 h-4 text-[#246a59] mr-2" />
-                  Expert Support
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-4 h-4 text-[#246a59] mr-2" />
-                  Comprehensive Tools
+      <div className="max-w-7xl mx-auto px-4 pt-8">
+        {/* Logo Section */}
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-12 h-12 bg-[#246a59] rounded-sm flex items-center justify-center shadow-lg relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#246a59] to-[#2d8872]"></div>
+                <span className="relative text-2xl font-bold text-white">
+                  {subdomain.charAt(0).toUpperCase()}
+                </span>
+                <div className="absolute top-0 right-0">
+                  <Sparkles className="w-3 h-3 text-white/50" />
                 </div>
               </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#2d8872] rounded-sm shadow-lg transform rotate-12"></div>
             </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              </h1>
+              <p className="text-sm text-gray-500">School Management System</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <Check className="w-4 h-4 text-[#246a59]" />
+            <span>Setup in progress</span>
           </div>
         </div>
 
@@ -412,61 +405,104 @@ export default function SchoolHome() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {selectedSchoolType.levels.map((level) => {
                     const isSelected = selectedLevels[selectedType]?.has(level.level) || false
                     return (
                       <div
                         key={level.level}
-                        className={`group relative overflow-hidden transition-all duration-300 ${
-                          isSelected
-                            ? 'bg-[#246a59]/5 shadow-lg'
-                            : 'bg-white hover:shadow-md'
-                        }`}
+                        className={`group relative overflow-hidden transition-all duration-300 rounded-sm
+                          ${isSelected
+                            ? 'bg-[#246a59]/5 shadow-lg ring-1 ring-[#246a59]'
+                            : 'bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5'
+                          }`}
                       >
-                        <div className="absolute inset-0 border-2 border-transparent transition-colors duration-300 pointer-events-none
-                          group-hover:border-[#246a59]/30
-                          ${isSelected ? '!border-[#246a59]' : ''}"
-                        ></div>
-                        <div className="p-4">
+                        <div 
+                          className={`absolute inset-0 transition-opacity duration-300 pointer-events-none
+                            ${isSelected 
+                              ? 'bg-gradient-to-br from-[#246a59]/5 via-transparent to-[#246a59]/5'
+                              : 'bg-[url("/grid.svg")] opacity-[0.02] group-hover:opacity-[0.05]'
+                            }`}
+                        />
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#246a59]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        <div className="p-6 relative">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className={`font-semibold transition-colors duration-300 ${
-                                isSelected
-                                  ? 'text-[#246a59]'
-                                  : 'text-gray-900'
-                              }`}>{level.level}</h3>
+                              <div className="flex items-center space-x-3">
+                                <h3 className={`font-semibold text-lg transition-colors duration-300 ${
+                                  isSelected
+                                    ? 'text-[#246a59]'
+                                    : 'text-gray-900 group-hover:text-[#246a59]'
+                                }`}>{level.level}</h3>
+                                <div className={`h-px flex-1 transition-all duration-300 ${
+                                  isSelected
+                                    ? 'bg-[#246a59]/30'
+                                    : 'bg-gray-200 group-hover:bg-[#246a59]/20'
+                                }`} />
+                              </div>
                               {level.description && (
-                                <p className="text-sm text-gray-500 mt-1">{level.description}</p>
+                                <div className="relative">
+                                  <p className="text-sm text-gray-500 mt-2 group-hover:text-gray-600 transition-colors duration-300 pr-8">
+                                    {level.description}
+                                  </p>
+                                  <div className={`absolute -left-4 top-0 bottom-0 w-0.5 transition-colors duration-300 ${
+                                    isSelected
+                                      ? 'bg-[#246a59]/40'
+                                      : 'bg-gray-200 group-hover:bg-[#246a59]/20'
+                                  }`} />
+                                </div>
                               )}
                             </div>
                             <button
                               type="button"
                               onClick={(e) => toggleLevel(e, selectedType, level.level)}
-                              className={`relative w-6 h-6 border-2 flex items-center justify-center transition-all duration-300 cursor-pointer ${
-                                isSelected
-                                  ? 'border-[#246a59] bg-[#246a59] text-white'
-                                  : 'border-gray-300 group-hover:border-[#246a59]/50'
-                              }`}
+                              className={`relative w-7 h-7 border-2 flex items-center justify-center transition-all duration-300 cursor-pointer 
+                                ${isSelected
+                                  ? 'border-[#246a59] bg-[#246a59] text-white shadow-sm'
+                                  : 'border-gray-300 group-hover:border-[#246a59] group-hover:shadow bg-white'
+                                }
+                                hover:scale-105 active:scale-95
+                              `}
                             >
-                              {isSelected && (
+                              {isSelected ? (
                                 <Check className="w-4 h-4" />
+                              ) : (
+                                <div className="w-2 h-2 bg-gray-300 group-hover:bg-[#246a59] transition-colors duration-300" />
                               )}
                             </button>
                           </div>
 
-                          <div className="mt-4 grid grid-cols-2 gap-2">
+                          <div className="mt-6 grid grid-cols-2 gap-3">
                             {level.classes.map((cls) => (
                               <div
                                 key={cls.name}
-                                className="relative overflow-hidden"
+                                className="relative overflow-hidden group/class"
                               >
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#246a59]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                <div className="relative p-2 border-l-2 border-[#246a59]/20 group-hover:border-[#246a59]/40 transition-colors duration-300">
-                                  <div className="font-medium text-gray-700">{cls.name}</div>
-                                  {cls.age && (
-                                    <div className="text-gray-500 text-xs">Age: {cls.age}</div>
-                                  )}
+                                <div className="relative p-4 bg-white border border-[#246a59]/10 hover:border-[#246a59]/30
+                                  shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5
+                                  group-hover:bg-gradient-to-br from-white to-[#246a59]/5">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <div className="font-medium text-gray-900 group-hover:text-[#246a59] transition-colors duration-300">
+                                        {cls.name}
+                                      </div>
+                                      {cls.age && (
+                                        <div className="flex items-center mt-2 space-x-2">
+                                          <div className="w-1.5 h-1.5 rounded-full bg-[#246a59]/40"></div>
+                                          <div className="text-sm text-gray-500">
+                                            {typeof cls.age === 'number' ? `${cls.age} years` : cls.age}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {cls.description && (
+                                        <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                                          {cls.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className="w-2 h-2 rounded-full bg-[#246a59]/20 group-hover:bg-[#246a59]/40 transition-colors duration-300"></div>
+                                  </div>
+                                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#246a59]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </div>
                               </div>
                             ))}
