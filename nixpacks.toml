@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ['bun']
+aptPkgs = ['build-essential']
+
+[phases.install]
+cmds = ['bun install --ignore-scripts --frozen-lockfile']
+
+[phases.build]
+cmds = ['build run build']
+
+[start]
+cmd = 'bun run build/index.js'
