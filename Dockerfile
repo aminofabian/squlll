@@ -1,20 +1,25 @@
-# Use a lightweight Node.js image
-FROM node:20
+# Use the official Bun image
+FROM oven/bun:1-alpine AS base
 
-# Create app directory
 WORKDIR /app
 
-# Copy files
+# Install dependencies
+FROM base AS install
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile
+
+# Copy source code
+FROM base AS prerelease
+COPY --from=install /app/node_modules node_modules
 COPY . .
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Final stage
+FROM base AS release
+COPY --from=install /app/node_modules node_modules
+COPY --from=prerelease /app .
 
-# Build the NestJS project (if using TypeScript)
-RUN npm run build
-
-# Expose the app port
-EXPOSE 3000
-
-# Start the application
-CMD ["npm", "run", "start:prod"]
+# Run the app
+ENV NODE_ENV=production
+USER bun
+EXPOSE 3000/tcp
+ENTRYPOINT [ "bun", "run", "start" ]
