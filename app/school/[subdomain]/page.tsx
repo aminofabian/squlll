@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { Building2, Home, School, Globe, Check, Sparkles } from 'lucide-react'
+import { Building2, Home, School, Globe, Check, Sparkles, ChevronRight } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
@@ -258,6 +258,25 @@ export default function SchoolHome() {
 
   const selectedSchoolType = schoolTypes.find(type => type.id === selectedType)
 
+  const styles = `
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  `;
+
+  useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-24">
       <Toaster 
@@ -287,7 +306,7 @@ export default function SchoolHome() {
       
       <div className="max-w-7xl mx-auto px-4 pt-8">
         {/* Logo Section */}
-        <div className="flex items-center justify-between mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-12">
           <div className="flex items-center space-x-3">
             <div className="relative">
               <div className="w-12 h-12 bg-[#246a59] rounded-sm flex items-center justify-center shadow-lg relative overflow-hidden">
@@ -302,7 +321,7 @@ export default function SchoolHome() {
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#2d8872] rounded-sm shadow-lg transform rotate-12"></div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </h1>
               <p className="text-sm text-gray-500">School Management System</p>
@@ -315,77 +334,126 @@ export default function SchoolHome() {
         </div>
 
         {/* Main Content */}
-        <div className="flex gap-8 pb-8">
+        <div className="flex flex-col lg:flex-row gap-8 pb-8">
           {/* Sidebar with School Types */}
-          <div className="w-80 flex-shrink-0">
-            <div className="sticky top-4 space-y-3">
+          <div className="w-full lg:w-80 lg:flex-shrink-0">
+            <div className="lg:sticky lg:top-4 space-y-3">
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">School Types</h3>
-                <p className="text-sm text-gray-500">Choose the curriculum that best fits your educational goals.</p>
+                <p className="text-sm text-gray-500 hidden lg:block">Choose the curriculum that best fits your educational goals.</p>
               </div>
-              {schoolTypes.map((type) => {
-                const Icon = type.icon
-                const isSelected = selectedType === type.id
-                const selectedLevelCount = getSelectedLevelsCount(type.id)
+              {/* Mobile View */}
+              <div className="lg:hidden">
+                <div className="grid grid-cols-2 grid-rows-2 gap-4 px-4">
+                  {schoolTypes.map((type) => {
+                    const Icon = type.icon
+                    const isSelected = selectedType === type.id
+                    const selectedLevelCount = getSelectedLevelsCount(type.id)
 
-                return (
-                  <button
-                    key={type.id}
-                    onClick={() => handleTypeSelect(type.id)}
-                    className={`group w-full p-4 border-l-4 transition-all duration-300 relative overflow-hidden ${
-                      isSelected
-                        ? 'border-l-[#246a59] bg-[#246a59]/5 shadow-lg'
-                        : 'border-l-transparent bg-white hover:border-l-[#246a59]/50'
-                    }`}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:via-[#246a59]/5 transition-all duration-500"></div>
-                    <div className="relative flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className={`p-2 transition-all duration-300 ${
-                          isSelected ? 'bg-[#246a59]/10' : 'bg-gray-50 group-hover:bg-[#246a59]/5'
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => handleTypeSelect(type.id)}
+                        className={`flex flex-col items-center justify-center aspect-square rounded-2xl transition-all duration-300 relative overflow-hidden
+                          ${isSelected
+                            ? 'bg-[#246a59] text-white shadow-xl scale-[0.98] border-2 border-[#246a59]'
+                            : 'bg-white hover:bg-[#246a59]/5 text-gray-900 shadow-lg hover:scale-[0.98] border border-gray-100'
+                          }`}
+                      >
+                        <div className={`absolute inset-0 bg-gradient-to-br opacity-10 ${
+                          isSelected ? 'from-white via-transparent to-black/20' : 'from-gray-50 via-transparent to-transparent'
+                        }`} />
+                        <div className={`mb-3 p-4 rounded-xl transition-all duration-300 ${
+                          isSelected ? 'bg-white/10' : 'bg-[#246a59]/5'
                         }`}>
-                          <Icon className={`w-6 h-6 ${
-                            isSelected ? 'text-[#246a59]' : 'text-gray-500 group-hover:text-[#246a59]'
-                          }`} />
+                          <Icon className="w-8 h-8" />
                         </div>
-                        {type.emoji && (
-                          <span className="text-xl mt-2 block">{type.emoji}</span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h3 className={`font-semibold transition-colors duration-300 ${
-                            isSelected ? 'text-[#246a59]' : 'text-gray-900 group-hover:text-[#246a59]'
-                          }`}>{type.title}</h3>
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-center font-semibold text-base">
+                            {type.title.split(' ')[0]}
+                          </span>
                           {selectedLevelCount > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-[#246a59] text-white">
+                            <span className={`text-xs px-3 py-1 rounded-full ${
+                              isSelected ? 'bg-white/20' : 'bg-[#246a59] text-white'
+                            }`}>
                               {selectedLevelCount}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{type.description}</p>
+                        {type.emoji && (
+                          <span className="absolute bottom-3 opacity-75 text-lg">{type.emoji}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              {/* Desktop View */}
+              <div className="hidden lg:grid lg:grid-cols-1 gap-3">
+                {schoolTypes.map((type) => {
+                  const Icon = type.icon
+                  const isSelected = selectedType === type.id
+                  const selectedLevelCount = getSelectedLevelsCount(type.id)
+
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => handleTypeSelect(type.id)}
+                      className={`group w-full p-4 border-l-4 transition-all duration-300 relative overflow-hidden ${
+                        isSelected
+                          ? 'border-l-[#246a59] bg-[#246a59]/5 shadow-lg'
+                          : 'border-l-transparent bg-white hover:border-l-[#246a59]/50'
+                      }`}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:via-[#246a59]/5 transition-all duration-500"></div>
+                      <div className="relative flex items-start space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className={`p-2 transition-all duration-300 ${
+                            isSelected ? 'bg-[#246a59]/10' : 'bg-gray-50 group-hover:bg-[#246a59]/5'
+                          }`}>
+                            <Icon className={`w-6 h-6 ${
+                              isSelected ? 'text-[#246a59]' : 'text-gray-500 group-hover:text-[#246a59]'
+                            }`} />
+                          </div>
+                          {type.emoji && (
+                            <span className="text-xl mt-2 block">{type.emoji}</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className={`font-semibold transition-colors duration-300 ${
+                              isSelected ? 'text-[#246a59]' : 'text-gray-900 group-hover:text-[#246a59]'
+                            }`}>{type.title}</h3>
+                            {selectedLevelCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-[#246a59] text-white">
+                                {selectedLevelCount}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{type.description}</p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                )
-              })}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
 
           {/* Main Content - Levels */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {selectedSchoolType && (
               <div className="space-y-6">
-                <div className="bg-white border-l-4 border-l-[#246a59] p-6 shadow-sm">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white border-l-4 border-l-[#246a59] p-4 sm:p-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                      <h2 className="text-2xl font-bold text-[#246a59] mb-2 flex items-center">
+                      <h2 className="text-xl sm:text-2xl font-bold text-[#246a59] flex items-center">
                         {selectedSchoolType.title}
                         {selectedSchoolType.emoji && (
                           <span className="ml-2">{selectedSchoolType.emoji}</span>
                         )}
                       </h2>
-                      <p className="text-gray-600">{selectedSchoolType.description}</p>
+                      <p className="text-sm sm:text-base text-gray-600 mt-1">{selectedSchoolType.description}</p>
                     </div>
                     <div className="bg-[#246a59]/5 px-4 py-2 rounded-sm">
                       <span className="text-sm font-medium text-[#246a59]">
@@ -405,13 +473,14 @@ export default function SchoolHome() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {selectedSchoolType.levels.map((level) => {
                     const isSelected = selectedLevels[selectedType]?.has(level.level) || false
                     return (
                       <div
                         key={level.level}
-                        className={`group relative overflow-hidden transition-all duration-300 rounded-sm
+                        onClick={(e) => toggleLevel(e, selectedType, level.level)}
+                        className={`group relative overflow-hidden transition-all duration-300 rounded-sm cursor-pointer
                           ${isSelected
                             ? 'bg-[#246a59]/5 shadow-lg ring-1 ring-[#246a59]'
                             : 'bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5'
@@ -453,54 +522,43 @@ export default function SchoolHome() {
                                 </div>
                               )}
                             </div>
-                            <button
-                              type="button"
-                              onClick={(e) => toggleLevel(e, selectedType, level.level)}
-                              className={`relative w-7 h-7 border-2 flex items-center justify-center transition-all duration-300 cursor-pointer 
+                            <div
+                              className={`relative w-7 h-7 border-2 flex items-center justify-center transition-all duration-300
                                 ${isSelected
                                   ? 'border-[#246a59] bg-[#246a59] text-white shadow-sm'
                                   : 'border-gray-300 group-hover:border-[#246a59] group-hover:shadow bg-white'
                                 }
-                                hover:scale-105 active:scale-95
+                                group-hover:scale-105 group-active:scale-95
                               `}
                             >
-                              {isSelected ? (
-                                <Check className="w-4 h-4" />
-                              ) : (
-                                <div className="w-2 h-2 bg-gray-300 group-hover:bg-[#246a59] transition-colors duration-300" />
-                              )}
-                            </button>
+                              {isSelected && <Check className="w-4 h-4" />}
+                            </div>
                           </div>
 
-                          <div className="mt-6 grid grid-cols-2 gap-3">
+                          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {level.classes.map((cls) => (
                               <div
                                 key={cls.name}
                                 className="relative overflow-hidden group/class"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="relative p-4 bg-white border border-[#246a59]/10 hover:border-[#246a59]/30
                                   shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5
                                   group-hover:bg-gradient-to-br from-white to-[#246a59]/5">
-                                  <div className="flex items-start justify-between">
-                                    <div>
-                                      <div className="font-medium text-gray-900 group-hover:text-[#246a59] transition-colors duration-300">
-                                        {cls.name}
-                                      </div>
-                                      {cls.age && (
-                                        <div className="flex items-center mt-2 space-x-2">
-                                          <div className="w-1.5 h-1.5 rounded-full bg-[#246a59]/40"></div>
-                                          <div className="text-sm text-gray-500">
-                                            {typeof cls.age === 'number' ? `${cls.age} years` : cls.age}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {cls.description && (
-                                        <p className="text-sm text-gray-500 mt-2 line-clamp-2">
-                                          {cls.description}
-                                        </p>
-                                      )}
+                                  <div>
+                                    <div className="font-medium text-gray-900 group-hover:text-[#246a59] transition-colors duration-300">
+                                      {cls.name}
                                     </div>
-                                    <div className="w-2 h-2 rounded-full bg-[#246a59]/20 group-hover:bg-[#246a59]/40 transition-colors duration-300"></div>
+                                    {cls.age && (
+                                      <div className="text-sm text-gray-500 mt-2">
+                                        {typeof cls.age === 'number' ? `${cls.age} years` : cls.age}
+                                      </div>
+                                    )}
+                                    {cls.description && (
+                                      <p className="text-sm text-gray-500 mt-2 line-clamp-2">
+                                        {cls.description}
+                                      </p>
+                                    )}
                                   </div>
                                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#246a59]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </div>
@@ -520,8 +578,8 @@ export default function SchoolHome() {
 
       {/* Footer Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#246a59]/10 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
-          <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center p-4 gap-4">
+          <div className="flex items-center space-x-4 w-full sm:w-auto justify-center sm:justify-start">
             <div className="text-sm text-gray-500">
               {canProceed ? 
                 <span className="flex items-center">
@@ -535,7 +593,7 @@ export default function SchoolHome() {
           <button
             onClick={handleContinue}
             disabled={!canProceed}
-            className={`px-8 py-3 relative overflow-hidden transition-all duration-300 ${
+            className={`w-full sm:w-auto px-8 py-3 relative overflow-hidden transition-all duration-300 ${
               canProceed
                 ? 'bg-[#246a59] hover:bg-[#246a59]/90 text-white shadow-lg hover:shadow-xl'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
