@@ -173,20 +173,36 @@ export default function SchoolHome() {
           level: 'Lower Primary',
           description: 'Foundation stage with religious instruction',
           classes: [
-            { name: 'Class 1', age: '6 years' },
-            { name: 'Class 2', age: '7 years' },
-            { name: 'Class 3', age: '8 years' },
-            { name: 'Class 4', age: '9 years' }
+            { name: 'Grade 1', age: '6 years' },
+            { name: 'Grade 2', age: '7 years' },
+            { name: 'Grade 3', age: '8 years' }
           ]
         },
         {
           level: 'Upper Primary',
           description: 'Intermediate stage with religious education',
           classes: [
-            { name: 'Class 5', age: '10 years' },
-            { name: 'Class 6', age: '11 years' },
-            { name: 'Class 7', age: '12 years' },
-            { name: 'Class 8', age: '13 years' }
+            { name: 'Grade 4', age: '9 years' },
+            { name: 'Grade 5', age: '10 years' },
+            { name: 'Grade 6', age: '11 years' }
+          ]
+        },
+        {
+          level: 'Junior Secondary',
+          description: 'Middle school stage with religious studies integration',
+          classes: [
+            { name: 'Grade 7', age: '12 years' },
+            { name: 'Grade 8', age: '13 years' },
+            { name: 'Grade 9', age: '14 years' }
+          ]
+        },
+        {
+          level: 'Senior Secondary',
+          description: 'Advanced stage with specialized religious education',
+          classes: [
+            { name: 'Grade 10', age: '15 years' },
+            { name: 'Grade 11', age: '16 years' },
+            { name: 'Grade 12', age: '17 years' }
           ]
         }
       ]
