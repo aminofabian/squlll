@@ -1,8 +1,8 @@
 'use client'
 
-import { useParams } from 'next/navigation'
-import { Building2, Home, School, Globe, Check, Sparkles, ChevronRight } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { Building2, Home, School, Globe, Check, Sparkles, ChevronRight, BookOpen, GraduationCap, Users, Calendar, Award, Library, DollarSign, Layers, ArrowRight, Settings, BarChart, Clock, Lightbulb } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
 interface Class {
@@ -29,12 +29,19 @@ interface SchoolType {
 
 export default function SchoolHome() {
   const params = useParams()
+  const router = useRouter()
   const subdomain = params.subdomain as string
   const [selectedType, setSelectedType] = useState<string>('cbc')
   const [selectedLevels, setSelectedLevels] = useState<Record<string, Set<string>>>({
     cbc: new Set()
   })
   const [pendingToast, setPendingToast] = useState<{type: 'success' | 'error', message: string} | null>(null)
+  const [currentStep, setCurrentStep] = useState<number>(1)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [setupComplete, setSetupComplete] = useState<boolean>(false)
+  
+  // Refs for scroll animations
+  const levelsSectionRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (pendingToast) {
@@ -154,17 +161,32 @@ export default function SchoolHome() {
       menu: ['Home', 'School', 'Teachers', 'Students', 'Attendance', 'Islamic Studies', 'Quran'],
       levels: [
         {
-          level: 'Lower Primary',
+          level: 'Pre-primary',
+          description: 'Early childhood education with religious foundation',
           classes: [
-            { name: 'Class 1' }, { name: 'Class 2' },
-            { name: 'Class 3' }, { name: 'Class 4' }
+            {name: 'Early Childhood', age: '3 years'},
+            { name: 'PP1', age: '4 years' },
+            { name: 'PP2', age: '5 years' }
+          ]
+        },
+        {
+          level: 'Lower Primary',
+          description: 'Foundation stage with religious instruction',
+          classes: [
+            { name: 'Class 1', age: '6 years' },
+            { name: 'Class 2', age: '7 years' },
+            { name: 'Class 3', age: '8 years' },
+            { name: 'Class 4', age: '9 years' }
           ]
         },
         {
           level: 'Upper Primary',
+          description: 'Intermediate stage with religious education',
           classes: [
-            { name: 'Class 5' }, { name: 'Class 6' },
-            { name: 'Class 7' }, { name: 'Class 8' }
+            { name: 'Class 5', age: '10 years' },
+            { name: 'Class 6', age: '11 years' },
+            { name: 'Class 7', age: '12 years' },
+            { name: 'Class 8', age: '13 years' }
           ]
         }
       ]
@@ -245,10 +267,35 @@ export default function SchoolHome() {
 
   const handleContinue = () => {
     if (canProceed) {
-      const selectedLevelsList = Array.from(selectedLevels[selectedType])
-      toast.success(`Proceeding with ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`)
+      setIsLoading(true);
+      const selectedLevelsList = Array.from(selectedLevels[selectedType]);
+      
+      // Simulate API call
+      setTimeout(() => {
+        setIsLoading(false);
+        setCurrentStep(currentStep + 1);
+        toast.success(`Saved ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`);
+        
+        // Scroll to top smoothly when advancing
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        if (currentStep >= 3) {
+          setSetupComplete(true);
+          // Redirect after setup completion
+          setTimeout(() => {
+            router.push(`/school/${subdomain}/dashboard`);
+          }, 2000);
+        }
+      }, 800);
     }
   }
+
+  const setupSteps = [
+    { id: 1, name: 'School Type', description: 'Select your curriculum type' },
+    { id: 2, name: 'Classes', description: 'Configure grade levels and classes' },
+    { id: 3, name: 'Teachers', description: 'Add teaching staff' },
+    { id: 4, name: 'Settings', description: 'School details and preferences' },
+  ]
 
   const getSelectedLevelsCount = (typeId: string) => {
     return selectedLevels[typeId]?.size || 0
@@ -305,11 +352,59 @@ export default function SchoolHome() {
       />
       
       <div className="max-w-7xl mx-auto px-4 pt-8">
+        {/* Progress Stepper */}
+        <div className="mb-8">
+          <div className="py-4">
+            <div className="flex items-center justify-between">
+              {setupSteps.map((step, index) => {
+                const isActive = step.id === currentStep;
+                const isCompleted = step.id < currentStep;
+                return (
+                  <div key={step.id} className="flex-1 relative">
+                    <div className="flex items-center justify-center">
+                      {/* Line before */}
+                      {index > 0 && (
+                        <div 
+                          className={`absolute left-0 right-1/2 top-1/2 h-0.5 -translate-y-1/2 transition-colors duration-300 ${isCompleted ? 'bg-[#246a59]' : 'bg-gray-200'}`}
+                        aria-hidden="true"
+                        style={{ zIndex: 0 }}
+                        />
+                      )}
+                      {/* Line after */}
+                      {index < setupSteps.length - 1 && (
+                        <div 
+                          className={`absolute left-1/2 right-0 top-1/2 h-0.5 -translate-y-1/2 transition-colors duration-300 ${step.id < currentStep ? 'bg-[#246a59]' : 'bg-gray-200'}`}
+                          aria-hidden="true"
+                          style={{ zIndex: 0 }}
+                        />
+                      )}
+                      {/* Step circle */}
+                      <div 
+                        className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 ${isActive ? 'border-[#246a59] bg-[#246a59]/10 shadow-md' : isCompleted ? 'border-[#246a59] bg-[#246a59] text-white' : 'border-gray-300 bg-white'}`}
+                        style={{ zIndex: 1 }}
+                      >
+                        {isCompleted ? (
+                          <Check className="h-5 w-5" />
+                        ) : (
+                          <span className={`text-sm font-medium ${isActive ? 'text-[#246a59]' : 'text-gray-500'}`}>{step.id}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-center">
+                      <div className={`text-sm font-medium ${isActive ? 'text-[#246a59]' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>{step.name}</div>
+                      <div className="text-xs text-gray-500 hidden sm:block">{step.description}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
         {/* Logo Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8 bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="w-12 h-12 bg-[#246a59] rounded-sm flex items-center justify-center shadow-lg relative overflow-hidden">
+              <div className="w-12 h-12 bg-[#246a59] rounded-lg flex items-center justify-center shadow-lg relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#246a59] to-[#2d8872]"></div>
                 <span className="relative text-2xl font-bold text-white">
                   {subdomain.charAt(0).toUpperCase()}
@@ -327,9 +422,9 @@ export default function SchoolHome() {
               <p className="text-sm text-gray-500">School Management System</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <Check className="w-4 h-4 text-[#246a59]" />
-            <span>Setup in progress</span>
+          <div className="flex items-center space-x-2 text-sm bg-[#246a59]/10 px-3 py-2 rounded-md">
+            <Clock className="w-4 h-4 text-[#246a59]" />
+            <span className="text-[#246a59] font-medium">Setup step {currentStep} of {setupSteps.length}</span>
           </div>
         </div>
 
@@ -337,14 +432,14 @@ export default function SchoolHome() {
         <div className="flex flex-col lg:flex-row gap-8 pb-8">
           {/* Sidebar with School Types */}
           <div className="w-full lg:w-80 lg:flex-shrink-0">
-            <div className="lg:sticky lg:top-4 space-y-3">
+            <div className="lg:sticky lg:top-4 space-y-3 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">School Types</h3>
                 <p className="text-sm text-gray-500 hidden lg:block">Choose the curriculum that best fits your educational goals.</p>
               </div>
               {/* Mobile View */}
               <div className="lg:hidden">
-                <div className="grid grid-cols-2 grid-rows-2 gap-4 px-4">
+                <div className="grid grid-cols-2 grid-rows-2 gap-4">
                   {schoolTypes.map((type) => {
                     const Icon = type.icon
                     const isSelected = selectedType === type.id
@@ -354,10 +449,10 @@ export default function SchoolHome() {
                       <button
                         key={type.id}
                         onClick={() => handleTypeSelect(type.id)}
-                        className={`flex flex-col items-center justify-center aspect-square rounded-2xl transition-all duration-300 relative overflow-hidden
+                        className={`flex flex-col items-center justify-center aspect-square rounded-2xl transition-all duration-300 relative overflow-hidden border-2
                           ${isSelected
-                            ? 'bg-[#246a59] text-white shadow-xl scale-[0.98] border-2 border-[#246a59]'
-                            : 'bg-white hover:bg-[#246a59]/5 text-gray-900 shadow-lg hover:scale-[0.98] border border-gray-100'
+                            ? 'bg-[#246a59] text-white shadow-xl scale-[0.98] border-[#246a59]'
+                            : 'bg-white hover:bg-[#246a59]/5 text-gray-900 shadow-lg hover:scale-[0.98] border-gray-200 hover:border-[#246a59]/50'
                           }`}
                       >
                         <div className={`absolute inset-0 bg-gradient-to-br opacity-10 ${
@@ -399,10 +494,10 @@ export default function SchoolHome() {
                     <button
                       key={type.id}
                       onClick={() => handleTypeSelect(type.id)}
-                      className={`group w-full p-4 border-l-4 transition-all duration-300 relative overflow-hidden ${
+                      className={`group w-full p-4 border transition-all duration-300 relative overflow-hidden rounded-lg ${
                         isSelected
-                          ? 'border-l-[#246a59] bg-[#246a59]/5 shadow-lg'
-                          : 'border-l-transparent bg-white hover:border-l-[#246a59]/50'
+                          ? 'border-[#246a59] bg-[#246a59]/5 shadow-lg'
+                          : 'border-gray-200 bg-white hover:border-[#246a59]/50'
                       }`}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:via-[#246a59]/5 transition-all duration-500"></div>
@@ -444,7 +539,7 @@ export default function SchoolHome() {
           <div className="flex-1 min-w-0">
             {selectedSchoolType && (
               <div className="space-y-6">
-                <div className="bg-white border-l-4 border-l-[#246a59] p-4 sm:p-6 shadow-sm">
+                <div className="bg-white border-l-4 border-l-[#246a59] p-4 sm:p-6 shadow-sm rounded-r-lg">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                       <h2 className="text-xl sm:text-2xl font-bold text-[#246a59] flex items-center">
@@ -461,11 +556,11 @@ export default function SchoolHome() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-4">
+                  <div className="flex flex-wrap gap-2 mt-4 hide-scrollbar overflow-x-auto pb-2 max-w-full">
                     {selectedSchoolType.menu.map((item, index) => (
                       <span 
                         key={index}
-                        className="inline-flex items-center px-3 py-1 text-xs font-medium bg-[#246a59]/10 text-[#246a59] hover:bg-[#246a59]/20 transition-colors duration-200"
+                        className="inline-flex items-center px-3 py-1 text-xs font-medium bg-[#246a59]/10 text-[#246a59] hover:bg-[#246a59]/20 transition-all duration-200 rounded-md hover:scale-105"
                       >
                         {item}
                       </span>
@@ -473,17 +568,17 @@ export default function SchoolHome() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div ref={levelsSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {selectedSchoolType.levels.map((level) => {
                     const isSelected = selectedLevels[selectedType]?.has(level.level) || false
                     return (
                       <div
                         key={level.level}
                         onClick={(e) => toggleLevel(e, selectedType, level.level)}
-                        className={`group relative overflow-hidden transition-all duration-300 rounded-sm cursor-pointer
+                        className={`group relative overflow-hidden transition-all duration-300 rounded-lg border cursor-pointer
                           ${isSelected
-                            ? 'bg-[#246a59]/5 shadow-lg ring-1 ring-[#246a59]'
-                            : 'bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5'
+                            ? 'bg-[#246a59]/5 shadow-lg border-[#246a59]'
+                            : 'bg-gradient-to-br from-white to-gray-50 hover:shadow-md hover:-translate-y-0.5 border-gray-200 hover:border-[#246a59]/50'
                           }`}
                       >
                         <div 
@@ -542,9 +637,9 @@ export default function SchoolHome() {
                                 className="relative overflow-hidden group/class"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <div className="relative p-4 bg-white border border-[#246a59]/10 hover:border-[#246a59]/30
+                                <div className="relative p-4 bg-white border rounded-lg border-[#246a59]/10 hover:border-[#246a59]/30
                                   shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5
-                                  group-hover:bg-gradient-to-br from-white to-[#246a59]/5">
+                                  group-hover:bg-gradient-to-br from-white to-[#246a59]/5 hover:cursor-pointer">
                                   <div>
                                     <div className="font-medium text-gray-900 group-hover:text-[#246a59] transition-colors duration-300">
                                       {cls.name}
@@ -576,6 +671,25 @@ export default function SchoolHome() {
         </div>
       </div>
 
+      {/* Tips Card */}
+      <div className="fixed right-6 bottom-24 max-w-xs">
+        <div className="bg-white border border-[#246a59]/20 rounded-lg shadow-lg p-4 transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 bg-[#246a59]/10 rounded-full">
+              <Lightbulb className="w-5 h-5 text-[#246a59]" />
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-900">Quick Tip</h4>
+              <p className="text-sm text-gray-600 mt-1">
+                {currentStep === 1 ? 'Select a school type that best matches your curriculum needs.' : 
+                 currentStep === 2 ? 'Click on levels to select which grades your school will offer.' : 
+                 'Add your teaching staff details in the next step.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Footer Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#246a59]/10 shadow-lg">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center p-4 gap-4">
@@ -592,15 +706,27 @@ export default function SchoolHome() {
           </div>
           <button
             onClick={handleContinue}
-            disabled={!canProceed}
-            className={`w-full sm:w-auto px-8 py-3 relative overflow-hidden transition-all duration-300 ${
-              canProceed
+            disabled={!canProceed || isLoading}
+            className={`w-full sm:w-auto px-8 py-3 relative overflow-hidden transition-all duration-300 rounded-md ${
+              canProceed && !isLoading
                 ? 'bg-[#246a59] hover:bg-[#246a59]/90 text-white shadow-lg hover:shadow-xl'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
           >
-            <div className="relative z-10">Continue Setup</div>
-            {canProceed && (
+            <div className="relative z-10 flex items-center justify-center">
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Continue Setup</span>
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </div>
+            {canProceed && !isLoading && (
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
             )}
           </button>
@@ -608,4 +734,4 @@ export default function SchoolHome() {
       </div>
     </div>
   )
-} 
+}

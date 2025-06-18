@@ -496,62 +496,121 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08),0_8px_24px_-4px_rgba(36,106,89,0.05)] overflow-hidden
+    <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#edf2f7] flex items-center justify-center p-4 relative">
+      {/* Background decoration elements */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-[#246a59]/5 -skew-y-6 transform origin-top-left"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#246a59]/3 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#246a59]/3 rounded-full blur-3xl"></div>
+      
+      <div className="w-full max-w-6xl bg-white backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.08),0_8px_24px_-4px_rgba(36,106,89,0.05),0_0_0_1px_rgba(36,106,89,0.05)] overflow-hidden
         relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-white before:to-gray-50/50
-        border-t-4 border-t-[#246a59]">
+        border-t-4 border-t-[#246a59] rounded-xl animate-in fade-in-50 duration-500 slide-in-from-bottom-8">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100
-          relative overflow-hidden
-          before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-[#246a59]/5 before:to-transparent">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 bg-gradient-to-b from-[#246a59] to-[#1a4c40] border border-[#1d5547] flex items-center justify-center rounded-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 3.727 1.51a1 1 0 00.788 0l7-3a1 1 0 000-1.84l-7-3z" />
-                <path d="M3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+        <div className="relative overflow-hidden">
+          {/* Decorative header background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#246a59]/10 via-transparent to-[#246a59]/5 z-0"></div>
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#246a59]/10 to-transparent opacity-70"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#246a59]/30 to-transparent"></div>
+          
+          <div className="flex items-center justify-between px-8 py-5 relative z-10">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#246a59] to-[#1a4c40] border border-[#1d5547]/50 flex items-center justify-center rounded-xl shadow-lg shadow-[#246a59]/10 transition-all duration-300 group-hover:shadow-[#246a59]/20 group-hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 3.727 1.51a1 1 0 00.788 0l7-3a1 1 0 000-1.84l-7-3z" />
+                  <path d="M3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                </svg>
+              </div>
+              <div className="font-mono font-bold text-xl tracking-wide transition-all duration-300 group-hover:translate-x-0.5">
+                <span className="text-[#246a59] dark:text-[#2d8570] bg-clip-text bg-gradient-to-r from-[#246a59] to-[#2d8570] text-transparent">SQ</span>
+                <span className="text-[#246a59] bg-clip-text bg-gradient-to-r from-[#246a59] to-[#2d8570] text-transparent">UL</span>
+                <span className="block text-xs font-medium text-[#246a59]/70 mt-0.5">School Management System</span>
+              </div>
+            </Link>
+            <Link 
+              href="/login"
+              className="text-sm font-medium px-5 py-2.5 rounded-lg bg-white border border-gray-200 text-[#246a59] shadow-sm hover:bg-[#246a59]/5 transition-all duration-300 hover:border-[#246a59]/20 flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
               </svg>
-            </div>
-            <div className="font-mono font-bold text-lg tracking-wide">
-              <span className="text-[#246a59] dark:text-[#2d8570]">SQ</span>
-              <span className="text-[#246a59]">UL</span>
-            </div>
-          </Link>
-          <Link 
-            href="/login"
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-gray-50 text-gray-900 hover:bg-gray-100 transition-colors"
-          >
-            Sign in
-          </Link>
+              Sign in
+            </Link>
+          </div>
         </div>
         
         <div className="flex flex-col lg:flex-row">
           {/* Left sidebar */}
-          <div className="w-full lg:w-[280px] p-6 border-b lg:border-b-0 lg:border-r border-gray-100">
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-[#246a59]">Step {currentStep + 1}</h2>
-              <p className="text-gray-500 text-sm mt-1">Enter your details</p>
-            </div>
-
-            <div className="space-y-8">
-              {steps.map((step, index) => (
-                <div key={step.id} className={inputStyles.stepContainer}>
-                  <div className={cn(
-                    inputStyles.stepIndicator,
-                    currentStep === index && inputStyles.stepIndicatorActive
-                  )}>
-                    <step.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className={cn(
-                      inputStyles.stepTitle,
-                      currentStep === index && inputStyles.stepTitleActive
-                    )}>
-                      {step.title}
-                    </h3>
-                    <p className={inputStyles.stepDescription}>{step.description}</p>
-                  </div>
+          <div className="w-full lg:w-[320px] p-8 border-b lg:border-b-0 lg:border-r border-gray-100 bg-gradient-to-br from-white to-gray-50/30 overflow-hidden relative">
+            {/* Decorative elements for sidebar */}
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNGM0LjQxOCAwIDgtMy41ODIgOC04cy0zLjU4Mi04LTgtOC04IDMuNTgyLTggOCAzLjU4MiA4IDggOHptMC0yYzMuMzE0IDAgNi0yLjY4NiA2LTZzLTIuNjg2LTYtNi02LTYgMi42ODYtNiA2IDIuNjg2IDYgNiA2eiIgZmlsbD0iIzI0NmE1OSIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')]  opacity-30 z-0"></div>
+            
+            <div className="relative z-10">
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#246a59] to-[#2d8570]">
+                  Step {currentStep + 1} of {steps.length}
+                </h2>
+                <p className="text-gray-500 mt-2 text-base">
+                  {currentStep === 0 ? 'Let\'s get to know you better' : 'Tell us about your school'}
+                </p>
+                <div className="mt-4 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-[#246a59] to-[#2d8570] h-full rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                  ></div>
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-6">
+                {steps.map((step, index) => (
+                  <div 
+                    key={step.id} 
+                    className={cn(
+                      "flex items-start gap-4 p-4 rounded-xl transition-all duration-300",
+                      currentStep === index ? "bg-white shadow-sm border border-[#246a59]/10" : "opacity-80"
+                    )}
+                  >
+                    <div 
+                      className={cn(
+                        "flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-300",
+                        currentStep === index 
+                          ? "bg-gradient-to-br from-[#246a59] to-[#2d8570] text-white shadow-lg shadow-[#246a59]/20" 
+                          : "bg-gray-100 text-gray-400"
+                      )}
+                    >
+                      <step.icon className={cn("w-6 h-6 transition-all", currentStep === index ? "scale-110" : "")} />
+                    </div>
+                    <div>
+                      <h3 className={cn(
+                        "font-semibold text-lg transition-all duration-300",
+                        currentStep === index ? "text-[#246a59]" : "text-gray-500"
+                      )}>
+                        {step.title}
+                      </h3>
+                      <p className={cn(
+                        "text-sm transition-all duration-300", 
+                        currentStep === index ? "text-gray-600" : "text-gray-400"
+                      )}>
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tips section */}
+              <div className="mt-12 p-4 bg-[#246a59]/5 rounded-xl border border-[#246a59]/10">
+                <h4 className="font-medium text-[#246a59] flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                  </svg>
+                  Tips
+                </h4>
+                <p className="text-sm text-gray-600 mt-2">
+                  {currentStep === 0 
+                    ? "Create a strong password that includes uppercase letters, numbers, and symbols for better security."
+                    : "Your school URL will be used to access your school's custom portal, so choose something memorable and relevant."}
+                </p>
+              </div>
             </div>
           </div>
 
