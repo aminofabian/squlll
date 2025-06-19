@@ -11,3 +11,6 @@ cmds = ['bun run build']  # Fixed: was 'build run build'
 
 [start]
 cmd = 'bun run build/index.js'
+
+
+
