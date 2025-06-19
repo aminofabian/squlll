@@ -65,37 +65,37 @@ const mainNavigationItems: NavigationItem[] = [
   },
   {
     title: "Classes",
-    href: "/school/[subdomain]/classes",
+    href: "/classes",
     icon: BookOpen,
   },
   {
     title: "Time Table",
-    href: "/school/[subdomain]/time-table",
+    href: "/time-table",
     icon: Calendar,
   },
   {
     title: "Students",
-    href: "/school/[subdomain]/students",
+    href: "/students",
     icon: Users,
   },
   {
     title: "Teachers",
-    href: "/school/[subdomain]/teachers",
+    href: "/teachers",
     icon: GraduationCap,
   },
   {
     title: "Staff",
-    href: "/school/[subdomain]/staff",
+    href: "/staff",
     icon: UserCheck,
   },
   {
     title: "Fees & Invoices",
-    href: "/school/[subdomain]/fees",
+    href: "/fees",
     icon: DollarSign,
   },
   {
     title: "Exams",
-    href: "/school/[subdomain]/exams",
+    href: "/exams",
     icon: ClipboardList,
   }
 ];
@@ -104,47 +104,47 @@ const mainNavigationItems: NavigationItem[] = [
 const moreNavigationItems: NavigationItem[] = [
   {
     title: "Curriculum",
-    href: "/dashboard/curriculum",
+    href: "/curriculum",
     icon: BookOpen,
   },
   {
     title: "School Years",
-    href: "/dashboard/school-years",
+    href: "/school-years",
     icon: School,
   },
   {
     title: "Reports",
-    href: "/dashboard/reports",
+    href: "/reports",
     icon: FileText,
   },
   {
     title: "Analytics",
-    href: "/dashboard/analytics",
+    href: "/analytics",
     icon: BarChart,
   },
   {
     title: "New Applications",
-    href: "/dashboard/admissions/applications",
+    href: "/admissions/applications",
     icon: UserPlus,
   },
   {
     title: "Enrollment",
-    href: "/dashboard/admissions/enrollment",
+    href: "/enrollment",
     icon: Award,
   },
   {
     title: "Attendances",
-    href: "/dashboard/attendances",
+    href: "/attendances",
     icon: UserCheck,
   },
   {
     title: "Grading",
-    href: "/dashboard/grading",
+    href: "/grading",
     icon: Award,
   },
   {
     title: "Communication",
-    href: "/dashboard/communication",
+    href: "/communication",
     icon: MessageSquare,
   }
 ];
@@ -161,7 +161,7 @@ const navigationCategories: NavigationCategory[] = [
       },
       {
         title: "Time Table",
-        href: "/dashboard/time-table",
+        href: "/time-table",
         icon: Calendar,
       },
     ]
@@ -171,17 +171,17 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "Classes",
-        href: "/dashboard/classes",
+        href: "/classes",
         icon: BookOpen,
       },
       {
         title: "Curriculum",
-        href: "/dashboard/curriculum",
+        href: "/curriculum",
         icon: ClipboardList,
       },
       {
         title: "School Years",
-        href: "/dashboard/school-years",
+        href: "/school-years",
         icon: School,
       },
     ]
@@ -191,17 +191,17 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "Students",
-        href: "/dashboard/students",
+        href: "/students",
         icon: Users,
       },
       {
         title: "Teachers",
-        href: "/dashboard/teachers",
+        href: "/teachers",
         icon: GraduationCap,
       },
       {
         title: "Staff",
-        href: "/dashboard/staff",
+        href: "/staff",
         icon: UserCheck,
       }
     ]
@@ -211,12 +211,12 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "Reports",
-        href: "/dashboard/reports",
+        href: "/reports",
         icon: FileText,
       },
       {
         title: "Analytics",
-        href: "/dashboard/analytics",
+        href: "/analytics",
         icon: BarChart,
       }
     ]
@@ -226,12 +226,12 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "New Applications",
-        href: "/dashboard/admissions/applications",
+        href: "/applications",
         icon: UserPlus,
       },
       {
         title: "Enrollment",
-        href: "/dashboard/admissions/enrollment",
+        href: "/enrollment",
         icon: Award,
       },
     ]
@@ -241,17 +241,17 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "Attendances",
-        href: "/dashboard/attendances",
+        href: "/attendances",
         icon: UserCheck,
       },
       {
         title: "Grading",
-        href: "/dashboard/grading",
+        href: "/grading",
         icon: Award,
       },
       {
         title: "Fees & Invoices",
-        href: "/dashboard/fees",
+        href: "/fees",
         icon: DollarSign,
       },
     ]
@@ -261,12 +261,12 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "Reports",
-        href: "/dashboard/reports",
+        href: "/reports",
         icon: BarChart,
       },
       {
         title: "Communication",
-        href: "/dashboard/communication",
+        href: "/communication",
         icon: MessageSquare,
       },
     ]
@@ -276,7 +276,7 @@ const navigationCategories: NavigationCategory[] = [
     items: [
       {
         title: "Settings",
-        href: "/dashboard/settings",
+        href: "/settings",
         icon: Settings,
       },
     ]
