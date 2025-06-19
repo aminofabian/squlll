@@ -925,10 +925,17 @@ export default function StudentsPage() {
                 
                 // Filter by grade if selected
                 const selectedGrade = mockGrades.find(g => g.id === selectedGradeId);
-                const gradeMatch = selectedGradeId !== 'all' && selectedGrade ? 
-                  student.class?.startsWith(selectedGrade.displayName) : 
-                  true;
-                  
+                let gradeMatch = true;
+                
+                if (selectedGradeId !== 'all' && selectedGrade) {
+                  // Check both grade field and class field for matches
+                  gradeMatch = (
+                    student.grade === selectedGrade.name || // Match exact grade name (G3)
+                    student.grade === selectedGrade.displayName || // Match display name (Grade 3)
+                    student.class?.includes(selectedGrade.displayName) // Class field contains display name
+                  );
+                }
+                
                 return nameMatch && gradeMatch;
               })
                 .map(student => {
@@ -988,9 +995,19 @@ export default function StudentsPage() {
               }
               {students.filter(student => {
                 const nameMatch = searchTerm ? student.name.toLowerCase().includes(searchTerm.toLowerCase()) : true;
-                const gradeMatch = selectedGradeId !== 'all' ? 
-                  student.class?.includes(mockGrades.find(g => g.id === selectedGradeId)?.displayName || '') : 
-                  true;
+                
+                // Use the same matching logic as above
+                const selectedGrade = mockGrades.find(g => g.id === selectedGradeId);
+                let gradeMatch = true;
+                
+                if (selectedGradeId !== 'all' && selectedGrade) {
+                  gradeMatch = (
+                    student.grade === selectedGrade.name ||
+                    student.grade === selectedGrade.displayName ||
+                    student.class?.includes(selectedGrade.displayName)
+                  );
+                }
+                
                 return nameMatch && gradeMatch;
               }).length === 0 && (
                 <div className="p-6 text-center text-muted-foreground">

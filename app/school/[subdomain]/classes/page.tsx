@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +25,7 @@ import {
   Users,
   GraduationCap,
   Layers,
+  X,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -35,12 +36,15 @@ type EducationLevel =
   | 'senior-secondary' 
   | 'other'
 
-type GradeType = 
-  | 'Baby Class' | 'PP1' | 'PP2' 
-  | 'Grade 1' | 'Grade 2' | 'Grade 3' | 'Grade 4' | 'Grade 5' | 'Grade 6'
-  | 'Grade 7' | 'Grade 8' | 'Grade 9'
-  | 'Grade 10' | 'Grade 11' | 'Grade 12'
-  | 'Other'
+interface Grade {
+  id: string
+  name: string      // Abbreviated name (G1, F1, etc)
+  displayName: string  // Full name (Grade 1, Form 1, etc)
+  level: EducationLevel
+  ageGroup: string
+  students: number
+  classes: number
+}
 
 interface Class {
   id: string
@@ -52,7 +56,8 @@ interface Class {
   students: number
   status: 'active' | 'scheduled' | 'completed'
   level: EducationLevel
-  grade: GradeType
+  grade: string // Using displayName
+  gradeType: string // Using abbreviation (G1, F1, etc)
   ageGroup: string
   pathway?: string
   
@@ -167,15 +172,187 @@ function getLevelIcon(level: EducationLevel) {
   }
 }
 
+// Mock grades data with abbreviations for display
+const mockGrades: Grade[] = [
+  // Preschool grades
+  {
+    id: 'babyclass',
+    name: 'BC',
+    displayName: 'Baby Class',
+    level: 'preschool',
+    ageGroup: '3 years',
+    students: 45,
+    classes: 2
+  },
+  {
+    id: 'pp1',
+    name: 'PP1',
+    displayName: 'PP1',
+    level: 'preschool',
+    ageGroup: '4 years',
+    students: 52,
+    classes: 2
+  },
+  {
+    id: 'pp2',
+    name: 'PP2',
+    displayName: 'PP2',
+    level: 'preschool',
+    ageGroup: '5 years',
+    students: 48,
+    classes: 2
+  },
+  
+  // Primary grades
+  {
+    id: 'grade1',
+    name: 'G1',
+    displayName: 'Grade 1',
+    level: 'primary',
+    ageGroup: '6 years',
+    students: 65,
+    classes: 3
+  },
+  {
+    id: 'grade2',
+    name: 'G2',
+    displayName: 'Grade 2',
+    level: 'primary',
+    ageGroup: '7 years',
+    students: 62,
+    classes: 3
+  },
+  {
+    id: 'grade3',
+    name: 'G3',
+    displayName: 'Grade 3',
+    level: 'primary',
+    ageGroup: '8 years',
+    students: 58,
+    classes: 2
+  },
+  {
+    id: 'grade4',
+    name: 'G4',
+    displayName: 'Grade 4',
+    level: 'primary',
+    ageGroup: '9 years',
+    students: 60,
+    classes: 2
+  },
+  {
+    id: 'grade5',
+    name: 'G5',
+    displayName: 'Grade 5',
+    level: 'primary',
+    ageGroup: '10 years',
+    students: 58,
+    classes: 2
+  },
+  {
+    id: 'grade6',
+    name: 'G6',
+    displayName: 'Grade 6',
+    level: 'primary',
+    ageGroup: '11 years',
+    students: 56,
+    classes: 2
+  },
+  
+  // Junior Secondary grades
+  {
+    id: 'grade7',
+    name: 'F1',
+    displayName: 'Form 1',
+    level: 'junior-secondary',
+    ageGroup: '12 years',
+    students: 86,
+    classes: 3
+  },
+  {
+    id: 'grade8',
+    name: 'F2',
+    displayName: 'Form 2',
+    level: 'junior-secondary',
+    ageGroup: '13 years',
+    students: 78,
+    classes: 3
+  },
+  {
+    id: 'grade9',
+    name: 'F3',
+    displayName: 'Form 3',
+    level: 'junior-secondary',
+    ageGroup: '14 years',
+    students: 72,
+    classes: 2
+  },
+  
+  // Senior Secondary grades
+  {
+    id: 'grade10',
+    name: 'F4',
+    displayName: 'Form 4',
+    level: 'senior-secondary',
+    ageGroup: '15 years',
+    students: 68,
+    classes: 3
+  },
+  {
+    id: 'grade11',
+    name: 'F5',
+    displayName: 'Form 5',
+    level: 'senior-secondary',
+    ageGroup: '16 years',
+    students: 54,
+    classes: 2
+  },
+  {
+    id: 'grade12',
+    name: 'F6',
+    displayName: 'Form 6',
+    level: 'senior-secondary',
+    ageGroup: '17 years',
+    students: 48,
+    classes: 2
+  }
+];
+
+function GradeButton({ 
+  grade, 
+  selectedGradeId, 
+  onClick 
+}: { 
+  grade: Grade; 
+  selectedGradeId: string; 
+  onClick: (id: string) => void;
+}) {
+  const isSelected = selectedGradeId === grade.id
+  
+  return (
+    <button
+      key={grade.id}
+      onClick={() => onClick(grade.id)}
+      className={`
+        px-2 py-1 text-xs rounded-md transition-all
+        ${isSelected 
+          ? 'bg-blue-100 text-blue-800 font-medium border border-blue-200' 
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'}
+      `}
+      aria-pressed={isSelected}
+    >
+      {grade.name}
+    </button>
+  )
+}
+
 function ClassesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedLevel, setSelectedLevel] = useState<EducationLevel | ''>('')
-  const [activeTab, setActiveTab] = useState<string>('all')
-  
-  // State for selected grade and its name
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('all')
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
-  const [selectedGradeName, setSelectedGradeName] = useState<string | null>(null)
+  // Removing selectedGradeName state as it's no longer needed
 
   // Handler for level change to fix type issues
   const handleLevelChange = (value: string) => {
@@ -198,6 +375,7 @@ function ClassesPage() {
       status: 'active',
       level: 'preschool',
       grade: 'Baby Class',
+      gradeType: 'BC',
       ageGroup: '3 years',
       genderBreakdown: { male: 10, female: 8 },
       academicPerformance: {
@@ -256,6 +434,7 @@ function ClassesPage() {
       status: 'active',
       level: 'preschool',
       grade: 'PP1',
+      gradeType: 'PP1',
       ageGroup: '4 years',
       genderBreakdown: { male: 12, female: 10 },
       academicPerformance: {
@@ -296,6 +475,7 @@ function ClassesPage() {
       status: 'active',
       level: 'preschool',
       grade: 'PP2',
+      gradeType: 'PP2',
       ageGroup: '5 years'
     },
     
@@ -311,6 +491,7 @@ function ClassesPage() {
       status: 'active',
       level: 'primary',
       grade: 'Grade 1',
+      gradeType: 'G1',
       ageGroup: '6 years'
     },
     {
@@ -324,6 +505,7 @@ function ClassesPage() {
       status: 'active',
       level: 'primary',
       grade: 'Grade 3',
+      gradeType: 'G3',
       ageGroup: '8 years'
     },
     {
@@ -337,6 +519,7 @@ function ClassesPage() {
       status: 'scheduled',
       level: 'primary',
       grade: 'Grade 5',
+      gradeType: 'G5',
       ageGroup: '10 years'
     },
     {
@@ -350,6 +533,7 @@ function ClassesPage() {
       status: 'active',
       level: 'primary',
       grade: 'Grade 6',
+      gradeType: 'G6',
       ageGroup: '11 years'
     },
     {
@@ -364,6 +548,7 @@ function ClassesPage() {
       status: 'active',
       level: 'primary',
       grade: 'Grade 3',
+      gradeType: 'G3',
       ageGroup: '8 years',
       genderBreakdown: { male: 17, female: 15 },
       academicPerformance: {
@@ -437,6 +622,7 @@ function ClassesPage() {
       status: 'active',
       level: 'junior-secondary',
       grade: 'Grade 7',
+      gradeType: 'F1',
       ageGroup: '12 years'
     },
     {
@@ -450,6 +636,7 @@ function ClassesPage() {
       status: 'scheduled',
       level: 'junior-secondary',
       grade: 'Grade 8',
+      gradeType: 'F2',
       ageGroup: '13 years'
     },
     {
@@ -464,6 +651,7 @@ function ClassesPage() {
       status: 'active',
       level: 'junior-secondary',
       grade: 'Grade 7',
+      gradeType: 'F1',
       ageGroup: '12 years',
       genderBreakdown: { male: 20, female: 18 },
       academicPerformance: {
@@ -507,6 +695,7 @@ function ClassesPage() {
       status: 'active',
       level: 'senior-secondary',
       grade: 'Grade 11',
+      gradeType: 'F5',
       ageGroup: '16 years',
       pathway: 'Science & Technology',
       genderBreakdown: { male: 15, female: 10 },
@@ -583,6 +772,7 @@ function ClassesPage() {
       status: 'active',
       level: 'senior-secondary',
       grade: 'Grade 11',
+      gradeType: 'F5',
       ageGroup: '16 years',
       pathway: 'Arts & Sports'
     },
@@ -597,6 +787,7 @@ function ClassesPage() {
       status: 'completed',
       level: 'senior-secondary',
       grade: 'Grade 12',
+      gradeType: 'F6',
       ageGroup: '17 years',
       pathway: 'Social Sciences'
     }
@@ -605,73 +796,65 @@ function ClassesPage() {
   // Get all unique education levels for filtering
   const educationLevels = Array.from(new Set(classes.map(cls => cls.level)))
   
-  // Filter classes based on search term, status, active tab, and selected grade
-  const filteredClasses = classes.filter(cls => {
-    // Filter by active tab (education level)
-    if (activeTab !== 'all' && cls.level !== activeTab) {
-      return false
-    }
-    
-    // Filter by status
-    if (selectedStatus !== 'all' && cls.status !== selectedStatus) {
-      return false
-    }
-    
-    // Filter by selected grade
-    if (selectedGradeName && cls.grade !== selectedGradeName) {
-      return false
-    }
-    
-    // Filter by search term
-    if (searchTerm && !cls.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !cls.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !cls.instructor.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false
-    }
-    
-    return true
-  })
-
+  // Filter classes based on search term, status, level, and grade
+  const filteredClasses = useMemo(() => {
+    return classes.filter((cls: Class) => {
+      // Filter by search term
+      const searchMatch = searchTerm ? cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                       cls.instructor.toLowerCase().includes(searchTerm.toLowerCase()) : true
+      
+      // Filter by status
+      const statusMatch = selectedStatus === 'all' ? true : cls.status === selectedStatus
+      
+      // Filter by education level
+      const levelMatch = selectedLevel ? cls.level === selectedLevel : true
+      
+      // Filter by grade using the gradeType (abbreviated name)
+      const selectedGradeObj = mockGrades.find(g => g.id === selectedGradeId)
+      const gradeMatch = selectedGradeId !== 'all' ? 
+                        cls.gradeType === selectedGradeObj?.name : 
+                        true
+      
+      return searchMatch && statusMatch && levelMatch && gradeMatch
+    })
+  }, [searchTerm, selectedStatus, selectedLevel, selectedGradeId])
+  
   // Handle search from filter component
   const handleSearch = (term: string) => {
     setSearchTerm(term)
     
     // If user starts typing a search, clear the grade selection for better UX
     if (term && selectedGrade) {
+      setSelectedGradeId('all')
       setSelectedGrade(null)
     }
   }
   
   // Handle grade selection from filter component
-  const handleGradeSelect = (grade: any) => {
-    // If the same grade is clicked again, clear the filter
-    if (selectedGrade === grade.id) {
+  const handleGradeSelect = (gradeId: string) => {
+    if (gradeId === 'all') {
+      setSelectedGradeId('all')
       setSelectedGrade(null)
-      setSelectedGradeName(null)
     } else {
-      setSelectedGrade(grade.id)
-      setSelectedGradeName(grade.name) // Store the grade name for display
+      const selectedGradeObj = mockGrades.find(g => g.id === gradeId)
+      setSelectedGradeId(gradeId)
+      setSelectedGrade(selectedGradeObj?.displayName || null)
     }
   }
   
   // Clear all filters
   const clearFilters = () => {
-    setSelectedGrade(null)
-    setSelectedGradeName(null)
-    setSelectedStatus('all')
-    setSearchTerm('')
-    
-    // Reset active tab if needed
-    if (activeTab !== 'all') {
-      setActiveTab('all')
-    }
+    setSearchTerm('');
+    setSelectedStatus('all');
+    setSelectedGradeId('all');
+    setSelectedGrade(null);
   }
-
+  
   // Count classes by level
-  const preschoolCount = classes.filter(c => c.level === 'preschool').length
-  const primaryCount = classes.filter(c => c.level === 'primary').length
-  const juniorSecondaryCount = classes.filter(c => c.level === 'junior-secondary').length
-  const seniorSecondaryCount = classes.filter(c => c.level === 'senior-secondary').length
+  const preschoolCount = classes.filter((c: Class) => c.level === 'preschool').length
+  const primaryCount = classes.filter((c: Class) => c.level === 'primary').length
+  const juniorSecondaryCount = classes.filter((c: Class) => c.level === 'junior-secondary').length
+  const seniorSecondaryCount = classes.filter((c: Class) => c.level === 'senior-secondary').length
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -687,7 +870,7 @@ function ClassesPage() {
       </div>
 
       {/* Tabs for education levels */}
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="all" value={selectedLevel || 'all'} onValueChange={handleLevelChange}>
         <TabsList className="grid grid-cols-5 w-full mb-4">
           <TabsTrigger value="all">All Levels</TabsTrigger>
           <TabsTrigger value="preschool">Preschool</TabsTrigger>
@@ -703,7 +886,17 @@ function ClassesPage() {
                 <CardTitle>Filters</CardTitle>
               </CardHeader>
               <CardContent>
-                <SchoolSearchFilter onSearch={handleSearch} type="classes" onGradeSelect={handleGradeSelect} />
+                <SchoolSearchFilter 
+                  onSearch={handleSearch} 
+                  type="classes" 
+                  onGradeSelect={(grade) => {
+                    if (grade && grade.id) {
+                      handleGradeSelect(grade.id);
+                    } else {
+                      handleGradeSelect('all');
+                    }
+                  }} 
+                />
                 
                 <div className="mt-4">
                   <label className="block text-sm font-medium mb-2">Status</label>
@@ -719,74 +912,135 @@ function ClassesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* Grade Filter for each education level */}
-                {activeTab !== 'all' && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium mb-2">Grade</label>
-                    <Select value={selectedLevel} onValueChange={handleLevelChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select grade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Grades</SelectItem>
-                        {activeTab === 'preschool' && (
-                          <>
-                            <SelectItem value="Baby Class">Baby Class (3 yrs)</SelectItem>
-                            <SelectItem value="PP1">PP1 (4 yrs)</SelectItem>
-                            <SelectItem value="PP2">PP2 (5 yrs)</SelectItem>
-                          </>
-                        )}
-                        {activeTab === 'primary' && (
-                          <>
-                            <SelectItem value="Grade 1">Grade 1 (6 yrs)</SelectItem>
-                            <SelectItem value="Grade 2">Grade 2 (7 yrs)</SelectItem>
-                            <SelectItem value="Grade 3">Grade 3 (8 yrs)</SelectItem>
-                            <SelectItem value="Grade 4">Grade 4 (9 yrs)</SelectItem>
-                            <SelectItem value="Grade 5">Grade 5 (10 yrs)</SelectItem>
-                            <SelectItem value="Grade 6">Grade 6 (11 yrs)</SelectItem>
-                          </>
-                        )}
-                        {activeTab === 'junior-secondary' && (
-                          <>
-                            <SelectItem value="Grade 7">Grade 7 (12 yrs)</SelectItem>
-                            <SelectItem value="Grade 8">Grade 8 (13 yrs)</SelectItem>
-                            <SelectItem value="Grade 9">Grade 9 (14 yrs)</SelectItem>
-                          </>
-                        )}
-                        {activeTab === 'senior-secondary' && (
-                          <>
-                            <SelectItem value="Grade 10">Grade 10 (15 yrs)</SelectItem>
-                            <SelectItem value="Grade 11">Grade 11 (16 yrs)</SelectItem>
-                            <SelectItem value="Grade 12">Grade 12 (17 yrs)</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
                 
-                {/* Pathway filter for senior secondary */}
-                {activeTab === 'senior-secondary' && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium mb-2">Pathway</label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select pathway" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Pathways</SelectItem>
-                        <SelectItem value="arts">Arts & Sports</SelectItem>
-                        <SelectItem value="stem">STEM</SelectItem>
-                        <SelectItem value="social">Social Sciences</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {/* Grade Filter Buttons */}
+                <div className="mt-5">
+                  <label className="block text-sm font-medium mb-2">Filter by Grade</label>
+                  
+                  {/* Preschool Grades */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookText className="h-4 w-4 text-purple-500" />
+                      <h3 className="text-xs font-medium text-purple-700">Preschool</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {mockGrades
+                        .filter(grade => grade.level === 'preschool')
+                        .map(grade => (
+                          <GradeButton 
+                            key={grade.id} 
+                            grade={grade} 
+                            selectedGradeId={selectedGradeId} 
+                            onClick={handleGradeSelect} 
+                          />
+                        ))
+                      }
+                    </div>
                   </div>
-                )}
+                  
+                  {/* Primary Grades */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="h-4 w-4 text-blue-500" />
+                      <h3 className="text-xs font-medium text-blue-700">Primary</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {mockGrades
+                        .filter(grade => grade.level === 'primary')
+                        .map(grade => (
+                          <GradeButton 
+                            key={grade.id} 
+                            grade={grade} 
+                            selectedGradeId={selectedGradeId} 
+                            onClick={handleGradeSelect} 
+                          />
+                        ))
+                      }
+                    </div>
+                  </div>
+                  
+                  {/* Junior Secondary Grades */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Layers className="h-4 w-4 text-yellow-500" />
+                      <h3 className="text-xs font-medium text-yellow-700">Junior Secondary</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {mockGrades
+                        .filter(grade => grade.level === 'junior-secondary')
+                        .map(grade => (
+                          <GradeButton 
+                            key={grade.id} 
+                            grade={grade} 
+                            selectedGradeId={selectedGradeId} 
+                            onClick={handleGradeSelect} 
+                          />
+                        ))
+                      }
+                    </div>
+                  </div>
+                  
+                  {/* Senior Secondary Grades */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GraduationCap className="h-4 w-4 text-red-500" />
+                      <h3 className="text-xs font-medium text-red-700">Senior Secondary</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {mockGrades
+                        .filter(grade => grade.level === 'senior-secondary')
+                        .map(grade => (
+                          <GradeButton 
+                            key={grade.id} 
+                            grade={grade} 
+                            selectedGradeId={selectedGradeId} 
+                            onClick={handleGradeSelect} 
+                          />
+                        ))
+                      }
+                    </div>
+                  </div>
+                  
+                  {/* Clear filters button */}
+                  {selectedGradeId !== 'all' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2 text-xs flex items-center gap-1" 
+                      onClick={() => handleGradeSelect('all')}
+                    >
+                      <X className="h-3 w-3" /> Clear Grade Filter
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Total Classes</span>
+                    <span className="font-medium">{classes.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Preschool</span>
+                    <span className="font-medium">{preschoolCount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Primary</span>
+                    <span className="font-medium">{primaryCount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Junior Secondary</span>
+                    <span className="font-medium">{juniorSecondaryCount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Senior Secondary</span>
+                    <span className="font-medium">{seniorSecondaryCount}</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            
-            <Card>
+
+            <Card className="mt-4">
               <CardHeader>
                 <CardTitle>Summary</CardTitle>
               </CardHeader>
@@ -821,11 +1075,11 @@ function ClassesPage() {
             {/* Filter Summary Bar */}
             <div className="flex items-center justify-between mb-4 bg-muted/30 p-3  transition-all duration-200">
               <div className="flex items-center space-x-2">
-                {selectedGrade ? (
+                {selectedGradeId !== 'all' ? (
                   <>
                     <span className="font-medium">Filtered by grade:</span>
                     <Badge className="animate-fadeIn" variant="outline">
-                      {selectedGradeName}
+                      {mockGrades.find(g => g.id === selectedGradeId)?.displayName}
                     </Badge>
                   </>
                 ) : (
