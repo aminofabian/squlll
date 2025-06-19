@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
-import { Sidebar } from "@/components/dashboard/Sidebar"
+import { SchoolSidebar } from "@/components/dashboard/SchoolSidebar"
 import { SearchFilter } from "@/components/dashboard/SearchFilter"
 import { MobileNav } from "@/components/dashboard/MobileNav"
 import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen } from "lucide-react"
@@ -94,7 +94,7 @@ export default function SchoolDashboard() {
 
   return (
     <DashboardLayout
-      sidebar={<Sidebar />}
+      sidebar={<SchoolSidebar subdomain={subdomain} schoolName={schoolName} />}
       searchFilter={
         <SearchFilter 
           type="dashboard" 
