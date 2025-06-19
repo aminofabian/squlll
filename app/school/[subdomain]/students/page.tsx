@@ -4,6 +4,18 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 // No longer using StudentSearchFilter component for this view
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { 
   Select, 
   SelectContent, 
@@ -18,6 +30,16 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { 
   Card, 
   CardContent, 
@@ -178,6 +200,358 @@ const GradeButton = ({ grade, selectedGradeId, onClick }: { grade: Grade, select
     {grade.name}
   </Button>
 )
+
+// Student form data schema
+const studentFormSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  admission_number: z.string().min(2, { message: 'Admission number is required' }),
+  gender: z.enum(['male', 'female']),
+  grade: z.string().min(1, { message: 'Grade is required' }),
+  class: z.string().min(1, { message: 'Class is required' }),
+  stream: z.string().optional(),
+  date_of_birth: z.string().min(1, { message: 'Date of birth is required' }),
+  age: z.coerce.number().min(3).max(22),
+  admission_date: z.string(),
+  guardian_name: z.string().min(2, { message: 'Guardian name is required' }),
+  guardian_phone: z.string().min(10, { message: 'Valid phone number is required' }),
+  guardian_email: z.string().email().optional().or(z.literal('')),
+  home_address: z.string().optional().or(z.literal('')),
+});
+
+type StudentFormData = z.infer<typeof studentFormSchema>;
+
+// Student creation drawer component
+function CreateStudentDrawer({ onStudentCreated }: { onStudentCreated: () => void }) {
+  // Form handling
+  const form = useForm<StudentFormData>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      name: '',
+      admission_number: '',
+      gender: 'male',
+      grade: '',
+      class: '',
+      stream: '',
+      date_of_birth: new Date(Date.now() - (10 * 365 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // Default to 10 years ago
+      age: 0,
+      admission_date: new Date().toISOString().split('T')[0],
+      guardian_name: '',
+      guardian_phone: '',
+      guardian_email: '',
+      home_address: '',
+    },
+  });
+
+  // Submit handler
+  const onSubmit = (data: StudentFormData) => {
+    // In a real application, this would call an API to create the student
+    console.log('Creating student:', data);
+    // Simulate API call
+    setTimeout(() => {
+      onStudentCreated();
+      form.reset();
+    }, 500);
+  };
+
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        <Button variant="default" className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4" />
+          Add New Student
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent className="h-full w-full md:w-1/2 bg-gradient-to-br from-blue-50 to-white" data-vaul-drawer-direction="right">
+        <DrawerHeader className="border-b border-blue-100 pb-4">
+          <div className="flex items-center justify-center mb-2">
+            <div className="bg-blue-100 rounded-full p-3 mr-3">
+              <GraduationCap className="h-6 w-6 text-blue-700" />
+            </div>
+            <DrawerTitle className="text-xl text-blue-800 font-semibold">Student Registration</DrawerTitle>
+          </div>
+          <DrawerDescription className="text-center text-sm text-blue-700">Enter new student information for school records</DrawerDescription>
+        </DrawerHeader>
+        <div className="px-6 py-4 overflow-y-auto">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                <h3 className="text-md font-medium text-blue-800 mb-3 flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Student Personal Information */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Student's full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="admission_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Admission Number *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., KPS/2023/001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="age"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Age *</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grade *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select grade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {mockGrades.map(grade => (
+                            <SelectItem key={grade.id} value={grade.id}>
+                              {grade.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="class"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Form 1 East" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="stream"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stream (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., East, West, Blue" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date_of_birth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5 text-custom-blue" />
+                        Date of Birth *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type="date" 
+                            {...field} 
+                            className="pl-3 pr-10 cursor-pointer bg-custom-blue/5 border-custom-blue/20 hover:border-custom-blue/40 focus:border-custom-blue focus:ring-2 focus:ring-custom-blue/20 transition-all" 
+                          />
+                          <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-custom-blue pointer-events-none" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="admission_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-custom-blue" />
+                        Admission Date *
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type="date" 
+                            {...field} 
+                            className="pl-3 pr-10 cursor-pointer bg-custom-blue/5 border-custom-blue/20 hover:border-custom-blue/40 focus:border-custom-blue focus:ring-2 focus:ring-custom-blue/20 transition-all" 
+                          />
+                          <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-custom-blue pointer-events-none" />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              </div>
+              
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+                <h3 className="text-md font-medium text-green-800 mb-3 flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  Guardian Information
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <FormField
+                  control={form.control}
+                  name="guardian_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Guardian Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Primary guardian's name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="guardian_phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Guardian Phone *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+254700000000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="guardian_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Guardian Email (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="guardian@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                  <FormField
+                    control={form.control}
+                    name="home_address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Home Address (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Physical address" {...field} className="focus:ring-2 focus:ring-green-200" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium flex items-center">
+                    <Info className="h-4 w-4 mr-2" />
+                    Student Portal Access
+                  </h3>
+                  <Badge className="bg-white text-blue-700">Auto-Generated</Badge>
+                </div>
+                <p className="text-xs opacity-90 mb-3">Login credentials will be automatically generated and sent to the guardian's email once the student is registered.</p>
+                <div className="flex items-center justify-between bg-white/20 rounded p-2 backdrop-blur-sm">
+                  <div className="flex items-center">
+                    <Verified className="h-4 w-4 mr-2 text-yellow-300" />
+                    <span className="text-sm">Student Portal</span>
+                  </div>
+                  <span className="text-xs bg-white/30 px-2 py-0.5 rounded">portal.kenyaschools.edu</span>
+                </div>
+              </div>
+
+              <DrawerFooter className="border-t border-blue-100 pt-4">
+                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Register New Student
+                </Button>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="border-blue-200 text-blue-700">Cancel</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </form>
+          </Form>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
 
 // Mock data for grades
 const mockGrades: Grade[] = [
@@ -1026,10 +1400,7 @@ export default function StudentsPage() {
               {selectedStudent ? 'Student Details' : 'Loading Student Information'}
             </h1>
           </div>
-          <Button variant="default" className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Add New Student
-          </Button>
+          <CreateStudentDrawer onStudentCreated={() => {}} />
         </div>
 
 

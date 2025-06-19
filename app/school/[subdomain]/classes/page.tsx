@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,9 +26,33 @@ import {
   Users,
   GraduationCap,
   Layers,
+  Plus,
   X,
+  Save,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 
 type EducationLevel = 
   | 'preschool' 
@@ -346,13 +371,625 @@ function GradeButton({
   )
 }
 
+// Kenya curriculum structure
+const kenyaCurriculumStructure = {
+  "PrePrimary": {
+    "grades": ["PP1", "PP2"],
+    "subjects": [
+      "Language Activities",
+      "Mathematical Activities",
+      "Environmental Activities",
+      "Psychomotor and Creative Activities",
+      "Religious Education Activities"
+    ]
+  },
+  "LowerPrimary": {
+    "grades": ["Grade 1", "Grade 2", "Grade 3"],
+    "subjects": [
+      "Literacy",
+      "Kiswahili Language Activities",
+      "English Language Activities",
+      "Indigenous Language Activities",
+      "Mathematical Activities",
+      "Environmental Activities",
+      "Hygiene and Nutrition Activities",
+      "Religious Education Activities",
+      "Movement and Creative Activities"
+    ]
+  },
+  "UpperPrimary": {
+    "grades": ["Grade 4", "Grade 5", "Grade 6"],
+    "subjects": [
+      "English",
+      "Kiswahili",
+      "Mathematics",
+      "Science and Technology",
+      "Agriculture and Nutrition",
+      "Social Studies",
+      "Religious Education (CRE, IRE, HRE)",
+      "Creative Arts",
+      "Physical and Health Education",
+      "Optional Foreign Languages (e.g. French, Arabic, Mandarin)"
+    ]
+  },
+  "JuniorSecondary": {
+    "grades": ["Grade 7", "Grade 8", "Grade 9"],
+    "core_subjects": [
+      "English",
+      "Kiswahili or Kenya Sign Language",
+      "Mathematics",
+      "Integrated Science",
+      "Social Studies",
+      "Agriculture",
+      "Religious Education (CRE, IRE, HRE)",
+      "Health Education",
+      "Life Skills Education",
+      "Pre-Technical and Pre-Career Education",
+      "Sports and Physical Education"
+    ],
+    "optional_subjects": [
+      "Visual Arts",
+      "Performing Arts",
+      "Home Science",
+      "Computer Science",
+      "Foreign Languages (German, French, Mandarin, Arabic)",
+      "Indigenous Languages",
+      "Kenyan Sign Language"
+    ]
+  },
+  "SeniorSecondary": {
+    "grades": ["Grade 10", "Grade 11", "Grade 12"],
+    "core_subjects": [
+      "English",
+      "Kiswahili or Kenya Sign Language",
+      "Community Service Learning",
+      "Physical Education"
+    ],
+    "pathways": {
+      "STEM": [
+        "Mathematics / Advanced Math",
+        "Biology",
+        "Chemistry",
+        "Physics",
+        "General Science",
+        "Agriculture",
+        "Computer Studies",
+        "Home Science",
+        "Drawing and Design",
+        "Aviation Technology",
+        "Building and Construction",
+        "Electrical Technology",
+        "Metal Technology",
+        "Power Mechanics",
+        "Wood Technology",
+        "Media Technology",
+        "Marine and Fisheries Technology"
+      ],
+      "SocialSciences": [
+        "Literature in English",
+        "Advanced English",
+        "Indigenous Languages",
+        "Kiswahili Kipevu",
+        "History and Citizenship",
+        "Geography",
+        "Business Studies",
+        "Religious Studies (CRE, IRE, HRE)",
+        "Foreign Languages (French, German, Arabic, Mandarin)",
+        "Kenyan Sign Language"
+      ],
+      "ArtsAndSports": [
+        "Music and Dance",
+        "Fine Art",
+        "Theatre and Film",
+        "Sports and Recreation",
+        "Creative Writing"
+      ]
+    }
+  }
+};
+
+// Helper function to map education level to curriculum level
+const mapEducationLevelToCurriculumLevel = (level: string): string => {
+  switch (level) {
+    case 'preschool':
+      return 'PrePrimary';
+    case 'primary':
+      return 'LowerPrimary'; // Default to lower, will adjust based on grade
+    case 'junior-secondary':
+      return 'JuniorSecondary';
+    case 'senior-secondary':
+      return 'SeniorSecondary';
+    default:
+      return '';
+  }
+};
+
+// Helper function to get appropriate grade choices based on level
+const getGradesByLevel = (level: string): string[] => {
+  const currLevel = mapEducationLevelToCurriculumLevel(level);
+  if (!currLevel) return [];
+  
+  if (level === 'primary') {
+    // For primary, combine both lower and upper primary grades
+    return [
+      ...kenyaCurriculumStructure.LowerPrimary.grades,
+      ...kenyaCurriculumStructure.UpperPrimary.grades
+    ];
+  }
+  
+  return kenyaCurriculumStructure[currLevel as keyof typeof kenyaCurriculumStructure]?.grades || [];
+};
+
+// Helper function to get subjects based on grade
+const getSubjectsByGrade = (grade: string): string[] => {
+  // Find which level this grade belongs to
+  for (const [level, data] of Object.entries(kenyaCurriculumStructure)) {
+    if (data.grades && data.grades.includes(grade)) {
+      if (level === 'PrePrimary' || level === 'LowerPrimary' || level === 'UpperPrimary') {
+        // For these levels, return the subjects directly
+        return 'subjects' in data ? data.subjects : [];
+      } else if (level === 'JuniorSecondary') {
+        // For junior secondary, combine core and optional subjects
+        return [
+          ...(kenyaCurriculumStructure.JuniorSecondary.core_subjects || []),
+          ...(kenyaCurriculumStructure.JuniorSecondary.optional_subjects || []),
+        ];
+      } else if (level === 'SeniorSecondary') {
+        // For senior secondary, combine all pathway subjects with core subjects
+        return [
+          ...(kenyaCurriculumStructure.SeniorSecondary.core_subjects || []),
+          ...(kenyaCurriculumStructure.SeniorSecondary.pathways?.STEM || []),
+          ...(kenyaCurriculumStructure.SeniorSecondary.pathways?.SocialSciences || []),
+          ...(kenyaCurriculumStructure.SeniorSecondary.pathways?.ArtsAndSports || []),
+        ];
+      }
+    }
+  }
+  return [];
+};
+
+// Interface for create class form data
+interface ClassFormData {
+  // Required fields
+  class_name: string;
+  class_code: string;
+  level: string;
+  grade: string;
+  curriculum: string;
+  academic_session: string;
+  section: string;
+  stream: string;
+  class_teacher: string;
+  
+  // Optional fields
+  subjects_assigned: string[];
+  max_students?: number;
+  classroom_location?: string;
+  class_color?: string;
+  status?: string;
+  notes?: string;
+}
+
+function CreateClassDrawer({ onClassCreated }: { onClassCreated: () => void }) {
+  // State for managing available grades and subjects based on selections
+  const [availableGrades, setAvailableGrades] = useState<string[]>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  
+  const form = useForm<ClassFormData>({
+    defaultValues: {
+      class_name: '',
+      class_code: '',
+      level: '',
+      grade: '',
+      curriculum: '',
+      academic_session: '',
+      section: '',
+      stream: '',
+      class_teacher: '',
+      subjects_assigned: [],
+      max_students: 0,
+      classroom_location: '',
+      class_color: '',
+      status: 'active',
+      notes: '',
+    }
+  });
+
+  // Watch for changes in the level and grade fields
+  const selectedLevel = form.watch('level');
+  const selectedGrade = form.watch('grade');
+
+  // Update available grades when level changes
+  useEffect(() => {
+    if (!selectedLevel) {
+      setAvailableGrades([]);
+      return;
+    }
+    
+    const grades = getGradesByLevel(selectedLevel);
+    setAvailableGrades(grades);
+    
+    // Reset grade selection when level changes
+    form.setValue('grade', '');
+    setAvailableSubjects([]);
+    setSelectedSubjects([]);
+    form.setValue('subjects_assigned', []);
+  }, [selectedLevel, form]);
+
+  // Update available subjects when grade changes
+  useEffect(() => {
+    if (!selectedGrade) {
+      setAvailableSubjects([]);
+      return;
+    }
+    
+    const subjects = getSubjectsByGrade(selectedGrade);
+    setAvailableSubjects(subjects);
+    setSelectedSubjects([]);
+    form.setValue('subjects_assigned', []);
+  }, [selectedGrade, form]);
+
+  // Handle subject selection
+  const handleSubjectToggle = (subject: string) => {
+    // Check if subject is already selected
+    const isSelected = selectedSubjects.includes(subject);
+    
+    // Toggle selection
+    let updatedSelection: string[];
+    if (isSelected) {
+      // Remove subject if it's already selected
+      updatedSelection = selectedSubjects.filter(s => s !== subject);
+    } else {
+      // Add subject if it wasn't selected
+      updatedSelection = [...selectedSubjects, subject];
+    }
+    
+    // Update state and form value
+    setSelectedSubjects(updatedSelection);
+    form.setValue('subjects_assigned', updatedSelection);
+  };
+
+  const onSubmit = async (data: ClassFormData) => {
+    // Include selected subjects in the form submission
+    data.subjects_assigned = selectedSubjects;
+    
+    // Here you would typically make an API call to create the class
+    console.log('Form data submitted:', data);
+    
+    // For now, we'll just simulate success and close the drawer
+    setTimeout(() => {
+      onClassCreated();
+    }, 1000);
+  };
+  
+  return (
+    <Drawer direction="right">
+      <DrawerTrigger asChild>
+        <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700">
+          <Plus className="mr-2 h-4 w-4" /> Create Class
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent className="h-screen overflow-y-auto w-1/2 border-l border-blue-100 shadow-lg right-0 absolute">
+        <DrawerHeader className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <DrawerTitle className="text-xl text-blue-800 font-semibold">Create New Class</DrawerTitle>
+          <DrawerDescription className="text-indigo-600">
+            Fill in the details below to create a new class. Required fields are marked with an asterisk (*).
+          </DrawerDescription>
+        </DrawerHeader>
+        
+        <div className="p-6 pt-4 bg-white">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Required Fields */}
+                <FormField
+                  control={form.control}
+                  name="class_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Grade 5, Year 8, Form 2" {...field} />
+                      </FormControl>
+                      <FormDescription>Enter the full name of the class</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="class_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Code *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Y8A, F2G, P6B" {...field} />
+                      </FormControl>
+                      <FormDescription>Short code for the class</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Education Level *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select education level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="preschool">Preschool</SelectItem>
+                          <SelectItem value="primary">Primary</SelectItem>
+                          <SelectItem value="junior-secondary">Junior Secondary</SelectItem>
+                          <SelectItem value="senior-secondary">Senior Secondary</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grade *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={availableGrades.length === 0}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={availableGrades.length === 0 ? "Select education level first" : "Select grade"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableGrades.map((grade) => (
+                            <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="curriculum"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Curriculum *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., CBC, IGCSE, 8-4-4" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="academic_session"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Academic Session *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., 2024–2025" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="section"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Section *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., A, B, North Wing" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="stream"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stream *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Stream (often used interchangeably with section)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="class_teacher"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Teacher *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Teacher assigned to this class" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Subject Selection - spans full width */}
+                <div className="col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="subjects_assigned"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel className="text-base">Subjects</FormLabel>
+                        <FormDescription>
+                          Select the subjects for this class based on the curriculum.
+                        </FormDescription>
+                        
+                        <div className="mt-3">
+                          {availableSubjects.length === 0 && selectedGrade && (
+                            <div className="text-sm text-orange-600 p-3 bg-orange-50 border border-orange-100 rounded-md">
+                              No subjects available for the selected grade. Please select a different grade.
+                            </div>
+                          )}
+                          
+                          {!selectedGrade && (
+                            <div className="text-sm text-gray-500 p-3 bg-gray-50 border border-gray-100 rounded-md">
+                              Please select a grade to view available subjects.
+                            </div>
+                          )}
+                          
+                          {availableSubjects.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              {availableSubjects.map((subject) => (
+                                <div key={subject} className="flex items-top space-x-2">
+                                  <Checkbox
+                                    id={`subject-${subject.replace(/\s+/g, '-').toLowerCase()}`}
+                                    checked={selectedSubjects.includes(subject)}
+                                    onCheckedChange={() => handleSubjectToggle(subject)}
+                                  />
+                                  <div className="grid gap-1.5 leading-none">
+                                    <label
+                                      htmlFor={`subject-${subject.replace(/\s+/g, '-').toLowerCase()}`}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      {subject}
+                                    </label>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Optional Fields */}
+                <FormField
+                  control={form.control}
+                  name="max_students"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Students</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Maximum allowed students" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="classroom_location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Classroom Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Block A, Room 3" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="class_color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Color</FormLabel>
+                      <FormControl>
+                        <Input type="color" {...field} className="h-10 w-full" />
+                      </FormControl>
+                      <FormDescription>For UI color-coding</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                          <SelectItem value="graduated">Graduated</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Admin notes or additional instructions" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DrawerFooter className="border-t border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 py-4">
+                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white w-full shadow-md">
+                  <Save className="mr-2 h-4 w-4" /> Create Class
+                </Button>
+                <DrawerClose asChild>
+                  <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 mt-2">Cancel</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </form>
+          </Form>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
 function ClassesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedLevel, setSelectedLevel] = useState<EducationLevel | ''>('')
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all')
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
-  // Removing selectedGradeName state as it's no longer needed
+  const [refreshTrigger, setRefreshTrigger] = useState(0) // Used to refresh data after creating a class
 
   // Handler for level change to fix type issues
   const handleLevelChange = (value: string) => {
@@ -858,15 +1495,11 @@ function ClassesPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Classes</h1>
-          <p className="text-gray-500">Manage and monitor all your school classes</p>
+      <div className="flex justify-between items-center mb-6 flex-col md:flex-row gap-4">
+        <h1 className="text-2xl font-bold">Classes</h1>
+        <div className="flex items-center gap-2">
+          <CreateClassDrawer onClassCreated={() => setRefreshTrigger(prev => prev + 1)} />
         </div>
-        <Button>
-          <GraduationCap className="mr-2 h-4 w-4" />
-          Create Class
-        </Button>
       </div>
 
       {/* Tabs for education levels */}
