@@ -1,16 +1,17 @@
-
 [phases.setup]
 nixPkgs = ['bun']
 aptPkgs = ['build-essential']
+env = { NIXPACKS_PATH = "/app/node_modules/.bin:$PATH" }
 
 [phases.install]
-cmds = ['bun install --ignore-scripts --frozen-lockfile']
+# Removed --frozen-lockfile to allow lockfile regeneration
+cmds = ['bun install --ignore-scripts']
 
 [phases.build]
-cmds = ['bun run build']  # Fixed: was 'build run build'
+# Assuming your project has a build step, otherwise remove this
+cmds = ['bun run build']
 
 [start]
+# Run the actual entry file, or replace with "bun start" if defined in package.json
 cmd = 'bun run build/index.js'
-
-
 
