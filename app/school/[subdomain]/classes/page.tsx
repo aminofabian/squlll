@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { mockGrades, mockClasses, mockStudents, getStreamsForGrade, getGradeStreamAbbr, getTeacherById, getSubjectById } from '@/lib/data/mockclasses'
 import type { Grade, Class, Student } from '@/lib/data/mockclasses'
+import { CreateClassDrawer } from './components/CreateClassDrawer'
 
 import { 
   Calendar,
@@ -1341,6 +1342,7 @@ function ClassesPage() {
   
   // Check if the device is mobile
   const [isMobile, setIsMobile] = useState(false)
+  const [refreshClasses, setRefreshClasses] = useState(false)
   
   // Set up a media query to detect mobile devices
   useEffect(() => {
@@ -1355,6 +1357,13 @@ function ClassesPage() {
       window.removeEventListener('resize', checkIfMobile)
     }
   }, [])
+
+  // Handle successful class creation
+  const handleClassCreated = () => {
+    console.log('Class created successfully')
+    setRefreshClasses(prev => !prev)
+    // In a real application, you would fetch updated class data here
+  }
 
   // Filter classes based on selected criteria
   const filteredClasses = useMemo(() => {
@@ -1559,10 +1568,8 @@ function ClassesPage() {
           </div>
 
           <div className="flex gap-2">
-            {/* Add Class button */}
-            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" /> Add Class
-            </Button>
+            {/* Add Class Drawer */}
+            <CreateClassDrawer onClassCreated={handleClassCreated} />
             {/* Export Report button */}
             <Button variant="outline">
               <FileText className="mr-2 h-4 w-4" /> Export Report
