@@ -127,11 +127,18 @@ export default function SignupPage() {
     },
   })
 
-  // Watch schoolName to update URL
+  // Watch schoolName to update URL only when it's explicitly changed
   const schoolName = form.watch("schoolName")
+  const name = form.watch("name")
+  const email = form.watch("email")
 
-  // Update school URL when school name changes
+  // Update school URL only when schoolName is manually changed
   useEffect(() => {
+    // Skip the effect if we're still on the first step or if schoolName seems to contain personal info
+    if (currentStep !== 1 || !schoolName || schoolName === name || schoolName.includes(email)) {
+      return;
+    }
+    
     if (!isUrlEdited && schoolName) {
       const generatedUrl = schoolName
         .toLowerCase()
@@ -157,10 +164,16 @@ export default function SignupPage() {
         form.setValue("schoolUrl", generatedUrl.slice(0, 63))
       }
     }
-  }, [schoolName, isUrlEdited, form])
+  }, [schoolName, isUrlEdited, form, currentStep, name, email])
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
+      // When moving to the school step, ensure school fields are clear
+      if (currentStep === 0) {
+        // Manually clear these fields when advancing to ensure no auto-population occurs
+        form.setValue("schoolName", "")
+        form.setValue("schoolUrl", "")
+      }
       setCurrentStep(prev => prev + 1)
     }
   }
@@ -397,30 +410,45 @@ export default function SignupPage() {
               )}
             />
           </>
-        )
+        );
       case 1:
         return (
           <>
             <FormField
               control={form.control}
               name="schoolName"
-              render={({ field }) => (
-                <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                  <FormLabel className={inputStyles.label}>School Name</FormLabel>
-                  <FormControl>
-                    <div className={inputStyles.container}>
-                      <Input 
-                        placeholder="Enter your school name"
-                        className={inputStyles.base}
-                        disabled={isLoading}
-                        {...field}
-                      />
-                      <Building2 className={inputStyles.icon} />
-                    </div>
-                  </FormControl>
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                // Force empty value when first displaying this step
+                if (currentStep === 1 && field.value === name) {
+                  setTimeout(() => form.setValue("schoolName", ""), 0);
+                }
+                
+                return (
+                  <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
+                    <FormLabel className={inputStyles.label}>School Name</FormLabel>
+                    <FormControl>
+                      <div className={inputStyles.container}>
+                        <Input 
+                          placeholder="Enter your school name"
+                          className={inputStyles.base}
+                          disabled={isLoading}
+                          // Use controlled component approach to prevent auto-population
+                          {...field}
+                          ref={(input) => {
+                            // Clear the input when it's first rendered in step 1
+                            if (input && currentStep === 1 && 
+                                (field.value === name || field.value.includes(email))) {
+                              form.setValue("schoolName", "");
+                            }
+                          }}
+                        />
+                        <Building2 className={inputStyles.icon} />
+                      </div>
+                    </FormControl>
+                    <FormMessage className={inputStyles.error} />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
@@ -491,7 +519,9 @@ export default function SignupPage() {
               )}
             />
           </>
-        )
+        );
+      default:
+        return null;
     }
   }
 
