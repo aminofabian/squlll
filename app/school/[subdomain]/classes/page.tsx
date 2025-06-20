@@ -1,155 +1,82 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { mockGrades, mockClasses, getStreamsForGrade, getGradeStreamAbbr } from '@/lib/data/mockclasses'
+import type { Grade, Class } from '@/lib/data/mockclasses'
+
 import { 
-  ArrowDown, 
-  ArrowRight, 
-  ArrowUp, 
-  Banknote, 
-  BookOpen, 
-  BookText, 
-  Calendar, 
-  CalendarDays, 
-  ChartBar, 
-  Clock, 
+  Calendar,
+  User,
+  MessageSquare,
+  Info,
+  ArrowUp,
+  ArrowDown,
+  ArrowRight,
+  GraduationCap, 
+  Search, 
+  Users, 
   Crown, 
-  Info, 
-  MessageSquare, 
   Trophy, 
-  User, 
-  Users,
-  GraduationCap,
+  Clock, 
+  CalendarDays, 
+  Plus, 
+  Banknote, 
+  Clock3, 
+  BookOpen, 
+  Briefcase, 
+  GraduationCap as GradIcon, 
+  BarChart, 
+  Users2, 
+  CircleAlert,
+  ChevronRight,
+  Check,
+  FileText,
+  FilePlus,
   Layers,
-  Plus,
-  X,
-  Save,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
+  Medal,
+  Music,
+  Award,
+  ChartBar,
+  Filter,
+  X
+} from 'lucide-react'
+// Mock component for empty state
+function EmptyState({ selectedGrade = null, selectedStatus = 'all', searchTerm = '' }: {
+  selectedGrade?: string | null,
+  selectedStatus?: string,
+  searchTerm?: string
+}) {
+  // Create a more specific message based on active filters
+  let message = 'Try adjusting your search or filters to find what you\'re looking for.'
+  
+  if (selectedGrade) {
+    message = 'No classes found for the selected grade. Try selecting a different grade.'
+  } else if (selectedStatus !== 'all') {
+    message = 'No ' + selectedStatus + ' classes found. Try another status filter.'
+  } else if (searchTerm) {
+    message = 'No classes match your search term "' + searchTerm + '". Try a different search.'
+  }
 
-type EducationLevel = 
-  | 'preschool' 
-  | 'primary' 
-  | 'junior-secondary' 
-  | 'senior-secondary' 
-  | 'other'
-
-interface Grade {
-  id: string
-  name: string      // Abbreviated name (G1, F1, etc)
-  displayName: string  // Full name (Grade 1, Form 1, etc)
-  level: EducationLevel
-  ageGroup: string
-  students: number
-  classes: number
+  return (
+    <div className="bg-gray-50 border p-8 text-center animate-fadeIn">
+      <h3 className="text-lg font-medium text-gray-900">No classes found</h3>
+      <p className="mt-1 text-sm text-gray-500">
+        {message}
+      </p>
+    </div>
+  )
 }
 
-interface Class {
-  id: string
-  name: string
-  description: string
-  instructor: string
-  schedule: string
-  time: string
-  students: number
-  status: 'active' | 'scheduled' | 'completed'
-  level: EducationLevel
-  grade: string // Using displayName
-  gradeType: string // Using abbreviation (G1, F1, etc)
-  ageGroup: string
-  pathway?: string
-  
-  // Additional detailed information
-  classTeacher?: string
-  genderBreakdown?: { male: number, female: number }
-  academicPerformance?: {
-    averageGrade: string
-    gradeDistribution: { A: number, B: number, C: number, D: number, E: number }
-    topStudents: string[]
-  }
-  attendance?: {
-    rate: string
-    absentToday: number
-    absentThisWeek: number
-    trend: 'improving' | 'stable' | 'declining'
-  }
-  fees?: {
-    billed: number
-    paid: number
-    pending: number
-    unpaidCount: number
-    clearedCount?: number
-    studentsPendingFees?: string[]
-  }
-  discipline?: {
-    warningReports: number
-    suspensions: number
-  }
-  assignments?: {
-    issued: number
-    submitted: number
-    upcoming: string[]
-  }
-  
-  // Kenya-specific school information
-  currentLesson?: {
-    subject: string
-    teacher: string
-    startTime: string
-    endTime: string
-    topic: string
-    room: string
-  }
-  classLeadership?: {
-    prefect: string
-    assistantPrefect?: string
-    timekeeper?: string
-    classMonitors: string[]
-    subjectMonitors?: Record<string, string>
-  }
-  kcpePerformanceMean?: string
-  kcseMean?: string
-  streamName?: string
-  examRanking?: {
-    internalRank: number
-    zonalPosition?: number
-    countyPosition?: number
-  }
-  clubsRepresentation?: string[]
-  parentsMeeting?: {
-    nextDate: string
-    agenda: string
-    venue: string
-  }
-  classTeacherRemarks?: string
-}
+// Use the EducationLevel type from mockclasses.ts
+import type { EducationLevel } from '@/lib/data/mockclasses'
+
 
 // Helper function to get status color for badges
 function getStatusColor(status: string) {
@@ -185,7 +112,7 @@ function getLevelColor(level: EducationLevel) {
 function getLevelIcon(level: EducationLevel) {
   switch (level) {
     case 'preschool':
-      return <BookText className="h-4 w-4" />
+      return <BookOpen className="h-4 w-4" />
     case 'primary':
       return <BookOpen className="h-4 w-4" />
     case 'junior-secondary':
@@ -197,151 +124,30 @@ function getLevelIcon(level: EducationLevel) {
   }
 }
 
-// Mock grades data with abbreviations for display
-const mockGrades: Grade[] = [
-  // Preschool grades
-  {
-    id: 'babyclass',
-    name: 'BC',
-    displayName: 'Baby Class',
-    level: 'preschool',
-    ageGroup: '3 years',
-    students: 45,
-    classes: 2
-  },
-  {
-    id: 'pp1',
-    name: 'PP1',
-    displayName: 'PP1',
-    level: 'preschool',
-    ageGroup: '4 years',
-    students: 52,
-    classes: 2
-  },
-  {
-    id: 'pp2',
-    name: 'PP2',
-    displayName: 'PP2',
-    level: 'preschool',
-    ageGroup: '5 years',
-    students: 48,
-    classes: 2
-  },
-  
-  // Primary grades
-  {
-    id: 'grade1',
-    name: 'G1',
-    displayName: 'Grade 1',
-    level: 'primary',
-    ageGroup: '6 years',
-    students: 65,
-    classes: 3
-  },
-  {
-    id: 'grade2',
-    name: 'G2',
-    displayName: 'Grade 2',
-    level: 'primary',
-    ageGroup: '7 years',
-    students: 62,
-    classes: 3
-  },
-  {
-    id: 'grade3',
-    name: 'G3',
-    displayName: 'Grade 3',
-    level: 'primary',
-    ageGroup: '8 years',
-    students: 58,
-    classes: 2
-  },
-  {
-    id: 'grade4',
-    name: 'G4',
-    displayName: 'Grade 4',
-    level: 'primary',
-    ageGroup: '9 years',
-    students: 60,
-    classes: 2
-  },
-  {
-    id: 'grade5',
-    name: 'G5',
-    displayName: 'Grade 5',
-    level: 'primary',
-    ageGroup: '10 years',
-    students: 58,
-    classes: 2
-  },
-  {
-    id: 'grade6',
-    name: 'G6',
-    displayName: 'Grade 6',
-    level: 'primary',
-    ageGroup: '11 years',
-    students: 56,
-    classes: 2
-  },
-  
-  // Junior Secondary grades
-  {
-    id: 'grade7',
-    name: 'F1',
-    displayName: 'Form 1',
-    level: 'junior-secondary',
-    ageGroup: '12 years',
-    students: 86,
-    classes: 3
-  },
-  {
-    id: 'grade8',
-    name: 'F2',
-    displayName: 'Form 2',
-    level: 'junior-secondary',
-    ageGroup: '13 years',
-    students: 78,
-    classes: 3
-  },
-  {
-    id: 'grade9',
-    name: 'F3',
-    displayName: 'Form 3',
-    level: 'junior-secondary',
-    ageGroup: '14 years',
-    students: 72,
-    classes: 2
-  },
-  
-  // Senior Secondary grades
-  {
-    id: 'grade10',
-    name: 'F4',
-    displayName: 'Form 4',
-    level: 'senior-secondary',
-    ageGroup: '15 years',
-    students: 68,
-    classes: 3
-  },
-  {
-    id: 'grade11',
-    name: 'F5',
-    displayName: 'Form 5',
-    level: 'senior-secondary',
-    ageGroup: '16 years',
-    students: 54,
-    classes: 2
-  },
-  {
-    id: 'grade12',
-    name: 'F6',
-    displayName: 'Form 6',
-    level: 'senior-secondary',
-    ageGroup: '17 years',
-    students: 48,
-    classes: 2
+// Helper function for component-specific status color styling
+function getComponentStatusColor(status: string) {
+  switch(status) {
+    case 'active': return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-400';
+    case 'scheduled': return 'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-400';
+    case 'completed': return 'bg-green-100 text-green-800 hover:bg-green-200 border-green-400';
+    default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-400';
   }
-];
+}
+
+// Helper function for component-specific level color styling
+function getComponentLevelColor(level: string) {
+  switch(level) {
+    case 'preschool': return 'bg-purple-100 text-purple-800 border-purple-400';
+    case 'primary': return 'bg-blue-100 text-blue-800 border-blue-400';
+    case 'junior-secondary': return 'bg-yellow-100 text-yellow-800 border-yellow-400';
+    case 'senior-secondary': return 'bg-red-100 text-red-800 border-red-400';
+    default: return 'bg-gray-100 text-gray-800 border-gray-400';
+  }
+}
+
+/**
+ * Mock grades data with abbreviations for display
+ */
 
 function GradeButton({ 
   grade, 
@@ -358,1477 +164,26 @@ function GradeButton({
     <button
       key={grade.id}
       onClick={() => onClick(grade.id)}
-      className={`
-        px-2 py-1 text-xs rounded-md transition-all
-        ${isSelected 
-          ? 'bg-blue-100 text-blue-800 font-medium border border-blue-200' 
-          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'}
-      `}
-      aria-pressed={isSelected}
+      className={isSelected ? getLevelColor(grade.level) : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
     >
-      {grade.name}
+      {grade.displayName}
     </button>
   )
 }
 
-// Kenya curriculum structure
-const kenyaCurriculumStructure = {
-  "PrePrimary": {
-    "grades": ["PP1", "PP2"],
-    "subjects": [
-      "Language Activities",
-      "Mathematical Activities",
-      "Environmental Activities",
-      "Psychomotor and Creative Activities",
-      "Religious Education Activities"
-    ]
-  },
-  "LowerPrimary": {
-    "grades": ["Grade 1", "Grade 2", "Grade 3"],
-    "subjects": [
-      "Literacy",
-      "Kiswahili Language Activities",
-      "English Language Activities",
-      "Indigenous Language Activities",
-      "Mathematical Activities",
-      "Environmental Activities",
-      "Hygiene and Nutrition Activities",
-      "Religious Education Activities",
-      "Movement and Creative Activities"
-    ]
-  },
-  "UpperPrimary": {
-    "grades": ["Grade 4", "Grade 5", "Grade 6"],
-    "subjects": [
-      "English",
-      "Kiswahili",
-      "Mathematics",
-      "Science and Technology",
-      "Agriculture and Nutrition",
-      "Social Studies",
-      "Religious Education (CRE, IRE, HRE)",
-      "Creative Arts",
-      "Physical and Health Education",
-      "Optional Foreign Languages (e.g. French, Arabic, Mandarin)"
-    ]
-  },
-  "JuniorSecondary": {
-    "grades": ["Grade 7", "Grade 8", "Grade 9"],
-    "core_subjects": [
-      "English",
-      "Kiswahili or Kenya Sign Language",
-      "Mathematics",
-      "Integrated Science",
-      "Social Studies",
-      "Agriculture",
-      "Religious Education (CRE, IRE, HRE)",
-      "Health Education",
-      "Life Skills Education",
-      "Pre-Technical and Pre-Career Education",
-      "Sports and Physical Education"
-    ],
-    "optional_subjects": [
-      "Visual Arts",
-      "Performing Arts",
-      "Home Science",
-      "Computer Science",
-      "Foreign Languages (German, French, Mandarin, Arabic)",
-      "Indigenous Languages",
-      "Kenyan Sign Language"
-    ]
-  },
-  "SeniorSecondary": {
-    "grades": ["Grade 10", "Grade 11", "Grade 12"],
-    "core_subjects": [
-      "English",
-      "Kiswahili or Kenya Sign Language",
-      "Community Service Learning",
-      "Physical Education"
-    ],
-    "pathways": {
-      "STEM": [
-        "Mathematics / Advanced Math",
-        "Biology",
-        "Chemistry",
-        "Physics",
-        "General Science",
-        "Agriculture",
-        "Computer Studies",
-        "Home Science",
-        "Drawing and Design",
-        "Aviation Technology",
-        "Building and Construction",
-        "Electrical Technology",
-        "Metal Technology",
-        "Power Mechanics",
-        "Wood Technology",
-        "Media Technology",
-        "Marine and Fisheries Technology"
-      ],
-      "SocialSciences": [
-        "Literature in English",
-        "Advanced English",
-        "Indigenous Languages",
-        "Kiswahili Kipevu",
-        "History and Citizenship",
-        "Geography",
-        "Business Studies",
-        "Religious Studies (CRE, IRE, HRE)",
-        "Foreign Languages (French, German, Arabic, Mandarin)",
-        "Kenyan Sign Language"
-      ],
-      "ArtsAndSports": [
-        "Music and Dance",
-        "Fine Art",
-        "Theatre and Film",
-        "Sports and Recreation",
-        "Creative Writing"
-      ]
-    }
-  }
-};
-
-// Helper function to map education level to curriculum level
-const mapEducationLevelToCurriculumLevel = (level: string): string => {
-  switch (level) {
-    case 'preschool':
-      return 'PrePrimary';
-    case 'primary':
-      return 'LowerPrimary'; // Default to lower, will adjust based on grade
-    case 'junior-secondary':
-      return 'JuniorSecondary';
-    case 'senior-secondary':
-      return 'SeniorSecondary';
-    default:
-      return '';
-  }
-};
-
-// Helper function to get appropriate grade choices based on level
-const getGradesByLevel = (level: string): string[] => {
-  const currLevel = mapEducationLevelToCurriculumLevel(level);
-  if (!currLevel) return [];
-  
-  if (level === 'primary') {
-    // For primary, combine both lower and upper primary grades
-    return [
-      ...kenyaCurriculumStructure.LowerPrimary.grades,
-      ...kenyaCurriculumStructure.UpperPrimary.grades
-    ];
-  }
-  
-  return kenyaCurriculumStructure[currLevel as keyof typeof kenyaCurriculumStructure]?.grades || [];
-};
-
-// Helper function to get subjects based on grade
-const getSubjectsByGrade = (grade: string): string[] => {
-  // Find which level this grade belongs to
-  for (const [level, data] of Object.entries(kenyaCurriculumStructure)) {
-    if (data.grades && data.grades.includes(grade)) {
-      if (level === 'PrePrimary' || level === 'LowerPrimary' || level === 'UpperPrimary') {
-        // For these levels, return the subjects directly
-        return 'subjects' in data ? data.subjects : [];
-      } else if (level === 'JuniorSecondary') {
-        // For junior secondary, combine core and optional subjects
-        return [
-          ...(kenyaCurriculumStructure.JuniorSecondary.core_subjects || []),
-          ...(kenyaCurriculumStructure.JuniorSecondary.optional_subjects || []),
-        ];
-      } else if (level === 'SeniorSecondary') {
-        // For senior secondary, combine all pathway subjects with core subjects
-        return [
-          ...(kenyaCurriculumStructure.SeniorSecondary.core_subjects || []),
-          ...(kenyaCurriculumStructure.SeniorSecondary.pathways?.STEM || []),
-          ...(kenyaCurriculumStructure.SeniorSecondary.pathways?.SocialSciences || []),
-          ...(kenyaCurriculumStructure.SeniorSecondary.pathways?.ArtsAndSports || []),
-        ];
-      }
-    }
-  }
-  return [];
-};
-
-// Interface for create class form data
-interface ClassFormData {
-  // Required fields
-  class_name: string;
-  class_code: string;
-  level: string;
-  grade: string;
-  curriculum: string;
-  academic_session: string;
-  section: string;
-  stream: string;
-  class_teacher: string;
-  
-  // Optional fields
-  subjects_assigned: string[];
-  max_students?: number;
-  classroom_location?: string;
-  class_color?: string;
-  status?: string;
-  notes?: string;
-}
-
-function CreateClassDrawer({ onClassCreated }: { onClassCreated: () => void }) {
-  // State for managing available grades and subjects based on selections
-  const [availableGrades, setAvailableGrades] = useState<string[]>([]);
-  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  
-  const form = useForm<ClassFormData>({
-    defaultValues: {
-      class_name: '',
-      class_code: '',
-      level: '',
-      grade: '',
-      curriculum: '',
-      academic_session: '',
-      section: '',
-      stream: '',
-      class_teacher: '',
-      subjects_assigned: [],
-      max_students: 0,
-      classroom_location: '',
-      class_color: '',
-      status: 'active',
-      notes: '',
-    }
-  });
-
-  // Watch for changes in the level and grade fields
-  const selectedLevel = form.watch('level');
-  const selectedGrade = form.watch('grade');
-
-  // Update available grades when level changes
-  useEffect(() => {
-    if (!selectedLevel) {
-      setAvailableGrades([]);
-      return;
-    }
-    
-    const grades = getGradesByLevel(selectedLevel);
-    setAvailableGrades(grades);
-    
-    // Reset grade selection when level changes
-    form.setValue('grade', '');
-    setAvailableSubjects([]);
-    setSelectedSubjects([]);
-    form.setValue('subjects_assigned', []);
-  }, [selectedLevel, form]);
-
-  // Update available subjects when grade changes
-  useEffect(() => {
-    if (!selectedGrade) {
-      setAvailableSubjects([]);
-      return;
-    }
-    
-    const subjects = getSubjectsByGrade(selectedGrade);
-    setAvailableSubjects(subjects);
-    setSelectedSubjects([]);
-    form.setValue('subjects_assigned', []);
-  }, [selectedGrade, form]);
-
-  // Handle subject selection
-  const handleSubjectToggle = (subject: string) => {
-    // Check if subject is already selected
-    const isSelected = selectedSubjects.includes(subject);
-    
-    // Toggle selection
-    let updatedSelection: string[];
-    if (isSelected) {
-      // Remove subject if it's already selected
-      updatedSelection = selectedSubjects.filter(s => s !== subject);
-    } else {
-      // Add subject if it wasn't selected
-      updatedSelection = [...selectedSubjects, subject];
-    }
-    
-    // Update state and form value
-    setSelectedSubjects(updatedSelection);
-    form.setValue('subjects_assigned', updatedSelection);
-  };
-
-  const onSubmit = async (data: ClassFormData) => {
-    // Include selected subjects in the form submission
-    data.subjects_assigned = selectedSubjects;
-    
-    // Here you would typically make an API call to create the class
-    console.log('Form data submitted:', data);
-    
-    // For now, we'll just simulate success and close the drawer
-    setTimeout(() => {
-      onClassCreated();
-    }, 1000);
-  };
-  
-  return (
-    <Drawer direction="right">
-      <DrawerTrigger asChild>
-        <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700">
-          <Plus className="mr-2 h-4 w-4" /> Create Class
-        </Button>
-      </DrawerTrigger>
-      <DrawerContent className="h-screen overflow-y-auto w-1/2 border-l border-blue-100 shadow-lg right-0 absolute">
-        <DrawerHeader className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <DrawerTitle className="text-xl text-blue-800 font-semibold">Create New Class</DrawerTitle>
-          <DrawerDescription className="text-indigo-600">
-            Fill in the details below to create a new class. Required fields are marked with an asterisk (*).
-          </DrawerDescription>
-        </DrawerHeader>
-        
-        <div className="p-6 pt-4 bg-white">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Required Fields */}
-                <FormField
-                  control={form.control}
-                  name="class_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Class Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Grade 5, Year 8, Form 2" {...field} />
-                      </FormControl>
-                      <FormDescription>Enter the full name of the class</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="class_code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Class Code *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Y8A, F2G, P6B" {...field} />
-                      </FormControl>
-                      <FormDescription>Short code for the class</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="level"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Education Level *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select education level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="preschool">Preschool</SelectItem>
-                          <SelectItem value="primary">Primary</SelectItem>
-                          <SelectItem value="junior-secondary">Junior Secondary</SelectItem>
-                          <SelectItem value="senior-secondary">Senior Secondary</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="grade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Grade *</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={availableGrades.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={availableGrades.length === 0 ? "Select education level first" : "Select grade"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableGrades.map((grade) => (
-                            <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="curriculum"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Curriculum *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., CBC, IGCSE, 8-4-4" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="academic_session"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Academic Session *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 2024–2025" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="section"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Section *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., A, B, North Wing" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="stream"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stream *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Stream (often used interchangeably with section)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="class_teacher"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Class Teacher *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Teacher assigned to this class" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Subject Selection - spans full width */}
-                <div className="col-span-2">
-                  <FormField
-                    control={form.control}
-                    name="subjects_assigned"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel className="text-base">Subjects</FormLabel>
-                        <FormDescription>
-                          Select the subjects for this class based on the curriculum.
-                        </FormDescription>
-                        
-                        <div className="mt-3">
-                          {availableSubjects.length === 0 && selectedGrade && (
-                            <div className="text-sm text-orange-600 p-3 bg-orange-50 border border-orange-100 rounded-md">
-                              No subjects available for the selected grade. Please select a different grade.
-                            </div>
-                          )}
-                          
-                          {!selectedGrade && (
-                            <div className="text-sm text-gray-500 p-3 bg-gray-50 border border-gray-100 rounded-md">
-                              Please select a grade to view available subjects.
-                            </div>
-                          )}
-                          
-                          {availableSubjects.length > 0 && (
-                            <div className="grid grid-cols-2 gap-2 mt-1">
-                              {availableSubjects.map((subject) => (
-                                <div key={subject} className="flex items-top space-x-2">
-                                  <Checkbox
-                                    id={`subject-${subject.replace(/\s+/g, '-').toLowerCase()}`}
-                                    checked={selectedSubjects.includes(subject)}
-                                    onCheckedChange={() => handleSubjectToggle(subject)}
-                                  />
-                                  <div className="grid gap-1.5 leading-none">
-                                    <label
-                                      htmlFor={`subject-${subject.replace(/\s+/g, '-').toLowerCase()}`}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      {subject}
-                                    </label>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Optional Fields */}
-                <FormField
-                  control={form.control}
-                  name="max_students"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Maximum Students</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Maximum allowed students" 
-                          {...field} 
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="classroom_location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Classroom Location</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Block A, Room 3" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="class_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Class Color</FormLabel>
-                      <FormControl>
-                        <Input type="color" {...field} className="h-10 w-full" />
-                      </FormControl>
-                      <FormDescription>For UI color-coding</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="archived">Archived</SelectItem>
-                          <SelectItem value="graduated">Graduated</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Admin notes or additional instructions" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <DrawerFooter className="border-t border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 py-4">
-                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white w-full shadow-md">
-                  <Save className="mr-2 h-4 w-4" /> Create Class
-                </Button>
-                <DrawerClose asChild>
-                  <Button variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 mt-2">Cancel</Button>
-                </DrawerClose>
-              </DrawerFooter>
-            </form>
-          </Form>
-        </div>
-      </DrawerContent>
-    </Drawer>
-  );
-}
-
-function ClassesPage() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('all')
-  const [selectedLevel, setSelectedLevel] = useState<EducationLevel | ''>('')
-  const [selectedGradeId, setSelectedGradeId] = useState<string>('all')
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
-  const [refreshTrigger, setRefreshTrigger] = useState(0) // Used to refresh data after creating a class
-
-  // Handler for level change to fix type issues
-  const handleLevelChange = (value: string) => {
-    // Type assertion to ensure value is either an EducationLevel or empty string
-    setSelectedLevel(value as EducationLevel | '')
-  }
-  
-  // Mock class data based on Kenya education system
-  const classes: Class[] = [
-    // Preschool classes
-    {
-      id: '1',
-      name: 'Baby Class - Morning Session',
-      description: 'Early childhood development and play-based learning',
-      instructor: 'Ms. Sarah Omondi',
-      classTeacher: 'Ms. Sarah Omondi',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 11:00 AM',
-      students: 18,
-      status: 'active',
-      level: 'preschool',
-      grade: 'Baby Class',
-      gradeType: 'BC',
-      ageGroup: '3 years',
-      genderBreakdown: { male: 10, female: 8 },
-      academicPerformance: {
-        averageGrade: 'B+',
-        gradeDistribution: { A: 5, B: 8, C: 3, D: 2, E: 0 },
-        topStudents: ['Olivia Wanjiku', 'Daniel Kariuki', 'Grace Muthoni']
-      },
-      attendance: {
-        rate: '92%',
-        absentToday: 2,
-        absentThisWeek: 5,
-        trend: 'stable'
-      },
-      fees: {
-        billed: 45000,
-        paid: 38000,
-        pending: 7000,
-        unpaidCount: 3,
-        clearedCount: 15,
-        studentsPendingFees: ['Noah Gitonga', 'Mercy Adhiambo', 'James Odhiambo']
-      },
-      assignments: {
-        issued: 12,
-        submitted: 10,
-        upcoming: ['Color recognition', 'Basic shapes']
-      },
-      discipline: {
-        warningReports: 2,
-        suspensions: 0
-      },
-      currentLesson: {
-        subject: 'Creative Arts',
-        teacher: 'Ms. Sarah Omondi',
-        startTime: '9:15 AM',
-        endTime: '10:00 AM',
-        topic: 'Animal Drawings',
-        room: 'Rainbow Room'
-      },
-      classLeadership: {
-        prefect: 'Daniel Kariuki',
-        classMonitors: ['Olivia Wanjiku', 'James Odhiambo'],
-        timekeeper: 'Grace Muthoni'
-      },
-      streamName: 'Morning Session',
-      classTeacherRemarks: 'The class is making good progress in language development. Need more focus on social skills.'
-    },
-    {
-      id: '2',
-      name: 'PP1 - Literacy Skills',
-      description: 'Basic literacy and numeracy for pre-primary learners',
-      instructor: 'Mr. David Kamau',
-      classTeacher: 'Mr. David Kamau',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 12:00 PM',
-      students: 22,
-      status: 'active',
-      level: 'preschool',
-      grade: 'PP1',
-      gradeType: 'PP1',
-      ageGroup: '4 years',
-      genderBreakdown: { male: 12, female: 10 },
-      academicPerformance: {
-        averageGrade: 'B',
-        gradeDistribution: { A: 6, B: 9, C: 5, D: 2, E: 0 },
-        topStudents: ['James Mwangi', 'Lucy Wambui', 'Thomas Gitau']
-      },
-      attendance: {
-        rate: '94%',
-        absentToday: 1,
-        absentThisWeek: 4,
-        trend: 'improving'
-      },
-      fees: {
-        billed: 50000,
-        paid: 45000,
-        pending: 5000,
-        unpaidCount: 2
-      },
-      assignments: {
-        issued: 15,
-        submitted: 14,
-        upcoming: ['Letter recognition', 'Basic counting']
-      },
-      discipline: {
-        warningReports: 1,
-        suspensions: 0
-      }
-    },
-    {
-      id: '3',
-      name: 'PP2 - School Readiness',
-      description: 'Preparation for primary school curriculum',
-      instructor: 'Ms. Mary Akinyi',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 12:30 PM',
-      students: 25,
-      status: 'active',
-      level: 'preschool',
-      grade: 'PP2',
-      gradeType: 'PP2',
-      ageGroup: '5 years'
-    },
-    
-    // Primary school classes
-    {
-      id: '4',
-      name: 'Grade 1 - English & Kiswahili',
-      description: 'Foundational literacy in English and Kiswahili',
-      instructor: 'Ms. Jane Wangari',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 3:30 PM',
-      students: 30,
-      status: 'active',
-      level: 'primary',
-      grade: 'Grade 1',
-      gradeType: 'G1',
-      ageGroup: '6 years'
-    },
-    {
-      id: '5',
-      name: 'Grade 3 - Mathematics',
-      description: 'Number operations, patterns and measurements',
-      instructor: 'Mr. Peter Odhiambo',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 3:30 PM',
-      students: 28,
-      status: 'active',
-      level: 'primary',
-      grade: 'Grade 3',
-      gradeType: 'G3',
-      ageGroup: '8 years'
-    },
-    {
-      id: '6',
-      name: 'Grade 5 - Science & Technology',
-      description: 'Integrated science and technology under CBC',
-      instructor: 'Dr. Susan Karanja',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 4:00 PM',
-      students: 32,
-      status: 'scheduled',
-      level: 'primary',
-      grade: 'Grade 5',
-      gradeType: 'G5',
-      ageGroup: '10 years'
-    },
-    {
-      id: '7',
-      name: 'Grade 6 - Social Studies',
-      description: 'Kenya and its relationship with the world',
-      instructor: 'Mr. James Maina',
-      schedule: 'Mon-Fri',
-      time: '8:00 AM - 4:00 PM',
-      students: 35,
-      status: 'active',
-      level: 'primary',
-      grade: 'Grade 6',
-      gradeType: 'G6',
-      ageGroup: '11 years'
-    },
-    {
-      id: '7',
-      name: 'Grade 3 - Science Class',
-      description: 'Introduction to basic scientific concepts for young learners',
-      instructor: 'Ms. Jane Njeri',
-      classTeacher: 'Ms. Jane Njeri',
-      schedule: 'Mon, Wed, Fri',
-      time: '10:30 AM - 12:30 PM',
-      students: 32,
-      status: 'active',
-      level: 'primary',
-      grade: 'Grade 3',
-      gradeType: 'G3',
-      ageGroup: '8 years',
-      genderBreakdown: { male: 17, female: 15 },
-      academicPerformance: {
-        averageGrade: 'B+',
-        gradeDistribution: { A: 10, B: 15, C: 5, D: 2, E: 0 },
-        topStudents: ['Michael Kamau', 'Rebecca Achieng', 'Eric Maina']
-      },
-      attendance: {
-        rate: '90%',
-        absentToday: 3,
-        absentThisWeek: 8,
-        trend: 'declining'
-      },
-      fees: {
-        billed: 65000,
-        paid: 52000,
-        pending: 13000,
-        unpaidCount: 5,
-        clearedCount: 27,
-        studentsPendingFees: ['John Mutua', 'Lucy Wambui', 'Peter Ouma', 'Irene Njoki', 'Brian Ochieng']
-      },
-      assignments: {
-        issued: 18,
-        submitted: 15,
-        upcoming: ['Plant life cycle', 'States of matter', 'Simple machines']
-      },
-      discipline: {
-        warningReports: 4,
-        suspensions: 1
-      },
-      currentLesson: {
-        subject: 'Environmental Activities',
-        teacher: 'Mr. Paul Wekesa',
-        startTime: '10:30 AM',
-        endTime: '11:15 AM',
-        topic: 'Water Conservation',
-        room: 'Science Lab 1'
-      },
-      classLeadership: {
-        prefect: 'Rebecca Achieng',
-        assistantPrefect: 'Eric Maina',
-        classMonitors: ['Michael Kamau', 'Esther Njeri', 'Kevin Omondi'],
-        subjectMonitors: {
-          'Science': 'Michael Kamau',
-          'Mathematics': 'John Kamau',
-          'English': 'Esther Njeri'
-        }
-      },
-      kcpePerformanceMean: '345/500',
-      streamName: 'North',
-      examRanking: {
-        internalRank: 2,
-        zonalPosition: 5
-      },
-      clubsRepresentation: ['Environmental Club', 'Science Club', 'Chess Club'],
-      parentsMeeting: {
-        nextDate: '2025-07-15',
-        agenda: 'Mid-term progress review and curriculum changes',
-        venue: 'School Hall'
-      },
-      classTeacherRemarks: 'This class shows good potential in sciences. Need to improve on language subjects.'
-    },
-    {
-      id: '8',
-      name: 'Grade 7 - Integrated Science',
-      description: 'Introduction to core scientific concepts',
-      instructor: 'Ms. Patricia Njeri',
-      schedule: 'Mon-Fri',
-      time: '7:30 AM - 4:30 PM',
-      students: 40,
-      status: 'active',
-      level: 'junior-secondary',
-      grade: 'Grade 7',
-      gradeType: 'F1',
-      ageGroup: '12 years'
-    },
-    {
-      id: '9',
-      name: 'Grade 8 - Mathematics',
-      description: 'Advanced mathematical concepts and problem solving',
-      instructor: 'Mr. Timothy Kimathi',
-      schedule: 'Mon-Fri',
-      time: '7:30 AM - 4:30 PM',
-      students: 38,
-      status: 'scheduled',
-      level: 'junior-secondary',
-      grade: 'Grade 8',
-      gradeType: 'F2',
-      ageGroup: '13 years'
-    },
-    {
-      id: '10',
-      name: 'Grade 7 - Mathematics',
-      description: 'Junior secondary mathematics curriculum introduction',
-      instructor: 'Mr. Edwin Mutua',
-      classTeacher: 'Mrs. Faith Wangari',
-      schedule: 'Mon-Thu',
-      time: '8:00 AM - 10:00 AM',
-      students: 38,
-      status: 'active',
-      level: 'junior-secondary',
-      grade: 'Grade 7',
-      gradeType: 'F1',
-      ageGroup: '12 years',
-      genderBreakdown: { male: 20, female: 18 },
-      academicPerformance: {
-        averageGrade: 'B-',
-        gradeDistribution: { A: 7, B: 12, C: 14, D: 4, E: 1 },
-        topStudents: ['Robert Ochieng', 'Diana Mwende', 'Peter Njoroge']
-      },
-      attendance: {
-        rate: '89%',
-        absentToday: 4,
-        absentThisWeek: 12,
-        trend: 'stable'
-      },
-      fees: {
-        billed: 80000,
-        paid: 62000,
-        pending: 18000,
-        unpaidCount: 7
-      },
-      discipline: {
-        warningReports: 6,
-        suspensions: 2
-      },
-      assignments: {
-        issued: 22,
-        submitted: 19,
-        upcoming: ['Algebraic equations', 'Geometric transformations']
-      }
-    },
-    
-    // Senior Secondary classes
-    {
-      id: '13',
-      name: 'Grade 11 - Physics',
-      description: 'Advanced physics curriculum for senior secondary students',
-      instructor: 'Dr. Samuel Maina',
-      classTeacher: 'Mrs. Elizabeth Otieno',
-      schedule: 'Mon, Wed, Fri',
-      time: '10:30 AM - 12:30 PM',
-      students: 25,
-      status: 'active',
-      level: 'senior-secondary',
-      grade: 'Grade 11',
-      gradeType: 'F5',
-      ageGroup: '16 years',
-      pathway: 'Science & Technology',
-      genderBreakdown: { male: 15, female: 10 },
-      academicPerformance: {
-        averageGrade: 'A-',
-        gradeDistribution: { A: 12, B: 8, C: 3, D: 2, E: 0 },
-        topStudents: ['Kevin Macharia', 'Faith Nyambura', 'Brian Otieno']
-      },
-      attendance: {
-        rate: '95%',
-        absentToday: 1,
-        absentThisWeek: 2,
-        trend: 'stable'
-      },
-      fees: {
-        billed: 120000,
-        paid: 105000,
-        pending: 15000,
-        unpaidCount: 3,
-        clearedCount: 22,
-        studentsPendingFees: ['Gilbert Mwangi', 'Mercy Wanjiru', 'Simon Kipkoech']
-      },
-      discipline: {
-        warningReports: 1,
-        suspensions: 0
-      },
-      assignments: {
-        issued: 25,
-        submitted: 24,
-        upcoming: ['Electromagnetism', 'Quantum Physics Introduction']
-      },
-      currentLesson: {
-        subject: 'Advanced Physics',
-        teacher: 'Dr. Samuel Maina',
-        startTime: '11:00 AM',
-        endTime: '12:30 PM',
-        topic: 'Wave-Particle Duality',
-        room: 'Physics Lab'
-      },
-      classLeadership: {
-        prefect: 'Brian Otieno',
-        assistantPrefect: 'Faith Nyambura',
-        classMonitors: ['Kevin Macharia', 'Jane Muthoni'],
-        subjectMonitors: {
-          'Physics': 'Kevin Macharia',
-          'Chemistry': 'Faith Nyambura',
-          'Mathematics': 'Ahmed Hussein',
-          'Biology': 'Mary Akinyi'
-        }
-      },
-      kcseMean: '8.7/12',
-      streamName: 'Science',
-      examRanking: {
-        internalRank: 1,
-        zonalPosition: 2,
-        countyPosition: 15
-      },
-      clubsRepresentation: ['Science Congress', 'Robotics Club', 'Chess Team', 'Debate Club'],
-      parentsMeeting: {
-        nextDate: '2025-06-28',
-        agenda: 'KCSE preparation and university applications',
-        venue: 'Science Block Auditorium'
-      },
-      classTeacherRemarks: 'Exceptional group with strong STEM performance. Has produced the best results in regional science competitions for three consecutive years.'
-    },
-    {
-      id: '11',
-      name: 'Grade 11 - Literature (Arts)',
-      description: 'Advanced literary analysis and creative writing',
-      instructor: 'Ms. Faith Wanjiku',
-      schedule: 'Mon-Fri',
-      time: '7:00 AM - 5:00 PM',
-      students: 22,
-      status: 'active',
-      level: 'senior-secondary',
-      grade: 'Grade 11',
-      gradeType: 'F5',
-      ageGroup: '16 years',
-      pathway: 'Arts & Sports'
-    },
-    {
-      id: '12',
-      name: 'Grade 12 - Economics (Social Sciences)',
-      description: 'Advanced economic theories and case studies',
-      instructor: 'Prof. Thomas Mboya',
-      schedule: 'Mon-Fri',
-      time: '7:00 AM - 5:00 PM',
-      students: 24,
-      status: 'completed',
-      level: 'senior-secondary',
-      grade: 'Grade 12',
-      gradeType: 'F6',
-      ageGroup: '17 years',
-      pathway: 'Social Sciences'
-    }
-  ]
-  
-  // Get all unique education levels for filtering
-  const educationLevels = Array.from(new Set(classes.map(cls => cls.level)))
-  
-  // Filter classes based on search term, status, level, and grade
-  const filteredClasses = useMemo(() => {
-    return classes.filter((cls: Class) => {
-      // Filter by search term
-      const searchMatch = searchTerm ? cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                       cls.instructor.toLowerCase().includes(searchTerm.toLowerCase()) : true
-      
-      // Filter by status
-      const statusMatch = selectedStatus === 'all' ? true : cls.status === selectedStatus
-      
-      // Filter by education level
-      const levelMatch = selectedLevel ? cls.level === selectedLevel : true
-      
-      // Filter by grade using the gradeType (abbreviated name)
-      const selectedGradeObj = mockGrades.find(g => g.id === selectedGradeId)
-      const gradeMatch = selectedGradeId !== 'all' ? 
-                        cls.gradeType === selectedGradeObj?.name : 
-                        true
-      
-      return searchMatch && statusMatch && levelMatch && gradeMatch
-    })
-  }, [searchTerm, selectedStatus, selectedLevel, selectedGradeId])
-  
-  // Handle search from filter component
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    
-    // If user starts typing a search, clear the grade selection for better UX
-    if (term && selectedGrade) {
-      setSelectedGradeId('all')
-      setSelectedGrade(null)
-    }
-  }
-  
-  // Handle grade selection from filter component
-  const handleGradeSelect = (gradeId: string) => {
-    if (gradeId === 'all') {
-      setSelectedGradeId('all')
-      setSelectedGrade(null)
-    } else {
-      const selectedGradeObj = mockGrades.find(g => g.id === gradeId)
-      setSelectedGradeId(gradeId)
-      setSelectedGrade(selectedGradeObj?.displayName || null)
-    }
-  }
-  
-  // Clear all filters
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedStatus('all');
-    setSelectedGradeId('all');
-    setSelectedGrade(null);
-  }
-  
-  // Count classes by level
-  const preschoolCount = classes.filter((c: Class) => c.level === 'preschool').length
-  const primaryCount = classes.filter((c: Class) => c.level === 'primary').length
-  const juniorSecondaryCount = classes.filter((c: Class) => c.level === 'junior-secondary').length
-  const seniorSecondaryCount = classes.filter((c: Class) => c.level === 'senior-secondary').length
-
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center mb-6 flex-col md:flex-row gap-4">
-        <h1 className="text-2xl font-bold">Classes</h1>
-        <div className="flex items-center gap-2">
-          <CreateClassDrawer onClassCreated={() => setRefreshTrigger(prev => prev + 1)} />
-        </div>
-      </div>
-
-      {/* Tabs for education levels */}
-      <Tabs defaultValue="all" value={selectedLevel || 'all'} onValueChange={handleLevelChange}>
-        <TabsList className="grid grid-cols-5 w-full mb-4">
-          <TabsTrigger value="all">All Levels</TabsTrigger>
-          <TabsTrigger value="preschool">Preschool</TabsTrigger>
-          <TabsTrigger value="primary">Primary</TabsTrigger>
-          <TabsTrigger value="junior-secondary">Junior Sec</TabsTrigger>
-          <TabsTrigger value="senior-secondary">Senior Sec</TabsTrigger>
-        </TabsList>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Filters</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SchoolSearchFilter 
-                  onSearch={handleSearch} 
-                  type="classes" 
-                  onGradeSelect={(grade) => {
-                    if (grade && grade.id) {
-                      handleGradeSelect(grade.id);
-                    } else {
-                      handleGradeSelect('all');
-                    }
-                  }} 
-                />
-                
-                <div className="mt-4">
-                  <label className="block text-sm font-medium mb-2">Status</label>
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* Grade Filter Buttons */}
-                <div className="mt-5">
-                  <label className="block text-sm font-medium mb-2">Filter by Grade</label>
-                  
-                  {/* Preschool Grades */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BookText className="h-4 w-4 text-purple-500" />
-                      <h3 className="text-xs font-medium text-purple-700">Preschool</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {mockGrades
-                        .filter(grade => grade.level === 'preschool')
-                        .map(grade => (
-                          <GradeButton 
-                            key={grade.id} 
-                            grade={grade} 
-                            selectedGradeId={selectedGradeId} 
-                            onClick={handleGradeSelect} 
-                          />
-                        ))
-                      }
-                    </div>
-                  </div>
-                  
-                  {/* Primary Grades */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BookOpen className="h-4 w-4 text-blue-500" />
-                      <h3 className="text-xs font-medium text-blue-700">Primary</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {mockGrades
-                        .filter(grade => grade.level === 'primary')
-                        .map(grade => (
-                          <GradeButton 
-                            key={grade.id} 
-                            grade={grade} 
-                            selectedGradeId={selectedGradeId} 
-                            onClick={handleGradeSelect} 
-                          />
-                        ))
-                      }
-                    </div>
-                  </div>
-                  
-                  {/* Junior Secondary Grades */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Layers className="h-4 w-4 text-yellow-500" />
-                      <h3 className="text-xs font-medium text-yellow-700">Junior Secondary</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {mockGrades
-                        .filter(grade => grade.level === 'junior-secondary')
-                        .map(grade => (
-                          <GradeButton 
-                            key={grade.id} 
-                            grade={grade} 
-                            selectedGradeId={selectedGradeId} 
-                            onClick={handleGradeSelect} 
-                          />
-                        ))
-                      }
-                    </div>
-                  </div>
-                  
-                  {/* Senior Secondary Grades */}
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <GraduationCap className="h-4 w-4 text-red-500" />
-                      <h3 className="text-xs font-medium text-red-700">Senior Secondary</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {mockGrades
-                        .filter(grade => grade.level === 'senior-secondary')
-                        .map(grade => (
-                          <GradeButton 
-                            key={grade.id} 
-                            grade={grade} 
-                            selectedGradeId={selectedGradeId} 
-                            onClick={handleGradeSelect} 
-                          />
-                        ))
-                      }
-                    </div>
-                  </div>
-                  
-                  {/* Clear filters button */}
-                  {selectedGradeId !== 'all' && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2 text-xs flex items-center gap-1" 
-                      onClick={() => handleGradeSelect('all')}
-                    >
-                      <X className="h-3 w-3" /> Clear Grade Filter
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Total Classes</span>
-                    <span className="font-medium">{classes.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Preschool</span>
-                    <span className="font-medium">{preschoolCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Primary</span>
-                    <span className="font-medium">{primaryCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Junior Secondary</span>
-                    <span className="font-medium">{juniorSecondaryCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Senior Secondary</span>
-                    <span className="font-medium">{seniorSecondaryCount}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle>Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Total Classes</span>
-                    <span className="font-medium">{classes.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Preschool</span>
-                    <span className="font-medium">{preschoolCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Primary</span>
-                    <span className="font-medium">{primaryCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Junior Secondary</span>
-                    <span className="font-medium">{juniorSecondaryCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Senior Secondary</span>
-                    <span className="font-medium">{seniorSecondaryCount}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="md:col-span-3">
-            {/* Filter Summary Bar */}
-            <div className="flex items-center justify-between mb-4 bg-muted/30 p-3  transition-all duration-200">
-              <div className="flex items-center space-x-2">
-                {selectedGradeId !== 'all' ? (
-                  <>
-                    <span className="font-medium">Filtered by grade:</span>
-                    <Badge className="animate-fadeIn" variant="outline">
-                      {mockGrades.find(g => g.id === selectedGradeId)?.displayName}
-                    </Badge>
-                  </>
-                ) : (
-                  <span className="font-medium">All grades</span>
-                )}
-                
-                {selectedStatus !== 'all' && (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <Badge variant="secondary">
-                      {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
-                    </Badge>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">
-                  Showing {filteredClasses.length} of {classes.length} classes
-                </span>
-                
-                {(selectedGrade || selectedStatus !== 'all' || searchTerm) && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-                    </svg>
-                    Clear filters
-                  </Button>
-                )}
-              </div>
-            </div>
-            <TabsContent value="all" className="mt-0">
-              <div className="grid grid-cols-1 gap-4 transition-all duration-300 ease-in-out">
-                {filteredClasses.length > 0 ? filteredClasses.map((cls) => (
-                  <ClassCard key={cls.id} cls={cls} />
-                )) : (
-                  <EmptyState 
-                    selectedGrade={selectedGrade}
-                    selectedStatus={selectedStatus}
-                    searchTerm={searchTerm}
-                  />
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="preschool" className="mt-0">
-              <div className="grid grid-cols-1 gap-4 transition-all duration-300 ease-in-out">
-                {filteredClasses.length > 0 ? filteredClasses.map((cls) => (
-                  <ClassCard key={cls.id} cls={cls} />
-                )) : (
-                  <EmptyState 
-                    selectedGrade={selectedGrade}
-                    selectedStatus={selectedStatus}
-                    searchTerm={searchTerm}
-                  />
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="primary" className="mt-0">
-              <div className="grid grid-cols-1 gap-4 transition-all duration-300 ease-in-out">
-                {filteredClasses.length > 0 ? filteredClasses.map((cls) => (
-                  <ClassCard key={cls.id} cls={cls} />
-                )) : (
-                  <EmptyState 
-                    selectedGrade={selectedGrade}
-                    selectedStatus={selectedStatus}
-                    searchTerm={searchTerm}
-                  />
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="junior-secondary" className="mt-0">
-              <div className="grid grid-cols-1 gap-4 transition-all duration-300 ease-in-out">
-                {filteredClasses.length > 0 ? filteredClasses.map((cls) => (
-                  <ClassCard key={cls.id} cls={cls} />
-                )) : (
-                  <EmptyState 
-                    selectedGrade={selectedGrade}
-                    selectedStatus={selectedStatus}
-                    searchTerm={searchTerm}
-                  />
-                )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="senior-secondary" className="mt-0">
-              <div className="grid grid-cols-1 gap-4 transition-all duration-300 ease-in-out">
-                {filteredClasses.length > 0 ? filteredClasses.map((cls) => (
-                  <ClassCard key={cls.id} cls={cls} />
-                )) : (
-                  <EmptyState 
-                    selectedGrade={selectedGrade}
-                    selectedStatus={selectedStatus}
-                    searchTerm={searchTerm}
-                  />
-                )}
-              </div>
-            </TabsContent>
-          </div>
-        </div>
-      </Tabs>
-    </div>
-  )
-}
-
-// Card component for displaying individual class details
+/**
+ * Card component for displaying individual class details
+ */
 function ClassCard({ cls }: { cls: Class }) {
   return (
-    <Card key={cls.id} className="transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1 border-l-4 overflow-hidden" 
-          style={{
-            borderLeftColor: cls.currentLesson ? '#10b981' : 
-                          cls.status === 'active' ? '#3b82f6' : 
-                          cls.status === 'scheduled' ? '#8b5cf6' : '#6b7280'
-          }}>
+    <Card 
+      className="transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1 border-l-4 overflow-hidden" 
+      style={{
+        borderLeftColor: cls.currentLesson ? '#10b981' : 
+                      cls.status === 'active' ? '#3b82f6' : 
+                      cls.status === 'scheduled' ? '#8b5cf6' : '#6b7280'
+      }}
+    >
       <CardHeader className="pb-0 pt-4">
         <div className="flex justify-between items-start">
           <div>
@@ -1843,20 +198,16 @@ function ClassCard({ cls }: { cls: Class }) {
             <CardDescription className="mt-1">{cls.description}</CardDescription>
             
             <div className="flex flex-wrap gap-2 mt-3">
-              <Badge className={`${getLevelColor(cls.level)} px-2 py-1  font-medium`}>
-                {getLevelIcon(cls.level)}
-                <span className="ml-1">
-                  {cls.level.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </span>
+              <Badge className={getComponentLevelColor(cls.level) + " px-2 py-1 font-medium"}>
+                {cls.level.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </Badge>
-              <Badge variant="outline" className="px-2 py-1  font-medium">{cls.grade}</Badge>
-              {cls.pathway && <Badge variant="secondary" className="px-2 py-1  font-medium">{cls.pathway}</Badge>}
+              <Badge variant="outline" className="px-2 py-1 font-medium">{cls.grade}</Badge>
             </div>
           </div>
           
           <div className="flex flex-col items-end gap-2">
-            <Badge className={`${getStatusColor(cls.status)} px-3 py-1  font-medium`}>
-              <div className="w-2 h-2  mr-1.5 bg-current inline-block"></div>
+            <Badge className={getComponentStatusColor(cls.status) + " px-3 py-1 font-medium"}>
+              <div className="w-2 h-2 mr-1.5 bg-current inline-block"></div>
               {cls.status.charAt(0).toUpperCase() + cls.status.slice(1)}
             </Badge>
             
@@ -1871,30 +222,64 @@ function ClassCard({ cls }: { cls: Class }) {
         </div>
       </CardHeader>
       <CardContent className="pt-5">
+        {/* Quick Stats Bar */}
+        <div className="mb-5 grid grid-cols-4 gap-2 text-xs">
+          <div className="bg-blue-50 p-2 rounded flex flex-col items-center justify-center">
+            <span className="text-blue-600 font-bold text-lg">{cls.students}</span>
+            <span className="text-blue-700">Students</span>
+          </div>
+          {cls.attendance && (
+            <div className="bg-amber-50 p-2 rounded flex flex-col items-center justify-center">
+              <span className="text-amber-600 font-bold text-lg">{cls.attendance.rate}</span>
+              <span className="text-amber-700">Attendance</span>
+            </div>
+          )}
+          {cls.academicPerformance && (
+            <div className="bg-emerald-50 p-2 rounded flex flex-col items-center justify-center">
+              <span className="text-emerald-600 font-bold text-lg">{cls.academicPerformance.averageGrade}</span>
+              <span className="text-emerald-700">Avg Grade</span>
+            </div>
+          )}
+          {cls.fees && (
+            <div className="bg-purple-50 p-2 rounded flex flex-col items-center justify-center">
+              <span className="text-purple-600 font-bold text-lg">{cls.fees.unpaidCount}</span>
+              <span className="text-purple-700">Fee Pending</span>
+            </div>
+          )}
+        </div>
+        
         {/* Current lesson section - displayed prominently if there's an ongoing lesson */}
         {cls.currentLesson && (
-          <div className="mb-5 bg-gradient-to-r from-green-50 to-green-100 p-4  border-l-4 border-green-500 shadow-sm">
+          <div className="mb-5 bg-gradient-to-r from-green-50 to-green-100 p-4 border-l-4 border-green-500 shadow-sm">
             <h4 className="text-sm font-semibold text-green-800 flex items-center mb-2">
               <BookOpen className="h-5 w-5 mr-2" />
               Ongoing: {cls.currentLesson.subject} Class
             </h4>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center">
-                <User className="h-4 w-4 mr-2 text-green-600" />
-                <span className="text-green-800 font-medium">{cls.currentLesson.teacher}</span>
+                <User className="h-3.5 w-3.5 mr-1.5 text-green-700" />
+                <span className="text-xs text-gray-700">{cls.currentLesson.teacher}</span>
               </div>
               <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-2 text-green-600" />
-                <span>{cls.currentLesson.startTime} - {cls.currentLesson.endTime}</span>
+                <Clock className="h-3.5 w-3.5 mr-1.5 text-green-700" />
+                <span className="text-xs text-gray-700">{cls.currentLesson.startTime} - {cls.currentLesson.endTime}</span>
               </div>
-              <div className="flex items-center col-span-2 mt-1">
-                <BookText className="h-4 w-4 mr-2 text-green-600" />
-                <span className="font-medium">Topic:</span>
-                <span className="ml-1.5 italic">"{cls.currentLesson.topic}"</span>
-              </div>
-              <div className="flex items-center mt-1">
-                <div className="h-4 w-4 mr-2 text-green-600 flex items-center justify-center">🏫</div>
-                <span>Room {cls.currentLesson.room}</span>
+              {cls.currentLesson.topic && (
+                <div className="flex items-center col-span-2">
+                  <FileText className="h-3.5 w-3.5 mr-1.5 text-green-700" />
+                  <span className="text-xs text-gray-700">Topic: {cls.currentLesson.topic}</span>
+                </div>
+              )}
+              {cls.currentLesson.room && (
+                <div className="flex items-center col-span-2">
+                  <Layers className="h-3.5 w-3.5 mr-1.5 text-green-700" />
+                  <span className="text-xs text-gray-700">Room: {cls.currentLesson.room}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center col-span-2 mt-2 justify-end">
+                <Users className="h-3 w-3 mr-1 text-green-700" /> 
+                <span className="text-xs text-gray-700">{cls.students} students</span>
               </div>
             </div>
           </div>
@@ -1951,14 +336,14 @@ function ClassCard({ cls }: { cls: Class }) {
                   <div className="w-5 h-5 flex justify-center items-center text-gray-500">
                     <Calendar className="h-4 w-4" />
                   </div>
-                  <span className="ml-2">{cls.schedule}</span>
+                  <span className="ml-2">{cls.schedule.days.join(', ')}</span>
                 </div>
                 
                 <div className="flex items-center">
                   <div className="w-5 h-5 flex justify-center items-center text-gray-500">
                     <Clock className="h-4 w-4" />
                   </div>
-                  <span className="ml-2">{cls.time}</span>
+                  <span className="ml-2">{cls.schedule.time}</span>
                 </div>
                 
                 <div className="flex items-center">
@@ -1974,18 +359,41 @@ function ClassCard({ cls }: { cls: Class }) {
         
         {/* Class Leadership Section */}
         {cls.classLeadership && (
-          <div className="mb-5 bg-gradient-to-r from-blue-50 to-indigo-50  p-4 shadow-sm border border-blue-100">
+          <div className="mb-5 bg-gradient-to-r from-indigo-50 to-blue-50 p-4 shadow-sm border border-indigo-100">
             <h4 className="text-sm font-semibold mb-3 text-indigo-900 flex items-center">
-              <div className="mr-2 p-1 bg-indigo-100  flex items-center justify-center">
-                <Users className="h-3.5 w-3.5 text-indigo-700" />
+              <div className="mr-2 p-1 bg-indigo-100 flex items-center justify-center">
+                <Crown className="h-3.5 w-3.5 text-indigo-700" />
               </div>
               Class Leadership
             </h4>
+            
+            {/* Leadership Summary Bar */}
+            <div className="flex items-center justify-between bg-white p-2 shadow-sm mb-3 border-l-4 border-indigo-500">
+              <div className="flex items-center">
+                <div className="p-1.5 mr-2 rounded-full bg-indigo-100">
+                  <Crown className="h-4 w-4 text-indigo-600" />
+                </div>
+                <div>
+                  <div className="text-xs text-indigo-600 font-medium">Led by</div>
+                  <div className="font-semibold text-indigo-900">
+                    {cls.classLeadership.prefect || "No prefect assigned"}
+                  </div>
+                </div>
+              </div>
+              
+              <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                {(cls.classLeadership.classMonitors?.length || 0) + 
+                 (cls.classLeadership.assistantPrefect ? 1 : 0) + 
+                 (cls.classLeadership.timekeeper ? 1 : 0) + 
+                 (cls.classLeadership.prefect ? 1 : 0)} Leaders
+              </Badge>
+            </div>
+            
             <div className="grid grid-cols-2 gap-3 text-sm">
               {cls.classLeadership.prefect && (
-                <div className="flex items-center bg-white p-2  shadow-sm">
-                  <div className="p-1.5 mr-2 bg-yellow-100 ">
-                    <Crown className="h-3.5 w-3.5 text-yellow-600" />
+                <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="p-1.5 mr-2 bg-indigo-100 rounded-full">
+                    <Crown className="h-3.5 w-3.5 text-indigo-600" />
                   </div>
                   <div>
                     <div className="text-xs text-indigo-600 font-medium">Prefect</div>
@@ -1994,8 +402,8 @@ function ClassCard({ cls }: { cls: Class }) {
                 </div>
               )}
               {cls.classLeadership.assistantPrefect && (
-                <div className="flex items-center bg-white p-2  shadow-sm">
-                  <div className="p-1.5 mr-2 bg-blue-100 ">
+                <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="p-1.5 mr-2 bg-blue-100 rounded-full">
                     <Trophy className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                   <div>
@@ -2005,8 +413,8 @@ function ClassCard({ cls }: { cls: Class }) {
                 </div>
               )}
               {cls.classLeadership.timekeeper && (
-                <div className="flex items-center bg-white p-2  shadow-sm">
-                  <div className="p-1.5 mr-2 bg-green-100 ">
+                <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="p-1.5 mr-2 bg-green-100 rounded-full">
                     <Clock className="h-3.5 w-3.5 text-green-600" />
                   </div>
                   <div>
@@ -2015,12 +423,30 @@ function ClassCard({ cls }: { cls: Class }) {
                   </div>
                 </div>
               )}
+              
+              {/* Subject Monitors Section */}
+              {cls.classLeadership.subjectMonitors && Object.keys(cls.classLeadership.subjectMonitors).length > 0 && (
+                <div className="col-span-2 mb-2 bg-white p-2 shadow-sm">
+                  <div className="text-xs text-indigo-600 font-medium mb-2">Subject Monitors</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(cls.classLeadership.subjectMonitors).map(([subject, monitor], idx) => (
+                      <div key={idx} className="flex items-center text-xs">
+                        <Badge className="bg-blue-50 text-blue-700 mr-1 w-24 justify-center overflow-hidden text-ellipsis">
+                          {subject}
+                        </Badge>
+                        <span>{monitor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {cls.classLeadership.classMonitors && cls.classLeadership.classMonitors.length > 0 && (
                 <div className="col-span-2 mt-1">
                   <div className="text-xs text-indigo-600 font-medium mb-1">Class Monitors</div>
                   <div className="flex flex-wrap gap-2">
                     {cls.classLeadership.classMonitors.map((monitor, idx) => (
-                      <Badge key={idx} className="bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100">
+                      <Badge key={idx} className="bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100">
                         {monitor}
                       </Badge>
                     ))}
@@ -2030,6 +456,43 @@ function ClassCard({ cls }: { cls: Class }) {
             </div>
           </div>
         )}
+        
+        {/* Resource Allocation Section */}
+        <div className="mb-5 bg-gradient-to-r from-teal-50 to-cyan-50 p-4 shadow-sm border border-teal-100">
+          <h4 className="text-sm font-semibold mb-3 text-teal-900 flex items-center">
+            <div className="mr-2 p-1 bg-teal-100 flex items-center justify-center">
+              <Layers className="h-3.5 w-3.5 text-teal-700" />
+            </div>
+            Resource Allocation
+          </h4>
+          
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="bg-white p-2 rounded flex flex-col items-center justify-center">
+              <div className="text-xs text-teal-600 font-medium mb-1">Textbooks</div>
+              <div className="font-bold text-lg">{Math.floor(Math.random() * 15) + 30}/{cls.students} Students</div>
+            </div>
+            
+            <div className="bg-white p-2 rounded flex flex-col items-center justify-center">
+              <div className="text-xs text-teal-600 font-medium mb-1">Learning Materials</div>
+              <div className="font-bold text-lg">{Math.floor(Math.random() * 10) + 40}/{cls.students} Students</div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 col-span-2">
+              <div className="bg-white p-2 rounded flex flex-col items-center justify-center">
+                <div className="text-xs text-teal-600 font-medium mb-1">Desks</div>
+                <div className="font-bold text-lg">{cls.students}</div>
+              </div>
+              <div className="bg-white p-2 rounded flex flex-col items-center justify-center">
+                <div className="text-xs text-teal-600 font-medium mb-1">Computers</div>
+                <div className="font-bold text-lg">{Math.floor(cls.students * 0.7)}</div>
+              </div>
+              <div className="bg-white p-2 rounded flex flex-col items-center justify-center">
+                <div className="text-xs text-teal-600 font-medium mb-1">Boards</div>
+                <div className="font-bold text-lg">{cls.level === 'senior-secondary' ? 2 : 1}</div>
+              </div>
+            </div>
+          </div>
+        </div>
         
         {/* Academic Performance Section */}
         {cls.academicPerformance && (
@@ -2091,7 +554,7 @@ function ClassCard({ cls }: { cls: Class }) {
                   <div className="text-xs text-emerald-600 font-medium mb-1">Top Students</div>
                   <div className="flex flex-wrap gap-2">
                     {cls.academicPerformance.topStudents.map((student, idx) => (
-                      <Badge key={idx} className="bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100">
+                      <Badge key={idx} className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
                         {student}
                       </Badge>
                     ))}
@@ -2120,12 +583,11 @@ function ClassCard({ cls }: { cls: Class }) {
                 {cls.attendance.trend && (
                   <Badge 
                     variant="outline" 
-                    className={`${cls.attendance.trend === 'improving' ? 
+                    className={(cls.attendance.trend === 'improving' ? 
                       'bg-green-50 text-green-700 border-green-100' : 
                       cls.attendance.trend === 'stable' ? 
                       'bg-blue-50 text-blue-700 border-blue-100' : 
-                      'bg-red-50 text-red-700 border-red-100'} 
-                    px-2 py-1 capitalize`}
+                      'bg-red-50 text-red-700 border-red-100') + " px-2 py-1 capitalize"}
                   >
                     {cls.attendance.trend === 'improving' && <ArrowUp className="h-3 w-3 mr-1 inline" />}
                     {cls.attendance.trend === 'declining' && <ArrowDown className="h-3 w-3 mr-1 inline" />}
@@ -2150,61 +612,375 @@ function ClassCard({ cls }: { cls: Class }) {
           </div>
         )}
         
-        {/* Fee Status Section (if applicable) */}
-        {cls.fees && (
-          <div className="mb-5 bg-gradient-to-r from-purple-50 to-fuchsia-50  p-4 shadow-sm border border-purple-100">
-            <h4 className="text-sm font-semibold mb-3 text-purple-900 flex items-center">
-              <div className="mr-2 p-1 bg-purple-100  flex items-center justify-center">
-                <Banknote className="h-3.5 w-3.5 text-purple-700" />
+        {/* Assignments Tracking Section */}
+        {/* Schedule */}
+        <div className="mb-5 bg-gradient-to-r from-amber-50 to-yellow-50 p-4 shadow-sm border border-amber-100">
+          <h4 className="text-sm font-semibold mb-3 text-amber-900 flex items-center">
+            <div className="mr-2 p-1 bg-amber-100 flex items-center justify-center">
+              <CalendarDays className="h-3.5 w-3.5 text-amber-700" />
+            </div>
+            Schedule
+          </h4>
+          
+          {/* Weekly Timetable Visualization */}
+          <div className="bg-white p-3 shadow-sm text-sm mb-3 overflow-x-auto">
+            <div className="text-xs font-medium mb-2">Weekly Timetable</div>
+            <table className="w-full min-w-max border-collapse text-xs">
+              <thead>
+                <tr className="bg-amber-50">
+                  <th className="p-1 border border-amber-100 w-20">Time</th>
+                  <th className="p-1 border border-amber-100">Monday</th>
+                  <th className="p-1 border border-amber-100">Tuesday</th>
+                  <th className="p-1 border border-amber-100">Wednesday</th>
+                  <th className="p-1 border border-amber-100">Thursday</th>
+                  <th className="p-1 border border-amber-100">Friday</th>
+                </tr>
+              </thead>
+              <tbody>
+                {['8:00-9:00', '9:00-10:00', '10:00-11:00', '11:30-12:30', '12:30-1:30'].map((timeSlot, timeIdx) => (
+                  <tr key={timeIdx} className="hover:bg-amber-50">
+                    <td className="p-1 border border-amber-100 font-medium text-center">{timeSlot}</td>
+                    {[0, 1, 2, 3, 4].map((day) => {
+                      // Randomly determine if this class is happening in this time slot for this day
+                      const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                      const hasClass = cls.schedule.days.includes(weekdays[day]) && Math.random() > 0.7;
+                      const subjects = ['Mathematics', 'English', 'Kiswahili', 'Science', 'Social Studies', 'PE', 'Art', 'Music'];
+                      const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
+                      
+                      return (
+                        <td key={day} className="p-1 border border-amber-100 text-center">
+                          {hasClass ? (
+                            <div className="p-1 bg-amber-100 rounded text-amber-800 text-xs">
+                              {randomSubject}
+                              <div className="text-xs text-amber-600">{cls.instructor}</div>
+                            </div>
+                          ) : null}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Class time and dates - Summary */}
+          <div className="bg-white p-3 shadow-sm text-sm mb-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-amber-600 font-medium mb-1">Days</div>
+                <div className="font-medium">{cls.schedule.days.join(', ')}</div>
               </div>
-              Fee Status
+              <div>
+                <div className="text-xs text-amber-600 font-medium mb-1">Time</div>
+                <div className="font-medium">{cls.schedule.time}</div>
+              </div>
+              {cls.schedule.venue && (
+                <div className="col-span-2">
+                  <div className="text-xs text-amber-600 font-medium mb-1">Venue</div>
+                  <div className="font-medium">{cls.schedule.venue}</div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Age group */}
+          <div className="text-sm">
+            <div className="text-xs text-amber-600 font-medium mb-1">Age Group</div>
+            <div className="font-medium">{cls.ageGroup}</div>
+          </div>
+        </div>
+        
+        {/* Syllabus Progress Section */}
+        <div className="mb-5 bg-gradient-to-r from-blue-50 to-sky-50 p-4 shadow-sm border border-blue-100">
+          <h4 className="text-sm font-semibold mb-3 text-blue-900 flex items-center">
+            <div className="mr-2 p-1 bg-blue-100 flex items-center justify-center">
+              <BookOpen className="h-3.5 w-3.5 text-blue-700" />
+            </div>
+            Syllabus Progress
+            <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200">
+              {Math.floor(Math.random() * 30) + 70}% Complete
+            </Badge>
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            {/* Overall Progress Bar */}
+            <div className="bg-white p-3 shadow-sm col-span-full">
+              <div className="flex justify-between mb-1 text-xs">
+                <span>Term Progress</span>
+                <span className="font-medium">{Math.floor(Math.random() * 30) + 70 + '%'}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full" 
+                  style={{ width: (Math.floor(Math.random() * 30) + 70) + '%' }}
+                ></div>
+              </div>
+              
+              {/* Key Subjects Progress */}
+              <div className="grid grid-cols-1 gap-2 mt-2">
+                {['Mathematics', 'English', 'Kiswahili', 'Science'].map((subject, idx) => {
+                  const progress = Math.floor(Math.random() * 30) + 70;
+                  return (
+                    <div key={idx} className="flex items-center">
+                      <div className="w-20 text-xs">{subject}</div>
+                      <div className="flex-grow">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div 
+                            className={idx % 2 === 0 ? 'bg-blue-500 h-1.5 rounded-full' : 'bg-sky-500 h-1.5 rounded-full'} 
+                            style={{ width: progress + '%' }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="w-8 text-right text-xs ml-2">{progress + '%'}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Upcoming Topics */}
+            <div className="bg-white p-3 shadow-sm">
+              <div className="text-xs font-medium mb-2 text-blue-700">Upcoming Topics</div>
+              <ul className="text-xs space-y-1.5">
+                {['Quadratic Equations', 'Essay Writing', 'Digestive System', 'Kenyan History'].map((topic, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <div className="p-0.5 bg-blue-100 rounded-full mr-1.5 mt-0.5">
+                      <ChevronRight className="h-2.5 w-2.5 text-blue-700" />
+                    </div>
+                    {topic}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Completed Topics */}
+            <div className="bg-white p-3 shadow-sm">
+              <div className="text-xs font-medium mb-2 text-green-700">Recently Completed</div>
+              <ul className="text-xs space-y-1.5">
+                {['Linear Equations', 'Comprehension', 'Plant Cells', 'Pre-Colonial Kenya'].map((topic, idx) => (
+                  <li key={idx} className="flex items-start">
+                    <div className="p-0.5 bg-green-100 rounded-full mr-1.5 mt-0.5">
+                      <Check className="h-2.5 w-2.5 text-green-700" />
+                    </div>
+                    {topic}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        {/* Upcoming Examinations */}
+        <div className="mb-5 bg-gradient-to-r from-rose-50 to-red-50 p-4 shadow-sm border border-rose-100">
+          <h4 className="text-sm font-semibold mb-3 text-rose-900 flex items-center">
+            <div className="mr-2 p-1 bg-rose-100 flex items-center justify-center">
+              <FileText className="h-3.5 w-3.5 text-rose-700" />
+            </div>
+            Upcoming Exams
+          </h4>
+          
+          <div className="bg-white overflow-hidden border border-rose-100 divide-y divide-rose-100">
+            {[1, 2, 3].map((_, idx) => {
+              const daysAway = Math.floor(Math.random() * 14) + 1;
+              const examDate = new Date();
+              examDate.setDate(examDate.getDate() + daysAway);
+              const formattedDate = examDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short'});
+              const subjects = ['End-Term Mathematics', 'English CAT', 'Science Practical', 'Kiswahili Insha'];
+              
+              return (
+                <div key={idx} className="p-2.5 hover:bg-rose-50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium text-sm">{subjects[idx]}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{['90 minutes', '45 minutes', '2 hours'][idx]}</div>
+                    </div>
+                    <Badge className={daysAway <= 3 ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}>
+                      {formattedDate}
+                    </Badge>
+                  </div>
+                  <div className="mt-2 text-xs flex items-center">
+                    <FilePlus className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+                    {Math.floor(Math.random() * 10) + 30} students registered
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Assignments Tracking Section */}
+        {cls.assignments && (
+          <div className="mb-5 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 shadow-sm border border-blue-100">
+            <h4 className="text-sm font-semibold mb-3 text-blue-900 flex items-center">
+              <div className="mr-2 p-1 bg-blue-100 flex items-center justify-center">
+                <FileText className="h-3.5 w-3.5 text-blue-700" />
+              </div>
+              Assignments & Homework
             </h4>
             
-            <div className="bg-white p-3  shadow-sm mb-3">
-              <div className="grid grid-cols-3 gap-1 text-sm">
-                <div>
-                  <div className="text-xs text-purple-600 font-medium mb-1">Billed</div>
-                  <div className="font-semibold">KES {cls.fees.billed.toLocaleString()}</div>
+            <div className="bg-white p-3 shadow-sm mb-3">
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="flex flex-col items-center justify-center p-1 bg-blue-50 rounded">
+                  <div className="text-xs text-blue-600 font-medium mb-1">Issued</div>
+                  <div className="font-bold text-lg">{cls.assignments.issued}</div>
                 </div>
-                <div>
-                  <div className="text-xs text-purple-600 font-medium mb-1">Paid</div>
-                  <div className="font-semibold text-green-700">KES {cls.fees.paid.toLocaleString()}</div>
+                <div className="flex flex-col items-center justify-center p-1 bg-green-50 rounded">
+                  <div className="text-xs text-green-600 font-medium mb-1">Submitted</div>
+                  <div className="font-bold text-lg">{cls.assignments.submitted}</div>
                 </div>
-                <div>
-                  <div className="text-xs text-purple-600 font-medium mb-1">Pending</div>
-                  <div className="font-semibold text-red-600">KES {cls.fees.pending.toLocaleString()}</div>
+                <div className="flex flex-col items-center justify-center p-1 bg-amber-50 rounded">
+                  <div className="text-xs text-amber-600 font-medium mb-1">Pending</div>
+                  <div className="font-bold text-lg">{cls.assignments.issued - cls.assignments.submitted}</div>
                 </div>
               </div>
             </div>
               
-            {/* Students with fee status */}
-            <div className="flex justify-between items-center mb-3">
-              <div className="text-xs text-purple-600 font-medium">Student Fee Status</div>
-              <div className="flex gap-2">
-                <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
-                  {cls.fees.unpaidCount} pending
-                </Badge>
-                {cls.fees.clearedCount && (
-                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                    {cls.fees.clearedCount} cleared
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            {/* List students with pending fees */}
-            {cls.fees.studentsPendingFees && cls.fees.studentsPendingFees.length > 0 && (
-              <div className="bg-white border border-red-100  overflow-hidden">
-                <div className="bg-red-50 px-3 py-1.5">
-                  <div className="font-medium text-red-800 text-xs">Students with pending fees</div>
+            {/* Upcoming assignments */}
+            {cls.assignments.upcoming && cls.assignments.upcoming.length > 0 && (
+              <div className="bg-white border border-blue-100 overflow-hidden">
+                <div className="bg-blue-50 px-3 py-1.5">
+                  <div className="font-medium text-blue-800 text-xs">Upcoming Assignments</div>
                 </div>
-                <div className="p-2 text-xs flex flex-wrap gap-2">
-                  {cls.fees.studentsPendingFees.map((student, idx) => (
-                    <Badge key={idx} variant="outline" className="bg-white text-red-600 border-red-200">
-                      {student}
+                <div className="p-2 text-xs">
+                  {cls.assignments.upcoming.map((assignment, idx) => (
+                    <Badge key={idx} className="bg-blue-50 text-blue-700 border-blue-100 mb-1 mr-1">
+                      {assignment}
                     </Badge>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Discipline Section */}
+        {cls.discipline && (
+          <div className="mb-5 bg-gradient-to-r from-rose-50 to-red-50 p-4 shadow-sm border border-rose-100">
+            <h4 className="text-sm font-semibold mb-3 text-rose-900 flex items-center">
+              <div className="mr-2 p-1 bg-rose-100 flex items-center justify-center">
+                <Info className="h-3.5 w-3.5 text-rose-700" />
+              </div>
+              Discipline Records
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-white p-2 shadow-sm flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-rose-600 font-medium">Warning Reports</div>
+                  <div className="font-bold text-lg">{cls.discipline.warningReports}</div>
+                </div>
+                {cls.discipline.warningReports > 5 && <Badge className="bg-red-100 text-red-800">High</Badge>}
+                {cls.discipline.warningReports > 0 && cls.discipline.warningReports <= 5 && <Badge className="bg-amber-100 text-amber-800">Medium</Badge>}
+                {cls.discipline.warningReports === 0 && <Badge className="bg-green-100 text-green-800">None</Badge>}
+              </div>
+              
+              <div className="bg-white p-2 shadow-sm flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-rose-600 font-medium">Suspensions</div>
+                  <div className="font-bold text-lg">{cls.discipline.suspensions}</div>
+                </div>
+                {cls.discipline.suspensions > 0 && <Badge className="bg-red-100 text-red-800">Action Needed</Badge>}
+                {cls.discipline.suspensions === 0 && <Badge className="bg-green-100 text-green-800">None</Badge>}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Fee Status Section (if applicable) - Enhanced with visual indicators */}
+        {cls.fees && (
+          <div className="mb-5 bg-gradient-to-r from-purple-50 to-fuchsia-50 p-4 shadow-sm border border-purple-100">
+            <h4 className="text-sm font-semibold mb-3 text-purple-900 flex items-center">
+              <div className="mr-2 p-1 bg-purple-100 flex items-center justify-center">
+                <Banknote className="h-3.5 w-3.5 text-purple-700" />
+              </div>
+              Fee Status
+              <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 bg-purple-50 text-purple-700 border-purple-200">
+                {Math.round((cls.fees.paid / cls.fees.billed) * 100) + '%'} Collection
+              </Badge>
+            </h4>
+            
+            {/* Payment Progress Visual Bar */}
+            <div className="bg-white p-3 shadow-sm mb-3">
+              <div className="flex justify-between mb-1 text-xs">
+                <span>Fee Collection Progress</span>
+                <span className="font-medium">{Math.round((cls.fees.paid / cls.fees.billed) * 100) + '%'}</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
+                <div 
+                  className="bg-purple-600 h-2.5 rounded-full" 
+                  style={{ width: Math.round((cls.fees.paid / cls.fees.billed) * 100) + '%' }}
+                ></div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-1 text-sm">
+                <div className="bg-purple-50 p-2 rounded">
+                  <div className="text-xs text-purple-600 font-medium mb-1">Billed</div>
+                  <div className="font-semibold">KES {cls.fees.billed.toLocaleString()}</div>
+                </div>
+                <div className="bg-green-50 p-2 rounded">
+                  <div className="text-xs text-green-600 font-medium mb-1">Paid</div>
+                  <div className="font-semibold text-green-700">KES {cls.fees.paid.toLocaleString()}</div>
+                </div>
+                <div className="bg-red-50 p-2 rounded">
+                  <div className="text-xs text-red-600 font-medium mb-1">Pending</div>
+                  <div className="font-semibold text-red-600">KES {cls.fees.pending.toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Payment Statistics */}
+            <div className="bg-white p-3 shadow-sm mb-3 flex justify-between">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-700">{cls.fees.clearedCount || 0}</div>
+                <div className="text-xs text-gray-500">Cleared</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-500">{cls.fees.unpaidCount}</div>
+                <div className="text-xs text-gray-500">Pending</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-emerald-600">
+                  {Math.round(((cls.fees.clearedCount || 0) / ((cls.fees.clearedCount || 0) + (cls.fees.unpaidCount || 1))) * 100) + '%'}
+                </div>
+                <div className="text-xs text-gray-500">Rate</div>
+              </div>
+            </div>
+            
+            {/* Top Defaulters - Enhanced with payment amount and days overdue */}
+            {cls.fees.studentsPendingFees && cls.fees.studentsPendingFees.length > 0 && (
+              <div className="bg-white border border-red-100 overflow-hidden">
+                <div className="bg-red-50 px-3 py-1.5 flex justify-between items-center">
+                  <div className="font-medium text-red-800 text-xs">Students with pending fees</div>
+                  <Badge variant="outline" className="text-xs bg-red-50 text-red-800 border-red-200">
+                    {cls.fees.unpaidCount} students
+                  </Badge>
+                </div>
+                
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50 text-gray-600">
+                    <tr>
+                      <th className="p-1.5 text-left">Student</th>
+                      <th className="p-1.5 text-right">Amount</th>
+                      <th className="p-1.5 text-right">Days</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {cls.fees.studentsPendingFees.slice(0, 5).map((student, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="p-1.5">{student}</td>
+                        <td className="p-1.5 text-right text-red-600 font-medium">KES {(Math.floor(Math.random() * 5000) + 1000).toLocaleString()}</td>
+                        <td className="p-1.5 text-right">{Math.floor(Math.random() * 30) + 5}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {cls.fees.studentsPendingFees.length > 5 && (
+                  <div className="p-1.5 text-center text-xs text-purple-600 border-t">
+                    +{cls.fees.studentsPendingFees.length - 5} more students with pending fees
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2274,31 +1050,370 @@ function ClassCard({ cls }: { cls: Class }) {
   )
 }
 
-// Empty state component when no classes are found
-function EmptyState({ selectedGrade = null, selectedStatus = 'all', searchTerm = '' }: {
-  selectedGrade?: string | null,
-  selectedStatus?: string,
-  searchTerm?: string
-}) {
-  // Create a more specific message based on active filters
-  let message = 'Try adjusting your search or filters to find what you\'re looking for.'
+
+// Main component for displaying classes
+function ClassesPage() {
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('all')
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string>('all')
+  const [selectedStream, setSelectedStream] = useState<string>('all')
+  const [searchTerm, setSearchTerm] = useState<string>('')  
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   
-  if (selectedGrade) {
-    message = `No classes found for the selected grade. Try selecting a different grade.`
-  } else if (selectedStatus !== 'all') {
-    message = `No ${selectedStatus} classes found. Try another status filter.`
-  } else if (searchTerm) {
-    message = `No classes match your search term "${searchTerm}". Try a different search.`
-  }
+  // Get available streams for selected grade
+  const availableStreams = useMemo(() => {
+    return getStreamsForGrade(selectedGradeId)
+  }, [selectedGradeId])
+  
+  // Check if the device is mobile
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Set up a media query to detect mobile devices
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 1024) // lg breakpoint in Tailwind
+    }
+    
+    checkIfMobile()
+    window.addEventListener('resize', checkIfMobile)
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile)
+    }
+  }, [])
+
+  // Filter classes based on selected criteria
+  const filteredClasses = useMemo(() => {
+    return mockClasses
+      .filter((cls: Class) => selectedGradeId === 'all' || cls.grade === selectedGradeId)
+      .filter((cls: Class) => selectedStatus === 'all' || cls.status === selectedStatus)
+      .filter((cls: Class) => selectedStream === 'all' || cls.stream === selectedStream)
+      .filter((cls: Class) => {
+        if (!searchTerm) return true
+        const search = searchTerm.toLowerCase()
+        return (
+          cls.name.toLowerCase().includes(search) ||
+          cls.description.toLowerCase().includes(search) ||
+          cls.instructor.toLowerCase().includes(search)
+        )
+      })
+  }, [selectedGradeId, selectedStatus, selectedStream, searchTerm])
+
+  // Update selected grade display name when grade ID changes
+  useEffect(() => {
+    if (selectedGradeId === 'all') {
+      setSelectedGrade(null)
+      return
+    }
+    
+    const grade = mockGrades.find(g => g.id === selectedGradeId)
+    setSelectedGrade(grade ? grade.displayName : null)
+  }, [selectedGradeId])
 
   return (
-    <div className="bg-gray-50 border  p-8 text-center animate-fadeIn">
-      <h3 className="text-lg font-medium text-gray-900">No classes found</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        {message}
-      </p>
+    <div className="flex h-full">
+      {/* Mobile sidebar overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Search filter sidebar */}
+      <div 
+        className={`${isMobileSidebarOpen ? 'fixed inset-y-0 left-0 z-40 w-72' : 'hidden'} md:flex md:sticky md:top-0 md:flex-col md:w-96 md:h-screen border-r overflow-y-auto p-6 shrink-0 bg-white`}
+      >
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-1 flex items-center">
+            <Users className="h-6 w-6 mr-2" />
+            Classes
+          </h2>
+          <p className="text-sm text-muted-foreground">Search and filter classes</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Search input */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Search Classes</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search classes..."
+                className="pl-9 h-12 text-base"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+
+          {/* Grade filters */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium">Filter by Grade</label>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setSelectedGradeId('all')
+                  setSelectedGrade(null)
+                }} 
+                className="h-7 px-2 text-xs"
+                disabled={selectedGradeId === 'all'}
+              >
+                Clear
+              </Button>
+            </div>
+            
+            <div className="flex flex-wrap gap-1">
+              <Button
+                variant={selectedGradeId === 'all' ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setSelectedGradeId('all')
+                  setSelectedGrade(null)
+                }}
+                className={`w-full justify-start ${selectedGradeId === 'all' ? 'bg-gray-600 hover:bg-gray-700' : 'border-gray-200 bg-white'}`}
+              >
+                All Grades
+              </Button>
+              
+              {/* Group grades by education level */}
+              {['preschool', 'primary', 'junior-secondary', 'senior-secondary'].map(level => {
+                const levelGrades = mockGrades.filter(g => g.level === level);
+                if (levelGrades.length === 0) return null;
+                
+                return (
+                  <div key={level} className="w-full">
+                    <div className="mt-2 mb-1 text-xs font-semibold flex items-center">
+                      {getLevelIcon(level as EducationLevel)}
+                      <span className="ml-1">
+                        {level === 'preschool' ? 'Preschool' : 
+                         level === 'primary' ? 'Primary' : 
+                         level === 'junior-secondary' ? 'Junior Secondary' : 'Senior Secondary'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {levelGrades.map(grade => (
+                        <React.Fragment key={grade.id}>
+                          <Button
+                            variant={selectedGradeId === grade.id ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setSelectedGradeId(grade.id)
+                              setSelectedGrade(grade.displayName)
+                              setSelectedStream('all') // Reset stream when changing grade
+                            }}
+                            className={`w-full justify-start ${selectedGradeId === grade.id ? getComponentLevelColor(grade.level) : 'border-gray-200 bg-white'}`}
+                          >
+                            <span className="mr-1 font-mono text-xs">{grade.name}</span>
+                            {grade.displayName}
+                          </Button>
+                          
+                          {/* Show streams directly under this grade when it's selected */}
+                          {selectedGradeId === grade.id && (
+                            <div className="ml-4 mt-1 mb-2 space-y-1">
+                              {/* Stream filter title */}
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-medium text-gray-500">Streams</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => setSelectedStream('all')} 
+                                  className="h-6 px-2 text-xs"
+                                  disabled={selectedStream === 'all'}
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                              
+                              {/* Stream filter buttons */}
+                              <div className="flex flex-col gap-1">
+                                <Button
+                                  variant={selectedStream === 'all' ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setSelectedStream('all')}
+                                  className={`w-full justify-start text-xs ${selectedStream === 'all' ? 'bg-gray-600 hover:bg-gray-700' : 'border-gray-200 bg-white'}`}
+                                >
+                                  All Streams
+                                </Button>
+                                
+                                {getStreamsForGrade(grade.id).map((stream, _index, _array) => {
+                                  // Ensure grade is properly typed as Grade object
+                                  const gradeObj: Grade = grade;
+                                  const streamAbbr = getGradeStreamAbbr(gradeObj, stream);
+                                  
+                                  return (
+                                    <Button
+                                      key={stream}
+                                      variant={selectedStream === stream ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setSelectedStream(stream)}
+                                      className={`w-full justify-start text-xs ${selectedStream === stream ? 'bg-teal-600 hover:bg-teal-700' : 'border-gray-200 bg-white'}`}
+                                    >
+                                      <span className="font-mono text-xs">{streamAbbr}</span>
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                );  
+
+              })}
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Classes</h1>
+            <p className="text-gray-600">
+              Manage class information, assignments, and student performance across all grades
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            {/* Add Class button */}
+            <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="mr-2 h-4 w-4" /> Add Class
+            </Button>
+            {/* Export Report button */}
+            <Button variant="outline">
+              <FileText className="mr-2 h-4 w-4" /> Export Report
+            </Button>
+            
+            {/* Show filter button on mobile */}
+            <Button 
+              variant="outline" 
+              className="md:hidden" 
+              onClick={() => setIsMobileSidebarOpen(true)}
+            >
+              <Filter className="mr-2 h-4 w-4" /> Filters
+            </Button>
+          </div>
+        </div>
+
+        {/* Active filter indicators */}
+        {(selectedStatus !== 'all' || selectedGradeId !== 'all' || selectedStream !== 'all' || searchTerm) && (
+          <div className="flex flex-wrap gap-2 mb-6 items-center">
+            <p className="text-sm font-medium mr-2">Active filters:</p>
+            
+
+            
+            {selectedStatus !== 'all' && (
+              <Badge variant="outline" className="flex gap-1 items-center">
+                Status: {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedStatus('all')} />
+              </Badge>
+            )}
+            
+            {selectedGradeId !== 'all' && (
+              <Badge variant="outline" className="flex gap-1 items-center">
+                Grade: {selectedGrade}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedGradeId('all')} />
+              </Badge>
+            )}
+            
+            {selectedStream !== 'all' && (
+              <Badge variant="outline" className="flex gap-1 items-center bg-teal-50 border-teal-300">
+                Stream: {selectedStream}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedStream('all')} />
+              </Badge>
+            )}
+            
+            {searchTerm && (
+              <Badge variant="outline" className="flex gap-1 items-center">
+                Search: {searchTerm}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchTerm('')} />
+              </Badge>
+            )}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-auto text-gray-500 hover:text-gray-700" 
+              onClick={() => {
+                setSelectedStatus('all')
+                setSelectedGradeId('all')
+                setSelectedStream('all')
+                setSearchTerm('')
+              }}
+            >Clear all</Button>
+          </div>
+        )}
+        
+        {/* Filter summary bar */}
+        {(selectedStatus !== 'all' || selectedGrade) && (
+          <div className="bg-gray-50 p-3 mb-6 rounded-lg border flex flex-wrap items-center text-sm">
+            <div className="text-gray-600 mr-2">Filters:</div>
+            
+
+            
+            {selectedStatus !== 'all' && (
+              <Badge variant="secondary" className="mr-2">
+                Status: {selectedStatus} 
+                <button 
+                  onClick={() => setSelectedStatus('all')} 
+                  className="ml-1 text-gray-500 hover:text-gray-700"
+                >×</button>
+              </Badge>
+            )}
+            
+            {selectedGrade && (
+              <Badge variant="secondary" className="mr-2">
+                Grade: {selectedGrade} 
+                <button 
+                  onClick={() => setSelectedGradeId('all')} 
+                  className="ml-1 text-gray-500 hover:text-gray-700"
+                >×</button>
+              </Badge>
+            )}
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-auto text-gray-500 hover:text-gray-700" 
+              onClick={() => {
+                setSelectedStatus('all')
+                setSelectedGradeId('all')
+                setSelectedStream('all')
+                setSearchTerm('')
+              }}
+            >Clear all</Button>
+          </div>
+        )}
+        
+        {/* Display filtered classes or empty state */}
+        <div className="grid grid-cols-1 gap-6">
+          {filteredClasses.length > 0 ? (
+            filteredClasses.map((cls: Class) => (
+              <ClassCard key={cls.id} cls={cls} />
+            ))
+          ) : (
+            <div className="col-span-3">
+              <EmptyState 
+                selectedGrade={selectedGrade} 
+                selectedStatus={selectedStatus} 
+                searchTerm={searchTerm} 
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
-export default ClassesPage
+// Export the ClassesPage component as default
+export default ClassesPage;
