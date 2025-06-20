@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { mockGrades, mockClasses, getStreamsForGrade, getGradeStreamAbbr } from '@/lib/data/mockclasses'
-import type { Grade, Class } from '@/lib/data/mockclasses'
+import { mockGrades, mockClasses, mockStudents, getStreamsForGrade, getGradeStreamAbbr, getTeacherById, getSubjectById } from '@/lib/data/mockclasses'
+import type { Grade, Class, Student } from '@/lib/data/mockclasses'
 
 import { 
   Calendar,
   User,
+  UserCheck,
   MessageSquare,
   Info,
   ArrowUp,
@@ -45,8 +46,19 @@ import {
   Award,
   ChartBar,
   Filter,
-  X
+  X,
+  UserX,
+  CalendarX,
+  
+  
 } from 'lucide-react'
+
+// Helper function to get student name by ID
+const getStudentNameById = (studentId: string): string => {
+  const student = mockStudents.find(student => student.id === studentId);
+  return student ? `${student.firstName} ${student.lastName}` : 'Unknown Student';
+}
+
 // Mock component for empty state
 function EmptyState({ selectedGrade = null, selectedStatus = 'all', searchTerm = '' }: {
   selectedGrade?: string | null,
@@ -253,12 +265,12 @@ function ClassCard({ cls }: { cls: Class }) {
           <div className="mb-5 bg-gradient-to-r from-green-50 to-green-100 p-4 border-l-4 border-green-500 shadow-sm">
             <h4 className="text-sm font-semibold text-green-800 flex items-center mb-2">
               <BookOpen className="h-5 w-5 mr-2" />
-              Ongoing: {cls.currentLesson.subject} Class
+              Ongoing: {getSubjectById(cls.currentLesson.subjectId)?.name || cls.currentLesson.subjectId} Class
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center">
                 <User className="h-3.5 w-3.5 mr-1.5 text-green-700" />
-                <span className="text-xs text-gray-700">{cls.currentLesson.teacher}</span>
+                <span className="text-xs text-gray-700">{getTeacherById(cls.currentLesson.teacherId) ? `${getTeacherById(cls.currentLesson.teacherId)?.firstName} ${getTeacherById(cls.currentLesson.teacherId)?.lastName}` : cls.currentLesson.teacherId}</span>
               </div>
               <div className="flex items-center">
                 <Clock className="h-3.5 w-3.5 mr-1.5 text-green-700" />
@@ -302,8 +314,8 @@ function ClassCard({ cls }: { cls: Class }) {
                     <User className="h-4 w-4" />
                   </div>
                   <span className="ml-2 flex items-center">
-                    <span className="font-medium">{cls.classTeacher ? cls.classTeacher : cls.instructor}</span>
-                    {cls.classTeacher && <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded ml-2">Class Teacher</span>}
+                    <span className="font-medium">{cls.classTeacherId ? getTeacherById(cls.classTeacherId)?.firstName + " " + getTeacherById(cls.classTeacherId)?.lastName : (cls.instructorId ? getTeacherById(cls.instructorId)?.firstName + " " + getTeacherById(cls.instructorId)?.lastName : "No Teacher Assigned")}</span>
+                    {cls.classTeacherId && <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded ml-2">Class Teacher</span>}
                   </span>
                 </div>
                 
@@ -343,7 +355,7 @@ function ClassCard({ cls }: { cls: Class }) {
                   <div className="w-5 h-5 flex justify-center items-center text-gray-500">
                     <Clock className="h-4 w-4" />
                   </div>
-                  <span className="ml-2">{cls.schedule.time}</span>
+                  <span className="ml-2">{cls.schedule.startTime} - {cls.schedule.endTime}</span>
                 </div>
                 
                 <div className="flex items-center">
@@ -376,50 +388,50 @@ function ClassCard({ cls }: { cls: Class }) {
                 <div>
                   <div className="text-xs text-indigo-600 font-medium">Led by</div>
                   <div className="font-semibold text-indigo-900">
-                    {cls.classLeadership.prefect || "No prefect assigned"}
+                    {cls.classLeadership?.prefectId ? getStudentNameById(cls.classLeadership.prefectId) : "No prefect assigned"}
                   </div>
                 </div>
               </div>
               
               <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200">
                 {(cls.classLeadership.classMonitors?.length || 0) + 
-                 (cls.classLeadership.assistantPrefect ? 1 : 0) + 
-                 (cls.classLeadership.timekeeper ? 1 : 0) + 
-                 (cls.classLeadership.prefect ? 1 : 0)} Leaders
+                 (cls.classLeadership.assistantPrefectId ? 1 : 0) + 
+                 (cls.classLeadership.timekeeperId ? 1 : 0) + 
+                 (cls.classLeadership.prefectId ? 1 : 0)} Leaders
               </Badge>
             </div>
             
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {cls.classLeadership.prefect && (
+              {cls.classLeadership.prefectId && (
                 <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-1.5 mr-2 bg-indigo-100 rounded-full">
                     <Crown className="h-3.5 w-3.5 text-indigo-600" />
                   </div>
                   <div>
                     <div className="text-xs text-indigo-600 font-medium">Prefect</div>
-                    <div className="font-medium">{cls.classLeadership.prefect}</div>
+                    <div className="font-medium">{typeof cls.classLeadership.prefectId === 'string' ? cls.classLeadership.prefectId : 'Invalid ID'}</div>
                   </div>
                 </div>
               )}
-              {cls.classLeadership.assistantPrefect && (
+              {cls.classLeadership.assistantPrefectId && (
                 <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-1.5 mr-2 bg-blue-100 rounded-full">
                     <Trophy className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                   <div>
                     <div className="text-xs text-indigo-600 font-medium">Assistant</div>
-                    <div>{cls.classLeadership.assistantPrefect}</div>
+                    <div>{typeof cls.classLeadership.assistantPrefectId === 'string' ? cls.classLeadership.assistantPrefectId : 'Invalid ID'}</div>
                   </div>
                 </div>
               )}
-              {cls.classLeadership.timekeeper && (
+              {cls.classLeadership.timekeeperId && (
                 <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="p-1.5 mr-2 bg-green-100 rounded-full">
                     <Clock className="h-3.5 w-3.5 text-green-600" />
                   </div>
                   <div>
                     <div className="text-xs text-indigo-600 font-medium">Timekeeper</div>
-                    <div>{cls.classLeadership.timekeeper}</div>
+                    <div>{typeof cls.classLeadership.timekeeperId === 'string' ? cls.classLeadership.timekeeperId : 'Invalid ID'}</div>
                   </div>
                 </div>
               )}
@@ -453,6 +465,191 @@ function ClassCard({ cls }: { cls: Class }) {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* Attendance Statistics */}
+        {cls.attendance && (
+          <div className="mb-5 bg-gradient-to-r from-indigo-50 to-blue-50 p-4 shadow-sm border border-indigo-100">
+            <h4 className="text-sm font-semibold mb-3 text-indigo-900 flex items-center">
+              <div className="mr-2 p-1 bg-indigo-100 flex items-center justify-center">
+                <Users className="h-3.5 w-3.5 text-indigo-700" />
+              </div>
+              Attendance Statistics
+              <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 border-indigo-200">
+                {cls.attendance.rate}% Present
+              </Badge>
+            </h4>
+            
+            {/* Overall attendance metrics */}
+            <div className="bg-white p-3 shadow-sm mb-3 border border-indigo-100">
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="flex flex-col items-center p-2 bg-indigo-50 rounded-md">
+                  <div className="text-xs text-indigo-600 font-medium mb-1">Present Today</div>
+                  <div className="flex items-center">
+                    <UserCheck className="h-4 w-4 mr-1.5 text-green-600" />
+                    <div className="font-bold text-xl">{cls.attendance.presentToday ?? cls.attendance.present ?? 0}</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-2 bg-red-50 rounded-md">
+                  <div className="text-xs text-red-600 font-medium mb-1">Absent Today</div>
+                  <div className="flex items-center">
+                    <UserX className="h-4 w-4 mr-1.5 text-red-600" />
+                    <div className="font-bold text-xl">{cls.attendance.absentToday ?? (cls.attendance.absences ? cls.attendance.absences.total : 0)}</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center p-2 bg-amber-50 rounded-md">
+                  <div className="text-xs text-amber-600 font-medium mb-1">Late Today</div>
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 mr-1.5 text-amber-600" />
+                    <div className="font-bold text-xl">{cls.attendance.lateToday ?? 0}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Weekly Attendance Trend */}
+            <div className="bg-white p-3 shadow-sm mb-3 border border-indigo-100">
+              <div className="text-xs text-indigo-700 font-medium mb-2 flex justify-between items-center">
+                <span>Weekly Attendance Trend</span>
+                <div className="text-gray-500">
+                  {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {' - '}
+                  {(() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - 6);
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  })()}
+                </div>
+              </div>
+              
+              <div className="flex items-end space-x-1 h-24">
+                {[...Array(7)].map((_, i) => {
+                  // Generate more realistic attendance data - higher on weekdays, lower on weekends
+                  const isWeekend = i > 4;
+                  const baseRate = isWeekend ? 70 : 90;
+                  const variance = isWeekend ? 20 : 8;
+                  const rate = Math.min(100, Math.max(0, baseRate - Math.floor(Math.random() * variance)));
+                  const height = rate + '%';
+                  const day = new Date();
+                  day.setDate(day.getDate() - (6 - i));
+                  const dayLabel = day.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+                  
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center">
+                      <div className="text-xs text-gray-500 mb-1">{rate}%</div>
+                      <div 
+                        className={`w-full rounded-t ${rate > 90 ? 'bg-green-500' : rate > 80 ? 'bg-blue-500' : rate > 70 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        style={{ height }}
+                      />
+                      <div className="text-xs text-center text-gray-600 mt-1">{dayLabel}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Absenteeism Analysis */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              {/* Frequently Absent Students */}
+              <div className="bg-white p-3 shadow-sm border border-indigo-100">
+                <div className="text-xs font-medium mb-2 text-indigo-700">Frequent Absentees</div>
+                {cls.attendance.frequentAbsentees && cls.attendance.frequentAbsentees.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {cls.attendance.frequentAbsentees.slice(0, 3).map((absentee, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center">
+                          <UserX className="h-3 w-3 mr-1.5 text-red-500" />
+                          <span>{absentee.student}</span>
+                        </div>
+                        <Badge className="bg-red-100 text-red-800">
+                          {absentee.days} days
+                        </Badge>
+                      </div>
+                    ))}
+                    
+                    {cls.attendance.frequentAbsentees.length > 3 && (
+                      <div className="text-xs text-center text-indigo-600 pt-1">
+                        +{cls.attendance.frequentAbsentees.length - 3} more students
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-500 italic">No frequent absentees</div>
+                )}
+              </div>
+              
+              {/* Recent Absences */}
+              <div className="bg-white p-3 shadow-sm border border-indigo-100">
+                <div className="text-xs font-medium mb-2 text-indigo-700">Today's Absences</div>
+                {cls.attendance.absentStudents && cls.attendance.absentStudents.length > 0 ? (
+                  <div className="space-y-1">
+                    {cls.attendance.absentStudents.slice(0, 3).map((absentee, idx) => (
+                      <div key={idx} className="flex items-center text-xs">
+                        <CalendarX className="h-3 w-3 mr-1.5 text-red-500" />
+                        <span>{absentee.student}</span>
+                        {idx === 0 && (
+                          <Badge variant="outline" className="ml-1 text-xs bg-red-50 text-red-700 border-red-200">
+                            {absentee.reason || 'Sick'}
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {cls.attendance.absentStudents.length > 3 && (
+                      <div className="text-xs text-center text-indigo-600 pt-1">
+                        +{cls.attendance.absentStudents.length - 3} more absences today
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-500 italic">No absences recorded today</div>
+                )}
+              </div>
+            </div>
+            
+            {/* Attendance Statistics */}
+            <div className="bg-white p-3 shadow-sm border border-indigo-100">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <div className="text-indigo-600 font-medium mb-1">Monthly Averages</div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between">
+                      <span>Rate:</span>
+                      <span className="font-medium">{(parseFloat(cls.attendance.rate) + (Math.random() * 5 - 2.5)).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Absences:</span>
+                      <span className="font-medium">{Math.round(cls.attendance.absent * 4)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Excused:</span>
+                      <span className="font-medium">{Math.round(cls.attendance.absent * 4 * 0.6)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-indigo-600 font-medium mb-1">Absence Type</div>
+                  <div className="flex items-center mt-2 flex-wrap">
+                    <div className="flex items-center mr-3 mb-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                      <span>Sick: {cls.attendance.absences ? Math.round(cls.attendance.absences.medical) : 0}</span>
+                    </div>
+                    <div className="flex items-center mr-3 mb-1">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full mr-1"></div>
+                      <span>Family: {cls.attendance.absences ? Math.round(cls.attendance.absences.excused) : 0}</span>
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <div className="w-2 h-2 bg-gray-500 rounded-full mr-1"></div>
+                      <span>Other: {cls.attendance.absences ? Math.round(cls.attendance.absences.unexcused) : 0}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -496,72 +693,149 @@ function ClassCard({ cls }: { cls: Class }) {
         
         {/* Academic Performance Section */}
         {cls.academicPerformance && (
-          <div className="mb-5 bg-gradient-to-r from-emerald-50 to-teal-50  p-4 shadow-sm border border-emerald-100">
+          <div className="mb-5 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 shadow-sm border border-emerald-100">
             <h4 className="text-sm font-semibold mb-3 text-emerald-900 flex items-center">
-              <div className="mr-2 p-1 bg-emerald-100  flex items-center justify-center">
+              <div className="mr-2 p-1 bg-emerald-100 flex items-center justify-center">
                 <BookOpen className="h-3.5 w-3.5 text-emerald-700" />
               </div>
               Academic Performance
+              <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200">
+                {cls.academicPerformance.overallPerformance}
+              </Badge>
             </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-white p-2  shadow-sm flex flex-col">
-                <span className="text-xs text-emerald-600 font-medium">Average Grade</span>
-                <span className="font-bold text-lg">{cls.academicPerformance.averageGrade}</span>
-              </div>
-              
-              {cls.examRanking && (
-                <div className="bg-white p-2  shadow-sm flex flex-col">
-                  <span className="text-xs text-emerald-600 font-medium">Class Rank</span>
-                  <div className="flex items-baseline">
-                    <span className="font-bold text-lg">{cls.examRanking.internalRank}</span>
-                    {cls.examRanking.zonalPosition && (
-                      <span className="text-xs text-gray-500 ml-2">
-                        Zonal: {cls.examRanking.zonalPosition}
-                      </span>
+            
+            {/* Performance metrics overview */}
+            <div className="bg-white p-3 shadow-sm mb-3 border border-emerald-100">
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-emerald-600 font-medium mb-1">Average Grade</div>
+                  <div className="font-bold text-xl">{cls.academicPerformance.averageGrade}</div>
+                  {cls.academicPerformance.previousTerm && (
+                    <div className="flex items-center mt-1 text-xs">
+                      <span className="text-gray-500 mr-1">Previous: {cls.academicPerformance.previousTerm.averageGrade}</span>
+                      {cls.academicPerformance.improvement > 0 ? (
+                        <span className="text-green-600 flex items-center">
+                          <ArrowUp className="h-3 w-3 mr-0.5" />
+                          {cls.academicPerformance.improvement}%
+                        </span>
+                      ) : cls.academicPerformance.improvement < 0 ? (
+                        <span className="text-red-600 flex items-center">
+                          <ArrowDown className="h-3 w-3 mr-0.5" />
+                          {Math.abs(cls.academicPerformance.improvement)}%
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 flex items-center">
+                          <ArrowRight className="h-3 w-3 mr-0.5" />
+                          {cls.academicPerformance.improvement}%
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-emerald-600 font-medium mb-1">Class Ranking</div>
+                  <div className="font-bold text-xl">
+                    {cls.academicPerformance.ranking}
+                    <span className="text-sm font-normal text-gray-500">/{cls.academicPerformance.totalClasses || '–'}</span>
+                  </div>
+                  {cls.academicPerformance.previousTerm && (
+                    <div className="flex items-center mt-1 text-xs text-gray-500">
+                      Previous: {cls.academicPerformance.previousTerm.ranking}/{cls.academicPerformance.totalClasses || '–'}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-emerald-600 font-medium mb-1">Target Mean</div>
+                  <div className="font-bold text-xl">
+                    {cls.academicPerformance.targetMeanScore || '–'}
+                  </div>
+                  <div className="flex items-center mt-1 text-xs">
+                    {cls.academicPerformance.averageGrade && cls.academicPerformance.targetMeanScore && (
+                      <Badge className={
+                        (parseFloat(cls.academicPerformance.averageGrade) >= parseFloat(String(cls.academicPerformance.targetMeanScore || '0'))) ?
+                        "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
+                      }>
+                        {(parseFloat(cls.academicPerformance.averageGrade) >= parseFloat(String(cls.academicPerformance.targetMeanScore || '0'))) ?
+                          'Target Achieved' : 'Below Target'}
+                      </Badge>
                     )}
                   </div>
                 </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-3 col-span-2">
-                {cls.kcpePerformanceMean && (
-                  <div className="bg-white p-2  shadow-sm flex items-center">
-                    <div className="p-1.5 mr-2 bg-teal-100 ">
-                      <ChartBar className="h-3.5 w-3.5 text-teal-600" />
-                    </div>
-                    <div>
-                      <div className="text-xs text-emerald-600 font-medium">KCPE Mean</div>
-                      <div className="font-medium">{cls.kcpePerformanceMean}</div>
-                    </div>
-                  </div>
-                )}
-                
-                {cls.kcseMean && (
-                  <div className="bg-white p-2  shadow-sm flex items-center">
-                    <div className="p-1.5 mr-2 bg-teal-100 ">
-                      <ChartBar className="h-3.5 w-3.5 text-teal-600" />
-                    </div>
-                    <div>
-                      <div className="text-xs text-emerald-600 font-medium">KCSE Mean</div>
-                      <div className="font-medium">{cls.kcseMean}</div>
-                    </div>
-                  </div>
-                )}
               </div>
-              
-              {cls.academicPerformance.topStudents && cls.academicPerformance.topStudents.length > 0 && (
-                <div className="col-span-2 mt-2">
-                  <div className="text-xs text-emerald-600 font-medium mb-1">Top Students</div>
-                  <div className="flex flex-wrap gap-2">
-                    {cls.academicPerformance.topStudents.map((student, idx) => (
-                      <Badge key={idx} className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-                        {student}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
+            
+            {/* Subject Performance Section */}
+            {cls.academicPerformance.subjectPerformance && Object.keys(cls.academicPerformance.subjectPerformance).length > 0 && (
+              <div className="bg-white p-3 border border-emerald-100 shadow-sm mb-3">
+                <div className="text-xs font-medium mb-2 text-emerald-700 border-b border-emerald-100 pb-2">
+                  Subject Performance
+                </div>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  {Object.entries(cls.academicPerformance.subjectPerformance).slice(0, 4).map(([subject, data], idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <div className="w-32 text-xs">{subject}</div>
+                      <div className="flex-grow">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div 
+                            className={`h-1.5 rounded-full ${idx % 2 === 0 ? 'bg-emerald-500' : 'bg-cyan-500'}`}
+                            style={{ width: `${Math.min(100, (data.averageScore / 100) * 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div className="ml-2 text-xs font-medium w-8 text-right">{data.averageScore}%</div>
+                      <div className="ml-2 text-xs w-16 text-right">
+                        <span className="text-green-600">{data.highestScore}</span>
+                        <span className="text-gray-400 mx-1">/</span>
+                        <span className="text-red-500">{data.lowestScore}</span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {Object.keys(cls.academicPerformance.subjectPerformance).length > 4 && (
+                    <div className="text-xs text-center text-emerald-600">
+                      +{Object.keys(cls.academicPerformance.subjectPerformance).length - 4} more subjects
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Top Students Section */}
+            {cls.academicPerformance.topStudents && cls.academicPerformance.topStudents.length > 0 && (
+              <div className="bg-white p-3 border border-emerald-100 shadow-sm">
+                <div className="text-xs font-medium mb-2 text-emerald-700 flex justify-between items-center">
+                  <span>Top Performing Students</span>
+                  <Badge className="bg-emerald-100 text-emerald-800">
+                    {cls.academicPerformance.topStudents.length} students
+                  </Badge>
+                </div>
+                
+                <div className="divide-y divide-gray-100">
+                  {cls.academicPerformance.topStudents.slice(0, 3).map((studentId, idx) => (
+                    <div key={idx} className="flex items-center justify-between py-1.5">
+                      <div className="flex items-center">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${idx === 0 ? 'bg-amber-100 text-amber-800' : idx === 1 ? 'bg-gray-200 text-gray-700' : 'bg-amber-50 text-amber-700'}`}>
+                          {idx + 1}
+                        </div>
+                        <span className="ml-2 text-sm">{studentId}</span>
+                      </div>
+                      <Badge className={idx === 0 ? 'bg-amber-100 text-amber-800' : idx === 1 ? 'bg-gray-100 text-gray-800' : 'bg-amber-50 text-amber-700'}>
+                        {idx === 0 ? 'A' : idx === 1 ? 'A-' : 'B+'}
+                      </Badge>
+                    </div>
+                  ))}
+                  
+                  {cls.academicPerformance.topStudents.length > 3 && (
+                    <div className="py-1 text-xs text-center text-emerald-600">
+                      +{cls.academicPerformance.topStudents.length - 3} more top students
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
         
@@ -642,8 +916,8 @@ function ClassCard({ cls }: { cls: Class }) {
                     <td className="p-1 border border-amber-100 font-medium text-center">{timeSlot}</td>
                     {[0, 1, 2, 3, 4].map((day) => {
                       // Randomly determine if this class is happening in this time slot for this day
-                      const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-                      const hasClass = cls.schedule.days.includes(weekdays[day]) && Math.random() > 0.7;
+                      const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as const;
+                      const hasClass = cls.schedule.days.includes(weekdays[day] as 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday') && Math.random() > 0.7;
                       const subjects = ['Mathematics', 'English', 'Kiswahili', 'Science', 'Social Studies', 'PE', 'Art', 'Music'];
                       const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
                       
@@ -652,7 +926,7 @@ function ClassCard({ cls }: { cls: Class }) {
                           {hasClass ? (
                             <div className="p-1 bg-amber-100 rounded text-amber-800 text-xs">
                               {randomSubject}
-                              <div className="text-xs text-amber-600">{cls.instructor}</div>
+                              <div className="text-xs text-amber-600">{cls.instructorId}</div>
                             </div>
                           ) : null}
                         </td>
@@ -673,7 +947,7 @@ function ClassCard({ cls }: { cls: Class }) {
               </div>
               <div>
                 <div className="text-xs text-amber-600 font-medium mb-1">Time</div>
-                <div className="font-medium">{cls.schedule.time}</div>
+                <div className="font-medium">{cls.schedule.startTime} - {cls.schedule.endTime}</div>
               </div>
               {cls.schedule.venue && (
                 <div className="col-span-2">
@@ -845,7 +1119,7 @@ function ClassCard({ cls }: { cls: Class }) {
                 <div className="p-2 text-xs">
                   {cls.assignments.upcoming.map((assignment, idx) => (
                     <Badge key={idx} className="bg-blue-50 text-blue-700 border-blue-100 mb-1 mr-1">
-                      {assignment}
+                      {assignment.title}
                     </Badge>
                   ))}
                 </div>
@@ -1094,7 +1368,8 @@ function ClassesPage() {
         return (
           cls.name.toLowerCase().includes(search) ||
           cls.description.toLowerCase().includes(search) ||
-          cls.instructor.toLowerCase().includes(search)
+          (getTeacherById(cls.instructorId)?.firstName.toLowerCase().includes(search) || false) ||
+          (getTeacherById(cls.instructorId)?.lastName.toLowerCase().includes(search) || false)
         )
       })
   }, [selectedGradeId, selectedStatus, selectedStream, searchTerm])
