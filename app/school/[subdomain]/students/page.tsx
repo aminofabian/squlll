@@ -1009,7 +1009,46 @@ export default function StudentsPage() {
       // Find the grade name from the selected grade id
       const selectedGradeObj = mockGrades.find(g => g.id === selectedGradeId);
       if (selectedGradeObj) {
-        result = result.filter(student => student.grade === selectedGradeObj.name);
+        // Check for various matching patterns between mockGrades and student records
+        result = result.filter(student => {
+          const studentGrade = student.grade?.toLowerCase();
+          const studentClass = student.class?.toLowerCase();
+          const gradeName = selectedGradeObj.name?.toLowerCase();
+          const gradeDisplayName = selectedGradeObj.displayName?.toLowerCase();
+          
+          // Special case handling for Form 4 (matches both F4 and 12)
+          if (selectedGradeObj.id === 'form4' || selectedGradeObj.name === 'F4') {
+            if (studentGrade === 'f4' || studentGrade === '12' || studentClass?.includes('form 4')) {
+              return true;
+            }
+          }
+          
+          // Check for exact match with name
+          if (studentGrade === gradeName) return true;
+          
+          // Check for class match (e.g., "Form 4" in student.class)
+          if (studentClass?.includes(gradeDisplayName)) return true;
+          
+          // Check if student grade contains the grade name (e.g., "F4" matches "F4")
+          if (studentGrade?.includes(gradeName)) return true;
+          
+          // Check if student grade matches display name without spaces (e.g., "Form4" matches "Form 4")
+          const displayNameNoSpaces = gradeDisplayName?.replace(/\s+/g, '');
+          if (studentGrade === displayNameNoSpaces) return true;
+          
+          // Check if student.class contains the grade name (e.g., "Form 4" contains "4")
+          const gradeNumber = selectedGradeObj.name.replace(/[^0-9]/g, '');
+          if (gradeNumber && studentClass?.includes(gradeNumber)) return true;
+          
+          // Check for numerical equivalence (e.g., grade "12" matches "Form 4" which is 12th grade)
+          // Form 1 = 9th grade, Form 2 = 10th grade, Form 3 = 11th grade, Form 4 = 12th grade
+          if (selectedGradeObj.id === 'form1' && studentGrade === '9') return true;
+          if (selectedGradeObj.id === 'form2' && studentGrade === '10') return true;
+          if (selectedGradeObj.id === 'form3' && studentGrade === '11') return true;
+          if (selectedGradeObj.id === 'form4' && studentGrade === '12') return true;
+          
+          return false;
+        });
       }
     }
     
@@ -1065,7 +1104,7 @@ export default function StudentsPage() {
     });
     
     return result;
-  }, [students, searchTerm, selectedClass, selectedGrade, selectedStatus, sortField, sortDirection]);
+  }, [students, searchTerm, selectedClass, selectedGradeId, selectedStatus, sortField, sortDirection]);
   
   // Function to get status badge color
   const getStatusColor = (status: string) => {
