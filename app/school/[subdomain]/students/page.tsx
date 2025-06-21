@@ -1005,8 +1005,12 @@ export default function StudentsPage() {
     }
     
     // Apply grade filter
-    if (selectedGrade) {
-      result = result.filter(student => student.grade === selectedGrade);
+    if (selectedGradeId && selectedGradeId !== 'all') {
+      // Find the grade name from the selected grade id
+      const selectedGradeObj = mockGrades.find(g => g.id === selectedGradeId);
+      if (selectedGradeObj) {
+        result = result.filter(student => student.grade === selectedGradeObj.name);
+      }
     }
     
     // Apply status filter
