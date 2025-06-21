@@ -76,6 +76,10 @@ import {
   File,
   Image,
   Download,
+  BookOpen,
+  Calculator,
+  Music,
+  Briefcase,
 } from "lucide-react";
 
 
@@ -1570,65 +1574,7 @@ function TeachersPage() {
             </div>
           </div>
 
-          {/* Department Filter */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">Filter by Department</label>
-              {filters.department && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleFilterChange({...filters, department: undefined})} 
-                  className="h-7 px-2 text-xs"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {departments.map(department => (
-                <Button
-                  key={department}
-                  variant={filters.department === department ? "default" : "outline"}
-                  size="sm"
-                  className={`text-xs ${filters.department === department ? "" : "border-gray-200 bg-white"}`}
-                  onClick={() => handleFilterChange({...filters, department})}
-                >
-                  {department}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Designation Filter */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">Filter by Designation</label>
-              {filters.designation && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleFilterChange({...filters, designation: undefined})} 
-                  className="h-7 px-2 text-xs"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {designations.map(designation => (
-                <Button
-                  key={designation}
-                  variant={filters.designation === designation ? "default" : "outline"}
-                  size="sm"
-                  className={`text-xs ${filters.designation === designation ? "" : "border-gray-200 bg-white"}`}
-                  onClick={() => handleFilterChange({...filters, designation})}
-                >
-                  {designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                </Button>
-              ))}
-            </div>
-          </div>
+          {/* Designation Filter removed as requested */}
 
           {/* Teacher Name Filter */}
           <div>
@@ -1703,6 +1649,134 @@ function TeachersPage() {
             </Button>
           </div>
 
+          {/* Department Filter - New Vertical Design */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Filter by Department</h2>
+              {filters.department && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleFilterChange({...filters, department: undefined})}
+                >
+                  Clear Filter
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Department Card */}
+              <div className="rounded-lg overflow-hidden border border-blue-100 shadow-sm">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 flex items-center gap-2 border-b border-blue-200">
+                  <BookOpen className="h-5 w-5 text-blue-700" />
+                  <h3 className="font-medium text-blue-900">Languages & Humanities</h3>
+                </div>
+                <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                  <div className="grid grid-cols-1 gap-2">
+                    {departments
+                      .filter(dept => ['English', 'Languages', 'Social Studies'].includes(dept))
+                      .map(department => (
+                        <Button
+                          key={department}
+                          variant={filters.department === department ? "default" : "outline"}
+                          className={`h-9 justify-start ${filters.department === department ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-blue-50 border-blue-200'}`}
+                          onClick={() => handleFilterChange({...filters, department})}
+                        >
+                          {department}
+                        </Button>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              {/* STEM Card */}
+              <div className="rounded-lg overflow-hidden border border-green-100 shadow-sm">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 flex items-center gap-2 border-b border-green-200">
+                  <Calculator className="h-5 w-5 text-green-700" />
+                  <h3 className="font-medium text-green-900">STEM</h3>
+                </div>
+                <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                  <div className="grid grid-cols-1 gap-2">
+                    {departments
+                      .filter(dept => ['Mathematics', 'Science', 'Computer Science'].includes(dept))
+                      .map(department => (
+                        <Button
+                          key={department}
+                          variant={filters.department === department ? "default" : "outline"}
+                          className={`h-9 justify-start ${filters.department === department ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-green-50 border-green-200'}`}
+                          onClick={() => handleFilterChange({...filters, department})}
+                        >
+                          {department}
+                        </Button>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              {/* Creative & Physical Card */}
+              <div className="rounded-lg overflow-hidden border border-amber-100 shadow-sm">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-3 flex items-center gap-2 border-b border-amber-200">
+                  <Music className="h-5 w-5 text-amber-700" />
+                  <h3 className="font-medium text-amber-900">Creative & Physical</h3>
+                </div>
+                <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                  <div className="grid grid-cols-1 gap-2">
+                    {departments
+                      .filter(dept => ['Arts & Music', 'Physical Education'].includes(dept))
+                      .map(department => (
+                        <Button
+                          key={department}
+                          variant={filters.department === department ? "default" : "outline"}
+                          className={`h-9 justify-start ${filters.department === department ? 'bg-amber-600 hover:bg-amber-700' : 'hover:bg-amber-50 border-amber-200'}`}
+                          onClick={() => handleFilterChange({...filters, department})}
+                        >
+                          {department}
+                        </Button>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+              
+              {/* Support Services Card */}
+              <div className="rounded-lg overflow-hidden border border-purple-100 shadow-sm">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 flex items-center gap-2 border-b border-purple-200">
+                  <Briefcase className="h-5 w-5 text-purple-700" />
+                  <h3 className="font-medium text-purple-900">Support Services</h3>
+                </div>
+                <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                  <div className="grid grid-cols-1 gap-2">
+                    {departments
+                      .filter(dept => ['Special Education', 'Administration'].includes(dept))
+                      .map(department => (
+                        <Button
+                          key={department}
+                          variant={filters.department === department ? "default" : "outline"}
+                          className={`h-9 justify-start ${filters.department === department ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-purple-50 border-purple-200'}`}
+                          onClick={() => handleFilterChange({...filters, department})}
+                        >
+                          {department}
+                        </Button>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Current selection indicator */}
+          {filters.department && (
+            <div className="mb-6 flex items-center">
+              <span className="text-sm text-gray-500">Currently viewing: </span>
+              <Badge className="ml-2 bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200">
+                {filters.department}
+              </Badge>
+            </div>
+          )}
+          
           {teacherCreated && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-md mb-4 flex items-center">
               <CheckCircle className="h-5 w-5 mr-2" />
