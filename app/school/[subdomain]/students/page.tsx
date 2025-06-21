@@ -206,19 +206,24 @@ const studentFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   admission_number: z.string().min(2, { message: 'Admission number is required' }),
   gender: z.enum(['male', 'female']),
-  grade: z.string().min(1, { message: 'Grade is required' }),
-  class: z.string().min(1, { message: 'Class is required' }),
-  stream: z.string().optional(),
-  date_of_birth: z.string().min(1, { message: 'Date of birth is required' }),
-  age: z.coerce.number().min(3).max(22),
+  grade: z.string(),
+  class: z.string(),
+  age: z.number(),
+  date_of_birth: z.string(),
   admission_date: z.string(),
   guardian_name: z.string().min(2, { message: 'Guardian name is required' }),
   guardian_phone: z.string().min(10, { message: 'Valid phone number is required' }),
   guardian_email: z.string().email().optional().or(z.literal('')),
   home_address: z.string().optional().or(z.literal('')),
+  stream: z.string().optional().or(z.literal('')),
 });
 
 type StudentFormData = z.infer<typeof studentFormSchema>;
+
+// Helper function to format currency (Kenya Shillings)
+const formatCurrency = (amount: number) => {
+  return `KES ${amount.toLocaleString()}`;
+};
 
 // Student creation drawer component
 function CreateStudentDrawer({ onStudentCreated }: { onStudentCreated: () => void }) {
@@ -1128,11 +1133,11 @@ export default function StudentsPage() {
         />
       )}
 
-      {/* Search filter column - expanded to take up more space */}
+      {/* Search filter column - simplified with only name search */}
       <div className="hidden md:flex flex-col w-96 border-r overflow-y-auto p-6 shrink-0 bg-white">
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-1">Search Students</h2>
-          <p className="text-sm text-muted-foreground">Find students by name or grade</p>
+          <p className="text-sm text-muted-foreground">Find students by name</p>
         </div>
 
         <div className="space-y-6">
@@ -1148,110 +1153,6 @@ export default function StudentsPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
-          </div>
-
-          {/* Grade Filter Section */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">Filter by Grade</label>
-              {selectedGradeId !== 'all' && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setSelectedGradeId('all')} 
-                  className="h-7 px-2 text-xs"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-            
-            {/* Education Level Headers */}
-            <div className="space-y-4">
-              {/* Preschool */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  {getLevelIcon('preschool')}
-                  <h4 className="text-sm font-medium">Preschool</h4>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {mockGrades
-                    .filter(grade => grade.level === 'preschool')
-                    .map(grade => (
-                      <GradeButton 
-                        key={grade.id} 
-                        grade={grade} 
-                        selectedGradeId={selectedGradeId} 
-                        onClick={setSelectedGradeId} 
-                      />
-                    ))
-                  }
-                </div>
-              </div>
-              
-              {/* Primary */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  {getLevelIcon('primary')}
-                  <h4 className="text-sm font-medium">Primary</h4>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {mockGrades
-                    .filter(grade => grade.level === 'primary')
-                    .map(grade => (
-                      <GradeButton 
-                        key={grade.id} 
-                        grade={grade} 
-                        selectedGradeId={selectedGradeId} 
-                        onClick={setSelectedGradeId} 
-                      />
-                    ))
-                  }
-                </div>
-              </div>
-              
-              {/* Junior Secondary */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  {getLevelIcon('junior-secondary')}
-                  <h4 className="text-sm font-medium">Junior Secondary</h4>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {mockGrades
-                    .filter(grade => grade.level === 'junior-secondary')
-                    .map(grade => (
-                      <GradeButton 
-                        key={grade.id} 
-                        grade={grade} 
-                        selectedGradeId={selectedGradeId} 
-                        onClick={setSelectedGradeId} 
-                      />
-                    ))
-                  }
-                </div>
-              </div>
-              
-              {/* Senior Secondary */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  {getLevelIcon('senior-secondary')}
-                  <h4 className="text-sm font-medium">Senior Secondary</h4>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {mockGrades
-                    .filter(grade => grade.level === 'senior-secondary')
-                    .map(grade => (
-                      <GradeButton 
-                        key={grade.id} 
-                        grade={grade} 
-                        selectedGradeId={selectedGradeId} 
-                        onClick={setSelectedGradeId} 
-                      />
-                    ))
-                  }
-                </div>
-              </div>
             </div>
           </div>
 
@@ -1275,124 +1176,39 @@ export default function StudentsPage() {
         {/* Student List with Filtering */}
         <div className="mt-8">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-medium">
-              {searchTerm || selectedGradeId !== 'all' ? 'Filtered Students' : 'All Students'}
-            </h3>
-            
-            {/* Filter badges */}
-            <div className="flex items-center gap-1">
-              {selectedGradeId !== 'all' && (
-                <Badge variant="outline" className="text-xs">
-                  {mockGrades.find(g => g.id === selectedGradeId)?.displayName || ''}
-                </Badge>
-              )}
-            </div>
+            <h3 className="font-medium">Students <span className="text-muted-foreground">({filteredAndSortedStudents.length})</span></h3>
           </div>
           
-          <div className="max-h-[400px] overflow-y-auto space-y-3">
-            {students
-              .filter(student => {
-                // Filter by search term if present
-                const nameMatch = searchTerm ? 
-                  student.name.toLowerCase().includes(searchTerm.toLowerCase()) : 
-                  true;
-                
-                // Filter by grade if selected
-                const selectedGrade = mockGrades.find(g => g.id === selectedGradeId);
-                let gradeMatch = true;
-                
-                if (selectedGradeId !== 'all' && selectedGrade) {
-                  // Check both grade field and class field for matches
-                  gradeMatch = (
-                    student.grade === selectedGrade.name || // Match exact grade name (G3)
-                    student.grade === selectedGrade.displayName || // Match display name (Grade 3)
-                    student.class?.includes(selectedGrade.displayName) // Class field contains display name
-                  );
-                }
-                
-                return nameMatch && gradeMatch;
-              })
-                .map(student => {
-                  // Calculate fees balance
-                  const feesBalance = (student as any).fees?.balance || 0;
-                  const formattedBalance = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'KES',
-                    minimumFractionDigits: 0,
-                  }).format(feesBalance);
-                  
-                  return (
-                    <div 
-                      key={student.id}
-                      className={`flex flex-col p-3 rounded-md cursor-pointer hover:bg-muted transition-colors ${selectedStudentId === student.id ? 'bg-primary/5 border border-primary/20' : 'border'}`}
-                      onClick={() => setSelectedStudentId(student.id)}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shadow-sm">
-                          {student.photo ? (
-                            <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="h-5 w-5 text-primary" />
-                          )}
-                        </div>
-                        <div className="flex-1 overflow-hidden">
-                          <p className="font-semibold text-base truncate">{student.name}</p>
-                          <p className="text-sm text-muted-foreground truncate">{student.class} {student.stream}</p>
-                        </div>
+          <div className="space-y-2">
+            {filteredAndSortedStudents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No students match your search criteria
+              </div>
+            ) : (
+              filteredAndSortedStudents.map((student) => (
+                <div
+                  key={student.id}
+                  className={`p-3 rounded-md border transition-colors cursor-pointer ${student.id === selectedStudentId ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/30'}`}
+                  onClick={() => setSelectedStudentId(student.id)}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${student.status === 'active' ? 'bg-green-500' : student.status === 'inactive' ? 'bg-gray-400' : 'bg-red-500'}`} />
+                        <div className="font-medium">{student.name}</div>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 mt-1">
-                        <div className="flex items-center gap-1 text-xs">
-                          <span className="text-muted-foreground">Gender:</span> 
-                          <span className="font-medium">{student.gender || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs justify-end">
-                          <span className="text-muted-foreground">Status:</span>
-                          <Badge variant="outline" className="h-5 text-xs px-1 capitalize">
-                            {student.status || 'Unknown'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs">
-                          <span className="text-muted-foreground">Admission:</span> 
-                          <span className="font-medium">{(student as any).admissionNo || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs justify-end">
-                          <span className="text-muted-foreground">Fees:</span> 
-                          <span className={`font-medium ${feesBalance > 0 ? 'text-red-500' : ''}`}>
-                            {formattedBalance}
-                          </span>
-                        </div>
-                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">{student.admissionNumber}</div>
                     </div>
-                  );
-                })
-              }
-              {students.filter(student => {
-                const nameMatch = searchTerm ? student.name.toLowerCase().includes(searchTerm.toLowerCase()) : true;
-                
-                // Use the same matching logic as above
-                const selectedGrade = mockGrades.find(g => g.id === selectedGradeId);
-                let gradeMatch = true;
-                
-                if (selectedGradeId !== 'all' && selectedGrade) {
-                  gradeMatch = (
-                    student.grade === selectedGrade.name ||
-                    student.grade === selectedGrade.displayName ||
-                    student.class?.includes(selectedGrade.displayName)
-                  );
-                }
-                
-                return nameMatch && gradeMatch;
-              }).length === 0 && (
-                <div className="p-6 text-center text-muted-foreground">
-                  No students match your filters
+                    <div className="text-sm text-muted-foreground">{student.class}</div>
+                  </div>
                 </div>
-              )}
-            </div>
+              ))
+            )}
           </div>
+        </div>
       </div>
 
-      {/* Main content column - Student Details */}
+      {/* Main content column - Grade Filter and Student Details */}
       <div className="flex-1 overflow-auto p-8">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
@@ -1402,19 +1218,138 @@ export default function StudentsPage() {
           </div>
           <CreateStudentDrawer onStudentCreated={() => {}} />
         </div>
-
-
-        {!selectedStudent ? (
-          <div className="flex flex-col items-center justify-center h-[70vh] text-center">
-            <div className="bg-muted/30 rounded-full p-6 mb-4">
-              <User className="h-12 w-12 text-muted-foreground" />
-            </div>
-            <h2 className="text-2xl font-medium mb-2">No student selected</h2>
-            <p className="text-muted-foreground max-w-md">
-              Please select a student from the list on the left to view their complete details, attendance records, academic performance, and other information.
-            </p>
+        
+        {/* Grade Filter Section - New Design */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Filter by Grade</h2>
+            {selectedGradeId !== 'all' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setSelectedGradeId('all')}
+              >
+                Clear Filter
+              </Button>
+            )}
           </div>
-        ) : (
+          
+          {/* Education Level Cards - Grid Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Preschool Card */}
+            <div className="rounded-lg overflow-hidden border border-blue-100 shadow-sm">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 flex items-center gap-2 border-b border-blue-200">
+                {getLevelIcon('preschool')}
+                <h3 className="font-medium text-blue-900">Preschool</h3>
+              </div>
+              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  {mockGrades
+                    .filter(grade => grade.level === 'preschool')
+                    .map(grade => (
+                      <Button
+                        key={grade.id}
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-blue-50 border-blue-200'}`}
+                        onClick={() => setSelectedGradeId(grade.id)}
+                      >
+                        {grade.name}
+                      </Button>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+            
+            {/* Primary Card */}
+            <div className="rounded-lg overflow-hidden border border-green-100 shadow-sm">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 flex items-center gap-2 border-b border-green-200">
+                {getLevelIcon('primary')}
+                <h3 className="font-medium text-green-900">Primary</h3>
+              </div>
+              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  {mockGrades
+                    .filter(grade => grade.level === 'primary')
+                    .map(grade => (
+                      <Button
+                        key={grade.id}
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-green-50 border-green-200'}`}
+                        onClick={() => setSelectedGradeId(grade.id)}
+                      >
+                        {grade.name}
+                      </Button>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+            
+            {/* Junior Secondary Card */}
+            <div className="rounded-lg overflow-hidden border border-amber-100 shadow-sm">
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-3 flex items-center gap-2 border-b border-amber-200">
+                {getLevelIcon('junior-secondary')}
+                <h3 className="font-medium text-amber-900">Junior Secondary</h3>
+              </div>
+              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  {mockGrades
+                    .filter(grade => grade.level === 'junior-secondary')
+                    .map(grade => (
+                      <Button
+                        key={grade.id}
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-amber-600 hover:bg-amber-700' : 'hover:bg-amber-50 border-amber-200'}`}
+                        onClick={() => setSelectedGradeId(grade.id)}
+                      >
+                        {grade.name}
+                      </Button>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+            
+            {/* Senior Secondary Card */}
+            <div className="rounded-lg overflow-hidden border border-purple-100 shadow-sm">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 flex items-center gap-2 border-b border-purple-200">
+                {getLevelIcon('senior-secondary')}
+                <h3 className="font-medium text-purple-900">Senior Secondary</h3>
+              </div>
+              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  {mockGrades
+                    .filter(grade => grade.level === 'senior-secondary')
+                    .map(grade => (
+                      <Button
+                        key={grade.id}
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-purple-50 border-purple-200'}`}
+                        onClick={() => setSelectedGradeId(grade.id)}
+                      >
+                        {grade.name}
+                      </Button>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Current Selection Indicator */}
+          {selectedGradeId !== 'all' && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Currently viewing:</span>
+              <Badge variant="secondary" className="font-medium">
+                {mockGrades.find(g => g.id === selectedGradeId)?.displayName || 'All Grades'}
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Student Details Section */}
+        {selectedStudent ? (
           <div className="space-y-6">
             {/* Student profile header */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -1694,8 +1629,17 @@ export default function StudentsPage() {
               </TabsContent>
             </Tabs>
           </div>
+        ) : (
+          <div className="bg-muted/30 rounded-lg p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <User className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h2 className="text-2xl font-medium mb-2">No student selected</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Please select a student from the list on the left to view their complete details, attendance records, academic performance, and other information.
+            </p>
+          </div>
         )}
-        
       </div>
     </div>
   );
@@ -1721,7 +1665,7 @@ function StudentCard({
   };
   
   return (
-    <Card className="overflow-hidden" style={{ borderLeft: "4px solid", borderLeftColor: "#0ea5e9" }}>
+    <Card className="overflow-hidden border-l-4 border-l-sky-500">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div className="flex items-start gap-3">
@@ -1952,4 +1896,3 @@ function StudentCard({
     </Card>
   );
 }
-

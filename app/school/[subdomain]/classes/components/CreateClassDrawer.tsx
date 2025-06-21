@@ -23,7 +23,7 @@ import { Plus, X, ChevronRight, School, Book, Users, GraduationCap, ClipboardLis
 // Data for subjects based on Kenyan CBC structure
 const SUBJECT_DATA = {
   "PrePrimary": {
-    "grades": ["PP1", "PP2"],
+    "grades": ["Baby Class", "PP1", "PP2"],
     "subjects": [
       "Language Activities",
       "Mathematical Activities",
@@ -31,6 +31,19 @@ const SUBJECT_DATA = {
       "Psychomotor and Creative Activities",
       "Religious Education Activities"
     ]
+  },
+  "Tertiary": {
+    "grades": ["Year 1", "Year 2", "Year 3", "Year 4"],
+    "subjects": [
+      "University Core Courses",
+      "Major Specific Courses",
+      "Minor/Elective Courses",
+      "Research Methods"
+    ]
+  },
+  "Other": {
+    "grades": ["Not Specified"],
+    "subjects": ["Not Specified"]
   },
   "LowerPrimary": {
     "grades": ["Grade 1", "Grade 2", "Grade 3"],
@@ -152,7 +165,8 @@ const mapEducationLevelToSubjectDataKey = (level: EducationLevel): EducationLeve
       return 'UpperPrimary';
     case 'junior-secondary': return 'JuniorSecondary';
     case 'senior-secondary': return 'SeniorSecondary';
-    // case 'tertiary': return 'Tertiary'; // Add "Tertiary" to SUBJECT_DATA if needed
+    case 'tertiary': return 'Tertiary';
+    case 'other': return 'Other';
     default: return null;
   }
 };
@@ -223,6 +237,14 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
   const selectedGrade = form.watch('grade'); // Watch the grade as well
 
   const getGradesForLevel = (level: EducationLevel): string[] => {
+    // Special case for primary to include both lower and upper primary grades
+    if (level === 'primary') {
+      return [
+        ...SUBJECT_DATA['LowerPrimary'].grades,
+        ...SUBJECT_DATA['UpperPrimary'].grades
+      ];
+    }
+    
     const dataKey = mapEducationLevelToSubjectDataKey(level);
     if (!dataKey) return [];
 
@@ -239,6 +261,16 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
 
   // Determine subjects based on selected level and possibly grade
   const getDefaultSubjects = (): string[] => {
+    // Special case for primary to include both Lower and Upper Primary subjects
+    if (selectedEducationLevel === 'primary') {
+      let subjects = [
+        ...SUBJECT_DATA['LowerPrimary'].subjects,
+        ...SUBJECT_DATA['UpperPrimary'].subjects
+      ];
+      // Remove duplicates and sort
+      return Array.from(new Set(subjects)).sort();
+    }
+
     const dataKey = mapEducationLevelToSubjectDataKey(selectedEducationLevel);
     if (!dataKey) return [];
 
@@ -301,53 +333,53 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-300">
+        <Button className="bg-[#246a59] hover:bg-[#246a59]/90 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300">
           <Plus className="mr-2 h-4 w-4" />
           Add New Class
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-screen w-full md:w-3/5 lg:w-2/5 bg-white shadow-xl rounded-t-lg" data-vaul-drawer-direction="right">
-        <DrawerHeader className="border-b border-indigo-100 pb-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
+        <DrawerHeader className="border-b border-[#246a59]/20 pb-4 bg-[#246a59]/10 rounded-t-lg">
           <div className="flex items-center justify-center">
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-full shadow-md">
+            <div className="bg-[#246a59] p-3 rounded-full shadow-md">
               <School className="h-6 w-6 text-white" />
             </div>
           </div>
-          <DrawerTitle className="text-2xl text-indigo-800 font-semibold text-center mt-3 flex items-center justify-center gap-2">
+          <DrawerTitle className="text-2xl text-[#246a59] font-semibold text-center mt-3 flex items-center justify-center gap-2">
             Create New Class
           </DrawerTitle>
-          <DrawerDescription className="text-center text-sm text-indigo-600 mt-1">
+          <DrawerDescription className="text-center text-sm text-[#246a59] mt-1">
             Complete the form below to create a new class in your school
           </DrawerDescription>
         </DrawerHeader>
         
         {/* Form progression indicator */}
         <div className="h-2 bg-gray-100">
-          <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500" style={{ width: `${formProgress}%` }}></div>
+          <div className="h-full bg-[#246a59]" style={{ width: `${formProgress}%` }}></div>
         </div>
 
         <div className="p-6 md:p-8 overflow-y-auto">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="w-full bg-gray-100 h-1.5 rounded-full mb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 rounded-full transition-all duration-500" 
+                <div className="bg-custom-blue h-1.5 rounded-full transition-all duration-500" 
                   style={{ width: form.formState.isValid ? '100%' : '40%' }}></div>
               </div>
               
               {/* Form Sections */}
-              <div className="flex justify-between items-center text-xs text-indigo-600 font-medium mb-6">
+              <div className="flex justify-between items-center text-xs text-[#246a59] font-medium mb-6">
                 <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center">1</div>
+                  <div className="w-6 h-6 rounded-full bg-[#246a59] text-white flex items-center justify-center">1</div>
                   <span>Basic Info</span>
                 </div>
                 <div className="h-0.5 w-1/6 bg-indigo-200"></div>
                 <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center">2</div>
+                  <div className="w-6 h-6 rounded-full bg-[#246a59] text-white flex items-center justify-center">2</div>
                   <span>Education</span>
                 </div>
                 <div className="h-0.5 w-1/6 bg-indigo-200"></div>
                 <div className="flex flex-col items-center gap-1">
-                  <div className="w-6 h-6 rounded-full bg-indigo-400 text-white flex items-center justify-center">3</div>
+                  <div className="w-6 h-6 rounded-full bg-[#246a59] text-white flex items-center justify-center">3</div>
                   <span>Subjects</span>
                 </div>
                 <div className="h-0.5 w-1/6 bg-indigo-200"></div>
@@ -359,7 +391,7 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
               {/* SECTION: Basic Class Information */}
               <div className="mb-8 p-5 bg-white rounded-xl shadow-sm border border-indigo-50 hover:border-indigo-100 transition-all">
                 <h3 className="text-lg font-medium text-indigo-800 mb-4 flex items-center gap-2 pb-2 border-b border-indigo-100">
-                  <School className="h-5 w-5 text-indigo-600" />
+                  <School className="h-5 w-5 text-[#246a59]" />
                   Basic Class Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -404,7 +436,7 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
               {/* Education Level and Grade */}
               <div className="mb-8">
                 <h3 className="text-lg font-medium text-indigo-800 mb-4 flex items-center gap-2 pb-2 border-b border-indigo-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#246a59]" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                   </svg>
                   Education Level & Grade
@@ -423,11 +455,12 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="PREPRIMARY">Pre-Primary</SelectItem>
-                          <SelectItem value="LOWER_PRIMARY">Lower Primary</SelectItem>
-                          <SelectItem value="UPPER_PRIMARY">Upper Primary</SelectItem>
-                          <SelectItem value="JUNIOR_SECONDARY">Junior Secondary</SelectItem>
-                          <SelectItem value="SENIOR_SECONDARY">Senior Secondary</SelectItem>
+                          <SelectItem value="preschool">Pre-Primary</SelectItem>
+                          <SelectItem value="primary">Primary</SelectItem>
+                          <SelectItem value="junior-secondary">Junior Secondary</SelectItem>
+                          <SelectItem value="senior-secondary">Senior Secondary</SelectItem>
+                          <SelectItem value="tertiary">Tertiary</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>The overall education stage (e.g., Primary, Junior Secondary).</FormDescription>
@@ -602,7 +635,7 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
               {/* SECTION: Subjects Offered */}
               <div className="mb-8 p-5 bg-white rounded-xl shadow-sm border border-indigo-50 hover:border-indigo-100 transition-all">
                 <h3 className="text-lg font-medium text-indigo-800 mb-4 flex items-center gap-2 pb-2 border-b border-indigo-100">
-                  <Book className="h-5 w-5 text-indigo-600" />
+                  <Book className="h-5 w-5 text-[#246a59]" />
                   Subjects Offered
                 </h3>
                 
@@ -680,7 +713,7 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
               {/* SECTION: Additional Details */}
               <div className="mb-8 p-5 bg-white rounded-xl shadow-sm border border-indigo-50 hover:border-indigo-100 transition-all">
                 <h3 className="text-lg font-medium text-indigo-800 mb-4 flex items-center gap-2 pb-2 border-b border-indigo-100">
-                  <Users className="h-5 w-5 text-indigo-600" />
+                  <Users className="h-5 w-5 text-[#246a59]" />
                   Additional Details
                 </h3>
                 
@@ -726,7 +759,7 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
                 />
               </div>
 
-              <DrawerFooter className="border-t border-indigo-100 pt-6 mt-8 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <DrawerFooter className="border-t border-custom-blue/20 pt-6 mt-8 bg-custom-blue/10">
                 <div className="flex justify-between w-full">
                   <DrawerClose asChild>
                     <Button variant="outline" className="border-indigo-200 hover:bg-indigo-50">
@@ -736,11 +769,11 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
                   </DrawerClose>
                   <Button
                     type="submit"
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-300"
+                    className="bg-custom-blue hover:bg-custom-blue/90 text-[#246a59] hover:text-white  hover:bg-[#246a59] font-medium shadow-md hover:shadow-lg transition-all duration-300"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <>Creating Class...<div className="ml-2 h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div></>
+                      <>Creating Class...<div className="ml-2 h-4 w-4 rounded-full border-2 border-slate-400 border-t-transparent animate-spin"></div></>
                     ) : (
                       <>Create Class <ChevronRight className="h-4 w-4 ml-1" /></>
                     )}

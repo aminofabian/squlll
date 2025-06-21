@@ -97,7 +97,7 @@ function getStatusColor(status: string) {
     case 'active':
       return 'bg-green-100 text-green-800'
     case 'scheduled':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-custom-blue/10 text-custom-blue'
     case 'completed':
       return 'bg-gray-100 text-gray-800'
     default:
@@ -111,7 +111,7 @@ function getLevelColor(level: EducationLevel) {
     case 'preschool':
       return 'bg-purple-100 text-purple-800'
     case 'primary':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-custom-blue/10 text-custom-blue'
     case 'junior-secondary':
       return 'bg-yellow-100 text-yellow-800'
     case 'senior-secondary':
@@ -140,7 +140,7 @@ function getLevelIcon(level: EducationLevel) {
 // Helper function for component-specific status color styling
 function getComponentStatusColor(status: string) {
   switch(status) {
-    case 'active': return 'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-400';
+    case 'active': return 'bg-custom-blue/10 text-custom-blue hover:bg-custom-blue/20 border-custom-blue/40';
     case 'scheduled': return 'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-400';
     case 'completed': return 'bg-green-100 text-green-800 hover:bg-green-200 border-green-400';
     default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-400';
@@ -151,7 +151,7 @@ function getComponentStatusColor(status: string) {
 function getComponentLevelColor(level: string) {
   switch(level) {
     case 'preschool': return 'bg-purple-100 text-purple-800 border-purple-400';
-    case 'primary': return 'bg-blue-100 text-blue-800 border-blue-400';
+    case 'primary': return 'bg-custom-blue/10 text-custom-blue border-custom-blue/40';
     case 'junior-secondary': return 'bg-yellow-100 text-yellow-800 border-yellow-400';
     case 'senior-secondary': return 'bg-red-100 text-red-800 border-red-400';
     default: return 'bg-gray-100 text-gray-800 border-gray-400';
@@ -237,9 +237,9 @@ function ClassCard({ cls }: { cls: Class }) {
       <CardContent className="pt-5">
         {/* Quick Stats Bar */}
         <div className="mb-5 grid grid-cols-4 gap-2 text-xs">
-          <div className="bg-blue-50 p-2 rounded flex flex-col items-center justify-center">
-            <span className="text-blue-600 font-bold text-lg">{cls.students}</span>
-            <span className="text-blue-700">Students</span>
+          <div className="bg-custom-blue/10 p-2 rounded flex flex-col items-center justify-center">
+            <span className="text-custom-blue font-bold text-lg">{cls.students}</span>
+            <span className="text-custom-blue">Students</span>
           </div>
           {cls.attendance && (
             <div className="bg-amber-50 p-2 rounded flex flex-col items-center justify-center">
@@ -299,12 +299,12 @@ function ClassCard({ cls }: { cls: Class }) {
         )}
 
         {/* Basic class info - premium card layout */}
-        <div className="bg-gradient-to-r from-slate-50 to-gray-50  p-4 shadow-sm border border-gray-100 mb-5">
+        <div className="bg-custom-blue/5  p-4 shadow-sm border border-gray-100 mb-5">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <h4 className="text-sm font-medium mb-2 text-gray-700 flex items-center">
-                <div className="mr-2 p-1 bg-blue-100  flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 text-blue-700" />
+                <div className="mr-2 p-1 bg-custom-blue/15  flex items-center justify-center">
+                  <User className="h-3.5 w-3.5 text-custom-blue" />
                 </div>
                 Staff & Students
               </h4>
@@ -316,7 +316,7 @@ function ClassCard({ cls }: { cls: Class }) {
                   </div>
                   <span className="ml-2 flex items-center">
                     <span className="font-medium">{cls.classTeacherId ? getTeacherById(cls.classTeacherId)?.firstName + " " + getTeacherById(cls.classTeacherId)?.lastName : (cls.instructorId ? getTeacherById(cls.instructorId)?.firstName + " " + getTeacherById(cls.instructorId)?.lastName : "No Teacher Assigned")}</span>
-                    {cls.classTeacherId && <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded ml-2">Class Teacher</span>}
+                    {cls.classTeacherId && <span className="text-xs bg-custom-blue/10 text-custom-blue px-1.5 py-0.5 rounded ml-2">Class Teacher</span>}
                   </span>
                 </div>
                 
@@ -372,7 +372,7 @@ function ClassCard({ cls }: { cls: Class }) {
         
         {/* Class Leadership Section */}
         {cls.classLeadership && (
-          <div className="mb-5 bg-gradient-to-r from-indigo-50 to-blue-50 p-4 shadow-sm border border-indigo-100">
+          <div className="mb-5 bg-custom-blue/10 p-4 shadow-sm border border-indigo-100">
             <h4 className="text-sm font-semibold mb-3 text-indigo-900 flex items-center">
               <div className="mr-2 p-1 bg-indigo-100 flex items-center justify-center">
                 <Crown className="h-3.5 w-3.5 text-indigo-700" />
@@ -416,8 +416,8 @@ function ClassCard({ cls }: { cls: Class }) {
               )}
               {cls.classLeadership.assistantPrefectId && (
                 <div className="flex items-center bg-white p-2 shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <div className="p-1.5 mr-2 bg-blue-100 rounded-full">
-                    <Trophy className="h-3.5 w-3.5 text-blue-600" />
+                  <div className="p-1.5 mr-2 bg-custom-blue/15 rounded-full">
+                    <Trophy className="h-3.5 w-3.5 text-custom-blue" />
                   </div>
                   <div>
                     <div className="text-xs text-indigo-600 font-medium">Assistant</div>
@@ -444,7 +444,7 @@ function ClassCard({ cls }: { cls: Class }) {
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(cls.classLeadership.subjectMonitors).map(([subject, monitor], idx) => (
                       <div key={idx} className="flex items-center text-xs">
-                        <Badge className="bg-blue-50 text-blue-700 mr-1 w-24 justify-center overflow-hidden text-ellipsis">
+                        <Badge className="bg-custom-blue/10 text-custom-blue mr-1 w-24 justify-center overflow-hidden text-ellipsis">
                           {subject}
                         </Badge>
                         <span>{monitor}</span>
@@ -472,7 +472,7 @@ function ClassCard({ cls }: { cls: Class }) {
         
         {/* Attendance Statistics */}
         {cls.attendance && (
-          <div className="mb-5 bg-gradient-to-r from-indigo-50 to-blue-50 p-4 shadow-sm border border-indigo-100">
+          <div className="mb-5 bg-custom-blue/10 p-4 shadow-sm border border-indigo-100">
             <h4 className="text-sm font-semibold mb-3 text-indigo-900 flex items-center">
               <div className="mr-2 p-1 bg-indigo-100 flex items-center justify-center">
                 <Users className="h-3.5 w-3.5 text-indigo-700" />
@@ -543,7 +543,7 @@ function ClassCard({ cls }: { cls: Class }) {
                     <div key={i} className="flex-1 flex flex-col items-center">
                       <div className="text-xs text-gray-500 mb-1">{rate}%</div>
                       <div 
-                        className={`w-full rounded-t ${rate > 90 ? 'bg-green-500' : rate > 80 ? 'bg-blue-500' : rate > 70 ? 'bg-amber-500' : 'bg-red-500'}`}
+                        className={`w-full rounded-t ${rate > 90 ? 'bg-green-500' : rate > 80 ? 'bg-custom-blue/100' : rate > 70 ? 'bg-amber-500' : 'bg-red-500'}`}
                         style={{ height }}
                       />
                       <div className="text-xs text-center text-gray-600 mt-1">{dayLabel}</div>
@@ -614,7 +614,7 @@ function ClassCard({ cls }: { cls: Class }) {
             
             {/* Attendance Statistics */}
             <div className="bg-white p-3 shadow-sm border border-indigo-100">
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <div className="text-indigo-600 font-medium mb-1">Monthly Averages</div>
                   <div className="space-y-1.5">
@@ -749,7 +749,7 @@ function ClassCard({ cls }: { cls: Class }) {
                 
                 <div className="flex flex-col items-center">
                   <div className="text-xs text-emerald-600 font-medium mb-1">Target Mean</div>
-                  <div className="font-bold text-xl">
+                  <div className="font-bold text-lg">
                     {cls.academicPerformance.targetMeanScore || '–'}
                   </div>
                   <div className="flex items-center mt-1 text-xs">
@@ -769,7 +769,7 @@ function ClassCard({ cls }: { cls: Class }) {
             
             {/* Subject Performance Section */}
             {cls.academicPerformance.subjectPerformance && Object.keys(cls.academicPerformance.subjectPerformance).length > 0 && (
-              <div className="bg-white p-3 border border-emerald-100 shadow-sm mb-3">
+              <div className="bg-white border border-emerald-100 shadow-sm mb-3">
                 <div className="text-xs font-medium mb-2 text-emerald-700 border-b border-emerald-100 pb-2">
                   Subject Performance
                 </div>
@@ -806,7 +806,7 @@ function ClassCard({ cls }: { cls: Class }) {
             
             {/* Top Students Section */}
             {cls.academicPerformance.topStudents && cls.academicPerformance.topStudents.length > 0 && (
-              <div className="bg-white p-3 border border-emerald-100 shadow-sm">
+              <div className="bg-white border border-emerald-100 shadow-sm">
                 <div className="text-xs font-medium mb-2 text-emerald-700 flex justify-between items-center">
                   <span>Top Performing Students</span>
                   <Badge className="bg-emerald-100 text-emerald-800">
@@ -861,7 +861,7 @@ function ClassCard({ cls }: { cls: Class }) {
                     className={(cls.attendance.trend === 'improving' ? 
                       'bg-green-50 text-green-700 border-green-100' : 
                       cls.attendance.trend === 'stable' ? 
-                      'bg-blue-50 text-blue-700 border-blue-100' : 
+                      'bg-custom-blue/10 text-custom-blue border-custom-blue/20' : 
                       'bg-red-50 text-red-700 border-red-100') + " px-2 py-1 capitalize"}
                   >
                     {cls.attendance.trend === 'improving' && <ArrowUp className="h-3 w-3 mr-1 inline" />}
@@ -967,13 +967,13 @@ function ClassCard({ cls }: { cls: Class }) {
         </div>
         
         {/* Syllabus Progress Section */}
-        <div className="mb-5 bg-gradient-to-r from-blue-50 to-sky-50 p-4 shadow-sm border border-blue-100">
-          <h4 className="text-sm font-semibold mb-3 text-blue-900 flex items-center">
-            <div className="mr-2 p-1 bg-blue-100 flex items-center justify-center">
-              <BookOpen className="h-3.5 w-3.5 text-blue-700" />
+        <div className="mb-5 bg-custom-blue/10 p-4 shadow-sm border border-custom-blue/20">
+          <h4 className="text-sm font-semibold mb-3 text-custom-blue flex items-center">
+            <div className="mr-2 p-1 bg-custom-blue/15 flex items-center justify-center">
+              <BookOpen className="h-3.5 w-3.5 text-custom-blue" />
             </div>
             Syllabus Progress
-            <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200">
+            <Badge variant="outline" className="ml-2 text-xs px-2 py-0.5 bg-custom-blue/10 text-custom-blue border-custom-blue/30">
               {Math.floor(Math.random() * 30) + 70}% Complete
             </Badge>
           </h4>
@@ -987,7 +987,7 @@ function ClassCard({ cls }: { cls: Class }) {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5 mb-3">
                 <div 
-                  className="bg-blue-600 h-2.5 rounded-full" 
+                  className="bg-custom-blue h-2.5 rounded-full" 
                   style={{ width: (Math.floor(Math.random() * 30) + 70) + '%' }}
                 ></div>
               </div>
@@ -1002,7 +1002,7 @@ function ClassCard({ cls }: { cls: Class }) {
                       <div className="flex-grow">
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
                           <div 
-                            className={idx % 2 === 0 ? 'bg-blue-500 h-1.5 rounded-full' : 'bg-sky-500 h-1.5 rounded-full'} 
+                            className={idx % 2 === 0 ? 'bg-custom-blue/100 h-1.5 rounded-full' : 'bg-sky-500 h-1.5 rounded-full'} 
                             style={{ width: progress + '%' }}
                           ></div>
                         </div>
@@ -1016,12 +1016,12 @@ function ClassCard({ cls }: { cls: Class }) {
             
             {/* Upcoming Topics */}
             <div className="bg-white p-3 shadow-sm">
-              <div className="text-xs font-medium mb-2 text-blue-700">Upcoming Topics</div>
+              <div className="text-xs font-medium mb-2 text-custom-blue">Upcoming Topics</div>
               <ul className="text-xs space-y-1.5">
                 {['Quadratic Equations', 'Essay Writing', 'Digestive System', 'Kenyan History'].map((topic, idx) => (
                   <li key={idx} className="flex items-start">
-                    <div className="p-0.5 bg-blue-100 rounded-full mr-1.5 mt-0.5">
-                      <ChevronRight className="h-2.5 w-2.5 text-blue-700" />
+                    <div className="p-0.5 bg-custom-blue/15 rounded-full mr-1.5 mt-0.5">
+                      <ChevronRight className="h-2.5 w-2.5 text-custom-blue" />
                     </div>
                     {topic}
                   </li>
@@ -1086,18 +1086,18 @@ function ClassCard({ cls }: { cls: Class }) {
         
         {/* Assignments Tracking Section */}
         {cls.assignments && (
-          <div className="mb-5 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 shadow-sm border border-blue-100">
-            <h4 className="text-sm font-semibold mb-3 text-blue-900 flex items-center">
-              <div className="mr-2 p-1 bg-blue-100 flex items-center justify-center">
-                <FileText className="h-3.5 w-3.5 text-blue-700" />
+          <div className="mb-5 bg-custom-blue/10 p-4 shadow-sm border border-custom-blue/20">
+            <h4 className="text-sm font-semibold mb-3 text-custom-blue flex items-center">
+              <div className="mr-2 p-1 bg-custom-blue/15 flex items-center justify-center">
+                <FileText className="h-3.5 w-3.5 text-custom-blue" />
               </div>
               Assignments & Homework
             </h4>
             
             <div className="bg-white p-3 shadow-sm mb-3">
               <div className="grid grid-cols-3 gap-3 text-sm">
-                <div className="flex flex-col items-center justify-center p-1 bg-blue-50 rounded">
-                  <div className="text-xs text-blue-600 font-medium mb-1">Issued</div>
+                <div className="flex flex-col items-center justify-center p-1 bg-custom-blue/10 rounded">
+                  <div className="text-xs text-custom-blue font-medium mb-1">Issued</div>
                   <div className="font-bold text-lg">{cls.assignments.issued}</div>
                 </div>
                 <div className="flex flex-col items-center justify-center p-1 bg-green-50 rounded">
@@ -1113,13 +1113,13 @@ function ClassCard({ cls }: { cls: Class }) {
               
             {/* Upcoming assignments */}
             {cls.assignments.upcoming && cls.assignments.upcoming.length > 0 && (
-              <div className="bg-white border border-blue-100 overflow-hidden">
-                <div className="bg-blue-50 px-3 py-1.5">
-                  <div className="font-medium text-blue-800 text-xs">Upcoming Assignments</div>
+              <div className="bg-white border border-custom-blue/20 overflow-hidden">
+                <div className="bg-custom-blue/10 px-3 py-1.5">
+                  <div className="font-medium text-custom-blue text-xs">Upcoming Assignments</div>
                 </div>
                 <div className="p-2 text-xs">
                   {cls.assignments.upcoming.map((assignment, idx) => (
-                    <Badge key={idx} className="bg-blue-50 text-blue-700 border-blue-100 mb-1 mr-1">
+                    <Badge key={idx} className="bg-custom-blue/10 text-custom-blue border-custom-blue/20 mb-1 mr-1">
                       {assignment.title}
                     </Badge>
                   ))}
@@ -1311,11 +1311,11 @@ function ClassCard({ cls }: { cls: Class }) {
         )}
         
         <div className="flex justify-between w-full mt-1 gap-2">
-          <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50 flex-1">
+          <Button variant="outline" size="sm" className="border-custom-blue/40 text-custom-blue font-medium hover:bg-custom-blue/10 flex-1">
             <Users className="mr-2 h-4 w-4" />
             Students
           </Button>
-          <Button variant="default" size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white flex-1">
+          <Button variant="default" size="sm" className="bg-custom-blue hover:bg-custom-blue/90 text-white font-medium flex-1">
             <BookOpen className="mr-2 h-4 w-4" />
             View Details
           </Button>
