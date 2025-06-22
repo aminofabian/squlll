@@ -1,14 +1,18 @@
 'use client'
 
 import * as React from "react"
-import * as FilterPrimitive from "@radix-ui/react-filter"
+import { Check } from "lucide-react"
+import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
+import * as TogglePrimitive from "@radix-ui/react-toggle"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 import { cn } from "@/lib/utils"
 
+// Filter root component
 const Filter = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Root>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <FilterPrimitive.Root
+  <div
     ref={ref}
     className={cn(
       "relative",
@@ -17,13 +21,14 @@ const Filter = React.forwardRef<
     {...props}
   />
 ))
-Filter.displayName = FilterPrimitive.Root.displayName
+Filter.displayName = "Filter"
 
+// Filter trigger component - similar to PopoverTrigger
 const FilterTrigger = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Trigger>
+  React.ElementRef<typeof PopoverPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
-  <FilterPrimitive.Trigger
+  <PopoverPrimitive.Trigger
     ref={ref}
     className={cn(
       "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
@@ -33,15 +38,16 @@ const FilterTrigger = React.forwardRef<
     {...props}
   >
     {children}
-  </FilterPrimitive.Trigger>
+  </PopoverPrimitive.Trigger>
 ))
-FilterTrigger.displayName = FilterPrimitive.Trigger.displayName
+FilterTrigger.displayName = "FilterTrigger"
 
+// Filter content component - similar to PopoverContent
 const FilterContent = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Content>
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
-  <FilterPrimitive.Content
+  <PopoverPrimitive.Content
     ref={ref}
     className={cn(
       "relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
@@ -50,75 +56,90 @@ const FilterContent = React.forwardRef<
     {...props}
   >
     {children}
-    <FilterPrimitive.Viewport className="absolute bottom-0 left-0 right-0 top-full" />
-  </FilterPrimitive.Content>
+  </PopoverPrimitive.Content>
 ))
-FilterContent.displayName = FilterPrimitive.Content.displayName
+FilterContent.displayName = "FilterContent"
 
-const FilterGroup = FilterPrimitive.Group
-
-const FilterSeparator = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Separator>
+// Filter group component - using ToggleGroup
+const FilterGroup = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root>
 >(({ className, ...props }, ref) => (
-  <FilterPrimitive.Separator
+  <ToggleGroupPrimitive.Root
+    ref={ref}
+    className={cn("flex flex-wrap gap-1", className)}
+    {...props}
+  />
+))
+FilterGroup.displayName = "FilterGroup"
+
+// Filter separator
+const FilterSeparator = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
     ref={ref}
     className={cn("-mx-1 my-2 h-px bg-muted", className)}
     {...props}
   />
 ))
-FilterSeparator.displayName = FilterPrimitive.Separator.displayName
+FilterSeparator.displayName = "FilterSeparator"
 
+// Filter label
 const FilterLabel = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Label>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <FilterPrimitive.Label
+  <div
     ref={ref}
     className={cn("px-2 py-1.5 text-sm font-semibold", className)}
     {...props}
   />
 ))
-FilterLabel.displayName = FilterPrimitive.Label.displayName
+FilterLabel.displayName = "FilterLabel"
 
+// Filter item - using Toggle from Radix UI
 const FilterItem = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Item>
+  React.ElementRef<typeof ToggleGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item>
 >(({ className, children, ...props }, ref) => (
-  <FilterPrimitive.Item
+  <ToggleGroupPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=on]:bg-accent/50",
       className
     )}
     {...props}
   >
-    <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
-      <FilterPrimitive.ItemIndicator className="h-2 w-2 rounded-full bg-primary" />
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <span className="h-2 w-2 rounded-full data-[state=on]:bg-primary">{(props as any)["data-state"] === "on" && <Check className="h-3 w-3" />}</span>
     </span>
-
-    <FilterPrimitive.ItemText>{children}</FilterPrimitive.ItemText>
-  </FilterPrimitive.Item>
+    <span>{children}</span>
+  </ToggleGroupPrimitive.Item>
 ))
-FilterItem.displayName = FilterPrimitive.Item.displayName
+FilterItem.displayName = "FilterItem"
 
+// Filter checkbox component
 const FilterCheckbox = React.forwardRef<
-  React.ElementRef<typeof FilterPrimitive.Checkbox>,
-  React.ComponentPropsWithoutRef<typeof FilterPrimitive.Checkbox>
+  React.ElementRef<typeof TogglePrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root>
 >(({ className, children, ...props }, ref) => (
-  <FilterPrimitive.Checkbox
+  <TogglePrimitive.Root
     ref={ref}
     className={cn(
-      "relative cursor-default rounded-sm py-1.5 pl-3 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative cursor-pointer rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=on]:bg-accent/50",
       className
     )}
     {...props}
   >
-    <FilterPrimitive.CheckboxIndicator className="absolute left-0 top-1/2 h-4 w-4 -translate-y-1/2" />
-    <FilterPrimitive.ItemText>{children}</FilterPrimitive.ItemText>
-  </FilterPrimitive.Checkbox>
+    <span className="absolute left-2 flex h-4 w-4 items-center justify-center border rounded">
+      {(props as any)["data-state"] === "on" && <Check className="h-3 w-3" />}
+    </span>
+    <span>{children}</span>
+  </TogglePrimitive.Root>
 ))
-FilterCheckbox.displayName = FilterPrimitive.Checkbox.displayName
+FilterCheckbox.displayName = "FilterCheckbox"
 
 export {
   Filter,
