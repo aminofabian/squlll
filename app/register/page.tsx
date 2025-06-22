@@ -280,14 +280,26 @@ export default function SignupPage() {
 
       // Redirect to dashboard after successful signup
       setTimeout(() => {
-        const subdomain = result.data.createUser.subdomainUrl
+        const userData = result.data.createUser
+        const subdomain = userData.subdomainUrl
         const isProd = process.env.NODE_ENV === 'production'
         const baseUrl = isProd ? 'https://' : 'http://'
         const domain = isProd ? 'squl.co.ke' : 'localhost:3000'
         
         // Extract just the subdomain part
         const subdomainPrefix = subdomain.split('.')[0]
-        const dashboardUrl = `${baseUrl}${subdomainPrefix}.${domain}`
+        
+        // Encode user data to pass in URL parameters
+        const params = new URLSearchParams({
+          userId: userData.user.id,
+          email: userData.user.email,
+          schoolUrl: userData.user.schoolUrl || '',
+          subdomainUrl: userData.subdomainUrl,
+          accessToken: userData.tokens.accessToken,
+          newRegistration: 'true'  // Flag to indicate this is a new registration
+        }).toString()
+        
+        const dashboardUrl = `${baseUrl}${subdomainPrefix}.${domain}/?${params}`
         
         console.log('Redirecting to:', dashboardUrl)
         window.location.href = dashboardUrl
