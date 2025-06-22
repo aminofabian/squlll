@@ -268,13 +268,29 @@ export const SchoolTypeSetup = () => {
     setPendingToast({ type: 'success', message: `Switched to ${typeId.toUpperCase()} curriculum` })
   }, [selectedType])
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (canProceed) {
       setIsLoading(true);
       const selectedLevelsList = Array.from(selectedLevels[selectedType]);
       
-      // Simulate API call
-      setTimeout(() => {
+      try {
+        // Call our API endpoint which forwards to GraphQL
+        const response = await fetch('/api/school/configure-levels', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            levels: selectedLevelsList,
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data?.error || 'Failed to configure school levels');
+        }
+        
         setIsLoading(false);
         setCurrentStep(currentStep + 1);
         toast.success(`Saved ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`);
@@ -289,7 +305,11 @@ export const SchoolTypeSetup = () => {
             router.push(`/school/${subdomain}/dashboard`);
           }, 2000);
         }
-      }, 800);
+      } catch (error) {
+        setIsLoading(false);
+        toast.error(error instanceof Error ? error.message : 'Failed to configure school levels');
+        console.error('Error configuring school levels:', error);
+      }
     }
   }
 
