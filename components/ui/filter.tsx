@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import * as FilterPrimitive from "@radix-ui/react-filter"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
 import { cn } from "@/lib/utils"
 
 const Filter = React.forwardRef<
