@@ -292,19 +292,16 @@ export const SchoolTypeSetup = () => {
         }
         
         setIsLoading(false);
-        setCurrentStep(currentStep + 1);
         toast.success(`Saved ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`);
         
-        // Scroll to top smoothly when advancing
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Set setup as complete
+        setSetupComplete(true);
         
-        if (currentStep >= 3) {
-          setSetupComplete(true);
-          // Redirect after setup completion
-          setTimeout(() => {
-            router.push(`/school/${subdomain}/dashboard`);
-          }, 2000);
-        }
+        // Redirect immediately to dashboard
+        toast.success('Redirecting to dashboard...', { duration: 2000 });
+        setTimeout(() => {
+          router.push(`/school/${subdomain}/dashboard`);
+        }, 1000);
       } catch (error) {
         setIsLoading(false);
         toast.error(error instanceof Error ? error.message : 'Failed to configure school levels');
