@@ -27,13 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 
 export default function SchoolLayout({
   children,
@@ -44,13 +37,38 @@ export default function SchoolLayout({
   const subdomain = params.subdomain as string
   const [schoolName, setSchoolName] = useState('School Dashboard')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [currentTerm, setCurrentTerm] = useState('Term 2 2023/24')
   const [userRole, setUserRole] = useState('Administrator')
   const [userName, setUserName] = useState('John Doe')
-  const [isNewDrawerOpen, setIsNewDrawerOpen] = useState(false)
 
   const searchParams = useSearchParams()
   const router = useRouter()
+
+  const getCurrentKenyanTerm = () => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth() + 1 // JavaScript months are 0-based
+
+    // Kenyan School Terms:
+    // Term 1: January - March
+    // Term 2: May - July
+    // Term 3: September - November
+    let term = ''
+    if (month >= 1 && month <= 3) {
+      term = `Term 1, ${year}`
+    } else if (month >= 5 && month <= 7) {
+      term = `Term 2, ${year}`
+    } else if (month >= 9 && month <= 11) {
+      term = `Term 3, ${year}`
+    } else {
+      // During holidays, show the upcoming term
+      if (month === 4) term = `Term 2, ${year}`
+      if (month === 8) term = `Term 3, ${year}`
+      if (month === 12) term = `Term 1, ${year + 1}`
+    }
+    return term
+  }
+
+  const [currentTerm, setCurrentTerm] = useState(getCurrentKenyanTerm())
 
   useEffect(() => {
     // Check for URL parameters from registration
@@ -94,6 +112,13 @@ export default function SchoolLayout({
       const formattedName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1) + ' School'
       setSchoolName(formattedName)
     }
+
+    // Update term when component mounts and every day at midnight
+    const timer = setInterval(() => {
+      setCurrentTerm(getCurrentKenyanTerm())
+    }, 86400000) // 24 hours
+
+    return () => clearInterval(timer)
   }, [subdomain, searchParams, router])
 
   // Get initials for avatar
