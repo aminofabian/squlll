@@ -10,6 +10,23 @@ import { ClassCard } from '../components/ClassCard'
 import { ClassCardSkeleton } from '../components/ClassCardSkeleton'
 import { Filter, Search, Users, X } from 'lucide-react'
 
+// Define the exact education level names and their order
+const LEVEL_ORDER: { [key: string]: number } = {
+  'Pre-Primary': 0,
+  'Lower Primary': 1,
+  'Upper Primary': 2,
+  'Junior Secondary': 3,
+  'Senior Secondary': 4,
+  'Madrasa Beginners': 5,
+  'Madrasa Lower': 6,
+  'Madrasa Upper': 7
+};
+
+function getLevelOrder(levelName: string): number {
+  const normalizedName = levelName.trim();
+  return LEVEL_ORDER[normalizedName] ?? 999;
+}
+
 // Mock component for empty state
 function EmptyState({ selectedLevel = null, searchTerm = '' }: {
   selectedLevel?: string | null,
@@ -41,15 +58,18 @@ function ClassesPage() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
-  // Filter levels based on search term
+  // Filter and sort levels
   const filteredLevels = useMemo(() => {
-    if (!config?.selectedLevels) return []
+    if (!config?.selectedLevels) return [];
     
-    return config.selectedLevels.filter((level) => {
-      if (selectedLevelId !== 'all' && level.id !== selectedLevelId) return false
-      if (!searchTerm) return true
+    let levels = config.selectedLevels;
+    
+    // Filter based on search and selection
+    levels = levels.filter((level) => {
+      if (selectedLevelId !== 'all' && level.id !== selectedLevelId) return false;
+      if (!searchTerm) return true;
       
-      const search = searchTerm.toLowerCase()
+      const search = searchTerm.toLowerCase();
       return (
         level.name.toLowerCase().includes(search) ||
         level.description.toLowerCase().includes(search) ||
@@ -57,9 +77,16 @@ function ClassesPage() {
           subject.name.toLowerCase().includes(search) ||
           subject.code.toLowerCase().includes(search)
         )
-      )
-    })
-  }, [config?.selectedLevels, selectedLevelId, searchTerm])
+      );
+    });
+
+    // Sort levels using the order map
+    return [...levels].sort((a, b) => {
+      const orderA = LEVEL_ORDER[a.name.trim()] ?? 999;
+      const orderB = LEVEL_ORDER[b.name.trim()] ?? 999;
+      return orderA - orderB;
+    });
+  }, [config?.selectedLevels, selectedLevelId, searchTerm]);
 
   if (error) return <div>Error: {error instanceof Error ? error.message : 'An error occurred'}</div>
   if (!config && !isLoading) return <div>No configuration found</div>
