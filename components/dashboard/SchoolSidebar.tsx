@@ -283,12 +283,23 @@ const navigationCategories: NavigationCategory[] = [
   },
 ]
 
-// Function to generate school logo initials
+// Function to style school name creatively
+const styleSchoolName = (name: string): string => {
+  // Remove hyphens and split into words
+  const words = name.replace(/-/g, ' ').split(' ');
+  
+  // Capitalize each word and join with spaces
+  return words.map(word => word.toUpperCase()).join(' ');
+};
+
+// Function to style initials creatively
 const getSchoolInitials = (schoolName: string): string => {
-  const words = schoolName.split(' ');
+  const words = schoolName.replace(/-/g, ' ').split(' ');
   if (words.length === 1) {
+    // For single word, take first two letters
     return words[0].substring(0, 2).toUpperCase();
   }
+  // For multiple words, take first letter of first two words
   return words.slice(0, 2).map(word => word[0].toUpperCase()).join('');
 };
 
@@ -343,18 +354,84 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
       className
     )}>
       {/* Header with School Logo */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700 shadow-sm">
-        <Link href={`/school/${subdomain}/dashboard`} className="flex items-center gap-4 group">
-          <div 
-            className="w-9 h-9 rounded-lg shadow-lg flex items-center justify-center transform transition-all duration-200 ease-out group-hover:scale-105 group-hover:shadow-xl group-hover:rotate-3"
-            style={{ 
-              background: `linear-gradient(to bottom right, ${fromColor}, ${toColor})` 
-            }}
-          >
-            <div className="text-white font-mono font-bold text-base tracking-wider">{initials}</div>
+      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700">
+        <Link href={`/school/${subdomain}/dashboard`} className="flex items-center gap-3 group relative">
+          <div className="relative">
+            {/* Main logo container with stacked layout */}
+            <div 
+              className="w-12 h-12 rounded-2xl shadow-lg flex flex-col items-center justify-center transform transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-xl group-hover:rotate-3 relative z-10 overflow-hidden"
+              style={{ 
+                background: `linear-gradient(135deg, ${fromColor}, ${toColor})` 
+              }}
+            >
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-4 h-4 bg-white/10 rounded-bl-xl" />
+              <div className="absolute bottom-0 left-0 w-3 h-3 bg-black/10 rounded-tr-lg" />
+              
+              {/* School initials - split into two lines for design */}
+              <div className="flex flex-col items-center justify-center h-full relative z-10">
+                <div className="text-white font-mono font-black text-sm tracking-wider leading-none">
+                  {getSchoolInitials(schoolName).split('').join('\n')}
+                </div>
+                <div className="w-3 h-0.5 bg-white/30 my-0.5 rounded-full" />
+                <div className="text-[0.5rem] text-white/70 font-semibold tracking-wider">EDU</div>
+              </div>
+
+              {/* Inner glow and patterns */}
+              <div 
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: `radial-gradient(circle at 70% 30%, ${fromColor}00, ${toColor} 70%)`
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+            </div>
+            
+            {/* Subtle glow effect */}
+            <div 
+              className="absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-300"
+              style={{ 
+                background: `linear-gradient(135deg, ${fromColor}, ${toColor})` 
+              }}
+            />
           </div>
-          <div className="font-mono font-bold text-xl tracking-wider transform transition-all duration-200 ease-out group-hover:translate-x-1">
-            <span className="text-slate-900 dark:text-slate-100">{schoolName}</span>
+
+          {/* School name and details with refined typography */}
+          <div className="relative py-0.5">
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono font-bold text-sm tracking-[0.15em] text-slate-900 dark:text-slate-100 relative group-hover:translate-x-1 transition-all duration-300">
+                  {styleSchoolName(schoolName)}
+                  {/* Animated underline */}
+                  <div 
+                    className="absolute bottom-0 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
+                    style={{ 
+                      background: `linear-gradient(to right, ${fromColor}, ${toColor})` 
+                    }}
+                  />
+                </span>
+                <div 
+                  className="text-[0.6rem] font-medium px-1 rounded"
+                  style={{ color: fromColor }}
+                >
+                  PRO
+                </div>
+              </div>
+              
+              {/* Tagline with dot separator */}
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span 
+                  className="text-[0.65rem] tracking-wider opacity-60 group-hover:opacity-90 transition-all duration-300"
+                  style={{ color: fromColor }}
+                >
+                  ACADEMY
+                </span>
+                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
+                  DASHBOARD v2
+                </span>
+              </div>
+            </div>
           </div>
         </Link>
       </div>

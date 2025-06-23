@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { mockGrades, mockClasses, mockStudents, getStreamsForGrade, getGradeStreamAbbr, getTeacherById, getSubjectById } from '@/lib/data/mockclasses'
 import type { Grade, Class, Student } from '@/lib/data/mockclasses'
-import { CreateClassDrawer } from './components/CreateClassDrawer'
+import { CreateClassDrawer } from '../../components/CreateClassDrawer'
 
 import { 
   Calendar,
