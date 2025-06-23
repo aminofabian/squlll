@@ -3,11 +3,12 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Search, GraduationCap, X } from "lucide-react"
+import { Search, GraduationCap, X, BookOpen, School, Users, Award } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { Level, GradeLevel } from '@/lib/types/school-config'
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -40,6 +41,26 @@ function sortGrades(grades: GradeLevel[], levelName: string): GradeLevel[] {
     // For all other levels, sort in ascending order
     return aNum - bNum;
   });
+}
+
+// Helper function to abbreviate grade names
+function abbreviateGrade(gradeName: string): string {
+  // Handle special cases first
+  if (gradeName.toLowerCase().includes('early childhood')) return 'EC';
+  if (gradeName.toLowerCase().includes('kindergarten')) return 'KG';
+  if (gradeName.toLowerCase().includes('nursery')) return 'NS';
+  if (gradeName.toLowerCase().includes('reception')) return 'RC';
+  if (gradeName.toLowerCase().includes('pp1')) return 'PP1';
+  if (gradeName.toLowerCase().includes('pp2')) return 'PP2';
+
+  // Handle regular grade numbers
+  const match = gradeName.match(/\d+/);
+  if (match) {
+    return `G${match[0]}`;
+  }
+
+  // If no number found, return first 2 characters
+  return gradeName.slice(0, 2);
 }
 
 // Props for the SchoolSearchFilter component
@@ -113,36 +134,84 @@ export function SchoolSearchFilter({
     }
   };
 
-  // Helper function to get the appropriate icon color based on level name
-  const getLevelColor = (levelName: string): string => {
+  // Enhanced level styling configuration
+  const getLevelStyle = (levelName: string) => {
     switch (true) {
       case levelName.includes('Pre-Primary'):
-        return 'text-purple-500';
+        return {
+          color: 'text-purple-600 dark:text-purple-400',
+          bgLight: 'bg-purple-50 dark:bg-purple-900/10',
+          bgDark: 'bg-purple-100 dark:bg-purple-800/20',
+          border: 'border-purple-200 dark:border-purple-700',
+          hover: 'hover:border-purple-300 dark:hover:border-purple-600',
+          gradient: 'from-purple-50 to-purple-100 dark:from-purple-900/10 dark:to-purple-800/20',
+          icon: School
+        };
       case levelName.includes('Lower Primary'):
-        return 'text-blue-500';
+        return {
+          color: 'text-blue-600 dark:text-blue-400',
+          bgLight: 'bg-blue-50 dark:bg-blue-900/10',
+          bgDark: 'bg-blue-100 dark:bg-blue-800/20',
+          border: 'border-blue-200 dark:border-blue-700',
+          hover: 'hover:border-blue-300 dark:hover:border-blue-600',
+          gradient: 'from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-800/20',
+          icon: BookOpen
+        };
       case levelName.includes('Upper Primary'):
-        return 'text-green-500';
+        return {
+          color: 'text-green-600 dark:text-green-400',
+          bgLight: 'bg-green-50 dark:bg-green-900/10',
+          bgDark: 'bg-green-100 dark:bg-green-800/20',
+          border: 'border-green-200 dark:border-green-700',
+          hover: 'hover:border-green-300 dark:hover:border-green-600',
+          gradient: 'from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-800/20',
+          icon: Users
+        };
       case levelName.includes('Junior Secondary'):
-        return 'text-orange-500';
+        return {
+          color: 'text-orange-600 dark:text-orange-400',
+          bgLight: 'bg-orange-50 dark:bg-orange-900/10',
+          bgDark: 'bg-orange-100 dark:bg-orange-800/20',
+          border: 'border-orange-200 dark:border-orange-700',
+          hover: 'hover:border-orange-300 dark:hover:border-orange-600',
+          gradient: 'from-orange-50 to-orange-100 dark:from-orange-900/10 dark:to-orange-800/20',
+          icon: GraduationCap
+        };
       case levelName.includes('Senior Secondary'):
-        return 'text-red-500';
+        return {
+          color: 'text-red-600 dark:text-red-400',
+          bgLight: 'bg-red-50 dark:bg-red-900/10',
+          bgDark: 'bg-red-100 dark:bg-red-800/20',
+          border: 'border-red-200 dark:border-red-700',
+          hover: 'hover:border-red-300 dark:hover:border-red-600',
+          gradient: 'from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-800/20',
+          icon: Award
+        };
       default:
-        return 'text-gray-500';
+        return {
+          color: 'text-gray-600 dark:text-gray-400',
+          bgLight: 'bg-gray-50 dark:bg-gray-900/10',
+          bgDark: 'bg-gray-100 dark:bg-gray-800/20',
+          border: 'border-gray-200 dark:border-gray-700',
+          hover: 'hover:border-gray-300 dark:hover:border-gray-600',
+          gradient: 'from-gray-50 to-gray-100 dark:from-gray-900/10 dark:to-gray-800/20',
+          icon: School
+        };
     }
   };
 
   return (
-    <div className={className}>
-      <div className="flex flex-col space-y-4">
+    <div className={cn("flex flex-col h-full", className)}>
+      <div className="flex flex-col space-y-4 p-4 border-b">
         {/* Search Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">Filter by Grade</h3>
+          <h3 className="text-lg font-semibold">Grade Levels</h3>
           {searchTerm && (
             <Button
               variant="ghost"
               size="sm"
               onClick={clearSearch}
-              className="h-8 px-2 text-muted-foreground"
+              className="h-8 px-2 text-muted-foreground hover:text-foreground"
             >
               Clear
               <X className="ml-2 h-4 w-4" />
@@ -152,75 +221,70 @@ export function SchoolSearchFilter({
 
         {/* Search Input */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search grades..."
-            className="pl-9 h-9"
+            className="pl-9 h-10"
             value={searchTerm}
             onChange={handleSearchChange}
           />
         </div>
-        
-        {/* Grades List */}
-        <ScrollArea className="h-[calc(100vh-220px)]">
-          <div className="space-y-6">
-            {filteredGrades.length === 0 ? (
-              <div className="text-center py-8 bg-muted/30 rounded-md">
-                <p className="text-muted-foreground">No grades found</p>
-              </div>
-            ) : (
-              filteredGrades.map((levelData) => (
-                <div key={levelData.levelId} className="space-y-2">
-                  {/* Level Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className={`h-4 w-4 ${getLevelColor(levelData.levelName)}`} />
-                      <h4 className="text-sm font-medium text-muted-foreground">
-                        {levelData.levelName}
-                      </h4>
-                    </div>
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs ${getLevelColor(levelData.levelName)} border-current bg-opacity-10`}
-                    >
-                      {levelData.grades.length} Grades
-                    </Badge>
-                  </div>
-                  
-                  {/* Grades Grid */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {levelData.grades.map((grade) => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`
-                          w-full justify-start text-left h-auto py-2 px-3
-                          ${selectedGradeId === grade.id 
-                            ? 'bg-primary text-primary-foreground' 
-                            : `hover:border-${getLevelColor(levelData.levelName)}`}
-                        `}
-                        onClick={() => handleGradeClick(grade.id, levelData.levelId)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <GraduationCap className="h-4 w-4" />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{grade.name}</span>
-                            {grade.age && (
-                              <span className="text-xs opacity-75">
-                                Age: {grade.age} years
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
       </div>
+      
+      {/* Grades List */}
+      <ScrollArea className="flex-1 px-4">
+        <div className="space-y-6 py-4">
+          {filteredGrades.length === 0 ? (
+            <div className="text-center py-8 rounded-lg border-2 border-dashed">
+              <p className="text-muted-foreground">No grades found</p>
+            </div>
+          ) : (
+            filteredGrades.map((levelData) => (
+              <div key={levelData.levelId} className="space-y-3">
+                {/* Level Header */}
+                <div className="flex items-center justify-between p-1.5 rounded-lg bg-primary/5 border">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <GraduationCap className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <h4 className="font-medium text-sm truncate">{levelData.levelName}</h4>
+                  </div>
+                  <Badge variant="outline" className="ml-1.5 text-[10px] h-5 px-1.5 shrink-0">
+                    {levelData.grades.length}
+                  </Badge>
+                </div>
+                
+                {/* Grades Grid */}
+                <div className="flex flex-wrap gap-1 pl-1 mt-1">
+                  {levelData.grades.map((grade) => (
+                    <Button
+                      key={grade.id}
+                      variant={selectedGradeId === grade.id ? "default" : "outline"}
+                      className={cn(
+                        "h-6 px-1 transition-all duration-200 group text-[11px]",
+                        selectedGradeId === grade.id 
+                          ? "bg-primary text-white hover:text-white"
+                          : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                      )}
+                      onClick={() => handleGradeClick(grade.id, levelData.levelId)}
+                    >
+                      <div className="flex items-center gap-0.5">
+                        <GraduationCap className={cn(
+                          "h-2.5 w-2.5 shrink-0",
+                          selectedGradeId === grade.id 
+                            ? "text-white" 
+                            : "text-muted-foreground group-hover:text-primary"
+                        )} />
+                        <span className="font-medium">
+                          {abbreviateGrade(grade.name)}
+                        </span>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

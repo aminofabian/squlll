@@ -3,10 +3,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers } from 'lucide-react'
 import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
 import { useState, useMemo } from 'react'
 import { EditSubjectDialog } from './EditSubjectDialog'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import CreateClassDrawer from "../../components/CreateClassDrawer";
 
 interface ClassCardProps {
   level: Level;
@@ -20,6 +22,25 @@ function getComponentLevelColor(name: string) {
     case 'madrasa beginners': return 'bg-custom-blue/10 text-custom-blue border-custom-blue/40';
     default: return 'bg-gray-100 text-gray-800 border-gray-400';
   }
+}
+
+export function ClassHeader() {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Classes</h2>
+        <p className="text-muted-foreground">
+          Manage class information and subjects across all levels
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <CreateClassDrawer onClassCreated={() => {
+          // Refresh class list or show success message
+          console.log('Class created successfully');
+        }} />
+      </div>
+    </div>
+  )
 }
 
 export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
@@ -73,6 +94,11 @@ export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
     console.log('Save updated subject:', updatedSubject);
   };
 
+  const handleAddStream = (gradeId: string) => {
+    // TODO: Implement add stream functionality
+    console.log('Add stream to grade:', gradeId);
+  };
+
   return (
     <Card className="w-full mb-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -88,12 +114,53 @@ export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
                   (Age: {selectedGrade.age} years)
                 </span>
               )}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 px-2 ml-2"
+                      onClick={() => handleAddStream(selectedGrade.id)}
+                    >
+                      <Layers className="h-3.5 w-3.5 mr-1" />
+                      <span className="text-xs">Add Stream</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add a new stream to this grade</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="relative group"
+              >
+                <div className="absolute -left-24 top-1/2 -translate-y-1/2 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {isExpanded ? 'Hide subjects' : 'Show subjects'}
+                  </span>
+                </div>
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>{isExpanded ? 'Hide subjects list' : 'Show subjects list'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </CardHeader>
 
       {isExpanded && (
