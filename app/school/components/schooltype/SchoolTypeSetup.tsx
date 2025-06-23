@@ -300,7 +300,7 @@ export const SchoolTypeSetup = () => {
         // Redirect immediately to dashboard
         toast.success('Redirecting to dashboard...', { duration: 2000 });
         setTimeout(() => {
-          router.push(`/school/${subdomain}/dashboard`);
+          router.push(`/dashboard`);
         }, 1000);
       } catch (error) {
         setIsLoading(false);
