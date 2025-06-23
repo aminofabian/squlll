@@ -51,48 +51,48 @@ export const SchoolTypeSetup = () => {
       menu: ['Home', 'School', 'Teachers', 'Students', 'Attendance', 'Grading', 'Library', 'Finance'],
       levels: [
         {
-          level: 'Pre-primary',
+          level: 'Pre-Primary',
           description: 'Early childhood education for ages 4-5',
           classes: [
-            {name: 'Early Childhood', age: '3 years'},
-            { name: 'PP1', age: '4 years' },
-            { name: 'PP2', age: '5 years' }
+            {name: 'Early Childhood', age: '3'},
+            { name: 'PP1', age: '4' },
+            { name: 'PP2', age: '5' }
           ]
         },
         {
           level: 'Lower Primary',
           description: 'Foundation stage for ages 6-8',
           classes: [
-            { name: 'Grade 1', age: '6 years' },
-            { name: 'Grade 2', age: '7 years' },
-            { name: 'Grade 3', age: '8 years' }
+            { name: 'Grade 1', age: '6' },
+            { name: 'Grade 2', age: '7' },
+            { name: 'Grade 3', age: '8' }
           ]
         },
         {
           level: 'Upper Primary',
           description: 'Intermediate stage for ages 9-11',
           classes: [
-            { name: 'Grade 4', age: '9 years' },
-            { name: 'Grade 5', age: '10 years' },
-            { name: 'Grade 6', age: '11 years' }
+            { name: 'Grade 4', age: '9' },
+            { name: 'Grade 5', age: '10' },
+            { name: 'Grade 6', age: '11' }
           ]
         },
         {
           level: 'Junior Secondary',
           description: 'Middle school stage for ages 12-14',
           classes: [
-            { name: 'Grade 7', age: '12 years' },
-            { name: 'Grade 8', age: '13 years' },
-            { name: 'Grade 9', age: '14 years' }
+            { name: 'Grade 7', age: '12' },
+            { name: 'Grade 8', age: '13' },
+            { name: 'Grade 9', age: '14' }
           ]
         },
         {
           level: 'Senior Secondary',
           description: 'Advanced stage for ages 15-17',
           classes: [
-            { name: 'Grade 10', age: '15 years' },
-            { name: 'Grade 11', age: '16 years' },
-            { name: 'Grade 12', age: '17 years' }
+            { name: 'Grade 10', age: '15' },
+            { name: 'Grade 11', age: '16' },
+            { name: 'Grade 12', age: '17' }
           ]
         }
       ]
@@ -109,32 +109,39 @@ export const SchoolTypeSetup = () => {
           level: 'IGCSE Early Years',
           description: 'British curriculum early years',
           classes: [
-            { name: 'Nursery' },
-            { name: 'Reception' }
+            { name: 'Nursery', age: '3' },
+            { name: 'Reception', age: '4' }
           ]
         },
         {
           level: 'IGCSE Primary',
           description: 'British curriculum primary',
           classes: [
-            { name: 'Year 1' }, { name: 'Year 2' }, { name: 'Year 3' },
-            { name: 'Year 4' }, { name: 'Year 5' }, { name: 'Year 6' }
+            { name: 'Year 1', age: '5' },
+            { name: 'Year 2', age: '6' },
+            { name: 'Year 3', age: '7' },
+            { name: 'Year 4', age: '8' },
+            { name: 'Year 5', age: '9' },
+            { name: 'Year 6', age: '10' }
           ]
         },
         {
           level: 'IGCSE Secondary',
           description: 'British curriculum secondary',
           classes: [
-            { name: 'Year 7' }, { name: 'Year 8' }, { name: 'Year 9' },
-            { name: 'Year 10' }, { name: 'Year 11' }
+            { name: 'Year 7', age: '11' },
+            { name: 'Year 8', age: '12' },
+            { name: 'Year 9', age: '13' },
+            { name: 'Year 10', age: '14' },
+            { name: 'Year 11', age: '15' }
           ]
         },
         {
           level: 'A-Level',
           description: 'Advanced level studies',
           classes: [
-            { name: 'Year 12' },
-            { name: 'Year 13' }
+            { name: 'Year 12', age: '16' },
+            { name: 'Year 13', age: '17' }
           ]
         }
       ]
@@ -148,48 +155,48 @@ export const SchoolTypeSetup = () => {
       menu: ['Home', 'School', 'Teachers', 'Students', 'Attendance', 'Islamic Studies', 'Quran'],
       levels: [
         {
-          level: 'Pre-primary',
+          level: 'Pre-Primary',
           description: 'Early childhood education with religious foundation',
           classes: [
-            {name: 'Early Childhood', age: '3 years'},
-            { name: 'PP1', age: '4 years' },
-            { name: 'PP2', age: '5 years' }
+            {name: 'Early Childhood', age: '3'},
+            { name: 'PP1', age: '4' },
+            { name: 'PP2', age: '5' }
           ]
         },
         {
           level: 'Lower Primary',
           description: 'Foundation stage with religious instruction',
           classes: [
-            { name: 'Grade 1', age: '6 years' },
-            { name: 'Grade 2', age: '7 years' },
-            { name: 'Grade 3', age: '8 years' }
+            { name: 'Grade 1', age: '6' },
+            { name: 'Grade 2', age: '7' },
+            { name: 'Grade 3', age: '8' }
           ]
         },
         {
           level: 'Upper Primary',
           description: 'Intermediate stage with religious education',
           classes: [
-            { name: 'Grade 4', age: '9 years' },
-            { name: 'Grade 5', age: '10 years' },
-            { name: 'Grade 6', age: '11 years' }
+            { name: 'Grade 4', age: '9' },
+            { name: 'Grade 5', age: '10' },
+            { name: 'Grade 6', age: '11' }
           ]
         },
         {
           level: 'Junior Secondary',
           description: 'Middle school stage with religious studies integration',
           classes: [
-            { name: 'Grade 7', age: '12 years' },
-            { name: 'Grade 8', age: '13 years' },
-            { name: 'Grade 9', age: '14 years' }
+            { name: 'Grade 7', age: '12' },
+            { name: 'Grade 8', age: '13' },
+            { name: 'Grade 9', age: '14' }
           ]
         },
         {
           level: 'Senior Secondary',
           description: 'Advanced stage with specialized religious education',
           classes: [
-            { name: 'Grade 10', age: '15 years' },
-            { name: 'Grade 11', age: '16 years' },
-            { name: 'Grade 12', age: '17 years' }
+            { name: 'Grade 10', age: '15' },
+            { name: 'Grade 11', age: '16' },
+            { name: 'Grade 12', age: '17' }
           ]
         }
       ]
@@ -274,6 +281,31 @@ export const SchoolTypeSetup = () => {
       const selectedLevelsList = Array.from(selectedLevels[selectedType]);
       
       try {
+        // Get the selected school type
+        const schoolType = schoolTypes.find(type => type.id === selectedType);
+        if (!schoolType) {
+          throw new Error('Selected school type not found');
+        }
+
+        // Get the full level data for each selected level
+        const selectedLevelData = selectedLevelsList.map(levelName => {
+          const levelConfig = schoolType.levels.find(l => l.level === levelName);
+          if (!levelConfig) {
+            throw new Error(`Level configuration not found for ${levelName}`);
+          }
+          return {
+            name: levelName,
+            description: levelConfig.description,
+            classes: levelConfig.classes.map(c => ({
+              name: c.name,
+              age: c.age
+            }))
+          };
+        });
+
+        // Debug: Log the level data being sent
+        console.log('Configuring levels with data:', selectedLevelData);
+
         // Call our API endpoint which forwards to GraphQL
         const response = await fetch('/api/school/configure-levels', {
           method: 'POST',
@@ -281,7 +313,7 @@ export const SchoolTypeSetup = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ 
-            levels: selectedLevelsList,
+            levels: selectedLevelData,
           })
         });
         
@@ -290,6 +322,9 @@ export const SchoolTypeSetup = () => {
         if (!response.ok) {
           throw new Error(data?.error || 'Failed to configure school levels');
         }
+
+        // Debug: Log the response
+        console.log('Configure levels response:', data);
         
         setIsLoading(false);
         toast.success(`Saved ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`);
@@ -345,60 +380,36 @@ export const SchoolTypeSetup = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-24">
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          success: {
-            style: {
-              background: '#246a59',
-              color: 'white',
-              border: 'none',
-            },
-            iconTheme: {
-              primary: 'white',
-              secondary: '#246a59',
-            },
-          },
-          error: {
-            style: {
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-            },
-          },
-          duration: 2000,
-        }}
-      />
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
+      <Toaster position="top-center" />
       
-      <div className="max-w-7xl mx-auto px-4 pt-8">
-        {/* Progress Stepper */}
-        <ProgressStepper steps={setupSteps} currentStep={currentStep} />
-        
-        {/* Logo Section */}
-        <Header subdomain={subdomain} currentStep={currentStep} totalSteps={setupSteps.length} />
-
-        {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-8 pb-8">
-          {/* Sidebar with School Types */}
-          <SchoolTypeSelector 
-            schoolTypes={schoolTypes}
-            selectedType={selectedType}
-            handleTypeSelect={handleTypeSelect}
-            getSelectedLevelsCount={getSelectedLevelsCount}
-          />
-
-          {/* Main Content - Levels */}
-          <div className="flex-1 min-w-0">
+      <Header subdomain={subdomain} currentStep={currentStep} totalSteps={setupSteps.length} />
+      
+      <main className="flex-1 container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Progress Stepper */}
+          <ProgressStepper steps={setupSteps} currentStep={currentStep} />
+          
+          {/* School Type Selection */}
+          <div className="space-y-6">
+            <SchoolTypeSelector
+              schoolTypes={schoolTypes}
+              selectedType={selectedType}
+              handleTypeSelect={handleTypeSelect}
+              getSelectedLevelsCount={getSelectedLevelsCount}
+            />
+            
+            {/* Selected Type Details */}
             {selectedSchoolType && (
               <div className="space-y-6">
-                <SelectedTypeHeader 
+                <SelectedTypeHeader
                   selectedSchoolType={selectedSchoolType}
                   getSelectedLevelsCount={getSelectedLevelsCount}
                   selectedType={selectedType}
                 />
-
-                <LevelGrid 
+                
+                {/* Level Selection Grid */}
+                <LevelGrid
                   selectedSchoolType={selectedSchoolType}
                   selectedType={selectedType}
                   selectedLevels={selectedLevels}
@@ -408,14 +419,14 @@ export const SchoolTypeSetup = () => {
               </div>
             )}
           </div>
+          
+          {/* Quick Tip */}
+          <QuickTip currentStep={currentStep} />
         </div>
-      </div>
-
-      {/* Tips Card */}
-      <QuickTip currentStep={currentStep} />
-
-      {/* Footer Action Bar */}
-      <Footer 
+      </main>
+      
+      {/* Footer */}
+      <Footer
         canProceed={canProceed}
         isLoading={isLoading}
         handleContinue={handleContinue}

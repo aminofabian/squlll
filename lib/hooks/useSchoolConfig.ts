@@ -55,6 +55,21 @@ export function useSchoolConfig() {
         setLoading(true);
         const response = await graphqlClient.request<GetSchoolConfigResponse>(GET_SCHOOL_CONFIG);
         const config = response.getSchoolConfiguration;
+        
+        // Debug: Log the response to see if we're getting gradeLevels
+        console.log('School config response:', {
+          id: config.id,
+          levels: config.selectedLevels.map(l => ({
+            name: l.name,
+            subjects: l.subjects.length,
+            grades: l.gradeLevels?.map(g => ({
+              id: g.id,
+              name: g.name,
+              age: g.age
+            }))
+          }))
+        });
+        
         setConfig(config);
         return config;
       } catch (error) {

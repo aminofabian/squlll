@@ -13,16 +13,18 @@ export interface Subject {
   curriculum: string | null;
 }
 
+export interface GradeLevel {
+  id: string;
+  name: string;
+  age: number | null;
+}
+
 export interface Level {
   id: string;
   name: string;
   description: string;
   subjects: Subject[];
-  gradeLevels: {
-    id: string;
-    name: string;
-    age: number;
-  }[] | null;
+  gradeLevels: GradeLevel[];
 }
 
 export interface School {
@@ -35,4 +37,15 @@ export interface SchoolConfiguration {
   id: string;
   selectedLevels: Level[];
   school: School;
+}
+
+export interface LevelClass {
+  name: string;
+  age: string;
+}
+
+export interface LevelInput {
+  name: string;
+  description: string;
+  classes: LevelClass[];
 } 

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { LevelInput } from '@/lib/types/school-config'
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql'
 
 export async function POST(request: Request) {
   try {
-    const { levels } = await request.json()
+    const { levels } = await request.json() as { levels: LevelInput[] }
     
     // Get the token from cookies
     const cookieStore = await cookies()
@@ -20,18 +21,37 @@ export async function POST(request: Request) {
 
     // Prepare GraphQL mutation
     const mutation = `
-      mutation {
-        configureSchoolLevelsByNames(levelNames: [
-          ${levels.map((level: string) => `"${level}"`).join(',\n          ')}
-        ]) {
+      mutation ConfigureSchoolLevels($levels: [LevelInput!]!) {
+        configureSchoolLevels(levels: $levels) {
           id
           selectedLevels {
             id
             name
+            description
+            subjects {
+              id
+              name
+              code
+              subjectType
+              category
+              department
+              shortName
+              isCompulsory
+              totalMarks
+              passingMarks
+              creditHours
+              curriculum
+            }
+            gradeLevels {
+              id
+              name
+              age
+            }
           }
           school {
             schoolId
             schoolName
+            subdomain
           }
         }
       }
@@ -44,7 +64,19 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ query: mutation })
+      body: JSON.stringify({
+        query: mutation,
+        variables: {
+          levels: levels.map(level => ({
+            name: level.name,
+            description: level.description,
+            gradeLevels: level.classes.map(cls => ({
+              name: cls.name,
+              age: parseInt(cls.age, 10) || null
+            }))
+          }))
+        }
+      })
     })
 
     const result = await response.json()
@@ -57,6 +89,19 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
+
+    // Debug: Log the response to see if we're getting gradeLevels
+    console.log('Configure levels response:', {
+      levels: result.data?.configureSchoolLevels?.selectedLevels?.map((l: any) => ({
+        name: l.name,
+        subjects: l.subjects?.length,
+        grades: l.gradeLevels?.map((g: any) => ({
+          id: g.id,
+          name: g.name,
+          age: g.age
+        }))
+      }))
+    });
 
     return NextResponse.json(result.data)
   } catch (error) {
