@@ -385,23 +385,26 @@ export const SchoolTypeSetup = () => {
       
       <Header subdomain={subdomain} currentStep={currentStep} totalSteps={setupSteps.length} />
       
-      <main className="flex-1 container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
+      <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-4">
+        <div className="w-full">
           {/* Progress Stepper */}
           <ProgressStepper steps={setupSteps} currentStep={currentStep} />
           
-          {/* School Type Selection */}
-          <div className="space-y-6">
-            <SchoolTypeSelector
-              schoolTypes={schoolTypes}
-              selectedType={selectedType}
-              handleTypeSelect={handleTypeSelect}
-              getSelectedLevelsCount={getSelectedLevelsCount}
-            />
+          {/* School Type and Levels Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 mt-1 w-full">
+            {/* School Type Selection - Left Column */}
+            <div className="lg:col-span-3 w-full border-r">
+              <SchoolTypeSelector
+                schoolTypes={schoolTypes}
+                selectedType={selectedType}
+                handleTypeSelect={handleTypeSelect}
+                getSelectedLevelsCount={getSelectedLevelsCount}
+              />
+            </div>
             
-            {/* Selected Type Details */}
+            {/* Selected Type Details - Right Column */}
             {selectedSchoolType && (
-              <div className="space-y-6">
+              <div className="lg:col-span-9 w-full lg:pl-2 lg:pr-4">
                 <SelectedTypeHeader
                   selectedSchoolType={selectedSchoolType}
                   getSelectedLevelsCount={getSelectedLevelsCount}
@@ -409,13 +412,18 @@ export const SchoolTypeSetup = () => {
                 />
                 
                 {/* Level Selection Grid */}
-                <LevelGrid
-                  selectedSchoolType={selectedSchoolType}
-                  selectedType={selectedType}
-                  selectedLevels={selectedLevels}
-                  toggleLevel={toggleLevel}
-                  levelsSectionRef={levelsSectionRef}
-                />
+                <div className="mt-2 relative">
+                  {/* Background decoration */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#246a59]/5 via-transparent to-transparent rounded-lg" />
+                  
+                  <LevelGrid
+                    selectedSchoolType={selectedSchoolType}
+                    selectedType={selectedType}
+                    selectedLevels={selectedLevels}
+                    toggleLevel={toggleLevel}
+                    levelsSectionRef={levelsSectionRef}
+                  />
+                </div>
               </div>
             )}
           </div>

@@ -18,15 +18,15 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
 }) => {
   return (
     <div className="w-full lg:w-80 lg:flex-shrink-0">
-      <div className="lg:sticky lg:top-4 space-y-3 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">School Types</h3>
+      <div className="lg:sticky lg:top-4 space-y-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">School Types</h3>
           <p className="text-sm text-gray-500 hidden lg:block">Choose the curriculum that best fits your educational goals.</p>
         </div>
         
         {/* Mobile View */}
         <div className="lg:hidden">
-          <div className="grid grid-cols-2 grid-rows-2 gap-4">
+          <div className="grid grid-cols-2 grid-rows-2 gap-2">
             {schoolTypes.map((type) => {
               const Icon = type.icon
               const isSelected = selectedType === type.id
