@@ -1,20 +1,19 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql'
-// Hard-coded token from the provided GraphQL example
-const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOm51bGwsImVtYWlsIjoianVzZGRkdGR3b2Rya2FuZEBleGFtcGxlLmNvbSIsIm9yZ2FuaXphdGlvbklkIjpudWxsLCJzY2hvb2xJZCI6ImI2ZDRiNzIzLWQ3NjctNGM0Ny1iNmJkLWZkMDg4NDU4ZWVkMyIsInNjaG9vbFN1YmRvbWFpbiI6Im1pYW5vLTIiLCJpYXQiOjE3NTA0ODc5NjMsImV4cCI6MTc1MDg0Nzk2MywiYXVkIjoibG9jYWxob3N0OjMwMDAiLCJpc3MiOiJsb2NhbGhvc3Q6MzAwMCJ9.F0TsVrzwzMDe4DcghKHZKWb84kApx5xOQNquLxok76I'
 
 export async function POST(request: Request) {
   try {
     const { levels } = await request.json()
     
-    // Use the hard-coded token from the example
-    // In a production environment, this would be properly retrieved from cookies or auth headers
-    const authToken = AUTH_TOKEN
+    // Get the token from cookies
+    const cookieStore = await cookies()
+    const token = cookieStore.get('accessToken')?.value
     
-    if (!authToken) {
+    if (!token) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: 'Authentication required. Please log in.' },
         { status: 401 }
       )
     }
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ query: mutation })
     })
