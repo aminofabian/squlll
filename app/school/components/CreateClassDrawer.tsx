@@ -333,9 +333,13 @@ export function CreateClassDrawer({ onClassCreated = () => {} }: { onClassCreate
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button className="bg-[#246a59] hover:bg-[#246a59]/90 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300">
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Class
+        <Button 
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 border-primary/30 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+        >
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          <span className="text-xs">Add Class</span>
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-screen w-full md:w-3/5 lg:w-2/5 bg-white shadow-xl rounded-t-lg" data-vaul-drawer-direction="right">

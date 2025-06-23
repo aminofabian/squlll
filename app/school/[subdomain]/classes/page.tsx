@@ -9,6 +9,7 @@ import { ClassCard } from '../components/ClassCard'
 import { ClassCardSkeleton } from '../components/ClassCardSkeleton'
 import { Filter, X } from 'lucide-react'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
+import CreateClassDrawer from "../../components/CreateClassDrawer"
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -57,6 +58,7 @@ function ClassesPage() {
   const [selectedLevelId, setSelectedLevelId] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [showMobileFilter, setShowMobileFilter] = useState(false)
 
   // Filter and sort levels
   const filteredLevels = useMemo(() => {
@@ -132,23 +134,34 @@ function ClassesPage() {
 
       {/* Main content */}
       <div className="flex-1 p-6 overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Classes</h1>
-            <p className="text-gray-600">
-              Manage class information and subjects across all levels
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            {/* Show filter button on mobile */}
-            <Button 
-              variant="outline" 
-              className="md:hidden" 
-              onClick={() => setIsMobileSidebarOpen(true)}
-            >
-              <Filter className="mr-2 h-4 w-4" /> Filters
-            </Button>
+        <div className="flex justify-between items-start">
+          <div></div>
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#246a59] via-emerald-500 to-teal-500 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+              <div className="relative">
+                <CreateClassDrawer onClassCreated={() => {
+                  // TODO: Refresh class list
+                  console.log('Class created successfully');
+                }} />
+              </div>
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                  Create a new class
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {/* Show filter button on mobile */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setShowMobileFilter(true)}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 

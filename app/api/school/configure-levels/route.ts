@@ -21,8 +21,8 @@ export async function POST(request: Request) {
 
     // Prepare GraphQL mutation
     const mutation = `
-      mutation ConfigureSchoolLevels($levels: [LevelInput!]!) {
-        configureSchoolLevels(levels: $levels) {
+      mutation ConfigureSchoolLevelsByNames($levelNames: [String!]!) {
+        configureSchoolLevelsByNames(levelNames: $levelNames) {
           id
           selectedLevels {
             id
@@ -67,14 +67,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         query: mutation,
         variables: {
-          levels: levels.map(level => ({
-            name: level.name,
-            description: level.description,
-            gradeLevels: level.classes.map(cls => ({
-              name: cls.name,
-              age: parseInt(cls.age, 10) || null
-            }))
-          }))
+          levelNames: levels.map(level => level.name)
         }
       })
     })
@@ -92,7 +85,8 @@ export async function POST(request: Request) {
 
     // Debug: Log the response to see if we're getting gradeLevels
     console.log('Configure levels response:', {
-      levels: result.data?.configureSchoolLevels?.selectedLevels?.map((l: any) => ({
+      levelNames: levels.map(level => level.name),
+      selectedLevels: result.data?.configureSchoolLevelsByNames?.selectedLevels?.map((l: any) => ({
         name: l.name,
         subjects: l.subjects?.length,
         grades: l.gradeLevels?.map((g: any) => ({
