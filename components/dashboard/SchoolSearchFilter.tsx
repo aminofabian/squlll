@@ -423,8 +423,6 @@ export function SchoolSearchFilter({
                           className="flex flex-wrap gap-1.5 pl-3 mt-1.5 overflow-visible"
                         >
                           {grade.streams.map((stream) => {
-                            // Get level style to match stream color with parent level
-                            const levelStyle = getLevelStyle(levelData.levelName);
                             const isSelected = selectedStreamId === stream.id;
                             
                             return (
@@ -435,8 +433,8 @@ export function SchoolSearchFilter({
                                 className={cn(
                                   "h-6 py-0 px-2.5 text-[10px] relative group overflow-hidden transition-all duration-300",
                                   isSelected 
-                                    ? `bg-white dark:bg-slate-800 border ${levelStyle.border} shadow-sm` 
-                                    : `hover:bg-${levelStyle.bgLight.split(' ')[0]} dark:hover:bg-${levelStyle.bgDark.split(' ')[1]} border border-dashed hover:${levelStyle.border}`
+                                    ? "bg-white dark:bg-slate-800 border border-primary shadow-sm" 
+                                    : "hover:bg-primary/5 dark:hover:bg-primary/10 border border-dashed hover:border-primary/40"
                                 )}
                                 onClick={() => handleStreamClick(stream.id, grade.id, levelData.levelId)}
                               >
@@ -444,17 +442,17 @@ export function SchoolSearchFilter({
                                   <div className={cn(
                                     "flex items-center justify-center h-3.5 w-3.5 rounded-full transition-colors",
                                     isSelected
-                                      ? levelStyle.bgDark
-                                      : "bg-muted group-hover:" + levelStyle.bgLight
+                                      ? "bg-primary" 
+                                      : "bg-muted group-hover:bg-primary/10"
                                   )}>
                                     <GitBranch className={cn(
                                       "h-2 w-2 shrink-0",
-                                      isSelected ? levelStyle.color : "text-muted-foreground group-hover:" + levelStyle.color
+                                      isSelected ? "text-white" : "text-muted-foreground group-hover:text-primary"
                                     )} />
                                   </div>
                                   <span className={cn(
                                     "font-medium",
-                                    isSelected && levelStyle.color
+                                    isSelected && "text-primary"
                                   )}>{stream.name}</span>
                                 </div>
                                 
@@ -463,10 +461,7 @@ export function SchoolSearchFilter({
                                     initial={{ width: 0 }}
                                     animate={{ width: '100%' }}
                                     transition={{ duration: 0.2 }}
-                                    className={cn(
-                                      "absolute bottom-0 left-0 h-0.5",
-                                      levelStyle.bgDark
-                                    )} 
+                                    className="absolute bottom-0 left-0 h-0.5 bg-primary" 
                                   />
                                 )}
                               </Button>
