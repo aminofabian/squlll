@@ -9,6 +9,7 @@ import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { Level, GradeLevel, Stream } from '@/lib/types/school-config'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import { motion } from 'framer-motion'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -70,6 +71,7 @@ interface SchoolSearchFilterProps {
   onSearch?: (term: string) => void
   onGradeSelect?: (gradeId: string, levelId: string) => void
   onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void
+  isLoading?: boolean
 }
 
 export function SchoolSearchFilter({ 
@@ -77,7 +79,8 @@ export function SchoolSearchFilter({
   type = 'grades',
   onSearch,
   onGradeSelect,
-  onStreamSelect
+  onStreamSelect,
+  isLoading = false
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
@@ -261,7 +264,78 @@ export function SchoolSearchFilter({
       {/* Grades List */}
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-6 py-4">
-          {filteredGrades.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-5">
+              {/* Skeleton for levels */}
+              {[...Array(4)].map((_, i) => {
+                // Simulate different level styles for visual variety
+                const levelColors = [
+                  { border: 'border-purple-200 dark:border-purple-700/40', bg: 'bg-purple-50/50 dark:bg-purple-900/5' },
+                  { border: 'border-blue-200 dark:border-blue-700/40', bg: 'bg-blue-50/50 dark:bg-blue-900/5' },
+                  { border: 'border-green-200 dark:border-green-700/40', bg: 'bg-green-50/50 dark:bg-green-900/5' },
+                  { border: 'border-orange-200 dark:border-orange-700/40', bg: 'bg-orange-50/50 dark:bg-orange-900/5' }
+                ];
+                const color = levelColors[i % levelColors.length];
+                
+                return (
+                  <motion.div 
+                    key={i} 
+                    className="space-y-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.1 }}
+                  >
+                    {/* Level Header Skeleton */}
+                    <div className={`flex items-center justify-between p-1.5 rounded-lg ${color.bg} border ${color.border}`}>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-3.5 w-3.5 rounded-full bg-muted-foreground/20 animate-pulse" />
+                        <div className="h-4 w-24 bg-muted-foreground/20 rounded animate-pulse" />
+                      </div>
+                      <div className="h-5 w-5 rounded-full bg-muted-foreground/10 animate-pulse" />
+                    </div>
+                    
+                    {/* Grades Grid Skeleton */}
+                    <div className="flex flex-wrap gap-1.5 pl-1 mt-1">
+                      {[...Array(i % 2 === 0 ? 6 : 4)].map((_, j) => (
+                        <motion.div 
+                          key={j} 
+                          className={`h-7 ${j % 3 === 0 ? 'w-20' : 'w-16'} border ${color.border} rounded-md bg-muted-foreground/5`}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.2, delay: (i * 0.05) + (j * 0.03) }}
+                        >
+                          <div className="flex items-center h-full px-2">
+                            <div className="h-3.5 w-3.5 rounded-full bg-muted-foreground/10 animate-pulse" />
+                            <div className="h-2 flex-1 bg-muted-foreground/10 rounded ml-1.5 animate-pulse" />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    
+                    {/* Stream Skeletons - only show for some levels */}
+                    {i % 2 === 0 && (
+                      <div className="flex flex-wrap gap-1.5 pl-3 mt-1">
+                        {[...Array(3)].map((_, j) => (
+                          <motion.div 
+                            key={j}
+                            className={`h-6 w-14 border border-dashed ${color.border} rounded-md bg-muted-foreground/5`}
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.15, delay: 0.3 + (j * 0.05) }}
+                          >
+                            <div className="flex items-center h-full px-1.5">
+                              <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/10 animate-pulse" />
+                              <div className="h-1.5 flex-1 bg-muted-foreground/10 rounded ml-1 animate-pulse" />
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : filteredGrades.length === 0 ? (
             <div className="text-center py-8 rounded-lg border-2 border-dashed">
               <p className="text-muted-foreground">No grades found</p>
             </div>
@@ -286,59 +360,119 @@ export function SchoolSearchFilter({
                       <Button
                         variant={selectedGradeId === grade.id ? "default" : "outline"}
                         className={cn(
-                          "h-6 px-1 transition-all duration-200 group text-[11px]",
+                          "h-7 px-2 transition-all duration-300 group text-[11px] relative",
                           selectedGradeId === grade.id 
-                            ? "bg-primary text-white hover:text-white"
+                            ? "bg-primary text-white hover:text-white shadow-sm"
                             : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
                         )}
                         onClick={() => handleGradeClick(grade.id, levelData.levelId)}
                       >
-                        <div className="flex items-center gap-0.5">
-                          <GraduationCap className={cn(
-                            "h-2.5 w-2.5 shrink-0",
+                        <div className="flex items-center gap-1">
+                          <div className={cn(
+                            "flex items-center justify-center h-4 w-4 rounded-full transition-colors",
                             selectedGradeId === grade.id 
-                              ? "text-white" 
-                              : "text-muted-foreground group-hover:text-primary"
-                          )} />
+                              ? "bg-white/20" 
+                              : "bg-muted group-hover:bg-primary/10"
+                          )}>
+                            <GraduationCap className={cn(
+                              "h-2.5 w-2.5 shrink-0",
+                              selectedGradeId === grade.id 
+                                ? "text-white" 
+                                : "text-muted-foreground group-hover:text-primary"
+                            )} />
+                          </div>
                           <span className="font-medium">
                             {abbreviateGrade(grade.name)}
                           </span>
                           {grade.streams?.length > 0 && (
-                            <Badge variant="outline" className="ml-1 text-[8px] h-4 px-1 shrink-0 border-dashed">
-                              {grade.streams.length}
-                            </Badge>
+                            <div className="flex items-center">
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "ml-1 text-[8px] h-4 px-1.5 shrink-0 transition-all duration-300",
+                                  selectedGradeId === grade.id
+                                    ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
+                                    : "border-dashed hover:border-primary/50"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGradeClick(grade.id, levelData.levelId);
+                                }}
+                              >
+                                <GitBranch className="mr-0.5 h-2 w-2 shrink-0" />
+                                {grade.streams.length}
+                              </Badge>
+                            </div>
                           )}
                         </div>
+                        {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="absolute -right-1 -top-1 h-2 w-2 bg-secondary rounded-full" 
+                          />
+                        )}
                       </Button>
                       
                       {/* Streams section */}
                       {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 pl-3 mt-0.5">
-                          {grade.streams.map((stream) => (
-                            <Button
-                              key={stream.id}
-                              variant={selectedStreamId === stream.id ? "secondary" : "outline"}
-                              size="sm"
-                              className={cn(
-                                "h-5 px-1.5 text-[10px] border-dashed",
-                                selectedStreamId === stream.id 
-                                  ? "bg-secondary/20 text-secondary-foreground" 
-                                  : "hover:bg-secondary/10 hover:text-secondary hover:border-secondary/30"
-                              )}
-                              onClick={() => handleStreamClick(stream.id, grade.id, levelData.levelId)}
-                            >
-                              <div className="flex items-center gap-0.5">
-                                <GitBranch className={cn(
-                                  "h-2 w-2 shrink-0",
-                                  selectedStreamId === stream.id 
-                                    ? "text-secondary" 
-                                    : "text-muted-foreground"
-                                )} />
-                                <span>{stream.name}</span>
-                              </div>
-                            </Button>
-                          ))}
-                        </div>
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex flex-wrap gap-1.5 pl-3 mt-1.5 overflow-visible"
+                        >
+                          {grade.streams.map((stream) => {
+                            // Get level style to match stream color with parent level
+                            const levelStyle = getLevelStyle(levelData.levelName);
+                            const isSelected = selectedStreamId === stream.id;
+                            
+                            return (
+                              <Button
+                                key={stream.id}
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-6 py-0 px-2.5 text-[10px] relative group overflow-hidden transition-all duration-300",
+                                  isSelected 
+                                    ? `bg-white dark:bg-slate-800 border ${levelStyle.border} shadow-sm` 
+                                    : `hover:bg-${levelStyle.bgLight.split(' ')[0]} dark:hover:bg-${levelStyle.bgDark.split(' ')[1]} border border-dashed hover:${levelStyle.border}`
+                                )}
+                                onClick={() => handleStreamClick(stream.id, grade.id, levelData.levelId)}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <div className={cn(
+                                    "flex items-center justify-center h-3.5 w-3.5 rounded-full transition-colors",
+                                    isSelected
+                                      ? levelStyle.bgDark
+                                      : "bg-muted group-hover:" + levelStyle.bgLight
+                                  )}>
+                                    <GitBranch className={cn(
+                                      "h-2 w-2 shrink-0",
+                                      isSelected ? levelStyle.color : "text-muted-foreground group-hover:" + levelStyle.color
+                                    )} />
+                                  </div>
+                                  <span className={cn(
+                                    "font-medium",
+                                    isSelected && levelStyle.color
+                                  )}>{stream.name}</span>
+                                </div>
+                                
+                                {isSelected && (
+                                  <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: '100%' }}
+                                    transition={{ duration: 0.2 }}
+                                    className={cn(
+                                      "absolute bottom-0 left-0 h-0.5",
+                                      levelStyle.bgDark
+                                    )} 
+                                  />
+                                )}
+                              </Button>
+                            );
+                          })}
+                        </motion.div>
                       )}
                     </div>
                   ))}

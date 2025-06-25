@@ -158,6 +158,7 @@ function ClassesPage() {
           onSearch={setSearchTerm}
           onGradeSelect={handleGradeSelect}
           onStreamSelect={handleStreamSelect}
+          isLoading={isLoading}
         />
       </div>
 

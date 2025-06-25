@@ -273,7 +273,7 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
           }}
           onSuccess={() => {
             // You might want to refresh the data here
-            console.log('Stream added successfully');
+            console.log('dded successfully');
           }}
           gradeId={selectedGradeForStream.id}
           gradeName={selectedGradeForStream.name}
