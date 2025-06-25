@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { 
   LayoutDashboard, 
-  Store, 
-  Key, 
-  FileText, 
+  CalendarDays, 
+  BookOpen, 
+  GraduationCap,
+  ClipboardList,
+  BookMarked,
+  MessageSquare,
+  User,
   Settings,
-  Activity,
-  Shield,
   LogOut
 } from "lucide-react"
 
@@ -22,39 +24,40 @@ interface SidebarProps {
 const navigation = [
   {
     title: "Dashboard",
-    href: "/dashboard",
+    href: "/teacher/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Time Table",
-    href: "/dashboard/stores",
-    icon: Store,
-    count: 12
+    title: "Timetable",
+    href: "/teacher/timetable",
+    icon: CalendarDays,
   },
   {
-    title: "API Keys",
-    href: "/dashboard/api-keys",
-    icon: Key,
-    count: 24
+    title: "Assignments",
+    href: "/teacher/assignments",
+    icon: BookOpen,
   },
   {
-    title: "Credentials",
-    href: "/dashboard/credentials",
-    icon: Shield,
-    count: 18
+    title: "Assessments",
+    href: "/teacher/assessments",
+    icon: GraduationCap,
   },
   {
-    title: "Providers",
-    href: "/dashboard/providers",
-    icon: Activity,
-    count: 2
+    title: "Attendance",
+    href: "/teacher/attendance",
+    icon: ClipboardList,
   },
   {
-    title: "Logs",
-    href: "/dashboard/logs",
-    icon: FileText,
-    count: "1.2K"
-  }
+    title: "Lesson Plans",
+    href: "/teacher/lesson-plans",
+    icon: BookMarked,
+  },
+  {
+    title: "Messages",
+    href: "/teacher/messages",
+    icon: MessageSquare,
+    count: "5"
+  },
 ]
 
 export function Sidebar({ className }: SidebarProps) {
@@ -83,7 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
         {navigation.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || 
-            (item.href !== "/dashboard" && pathname.startsWith(item.href))
+            (item.href !== "/teacher/dashboard" && pathname.startsWith(item.href))
           
           return (
             <Link key={item.href} href={item.href}>
@@ -113,32 +116,18 @@ export function Sidebar({ className }: SidebarProps) {
         })}
       </nav>
 
-      {/* System Status */}
-      <div className="px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 shadow-sm">
-        <div className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3">
-          System Status
-        </div>
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></div>
-              <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">GAMEROOM</span>
-            </div>
-            <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">99.9%</span>
-          </div>
-          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></div>
-              <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">GAMEVAULT</span>
-            </div>
-            <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">99.8%</span>
-          </div>
-        </div>
-      </div>
-
       {/* Footer */}
       <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 space-y-2 shadow-sm">
-        <Link href="/dashboard/settings">
+        <Link href="/teacher/profile">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-sm"
+          >
+            <User className="mr-3 h-4 w-4" />
+            Profile
+          </Button>
+        </Link>
+        <Link href="/teacher/settings">
           <Button 
             variant="ghost" 
             className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-sm"
