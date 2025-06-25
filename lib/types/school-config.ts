@@ -13,10 +13,16 @@ export interface Subject {
   curriculum: string | null;
 }
 
+export interface Stream {
+  id: string;
+  name: string;
+}
+
 export interface GradeLevel {
   id: string;
   name: string;
   age: number | null;
+  streams: Stream[];
 }
 
 export interface Level {

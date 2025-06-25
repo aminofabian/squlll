@@ -1,6 +1,6 @@
 'use client'
 
-import { SchoolTypeSetup } from '../components/schooltype/SchoolTypeSetup'
+import { SchoolTypeSetup } from '../../components/schooltype'
 import { ClassHeader } from './components/ClassCard'
 
 export default function SchoolHome() {

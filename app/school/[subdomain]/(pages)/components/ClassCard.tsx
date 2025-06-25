@@ -8,11 +8,13 @@ import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
 import { useState, useMemo } from 'react'
 import { EditSubjectDialog } from './EditSubjectDialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import CreateClassDrawer from "../../components/CreateClassDrawer";
+import CreateClassDrawer from "@/app/school/components/CreateClassDrawer"
+import { AddStreamModal } from './AddStreamModal'
 
 interface ClassCardProps {
   level: Level;
   selectedGradeId?: string;
+  selectedStreamId?: string;
 }
 
 // Helper function to get component level color
@@ -43,12 +45,14 @@ export function ClassHeader() {
   )
 }
 
-export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
+export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'optional'>('all')
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
+  const [showStreamModal, setShowStreamModal] = useState(false)
+  const [selectedGradeForStream, setSelectedGradeForStream] = useState<GradeLevel | null>(null)
 
-  // Filter subjects based on selected grade and filter type
+  // Filter subjects based on selected grade, stream, and filter type
   const filteredSubjects = useMemo(() => {
     let subjects = level.subjects;
 
@@ -57,7 +61,11 @@ export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
       if (selectedFilter === 'all') return true;
       return selectedFilter === 'core' ? subject.subjectType === 'core' : subject.subjectType !== 'core';
     });
-
+    
+    // If there's a selected stream, we could add stream-specific filtering here
+    // For now, streams share the same subjects as their grades/levels
+    // This is where you would add custom stream-subject filtering logic if needed
+    
     // Then sort: core subjects first, then by name within each group
     return subjects.sort((a, b) => {
       // First sort by type (core comes first)
@@ -69,11 +77,16 @@ export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
     });
   }, [level.subjects, selectedFilter]);
 
-  // Get the selected grade if any
+  // Get the selected grade and stream if any
   const selectedGrade = useMemo(() => {
     if (!selectedGradeId) return null;
     return level.gradeLevels?.find(grade => grade.id === selectedGradeId) || null;
   }, [level.gradeLevels, selectedGradeId]);
+  
+  const selectedStream = useMemo(() => {
+    if (!selectedStreamId || !selectedGrade) return null;
+    return selectedGrade.streams?.find(stream => stream.id === selectedStreamId) || null;
+  }, [selectedGrade, selectedStreamId]);
 
   const handleDeleteSubject = (subjectId: string) => {
     // TODO: Implement delete functionality
@@ -95,25 +108,37 @@ export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
   };
 
   const handleAddStream = (gradeId: string) => {
-    // TODO: Implement add stream functionality
-    console.log('Add stream to grade:', gradeId);
+    const grade = level.gradeLevels?.find(g => g.id === gradeId);
+    if (grade) {
+      setSelectedGradeForStream(grade);
+      setShowStreamModal(true);
+    }
   };
 
   return (
     <Card className="w-full mb-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex flex-col">
-          <CardTitle className="text-xl font-bold">{level.name}</CardTitle>
+          <CardTitle className="text-lg">
+            {selectedGrade ? (
+              <span>
+                <span className="font-bold">{selectedGrade.name}</span>
+                {selectedStream && <span> ({selectedStream.name})</span>} - {level.name}
+              </span>
+            ) : (
+              <span>{level.name}</span>
+            )}
+          </CardTitle>
           <CardDescription>{level.description}</CardDescription>
           {selectedGrade && (
-            <div className="flex items-center gap-2 mt-2">
-              <GraduationCap className="h-4 w-4" />
-              <span className="text-sm font-medium">{selectedGrade.name}</span>
-              {selectedGrade.age && (
-                <span className="text-xs text-muted-foreground">
-                  (Age: {selectedGrade.age} years)
-                </span>
-              )}
+            <div className="flex items-center gap-1 mt-1">
+              <GraduationCap className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-600">
+                Selected Grade: <strong>{selectedGrade.name}</strong>
+                {selectedStream && (
+                  <> - Stream: <strong>{selectedStream.name}</strong></>
+                )}
+              </span>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -238,6 +263,22 @@ export function ClassCard({ level, selectedGradeId }: ClassCardProps) {
           isOpen={!!editingSubject}
         />
       )}
+
+      {selectedGradeForStream && (
+        <AddStreamModal
+          isOpen={showStreamModal}
+          onClose={() => {
+            setShowStreamModal(false);
+            setSelectedGradeForStream(null);
+          }}
+          onSuccess={() => {
+            // You might want to refresh the data here
+            console.log('Stream added successfully');
+          }}
+          gradeId={selectedGradeForStream.id}
+          gradeName={selectedGradeForStream.name}
+        />
+      )}
     </Card>
   );
-} 
+}

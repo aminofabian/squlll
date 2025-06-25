@@ -9,7 +9,7 @@ import { ClassCard } from '../components/ClassCard'
 import { ClassCardSkeleton } from '../components/ClassCardSkeleton'
 import { Filter, X } from 'lucide-react'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
-import CreateClassDrawer from "../../components/CreateClassDrawer"
+import CreateClassDrawer from '@/app/school/components/CreateClassDrawer'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -29,13 +29,15 @@ function getLevelOrder(levelName: string): number {
 }
 
 function EmptyState({ selectedGrade = null, searchTerm = '' }: {
-  selectedGrade?: { name: string; levelName: string } | null,
+  selectedGrade?: { name: string; levelName: string; streamName?: string } | null,
   searchTerm?: string
 }) {
   let message = 'Try adjusting your search or filters to find what you\'re looking for.'
   
   if (selectedGrade) {
-    message = `No classes found for ${selectedGrade.name} in ${selectedGrade.levelName}. Try selecting a different grade.`
+    message = selectedGrade.streamName
+      ? `No classes found for ${selectedGrade.name} (${selectedGrade.streamName}) in ${selectedGrade.levelName}. Try selecting a different grade or stream.`
+      : `No classes found for ${selectedGrade.name} in ${selectedGrade.levelName}. Try selecting a different grade.`
   } else if (searchTerm) {
     message = 'No classes match your search term "' + searchTerm + '". Try a different search.'
   }
@@ -56,6 +58,7 @@ function ClassesPage() {
   
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
   const [selectedLevelId, setSelectedLevelId] = useState<string>('')
+  const [selectedStreamId, setSelectedStreamId] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [showMobileFilter, setShowMobileFilter] = useState(false)
@@ -66,10 +69,20 @@ function ClassesPage() {
     
     let levels = config.selectedLevels;
     
-    // Filter based on grade selection and search
+    // Filter based on grade selection, stream selection, and search
     levels = levels.filter((level) => {
       if (selectedGradeId && selectedLevelId) {
         const hasSelectedGrade = level.gradeLevels?.some(g => g.id === selectedGradeId);
+        
+        // If both grade and stream are selected, filter accordingly
+        if (selectedStreamId) {
+          const gradeWithStream = level.gradeLevels?.find(g => 
+            g.id === selectedGradeId && 
+            g.streams?.some(s => s.id === selectedStreamId)
+          );
+          return level.id === selectedLevelId && !!gradeWithStream;
+        }
+        
         return level.id === selectedLevelId && hasSelectedGrade;
       }
       
@@ -97,6 +110,16 @@ function ClassesPage() {
   const handleGradeSelect = (gradeId: string, levelId: string) => {
     setSelectedGradeId(gradeId);
     setSelectedLevelId(levelId);
+    setSelectedStreamId(''); // Reset stream selection when grade changes
+  };
+
+  const handleStreamSelect = (streamId: string, gradeId: string, levelId: string) => {
+    setSelectedStreamId(streamId);
+    // Ensure the correct grade and level are also selected
+    if (gradeId !== selectedGradeId || levelId !== selectedLevelId) {
+      setSelectedGradeId(gradeId);
+      setSelectedLevelId(levelId);
+    }
   };
 
   const selectedGrade = useMemo(() => {
@@ -105,14 +128,19 @@ function ClassesPage() {
     for (const level of config.selectedLevels) {
       const grade = level.gradeLevels?.find(g => g.id === selectedGradeId);
       if (grade) {
+        // If a stream is selected, include it in the information
+        const selectedStream = selectedStreamId ? 
+          grade.streams?.find(s => s.id === selectedStreamId) : null;
+          
         return {
           name: grade.name,
-          levelName: level.name
+          levelName: level.name,
+          streamName: selectedStream?.name
         };
       }
     }
     return null;
-  }, [selectedGradeId, config]);
+  }, [selectedGradeId, selectedStreamId, config]);
 
   if (error) return <div>Error: {error instanceof Error ? error.message : 'An error occurred'}</div>
   if (!config && !isLoading) return <div>No configuration found</div>
@@ -129,6 +157,7 @@ function ClassesPage() {
           type="grades"
           onSearch={setSearchTerm}
           onGradeSelect={handleGradeSelect}
+          onStreamSelect={handleStreamSelect}
         />
       </div>
 
@@ -172,12 +201,13 @@ function ClassesPage() {
             
             {selectedGrade && (
               <Badge variant="outline" className="flex gap-1 items-center">
-                Grade: {selectedGrade.name} ({selectedGrade.levelName})
+                Grade: {selectedGrade.name} {selectedGrade.streamName && `(${selectedGrade.streamName})`} ({selectedGrade.levelName})
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => {
                     setSelectedGradeId('');
                     setSelectedLevelId('');
+                    setSelectedStreamId('');
                   }} 
                 />
               </Badge>
@@ -197,6 +227,7 @@ function ClassesPage() {
               onClick={() => {
                 setSelectedGradeId('');
                 setSelectedLevelId('');
+                setSelectedStreamId('');
                 setSearchTerm('');
               }}
             >Clear all</Button>
@@ -216,6 +247,7 @@ function ClassesPage() {
                 key={level.id} 
                 level={level} 
                 selectedGradeId={selectedGradeId}
+                selectedStreamId={selectedStreamId}
               />
             ))
           ) : config ? (

@@ -3,10 +3,10 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Search, GraduationCap, X, BookOpen, School, Users, Award } from "lucide-react"
+import { Search, GraduationCap, X, BookOpen, School, Users, Award, GitBranch } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
-import { Level, GradeLevel } from '@/lib/types/school-config'
+import { Level, GradeLevel, Stream } from '@/lib/types/school-config'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
@@ -69,16 +69,20 @@ interface SchoolSearchFilterProps {
   type?: 'grades' | 'classes' | 'students'
   onSearch?: (term: string) => void
   onGradeSelect?: (gradeId: string, levelId: string) => void
+  onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void
 }
 
 export function SchoolSearchFilter({ 
   className, 
   type = 'grades',
   onSearch,
-  onGradeSelect
+  onGradeSelect,
+  onStreamSelect
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
+  const [selectedStreamId, setSelectedStreamId] = useState<string>('')
+  const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
   const { config } = useSchoolConfigStore()
 
   // Get all grades grouped by level and sorted
@@ -129,8 +133,31 @@ export function SchoolSearchFilter({
 
   const handleGradeClick = (gradeId: string, levelId: string) => {
     setSelectedGradeId(gradeId);
+    setSelectedStreamId(''); // Reset stream selection when grade changes
+    
+    // Toggle expanded state for the grade
+    setExpandedGrades(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(gradeId)) {
+        newSet.delete(gradeId);
+      } else {
+        newSet.add(gradeId);
+      }
+      return newSet;
+    });
+    
     if (onGradeSelect) {
       onGradeSelect(gradeId, levelId);
+    }
+  };
+  
+  const handleStreamClick = (streamId: string, gradeId: string, levelId: string) => {
+    // Toggle stream selection if clicking the same stream
+    const newStreamId = selectedStreamId === streamId ? '' : streamId;
+    setSelectedStreamId(newStreamId);
+    
+    if (onStreamSelect) {
+      onStreamSelect(newStreamId, gradeId, levelId);
     }
   };
 
@@ -255,29 +282,65 @@ export function SchoolSearchFilter({
                 {/* Grades Grid */}
                 <div className="flex flex-wrap gap-1 pl-1 mt-1">
                   {levelData.grades.map((grade) => (
-                    <Button
-                      key={grade.id}
-                      variant={selectedGradeId === grade.id ? "default" : "outline"}
-                      className={cn(
-                        "h-6 px-1 transition-all duration-200 group text-[11px]",
-                        selectedGradeId === grade.id 
-                          ? "bg-primary text-white hover:text-white"
-                          : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-                      )}
-                      onClick={() => handleGradeClick(grade.id, levelData.levelId)}
-                    >
-                      <div className="flex items-center gap-0.5">
-                        <GraduationCap className={cn(
-                          "h-2.5 w-2.5 shrink-0",
+                    <div key={grade.id} className="flex flex-col gap-1 mb-1">
+                      <Button
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        className={cn(
+                          "h-6 px-1 transition-all duration-200 group text-[11px]",
                           selectedGradeId === grade.id 
-                            ? "text-white" 
-                            : "text-muted-foreground group-hover:text-primary"
-                        )} />
-                        <span className="font-medium">
-                          {abbreviateGrade(grade.name)}
-                        </span>
-                      </div>
-                    </Button>
+                            ? "bg-primary text-white hover:text-white"
+                            : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                        )}
+                        onClick={() => handleGradeClick(grade.id, levelData.levelId)}
+                      >
+                        <div className="flex items-center gap-0.5">
+                          <GraduationCap className={cn(
+                            "h-2.5 w-2.5 shrink-0",
+                            selectedGradeId === grade.id 
+                              ? "text-white" 
+                              : "text-muted-foreground group-hover:text-primary"
+                          )} />
+                          <span className="font-medium">
+                            {abbreviateGrade(grade.name)}
+                          </span>
+                          {grade.streams?.length > 0 && (
+                            <Badge variant="outline" className="ml-1 text-[8px] h-4 px-1 shrink-0 border-dashed">
+                              {grade.streams.length}
+                            </Badge>
+                          )}
+                        </div>
+                      </Button>
+                      
+                      {/* Streams section */}
+                      {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pl-3 mt-0.5">
+                          {grade.streams.map((stream) => (
+                            <Button
+                              key={stream.id}
+                              variant={selectedStreamId === stream.id ? "secondary" : "outline"}
+                              size="sm"
+                              className={cn(
+                                "h-5 px-1.5 text-[10px] border-dashed",
+                                selectedStreamId === stream.id 
+                                  ? "bg-secondary/20 text-secondary-foreground" 
+                                  : "hover:bg-secondary/10 hover:text-secondary hover:border-secondary/30"
+                              )}
+                              onClick={() => handleStreamClick(stream.id, grade.id, levelData.levelId)}
+                            >
+                              <div className="flex items-center gap-0.5">
+                                <GitBranch className={cn(
+                                  "h-2 w-2 shrink-0",
+                                  selectedStreamId === stream.id 
+                                    ? "text-secondary" 
+                                    : "text-muted-foreground"
+                                )} />
+                                <span>{stream.name}</span>
+                              </div>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

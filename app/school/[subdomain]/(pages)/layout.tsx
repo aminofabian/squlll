@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Toaster } from "sonner"
 
 export default function SchoolLayout({
   children,
@@ -166,6 +167,7 @@ export default function SchoolLayout({
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <Toaster position="top-right" closeButton richColors />
       {/* Mobile sidebar overlay */}
       {isMobileSidebarOpen && (
         <div 

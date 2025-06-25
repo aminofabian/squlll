@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { SchoolConfiguration, Level, Subject, GradeLevel } from '../types/school-config';
+import { SchoolConfiguration, Level, Subject, GradeLevel, Stream } from '../types/school-config';
 
 interface SchoolConfigState {
   config: SchoolConfiguration | null;
@@ -19,6 +19,7 @@ interface SchoolConfigState {
   getGradeLevelsByLevelId: (levelId: string) => GradeLevel[];
   getAllGradeLevels: () => { levelId: string; levelName: string; grades: GradeLevel[] }[];
   getGradeById: (gradeId: string) => { grade: GradeLevel; levelId: string; levelName: string } | undefined;
+  getStreamsByGradeId: (gradeId: string) => Stream[];
   
   // Reset
   reset: () => void;
@@ -46,7 +47,8 @@ export const useSchoolConfigStore = create<SchoolConfigState>()(
             grades: l.gradeLevels?.map(g => ({
               id: g.id,
               name: g.name,
-              age: g.age
+              age: g.age,
+              streams: g.streams?.length || 0
             }))
           }))
         });
@@ -83,7 +85,8 @@ export const useSchoolConfigStore = create<SchoolConfigState>()(
           grades: level?.gradeLevels?.map(g => ({
             id: g.id,
             name: g.name,
-            age: g.age
+            age: g.age,
+            streams: g.streams?.map(s => s.name) || []
           }))
         });
         return level?.gradeLevels || [];
@@ -113,6 +116,19 @@ export const useSchoolConfigStore = create<SchoolConfigState>()(
           }
         }
         return undefined;
+      },
+      
+      getStreamsByGradeId: (gradeId) => {
+        const state = get();
+        if (!state.config) return [];
+        
+        for (const level of state.config.selectedLevels) {
+          const grade = level.gradeLevels?.find(g => g.id === gradeId);
+          if (grade) {
+            return grade.streams || [];
+          }
+        }
+        return [];
       },
 
       // Reset

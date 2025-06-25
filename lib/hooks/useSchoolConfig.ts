@@ -34,6 +34,12 @@ const GET_SCHOOL_CONFIG = gql`
           id
           name
           age
+          streams {
+            id
+            name
+            capacity
+            isActive
+          }
         }
       }
       school {
