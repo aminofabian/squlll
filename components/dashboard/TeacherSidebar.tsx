@@ -4,6 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -82,67 +84,134 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {navigation.map((item) => {
+      <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
+        {navigation.map((item, index) => {
           const Icon = item.icon
           const isActive = pathname === item.href || 
             (item.href !== "/teacher/dashboard" && pathname.startsWith(item.href))
           
           return (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start h-12 font-mono text-sm tracking-wide uppercase relative overflow-hidden group",
-                  isActive 
-                    ? "bg-slate-100 dark:bg-slate-800 shadow-sm text-slate-900 dark:text-slate-100" 
-                    : "hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400"
-                )}
-              >
-                <div className={cn(
-                  "absolute left-0 top-0 bottom-0 w-1 transition-colors",
-                  isActive ? "bg-[#246a59]" : "bg-transparent group-hover:bg-slate-200 dark:group-hover:bg-slate-700"
-                )} />
-                <Icon className="mr-3 h-4 w-4" />
-                <span className="flex-1 text-left">{item.title}</span>
-                {item.count && (
-                  <div className="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-mono shadow-sm">
-                    {item.count}
+            <motion.div 
+              key={item.href}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+            >
+              <Link href={item.href}>
+                <Button
+                  variant={isActive ? "default" : "outline"}
+                  className={cn(
+                    "w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300",
+                    isActive 
+                      ? "bg-primary text-white hover:text-white shadow-sm" 
+                      : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className={cn(
+                      "flex items-center justify-center h-6 w-6 rounded-full transition-colors",
+                      isActive 
+                        ? "bg-white/20" 
+                        : "bg-muted group-hover:bg-primary/10"
+                    )}>
+                      <Icon className={cn(
+                        "h-3.5 w-3.5 shrink-0",
+                        isActive 
+                          ? "text-white" 
+                          : "text-muted-foreground group-hover:text-primary"
+                      )} />
+                    </div>
+                    <span className="font-medium">{item.title}</span>
                   </div>
-                )}
-              </Button>
-            </Link>
+                  
+                  {item.count && (
+                    <Badge 
+                      variant={isActive ? "outline" : "secondary"}
+                      className={cn(
+                        "ml-auto text-[10px] h-5 px-1.5 transition-all duration-300",
+                        isActive
+                          ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
+                          : "border-dashed hover:border-primary/50"
+                      )}
+                    >
+                      {item.count}
+                    </Badge>
+                  )}
+                  
+                  {isActive && (
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute bottom-0 left-0 h-0.5 bg-primary/30" 
+                    />
+                  )}
+                </Button>
+              </Link>
+            </motion.div>
           )
         })}
       </nav>
 
       {/* Footer */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 space-y-2 shadow-sm">
-        <Link href="/teacher/profile">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-sm"
-          >
-            <User className="mr-3 h-4 w-4" />
-            Profile
-          </Button>
-        </Link>
-        <Link href="/teacher/settings">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-sm"
-          >
-            <Settings className="mr-3 h-4 w-4" />
-            Settings
-          </Button>
-        </Link>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm"
+      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 space-y-3 shadow-sm">
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
         >
-          <LogOut className="mr-3 h-4 w-4" />
-          Sign Out
-        </Button>
+          <Link href="/teacher/profile">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
+                  <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                </div>
+                <span className="font-medium">Profile</span>
+              </div>
+            </Button>
+          </Link>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.05 }}
+        >
+          <Link href="/teacher/settings">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-primary/10 transition-colors">
+                  <Settings className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                </div>
+                <span className="font-medium">Settings</span>
+              </div>
+            </Button>
+          </Link>
+        </motion.div>
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.1 }}
+        >
+          <Button 
+            variant="outline" 
+            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50/50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-red-100/30 transition-colors">
+                <LogOut className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-red-500" />
+              </div>
+              <span className="font-medium group-hover:text-red-600">Sign Out</span>
+            </div>
+          </Button>
+        </motion.div>
       </div>
     </div>
   )
