@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { LevelInput } from '@/lib/types/school-config'
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql'
@@ -21,6 +22,18 @@ export async function POST(request: Request) {
         { status: 401 }
       )
     }
+
+    // Get school context from cookies
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('userId')?.value
+    const schoolUrl = cookieStore.get('schoolUrl')?.value
+    const subdomainUrl = cookieStore.get('subdomainUrl')?.value
+    
+    console.log('School context from cookies:', {
+      userId: userId ? `${userId.substring(0, 10)}...` : 'None',
+      schoolUrl: schoolUrl || 'None', 
+      subdomainUrl: subdomainUrl || 'None'
+    })
 
     // Prepare GraphQL mutation
     const mutation = `
@@ -63,13 +76,35 @@ export async function POST(request: Request) {
     console.log('Sending request to GraphQL with token:', token ? `${token.substring(0, 20)}...` : 'None')
     console.log('GraphQL endpoint:', GRAPHQL_ENDPOINT)
 
+    // Prepare headers with school context
+    const graphqlHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+
+    // Add school context headers if available
+    if (userId) {
+      graphqlHeaders['x-school-id'] = userId
+      graphqlHeaders['schoolId'] = userId
+      graphqlHeaders['x-user-id'] = userId
+    }
+    if (schoolUrl) {
+      graphqlHeaders['x-school-subdomain'] = schoolUrl
+      graphqlHeaders['schoolSubdomain'] = schoolUrl
+      graphqlHeaders['x-subdomain'] = schoolUrl
+      graphqlHeaders['subdomain'] = schoolUrl
+    }
+    if (subdomainUrl) {
+      graphqlHeaders['x-subdomain-url'] = subdomainUrl
+      graphqlHeaders['x-full-subdomain'] = subdomainUrl
+    }
+
+    console.log('GraphQL headers:', Object.keys(graphqlHeaders))
+
     // Call external GraphQL API
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers: graphqlHeaders,
       body: JSON.stringify({
         query: mutation,
         variables: {
