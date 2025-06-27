@@ -61,14 +61,16 @@ export async function POST(request: Request) {
             gradeLevels {
               id
               name
-              age
+              code
+              order
             }
           }
-          school {
-            schoolId
+          tenant {
+            id
             schoolName
             subdomain
           }
+          createdAt
         }
       }
     `
@@ -132,13 +134,16 @@ export async function POST(request: Request) {
       levelNames: levels.map(level => level.name),
       selectedLevels: result.data?.configureSchoolLevelsByNames?.selectedLevels?.map((l: any) => ({
         name: l.name,
+        description: l.description,
         subjects: l.subjects?.length,
-        grades: l.gradeLevels?.map((g: any) => ({
+        gradeLevels: l.gradeLevels?.map((g: any) => ({
           id: g.id,
           name: g.name,
-          age: g.age
+          code: g.code,
+          order: g.order
         }))
-      }))
+      })),
+      tenant: result.data?.configureSchoolLevelsByNames?.tenant
     });
 
     return NextResponse.json(result.data)
