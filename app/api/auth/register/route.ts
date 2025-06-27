@@ -9,18 +9,18 @@ export async function POST(request: Request) {
 
     // GraphQL mutation
     const mutation = `
-      mutation CreateUser($input: CreateUserInput!) {
-        createUser(createUserInput: $input) {
+      mutation CreateUser($signupInput: SignupInput!) {
+        createUser(signupInput: $signupInput) {
           user {
             id
             email
-            name
-            userRole
-          }
-          school {
-            schoolName
+            schoolUrl
           }
           subdomainUrl
+          tokens {
+            accessToken
+            refreshToken
+          }
         }
       }
     `
@@ -34,11 +34,10 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         query: mutation,
         variables: {
-          input: {
+          signupInput: {
             email,
             password,
             name,
-            userRole: "SUPER_ADMIN",
             schoolName
           }
         }

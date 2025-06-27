@@ -98,6 +98,7 @@ export default function SchoolLayout({
       
       if (accessToken) {
         document.cookie = `accessToken=${accessToken}; max-age=${60 * 60 * 24 * 30}; path=/`
+        console.log('Access token stored in cookies:', accessToken.substring(0, 20) + '...')
       }
       
       // Remove parameters from URL to prevent sharing sensitive data

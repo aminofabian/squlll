@@ -306,18 +306,42 @@ export const SchoolTypeSetup = () => {
         // Debug: Log the level data being sent
         console.log('Configuring levels with data:', selectedLevelData);
 
+        // Helper function to get cookie value
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift();
+          return undefined;
+        };
+
+        // Get access token from cookies
+        const accessToken = getCookie('accessToken');
+        console.log('Retrieved access token from cookies:', accessToken ? 'Found' : 'Not found');
+        console.log('All cookies:', document.cookie);
+        console.log('Access token (first 20 chars):', accessToken ? accessToken.substring(0, 20) + '...' : 'None');
+        
+        if (!accessToken) {
+          console.error('No access token found in cookies');
+          throw new Error('Authentication required. Please log in.');
+        }
+
+        console.log('About to make API call with token');
+
         // Call our API endpoint which forwards to GraphQL
         const response = await fetch('/api/school/configure-levels', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
           },
           body: JSON.stringify({ 
             levels: selectedLevelData,
           })
         });
         
+        console.log('API response status:', response.status);
         const data = await response.json();
+        console.log('API response data:', data);
         
         if (!response.ok) {
           throw new Error(data?.error || 'Failed to configure school levels');

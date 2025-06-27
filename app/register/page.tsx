@@ -191,21 +191,16 @@ export default function SignupPage() {
 
     const mutation = `
       mutation {
-        createUser(createUserInput: {
+        createUser(signupInput: {
           email: "${data.email}"
           password: "${data.password}"
           name: "${data.name}"
-          userRole: "SUPER_ADMIN"
           schoolName: "${data.schoolName}"
-          schoolUrl: "${data.schoolUrl}"
         }) {
           user {
             id
             email
             schoolUrl
-          }
-          school {
-            schoolName
           }
           subdomainUrl
           tokens {
@@ -272,11 +267,8 @@ export default function SignupPage() {
 
       setSuccess(result.data.createUser)
       
-      // Store tokens in localStorage or your preferred state management solution
-      if (result.data.createUser.tokens) {
-        localStorage.setItem('accessToken', result.data.createUser.tokens.accessToken)
-        localStorage.setItem('refreshToken', result.data.createUser.tokens.refreshToken)
-      }
+      // Tokens will be passed as URL parameters and stored in cookies on subdomain
+      // No need to store in localStorage here
 
       // Redirect to dashboard after successful signup
       setTimeout(() => {
