@@ -281,6 +281,71 @@ export const SchoolTypeSetup = () => {
       const selectedLevelsList = Array.from(selectedLevels[selectedType]);
       
       try {
+        // Helper function to get cookie value
+        const getCookie = (name: string) => {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift();
+          return undefined;
+        };
+
+        // Check if access token exists in cookies (the API will read it directly)
+        const accessToken = getCookie('accessToken');
+        console.log('Retrieved access token from cookies:', accessToken ? 'Found' : 'Not found');
+        
+        if (!accessToken) {
+          console.error('No access token found in cookies');
+          throw new Error('Authentication required. Please log in.');
+        }
+
+        // First, try to check if school already has a configuration
+        console.log('Checking if school already has configuration...');
+        
+        try {
+          const configResponse = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              query: `
+                query GetSchoolConfiguration {
+                  getSchoolConfiguration {
+                    id
+                    selectedLevels {
+                      id
+                      name
+                      description
+                    }
+                    tenant {
+                      id
+                      schoolName
+                      subdomain
+                    }
+                  }
+                }
+              `
+            })
+          });
+
+          const configData = await configResponse.json();
+          console.log('Existing config check:', configData);
+
+          // Check if we got a valid configuration (not just an auth error)
+          if (configData.data?.getSchoolConfiguration?.selectedLevels?.length > 0) {
+            console.log('School already has configuration, skipping setup...');
+            setIsLoading(false);
+            toast.success('School configuration found! Redirecting to dashboard...');
+            setSetupComplete(true);
+            setTimeout(() => {
+              router.push(`/dashboard`);
+            }, 1000);
+            return;
+          }
+        } catch (configError) {
+          console.log('Could not check existing config:', configError);
+        }
+
         // Get the selected school type
         const schoolType = schoolTypes.find(type => type.id === selectedType);
         if (!schoolType) {
@@ -303,36 +368,13 @@ export const SchoolTypeSetup = () => {
           };
         });
 
-        // Debug: Log the level data being sent
-        console.log('Configuring levels with data:', selectedLevelData);
-
-        // Helper function to get cookie value
-        const getCookie = (name: string) => {
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${name}=`);
-          if (parts.length === 2) return parts.pop()?.split(';').shift();
-          return undefined;
-        };
-
-        // Get access token from cookies
-        const accessToken = getCookie('accessToken');
-        console.log('Retrieved access token from cookies:', accessToken ? 'Found' : 'Not found');
-        console.log('All cookies:', document.cookie);
-        console.log('Access token (first 20 chars):', accessToken ? accessToken.substring(0, 20) + '...' : 'None');
-        
-        if (!accessToken) {
-          console.error('No access token found in cookies');
-          throw new Error('Authentication required. Please log in.');
-        }
-
-        console.log('About to make API call with token');
+        console.log('Attempting to configure levels with data:', selectedLevelData);
 
         // Call our API endpoint which forwards to GraphQL
         const response = await fetch('/api/school/configure-levels', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ 
             levels: selectedLevelData,
@@ -344,23 +386,52 @@ export const SchoolTypeSetup = () => {
         console.log('API response data:', data);
         
         if (!response.ok) {
+          // Always show skip dialog for any permission/auth errors
+          if (response.status === 403 || response.status === 401 || 
+              data.error?.includes('Permission denied') || 
+              data.error?.includes('Unauthorized') ||
+              data.error?.includes('Authentication required')) {
+            
+            console.log('Permission/auth error detected, showing skip dialog...');
+            
+            // Use a more prominent dialog
+            const shouldSkip = window.confirm(
+              `🔒 PERMISSION REQUIRED\n\n` +
+              `You don't currently have admin rights to configure school levels.\n\n` +
+              `OPTIONS:\n` +
+              `✅ Skip Setup - Continue to dashboard (you can use the system normally)\n` +
+              `❌ Cancel - Stay here (contact an admin for help)\n\n` +
+              `Would you like to SKIP this setup and continue to the dashboard?`
+            );
+            
+            if (shouldSkip) {
+              setIsLoading(false);
+              toast.success('🎉 Setup skipped! Welcome to your dashboard!', { duration: 3000 });
+              setSetupComplete(true);
+              setTimeout(() => {
+                router.push(`/dashboard`);
+              }, 1500);
+              return;
+            } else {
+              setIsLoading(false);
+              toast.error('Setup cancelled. Contact your administrator for help configuring school levels.');
+              return;
+            }
+          }
+          
           throw new Error(data?.error || 'Failed to configure school levels');
         }
 
-        // Debug: Log the response
+        // Success case
         console.log('Configure levels response:', data);
-        
         setIsLoading(false);
         toast.success(`Saved ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`);
-        
-        // Set setup as complete
         setSetupComplete(true);
         
-        // Redirect immediately to dashboard
-        toast.success('Redirecting to dashboard...', { duration: 2000 });
         setTimeout(() => {
           router.push(`/dashboard`);
         }, 1000);
+        
       } catch (error) {
         setIsLoading(false);
         toast.error(error instanceof Error ? error.message : 'Failed to configure school levels');

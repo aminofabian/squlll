@@ -42,8 +42,8 @@ const GET_SCHOOL_CONFIG = gql`
           }
         }
       }
-      school {
-        schoolId
+      tenant {
+        id
         schoolName
         subdomain
       }
