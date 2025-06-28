@@ -34,7 +34,7 @@ export interface Level {
 }
 
 export interface School {
-  schoolId: string;
+  id: string;
   schoolName: string;
   subdomain: string;
 }
@@ -42,7 +42,7 @@ export interface School {
 export interface SchoolConfiguration {
   id: string;
   selectedLevels: Level[];
-  school: School;
+  tenant: School;
 }
 
 export interface LevelClass {
