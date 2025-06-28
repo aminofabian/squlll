@@ -22,19 +22,21 @@ export const LevelGrid: React.FC<LevelGridProps> = ({
   if (!selectedSchoolType) return null
   
   return (
-    <div ref={levelsSectionRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-      {selectedSchoolType.levels.map((level) => {
-        const isSelected = selectedLevels[selectedType]?.has(level.level) || false
-        return (
-          <LevelCard
-            key={level.level}
-            level={level}
-            isSelected={isSelected}
-            toggleLevel={toggleLevel}
-            selectedType={selectedType}
-          />
-        )
-      })}
+    <div ref={levelsSectionRef} className="bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-100 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {selectedSchoolType.levels.map((level) => {
+          const isSelected = selectedLevels[selectedType]?.has(level.level) || false
+          return (
+            <LevelCard
+              key={level.level}
+              level={level}
+              isSelected={isSelected}
+              toggleLevel={toggleLevel}
+              selectedType={selectedType}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -26,7 +26,7 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    title: "Stores",
+    title: "Time Table",
     href: "/dashboard/stores",
     icon: Store,
     count: 12

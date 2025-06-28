@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Toaster } from "sonner"
 
 export default function SchoolLayout({
   children,
@@ -97,6 +98,7 @@ export default function SchoolLayout({
       
       if (accessToken) {
         document.cookie = `accessToken=${accessToken}; max-age=${60 * 60 * 24 * 30}; path=/`
+        console.log('Access token stored in cookies:', accessToken.substring(0, 20) + '...')
       }
       
       // Remove parameters from URL to prevent sharing sensitive data
@@ -166,6 +168,7 @@ export default function SchoolLayout({
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <Toaster position="top-right" closeButton richColors />
       {/* Mobile sidebar overlay */}
       {isMobileSidebarOpen && (
         <div 

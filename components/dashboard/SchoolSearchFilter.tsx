@@ -1,310 +1,482 @@
 'use client'
 
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, BookText, BookOpen, Layers, GraduationCap, Users } from "lucide-react"
+import { Search, GraduationCap, X, BookOpen, School, Users, Award, GitBranch } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
+import { Level, GradeLevel, Stream } from '@/lib/types/school-config'
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
+import { motion } from 'framer-motion'
 
-// Education level type
-type EducationLevel = 'preschool' | 'primary' | 'junior-secondary' | 'senior-secondary' | 'all'
+// Define the exact education level names and their order
+const LEVEL_ORDER: { [key: string]: number } = {
+  'Pre-Primary': 0,
+  'Lower Primary': 1,
+  'Upper Primary': 2,
+  'Junior Secondary': 3,
+  'Senior Secondary': 4,
+  'Madrasa Beginners': 5,
+  'Madrasa Lower': 6,
+  'Madrasa Upper': 7
+};
 
-// Grade type
-interface Grade {
-  id: string
-  name: string
-  level: EducationLevel
-  ageGroup: string
-  students: number
-  classes: number
+// Helper function to get the numeric value from a grade name (e.g., "Grade 1" -> 1)
+function getGradeNumber(gradeName: string): number {
+  const match = gradeName.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 999;
+}
+
+// Helper function to sort grades within a level
+function sortGrades(grades: GradeLevel[], levelName: string): GradeLevel[] {
+  return [...grades].sort((a, b) => {
+    const aNum = getGradeNumber(a.name);
+    const bNum = getGradeNumber(b.name);
+    
+    // For secondary levels, sort in descending order (higher grades first)
+    if (levelName.includes('Secondary')) {
+      return bNum - aNum;
+    }
+    // For all other levels, sort in ascending order
+    return aNum - bNum;
+  });
+}
+
+// Helper function to abbreviate grade names
+function abbreviateGrade(gradeName: string): string {
+  // Handle special cases first
+  if (gradeName.toLowerCase().includes('early childhood')) return 'EC';
+  if (gradeName.toLowerCase().includes('kindergarten')) return 'KG';
+  if (gradeName.toLowerCase().includes('nursery')) return 'NS';
+  if (gradeName.toLowerCase().includes('reception')) return 'RC';
+  if (gradeName.toLowerCase().includes('pp1')) return 'PP1';
+  if (gradeName.toLowerCase().includes('pp2')) return 'PP2';
+
+  // Handle regular grade numbers
+  const match = gradeName.match(/\d+/);
+  if (match) {
+    return `G${match[0]}`;
+  }
+
+  // If no number found, return first 2 characters
+  return gradeName.slice(0, 2);
 }
 
 // Props for the SchoolSearchFilter component
 interface SchoolSearchFilterProps {
   className?: string
   type?: 'grades' | 'classes' | 'students'
-  level?: EducationLevel // Kept for backwards compatibility
   onSearch?: (term: string) => void
-  onGradeSelect?: (grade: Grade) => void
+  onGradeSelect?: (gradeId: string, levelId: string) => void
+  onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void
+  isLoading?: boolean
 }
-
-// Helper function to get level icon
-const getLevelIcon = (level: EducationLevel) => {
-  switch (level) {
-    case 'preschool':
-      return <BookText className="h-4 w-4" />
-    case 'primary':
-      return <BookOpen className="h-4 w-4" />
-    case 'junior-secondary':
-      return <Layers className="h-4 w-4" />
-    case 'senior-secondary':
-      return <GraduationCap className="h-4 w-4" />
-    default:
-      return <BookOpen className="h-4 w-4" />
-  }
-}
-
-// Helper function to get level color
-const getLevelColor = (level: EducationLevel): string => {
-  switch (level) {
-    case 'preschool':
-      return 'bg-purple-100 text-purple-800'
-    case 'primary':
-      return 'bg-blue-100 text-blue-800'
-    case 'junior-secondary':
-      return 'bg-yellow-100 text-yellow-800'
-    case 'senior-secondary':
-      return 'bg-red-100 text-red-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
-}
-
-// Mock data for grades
-const mockGrades: Grade[] = [
-  // Preschool grades
-  {
-    id: 'baby-class',
-    name: 'Baby Class',
-    level: 'preschool',
-    ageGroup: '3 years',
-    students: 42,
-    classes: 2
-  },
-  {
-    id: 'pp1',
-    name: 'PP1',
-    level: 'preschool',
-    ageGroup: '4 years',
-    students: 56,
-    classes: 3
-  },
-  {
-    id: 'pp2',
-    name: 'PP2',
-    level: 'preschool',
-    ageGroup: '5 years',
-    students: 48,
-    classes: 2
-  },
-  
-  // Primary grades
-  {
-    id: 'grade1',
-    name: 'Grade 1',
-    level: 'primary',
-    ageGroup: '6 years',
-    students: 65,
-    classes: 3
-  },
-  {
-    id: 'grade2',
-    name: 'Grade 2',
-    level: 'primary',
-    ageGroup: '7 years',
-    students: 62,
-    classes: 3
-  },
-  {
-    id: 'grade3',
-    name: 'Grade 3',
-    level: 'primary',
-    ageGroup: '8 years',
-    students: 58,
-    classes: 2
-  },
-  {
-    id: 'grade4',
-    name: 'Grade 4',
-    level: 'primary',
-    ageGroup: '9 years',
-    students: 60,
-    classes: 2
-  },
-  {
-    id: 'grade5',
-    name: 'Grade 5',
-    level: 'primary',
-    ageGroup: '10 years',
-    students: 54,
-    classes: 2
-  },
-  {
-    id: 'grade6',
-    name: 'Grade 6',
-    level: 'primary',
-    ageGroup: '11 years',
-    students: 52,
-    classes: 2
-  },
-  
-  // Junior Secondary grades
-  {
-    id: 'grade7',
-    name: 'Grade 7',
-    level: 'junior-secondary',
-    ageGroup: '12 years',
-    students: 86,
-    classes: 3
-  },
-  {
-    id: 'grade8',
-    name: 'Grade 8',
-    level: 'junior-secondary',
-    ageGroup: '13 years',
-    students: 78,
-    classes: 3
-  },
-  {
-    id: 'grade9',
-    name: 'Grade 9',
-    level: 'junior-secondary',
-    ageGroup: '14 years',
-    students: 72,
-    classes: 2
-  },
-  
-  // Senior Secondary grades
-  {
-    id: 'grade10',
-    name: 'Grade 10',
-    level: 'senior-secondary',
-    ageGroup: '15 years',
-    students: 68,
-    classes: 3
-  },
-  {
-    id: 'grade11',
-    name: 'Grade 11',
-    level: 'senior-secondary',
-    ageGroup: '16 years',
-    students: 54,
-    classes: 2
-  },
-  {
-    id: 'grade12',
-    name: 'Grade 12',
-    level: 'senior-secondary',
-    ageGroup: '17 years',
-    students: 48,
-    classes: 2
-  }
-]
 
 export function SchoolSearchFilter({ 
   className, 
   type = 'grades',
-  level = 'all',
   onSearch,
-  onGradeSelect
+  onGradeSelect,
+  onStreamSelect,
+  isLoading = false
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [grades, setGrades] = useState<Grade[]>([])
-  const [selectedGrade, setSelectedGrade] = useState<string>('all')
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('')
+  const [selectedStreamId, setSelectedStreamId] = useState<string>('')
+  const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
+  const { config } = useSchoolConfigStore()
 
-  // Filter grades based on search term only
+  // Get all grades grouped by level and sorted
+  const gradesData = useMemo(() => {
+    if (!config?.selectedLevels) return [];
+
+    return config.selectedLevels
+      .map(level => ({
+        levelId: level.id,
+        levelName: level.name,
+        levelOrder: LEVEL_ORDER[level.name] ?? 999,
+        grades: sortGrades(level.gradeLevels || [], level.name)
+      }))
+      .sort((a, b) => a.levelOrder - b.levelOrder);
+  }, [config?.selectedLevels]);
+
+  // Filter grades based on search term
   const filteredGrades = useMemo(() => {
-    let filtered = mockGrades
+    if (!gradesData) return [];
     
-    // Filter by search term
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      filtered = filtered.filter(grade => 
-        grade.name.toLowerCase().includes(term) || 
-        grade.ageGroup.toLowerCase().includes(term)
-      )
-    }
+    if (!searchTerm) return gradesData;
     
-    return filtered
-  }, [searchTerm])
-  
-  // Handle grade selection
-  const handleGradeClick = (grade: Grade) => {
-    setSelectedGrade(grade.id)
-    if (onGradeSelect) {
-      onGradeSelect(grade)
-    }
-  }
-  
-  // No longer using education level selection
-  
-  // Handle search term changes
+    const term = searchTerm.toLowerCase();
+    return gradesData
+      .map(levelData => ({
+        ...levelData,
+        grades: levelData.grades.filter(grade =>
+          grade.name.toLowerCase().includes(term) ||
+          levelData.levelName.toLowerCase().includes(term)
+        )
+      }))
+      .filter(levelData => levelData.grades.length > 0);
+  }, [gradesData, searchTerm]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
+    setSearchTerm(e.target.value);
     if (onSearch) {
-      onSearch(e.target.value)
+      onSearch(e.target.value);
     }
-  }
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    if (onSearch) {
+      onSearch('');
+    }
+  };
+
+  const handleGradeClick = (gradeId: string, levelId: string) => {
+    setSelectedGradeId(gradeId);
+    setSelectedStreamId(''); // Reset stream selection when grade changes
+    
+    // Toggle expanded state for the grade
+    setExpandedGrades(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(gradeId)) {
+        newSet.delete(gradeId);
+      } else {
+        newSet.add(gradeId);
+      }
+      return newSet;
+    });
+    
+    if (onGradeSelect) {
+      onGradeSelect(gradeId, levelId);
+    }
+  };
+  
+  const handleStreamClick = (streamId: string, gradeId: string, levelId: string) => {
+    // Toggle stream selection if clicking the same stream
+    const newStreamId = selectedStreamId === streamId ? '' : streamId;
+    setSelectedStreamId(newStreamId);
+    
+    if (onStreamSelect) {
+      onStreamSelect(newStreamId, gradeId, levelId);
+    }
+  };
+
+  // Enhanced level styling configuration
+  const getLevelStyle = (levelName: string) => {
+    switch (true) {
+      case levelName.includes('Pre-Primary'):
+        return {
+          color: 'text-purple-600 dark:text-purple-400',
+          bgLight: 'bg-purple-50 dark:bg-purple-900/10',
+          bgDark: 'bg-purple-100 dark:bg-purple-800/20',
+          border: 'border-purple-200 dark:border-purple-700',
+          hover: 'hover:border-purple-300 dark:hover:border-purple-600',
+          gradient: 'from-purple-50 to-purple-100 dark:from-purple-900/10 dark:to-purple-800/20',
+          icon: School
+        };
+      case levelName.includes('Lower Primary'):
+        return {
+          color: 'text-blue-600 dark:text-blue-400',
+          bgLight: 'bg-blue-50 dark:bg-blue-900/10',
+          bgDark: 'bg-blue-100 dark:bg-blue-800/20',
+          border: 'border-blue-200 dark:border-blue-700',
+          hover: 'hover:border-blue-300 dark:hover:border-blue-600',
+          gradient: 'from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-800/20',
+          icon: BookOpen
+        };
+      case levelName.includes('Upper Primary'):
+        return {
+          color: 'text-green-600 dark:text-green-400',
+          bgLight: 'bg-green-50 dark:bg-green-900/10',
+          bgDark: 'bg-green-100 dark:bg-green-800/20',
+          border: 'border-green-200 dark:border-green-700',
+          hover: 'hover:border-green-300 dark:hover:border-green-600',
+          gradient: 'from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-800/20',
+          icon: Users
+        };
+      case levelName.includes('Junior Secondary'):
+        return {
+          color: 'text-orange-600 dark:text-orange-400',
+          bgLight: 'bg-orange-50 dark:bg-orange-900/10',
+          bgDark: 'bg-orange-100 dark:bg-orange-800/20',
+          border: 'border-orange-200 dark:border-orange-700',
+          hover: 'hover:border-orange-300 dark:hover:border-orange-600',
+          gradient: 'from-orange-50 to-orange-100 dark:from-orange-900/10 dark:to-orange-800/20',
+          icon: GraduationCap
+        };
+      case levelName.includes('Senior Secondary'):
+        return {
+          color: 'text-red-600 dark:text-red-400',
+          bgLight: 'bg-red-50 dark:bg-red-900/10',
+          bgDark: 'bg-red-100 dark:bg-red-800/20',
+          border: 'border-red-200 dark:border-red-700',
+          hover: 'hover:border-red-300 dark:hover:border-red-600',
+          gradient: 'from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-800/20',
+          icon: Award
+        };
+      default:
+        return {
+          color: 'text-gray-600 dark:text-gray-400',
+          bgLight: 'bg-gray-50 dark:bg-gray-900/10',
+          bgDark: 'bg-gray-100 dark:bg-gray-800/20',
+          border: 'border-gray-200 dark:border-gray-700',
+          hover: 'hover:border-gray-300 dark:hover:border-gray-600',
+          gradient: 'from-gray-50 to-gray-100 dark:from-gray-900/10 dark:to-gray-800/20',
+          icon: School
+        };
+    }
+  };
 
   return (
-    <div className={className}>
-      <div className="flex flex-col space-y-4">
-        {/* Search Section */}
-        <div className="flex items-center">
-          <div className="flex-1 flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search for a grade..."
-              className="h-8 w-full"
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
-        </div>
-        
-        {/* Grades Section */}
-        <div className="mt-2">
-          {/* If no grades match filters */}
-          {filteredGrades.length === 0 && (
-            <div className="text-center py-8 bg-muted/30 rounded-md">
-              <p className="text-muted-foreground">No grades match your search</p>
-            </div>
+    <div className={cn("flex flex-col h-full", className)}>
+      <div className="flex flex-col space-y-4 p-4 border-b">
+        {/* Search Header */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Grade Levels</h3>
+          {searchTerm && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSearch}
+              className="h-8 px-2 text-muted-foreground hover:text-foreground"
+            >
+              Clear
+              <X className="ml-2 h-4 w-4" />
+            </Button>
           )}
-          
-          {/* Grades Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {filteredGrades.map((grade) => (
-              <Button
-                key={grade.id}
-                variant={selectedGrade === grade.id ? "default" : "outline"}
-                className={`
-                  flex-grow min-w-[140px] h-auto py-3 px-3 
-                  transition-all hover:scale-105 
-                  ${selectedGrade === grade.id ? 'shadow-md ring-1 ring-primary/30' : 'shadow-sm hover:shadow-md'} 
-                  relative overflow-hidden group
-                `}
-                onClick={() => handleGradeClick(grade)}
-              >
-                {selectedGrade === grade.id && (
-                  <div className="absolute top-0 right-0 w-0 h-0 border-t-8 border-r-8 border-primary border-l-transparent border-b-transparent"></div>
-                )}
-                <div className="w-full flex flex-col items-start gap-2">
-                  <div className="w-full flex justify-between items-center">
-                    <span className="font-medium text-base">{grade.name}</span>
-                    <Badge variant="outline" className="text-xs font-normal">
-                      {grade.ageGroup}
-                    </Badge>
-                  </div>
-                  
-                  <div className="w-full flex justify-between text-xs mt-1">
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-3 w-3 opacity-70" />
-                      {grade.classes} Classes
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3 opacity-70" />
-                      {grade.students} Students
-                    </span>
-                  </div>
-                </div>
-              </Button>
-            ))}
-          </div>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search grades..."
+            className="pl-9 h-10"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
+      
+      {/* Grades List */}
+      <ScrollArea className="flex-1 px-4">
+        <div className="space-y-6 py-4">
+          {isLoading ? (
+            <div className="space-y-5">
+              {/* Skeleton for levels */}
+              {[...Array(4)].map((_, i) => {
+                // Simulate different level styles for visual variety
+                const levelColors = [
+                  { border: 'border-purple-200 dark:border-purple-700/40', bg: 'bg-purple-50/50 dark:bg-purple-900/5' },
+                  { border: 'border-blue-200 dark:border-blue-700/40', bg: 'bg-blue-50/50 dark:bg-blue-900/5' },
+                  { border: 'border-green-200 dark:border-green-700/40', bg: 'bg-green-50/50 dark:bg-green-900/5' },
+                  { border: 'border-orange-200 dark:border-orange-700/40', bg: 'bg-orange-50/50 dark:bg-orange-900/5' }
+                ];
+                const color = levelColors[i % levelColors.length];
+                
+                return (
+                  <motion.div 
+                    key={i} 
+                    className="space-y-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.1 }}
+                  >
+                    {/* Level Header Skeleton */}
+                    <div className={`flex items-center justify-between p-1.5 rounded-lg ${color.bg} border ${color.border}`}>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-3.5 w-3.5 rounded-full bg-muted-foreground/20 animate-pulse" />
+                        <div className="h-4 w-24 bg-muted-foreground/20 rounded animate-pulse" />
+                      </div>
+                      <div className="h-5 w-5 rounded-full bg-muted-foreground/10 animate-pulse" />
+                    </div>
+                    
+                    {/* Grades Grid Skeleton */}
+                    <div className="flex flex-wrap gap-1.5 pl-1 mt-1">
+                      {[...Array(i % 2 === 0 ? 6 : 4)].map((_, j) => (
+                        <motion.div 
+                          key={j} 
+                          className={`h-7 ${j % 3 === 0 ? 'w-20' : 'w-16'} border ${color.border} rounded-md bg-muted-foreground/5`}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.2, delay: (i * 0.05) + (j * 0.03) }}
+                        >
+                          <div className="flex items-center h-full px-2">
+                            <div className="h-3.5 w-3.5 rounded-full bg-muted-foreground/10 animate-pulse" />
+                            <div className="h-2 flex-1 bg-muted-foreground/10 rounded ml-1.5 animate-pulse" />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    
+                    {/* Stream Skeletons - only show for some levels */}
+                    {i % 2 === 0 && (
+                      <div className="flex flex-wrap gap-1.5 pl-3 mt-1">
+                        {[...Array(3)].map((_, j) => (
+                          <motion.div 
+                            key={j}
+                            className={`h-6 w-14 border border-dashed ${color.border} rounded-md bg-muted-foreground/5`}
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.15, delay: 0.3 + (j * 0.05) }}
+                          >
+                            <div className="flex items-center h-full px-1.5">
+                              <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/10 animate-pulse" />
+                              <div className="h-1.5 flex-1 bg-muted-foreground/10 rounded ml-1 animate-pulse" />
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : filteredGrades.length === 0 ? (
+            <div className="text-center py-8 rounded-lg border-2 border-dashed">
+              <p className="text-muted-foreground">No grades found</p>
+            </div>
+          ) : (
+            filteredGrades.map((levelData) => (
+              <div key={levelData.levelId} className="space-y-3">
+                {/* Level Header */}
+                <div className="flex items-center justify-between p-1.5 rounded-lg bg-primary/5 border">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <GraduationCap className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <h4 className="font-medium text-sm truncate">{levelData.levelName}</h4>
+                  </div>
+                  <Badge variant="outline" className="ml-1.5 text-[10px] h-5 px-1.5 shrink-0">
+                    {levelData.grades.length}
+                  </Badge>
+                </div>
+                
+                {/* Grades Grid */}
+                <div className="flex flex-wrap gap-1 pl-1 mt-1">
+                  {levelData.grades.map((grade) => (
+                    <div key={grade.id} className="flex flex-col gap-1 mb-1">
+                      <Button
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        className={cn(
+                          "h-7 px-2 transition-all duration-300 group text-[11px] relative",
+                          selectedGradeId === grade.id 
+                            ? "bg-primary text-white hover:text-white shadow-sm"
+                            : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                        )}
+                        onClick={() => handleGradeClick(grade.id, levelData.levelId)}
+                      >
+                        <div className="flex items-center gap-1">
+                          <div className={cn(
+                            "flex items-center justify-center h-4 w-4 rounded-full transition-colors",
+                            selectedGradeId === grade.id 
+                              ? "bg-white/20" 
+                              : "bg-muted group-hover:bg-primary/10"
+                          )}>
+                            <GraduationCap className={cn(
+                              "h-2.5 w-2.5 shrink-0",
+                              selectedGradeId === grade.id 
+                                ? "text-white" 
+                                : "text-muted-foreground group-hover:text-primary"
+                            )} />
+                          </div>
+                          <span className="font-medium">
+                            {abbreviateGrade(grade.name)}
+                          </span>
+                          {grade.streams?.length > 0 && (
+                            <div className="flex items-center">
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "ml-1 text-[8px] h-4 px-1.5 shrink-0 transition-all duration-300",
+                                  selectedGradeId === grade.id
+                                    ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
+                                    : "border-dashed hover:border-primary/50"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGradeClick(grade.id, levelData.levelId);
+                                }}
+                              >
+                                <GitBranch className="mr-0.5 h-2 w-2 shrink-0" />
+                                {grade.streams.length}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                        {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
+                          <motion.div 
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="absolute -right-1 -top-1 h-2 w-2 bg-secondary rounded-full" 
+                          />
+                        )}
+                      </Button>
+                      
+                      {/* Streams section */}
+                      {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex flex-wrap gap-1.5 pl-3 mt-1.5 overflow-visible"
+                        >
+                          {grade.streams.map((stream) => {
+                            const isSelected = selectedStreamId === stream.id;
+                            
+                            return (
+                              <Button
+                                key={stream.id}
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "h-6 py-0 px-2.5 text-[10px] relative group overflow-hidden transition-all duration-300",
+                                  isSelected 
+                                    ? "bg-white dark:bg-slate-800 border border-primary shadow-sm" 
+                                    : "hover:bg-primary/5 dark:hover:bg-primary/10 border border-dashed hover:border-primary/40"
+                                )}
+                                onClick={() => handleStreamClick(stream.id, grade.id, levelData.levelId)}
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <div className={cn(
+                                    "flex items-center justify-center h-3.5 w-3.5 rounded-full transition-colors",
+                                    isSelected
+                                      ? "bg-primary" 
+                                      : "bg-muted group-hover:bg-primary/10"
+                                  )}>
+                                    <GitBranch className={cn(
+                                      "h-2 w-2 shrink-0",
+                                      isSelected ? "text-white" : "text-muted-foreground group-hover:text-primary"
+                                    )} />
+                                  </div>
+                                  <span className={cn(
+                                    "font-medium",
+                                    isSelected && "text-primary"
+                                  )}>{stream.name}</span>
+                                </div>
+                                
+                                {isSelected && (
+                                  <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: '100%' }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute bottom-0 left-0 h-0.5 bg-primary" 
+                                  />
+                                )}
+                              </Button>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
     </div>
-  )
+  );
 }

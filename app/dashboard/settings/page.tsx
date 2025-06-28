@@ -475,7 +475,7 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <h3 className="font-medium text-sm">Database Cleanup</h3>
                 <p className="text-xs text-muted-foreground">
-                  Remove old logs and optimize database
+                  Remove old SQUL and optimize database
                 </p>
                 <Button variant="outline" className="w-full">
                   Cleanup Database
