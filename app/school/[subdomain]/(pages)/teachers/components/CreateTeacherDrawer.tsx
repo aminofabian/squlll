@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
@@ -46,7 +46,11 @@ import {
   Mail,
   MapPin,
   IdCard,
+  Loader2,
 } from "lucide-react";
+import { toast } from 'sonner';
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
+import { InvitationSuccessModal } from './InvitationSuccessModal';
 
 // Teacher form data schema
 const teacherFormSchema = z.object({
@@ -87,6 +91,17 @@ interface CreateTeacherDrawerProps {
 }
 
 export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [invitationData, setInvitationData] = useState<{
+    email: string;
+    fullName: string;
+    status: string;
+    createdAt: string;
+  } | null>(null);
+  const { data: schoolConfig } = useSchoolConfig();
+  
   const form = useForm<TeacherFormData>({
     resolver: zodResolver(teacherFormSchema),
     defaultValues: {
@@ -108,20 +123,64 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
   });
 
   // Submit handler
-  const onSubmit = (data: TeacherFormData) => {
-    // In a real application, this would call an API to create the teacher
-    console.log('Creating teacher:', data);
-    // Simulate API call
-    setTimeout(() => {
-      onTeacherCreated();
+  const onSubmit = async (data: TeacherFormData) => {
+    if (!schoolConfig?.tenant?.id) {
+      toast.error("Configuration Error", {
+        description: "School configuration not available. Please refresh and try again."
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/school/invite-teacher', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          tenantId: schoolConfig.tenant.id
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to invite teacher');
+      }
+
+      const inviteData = result.inviteTeacher;
+      
+      // Store invitation data and show success modal
+      setInvitationData(inviteData);
+      setShowSuccessModal(true);
+      
+      // Reset form and close drawer
       form.reset();
-    }, 500);
+      setIsDrawerOpen(false);
+      onTeacherCreated();
+      
+    } catch (error) {
+      console.error('Error inviting teacher:', error);
+      toast.error("Invitation Failed", {
+        description: error instanceof Error ? error.message : "An error occurred while sending the teacher invitation"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Drawer>
+    <>
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
-        <Button variant="default" className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white">
+        <Button 
+          variant="default" 
+          className="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white"
+          disabled={isLoading}
+        >
           <UserPlus className="h-4 w-4" />
           Add New Teacher
         </Button>
@@ -137,7 +196,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                 Teacher Registration
               </DrawerTitle>
               <DrawerDescription className="text-sm text-muted-foreground font-medium">
-                Add new teaching staff to your institution
+                Send an invitation email to a new teacher
               </DrawerDescription>
             </div>
             <div className="px-3 py-1 bg-primary/10 border border-primary/30 text-xs font-mono text-primary uppercase tracking-wide">
@@ -148,6 +207,16 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
         <div className="flex-1 overflow-y-auto bg-background">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-8">
+              
+              {/* Loading Overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 z-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Sending invitation...</p>
+                  </div>
+                </div>
+              )}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                 <div className="border-b border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800">
                   <h3 className="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide flex items-center gap-2">
@@ -513,17 +582,17 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-2">
-                        Portal Access Credentials
+                        Invitation Process
                       </h4>
                       <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        Login credentials will be automatically generated and sent to the teacher's email address upon successful registration.
+                        An invitation email will be sent to the teacher with a secure signup link. They will create their own password to access the staff portal.
                       </p>
                       <div className="flex items-center gap-4 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                         <div className="text-xs font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                           Access Portal:
                         </div>
                         <div className="text-xs font-mono text-primary font-medium">
-                          staff.kenyaschools.edu
+                          {schoolConfig?.tenant?.subdomain || 'school'}.squl.co.ke
                         </div>
                       </div>
                     </div>
@@ -539,22 +608,43 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
             <Button 
               type="submit" 
               onClick={form.handleSubmit(onSubmit)}
-              className="flex-1 bg-primary hover:bg-primary-dark text-white font-medium transition-colors gap-2"
+              disabled={isLoading}
+              className="flex-1 bg-primary hover:bg-primary-dark text-white font-medium transition-colors gap-2 disabled:opacity-50"
             >
-              <UserPlus className="h-4 w-4" />
-              Register Teacher
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending Invitation...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" />
+                  Send Teacher Invitation
+                </>
+              )}
             </Button>
-            <DrawerClose asChild>
-              <Button 
-                variant="outline" 
-                className="px-6 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                Cancel
-              </Button>
-            </DrawerClose>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDrawerOpen(false)}
+              disabled={isLoading}
+              className="px-6 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+            >
+              Cancel
+            </Button>
           </div>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
+    
+    {/* Success Modal */}
+    {invitationData && (
+      <InvitationSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        invitationData={invitationData}
+        schoolSubdomain={schoolConfig?.tenant?.subdomain}
+      />
+    )}
+    </>
   );
 } 
