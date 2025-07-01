@@ -52,11 +52,11 @@ const levelNameMapping: Record<string, Record<string, string>> = {
     'Senior Secondary': 'Madrasa Secondary'
   },
   cbc: {
-    'Pre-Primary': 'CBC Pre-Primary',
-    'Lower Primary': 'CBC Lower Primary',
-    'Upper Primary': 'CBC Upper Primary',
-    'Junior Secondary': 'CBC Junior Secondary',
-    'Senior Secondary': 'CBC Senior Secondary'
+    'Pre-Primary': 'pre primary',
+    'Lower Primary': 'lower primary',
+    'Upper Primary': 'upper primary',
+    'Junior Secondary': 'junior secondary',
+    'Senior Secondary': 'Senior Secondary'
   },
   international: {
     'IGCSE Early Years': 'IGCSE Early Years',
