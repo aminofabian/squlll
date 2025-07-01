@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { SchoolSidebar } from '@/components/dashboard/SchoolSidebar'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,35 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Toaster } from "sonner"
 
-export default function SchoolLayout({
+// Loading component for Suspense fallback
+function LayoutLoading() {
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <div className="w-64 bg-white border-r animate-pulse">
+        <div className="p-4 space-y-4">
+          <div className="h-8 bg-gray-200 rounded"></div>
+          <div className="space-y-2">
+            <div className="h-6 bg-gray-200 rounded"></div>
+            <div className="h-6 bg-gray-200 rounded"></div>
+            <div className="h-6 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 flex flex-col">
+        <div className="h-16 bg-white border-b animate-pulse">
+          <div className="h-full px-6 flex items-center justify-between">
+            <div className="h-8 w-32 bg-gray-200 rounded"></div>
+            <div className="h-8 w-20 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+        <div className="flex-1 bg-gray-50"></div>
+      </div>
+    </div>
+  )
+}
+
+// Main layout component that uses useSearchParams
+function SchoolLayoutContent({
   children,
 }: {
   children: React.ReactNode
@@ -315,5 +343,20 @@ export default function SchoolLayout({
         </main>
       </div>
     </div>
+  )
+}
+
+// Main export with Suspense boundary
+export default function SchoolLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <Suspense fallback={<LayoutLoading />}>
+      <SchoolLayoutContent>
+        {children}
+      </SchoolLayoutContent>
+    </Suspense>
   )
 }

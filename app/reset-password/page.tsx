@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 
 // Admin Logo Component for Reset Password
@@ -22,7 +22,20 @@ function AdminLogo() {
   )
 }
 
-export default function ResetPasswordPage() {
+// Loading component to show while suspense is loading
+function ResetPasswordLoading() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-custom-blue mx-auto"></div>
+        <p className="mt-4 text-slate-500">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+// Component that uses useSearchParams - wrapped in Suspense
+function ResetPasswordForm() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -89,14 +102,7 @@ export default function ResetPasswordPage() {
   }
 
   if (!token && !error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-custom-blue mx-auto"></div>
-          <p className="mt-4 text-slate-500">Loading...</p>
-        </div>
-      </div>
-    )
+    return <ResetPasswordLoading />
   }
 
   return (
@@ -266,5 +272,14 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main page component with Suspense boundary
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordForm />
+    </Suspense>
   )
 } 
