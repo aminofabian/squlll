@@ -78,6 +78,24 @@ export async function POST(request: Request) {
     // Check for GraphQL errors
     if (result.errors) {
       console.error('GraphQL errors:', result.errors);
+      
+      // Check if the school is already configured
+      const alreadyConfiguredError = result.errors.find((error: any) => 
+        error.extensions?.code === 'BADREQUESTEXCEPTION' && 
+        error.message === 'School has already been configured'
+      );
+      
+      if (alreadyConfiguredError) {
+        return NextResponse.json(
+          { 
+            error: 'SCHOOL_ALREADY_CONFIGURED',
+            message: 'School has already been configured',
+            action: 'redirect_to_dashboard'
+          },
+          { status: 400 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Error configuring school levels', details: result.errors },
         { status: 500 }
