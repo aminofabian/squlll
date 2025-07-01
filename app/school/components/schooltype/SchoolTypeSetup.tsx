@@ -361,6 +361,50 @@ export const SchoolTypeSetup = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle specific case where school is already configured
+        if (errorData.error === 'SCHOOL_ALREADY_CONFIGURED') {
+          toast.error(
+            <div className="space-y-3 p-2">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <School className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+                    School Already Configured
+                  </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    Your school has already been set up. You can continue to your dashboard.
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    toast.dismiss();
+                    router.push('/dashboard');
+                  }}
+                  className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>,
+            { 
+              duration: 10000,
+              style: {
+                maxWidth: '420px',
+                background: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              }
+            }
+          );
+          return;
+        }
+        
         throw new Error(errorData.error || 'Failed to configure school levels');
       }
 
