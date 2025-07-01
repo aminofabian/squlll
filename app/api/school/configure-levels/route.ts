@@ -1,46 +1,31 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { LevelInput } from '@/lib/types/school-config'
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql'
+const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql';
 
 export async function POST(request: Request) {
   try {
-    // Note: Using hardcoded level names as specified
-    const levelNames = [
-      "lower primary",
-      "upper primary", 
-      "junior secondary",
-      "Senior Secondary"
-    ]
+    const { levelNames } = await request.json();
     
     // Get the token from cookies
-    const cookieStore = await cookies()
-    const token = cookieStore.get('accessToken')?.value
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken')?.value;
+    
+    console.log('Debug - Token found:', token ? `${token.substring(0, 20)}...` : 'No token');
+    console.log('Debug - GRAPHQL_ENDPOINT:', GRAPHQL_ENDPOINT);
+    console.log('Debug - levelNames:', levelNames);
     
     if (!token) {
       return NextResponse.json(
         { error: 'Authentication required. Please log in.' },
         { status: 401 }
-      )
+      );
     }
 
-    // Get school context from cookies
-    const userId = cookieStore.get('userId')?.value
-    const schoolUrl = cookieStore.get('schoolUrl')?.value
-    const subdomainUrl = cookieStore.get('subdomainUrl')?.value
-    
-    console.log('Configuring school levels for:', { schoolUrl, levelNames })
-
-    // Prepare GraphQL mutation with exact structure you provided
+    // Prepare GraphQL mutation
     const mutation = `
-      mutation {
-        configureSchoolLevelsByNames(levelNames: [
-          "lower primary",
-          "upper primary",
-          "junior secondary",
-          "Senior Secondary"
-        ]) {
+      mutation ConfigureSchoolLevelsByNames($levelNames: [String!]!) {
+        configureSchoolLevelsByNames(levelNames: $levelNames) {
           id
           selectedLevels {
             id
@@ -59,74 +44,49 @@ export async function POST(request: Request) {
           createdAt
         }
       }
-    `
+    `;
 
-    // Prepare headers with school context
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-
-    // Add school context headers if available
-    if (userId) {
-      headers['x-user-id'] = userId
-      headers['x-school-id'] = userId
-    }
-    if (schoolUrl) {
-      headers['x-subdomain'] = schoolUrl
-      headers['x-school-subdomain'] = schoolUrl
-    }
-    if (subdomainUrl) {
-      headers['x-subdomain-url'] = subdomainUrl
-    }
-
-    // Call external GraphQL API with the exact mutation
+    // Call external GraphQL API
+    const requestBody = {
+      query: mutation,
+      variables: {
+        levelNames
+      }
+    };
+    
+    console.log('Debug - Request body:', JSON.stringify(requestBody, null, 2));
+    console.log('Debug - Authorization header:', `Bearer ${token.substring(0, 20)}...`);
+    
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
-      headers,
-      body: JSON.stringify({
-        query: mutation
-        // No variables needed since level names are hardcoded in the mutation
-      })
-    })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-    const result = await response.json()
+    console.log('Debug - Response status:', response.status);
+    console.log('Debug - Response headers:', Object.fromEntries(response.headers.entries()));
+    
+    const result = await response.json();
+    console.log('Debug - Response body:', JSON.stringify(result, null, 2));
     
     // Check for GraphQL errors
     if (result.errors) {
-      console.error('GraphQL configuration error:', result.errors)
-      
-      // Check if it's a permissions issue
-      const hasPermissionError = result.errors.some((error: any) => 
-        error.extensions?.code === 'UNAUTHORIZEDEXCEPTION' ||
-        error.message?.toLowerCase().includes('unauthorized') ||
-        error.message?.toLowerCase().includes('permission') ||
-        error.message?.toLowerCase().includes('forbidden')
-      )
-      
-      if (hasPermissionError) {
-        return NextResponse.json(
-          { 
-            error: 'Permission denied. You may not have admin rights to configure school levels.',
-            details: result.errors 
-          },
-          { status: 403 }
-        )
-      }
-      
+      console.error('GraphQL errors:', result.errors);
       return NextResponse.json(
         { error: 'Error configuring school levels', details: result.errors },
         { status: 500 }
-      )
+      );
     }
 
-    console.log('School levels configured successfully')
-    return NextResponse.json(result.data)
+    return NextResponse.json(result.data);
   } catch (error) {
-    console.error('Error configuring school levels:', error)
+    console.error('Error configuring school levels:', error);
     return NextResponse.json(
       { error: 'Failed to configure school levels' },
       { status: 500 }
-    )
+    );
   }
-}
+} 

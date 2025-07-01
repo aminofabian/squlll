@@ -14,6 +14,63 @@ import { Footer } from './Footer'
 import { Header } from './Header'
 import { ProgressStepper } from './ProgressStepper'
 
+// Types for API response
+interface GradeLevel {
+  id: string;
+  name: string;
+  code: string | null;
+  order: number | null;
+}
+
+interface SelectedLevel {
+  id: string;
+  name: string;
+  gradeLevels: GradeLevel[];
+}
+
+interface Tenant {
+  id: string;
+  schoolName: string;
+}
+
+interface ConfigureSchoolLevelsResponse {
+  configureSchoolLevelsByNames: {
+    id: string;
+    selectedLevels: SelectedLevel[];
+    tenant: Tenant;
+    createdAt: string;
+  };
+}
+
+// Mapping from frontend level names to backend level names
+const levelNameMapping: Record<string, Record<string, string>> = {
+  madrasa: {
+    'Pre-Primary': 'Madrasa Beginners',
+    'Lower Primary': 'Madrasa Lower',
+    'Upper Primary': 'Madrasa Upper',
+    'Junior Secondary': 'Madrasa Secondary',
+    'Senior Secondary': 'Madrasa Secondary'
+  },
+  cbc: {
+    'Pre-Primary': 'CBC Pre-Primary',
+    'Lower Primary': 'CBC Lower Primary',
+    'Upper Primary': 'CBC Upper Primary',
+    'Junior Secondary': 'CBC Junior Secondary',
+    'Senior Secondary': 'CBC Senior Secondary'
+  },
+  international: {
+    'IGCSE Early Years': 'IGCSE Early Years',
+    'IGCSE Primary': 'IGCSE Primary',
+    'IGCSE Secondary': 'IGCSE Secondary',
+    'A-Level': 'A-Level'
+  },
+  homeschool: {
+    'Elementary': 'Homeschool Elementary',
+    'Middle School': 'Homeschool Middle School',
+    'High School': 'Homeschool High School'
+  }
+}
+
 export const SchoolTypeSetup = () => {
   const params = useParams()
   const router = useRouter()
@@ -276,167 +333,62 @@ export const SchoolTypeSetup = () => {
   }, [selectedType])
 
   const handleContinue = async () => {
-    if (canProceed) {
-      setIsLoading(true);
-      const selectedLevelsList = Array.from(selectedLevels[selectedType]);
-      
-      try {
-        // Helper function to get cookie value
-        const getCookie = (name: string) => {
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${name}=`);
-          if (parts.length === 2) return parts.pop()?.split(';').shift();
-          return undefined;
-        };
+    if (!canProceed) return;
 
-        // Check if access token exists in cookies (the API will read it directly)
-        const accessToken = getCookie('accessToken');
-        console.log('Retrieved access token from cookies:', accessToken ? 'Found' : 'Not found');
-        
-        if (!accessToken) {
-          console.error('No access token found in cookies');
-          throw new Error('Authentication required. Please log in.');
-        }
+    setIsLoading(true);
+    const selectedLevelsList = Array.from(selectedLevels[selectedType]);
+    
+    try {
+      // Map frontend level names to backend level names
+      const mappedLevelNames = selectedLevelsList
+        .map(levelName => levelNameMapping[selectedType]?.[levelName] || levelName)
+        .filter(Boolean);
 
-        // First, try to check if school already has a configuration
-        console.log('Checking if school already has configuration...');
-        
-        try {
-          const configResponse = await fetch('/api/graphql', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              query: `
-                query GetSchoolConfiguration {
-                  getSchoolConfiguration {
-                    id
-                    selectedLevels {
-                      id
-                      name
-                      description
-                    }
-                    tenant {
-                      id
-                      schoolName
-                      subdomain
-                    }
-                  }
-                }
-              `
-            })
-          });
+      console.log('Configuring school levels:', { 
+        selectedType, 
+        frontendLevels: selectedLevelsList,
+        mappedLevels: mappedLevelNames 
+      });
 
-          const configData = await configResponse.json();
-          console.log('Existing config check:', configData);
+      // Call the API endpoint
+      const response = await fetch('/api/school/configure-levels', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ levelNames: mappedLevelNames }),
+      });
 
-          // Check if we got a valid configuration (not just an auth error)
-          if (configData.data?.getSchoolConfiguration?.selectedLevels?.length > 0) {
-            console.log('School already has configuration, skipping setup...');
-            setIsLoading(false);
-            toast.success('School configuration found! Redirecting to dashboard...');
-            setSetupComplete(true);
-            setTimeout(() => {
-              router.push(`/dashboard`);
-            }, 1000);
-            return;
-          }
-        } catch (configError) {
-          console.log('Could not check existing config:', configError);
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to configure school levels');
+      }
 
-        // Get the selected school type
-        const schoolType = schoolTypes.find(type => type.id === selectedType);
-        if (!schoolType) {
-          throw new Error('Selected school type not found');
-        }
+      const result: ConfigureSchoolLevelsResponse = await response.json();
 
-        // Get the full level data for each selected level
-        const selectedLevelData = selectedLevelsList.map(levelName => {
-          const levelConfig = schoolType.levels.find(l => l.level === levelName);
-          if (!levelConfig) {
-            throw new Error(`Level configuration not found for ${levelName}`);
-          }
-          return {
-            name: levelName,
-            description: levelConfig.description,
-            classes: levelConfig.classes.map(c => ({
-              name: c.name,
-              age: c.age
-            }))
-          };
-        });
+      console.log('School configuration response:', result);
 
-        console.log('Attempting to configure levels with data:', selectedLevelData);
-
-        // Call our API endpoint which forwards to GraphQL
-        const response = await fetch('/api/school/configure-levels', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            levels: selectedLevelData,
-          })
-        });
-        
-        console.log('API response status:', response.status);
-        const data = await response.json();
-        console.log('API response data:', data);
-        
-        if (!response.ok) {
-          // Always show skip dialog for any permission/auth errors
-          if (response.status === 403 || response.status === 401 || 
-              data.error?.includes('Permission denied') || 
-              data.error?.includes('Unauthorized') ||
-              data.error?.includes('Authentication required')) {
-            
-            console.log('Permission/auth error detected, showing skip dialog...');
-            
-            // Use a more prominent dialog
-            const shouldSkip = window.confirm(
-              `🔒 PERMISSION REQUIRED\n\n` +
-              `You don't currently have admin rights to configure school levels.\n\n` +
-              `OPTIONS:\n` +
-              `✅ Skip Setup - Continue to dashboard (you can use the system normally)\n` +
-              `❌ Cancel - Stay here (contact an admin for help)\n\n` +
-              `Would you like to SKIP this setup and continue to the dashboard?`
-            );
-            
-            if (shouldSkip) {
-              setIsLoading(false);
-              toast.success('🎉 Setup skipped! Welcome to your dashboard!', { duration: 3000 });
-              setSetupComplete(true);
-              setTimeout(() => {
-                router.push(`/dashboard`);
-              }, 1500);
-              return;
-            } else {
-              setIsLoading(false);
-              toast.error('Setup cancelled. Contact your administrator for help configuring school levels.');
-              return;
-            }
-          }
-          
-          throw new Error(data?.error || 'Failed to configure school levels');
-        }
-
-        // Success case
-        console.log('Configure levels response:', data);
-        setIsLoading(false);
-        toast.success(`Saved ${selectedLevelsList.length} levels: ${selectedLevelsList.join(', ')}`);
+      if (result.configureSchoolLevelsByNames) {
+        const configData = result.configureSchoolLevelsByNames;
+        toast.success(
+          `🎉 Successfully configured ${configData.selectedLevels.length} levels for ${configData.tenant.schoolName}!`,
+          { duration: 4000 }
+        );
         setSetupComplete(true);
         
         setTimeout(() => {
+          console.log('Redirecting to dashboard...');
           router.push(`/dashboard`);
-        }, 1000);
-        
-      } catch (error) {
-        setIsLoading(false);
-        toast.error(error instanceof Error ? error.message : 'Failed to configure school levels');
-        console.error('Error configuring school levels:', error);
+        }, 2000);
       }
+    } catch (error) {
+      console.error('Error configuring school levels:', error);
+      toast.error(
+        `Failed to configure school levels. ${error instanceof Error ? error.message : 'Please try again.'}`,
+        { duration: 5000 }
+      );
+    } finally {
+      setIsLoading(false);
     }
   }
 
