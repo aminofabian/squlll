@@ -7,7 +7,7 @@ import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircle2, AlertCircle, Info, User, Mail, Building2, KeyRound, RefreshCw, Globe2, ArrowLeft, ArrowRight, Loader2, GraduationCap, Shield, Eye, EyeOff } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -54,6 +54,18 @@ interface AcceptInvitationResponse {
   }
 }
 
+// Loading component for Suspense fallback
+function SignupLoading() {
+  return (
+    <AuthWrapper title="Loading...">
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-4 text-slate-500">Preparing signup form...</p>
+      </div>
+    </AuthWrapper>
+  )
+}
+
 const inputStyles = {
   base: `h-12 w-full bg-white border-0 px-4 pl-11 text-slate-900 
     ring-1 ring-inset ring-gray-200
@@ -74,7 +86,7 @@ const inputStyles = {
   formItem: `mb-6`,
 }
 
-export default function TeacherSignupPage() {
+function TeacherSignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<AcceptInvitationResponse | null>(null)
@@ -212,7 +224,7 @@ export default function TeacherSignupPage() {
 
   if (success) {
     return (
-      <AuthWrapper>
+      <AuthWrapper title="Account Activated">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -301,7 +313,7 @@ export default function TeacherSignupPage() {
   }
 
   return (
-    <AuthWrapper>
+    <AuthWrapper title="Complete Signup">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -364,8 +376,13 @@ export default function TeacherSignupPage() {
                           placeholder="Create a strong password"
                           className={cn(inputStyles.base, "pr-12")}
                           onFocus={() => setPasswordFocused(true)}
-                          onBlur={() => setPasswordFocused(false)}
-                          {...field}
+                          onBlur={(e) => {
+                            setPasswordFocused(false);
+                            field.onBlur();
+                          }}
+                          value={field.value}
+                          onChange={field.onChange}
+                          name={field.name}
                         />
                       </FormControl>
                       <button
@@ -493,4 +510,13 @@ export default function TeacherSignupPage() {
       </div>
     </AuthWrapper>
   )
-} 
+}
+
+// Main page component with Suspense boundary
+export default function TeacherSignupPage() {
+  return (
+    <Suspense fallback={<SignupLoading />}>
+      <TeacherSignupForm />
+    </Suspense>
+  )
+}
