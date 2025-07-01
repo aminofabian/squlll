@@ -6,16 +6,20 @@ const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { email, password, name, schoolName } = body
+    const { email, password } = body
 
-    // GraphQL mutation
+    // GraphQL mutation for sign in
     const mutation = `
-      mutation CreateUser($signupInput: SignupInput!) {
-        createUser(signupInput: $signupInput) {
+      mutation SignIn($signInInput: SignInInput!) {
+        signIn(signInInput: $signInInput) {
           user {
             id
             email
-            schoolUrl
+            name
+          }
+          membership {
+            role
+            status
           }
           subdomainUrl
           tokens {
@@ -35,11 +39,9 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         query: mutation,
         variables: {
-          signupInput: {
+          signInInput: {
             email,
-            password,
-            name,
-            schoolName
+            password
           }
         }
       })
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const userData = data.data.createUser
+    const userData = data.data.signIn
     
     // Set authentication cookies
     const cookieStore = await cookies()
@@ -83,7 +85,19 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7
     })
-    cookieStore.set('schoolUrl', userData.user.schoolUrl, {
+    cookieStore.set('userName', userData.user.name, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7
+    })
+    cookieStore.set('userRole', userData.membership.role, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7
+    })
+    cookieStore.set('membershipStatus', userData.membership.status, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -99,14 +113,20 @@ export async function POST(request: Request) {
     // Return success response
     return NextResponse.json({
       user: userData.user,
+      membership: userData.membership,
       subdomainUrl: userData.subdomainUrl,
-      message: 'Registration successful'
+      tokens: {
+        // Only return non-sensitive token info if needed
+        accessToken: userData.tokens.accessToken.substring(0, 20) + '...',
+        hasRefreshToken: !!userData.tokens.refreshToken
+      },
+      message: 'Sign in successful'
     })
 
   } catch (error) {
-    console.error('Signup error:', error)
+    console.error('Sign in error:', error)
     return NextResponse.json(
-      { error: 'An error occurred during signup' },
+      { error: 'An error occurred during sign in' },
       { status: 500 }
     )
   }

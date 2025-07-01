@@ -11,9 +11,10 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
     
-    console.log('Debug - Token found:', token ? `${token.substring(0, 20)}...` : 'No token');
-    console.log('Debug - GRAPHQL_ENDPOINT:', GRAPHQL_ENDPOINT);
-    console.log('Debug - levelNames:', levelNames);
+    console.log('🔍 Debug - Token found:', token ? `${token.substring(0, 30)}...` : 'No token');
+    console.log('🔍 Debug - All cookies:', Object.fromEntries(
+      Array.from(cookieStore.getAll().map(cookie => [cookie.name, cookie.value.substring(0, 20) + '...']))
+    ));
     
     if (!token) {
       return NextResponse.json(
@@ -49,13 +50,15 @@ export async function POST(request: Request) {
     // Call external GraphQL API
     const requestBody = {
       query: mutation,
-      variables: {
-        levelNames
-      }
+      variables: { levelNames }
     };
     
-    console.log('Debug - Request body:', JSON.stringify(requestBody, null, 2));
-    console.log('Debug - Authorization header:', `Bearer ${token.substring(0, 20)}...`);
+
+    console.log('🔍 Debug - Request details:');
+    console.log('  - Endpoint:', GRAPHQL_ENDPOINT);
+    console.log('  - Level names:', levelNames);
+    console.log('  - Auth header:', `Bearer ${token.substring(0, 30)}...`);
+    console.log('  - Request body:', JSON.stringify(requestBody, null, 2));
     
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
@@ -66,11 +69,11 @@ export async function POST(request: Request) {
       body: JSON.stringify(requestBody)
     });
 
-    console.log('Debug - Response status:', response.status);
-    console.log('Debug - Response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('🔍 Debug - Response status:', response.status);
+    console.log('🔍 Debug - Response headers:', Object.fromEntries(response.headers.entries()));
     
     const result = await response.json();
-    console.log('Debug - Response body:', JSON.stringify(result, null, 2));
+    console.log('🔍 Debug - Full response:', JSON.stringify(result, null, 2));
     
     // Check for GraphQL errors
     if (result.errors) {

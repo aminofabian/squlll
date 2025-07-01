@@ -1,8 +1,12 @@
+"use client"
+
 import { AuthWrapper } from "@/components/auth/AuthFormWrapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 // Admin Logo Component for Login
 function AdminLogo() {
@@ -19,6 +23,50 @@ function AdminLogo() {
 }
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Sign in failed')
+      }
+
+      // Redirect based on user role
+      if (data.membership?.role === 'ADMIN') {
+        router.push('/dashboard')
+      } else {
+        // Redirect to appropriate subdomain for teachers/students
+        if (data.subdomainUrl) {
+          window.location.href = `https://${data.subdomainUrl}`
+        } else {
+          router.push('/dashboard')
+        }
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred during sign in')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -49,16 +97,24 @@ export default function LoginPage() {
             title="System Authentication" 
             description="This system is restricted to authorized personnel only"
           >
-            <div className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
+                  {error}
+                </div>
+              )}
+              
               <div className="space-y-3">
-                <Label htmlFor="username" className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wide">
-                  Administrator ID
+                <Label htmlFor="email" className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                  Administrator Email
                 </Label>
                 <Input 
-                  id="username" 
-                  type="text" 
-                  placeholder="Enter your admin username"
+                  id="email" 
+                  type="email" 
+                  placeholder="Enter your admin email"
                   className="h-12 border-2 border-slate-300 dark:border-slate-600 focus:border-slate-500 font-mono bg-slate-50 dark:bg-slate-900 placeholder:text-slate-400"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -72,6 +128,8 @@ export default function LoginPage() {
                   type="password" 
                   placeholder="Enter your secure password"
                   className="h-12 border-2 border-slate-300 dark:border-slate-600 focus:border-slate-500 font-mono bg-slate-50 dark:bg-slate-900 placeholder:text-slate-400"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
@@ -96,8 +154,12 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              <Button className="w-full h-12 mt-8 bg-slate-900 hover:bg-slate-800 text-white font-mono tracking-wide uppercase text-sm">
-                Authenticate & Access
+              <Button 
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-12 mt-8 bg-slate-900 hover:bg-slate-800 text-white font-mono tracking-wide uppercase text-sm disabled:opacity-50"
+              >
+                {isLoading ? 'Authenticating...' : 'Authenticate & Access'}
               </Button>
 
               <div className="border-t-2 border-slate-200 dark:border-slate-700 pt-6">
@@ -111,7 +173,7 @@ export default function LoginPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </form>
           </AuthWrapper>
           
           {/* System Status */}
