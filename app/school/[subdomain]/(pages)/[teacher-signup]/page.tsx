@@ -158,7 +158,7 @@ function TeacherSignupContent() {
         
         // Redirect to teacher dashboard within the same subdomain after 3 seconds
         setTimeout(() => {
-          router.push(`/school/${subdomain}/teacher`)
+          router.push(`/teacher`)
         }, 3000)
       } else {
         throw new Error('No response data received')
