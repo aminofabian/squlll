@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -25,7 +25,7 @@ import {
 import {
   Drawer,
   DrawerClose,
-  DrawerContent,
+  DrawerContent,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
@@ -42,7 +42,14 @@ import {
   Calendar, 
   GraduationCap,
   Verified,
+  Loader2,
+  Mail,
+  CheckCircle,
+  Wand2,
 } from "lucide-react"
+import { toast } from 'sonner'
+import { StudentSuccessModal } from './StudentSuccessModal'
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 
 // Form validation schema
 const studentFormSchema = z.object({
@@ -53,8 +60,9 @@ const studentFormSchema = z.object({
   class: z.string().min(1, "Class is required"),
   stream: z.string().optional(),
   date_of_birth: z.string().min(1, "Date of birth is required"),
-  age: z.number().min(1).max(25),
+  age: z.coerce.number().min(1, "Age must be at least 1").max(25, "Age must be at most 25"),
   admission_date: z.string().min(1, "Admission date is required"),
+  student_email: z.string().email().optional().or(z.literal("")),
   guardian_name: z.string().min(2, "Guardian name must be at least 2 characters"),
   guardian_phone: z.string().min(1, "Guardian phone is required"),
   guardian_email: z.string().email().optional().or(z.literal("")),
@@ -214,6 +222,36 @@ interface CreateStudentDrawerProps {
 }
 
 export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerProps) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successData, setSuccessData] = useState<{
+    user: { id: string; email: string; name: string }
+    student: { id: string; admission_number: string; grade: string; gender: string; phone: string }
+    generatedPassword: string
+  } | null>(null)
+  const { data: schoolConfig } = useSchoolConfig()
+
+  // Function to generate email from name
+  const generateEmailFromName = () => {
+    const name = form.getValues('name')
+    if (!name || name.trim() === '') {
+      toast.error('Please enter a name first to generate email')
+      return
+    }
+    
+    // Generate email from name: "Kelvin Mwangi" -> "kelvinmwangi@squl.ac.ke"
+    const cleanName = name.toLowerCase()
+      .replace(/[^a-z\s]/g, '') // Remove non-alphabetic characters except spaces
+      .replace(/\s+/g, '') // Remove all spaces
+    const generatedEmail = `${cleanName}@squl.ac.ke`
+    
+    form.setValue('student_email', generatedEmail)
+    toast.success('Email generated!', {
+      description: `Generated: ${generatedEmail}`
+    })
+  }
+
   // Form handling
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentFormSchema),
@@ -227,6 +265,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
       date_of_birth: new Date(Date.now() - (10 * 365 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // Default to 10 years ago
       age: 0,
       admission_date: new Date().toISOString().split('T')[0],
+      student_email: '',
       guardian_name: '',
       guardian_phone: '',
       guardian_email: '',
@@ -234,21 +273,90 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
     },
   })
 
+  // Watch the name field for dynamic email preview
+  const watchedName = form.watch('name')
+
+  // Generate preview email from current name
+  const getPreviewEmail = () => {
+    if (!watchedName || watchedName.trim() === '') {
+      return 'studentname@squl.ac.ke'
+    }
+    const cleanName = watchedName.toLowerCase()
+      .replace(/[^a-z\s]/g, '') // Remove non-alphabetic characters except spaces
+      .replace(/\s+/g, '') // Remove all spaces
+    return `${cleanName}@squl.ac.ke`
+  }
+
   // Submit handler
-  const onSubmit = (data: StudentFormData) => {
-    // In a real application, this would call an API to create the student
-    console.log('Creating student:', data)
-    // Simulate API call
-    setTimeout(() => {
-      onStudentCreated()
+  const onSubmit = async (data: StudentFormData) => {
+    setIsLoading(true)
+
+    try {
+      // Auto-generate email if not provided
+      let studentEmail = data.student_email
+      if (!studentEmail || studentEmail.trim() === '') {
+        // Generate email from name: "Kelvin Mwangi" -> "kelvinmwangi@squl.ac.ke"
+        const cleanName = data.name.toLowerCase()
+          .replace(/[^a-z\s]/g, '') // Remove non-alphabetic characters except spaces
+          .replace(/\s+/g, '') // Remove all spaces
+        studentEmail = `${cleanName}@squl.ac.ke`
+      }
+
+      // Prepare data with auto-generated email
+      const submissionData = {
+        ...data,
+        student_email: studentEmail
+      }
+
+      const response = await fetch('/api/school/create-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create student')
+      }
+
+      const studentData = result.createStudent
+      
+      // Store success data for display
+      setSuccessData(studentData)
+      setShowSuccessModal(true)
+      
+      // Show success toast
+      toast.success("Student Created Successfully!", {
+        description: `${studentData.user.name} has been registered with admission number ${studentData.student.admission_number}`
+      })
+      
+      // Reset form and close drawer
       form.reset()
-    }, 500)
+      setIsDrawerOpen(false)
+      onStudentCreated()
+      
+    } catch (error) {
+      console.error('Error creating student:', error)
+      toast.error("Registration Failed", {
+        description: error instanceof Error ? error.message : "An error occurred while creating the student"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <Drawer>
+    <>
+    <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
-        <Button variant="default" className="flex items-center gap-2 font-mono">
+        <Button 
+          variant="default" 
+          className="flex items-center gap-2 font-mono"
+          disabled={isLoading}
+        >
           <UserPlus className="h-4 w-4" />
           Add New Student
         </Button>
@@ -274,9 +382,19 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
             </DrawerDescription>
           </div>
         </DrawerHeader>
-        <div className="px-6 py-4 overflow-y-auto">
+        <div className="px-6 py-4 overflow-y-auto relative">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
+              
+              {/* Loading Overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 z-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Creating student...</p>
+                  </div>
+                </div>
+              )}
               <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
                 <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
                   <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
@@ -310,6 +428,39 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                           <Input placeholder="e.g., KPS/2023/001" {...field} className="font-mono" />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="student_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1 font-mono text-sm">
+                          <Mail className="h-3.5 w-3.5 text-primary" />
+                          Student Email (Optional)
+                        </FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <Input placeholder="student@example.com" {...field} className="font-mono flex-1" />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={generateEmailFromName}
+                              disabled={isLoading}
+                              className="shrink-0 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
+                              title="Generate email from name"
+                            >
+                              <Wand2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Click the <Wand2 className="inline h-3 w-3 mx-1" /> icon to generate: <span className="font-mono text-primary">{getPreviewEmail()}</span>
+                        </p>
                       </FormItem>
                     )}
                   />
@@ -544,26 +695,53 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     <span className="text-sm font-mono text-slate-700 dark:text-slate-300">Student Portal</span>
                   </div>
                   <span className="text-xs font-mono bg-primary/20 text-primary px-2 py-1 rounded border border-primary/30">
-                    portal.kenyaschools.edu
+          portal.kenyaschools.edu5
                   </span>
                 </div>
               </div>
 
               <DrawerFooter className="border-t-2 border-primary/20 pt-6 space-y-3">
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white gap-2 font-mono transition-colors">
-                  <UserPlus className="h-4 w-4" />
-                  Register New Student
+                <Button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="bg-primary hover:bg-primary/90 text-white gap-2 font-mono transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating Student...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4" />
+                      Register New Student
+                    </>
+                  )}
                 </Button>
-                <DrawerClose asChild>
-                  <Button variant="outline" className="border-primary/20 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:border-primary/40 font-mono transition-colors">
-                    Cancel
-                  </Button>
-                </DrawerClose>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsDrawerOpen(false)}
+                  disabled={isLoading}
+                  className="border-primary/20 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:border-primary/40 font-mono transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </Button>
               </DrawerFooter>
             </form>
           </Form>
         </div>
       </DrawerContent>
     </Drawer>
+    
+    {/* Success Modal */}
+    {successData && showSuccessModal && (
+      <StudentSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        studentData={successData}
+        schoolSubdomain={schoolConfig?.tenant?.subdomain || "school"}
+      />
+    )}
+  </>
   )
 } 
