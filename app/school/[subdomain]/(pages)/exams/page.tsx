@@ -38,6 +38,7 @@ import {
 import { mockExams, mockStudentResults, subjects } from "@/lib/data/mockExams"
 import { Exam, StudentExamResult } from "@/types/exam"
 import { format } from "date-fns"
+import { CreateExamDrawer } from "./components/CreateExamDrawer"
 
 // Student Performance View Component
 function StudentPerformanceView({ studentId }: { studentId: string }) {
@@ -700,10 +701,18 @@ export default function ExamsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Exam
-                </Button>
+                <CreateExamDrawer 
+                  onExamCreated={() => {
+                    // Refresh the exams list after creation
+                    window.location.reload();
+                  }}
+                  trigger={
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Exam
+                    </Button>
+                  }
+                />
                 <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" />
                   Export Report
@@ -853,10 +862,18 @@ export default function ExamsPage() {
                     <p className="text-gray-600 mb-6 max-w-md mx-auto">
                       No exams have been created for this class and term yet. Create your first exam to get started.
                     </p>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Exam
-                    </Button>
+                    <CreateExamDrawer 
+                      onExamCreated={() => {
+                        // Refresh the exams list after creation
+                        window.location.reload();
+                      }}
+                      trigger={
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create First Exam
+                        </Button>
+                      }
+                    />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
