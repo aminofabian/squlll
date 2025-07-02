@@ -84,6 +84,11 @@ const mainNavigationItems: NavigationItem[] = [
     icon: GraduationCap,
   },
   {
+    title: "Parents",
+    href: "/parents",
+    icon: Users,
+  },
+  {
     title: "Staff",
     href: "/staff",
     icon: UserCheck,
