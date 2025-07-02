@@ -370,275 +370,357 @@ export default function StaffPage() {
 
       {/* Main Content */}
       <div className="flex-1 p-8 space-y-8">
-        {/* Page Header */}
-        <div className="border-b-2 border-primary/20 pb-6">
-          <div className="flex flex-col gap-2">
-            <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-              <span className="text-xs font-mono uppercase tracking-wide text-primary">
-                Non-Teaching Staff
-              </span>
-            </div>
-            <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
-              Administrative & Support Staff
-            </h1>
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                Manage administrative, support, and non-teaching staff members
-              </p>
-              <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                Showing {filteredStaff.length} of {nonTeachingStaff.length} staff members
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Staff Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredStaff.map((staff) => (
-            <Card 
-              key={staff.id} 
-              className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-200 cursor-pointer hover:shadow-lg"
-              onClick={() => setSelectedStaff(staff)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base font-mono">{staff.name}</CardTitle>
-                      <CardDescription className="text-xs font-mono">
-                        {staff.employeeId}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    className={`text-xs font-mono ${getStatusColor(staff.status)}`}
-                  >
-                    {staff.status.replace('-', ' ')}
-                  </Badge>
+        {!selectedStaff ? (
+          <>
+            {/* Page Header */}
+            <div className="border-b-2 border-primary/20 pb-6">
+              <div className="flex flex-col gap-2">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                  <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                    Non-Teaching Staff
+                  </span>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    {getStaffTypeIcon(staff.staffType)}
-                    <span className="text-sm font-mono font-medium">{staff.position}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4 text-slate-400" />
-                    <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                      {staff.department}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-slate-400" />
-                    <span className="text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
-                      {staff.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-slate-400" />
-                    <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                      {staff.phone}
-                    </span>
-                  </div>
+                <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                  Administrative & Support Staff
+                </h1>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    Manage administrative, support, and non-teaching staff members
+                  </p>
+                  <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                    Showing {filteredStaff.length} of {nonTeachingStaff.length} staff members
+                  </p>
                 </div>
+              </div>
+            </div>
 
-                <div className="pt-2 border-t border-primary/20">
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs font-mono text-slate-500">
-                      Experience: {staff.experience} years
-                    </div>
-                    {staff.rating && (
-                      <div className="flex items-center gap-1">
-                        <Award className="h-3 w-3 text-yellow-500" />
-                        <span className="text-xs font-mono">{staff.rating}/5</span>
+            {/* Staff Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredStaff.map((staff) => (
+                <Card 
+                  key={staff.id} 
+                  className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-200 cursor-pointer hover:shadow-lg"
+                  onClick={() => setSelectedStaff(staff)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base font-mono">{staff.name}</CardTitle>
+                          <CardDescription className="text-xs font-mono">
+                            {staff.employeeId}
+                          </CardDescription>
+                        </div>
                       </div>
-                    )}
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs font-mono ${getStatusColor(staff.status)}`}
+                      >
+                        {staff.status.replace('-', ' ')}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {getStaffTypeIcon(staff.staffType)}
+                        <span className="text-sm font-mono font-medium">{staff.position}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-slate-400" />
+                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                          {staff.department}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-slate-400" />
+                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
+                          {staff.email}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-slate-400" />
+                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                          {staff.phone}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-primary/20">
+                      <div className="flex justify-between items-center">
+                        <div className="text-xs font-mono text-slate-500">
+                          Experience: {staff.experience} years
+                        </div>
+                        {staff.rating && (
+                          <div className="flex items-center gap-1">
+                            <Award className="h-3 w-3 text-yellow-500" />
+                            <span className="text-xs font-mono">{staff.rating}/5</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {filteredStaff.length === 0 && (
+              <div className="text-center py-12 border-2 border-dashed border-primary/20 rounded-lg">
+                <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-lg font-mono font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  No non-teaching staff found
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-500 font-mono">
+                  {searchTerm ? `No staff found matching "${searchTerm}"` : 'No non-teaching staff members available'}
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Staff Detail View */}
+            <div className="space-y-8">
+              {/* Back Button and Header */}
+              <div className="border-b-2 border-primary/20 pb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedStaff(null)}
+                    className="border-primary/20 font-mono hover:bg-primary/5"
+                  >
+                    ← Back to Staff List
+                  </Button>
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Staff Details
+                    </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredStaff.length === 0 && (
-          <div className="text-center py-12 border-2 border-dashed border-primary/20 rounded-lg">
-            <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-mono font-medium text-slate-600 dark:text-slate-400 mb-2">
-              No non-teaching staff found
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-500 font-mono">
-              {searchTerm ? `No staff found matching "${searchTerm}"` : 'No non-teaching staff members available'}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Staff Detail Modal */}
-      <Dialog open={!!selectedStaff} onOpenChange={() => setSelectedStaff(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-mono">Staff Details</DialogTitle>
-          </DialogHeader>
-          
-          {selectedStaff && (
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="border-2 border-primary/20 rounded-lg p-4">
-                <div className="inline-block w-fit px-2 py-1 bg-primary/5 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-                  Personal Information
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono font-medium">{selectedStaff.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">{selectedStaff.position}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">{selectedStaff.department}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">{selectedStaff.email}</span>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary" />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">{selectedStaff.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">
-                        Joined: {new Date(selectedStaff.joinDate).toLocaleDateString()}
+                  <div>
+                    <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                      {selectedStaff.name}
+                    </h1>
+                    <p className="text-lg font-mono text-slate-600 dark:text-slate-400">
+                      {selectedStaff.position}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs font-mono ${getStatusColor(selectedStaff.status)}`}
+                      >
+                        {selectedStaff.status.replace('-', ' ')}
+                      </Badge>
+                      <span className="text-sm font-mono text-slate-500">
+                        {selectedStaff.employeeId}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">Experience: {selectedStaff.experience} years</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Staff Details Content */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Basic Information */}
+                <div className="border-2 border-primary/20 rounded-xl p-6">
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md mb-4">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Personal Information
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="text-xs font-mono text-slate-500 uppercase">Email</div>
+                        <div className="text-sm font-mono">{selectedStaff.email}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="text-xs font-mono text-slate-500 uppercase">Phone</div>
+                        <div className="text-sm font-mono">{selectedStaff.phone}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Building className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="text-xs font-mono text-slate-500 uppercase">Department</div>
+                        <div className="text-sm font-mono">{selectedStaff.department}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="text-xs font-mono text-slate-500 uppercase">Join Date</div>
+                        <div className="text-sm font-mono">
+                          {new Date(selectedStaff.joinDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Award className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="text-xs font-mono text-slate-500 uppercase">Experience</div>
+                        <div className="text-sm font-mono">{selectedStaff.experience} years</div>
+                      </div>
                     </div>
                     {selectedStaff.address && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-slate-400" />
-                        <span className="text-sm font-mono">{selectedStaff.address}</span>
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-slate-400" />
+                        <div>
+                          <div className="text-xs font-mono text-slate-500 uppercase">Address</div>
+                          <div className="text-sm font-mono">{selectedStaff.address}</div>
+                        </div>
                       </div>
                     )}
+                    {selectedStaff.officeLocation && (
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-slate-400" />
+                        <div>
+                          <div className="text-xs font-mono text-slate-500 uppercase">Office</div>
+                          <div className="text-sm font-mono">{selectedStaff.officeLocation}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Professional Information */}
+                <div className="border-2 border-primary/20 rounded-xl p-6">
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md mb-4">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Professional Information
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-xs font-mono text-slate-500 uppercase mb-2">Qualifications</div>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedStaff.qualifications.map((qual, index) => (
+                          <Badge key={index} variant="outline" className="text-xs font-mono">
+                            {qual}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="text-xs font-mono text-slate-500 uppercase mb-2">Responsibilities</div>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedStaff.responsibilities.map((resp, index) => (
+                          <Badge key={index} variant="outline" className="text-xs font-mono">
+                            {resp}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Briefcase className="h-5 w-5 text-slate-400" />
+                      <div>
+                        <div className="text-xs font-mono text-slate-500 uppercase">Staff Type</div>
+                        <div className="text-sm font-mono flex items-center gap-2">
+                          {getStaffTypeIcon(selectedStaff.staffType)}
+                          {selectedStaff.staffType.charAt(0).toUpperCase() + selectedStaff.staffType.slice(1)}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Professional Info */}
-              <div className="border-2 border-primary/20 rounded-lg p-4">
-                <div className="inline-block w-fit px-2 py-1 bg-primary/5 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-                  Professional Information
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-sm font-mono font-medium mb-2">Qualifications:</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedStaff.qualifications.map((qual, index) => (
-                        <Badge key={index} variant="outline" className="text-xs font-mono">
-                          {qual}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-mono font-medium mb-2">Responsibilities:</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedStaff.responsibilities.map((resp, index) => (
-                        <Badge key={index} variant="outline" className="text-xs font-mono">
-                          {resp}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {selectedStaff.officeLocation && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">Office: {selectedStaff.officeLocation}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Performance Info */}
-              {(selectedStaff.rating || selectedStaff.attendanceRate) && (
-                <div className="border-2 border-primary/20 rounded-lg p-4">
-                  <div className="inline-block w-fit px-2 py-1 bg-primary/5 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-                    Performance & Records
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {selectedStaff.rating && (
-                      <div className="text-center p-3 bg-primary/5 rounded-lg">
-                        <div className="text-2xl font-mono font-bold text-primary">
-                          {selectedStaff.rating}/5
-                        </div>
-                        <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                          Performance Rating
-                        </div>
-                      </div>
-                    )}
-                    {selectedStaff.attendanceRate && (
-                      <div className="text-center p-3 bg-primary/5 rounded-lg">
-                        <div className="text-2xl font-mono font-bold text-primary">
-                          {selectedStaff.attendanceRate}%
-                        </div>
-                        <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                          Attendance Rate
-                        </div>
-                      </div>
-                    )}
-                    {selectedStaff.lastEvaluation && (
-                      <div className="text-center p-3 bg-primary/5 rounded-lg">
-                        <div className="text-sm font-mono font-bold text-primary">
-                          {new Date(selectedStaff.lastEvaluation).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                          Last Evaluation
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Emergency Contact */}
-              {selectedStaff.emergencyContact && (
-                <div className="border-2 border-primary/20 rounded-lg p-4">
-                  <div className="inline-block w-fit px-2 py-1 bg-primary/5 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-                    Emergency Contact
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">
-                        {selectedStaff.emergencyContact.name} ({selectedStaff.emergencyContact.relationship})
+              {/* Performance & Emergency Contact */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Performance Info */}
+                {(selectedStaff.rating || selectedStaff.attendanceRate || selectedStaff.lastEvaluation) && (
+                  <div className="border-2 border-primary/20 rounded-xl p-6">
+                    <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md mb-4">
+                      <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                        Performance & Records
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" />
-                      <span className="text-sm font-mono">{selectedStaff.emergencyContact.phone}</span>
+                    <div className="grid grid-cols-1 gap-4">
+                      {selectedStaff.rating && (
+                        <div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="text-2xl font-mono font-bold text-primary">
+                            {selectedStaff.rating}/5
+                          </div>
+                          <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                            Performance Rating
+                          </div>
+                        </div>
+                      )}
+                      {selectedStaff.attendanceRate && (
+                        <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200 dark:bg-green-900/20 dark:border-green-800">
+                          <div className="text-2xl font-mono font-bold text-green-600">
+                            {selectedStaff.attendanceRate}%
+                          </div>
+                          <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                            Attendance Rate
+                          </div>
+                        </div>
+                      )}
+                      {selectedStaff.lastEvaluation && (
+                        <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+                          <div className="text-sm font-mono font-bold text-blue-600">
+                            {new Date(selectedStaff.lastEvaluation).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                            Last Evaluation
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Emergency Contact */}
+                {selectedStaff.emergencyContact && (
+                  <div className="border-2 border-primary/20 rounded-xl p-6">
+                    <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md mb-4">
+                      <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                        Emergency Contact
+                      </span>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-slate-400" />
+                        <div>
+                          <div className="text-xs font-mono text-slate-500 uppercase">Name</div>
+                          <div className="text-sm font-mono">{selectedStaff.emergencyContact.name}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-slate-400" />
+                        <div>
+                          <div className="text-xs font-mono text-slate-500 uppercase">Relationship</div>
+                          <div className="text-sm font-mono">{selectedStaff.emergencyContact.relationship}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Phone className="h-5 w-5 text-slate-400" />
+                        <div>
+                          <div className="text-xs font-mono text-slate-500 uppercase">Phone</div>
+                          <div className="text-sm font-mono">{selectedStaff.emergencyContact.phone}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </>
+        )}
+      </div>
 
       {/* Create Staff Drawer */}
       <CreateStaffDrawer
