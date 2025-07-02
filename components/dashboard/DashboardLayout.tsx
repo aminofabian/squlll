@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
 
 interface DashboardLayoutProps {
-  sidebar: ReactNode
+  sidebar?: ReactNode
   searchFilter: ReactNode
   children: ReactNode
   showMobileNav?: boolean
@@ -28,17 +28,19 @@ export function DashboardLayout({
       {/* Mobile Header */}
       <div className="lg:hidden sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
-          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open sidebar</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72">
-              {sidebar}
-            </SheetContent>
-          </Sheet>
+          {sidebar && (
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open sidebar</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72">
+                {sidebar}
+              </SheetContent>
+            </Sheet>
+          )}
           
           <h1 className="font-semibold text-lg">SQUL Admin</h1>
           
@@ -60,17 +62,19 @@ export function DashboardLayout({
 
       <div className="flex">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-40">
-          <div className="flex flex-col flex-grow border-r border-border bg-card overflow-y-auto">
-            {sidebar}
-          </div>
-        </aside>
+        {sidebar && (
+          <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-40">
+            <div className="flex flex-col flex-grow border-r border-border bg-card overflow-y-auto">
+              {sidebar}
+            </div>
+          </aside>
+        )}
 
         {/* Main content area */}
-        <div className="flex-1 lg:pl-64">
+        <div className={`flex-1 ${sidebar ? 'lg:pl-64' : ''}`}>
           <div className="flex">
             {/* Desktop Search/Filter Column */}
-            <div className="hidden md:block md:w-80 border-r border-border bg-card/50">
+            <div className={`hidden md:block border-r border-border bg-card/50 ${sidebar ? 'md:w-80' : 'md:w-96'}`}>
               <div className="sticky top-0 h-screen overflow-y-auto">
                 {searchFilter}
               </div>
