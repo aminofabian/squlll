@@ -41,9 +41,7 @@ export function InvitationSuccessModal({
   
   const copyEmailToClipboard = () => {
     navigator.clipboard.writeText(invitationData.email);
-    toast.success("Email copied!", {
-      description: "Teacher's email address copied to clipboard"
-    });
+    toast.success("Email copied to clipboard!");
   };
   
   const formatDate = (dateString: string) => {
@@ -58,7 +56,7 @@ export function InvitationSuccessModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white dark:bg-slate-900">
+      <DialogContent className="sm:max-w-[450px] bg-white dark:bg-slate-900">
         <DialogHeader className="text-center pb-4">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
@@ -66,24 +64,20 @@ export function InvitationSuccessModal({
             </div>
           </div>
           <DialogTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            Invitation Sent Successfully!
+            Invitation Sent!
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
-            The teacher invitation has been sent to their email address
+            {invitationData.fullName} will receive an email to join your school
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Invitation Details Card */}
+          {/* Teacher Details */}
           <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
-              Invitation Details
-            </h3>
-            
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" />
+                  <User className="h-4 w-4 text-slate-500" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Teacher:</span>
                 </div>
                 <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
@@ -93,7 +87,7 @@ export function InvitationSuccessModal({
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-primary" />
+                  <Mail className="h-4 w-4 text-slate-500" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Email:</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -113,7 +107,7 @@ export function InvitationSuccessModal({
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
+                  <Clock className="h-4 w-4 text-slate-500" />
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Sent:</span>
                 </div>
                 <span className="text-sm text-slate-900 dark:text-slate-100">
@@ -133,24 +127,24 @@ export function InvitationSuccessModal({
             </div>
           </div>
 
-          {/* What happens next */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-primary mb-3">
+          {/* What's Next */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
               What happens next?
             </h3>
             
-            <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>The teacher will receive an email with a secure signup link</span>
+            <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <span>They'll get an email with a signup link</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>They'll click the link to create their password and activate their account</span>
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <span>They'll create their password and join your school</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span>Once activated, they can access the teacher portal</span>
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <span>You'll see them in your teachers list once they sign up</span>
               </div>
             </div>
           </div>
@@ -159,9 +153,9 @@ export function InvitationSuccessModal({
         <DialogFooter className="pt-4">
           <Button 
             onClick={onClose}
-            className="w-full bg-primary hover:bg-primary-dark text-white"
+            className="w-full bg-primary hover:bg-primary/90 text-white"
           >
-            Continue
+            Got it!
           </Button>
         </DialogFooter>
       </DialogContent>
