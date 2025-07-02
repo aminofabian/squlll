@@ -1198,11 +1198,6 @@ function TeachersPage() {
               Reset All Filters
             </Button>
           </div>
-
-          {/* Add Teacher Button */}
-          <div className="pt-4">
-            <CreateTeacherDrawer onTeacherCreated={handleTeacherCreated} />
-          </div>
         </div>
       </div>
 
@@ -1217,13 +1212,30 @@ function TeachersPage() {
                 Teachers
               </h1>
             </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsMobileSidebarOpen(true)}
-            >
-              <Filter className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <CreateTeacherDrawer onTeacherCreated={handleTeacherCreated} />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsMobileSidebarOpen(true)}
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop header */}
+          <div className="hidden md:flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-custom-blue flex items-center mb-2">
+                <Users className="h-8 w-8 mr-3" />
+                Teachers
+              </h1>
+              <p className="text-gray-600">Manage your teaching staff and their information</p>
+            </div>
+            <div>
+              <CreateTeacherDrawer onTeacherCreated={handleTeacherCreated} />
+            </div>
           </div>
 
           {/* Department Filter - New Vertical Design */}
