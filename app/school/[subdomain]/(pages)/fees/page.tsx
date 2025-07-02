@@ -29,7 +29,13 @@ import {
   CalendarClock,
   Phone,
   Banknote,
-  Wallet
+  Wallet,
+  Target,
+  ArrowRight,
+  Edit2,
+  Pause,
+  Play,
+  RotateCcw
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -88,6 +94,41 @@ interface FeeInvoice {
   }[]
   remindersSent: number
   lastReminderDate?: string
+}
+
+// Payment Plan types
+interface PaymentPlan {
+  id: string
+  studentId: string
+  studentName: string
+  totalAmount: number
+  downPayment: number
+  numberOfInstallments: number
+  installmentAmount: number
+  frequency: 'weekly' | 'bi-weekly' | 'monthly' | 'quarterly'
+  startDate: string
+  endDate: string
+  status: 'active' | 'paused' | 'completed' | 'defaulted'
+  autoReminders: boolean
+  latePaymentFee: number
+  description: string
+  createdDate: string
+  installments: PaymentInstallment[]
+}
+
+interface PaymentInstallment {
+  id: string
+  installmentNumber: number
+  dueDate: string
+  amount: number
+  status: 'pending' | 'paid' | 'overdue' | 'partial'
+  paidAmount: number
+  paidDate?: string
+  paymentMethod?: string
+  lateFeesApplied: number
+  remindersSent: number
+  lastReminderDate?: string
+  notes?: string
 }
 
 // Mock fee data
@@ -210,6 +251,171 @@ const mockFeeInvoices: FeeInvoice[] = [
   }
 ]
 
+// Mock Payment Plans Data
+const mockPaymentPlans: PaymentPlan[] = [
+  {
+    id: "plan-001",
+    studentId: "st-001",
+    studentName: "John Doe",
+    totalAmount: 45000,
+    downPayment: 15000,
+    numberOfInstallments: 3,
+    installmentAmount: 10000,
+    frequency: "monthly",
+    startDate: "2024-02-01",
+    endDate: "2024-04-01",
+    status: "active",
+    autoReminders: true,
+    latePaymentFee: 500,
+    description: "Term 1 tuition payment plan",
+    createdDate: "2024-01-15",
+    installments: [
+      {
+        id: "inst-001",
+        installmentNumber: 1,
+        dueDate: "2024-02-01",
+        amount: 10000,
+        status: "paid",
+        paidAmount: 10000,
+        paidDate: "2024-01-30",
+        paymentMethod: "bank",
+        lateFeesApplied: 0,
+        remindersSent: 1,
+        lastReminderDate: "2024-01-25",
+        notes: "Paid on time"
+      },
+      {
+        id: "inst-002",
+        installmentNumber: 2,
+        dueDate: "2024-03-01",
+        amount: 10000,
+        status: "paid",
+        paidAmount: 10000,
+        paidDate: "2024-02-28",
+        paymentMethod: "cash",
+        lateFeesApplied: 0,
+        remindersSent: 2,
+        lastReminderDate: "2024-02-25"
+      },
+      {
+        id: "inst-003",
+        installmentNumber: 3,
+        dueDate: "2024-04-01",
+        amount: 10000,
+        status: "pending",
+        paidAmount: 0,
+        lateFeesApplied: 0,
+        remindersSent: 0
+      }
+    ]
+  },
+  {
+    id: "plan-002",
+    studentId: "st-002",
+    studentName: "Jane Smith",
+    totalAmount: 60000,
+    downPayment: 20000,
+    numberOfInstallments: 4,
+    installmentAmount: 10000,
+    frequency: "monthly",
+    startDate: "2024-01-15",
+    endDate: "2024-04-15",
+    status: "active",
+    autoReminders: true,
+    latePaymentFee: 750,
+    description: "Full year payment plan with discount",
+    createdDate: "2024-01-01",
+    installments: [
+      {
+        id: "inst-004",
+        installmentNumber: 1,
+        dueDate: "2024-01-15",
+        amount: 10000,
+        status: "paid",
+        paidAmount: 10000,
+        paidDate: "2024-01-12",
+        paymentMethod: "online",
+        lateFeesApplied: 0,
+        remindersSent: 0
+      },
+      {
+        id: "inst-005",
+        installmentNumber: 2,
+        dueDate: "2024-02-15",
+        amount: 10000,
+        status: "overdue",
+        paidAmount: 0,
+        lateFeesApplied: 750,
+        remindersSent: 3,
+        lastReminderDate: "2024-02-20"
+      },
+      {
+        id: "inst-006",
+        installmentNumber: 3,
+        dueDate: "2024-03-15",
+        amount: 10000,
+        status: "pending",
+        paidAmount: 0,
+        lateFeesApplied: 0,
+        remindersSent: 0
+      },
+      {
+        id: "inst-007",
+        installmentNumber: 4,
+        dueDate: "2024-04-15",
+        amount: 10000,
+        status: "pending",
+        paidAmount: 0,
+        lateFeesApplied: 0,
+        remindersSent: 0
+      }
+    ]
+  },
+  {
+    id: "plan-003",
+    studentId: "st-003",
+    studentName: "Mike Johnson",
+    totalAmount: 30000,
+    downPayment: 10000,
+    numberOfInstallments: 2,
+    installmentAmount: 10000,
+    frequency: "bi-weekly",
+    startDate: "2024-02-01",
+    endDate: "2024-03-01",
+    status: "completed",
+    autoReminders: true,
+    latePaymentFee: 300,
+    description: "Short-term payment plan for examination fees",
+    createdDate: "2024-01-20",
+    installments: [
+      {
+        id: "inst-008",
+        installmentNumber: 1,
+        dueDate: "2024-02-01",
+        amount: 10000,
+        status: "paid",
+        paidAmount: 10000,
+        paidDate: "2024-02-01",
+        paymentMethod: "cash",
+        lateFeesApplied: 0,
+        remindersSent: 1
+      },
+      {
+        id: "inst-009",
+        installmentNumber: 2,
+        dueDate: "2024-03-01",
+        amount: 10000,
+        status: "paid",
+        paidAmount: 10000,
+        paidDate: "2024-02-28",
+        paymentMethod: "bank",
+        lateFeesApplied: 0,
+        remindersSent: 1
+      }
+    ]
+  }
+]
+
 const feeTypes = ['tuition', 'transport', 'hostel', 'exam', 'library', 'sports', 'lab']
 const paymentStatuses = ['paid', 'pending', 'overdue', 'partial']
 const classes = ['Form 1', 'Form 2', 'Form 3', 'Form 4']
@@ -230,6 +436,7 @@ export default function FeesPage() {
   const [showPaymentReminderDrawer, setShowPaymentReminderDrawer] = useState(false)
   const [showRecordPaymentDrawer, setShowRecordPaymentDrawer] = useState(false)
   const [showPaymentPlanDrawer, setShowPaymentPlanDrawer] = useState(false)
+  const [selectedPaymentPlan, setSelectedPaymentPlan] = useState<PaymentPlan | null>(null)
   
   // New Invoice Form State
   const [newInvoiceForm, setNewInvoiceForm] = useState({
@@ -478,6 +685,124 @@ export default function FeesPage() {
     handleCloseNewInvoiceDrawer()
   }
 
+  // Payment Reminder Handlers
+  const handleSendReminder = () => {
+    setReminderForm({
+      ...reminderForm,
+      studentIds: selectedStudent ? [selectedStudent] : selectedInvoices.map((id: string) => {
+        const invoice = mockFeeInvoices.find((inv: FeeInvoice) => inv.id === id)
+        return invoice?.studentId || ''
+      }).filter(Boolean)
+    })
+    setShowPaymentReminderDrawer(true)
+  }
+
+  const handleSubmitReminder = () => {
+    console.log('Sending reminder:', reminderForm)
+    setShowPaymentReminderDrawer(false)
+    setReminderForm({
+      studentIds: [],
+      reminderType: 'email',
+      message: '',
+      urgencyLevel: 'normal',
+      includeInvoiceDetails: true,
+      scheduledDate: '',
+      followUpDays: '7'
+    })
+  }
+
+  // Record Payment Handlers
+  const handleRecordPayment = () => {
+    if (selectedStudent) {
+      const studentInvoices = filteredInvoices.filter((inv: FeeInvoice) => inv.studentId === selectedStudent)
+      const pendingInvoice = studentInvoices.find((inv: FeeInvoice) => inv.paymentStatus === 'pending')
+      setPaymentForm(prev => ({
+        ...prev,
+        studentId: selectedStudent,
+        invoiceId: pendingInvoice?.id || '',
+        paymentDate: new Date().toISOString().split('T')[0]
+      }))
+    }
+    setShowRecordPaymentDrawer(true)
+  }
+
+  const handleSubmitPayment = () => {
+    console.log('Recording payment:', paymentForm)
+    setShowRecordPaymentDrawer(false)
+    setPaymentForm({
+      invoiceId: '',
+      studentId: '',
+      amountPaid: '',
+      paymentMethod: 'cash',
+      paymentDate: '',
+      referenceNumber: '',
+      notes: '',
+      partialPayment: false
+    })
+  }
+
+  // Payment Plan Handlers
+  const handleCreatePaymentPlan = () => {
+    if (selectedStudent) {
+      const studentOutstanding = filteredInvoices
+        .filter((inv: FeeInvoice) => inv.studentId === selectedStudent && inv.paymentStatus !== 'paid')
+        .reduce((sum: number, inv: FeeInvoice) => sum + inv.totalAmount, 0)
+      
+      setPaymentPlanForm(prev => ({
+        ...prev,
+        studentId: selectedStudent,
+        totalAmount: studentOutstanding.toString(),
+        startDate: new Date().toISOString().split('T')[0]
+      }))
+    }
+    setShowPaymentPlanDrawer(true)
+  }
+
+  const handleSubmitPaymentPlan = () => {
+    console.log('Creating payment plan:', paymentPlanForm)
+    setShowPaymentPlanDrawer(false)
+    setPaymentPlanForm({
+      studentId: '',
+      totalAmount: '',
+      downPayment: '',
+      numberOfInstallments: '3',
+      installmentFrequency: 'monthly',
+      startDate: '',
+      description: '',
+      latePaymentFee: '',
+      autoReminders: true
+    })
+  }
+
+
+
+  const getStudentPaymentPlans = (studentId: string | null) => {
+    if (!studentId) return mockPaymentPlans
+    return mockPaymentPlans.filter(plan => plan.studentId === studentId)
+  }
+
+  const getInstallmentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid': return 'bg-green-100 text-green-800 border-green-200'
+      case 'pending': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'overdue': return 'bg-red-100 text-red-800 border-red-200'
+      case 'partial': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  const getPlanStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-200'
+      case 'paused': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'defaulted': return 'bg-red-100 text-red-800 border-red-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+
+
   return (
     <div className="flex min-h-screen">
       {/* Search Sidebar */}
@@ -630,18 +955,31 @@ export default function FeesPage() {
               {selectedStudent ? (
                 // Student-specific actions
                 <>
-                  <Button variant="outline" className="font-mono">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Payment Reminder
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSendReminder}
+                    className="font-mono"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Reminder
                   </Button>
-                  <Button variant="outline" className="font-mono">
-                    <CreditCard className="h-4 w-4 mr-2" />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleRecordPayment}
+                    className="font-mono"
+                  >
+                    <Receipt className="h-4 w-4 mr-2" />
                     Record Payment
                   </Button>
-                  <Button variant="outline" className="font-mono">
-                    <Calendar className="h-4 w-4 mr-2" />
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCreatePaymentPlan}
+                    className="font-mono"
+                  >
+                    <CalendarClock className="h-4 w-4 mr-2" />
                     Payment Plan
                   </Button>
+
                 </>
               ) : (
                 // General view quick filters
@@ -673,6 +1011,7 @@ export default function FeesPage() {
                     <Calendar className="h-3 w-3 mr-1" />
                     Due Soon
                   </Button>
+
                 </>
               )}
 
@@ -832,6 +1171,300 @@ export default function FeesPage() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Payment Plans Section - Only show for individual students */}
+        {selectedStudent && (
+          <div className="border-2 border-primary/20 rounded-xl p-6 bg-primary/5">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                Payment Plans
+              </h3>
+              <Badge variant="outline" className="font-mono">
+                {getStudentPaymentPlans(selectedStudent).length} active
+              </Badge>
+            </div>
+            <Button
+              onClick={() => setShowPaymentPlanDrawer(true)}
+              variant="outline"
+              size="sm"
+              className="font-mono"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              New Payment Plan
+            </Button>
+          </div>
+
+          {selectedPaymentPlan ? (
+            // Individual Plan Details
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedPaymentPlan(null)}
+                  className="font-mono"
+                >
+                  ← Back to Plans Overview
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="font-mono">
+                    <Edit2 className="h-4 w-4 mr-1" />
+                    Edit Plan
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="font-mono"
+                    disabled={selectedPaymentPlan.status === 'paused'}
+                  >
+                    <Pause className="h-4 w-4 mr-1" />
+                    Pause Plan
+                  </Button>
+                  <Button variant="outline" size="sm" className="font-mono">
+                    <Send className="h-4 w-4 mr-1" />
+                    Send Reminder
+                  </Button>
+                </div>
+              </div>
+
+              {/* Plan Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="border-2 border-primary/20 bg-white dark:bg-slate-800">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-mono flex items-center gap-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      Total Amount
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-mono font-bold text-primary">
+                      {formatCurrency(selectedPaymentPlan.totalAmount)}
+                    </div>
+                    <p className="text-xs font-mono text-slate-500 mt-1">
+                      Plan total
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 border-green-200 bg-green-50 dark:bg-green-900/10">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-mono flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      Amount Paid
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-mono font-bold text-green-600">
+                      {formatCurrency(selectedPaymentPlan.downPayment + selectedPaymentPlan.installments.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.paidAmount, 0))}
+                    </div>
+                    <p className="text-xs font-mono text-slate-500 mt-1">
+                      Including down payment
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 border-blue-200 bg-blue-50 dark:bg-blue-900/10">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-mono flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-mono font-bold text-blue-600">
+                      {selectedPaymentPlan.installments.filter(i => i.status === 'paid').length}/{selectedPaymentPlan.numberOfInstallments}
+                    </div>
+                    <p className="text-xs font-mono text-slate-500 mt-1">
+                      Installments paid
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 border-amber-200 bg-amber-50 dark:bg-amber-900/10">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-mono flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      Next Payment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-xl font-mono font-bold text-amber-600">
+                      {(() => {
+                        const nextInstallment = selectedPaymentPlan.installments.find(i => i.status === 'pending' || i.status === 'overdue')
+                        return nextInstallment ? formatCurrency(nextInstallment.amount) : 'Complete'
+                      })()}
+                    </div>
+                    <p className="text-xs font-mono text-slate-500 mt-1">
+                      {(() => {
+                        const nextInstallment = selectedPaymentPlan.installments.find(i => i.status === 'pending' || i.status === 'overdue')
+                        return nextInstallment ? `Due ${nextInstallment.dueDate}` : 'All paid'
+                      })()}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payment Timeline */}
+              <Card className="border-2 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="font-mono flex items-center gap-2">
+                    <CalendarClock className="h-5 w-5" />
+                    Payment Schedule
+                  </CardTitle>
+                  <CardDescription className="font-mono">
+                    Track installment payments and due dates for {selectedPaymentPlan.studentName}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Down Payment */}
+                    {selectedPaymentPlan.downPayment > 0 && (
+                      <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                            <CheckCircle className="h-3 w-3 text-white" />
+                          </div>
+                          <div>
+                            <div className="font-mono font-medium text-sm">Down Payment</div>
+                            <div className="font-mono text-xs text-slate-500">{selectedPaymentPlan.createdDate}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-mono font-bold text-green-600 text-sm">{formatCurrency(selectedPaymentPlan.downPayment)}</div>
+                          <Badge className="bg-green-100 text-green-800 border-green-200 font-mono text-xs">
+                            Paid
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Installments */}
+                    {selectedPaymentPlan.installments.slice(0, 5).map((installment, index) => (
+                      <div key={installment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                            installment.status === 'paid' ? 'bg-green-600 text-white' :
+                            installment.status === 'overdue' ? 'bg-red-600 text-white' :
+                            installment.status === 'partial' ? 'bg-yellow-600 text-white' :
+                            'bg-gray-400 text-white'
+                          }`}>
+                            {installment.status === 'paid' ? (
+                              <CheckCircle className="h-3 w-3" />
+                            ) : installment.status === 'overdue' ? (
+                              <AlertTriangle className="h-3 w-3" />
+                            ) : (
+                              <span className="font-mono">{index + 1}</span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-mono font-medium text-sm">Installment {installment.installmentNumber}</div>
+                            <div className="font-mono text-xs text-slate-500">Due: {installment.dueDate}</div>
+                            {installment.paidDate && (
+                              <div className="font-mono text-xs text-green-600">Paid: {installment.paidDate}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-mono font-bold text-sm">{formatCurrency(installment.amount)}</div>
+                          <Badge className={getInstallmentStatusColor(installment.status)}>
+                            {installment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+
+                    {selectedPaymentPlan.installments.length > 5 && (
+                      <div className="text-center py-2">
+                        <Button variant="outline" size="sm" className="font-mono text-xs">
+                          View All {selectedPaymentPlan.installments.length} Installments
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            // Payment Plans Overview
+            <div className="space-y-4">
+              {getStudentPaymentPlans(selectedStudent).length === 0 ? (
+                <div className="text-center py-8">
+                  <Target className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                  <h3 className="font-mono text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                    No Payment Plans
+                  </h3>
+                  <p className="font-mono text-sm text-slate-500 mb-4">
+                    {selectedStudent 
+                      ? `${allStudents.find(s => s.id === selectedStudent)?.name} doesn't have any payment plans yet.`
+                      : 'No payment plans have been created yet.'
+                    }
+                  </p>
+                  <Button
+                    onClick={() => setShowPaymentPlanDrawer(true)}
+                    className="bg-primary hover:bg-primary/90 text-white font-mono"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Payment Plan
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getStudentPaymentPlans(selectedStudent).map((plan) => (
+                    <Card 
+                      key={plan.id} 
+                      className="border-2 border-primary/20 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                      onClick={() => setSelectedPaymentPlan(plan)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base font-mono">{plan.studentName}</CardTitle>
+                          <Badge className={getPlanStatusColor(plan.status)}>
+                            {plan.status}
+                          </Badge>
+                        </div>
+                        <CardDescription className="font-mono text-xs">
+                          {plan.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex justify-between font-mono text-xs">
+                            <span>Total Amount:</span>
+                            <span className="font-bold">{formatCurrency(plan.totalAmount)}</span>
+                          </div>
+                          <div className="flex justify-between font-mono text-xs">
+                            <span>Per {plan.frequency}:</span>
+                            <span className="font-bold">{formatCurrency(plan.installmentAmount)}</span>
+                          </div>
+                          <div className="flex justify-between font-mono text-xs">
+                            <span>Progress:</span>
+                            <span className="font-bold">
+                              {plan.installments.filter(i => i.status === 'paid').length}/{plan.numberOfInstallments}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-primary h-1.5 rounded-full" 
+                              style={{
+                                width: `${(plan.installments.filter(i => i.status === 'paid').length / plan.numberOfInstallments) * 100}%`
+                              }}
+                            ></div>
+                          </div>
+                          <div className="flex items-center justify-between text-xs font-mono text-slate-500 pt-1">
+                            <span>Next: {plan.installments.find(i => i.status === 'pending')?.dueDate || 'Complete'}</span>
+                            <ArrowRight className="h-3 w-3" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         )}
 
         {/* Filters and Sorting - Only show when no student is selected */}
@@ -1389,6 +2022,670 @@ export default function FeesPage() {
                     disabled={!newInvoiceForm.feeType || !newInvoiceForm.amount || !newInvoiceForm.dueDate || (!selectedStudent && !newInvoiceForm.studentId)}
                   >
                     Create Invoice
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Reminder Drawer */}
+      {showPaymentReminderDrawer && (
+        <div className="fixed inset-0 z-50">
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setShowPaymentReminderDrawer(false)}
+          />
+          
+          <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-slate-900 shadow-xl animate-in slide-in-from-right duration-300">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b-2 border-primary/20">
+                <div>
+                  <h2 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                    Send Payment Reminder
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-mono mt-1">
+                    {selectedStudent 
+                      ? `For ${allStudents.find(s => s.id === selectedStudent)?.name}`
+                      : `${reminderForm.studentIds.length} student(s) selected`
+                    }
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPaymentReminderDrawer(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Form Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Reminder Settings */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Reminder Settings
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Reminder Type */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Delivery Method *
+                      </Label>
+                      <Select value={reminderForm.reminderType} onValueChange={(value) => setReminderForm(prev => ({...prev, reminderType: value}))}>
+                        <SelectTrigger className="border-primary/30 bg-white dark:bg-slate-900 font-mono">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              Email
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="sms" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4" />
+                              SMS
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="phone" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              Phone Call
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="both" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              Email & SMS
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Urgency Level */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Urgency Level
+                      </Label>
+                      <Select value={reminderForm.urgencyLevel} onValueChange={(value) => setReminderForm(prev => ({...prev, urgencyLevel: value}))}>
+                        <SelectTrigger className="border-primary/30 bg-white dark:bg-slate-900 font-mono">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal" className="font-mono">Normal</SelectItem>
+                          <SelectItem value="urgent" className="font-mono">Urgent</SelectItem>
+                          <SelectItem value="final_notice" className="font-mono">Final Notice</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Include Invoice Details */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="includeDetails" 
+                      checked={reminderForm.includeInvoiceDetails}
+                      onCheckedChange={(checked) => setReminderForm(prev => ({...prev, includeInvoiceDetails: checked as boolean}))}
+                    />
+                    <Label htmlFor="includeDetails" className="text-sm font-mono">
+                      Include detailed invoice breakdown
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Message Content */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-blue-50 border border-blue-200 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-blue-700">
+                      Message Content
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                      Custom Message
+                    </Label>
+                    <Textarea
+                      placeholder="Dear parent/guardian, this is a gentle reminder..."
+                      value={reminderForm.message}
+                      onChange={(e) => setReminderForm(prev => ({...prev, message: e.target.value}))}
+                      className="border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                      rows={4}
+                    />
+                    <p className="text-xs text-slate-500 font-mono">
+                      Leave blank to use default template
+                    </p>
+                  </div>
+                </div>
+
+                {/* Scheduling */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-green-50 border border-green-200 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-green-700">
+                      Scheduling
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Scheduled Date */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Send Date (Optional)
+                      </Label>
+                      <div className="relative">
+                        <CalendarDays className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="datetime-local"
+                          value={reminderForm.scheduledDate}
+                          onChange={(e) => setReminderForm(prev => ({...prev, scheduledDate: e.target.value}))}
+                          className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono">
+                        Leave blank to send immediately
+                      </p>
+                    </div>
+
+                    {/* Follow-up Days */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Follow-up After (Days)
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={reminderForm.followUpDays}
+                        onChange={(e) => setReminderForm(prev => ({...prev, followUpDays: e.target.value}))}
+                        className="border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 border-t-2 border-primary/20 bg-slate-50 dark:bg-slate-800">
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPaymentReminderDrawer(false)}
+                    className="flex-1 font-mono"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitReminder}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white font-mono"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Reminder
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record Payment Drawer */}
+      {showRecordPaymentDrawer && (
+        <div className="fixed inset-0 z-50">
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setShowRecordPaymentDrawer(false)}
+          />
+          
+          <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-slate-900 shadow-xl animate-in slide-in-from-right duration-300">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b-2 border-primary/20">
+                <div>
+                  <h2 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                    Record Payment
+                  </h2>
+                  {selectedStudent && (
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono mt-1">
+                      For {allStudents.find(s => s.id === selectedStudent)?.name}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowRecordPaymentDrawer(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Form Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Invoice Selection */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Invoice Information
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                      Select Invoice *
+                    </Label>
+                    <Select value={paymentForm.invoiceId} onValueChange={(value) => setPaymentForm(prev => ({...prev, invoiceId: value}))}>
+                      <SelectTrigger className="border-primary/30 bg-white dark:bg-slate-900 font-mono">
+                        <SelectValue placeholder="Choose an invoice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredInvoices
+                          .filter((inv: FeeInvoice) => selectedStudent ? inv.studentId === selectedStudent : true)
+                          .filter((inv: FeeInvoice) => inv.paymentStatus !== 'paid')
+                          .map((invoice: FeeInvoice) => (
+                          <SelectItem key={invoice.id} value={invoice.id} className="font-mono">
+                            <div className="flex flex-col">
+                              <span>{invoice.feeType.toUpperCase()} - {formatCurrency(invoice.amountDue)}</span>
+                              <span className="text-xs text-slate-500">Due: {invoice.dueDate} • {invoice.studentName}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-green-50 border border-green-200 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-green-700">
+                      Payment Details
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Amount Paid */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Amount Paid (KES) *
+                      </Label>
+                      <div className="relative">
+                        <Banknote className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={paymentForm.amountPaid}
+                          onChange={(e) => setPaymentForm(prev => ({...prev, amountPaid: e.target.value}))}
+                          className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Payment Date */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Payment Date *
+                      </Label>
+                      <div className="relative">
+                        <CalendarDays className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="date"
+                          value={paymentForm.paymentDate}
+                          onChange={(e) => setPaymentForm(prev => ({...prev, paymentDate: e.target.value}))}
+                          className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Payment Method */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Payment Method *
+                      </Label>
+                      <Select value={paymentForm.paymentMethod} onValueChange={(value) => setPaymentForm(prev => ({...prev, paymentMethod: value}))}>
+                        <SelectTrigger className="border-primary/30 bg-white dark:bg-slate-900 font-mono">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <Banknote className="h-4 w-4" />
+                              Cash
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="bank" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <CreditCard className="h-4 w-4" />
+                              Bank Transfer
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="online" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <Wallet className="h-4 w-4" />
+                              Online Payment
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="cheque" className="font-mono">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              Cheque
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Reference Number */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Reference Number
+                      </Label>
+                      <Input
+                        placeholder="Transaction ID, cheque no., etc."
+                        value={paymentForm.referenceNumber}
+                        onChange={(e) => setPaymentForm(prev => ({...prev, referenceNumber: e.target.value}))}
+                        className="border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Partial Payment Toggle */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="partialPayment" 
+                      checked={paymentForm.partialPayment}
+                      onCheckedChange={(checked) => setPaymentForm(prev => ({...prev, partialPayment: checked as boolean}))}
+                    />
+                    <Label htmlFor="partialPayment" className="text-sm font-mono">
+                      This is a partial payment
+                    </Label>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                      Notes (Optional)
+                    </Label>
+                    <Textarea
+                      placeholder="Additional notes about this payment..."
+                      value={paymentForm.notes}
+                      onChange={(e) => setPaymentForm(prev => ({...prev, notes: e.target.value}))}
+                      className="border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 border-t-2 border-primary/20 bg-slate-50 dark:bg-slate-800">
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRecordPaymentDrawer(false)}
+                    className="flex-1 font-mono"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitPayment}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white font-mono"
+                    disabled={!paymentForm.invoiceId || !paymentForm.amountPaid || !paymentForm.paymentDate || !paymentForm.paymentMethod}
+                  >
+                    <Receipt className="h-4 w-4 mr-2" />
+                    Record Payment
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Plan Drawer */}
+      {showPaymentPlanDrawer && (
+        <div className="fixed inset-0 z-50">
+          <div 
+            className="absolute inset-0 bg-black/50" 
+            onClick={() => setShowPaymentPlanDrawer(false)}
+          />
+          
+          <div className="absolute right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-slate-900 shadow-xl animate-in slide-in-from-right duration-300">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b-2 border-primary/20">
+                <div>
+                  <h2 className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                    Create Payment Plan
+                  </h2>
+                  {selectedStudent && (
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono mt-1">
+                      For {allStudents.find(s => s.id === selectedStudent)?.name} • Outstanding: {formatCurrency(parseFloat(paymentPlanForm.totalAmount) || 0)}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPaymentPlanDrawer(false)}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Form Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Plan Overview */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Plan Overview
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Total Amount */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Total Amount (KES) *
+                      </Label>
+                      <div className="relative">
+                        <Banknote className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={paymentPlanForm.totalAmount}
+                          onChange={(e) => setPaymentPlanForm(prev => ({...prev, totalAmount: e.target.value}))}
+                          className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                          disabled={!!selectedStudent} // Auto-filled for selected student
+                        />
+                      </div>
+                    </div>
+
+                    {/* Down Payment */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Down Payment (KES)
+                      </Label>
+                      <div className="relative">
+                        <Banknote className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={paymentPlanForm.downPayment}
+                          onChange={(e) => setPaymentPlanForm(prev => ({...prev, downPayment: e.target.value}))}
+                          className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Installment Details */}
+                <div className="space-y-3">
+                  <div className="inline-block w-fit px-3 py-1 bg-blue-50 border border-blue-200 rounded-md">
+                    <span className="text-xs font-mono uppercase tracking-wide text-blue-700">
+                      Installment Details
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Number of Installments */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Number of Installments *
+                      </Label>
+                      <Select value={paymentPlanForm.numberOfInstallments} onValueChange={(value) => setPaymentPlanForm(prev => ({...prev, numberOfInstallments: value}))}>
+                        <SelectTrigger className="border-primary/30 bg-white dark:bg-slate-900 font-mono">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[2, 3, 4, 5, 6, 8, 10, 12].map(num => (
+                            <SelectItem key={num} value={num.toString()} className="font-mono">
+                              {num} installments
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Frequency */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Payment Frequency *
+                      </Label>
+                      <Select value={paymentPlanForm.installmentFrequency} onValueChange={(value) => setPaymentPlanForm(prev => ({...prev, installmentFrequency: value}))}>
+                        <SelectTrigger className="border-primary/30 bg-white dark:bg-slate-900 font-mono">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weekly" className="font-mono">Weekly</SelectItem>
+                          <SelectItem value="bi-weekly" className="font-mono">Bi-weekly</SelectItem>
+                          <SelectItem value="monthly" className="font-mono">Monthly</SelectItem>
+                          <SelectItem value="quarterly" className="font-mono">Quarterly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Start Date */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        First Payment Date *
+                      </Label>
+                      <div className="relative">
+                        <CalendarDays className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="date"
+                          value={paymentPlanForm.startDate}
+                          onChange={(e) => setPaymentPlanForm(prev => ({...prev, startDate: e.target.value}))}
+                          className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Late Payment Fee */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                        Late Payment Fee (KES)
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={paymentPlanForm.latePaymentFee}
+                        onChange={(e) => setPaymentPlanForm(prev => ({...prev, latePaymentFee: e.target.value}))}
+                        className="border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Auto Reminders */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="autoReminders" 
+                      checked={paymentPlanForm.autoReminders}
+                      onCheckedChange={(checked) => setPaymentPlanForm(prev => ({...prev, autoReminders: checked as boolean}))}
+                    />
+                    <Label htmlFor="autoReminders" className="text-sm font-mono">
+                      Send automatic reminders before due dates
+                    </Label>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-mono font-medium text-slate-700 dark:text-slate-300">
+                      Plan Description
+                    </Label>
+                    <Textarea
+                      placeholder="Additional terms and conditions..."
+                      value={paymentPlanForm.description}
+                      onChange={(e) => setPaymentPlanForm(prev => ({...prev, description: e.target.value}))}
+                      className="border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Schedule Preview */}
+                {paymentPlanForm.totalAmount && paymentPlanForm.numberOfInstallments && (
+                  <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
+                    <h3 className="font-mono font-medium mb-3">Payment Schedule Preview</h3>
+                    <div className="space-y-2 font-mono text-sm">
+                      {paymentPlanForm.downPayment && (
+                        <div className="flex justify-between">
+                          <span>Down Payment:</span>
+                          <span className="font-bold">{formatCurrency(parseFloat(paymentPlanForm.downPayment) || 0)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span>Amount to be Financed:</span>
+                        <span>{formatCurrency((parseFloat(paymentPlanForm.totalAmount) || 0) - (parseFloat(paymentPlanForm.downPayment) || 0))}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Per Installment:</span>
+                        <span className="font-bold">
+                          {formatCurrency(((parseFloat(paymentPlanForm.totalAmount) || 0) - (parseFloat(paymentPlanForm.downPayment) || 0)) / parseInt(paymentPlanForm.numberOfInstallments))}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-600">
+                        <span>Frequency:</span>
+                        <span>{paymentPlanForm.installmentFrequency}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 border-t-2 border-primary/20 bg-slate-50 dark:bg-slate-800">
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPaymentPlanDrawer(false)}
+                    className="flex-1 font-mono"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitPaymentPlan}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-white font-mono"
+                    disabled={!paymentPlanForm.totalAmount || !paymentPlanForm.numberOfInstallments || !paymentPlanForm.startDate}
+                  >
+                    <CalendarClock className="h-4 w-4 mr-2" />
+                    Create Payment Plan
                   </Button>
                 </div>
               </div>
