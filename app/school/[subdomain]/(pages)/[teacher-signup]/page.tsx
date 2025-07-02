@@ -121,51 +121,31 @@ function TeacherSignupContent() {
     setError(null)
     setSuccess(null)
 
-    const mutation = `
-      mutation {
-        acceptTeacherInvitation(
-          acceptInvitationInput: {
-            token: "${token}"
-            password: "${data.password}"
-          }
-        ) {
-          message
-          user {
-            id
-            name
-            email
-          }
-          tokens {
-            accessToken
-            refreshToken
-          }
-          teacher {
-            id
-            name
-          }
-        }
-      }
-    `
-
     try {
-      const response = await fetch('/api/graphql', {
+      const response = await fetch('/api/auth/accept-teacher-invitation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: mutation,
+          token,
+          password: data.password,
         }),
       })
 
       const result = await response.json()
 
-      if (result.errors) {
-        throw new Error(result.errors[0]?.message || 'Teacher invitation acceptance failed')
+      if (!response.ok) {
+        throw new Error(result.error || 'Teacher invitation acceptance failed')
       }
 
-      if (result.data?.acceptTeacherInvitation) {
-        const acceptData = result.data.acceptTeacherInvitation
+      if (result.success) {
+        const acceptData = {
+          message: result.message,
+          user: result.user,
+          tokens: result.tokens,
+          teacher: result.teacher
+        }
         setSuccess(acceptData)
         
         // Store tokens in localStorage for client-side access
