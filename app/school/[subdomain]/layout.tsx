@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, Suspense } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useEffect, Suspense, useState } from 'react'
+import { useParams } from 'next/navigation'
 
 // Loading component for Suspense fallback
 function SubdomainLayoutLoading() {
@@ -20,30 +20,38 @@ function SubdomainLayoutContent({
 }) {
   const params = useParams()
   const subdomain = params.subdomain as string
-  const searchParams = useSearchParams()
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) return
     console.log('Subdomain Layout - Processing authentication parameters for:', subdomain)
+    
+    // Ensure we're in a browser environment
+    if (typeof window === 'undefined' || !isClient) {
+      console.log('Subdomain Layout - Not in browser environment, skipping auth processing')
+      return
+    }
+    
     console.log('Subdomain Layout - Component mounted, window.location:', window.location.href)
-    console.log('Subdomain Layout - searchParams object:', searchParams)
-    console.log('Subdomain Layout - searchParams.toString():', searchParams.toString())
     
-    // Check for URL parameters from registration
-    // Use both useSearchParams and direct URL parsing as fallback
-    let userId = searchParams.get('userId')
-    let email = searchParams.get('email')
-    let schoolUrl = searchParams.get('schoolUrl')
-    let subdomainUrl = searchParams.get('subdomainUrl')
-    let tenantId = searchParams.get('tenantId')
-    let tenantName = searchParams.get('tenantName')
-    let tenantSubdomain = searchParams.get('tenantSubdomain')
-    let accessToken = searchParams.get('accessToken')
-    let refreshToken = searchParams.get('refreshToken')
-    let isNewRegistration = searchParams.get('newRegistration') === 'true'
+    // Check for URL parameters from registration using direct URL parsing
+    // This is more reliable in production than useSearchParams
+    let userId: string | null = null
+    let email: string | null = null
+    let schoolUrl: string | null = null
+    let subdomainUrl: string | null = null
+    let tenantId: string | null = null
+    let tenantName: string | null = null
+    let tenantSubdomain: string | null = null
+    let accessToken: string | null = null
+    let refreshToken: string | null = null
+    let isNewRegistration = false
     
-    // Fallback: If useSearchParams didn't work, try parsing URL directly
-    if (!userId && typeof window !== 'undefined') {
-      console.log('Subdomain Layout - useSearchParams failed, trying direct URL parsing...')
+    try {
       const urlParams = new URLSearchParams(window.location.search)
       userId = urlParams.get('userId')
       email = urlParams.get('email')
@@ -55,6 +63,11 @@ function SubdomainLayoutContent({
       accessToken = urlParams.get('accessToken')
       refreshToken = urlParams.get('refreshToken')
       isNewRegistration = urlParams.get('newRegistration') === 'true'
+      
+      console.log('Subdomain Layout - Direct URL parsing successful')
+    } catch (error) {
+      console.error('Subdomain Layout - Error parsing URL parameters:', error)
+      return
     }
 
     console.log('Subdomain Layout - URL parameters detected:', {
@@ -237,7 +250,7 @@ function SubdomainLayoutContent({
         hasEmail: !!email
       })
     }
-  }, [subdomain, searchParams])
+      }, [subdomain, isClient])
 
   return (
     <>
@@ -256,6 +269,10 @@ function SubdomainLayoutContent({
           Subdomain Layout Active: {subdomain}
         </div>
       )}
+      {/* Simple test to see if layout is working */}
+      <div style={{ display: 'none' }}>
+        Layout loaded for subdomain: {subdomain}
+      </div>
       {children}
     </>
   )

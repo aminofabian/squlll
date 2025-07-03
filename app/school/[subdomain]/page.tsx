@@ -10,14 +10,29 @@ export default function SchoolHome() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [shouldLoadConfig, setShouldLoadConfig] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   
   // Only load school config after authentication is confirmed
   const { data: config, isLoading, error } = useSchoolConfig(shouldLoadConfig)
 
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   // Check if user is authenticated on component mount
   useEffect(() => {
+    if (!isClient) return
+    
     const checkAuth = () => {
       console.log('SchoolHome - Starting authentication check...')
+      
+      // Ensure we're in a browser environment
+      if (typeof window === 'undefined') {
+        console.log('SchoolHome - Not in browser environment, skipping auth check')
+        setIsCheckingAuth(false)
+        return
+      }
+      
       try {
         // Check if access token exists in cookies
         const cookies = document.cookie.split(';')
@@ -31,50 +46,62 @@ export default function SchoolHome() {
           console.log('SchoolHome - User is authenticated, enabling config loading')
           setIsAuthenticated(true)
           setShouldLoadConfig(true) // Enable config loading
+          setIsCheckingAuth(false)
         } else {
           // Check if we have authentication data in URL parameters (new registration)
-          const urlParams = new URLSearchParams(window.location.search)
-          const hasAuthParams = urlParams.get('accessToken') || urlParams.get('newRegistration')
-          
-          console.log('SchoolHome - Has auth params:', !!hasAuthParams)
-          
-          if (hasAuthParams) {
-            console.log('SchoolHome - New registration detected, waiting for cookies...')
-            // Wait a bit longer for the layout to process the authentication data
-            setTimeout(() => {
-              const updatedCookies = document.cookie.split(';')
-              const updatedAccessToken = updatedCookies.find(cookie => 
-                cookie.trim().startsWith('accessToken=')
-              )
-              
-              console.log('SchoolHome - After timeout, access token:', !!updatedAccessToken)
-              
-              if (updatedAccessToken) {
-                console.log('SchoolHome - Authentication successful, enabling config loading')
-                setIsAuthenticated(true)
-                setShouldLoadConfig(true) // Enable config loading
-              } else {
-                console.log('SchoolHome - Authentication failed after timeout')
-                setIsAuthenticated(false)
-              }
+          try {
+            const urlParams = new URLSearchParams(window.location.search)
+            const hasAuthParams = urlParams.get('accessToken') || urlParams.get('newRegistration')
+            
+            console.log('SchoolHome - Has auth params:', !!hasAuthParams)
+            
+            if (hasAuthParams) {
+              console.log('SchoolHome - New registration detected, waiting for cookies...')
+              // Wait a bit longer for the layout to process the authentication data
+              setTimeout(() => {
+                try {
+                  const updatedCookies = document.cookie.split(';')
+                  const updatedAccessToken = updatedCookies.find(cookie => 
+                    cookie.trim().startsWith('accessToken=')
+                  )
+                  
+                  console.log('SchoolHome - After timeout, access token:', !!updatedAccessToken)
+                  
+                  if (updatedAccessToken) {
+                    console.log('SchoolHome - Authentication successful, enabling config loading')
+                    setIsAuthenticated(true)
+                    setShouldLoadConfig(true) // Enable config loading
+                  } else {
+                    console.log('SchoolHome - Authentication failed after timeout')
+                    setIsAuthenticated(false)
+                  }
+                } catch (timeoutError) {
+                  console.error('SchoolHome - Error during timeout check:', timeoutError)
+                  setIsAuthenticated(false)
+                }
+                setIsCheckingAuth(false)
+              }, 2000) // Wait 2 seconds for cookies to be set
+              return
+            } else {
+              console.log('SchoolHome - No authentication found')
+              setIsAuthenticated(false)
               setIsCheckingAuth(false)
-            }, 2000) // Wait 2 seconds for cookies to be set
-            return
-          } else {
-            console.log('SchoolHome - No authentication found')
+            }
+          } catch (urlError) {
+            console.error('SchoolHome - Error parsing URL parameters:', urlError)
             setIsAuthenticated(false)
+            setIsCheckingAuth(false)
           }
         }
       } catch (error) {
         console.error('SchoolHome - Error checking authentication:', error)
         setIsAuthenticated(false)
+        setIsCheckingAuth(false)
       }
-      
-      setIsCheckingAuth(false)
     }
 
     checkAuth()
-  }, [])
+  }, [isClient])
 
   // Show loading state while checking auth or loading config
   if (isCheckingAuth || isLoading) {
