@@ -27,14 +27,18 @@ function SubdomainLayoutContent({
   }, [])
 
   useEffect(() => {
-    if (!isClient) return
-    console.log('Subdomain Layout - Processing authentication parameters for:', subdomain)
-    
-    // Ensure we're in a browser environment
-    if (typeof window === 'undefined' || !isClient) {
-      console.log('Subdomain Layout - Not in browser environment, skipping auth processing')
-      return
-    }
+    const processAuth = async () => {
+      if (!isClient) return
+      console.log('Subdomain Layout - Processing authentication parameters for:', subdomain)
+      
+      // Ensure we're in a browser environment
+      if (typeof window === 'undefined' || !isClient) {
+        console.log('Subdomain Layout - Not in browser environment, skipping auth processing')
+        return
+      }
+      
+      // Add error boundary for the entire authentication process
+      try {
     
     console.log('Subdomain Layout - Component mounted, window.location:', window.location.href)
     
@@ -67,7 +71,8 @@ function SubdomainLayoutContent({
       console.log('Subdomain Layout - Direct URL parsing successful')
     } catch (error) {
       console.error('Subdomain Layout - Error parsing URL parameters:', error)
-      return
+      // Don't return here, continue with empty values
+      console.log('Subdomain Layout - Continuing with empty authentication parameters')
     }
 
     console.log('Subdomain Layout - URL parameters detected:', {
@@ -102,8 +107,8 @@ function SubdomainLayoutContent({
         // Store user data in cookies (30 day expiry)
         // Use secure flags for production
         const isProduction = process.env.NODE_ENV === 'production'
-        const domain = isProduction ? '.squl.co.ke' : undefined
-        const cookieOptions = `max-age=${60 * 60 * 24 * 30}; path=/; SameSite=Lax${isProduction ? '; Secure' : ''}${domain ? `; Domain=${domain}` : ''}`
+        // In production, don't set domain for subdomain cookies to avoid issues
+        const cookieOptions = `max-age=${60 * 60 * 24 * 30}; path=/; SameSite=Lax${isProduction ? '; Secure' : ''}`
         
         console.log('Subdomain Layout - Cookie options:', cookieOptions)
         console.log('Subdomain Layout - Setting cookies for:', { userId, email, schoolUrl, subdomainUrl })
@@ -179,32 +184,36 @@ function SubdomainLayoutContent({
           
           // Also make a request to our API to set HTTP-only cookies
           console.log('Subdomain Layout - Making request to /api/auth/store-tokens...')
-          fetch('/api/auth/store-tokens', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              accessToken,
-              refreshToken,
-              userId,
-              email,
-              schoolUrl,
-              subdomainUrl,
-              tenantId,
-              tenantName,
-              tenantSubdomain
-            }),
-          }).then((response) => {
+          try {
+            const response = await fetch('/api/auth/store-tokens', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                accessToken,
+                refreshToken,
+                userId,
+                email,
+                schoolUrl,
+                subdomainUrl,
+                tenantId,
+                tenantName,
+                tenantSubdomain
+              }),
+            })
+            
             console.log('Subdomain Layout - store-tokens response status:', response.status)
             if (response.ok) {
               console.log('Subdomain Layout - HTTP-only cookies stored successfully')
             } else {
               console.error('Subdomain Layout - store-tokens failed with status:', response.status)
+              // Continue even if API call fails - we still have client-side cookies
             }
-          }).catch(error => {
+          } catch (error) {
             console.error('Subdomain Layout - Failed to store HTTP-only cookies:', error)
-          })
+            // Continue even if API call fails - we still have client-side cookies
+          }
         }
         
         console.log('Subdomain Layout - All authentication data stored successfully')
@@ -213,6 +222,28 @@ function SubdomainLayoutContent({
         setTimeout(() => {
           console.log('Subdomain Layout - Cookies after setting:', document.cookie);
         }, 1000)
+        
+        // Add a fallback check to ensure at least basic cookies are set
+        setTimeout(() => {
+          const cookies = document.cookie.split(';')
+          const hasAccessToken = cookies.some(cookie => cookie.trim().startsWith('accessToken='))
+          const hasUserId = cookies.some(cookie => cookie.trim().startsWith('userId='))
+          
+          if (!hasAccessToken || !hasUserId) {
+            console.warn('Subdomain Layout - Critical cookies missing, attempting to set them again')
+            // Try to set the most critical cookies again
+            try {
+              if (accessToken && !hasAccessToken) {
+                document.cookie = `accessToken=${accessToken}; max-age=${60 * 60 * 24 * 30}; path=/; SameSite=Lax${isProduction ? '; Secure' : ''}`
+              }
+              if (userId && !hasUserId) {
+                document.cookie = `userId=${userId}; max-age=${60 * 60 * 24 * 30}; path=/; SameSite=Lax${isProduction ? '; Secure' : ''}`
+              }
+            } catch (e) {
+              console.error('Subdomain Layout - Failed to set fallback cookies:', e)
+            }
+          }
+        }, 2000)
         
         // Wait a bit before cleaning URL parameters to ensure cookies are set
         setTimeout(() => {
@@ -250,7 +281,13 @@ function SubdomainLayoutContent({
         hasEmail: !!email
       })
     }
-      }, [subdomain, isClient])
+    } catch (error) {
+      console.error('Subdomain Layout - Critical error in authentication processing:', error)
+    }
+    }
+    
+    processAuth()
+  }, [subdomain, isClient])
 
   return (
     <>

@@ -3,10 +3,20 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   try {
+    console.log('Store-tokens API - Starting request processing')
+    
     const body = await request.json()
+    console.log('Store-tokens API - Request body received:', {
+      hasAccessToken: !!body.accessToken,
+      hasUserId: !!body.userId,
+      hasEmail: !!body.email,
+      hasRefreshToken: !!body.refreshToken
+    })
+    
     const { accessToken, refreshToken, userId, email, schoolUrl, subdomainUrl, tenantId, tenantName, tenantSubdomain } = body
 
     if (!accessToken || !userId || !email) {
+      console.error('Store-tokens API - Missing required data:', { accessToken: !!accessToken, userId: !!userId, email: !!email })
       return NextResponse.json(
         { error: 'Missing required authentication data' },
         { status: 400 }
@@ -16,7 +26,8 @@ export async function POST(request: Request) {
     // Set HTTP-only cookies for security
     const cookieStore = await cookies()
     const isProduction = process.env.NODE_ENV === 'production'
-    const domain = isProduction ? '.squl.co.ke' : undefined
+    // In production, don't set domain for subdomain cookies to avoid issues
+    const domain = undefined
     
     // Set access token as HTTP-only for security
     cookieStore.set('accessToken', accessToken, {
@@ -113,9 +124,12 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error('Error storing tokens:', error)
+    console.error('Store-tokens API - Error storing tokens:', error)
     return NextResponse.json(
-      { error: 'Failed to store authentication tokens' },
+      { 
+        error: 'Failed to store authentication tokens',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
