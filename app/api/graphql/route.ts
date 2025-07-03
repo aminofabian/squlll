@@ -20,14 +20,27 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
 
+    console.log('GraphQL API Route - Processing request');
+    console.log('GraphQL API Route - Token present:', !!token);
+
     if (!token) {
+      console.log('GraphQL API Route - No access token found, returning 401');
       return NextResponse.json(
-        { error: 'Authentication required. Please log in.' },
+        { 
+          errors: [{ 
+            message: 'Authentication required. Please log in.',
+            extensions: { code: 'UNAUTHENTICATED' }
+          }] 
+        },
         { status: 401 }
       );
     }
 
     const body = await request.json();
+    console.log('GraphQL API Route - Request body:', {
+      query: body.query?.substring(0, 100) + '...',
+      operationName: body.operationName
+    });
 
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
@@ -39,18 +52,46 @@ export async function POST(request: Request) {
     });
 
     const data = await response.json();
+    console.log('GraphQL API Route - External API response status:', response.status);
 
     // Check for GraphQL errors
     if (data.errors) {
-      console.error('GraphQL errors:', data.errors);
+      console.error('GraphQL API Route - GraphQL errors:', data.errors);
+      
+      // Check if it's an authentication error
+      const hasAuthError = data.errors.some((error: any) => 
+        error.message?.includes('School (tenant) not found') ||
+        error.extensions?.code === 'NOTFOUNDEXCEPTION' ||
+        error.extensions?.code === 'UNAUTHENTICATED'
+      );
+      
+      if (hasAuthError) {
+        console.log('GraphQL API Route - Authentication error detected, returning 401');
+        return NextResponse.json(
+          { 
+            errors: [{ 
+              message: 'School not found or access denied. Please check your credentials.',
+              extensions: { code: 'UNAUTHENTICATED' }
+            }] 
+          },
+          { status: 401 }
+        );
+      }
+      
       return NextResponse.json(data, { status: 500 });
     }
 
+    console.log('GraphQL API Route - Success response');
     return NextResponse.json(data);
   } catch (error) {
-    console.error('GraphQL proxy error:', error);
+    console.error('GraphQL API Route - Proxy error:', error);
     return NextResponse.json(
-      { error: 'Failed to proxy GraphQL request' },
+      { 
+        errors: [{ 
+          message: 'Failed to proxy GraphQL request',
+          extensions: { code: 'INTERNAL_SERVER_ERROR' }
+        }] 
+      },
       { status: 500 }
     );
   }

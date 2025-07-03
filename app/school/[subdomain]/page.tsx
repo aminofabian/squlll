@@ -4,16 +4,47 @@ import { useSchoolConfig } from '../../../lib/hooks/useSchoolConfig'
 import { SchoolTypeSetup } from '../components/schooltype'
 import { SchoolHomepage } from './(pages)/components/SchoolHomepage'
 import { ClassHeader } from './(pages)/components/ClassCard'
+import { useEffect, useState } from 'react'
 
 export default function SchoolHome() {
   const { data: config, isLoading, error } = useSchoolConfig()
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // Show loading state
-  if (isLoading) {
+  // Check if user is authenticated on component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        // Check if access token exists in cookies
+        const cookies = document.cookie.split(';')
+        const accessToken = cookies.find(cookie => 
+          cookie.trim().startsWith('accessToken=')
+        )
+        
+        if (accessToken) {
+          setIsAuthenticated(true)
+        } else {
+          setIsAuthenticated(false)
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error)
+        setIsAuthenticated(false)
+      } finally {
+        setIsCheckingAuth(false)
+      }
+    }
+
+    checkAuth()
+  }, [])
+
+  // Show loading state while checking auth or loading config
+  if (isCheckingAuth || isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="mt-4 text-sm text-gray-500">Loading school configuration...</p>
+        <p className="mt-4 text-sm text-gray-500">
+          {isCheckingAuth ? 'Checking authentication...' : 'Loading school configuration...'}
+        </p>
       </main>
     )
   }
@@ -23,12 +54,50 @@ export default function SchoolHome() {
   const isAuthError = error && (
     errorMessage.includes('401') || 
     errorMessage.includes('Unauthorized') || 
-    errorMessage.includes('Authentication required')
+    errorMessage.includes('Authentication required') ||
+    errorMessage.includes('School not found or access denied')
   )
   
   // If there's an auth error or no config data, show the setup flow
   // This handles new registrations or schools that haven't been configured yet
   const shouldShowSetup = isAuthError || !config || (config && (!config.selectedLevels || config.selectedLevels.length === 0))
+
+  // If user is not authenticated and we have an auth error, show login prompt
+  if (isAuthError && !isAuthenticated) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Access Required
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              You need to be logged in to access this school portal.
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <button 
+              onClick={() => window.location.href = '/login'} 
+              className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
+            >
+              Sign In
+            </button>
+            
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Don't have an account?{' '}
+              <button 
+                onClick={() => window.location.href = '/register'} 
+                className="text-primary hover:underline"
+              >
+                Contact your school administrator
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   if (shouldShowSetup) {
     return (

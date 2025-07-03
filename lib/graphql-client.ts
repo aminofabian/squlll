@@ -9,10 +9,21 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql/';
 };
 
-export const graphqlClient = new GraphQLClient(getBaseUrl(), {
-  credentials: 'include',
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-}); 
+// Create a more robust GraphQL client
+const createGraphQLClient = () => {
+  const baseUrl = getBaseUrl();
+  
+  return new GraphQLClient(baseUrl, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  });
+};
+
+// Export a singleton instance
+export const graphqlClient = createGraphQLClient();
+
+// Export a function to create new instances if needed
+export const createClient = () => createGraphQLClient(); 

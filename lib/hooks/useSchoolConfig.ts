@@ -3,6 +3,8 @@ import { graphqlClient } from '../graphql-client';
 import { useSchoolConfigStore } from '../stores/useSchoolConfigStore';
 import { SchoolConfiguration } from '../types/school-config';
 import { gql } from 'graphql-request';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 interface GetSchoolConfigResponse {
   getSchoolConfiguration: SchoolConfiguration;
@@ -53,12 +55,19 @@ const GET_SCHOOL_CONFIG = gql`
 
 export function useSchoolConfig() {
   const { setConfig, setLoading, setError } = useSchoolConfigStore();
+  const router = useRouter();
 
   const query = useQuery({
     queryKey: ['schoolConfig'],
     queryFn: async () => {
       try {
         setLoading(true);
+        
+        // Ensure we're in a client environment
+        if (typeof window === 'undefined') {
+          throw new Error('This hook can only be used in client-side components');
+        }
+        
         const response = await graphqlClient.request<GetSchoolConfigResponse>(GET_SCHOOL_CONFIG);
         const config = response.getSchoolConfiguration;
         
@@ -83,6 +92,7 @@ export function useSchoolConfig() {
         
         // Handle different types of errors
         let errorMessage = 'Failed to fetch school configuration';
+        let shouldRedirectToLogin = false;
         
         if (error && typeof error === 'object' && 'response' in error) {
           const graphQLError = error as any;
@@ -90,16 +100,35 @@ export function useSchoolConfig() {
           // Check for 401 (unauthorized) errors
           if (graphQLError.response?.status === 401) {
             errorMessage = 'Authentication required. Please log in.';
-            console.log('401 error detected - user needs to authenticate or configure school');
+            shouldRedirectToLogin = true;
+            console.log('401 error detected - user needs to authenticate');
           } else if (graphQLError.response?.errors) {
-            // Handle other GraphQL errors
-            errorMessage = graphQLError.response.errors[0]?.message || errorMessage;
+            // Handle GraphQL errors
+            const graphQLErrors = graphQLError.response.errors;
+            const firstError = graphQLErrors[0];
+            
+            // Check for "School (tenant) not found" error
+            if (firstError?.message?.includes('School (tenant) not found') || 
+                firstError?.extensions?.code === 'NOTFOUNDEXCEPTION') {
+              errorMessage = 'School not found or access denied. Please check your credentials.';
+              shouldRedirectToLogin = true;
+              console.log('School not found error - likely authentication issue');
+            } else {
+              errorMessage = firstError?.message || errorMessage;
+            }
           }
         } else if (error instanceof Error) {
           errorMessage = error.message;
         }
         
         setError(errorMessage);
+        
+        // Redirect to login if authentication is required
+        if (shouldRedirectToLogin && typeof window !== 'undefined') {
+          // Use window.location for full page redirect to login
+          window.location.href = '/login';
+        }
+        
         throw error;
       } finally {
         setLoading(false);
@@ -107,19 +136,30 @@ export function useSchoolConfig() {
     },
     // Retry configuration
     retry: (failureCount, error) => {
-      // Don't retry 401 errors (authentication issues)
+      // Don't retry 401 errors or "School not found" errors (authentication issues)
       if (error && typeof error === 'object' && 'response' in error) {
         const graphQLError = error as any;
         if (graphQLError.response?.status === 401) {
           return false;
+        }
+        
+        // Don't retry "School not found" errors
+        if (graphQLError.response?.errors) {
+          const firstError = graphQLError.response.errors[0];
+          if (firstError?.message?.includes('School (tenant) not found') || 
+              firstError?.extensions?.code === 'NOTFOUNDEXCEPTION') {
+            return false;
+          }
         }
       }
       // Retry other errors up to 2 times
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    // Consider the query successful even if it fails with 401 (so we can show setup)
+    // Consider the query successful even if it fails with auth errors (so we can redirect)
     throwOnError: false,
+    // Only run the query on the client side
+    enabled: typeof window !== 'undefined',
   });
 
   return query;
