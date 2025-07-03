@@ -13,14 +13,23 @@ import CreateClassDrawer from '@/app/school/components/CreateClassDrawer'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
-  'Pre-Primary': 0,
-  'Lower Primary': 1,
-  'Upper Primary': 2,
-  'Junior Secondary': 3,
-  'Senior Secondary': 4,
-  'Madrasa Beginners': 5,
-  'Madrasa Lower': 6,
-  'Madrasa Upper': 7
+  // International School (IGCSE) levels
+  'IGCSE Early Years': 0,
+  'IGCSE Primary': 1,
+  'IGCSE Lower Secondary': 2,
+  'IGCSE Upper Secondary': 3,
+  'A Level': 4,
+  // Local curriculum levels
+  'Pre-Primary': 5,
+  'Lower Primary': 6,
+  'Upper Primary': 7,
+  'Junior Secondary': 8,
+  'Senior Secondary': 9,
+  // Madrasa levels
+  'Madrasa Beginners': 10,
+  'Madrasa Lower': 11,
+  'Madrasa Upper': 12,
+  'Madrasa Secondary': 13
 };
 
 function getLevelOrder(levelName: string): number {

@@ -13,14 +13,23 @@ import { motion } from 'framer-motion'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
-  'Pre-Primary': 0,
-  'Lower Primary': 1,
-  'Upper Primary': 2,
-  'Junior Secondary': 3,
-  'Senior Secondary': 4,
-  'Madrasa Beginners': 5,
-  'Madrasa Lower': 6,
-  'Madrasa Upper': 7
+  // International School (IGCSE) levels
+  'IGCSE Early Years': 0,
+  'IGCSE Primary': 1,
+  'IGCSE Lower Secondary': 2,
+  'IGCSE Upper Secondary': 3,
+  'A Level': 4,
+  // Local curriculum levels
+  'Pre-Primary': 5,
+  'Lower Primary': 6,
+  'Upper Primary': 7,
+  'Junior Secondary': 8,
+  'Senior Secondary': 9,
+  // Madrasa levels
+  'Madrasa Beginners': 10,
+  'Madrasa Lower': 11,
+  'Madrasa Upper': 12,
+  'Madrasa Secondary': 13
 };
 
 // Helper function to get the numeric value from a grade name (e.g., "Grade 1" -> 1)
@@ -167,6 +176,99 @@ export function SchoolSearchFilter({
   // Enhanced level styling configuration
   const getLevelStyle = (levelName: string) => {
     switch (true) {
+      // IGCSE International School levels
+      case levelName.includes('IGCSE Early Years'):
+        return {
+          color: 'text-cyan-600 dark:text-cyan-400',
+          bgLight: 'bg-cyan-50 dark:bg-cyan-900/10',
+          bgDark: 'bg-cyan-100 dark:bg-cyan-800/20',
+          border: 'border-cyan-200 dark:border-cyan-700',
+          hover: 'hover:border-cyan-300 dark:hover:border-cyan-600',
+          gradient: 'from-cyan-50 to-cyan-100 dark:from-cyan-900/10 dark:to-cyan-800/20',
+          icon: School
+        };
+      case levelName.includes('IGCSE Primary'):
+        return {
+          color: 'text-indigo-600 dark:text-indigo-400',
+          bgLight: 'bg-indigo-50 dark:bg-indigo-900/10',
+          bgDark: 'bg-indigo-100 dark:bg-indigo-800/20',
+          border: 'border-indigo-200 dark:border-indigo-700',
+          hover: 'hover:border-indigo-300 dark:hover:border-indigo-600',
+          gradient: 'from-indigo-50 to-indigo-100 dark:from-indigo-900/10 dark:to-indigo-800/20',
+          icon: BookOpen
+        };
+      case levelName.includes('IGCSE Lower Secondary'):
+        return {
+          color: 'text-violet-600 dark:text-violet-400',
+          bgLight: 'bg-violet-50 dark:bg-violet-900/10',
+          bgDark: 'bg-violet-100 dark:bg-violet-800/20',
+          border: 'border-violet-200 dark:border-violet-700',
+          hover: 'hover:border-violet-300 dark:hover:border-violet-600',
+          gradient: 'from-violet-50 to-violet-100 dark:from-violet-900/10 dark:to-violet-800/20',
+          icon: Users
+        };
+      case levelName.includes('IGCSE Upper Secondary'):
+        return {
+          color: 'text-pink-600 dark:text-pink-400',
+          bgLight: 'bg-pink-50 dark:bg-pink-900/10',
+          bgDark: 'bg-pink-100 dark:bg-pink-800/20',
+          border: 'border-pink-200 dark:border-pink-700',
+          hover: 'hover:border-pink-300 dark:hover:border-pink-600',
+          gradient: 'from-pink-50 to-pink-100 dark:from-pink-900/10 dark:to-pink-800/20',
+          icon: GraduationCap
+        };
+      case levelName.includes('A Level'):
+        return {
+          color: 'text-rose-600 dark:text-rose-400',
+          bgLight: 'bg-rose-50 dark:bg-rose-900/10',
+          bgDark: 'bg-rose-100 dark:bg-rose-800/20',
+          border: 'border-rose-200 dark:border-rose-700',
+          hover: 'hover:border-rose-300 dark:hover:border-rose-600',
+          gradient: 'from-rose-50 to-rose-100 dark:from-rose-900/10 dark:to-rose-800/20',
+          icon: Award
+        };
+      // Madrasa levels
+      case levelName.includes('Madrasa Beginners'):
+        return {
+          color: 'text-emerald-600 dark:text-emerald-400',
+          bgLight: 'bg-emerald-50 dark:bg-emerald-900/10',
+          bgDark: 'bg-emerald-100 dark:bg-emerald-800/20',
+          border: 'border-emerald-200 dark:border-emerald-700',
+          hover: 'hover:border-emerald-300 dark:hover:border-emerald-600',
+          gradient: 'from-emerald-50 to-emerald-100 dark:from-emerald-900/10 dark:to-emerald-800/20',
+          icon: School
+        };
+      case levelName.includes('Madrasa Lower'):
+        return {
+          color: 'text-teal-600 dark:text-teal-400',
+          bgLight: 'bg-teal-50 dark:bg-teal-900/10',
+          bgDark: 'bg-teal-100 dark:bg-teal-800/20',
+          border: 'border-teal-200 dark:border-teal-700',
+          hover: 'hover:border-teal-300 dark:hover:border-teal-600',
+          gradient: 'from-teal-50 to-teal-100 dark:from-teal-900/10 dark:to-teal-800/20',
+          icon: BookOpen
+        };
+      case levelName.includes('Madrasa Upper'):
+        return {
+          color: 'text-amber-600 dark:text-amber-400',
+          bgLight: 'bg-amber-50 dark:bg-amber-900/10',
+          bgDark: 'bg-amber-100 dark:bg-amber-800/20',
+          border: 'border-amber-200 dark:border-amber-700',
+          hover: 'hover:border-amber-300 dark:hover:border-amber-600',
+          gradient: 'from-amber-50 to-amber-100 dark:from-amber-900/10 dark:to-amber-800/20',
+          icon: Users
+        };
+      case levelName.includes('Madrasa Secondary'):
+        return {
+          color: 'text-yellow-600 dark:text-yellow-400',
+          bgLight: 'bg-yellow-50 dark:bg-yellow-900/10',
+          bgDark: 'bg-yellow-100 dark:bg-yellow-800/20',
+          border: 'border-yellow-200 dark:border-yellow-700',
+          hover: 'hover:border-yellow-300 dark:hover:border-yellow-600',
+          gradient: 'from-yellow-50 to-yellow-100 dark:from-yellow-900/10 dark:to-yellow-800/20',
+          icon: GraduationCap
+        };
+      // Local curriculum levels
       case levelName.includes('Pre-Primary'):
         return {
           color: 'text-purple-600 dark:text-purple-400',
