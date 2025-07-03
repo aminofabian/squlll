@@ -54,7 +54,9 @@ export const useTeachersStore = create<TeachersState>()(
 
       getTeachersByTenantId: (tenantId) => {
         const state = get();
-        return state.teachers.filter(teacher => teacher.tenantId === tenantId);
+        // Since tenantId is not available on teacher objects, return all teachers
+        // The filtering should be done at the API level
+        return state.teachers;
       },
 
       getTeacherByEmail: (email) => {
@@ -64,7 +66,7 @@ export const useTeachersStore = create<TeachersState>()(
 
       getTeacherByName: (name) => {
         const state = get();
-        return state.teachers.find(teacher => teacher.name === name);
+        return state.teachers.find(teacher => teacher.fullName === name);
       },
 
       // Actions

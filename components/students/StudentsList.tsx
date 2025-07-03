@@ -82,19 +82,21 @@ export const StudentsList: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-lg">{student.admission_number}</span>
-                  <Badge variant="secondary">{student.tenantId}</Badge>
+                  <Badge variant="default">
+                    {student.gender}
+                  </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{student.user.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{student.phone || 'N/A'}</p>
-                  </div>
+                <div className="space-y-2 text-sm">
+                  <div><strong>ID:</strong> {student.id}</div>
+                  <div><strong>Admission Number:</strong> {student.admission_number}</div>
+                  <div><strong>Name:</strong> {student.user.name}</div>
+                  <div><strong>Email:</strong> {student.user.email}</div>
+                  <div><strong>User ID:</strong> {student.user.id}</div>
+                  <div><strong>Phone:</strong> {student.phone}</div>
+                  <div><strong>Gender:</strong> {student.gender}</div>
+                  <div><strong>Grade:</strong> {student.grade}</div>
                 </div>
               </CardContent>
             </Card>

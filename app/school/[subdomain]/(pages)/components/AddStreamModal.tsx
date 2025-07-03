@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { 
   Dialog, 
   DialogContent, 
@@ -25,6 +26,7 @@ interface AddStreamModalProps {
 
 export function AddStreamModal({ isOpen, onClose, onSuccess, gradeId, gradeName }: AddStreamModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const queryClient = useQueryClient()
   const [formData, setFormData] = useState({
     name: '',
     capacity: '30'
@@ -70,28 +72,37 @@ export function AddStreamModal({ isOpen, onClose, onSuccess, gradeId, gradeName 
       const data = await response.json()
       
       if (!response.ok) {
+        // Check if there are GraphQL error details
+        if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+          const firstError = data.details[0];
+          throw new Error(firstError.message || data.error || 'Failed to create stream');
+        }
         throw new Error(data.error || 'Failed to create stream')
       }
 
+      // Show success message
       toast.success(`Stream Created: ${formData.name}`, {
         description: `New stream has been successfully added to ${gradeName} with capacity of ${formData.capacity} students.`,
-        duration: 5000,
-        action: {
-          label: 'View',
-          onClick: () => {
-            // This action could navigate to the stream details or refresh the current view
-            console.log('View stream action clicked')
-            // You could add navigation here if needed
-          }
-        }
+        duration: 5000
       })
+      
+      // Invalidate and refetch school configuration to show the new stream
+      await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] })
       
       onSuccess()
       onClose()
     } catch (error) {
       console.error('Error creating stream:', error)
-      toast.error("Error", {
-        description: error instanceof Error ? error.message : "An error occurred while creating the stream"
+      
+      // Determine if this is a validation error (duplicate stream name)
+      const errorMessage = error instanceof Error ? error.message : "An error occurred while creating the stream"
+      const isValidationError = errorMessage.includes('already exists')
+      
+      toast.error(isValidationError ? "Stream Already Exists" : "Error", {
+        description: isValidationError 
+          ? "A stream with this name already exists for this grade level. Please choose a different name."
+          : errorMessage,
+        duration: 6000
       })
     } finally {
       setIsLoading(false)

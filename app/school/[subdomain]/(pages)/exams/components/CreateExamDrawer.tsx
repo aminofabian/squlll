@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -48,10 +48,14 @@ import {
   Loader2,
   School,
   Timer,
-  PenTool
+  PenTool,
+  Wand2,
+  MessageSquare
 } from "lucide-react";
 import { toast } from 'sonner';
 import { subjects } from "@/lib/data/mockExams";
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Exam form data schema
 const examFormSchema = z.object({
@@ -84,14 +88,6 @@ const examTypes = [
   'Project'
 ];
 
-const classes = [
-  "Form 1A", "Form 1B", "Form 1C",
-  "Form 2A", "Form 2B", "Form 2C", 
-  "Form 3A", "Form 3B", "Form 3C",
-  "Form 4A", "Form 4B", "Form 4C"
-];
-
-const streams = ["A", "B", "C", "East", "West", "North", "South"];
 const terms = ["Term 1", "Term 2", "Term 3"];
 const academicYears = ["2023", "2024", "2025", "2026"];
 
@@ -103,6 +99,89 @@ interface CreateExamDrawerProps {
 export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const queryClient = useQueryClient();
+  
+  // Get data from school config store
+  const { config, getAllGradeLevels, getStreamsByGradeId, getGradeById } = useSchoolConfigStore();
+  
+  // Generate classes and streams from store data with proper sorting
+  const { classes, streams, allGrades } = useMemo(() => {
+    if (!config) {
+      return { classes: [], streams: [], allGrades: [] };
+    }
+    
+    // Get all grade levels and flatten them
+    const allGradeLevels = getAllGradeLevels();
+    const allGrades = allGradeLevels.flatMap(level => 
+      level.grades.map(grade => ({
+        ...grade,
+        levelName: level.levelName,
+        levelId: level.levelId
+      }))
+    ).sort((a, b) => {
+      // Helper function to extract grade number
+      const getGradeNumber = (gradeName: string): number => {
+        // Handle "Grade X" format
+        const gradeMatch = gradeName.match(/Grade\s+(\d+)/i)
+        if (gradeMatch) {
+          return parseInt(gradeMatch[1])
+        }
+        
+        // Handle "Form X" format
+        const formMatch = gradeName.match(/Form\s+(\d+)/i)
+        if (formMatch) {
+          return parseInt(formMatch[1]) + 6 // Form 1 = Grade 7, Form 2 = Grade 8, etc.
+        }
+        
+        // Handle "PPX" format
+        const ppMatch = gradeName.match(/PP(\d+)/i)
+        if (ppMatch) {
+          return parseInt(ppMatch[1]) - 3 // PP1 = -2, PP2 = -1, PP3 = 0
+        }
+        
+        // Handle "Baby Class", "Nursery", "Reception"
+        const specialGrades: { [key: string]: number } = {
+          'Baby Class': -4,
+          'Nursery': -3,
+          'Reception': -2
+        }
+        
+        if (specialGrades[gradeName]) {
+          return specialGrades[gradeName]
+        }
+        
+        // For any other grades, use a high number to put them at the end
+        return 999
+      }
+      
+      const aNumber = getGradeNumber(a.name)
+      const bNumber = getGradeNumber(b.name)
+      
+      return aNumber - bNumber
+    });
+    
+    // Generate classes from grade levels
+    const allClasses: string[] = [];
+    const allStreams: string[] = [];
+    
+    config.selectedLevels.forEach(level => {
+      level.gradeLevels?.forEach(grade => {
+        // Add grade as a class option
+        allClasses.push(grade.name);
+        
+        // Add streams for this grade
+        grade.streams?.forEach(stream => {
+          allStreams.push(stream.name);
+        });
+      });
+    });
+    
+    return {
+      classes: allClasses.sort(),
+      streams: [...new Set(allStreams)].sort(), // Remove duplicates
+      allGrades
+    };
+  }, [config, getAllGradeLevels]);
   
   const form = useForm<ExamFormData>({
     resolver: zodResolver(examFormSchema),
@@ -123,6 +202,23 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
       passingMarks: 40,
     },
   });
+
+  // Watch form values for dynamic updates
+  const watchedClass = form.watch('class');
+  const watchedStream = form.watch('stream');
+  
+  // Find the selected grade ID from the class name
+  const selectedGradeId = useMemo(() => {
+    if (!watchedClass || !allGrades) return null;
+    const grade = allGrades.find(g => g.name === watchedClass);
+    return grade?.id || null;
+  }, [watchedClass, allGrades]);
+  
+  // Get streams for selected grade
+  const availableStreams = selectedGradeId ? getStreamsByGradeId(selectedGradeId) : [];
+  
+  // Get grade info for display
+  const selectedGradeInfo = selectedGradeId ? getGradeById(selectedGradeId) : null;
 
   // Generate exam title automatically
   const generateExamTitle = () => {
@@ -161,6 +257,9 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
         description: `${data.title} has been created and is ready for administration.`
       });
       
+      // Invalidate and refetch school configuration to show any updated data
+      await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] });
+      
       // Reset form and close drawer
       form.reset();
       setIsDrawerOpen(false);
@@ -177,49 +276,101 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
   };
 
   const defaultTrigger = (
-    <Button className="flex items-center gap-2">
+    <Button className="flex items-center gap-2 font-mono">
       <Plus className="h-4 w-4" />
       Create Exam
     </Button>
   );
+
+  // Show loading state if no configuration is available
+  if (!config) {
+    return (
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerTrigger asChild>
+          {trigger || defaultTrigger}
+        </DrawerTrigger>
+        <DrawerContent className="h-full w-full md:w-1/2 bg-slate-50 dark:bg-slate-900" data-vaul-drawer-direction="right">
+          <DrawerHeader className="border-b-2 border-primary/20 pb-6">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                  Exam Creation
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/10 border-2 border-primary/20 rounded-xl p-3">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                </div>
+                <DrawerTitle className="text-2xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                  New Exam
+                </DrawerTitle>
+              </div>
+              <DrawerDescription className="text-center text-sm text-slate-600 dark:text-slate-400 font-medium max-w-md">
+                Loading school configuration...
+              </DrawerDescription>
+            </div>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex items-center justify-center h-32">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">Loading school data...</span>
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
         {trigger || defaultTrigger}
       </DrawerTrigger>
-      <DrawerContent className="h-full w-full md:w-2/3 lg:w-1/2 bg-background" data-vaul-drawer-direction="right">
-        <DrawerHeader className="border-b border-border bg-slate-50 dark:bg-slate-900">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center">
-              <GraduationCap className="h-6 w-6 text-primary" />
+      <DrawerContent className="h-full w-full md:w-1/2 bg-slate-50 dark:bg-slate-900" data-vaul-drawer-direction="right">
+        <DrawerHeader className="border-b-2 border-primary/20 pb-6">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+              <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                Exam Creation
+              </span>
             </div>
-            <div className="flex-1">
-              <DrawerTitle className="text-xl font-mono font-bold text-foreground uppercase tracking-wide">
-                Create New Exam
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 border-2 border-primary/20 rounded-xl p-3">
+                <GraduationCap className="h-6 w-6 text-primary" />
+              </div>
+              <DrawerTitle className="text-2xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                New Exam
               </DrawerTitle>
-              <DrawerDescription className="text-sm text-muted-foreground font-medium">
-                Set up a new examination for your students
-              </DrawerDescription>
             </div>
-          </div>
-          
-          {/* Progress indicator */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Info className="h-3 w-3" />
-            <span>Complete all required fields to create the exam</span>
+            <DrawerDescription className="text-center text-sm text-slate-600 dark:text-slate-400 font-medium max-w-md">
+              Complete the form below to create a new examination for your students
+            </DrawerDescription>
           </div>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="px-6 py-4 overflow-y-auto relative">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
+              
+              {/* Loading Overlay */}
+              {isLoading && (
+                <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 z-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Creating exam...</p>
+                  </div>
+                </div>
+              )}
               
               {/* Basic Information Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                  <FileText className="h-4 w-4 text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Basic Information</h3>
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                  <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                    <FileText className="h-3 w-3 mr-2" />
+                    Basic Information
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,17 +379,17 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="subject"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <BookOpen className="h-4 w-4" />
                           Subject *
                         </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
                               <SelectValue placeholder="Select subject" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
                             {subjects.map((subject) => (
                               <SelectItem key={subject.id} value={subject.id}>
                                 {subject.name} ({subject.code})
@@ -256,17 +407,17 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="examType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Award className="h-4 w-4" />
                           Exam Type *
                         </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
                               <SelectValue placeholder="Select exam type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
                             {examTypes.map((type) => (
                               <SelectItem key={type} value={type}>
                                 {type}
@@ -285,7 +436,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2 font-mono text-sm">
                         <PenTool className="h-4 w-4" />
                         Exam Title *
                       </FormLabel>
@@ -293,7 +444,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                         <Input 
                           placeholder="e.g., Term 1 Midterm Mathematics" 
                           {...field} 
-                          className="font-medium"
+                          className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                         />
                       </FormControl>
                       <FormMessage />
@@ -306,11 +457,11 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description *</FormLabel>
+                      <FormLabel className="font-mono text-sm">Description *</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Brief description of the exam content and scope..."
-                          className="resize-none h-20"
+                          className="resize-none h-20 font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                           {...field}
                         />
                       </FormControl>
@@ -321,10 +472,12 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
               </div>
 
               {/* Class & Academic Information */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                  <School className="h-4 w-4 text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Class & Academic Details</h3>
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                  <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                    <School className="h-3 w-3 mr-2" />
+                    Class & Academic Details
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -333,25 +486,53 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Users className="h-4 w-4" />
                           Class *
                         </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
                               <SelectValue placeholder="Select class" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            {classes.map((cls) => (
-                              <SelectItem key={cls} value={cls}>
-                                {cls}
-                              </SelectItem>
-                            ))}
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
+                            {allGrades.map(grade => {
+                              const gradeStreams = getStreamsByGradeId(grade.id)
+                              return (
+                                <SelectItem 
+                                  key={grade.id} 
+                                  value={grade.name}
+                                  className="hover:bg-primary/5 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer"
+                                >
+                                  <div className="flex items-center justify-between w-full py-1">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-2 h-2 rounded-full bg-primary/30"></div>
+                                      <span className="font-medium text-slate-700 dark:text-slate-300">{grade.name}</span>
+                                    </div>
+                                    {gradeStreams.length > 0 && (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="ml-2 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
+                                      >
+                                        {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              )
+                            })}
                           </SelectContent>
                         </Select>
                         <FormMessage />
+                        {selectedGradeInfo && availableStreams.length > 0 && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {availableStreams.length} stream{availableStreams.length !== 1 ? 's' : ''} available for {selectedGradeInfo.grade.name}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -361,22 +542,40 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="stream"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Stream</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel className="font-mono text-sm">Stream (Optional)</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={!watchedClass || availableStreams.length === 0}
+                        >
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Optional" />
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                              <SelectValue placeholder={
+                                !watchedClass 
+                                  ? "Select a class first" 
+                                  : availableStreams.length === 0 
+                                    ? "No streams available" 
+                                    : "Select stream"
+                              } />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            {streams.map((stream) => (
-                              <SelectItem key={stream} value={stream}>
-                                Stream {stream}
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
+                            {availableStreams.map((stream) => (
+                              <SelectItem key={stream.id} value={stream.name}>
+                                <div className="flex items-center gap-3 py-1">
+                                  <div className="w-2 h-2 rounded-full bg-primary/20"></div>
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">{stream.name}</span>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
+                        {watchedClass && availableStreams.length === 0 && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            No streams configured for this class
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -386,14 +585,14 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="term"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Term *</FormLabel>
+                        <FormLabel className="font-mono text-sm">Term *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
                               <SelectValue placeholder="Select term" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
                             {terms.map((term) => (
                               <SelectItem key={term} value={term}>
                                 {term}
@@ -412,14 +611,14 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                   name="academicYear"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Academic Year *</FormLabel>
+                      <FormLabel className="font-mono text-sm">Academic Year *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="w-full md:w-48">
+                          <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-full md:w-48">
                             <SelectValue placeholder="Select year" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
                           {academicYears.map((year) => (
                             <SelectItem key={year} value={year}>
                               {year}
@@ -434,10 +633,12 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
               </div>
 
               {/* Schedule & Duration */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                  <CalendarDays className="h-4 w-4 text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Schedule & Duration</h3>
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                  <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                    <CalendarDays className="h-3 w-3 mr-2" />
+                    Schedule & Duration
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -446,7 +647,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="dateAdministered"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <CalendarDays className="h-4 w-4" />
                           Exam Date *
                         </FormLabel>
@@ -455,6 +656,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                             type="date" 
                             {...field}
                             min={new Date().toISOString().split('T')[0]}
+                            className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                           />
                         </FormControl>
                         <FormMessage />
@@ -467,12 +669,12 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="timeStart"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Clock className="h-4 w-4" />
                           Start Time *
                         </FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input type="time" {...field} className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -486,7 +688,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="duration"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Timer className="h-4 w-4" />
                           Duration (minutes) *
                         </FormLabel>
@@ -497,6 +699,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                             min="30"
                             max="360"
                             {...field}
+                            className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-full md:w-48"
                           />
                         </FormControl>
                         <FormMessage />
@@ -509,7 +712,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                     name="totalMarks"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Target className="h-4 w-4" />
                           Total Marks *
                         </FormLabel>
@@ -520,6 +723,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                             min="1"
                             max="1000"
                             {...field}
+                            className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-full md:w-48"
                           />
                         </FormControl>
                         <FormMessage />
@@ -533,13 +737,13 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                   name="passingMarks"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Passing Marks *</FormLabel>
+                      <FormLabel className="font-mono text-sm">Passing Marks *</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
                           placeholder="40"
                           min="1"
-                          className="w-full md:w-48"
+                          className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all w-full md:w-48"
                           {...field}
                         />
                       </FormControl>
@@ -550,10 +754,12 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
               </div>
 
               {/* Instructions */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                  <Info className="h-4 w-4 text-gray-600" />
-                  <h3 className="font-semibold text-gray-900">Exam Instructions</h3>
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                  <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                    <MessageSquare className="h-3 w-3 mr-2" />
+                    Exam Instructions
+                  </h3>
                 </div>
 
                 <FormField
@@ -561,11 +767,11 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                   name="instructions"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Instructions for Students *</FormLabel>
+                      <FormLabel className="font-mono text-sm">Instructions for Students *</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="e.g., Answer all questions. Show all working clearly. Use blue or black ink only..."
-                          className="resize-none h-24"
+                          className="resize-none h-24 font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                           {...field}
                         />
                       </FormControl>

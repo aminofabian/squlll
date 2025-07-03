@@ -152,7 +152,19 @@ function ClassesPage() {
   }, [selectedGradeId, selectedStreamId, config]);
 
   if (error) return <div>Error: {error instanceof Error ? error.message : 'An error occurred'}</div>
-  if (!config && !isLoading) return <div>No configuration found</div>
+  if (!config && !isLoading) {
+    return (
+      <div className="flex h-screen">
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="grid grid-cols-1 gap-6">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <ClassCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen">

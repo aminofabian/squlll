@@ -31,9 +31,19 @@ export async function GET(request: Request) {
       query GetTeachersByTenant($tenantId: String!) {
         getTeachersByTenant(tenantId: $tenantId) {
           id
-          name
+          fullName
+          firstName
+          lastName
           email
-          tenantId
+          phoneNumber
+          gender
+          department
+          address
+          subject
+          employeeId
+          dateOfBirth
+          isActive
+          hasCompletedProfile
           userId
         }
       }

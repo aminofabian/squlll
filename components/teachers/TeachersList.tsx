@@ -81,28 +81,29 @@ export const TeachersList: React.FC = () => {
             <Card key={teacher.id}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span className="text-lg">{teacher.name}</span>
+                  <span className="text-lg">{teacher.fullName}</span>
                   <Badge variant={teacher.userId ? "default" : "secondary"}>
                     {teacher.userId ? 'Active' : 'Pending'}
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{teacher.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Tenant ID</p>
-                    <p className="font-medium text-sm text-gray-600">{teacher.tenantId}</p>
-                  </div>
-                  {teacher.userId && (
-                    <div>
-                      <p className="text-sm text-gray-500">User ID</p>
-                      <p className="font-medium text-sm text-gray-600">{teacher.userId}</p>
-                    </div>
-                  )}
+                <div className="space-y-2 text-sm">
+                  <div><strong>ID:</strong> {teacher.id}</div>
+                  <div><strong>Full Name:</strong> {teacher.fullName}</div>
+                  <div><strong>First Name:</strong> {teacher.firstName}</div>
+                  <div><strong>Last Name:</strong> {teacher.lastName}</div>
+                  <div><strong>Email:</strong> {teacher.email}</div>
+                  <div><strong>Phone Number:</strong> {teacher.phoneNumber}</div>
+                  <div><strong>Gender:</strong> {teacher.gender}</div>
+                  <div><strong>Department:</strong> {teacher.department}</div>
+                  <div><strong>Address:</strong> {teacher.address}</div>
+                  <div><strong>Subject:</strong> {teacher.subject}</div>
+                  <div><strong>Employee ID:</strong> {teacher.employeeId}</div>
+                  <div><strong>Date of Birth:</strong> {teacher.dateOfBirth || 'N/A'}</div>
+                  <div><strong>Is Active:</strong> {teacher.isActive ? 'Yes' : 'No'}</div>
+                  <div><strong>Has Completed Profile:</strong> {teacher.hasCompletedProfile ? 'Yes' : 'No'}</div>
+                  <div><strong>User ID:</strong> {teacher.userId || 'N/A'}</div>
                 </div>
               </CardContent>
             </Card>

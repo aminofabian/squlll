@@ -22,9 +22,12 @@ export interface GraphQLStudent {
   id: string;
   admission_number: string;
   phone: string;
-  tenantId: string;
+  grade: string;
+  gender: string;
   user: {
+    id: string;
     email: string;
+    name: string;
   };
 }
 

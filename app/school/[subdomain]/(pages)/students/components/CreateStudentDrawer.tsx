@@ -50,6 +50,7 @@ import {
 import { toast } from 'sonner'
 import { StudentSuccessModal } from './StudentSuccessModal'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 
 // Form validation schema
 const studentFormSchema = z.object({
@@ -71,151 +72,15 @@ const studentFormSchema = z.object({
 
 type StudentFormData = z.infer<typeof studentFormSchema>
 
-// Mock grades data - you might want to import this from a shared location
-const mockGrades = [
-  // Preschool grades
-  {
-    id: 'baby-class',
-    name: 'Baby',
-    displayName: 'Baby Class',
-    level: 'preschool',
-    ageGroup: '3 years',
-    students: 42,
-    classes: 2
-  },
-  {
-    id: 'pp1',
-    name: 'PP1',
-    displayName: 'PP1',
-    level: 'preschool',
-    ageGroup: '4 years',
-    students: 56,
-    classes: 3
-  },
-  {
-    id: 'pp2',
-    name: 'PP2',
-    displayName: 'PP2',
-    level: 'preschool',
-    ageGroup: '5 years',
-    students: 48,
-    classes: 2
-  },
-  
-  // Primary grades
-  {
-    id: 'grade1',
-    name: 'G1',
-    displayName: 'Grade 1',
-    level: 'primary',
-    ageGroup: '6 years',
-    students: 65,
-    classes: 3
-  },
-  {
-    id: 'grade2',
-    name: 'G2',
-    displayName: 'Grade 2',
-    level: 'primary',
-    ageGroup: '7 years',
-    students: 62,
-    classes: 3
-  },
-  {
-    id: 'grade3',
-    name: 'G3',
-    displayName: 'Grade 3',
-    level: 'primary',
-    ageGroup: '8 years',
-    students: 58,
-    classes: 2
-  },
-  {
-    id: 'grade4',
-    name: 'G4',
-    displayName: 'Grade 4',
-    level: 'primary',
-    ageGroup: '9 years',
-    students: 60,
-    classes: 2
-  },
-  {
-    id: 'grade5',
-    name: 'G5',
-    displayName: 'Grade 5',
-    level: 'primary',
-    ageGroup: '10 years',
-    students: 54,
-    classes: 2
-  },
-  {
-    id: 'grade6',
-    name: 'G6',
-    displayName: 'Grade 6',
-    level: 'primary',
-    ageGroup: '11 years',
-    students: 52,
-    classes: 2
-  },
-  
-  // Junior Secondary grades
-  {
-    id: 'grade7',
-    name: 'F1',
-    displayName: 'Form 1',
-    level: 'junior-secondary',
-    ageGroup: '12 years',
-    students: 86,
-    classes: 3
-  },
-  {
-    id: 'grade8',
-    name: 'F2',
-    displayName: 'Form 2',
-    level: 'junior-secondary',
-    ageGroup: '13 years',
-    students: 78,
-    classes: 3
-  },
-  {
-    id: 'grade9',
-    name: 'F3',
-    displayName: 'Form 3',
-    level: 'junior-secondary',
-    ageGroup: '14 years',
-    students: 72,
-    classes: 2
-  },
-  
-  // Senior Secondary grades
-  {
-    id: 'grade10',
-    name: 'F4',
-    displayName: 'Form 4',
-    level: 'senior-secondary',
-    ageGroup: '15 years',
-    students: 68,
-    classes: 3
-  },
-  {
-    id: 'grade11',
-    name: 'F5',
-    displayName: 'Form 5',
-    level: 'senior-secondary',
-    ageGroup: '16 years',
-    students: 54,
-    classes: 2
-  },
-  {
-    id: 'grade12',
-    name: 'F6',
-    displayName: 'Form 6',
-    level: 'senior-secondary',
-    ageGroup: '17 years',
-    students: 48,
-    classes: 2
+// Creative class name generation function
+const generateClassName = (gradeName: string, streamName?: string): string => {
+  if (!streamName) {
+    return gradeName
   }
-]
+  
+  // Simple and clean combination: Grade + Stream
+  return `${gradeName} ${streamName}`
+}
 
 interface CreateStudentDrawerProps {
   onStudentCreated: () => void
@@ -231,6 +96,90 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
     generatedPassword: string
   } | null>(null)
   const { data: schoolConfig } = useSchoolConfig()
+    const { getAllGradeLevels, getStreamsByGradeId, getGradeById } = useSchoolConfigStore()
+  
+  // Form handling
+  const form = useForm<StudentFormData>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      name: '',
+      admission_number: '',
+      gender: 'male',
+      grade: '',
+      class: '',
+      stream: '',
+      date_of_birth: new Date(Date.now() - (10 * 365 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // Default to 10 years ago
+      age: 0,
+      admission_date: new Date().toISOString().split('T')[0],
+      student_email: '',
+      guardian_name: '',
+      guardian_phone: '',
+      guardian_email: '',
+      home_address: '',
+    },
+  })
+    
+  // Get all available grades from school config
+  const allGradeLevels = getAllGradeLevels()
+  
+  // Watch form values for dynamic updates
+  const watchedGrade = form.watch('grade')
+  const watchedStream = form.watch('stream')
+  
+  // Get streams for selected grade
+  const availableStreams = watchedGrade ? getStreamsByGradeId(watchedGrade) : []
+  
+  // Get grade info for display
+  const selectedGradeInfo = watchedGrade ? getGradeById(watchedGrade) : null
+  
+  // Flatten all grades for easier access and sort them properly
+  const allGrades = allGradeLevels.flatMap(level => 
+    level.grades.map(grade => ({
+      ...grade,
+      levelName: level.levelName,
+      levelId: level.levelId
+    }))
+  ).sort((a, b) => {
+    // Helper function to extract grade number
+    const getGradeNumber = (gradeName: string): number => {
+      // Handle "Grade X" format
+      const gradeMatch = gradeName.match(/Grade\s+(\d+)/i)
+      if (gradeMatch) {
+        return parseInt(gradeMatch[1])
+      }
+      
+      // Handle "Form X" format
+      const formMatch = gradeName.match(/Form\s+(\d+)/i)
+      if (formMatch) {
+        return parseInt(formMatch[1]) + 6 // Form 1 = Grade 7, Form 2 = Grade 8, etc.
+      }
+      
+      // Handle "PPX" format
+      const ppMatch = gradeName.match(/PP(\d+)/i)
+      if (ppMatch) {
+        return parseInt(ppMatch[1]) - 3 // PP1 = -2, PP2 = -1, PP3 = 0
+      }
+      
+      // Handle "Baby Class", "Nursery", "Reception"
+      const specialGrades: { [key: string]: number } = {
+        'Baby Class': -4,
+        'Nursery': -3,
+        'Reception': -2
+      }
+      
+      if (specialGrades[gradeName]) {
+        return specialGrades[gradeName]
+      }
+      
+      // For any other grades, use a high number to put them at the end
+      return 999
+    }
+    
+    const aNumber = getGradeNumber(a.name)
+    const bNumber = getGradeNumber(b.name)
+    
+    return aNumber - bNumber
+  })
 
   // Function to generate email from name
   const generateEmailFromName = () => {
@@ -252,26 +201,27 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
     })
   }
 
-  // Form handling
-  const form = useForm<StudentFormData>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      name: '',
-      admission_number: '',
-      gender: 'male',
-      grade: '',
-      class: '',
-      stream: '',
-      date_of_birth: new Date(Date.now() - (10 * 365 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0], // Default to 10 years ago
-      age: 0,
-      admission_date: new Date().toISOString().split('T')[0],
-      student_email: '',
-      guardian_name: '',
-      guardian_phone: '',
-      guardian_email: '',
-      home_address: '',
-    },
-  })
+  // Function to auto-generate class name when grade or stream changes
+  const autoGenerateClassName = () => {
+    const gradeId = form.getValues('grade')
+    const streamId = form.getValues('stream')
+    
+    if (gradeId) {
+      const gradeInfo = getGradeById(gradeId)
+      if (gradeInfo) {
+        const gradeName = gradeInfo.grade.name
+        let streamName: string | undefined
+        
+        if (streamId) {
+          const stream = availableStreams.find(s => s.id === streamId)
+          streamName = stream?.name
+        }
+        
+        const className = generateClassName(gradeName, streamName)
+        form.setValue('class', className)
+      }
+    }
+  }
 
   // Watch the name field for dynamic email preview
   const watchedName = form.watch('name')
@@ -286,6 +236,11 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
       .replace(/\s+/g, '') // Remove all spaces
     return `${cleanName}@squl.ac.ke`
   }
+
+  // Auto-generate class name when grade or stream changes
+  React.useEffect(() => {
+    autoGenerateClassName()
+  }, [watchedGrade, watchedStream])
 
   // Submit handler
   const onSubmit = async (data: StudentFormData) => {
@@ -504,30 +459,55 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     )}
                   />
 
-                  <FormField
+                                    <FormField
                     control={form.control}
                     name="grade"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-mono text-sm">Grade *</FormLabel>
-                        <Select 
+                                                <Select 
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger className="font-mono">
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
                               <SelectValue placeholder="Select grade" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            {mockGrades.map(grade => (
-                              <SelectItem key={grade.id} value={grade.id}>
-                                {grade.displayName}
-                              </SelectItem>
-                            ))}
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
+                            {allGrades.map(grade => {
+                              const gradeStreams = getStreamsByGradeId(grade.id)
+                              return (
+                                <SelectItem 
+                                  key={grade.id} 
+                                  value={grade.id}
+                                  className="hover:bg-primary/5 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer"
+                                >
+                                  <div className="flex items-center justify-between w-full py-1">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-2 h-2 rounded-full bg-primary/30"></div>
+                                      <span className="font-medium text-slate-700 dark:text-slate-300">{grade.name}</span>
+                                    </div>
+                                    {gradeStreams.length > 0 && (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="ml-2 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
+                                      >
+                                        {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              )
+                            })}
                           </SelectContent>
                         </Select>
                         <FormMessage />
+                        {selectedGradeInfo && availableStreams.length > 0 && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {availableStreams.length} stream{availableStreams.length !== 1 ? 's' : ''} available for {selectedGradeInfo.grade.name}
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -537,11 +517,24 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     name="class"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-sm">Class *</FormLabel>
+                        <FormLabel className="flex items-center gap-1 font-mono text-sm">
+                          <Wand2 className="h-3.5 w-3.5 text-primary" />
+                          Class (Auto-Generated) *
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., Form 1 East" {...field} className="font-mono" />
+                          <Input 
+                            placeholder="Will be generated from grade and stream" 
+                            {...field} 
+                            className="font-mono bg-primary/5 border-primary/20" 
+                            readOnly
+                          />
                         </FormControl>
                         <FormMessage />
+                        {watchedGrade && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Class name is automatically generated from your grade and stream selection
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -552,10 +545,43 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-mono text-sm">Stream (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., East, West, Blue" {...field} className="font-mono" />
-                        </FormControl>
+                        <Select 
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={!watchedGrade || availableStreams.length === 0}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                              <SelectValue placeholder={
+                                !watchedGrade 
+                                  ? "Select a grade first" 
+                                  : availableStreams.length === 0 
+                                    ? "No streams available" 
+                                    : "Select stream"
+                              } />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
+                            {availableStreams.map(stream => (
+                              <SelectItem 
+                                key={stream.id} 
+                                value={stream.id}
+                                className="hover:bg-primary/5 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center gap-3 py-1">
+                                  <div className="w-2 h-2 rounded-full bg-primary/20"></div>
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">{stream.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
+                        {watchedGrade && availableStreams.length === 0 && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            No streams configured for this grade
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />

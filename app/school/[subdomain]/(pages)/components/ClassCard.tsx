@@ -272,8 +272,8 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
             setSelectedGradeForStream(null);
           }}
           onSuccess={() => {
-            // You might want to refresh the data here
-            console.log('dded successfully');
+            // The modal now handles revalidation automatically
+            console.log('Stream created successfully');
           }}
           gradeId={selectedGradeForStream.id}
           gradeName={selectedGradeForStream.name}

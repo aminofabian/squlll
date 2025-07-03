@@ -49,14 +49,19 @@ import {
   GraduationCap as Gradebook,
   Grid2x2PlusIcon,
   BookKeyIcon,
-  BookOpen
+  BookOpen,
+  Loader2
 } from "lucide-react";
 
-// Kenya-specific student type
+// Import hooks and types for real data
+import { useStudents, useStudentsFromStore } from '@/lib/hooks/useStudents';
+import { GraphQLStudent } from '@/types/student';
+
+// Kenya-specific student type (adapted from GraphQL data)
 type Student = {
   id: string;
   name: string;
-  admissionNumber: string; // Kenya-specific
+  admissionNumber: string;
   photo?: string;
   gender: "male" | "female";
   class: string;
@@ -72,12 +77,12 @@ type Student = {
     homeAddress?: string;
   };
   academicDetails?: {
-    averageGrade?: string; // Kenya uses letter grades like A, B+, etc.
+    averageGrade?: string;
     classRank?: number;
     streamRank?: number;
     yearRank?: number;
-    kcpeScore?: number; // Kenya Certificate of Primary Education score
-    kcsePrediction?: string; // Kenya Certificate of Secondary Education prediction
+    kcpeScore?: number;
+    kcsePrediction?: string;
   };
   feeStatus?: {
     currentBalance: number;
@@ -101,7 +106,7 @@ type Student = {
     bloodGroup?: string;
     knownConditions?: string[];
     emergencyContact?: string;
-    nhifNumber?: string; // Kenya's National Hospital Insurance Fund
+    nhifNumber?: string;
   };
   extraCurricular?: {
     clubs?: string[];
@@ -333,274 +338,75 @@ export default function StudentsPage() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
 
-  // Mock data for students (Kenya-specific)
-  const students: Student[] = [
-    {
-      id: "1",
-      name: "Wanjiku Kamau",
-      admissionNumber: "KPS/2023/001",
-      photo: "/students/student-1.jpg",
-      gender: "female",
-      class: "Form 4",
-      stream: "East",
-      grade: "F4",
-      age: 17,
-      admissionDate: "2020-01-15",
-      status: "active",
-      contacts: {
-        primaryGuardian: "James Kamau",
-        guardianPhone: "+254722123456",
-        guardianEmail: "james.kamau@example.com",
-        homeAddress: "456 Moi Avenue, Nairobi"
-      },
-      academicDetails: {
-        averageGrade: "A-",
-        classRank: 3,
-        streamRank: 1,
-        yearRank: 15,
-        kcsePrediction: "A"
-      },
-      feeStatus: {
-        currentBalance: 12500,
-        lastPaymentDate: "2023-05-10",
-        lastPaymentAmount: 15000,
-        paymentHistory: [
-          { date: "2023-05-10", amount: 15000, receiptNumber: "RCT-2023-1234", paymentMethod: "M-Pesa" },
-          { date: "2023-01-15", amount: 25000, receiptNumber: "RCT-2023-0987", paymentMethod: "Bank Transfer" }
-        ]
-      },
-      attendance: {
-        rate: "95%",
-        absentDays: 3,
-        lateDays: 2,
-        trend: "stable"
-      },
-      healthInfo: {
-        bloodGroup: "O+",
-        knownConditions: ["Asthma"],
-        emergencyContact: "+254722987654",
-        nhifNumber: "NHIF12345678"
-      },
-      extraCurricular: {
-        clubs: ["Debate Club", "Science Club"],
-        sports: ["Volleyball", "Athletics"],
-        achievements: ["County Debate Champion 2022"],
-        leadership: ["Class Prefect"]
-      }
-    },
-    {
-      id: "2",
-      name: "Emmanuel Ochieng",
-      admissionNumber: "KPS/2022/042",
-      photo: "/students/student-2.jpg",
-      gender: "male",
-      class: "Form 3",
-      stream: "West",
-      grade: "F3",
-      age: 16,
-      admissionDate: "2021-01-12",
-      status: "active",
-      contacts: {
-        primaryGuardian: "Sarah Ochieng",
-        guardianPhone: "+254733456789",
-        homeAddress: "123 Kenyatta Road, Kisumu"
-      },
-      academicDetails: {
+  // Fetch real data from the store
+  const { students: graphqlStudents, isLoading, error } = useStudentsFromStore();
+  const { refetch } = useStudents();
+
+  // Transform GraphQL data to match our Student type
+  const students: Student[] = useMemo(() => {
+    return graphqlStudents.map((graphqlStudent: GraphQLStudent) => {
+      // Calculate age from admission date (assuming we have this data)
+      const admissionDate = new Date(); // Default to current date if not available
+      const age = 16; // Default age, should be calculated from date of birth
+      
+      // Generate mock data for fields not available in GraphQL
+      const mockAcademicDetails = {
         averageGrade: "B+",
-        classRank: 5,
-        streamRank: 2,
-        kcpeScore: 398
-      },
-      feeStatus: {
-        currentBalance: 0,
-        lastPaymentDate: "2023-04-20",
-        lastPaymentAmount: 32500,
-        scholarshipPercentage: 25
-      },
-      attendance: {
-        rate: "98%",
-        absentDays: 1,
-        lateDays: 0,
-        trend: "improving"
-      },
-      healthInfo: {
-        bloodGroup: "AB-",
-        nhifNumber: "NHIF98765432"
-      },
-      extraCurricular: {
-        clubs: ["Chess Club"],
-        sports: ["Football", "Rugby"],
-        achievements: ["School Football Captain"],
-        leadership: ["Sports Captain"]
-      }
-    },
-    {
-      id: "3",
-      name: "Aisha Mohamed",
-      admissionNumber: "KPS/2022/018",
-      gender: "female",
-      class: "Form 2",
-      stream: "North",
-      grade: "F2",
-      age: 15,
-      admissionDate: "2022-01-10",
-      status: "active",
-      contacts: {
-        primaryGuardian: "Hassan Mohamed",
-        guardianPhone: "+254711789012",
-        guardianEmail: "hassan.mohamed@example.com"
-      },
-      academicDetails: {
-        averageGrade: "A",
-        classRank: 1,
-        streamRank: 1,
-        yearRank: 3,
-        kcpeScore: 412
-      },
-      feeStatus: {
-        currentBalance: 5000,
-        lastPaymentDate: "2023-05-05",
-        lastPaymentAmount: 20000
-      },
-      attendance: {
-        rate: "100%",
-        absentDays: 0,
-        lateDays: 0,
-        trend: "stable"
-      },
-      extraCurricular: {
-        clubs: ["Mathematics Club", "Islamic Students Association"],
-        sports: ["Basketball"],
-        achievements: ["Mathematics Olympiad Winner"],
-        leadership: ["Academic Prefect"]
-      }
-    },
-    {
-      id: "4",
-      name: "Daniel Mwangi",
-      admissionNumber: "KPS/2021/076",
-      gender: "male",
-      class: "Form 4",
-      stream: "East",
-      grade: "12",
-      age: 18,
-      admissionDate: "2020-01-20",
-      status: "suspended",
-      contacts: {
-        primaryGuardian: "Catherine Mwangi",
-        guardianPhone: "+254700123456"
-      },
-      academicDetails: {
-        averageGrade: "C+",
-        classRank: 24,
-        streamRank: 12,
-        kcsePrediction: "C+"
-      },
-      feeStatus: {
-        currentBalance: 18700,
-        lastPaymentDate: "2023-02-15",
-        lastPaymentAmount: 10000
-      },
-      attendance: {
-        rate: "76%",
-        absentDays: 12,
-        lateDays: 8,
-        trend: "declining"
-      },
-      extraCurricular: {
-        clubs: ["Drama Club"],
-        sports: ["Football"],
-        achievements: [],
-        leadership: []
-      }
-    },
-    {
-      id: "5",
-      name: "Faith Njeri",
-      admissionNumber: "KPS/2020/034",
-      photo: "/students/student-5.jpg",
-      gender: "female",
-      class: "Form 4",
-      stream: "South",
-      grade: "12",
-      age: 17,
-      admissionDate: "2020-01-15",
-      status: "active",
-      contacts: {
-        primaryGuardian: "Peter Njeri",
-        guardianPhone: "+254722987123",
-        guardianEmail: "peter.njeri@example.com",
-        homeAddress: "789 Tom Mboya Street, Nakuru"
-      },
-      academicDetails: {
-        averageGrade: "B",
-        classRank: 8,
-        streamRank: 3,
-        kcsePrediction: "B+"
-      },
-      feeStatus: {
-        currentBalance: 0,
-        lastPaymentDate: "2023-05-20",
-        lastPaymentAmount: 35000,
-        scholarshipPercentage: 15
-      },
-      attendance: {
-        rate: "94%",
-        absentDays: 4,
-        lateDays: 1,
-        trend: "stable"
-      },
-      healthInfo: {
-        bloodGroup: "A+",
-        nhifNumber: "NHIF45678901"
-      },
-      extraCurricular: {
-        clubs: ["Red Cross", "Environmental Club"],
-        sports: ["Netball"],
-        achievements: ["County Environmental Champion 2022"],
-        leadership: ["Environmental Club Chairperson"]
-      }
-    },
-    {
-      id: "6",
-      name: "John Kipchoge",
-      admissionNumber: "KPS/2021/102",
-      gender: "male",
-      class: "Form 3",
-      stream: "North",
-      grade: "11",
-      age: 16,
-      admissionDate: "2021-01-15",
-      status: "transferred",
-      contacts: {
-        primaryGuardian: "Elizabeth Kipchoge",
-        guardianPhone: "+254733567890"
-      },
-      academicDetails: {
-        averageGrade: "B-",
-        classRank: 12,
-        streamRank: 5,
-        kcpeScore: 365
-      },
-      feeStatus: {
-        currentBalance: 0,
-        lastPaymentDate: "2023-04-10",
-        lastPaymentAmount: 15000
-      },
-      attendance: {
-        rate: "92%",
-        absentDays: 5,
-        lateDays: 3,
-        trend: "stable"
-      },
-      extraCurricular: {
-        clubs: [],
-        sports: ["Athletics", "Cross Country"],
-        achievements: ["County 5000m Champion 2022"],
-        leadership: []
-      }
-    }
-  ];
+        classRank: Math.floor(Math.random() * 30) + 1,
+        streamRank: Math.floor(Math.random() * 15) + 1,
+        yearRank: Math.floor(Math.random() * 120) + 1,
+        kcpeScore: Math.floor(Math.random() * 100) + 300,
+        kcsePrediction: ["A", "A-", "B+", "B", "B-"][Math.floor(Math.random() * 5)]
+      };
+
+      const mockFeeStatus = {
+        currentBalance: Math.floor(Math.random() * 20000),
+        lastPaymentDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        lastPaymentAmount: Math.floor(Math.random() * 35000) + 10000,
+        scholarshipPercentage: Math.random() > 0.7 ? Math.floor(Math.random() * 30) + 10 : undefined
+      };
+
+      const mockAttendance = {
+        rate: `${Math.floor(Math.random() * 20) + 80}%`,
+        absentDays: Math.floor(Math.random() * 10),
+        lateDays: Math.floor(Math.random() * 5),
+        trend: ["improving", "declining", "stable"][Math.floor(Math.random() * 3)] as "improving" | "declining" | "stable"
+      };
+
+      return {
+        id: graphqlStudent.id,
+        name: graphqlStudent.user.name,
+        admissionNumber: graphqlStudent.admission_number,
+        photo: undefined, // No photo in GraphQL data
+        gender: graphqlStudent.gender as "male" | "female",
+        class: `Form ${graphqlStudent.grade}`,
+        stream: ["East", "West", "North", "South"][Math.floor(Math.random() * 4)],
+        grade: graphqlStudent.grade,
+        age,
+        admissionDate: admissionDate.toISOString().split('T')[0],
+        status: "active" as const, // Default to active, should come from GraphQL
+        contacts: {
+          primaryGuardian: `Guardian of ${graphqlStudent.user.name.split(' ')[0]}`,
+          guardianPhone: graphqlStudent.phone,
+          guardianEmail: graphqlStudent.user.email,
+          homeAddress: "Nairobi, Kenya"
+        },
+        academicDetails: mockAcademicDetails,
+        feeStatus: mockFeeStatus,
+        attendance: mockAttendance,
+        healthInfo: {
+          bloodGroup: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"][Math.floor(Math.random() * 8)],
+          nhifNumber: `NHIF${Math.random().toString(36).substr(2, 8).toUpperCase()}`
+        },
+        extraCurricular: {
+          clubs: [["Debate Club", "Science Club", "Mathematics Club"][Math.floor(Math.random() * 3)]],
+          sports: [["Football", "Basketball", "Athletics"][Math.floor(Math.random() * 3)]],
+          achievements: [],
+          leadership: Math.random() > 0.7 ? ["Class Prefect"] : []
+        }
+      };
+    });
+  }, [graphqlStudents]);
 
   // Filter and sort students based on selected criteria
   const filteredAndSortedStudents = useMemo(() => {
