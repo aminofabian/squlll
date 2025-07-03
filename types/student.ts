@@ -17,6 +17,21 @@ export interface Student {
   photo?: string;
 }
 
+// GraphQL API Student type
+export interface GraphQLStudent {
+  id: string;
+  admission_number: string;
+  phone: string;
+  tenantId: string;
+  user: {
+    email: string;
+  };
+}
+
+export interface StudentsResponse {
+  students: GraphQLStudent[];
+}
+
 export interface Grade {
   id: string;
   name: string;
