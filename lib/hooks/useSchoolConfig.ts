@@ -53,13 +53,14 @@ const GET_SCHOOL_CONFIG = gql`
   }
 `;
 
-export function useSchoolConfig() {
+export function useSchoolConfig(enabled: boolean = true) {
   const { setConfig, setLoading, setError } = useSchoolConfigStore();
   const router = useRouter();
 
   const query = useQuery({
     queryKey: ['schoolConfig'],
     queryFn: async () => {
+      console.log('useSchoolConfig - Starting GraphQL request...')
       try {
         setLoading(true);
         
@@ -125,8 +126,17 @@ export function useSchoolConfig() {
         
         // Redirect to login if authentication is required
         if (shouldRedirectToLogin && typeof window !== 'undefined') {
-          // Use window.location for full page redirect to login
-          window.location.href = '/login';
+          // Check if this is a new registration (has URL parameters)
+          const urlParams = new URLSearchParams(window.location.search)
+          const isNewRegistration = urlParams.get('newRegistration') === 'true' || urlParams.get('accessToken')
+          
+          if (!isNewRegistration) {
+            // Only redirect to login if this is not a new registration
+            // Use window.location for full page redirect to login
+            window.location.href = '/login';
+          } else {
+            console.log('New registration detected - not redirecting to login, waiting for authentication to complete')
+          }
         }
         
         throw error;
@@ -158,8 +168,8 @@ export function useSchoolConfig() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Consider the query successful even if it fails with auth errors (so we can redirect)
     throwOnError: false,
-    // Only run the query on the client side
-    enabled: typeof window !== 'undefined',
+    // Only run the query on the client side and when enabled
+    enabled: typeof window !== 'undefined' && enabled,
   });
 
   return query;

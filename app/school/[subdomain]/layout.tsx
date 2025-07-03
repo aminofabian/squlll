@@ -34,6 +34,7 @@ function SubdomainLayoutContent({
     const tenantName = searchParams.get('tenantName')
     const tenantSubdomain = searchParams.get('tenantSubdomain')
     const accessToken = searchParams.get('accessToken')
+    const refreshToken = searchParams.get('refreshToken')
     const isNewRegistration = searchParams.get('newRegistration') === 'true'
 
     console.log('Subdomain Layout - URL parameters detected:', {
@@ -45,6 +46,7 @@ function SubdomainLayoutContent({
       tenantName,
       tenantSubdomain,
       hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
       isNewRegistration,
       currentURL: window.location.href
     })
@@ -105,6 +107,7 @@ function SubdomainLayoutContent({
             },
             body: JSON.stringify({
               accessToken,
+              refreshToken,
               userId,
               email,
               schoolUrl,
@@ -127,21 +130,25 @@ function SubdomainLayoutContent({
           console.log('Cookies after setting:', document.cookie);
         }, 1000)
         
-        // Remove parameters from URL to prevent sharing sensitive data
-        const newUrl = new URL(window.location.href)
-        newUrl.searchParams.delete('userId')
-        newUrl.searchParams.delete('email')
-        newUrl.searchParams.delete('schoolUrl')
-        newUrl.searchParams.delete('subdomainUrl')
-        newUrl.searchParams.delete('tenantId')
-        newUrl.searchParams.delete('tenantName')
-        newUrl.searchParams.delete('tenantSubdomain')
-        newUrl.searchParams.delete('accessToken')
-        newUrl.searchParams.delete('newRegistration')
-        
-        // Replace URL without reloading the page
-        window.history.replaceState({}, '', newUrl.toString())
-        console.log('Subdomain Layout - URL parameters cleaned')
+        // Wait a bit before cleaning URL parameters to ensure cookies are set
+        setTimeout(() => {
+          // Remove parameters from URL to prevent sharing sensitive data
+          const newUrl = new URL(window.location.href)
+          newUrl.searchParams.delete('userId')
+          newUrl.searchParams.delete('email')
+          newUrl.searchParams.delete('schoolUrl')
+          newUrl.searchParams.delete('subdomainUrl')
+          newUrl.searchParams.delete('tenantId')
+          newUrl.searchParams.delete('tenantName')
+          newUrl.searchParams.delete('tenantSubdomain')
+          newUrl.searchParams.delete('accessToken')
+          newUrl.searchParams.delete('refreshToken')
+          newUrl.searchParams.delete('newRegistration')
+          
+          // Replace URL without reloading the page
+          window.history.replaceState({}, '', newUrl.toString())
+          console.log('Subdomain Layout - URL parameters cleaned')
+        }, 1500) // Wait 1.5 seconds before cleaning URL
         
       } catch (error) {
         console.error('Subdomain Layout - Error storing authentication data in cookies:', error)

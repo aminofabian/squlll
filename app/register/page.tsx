@@ -296,6 +296,7 @@ export default function SignupPage() {
           tenantName: userData.tenant.name,
           tenantSubdomain: userData.tenant.subdomain,
           accessToken: userData.tokens.accessToken,
+          refreshToken: userData.tokens.refreshToken,
           newRegistration: 'true'  // Flag to indicate this is a new registration
         }).toString()
         

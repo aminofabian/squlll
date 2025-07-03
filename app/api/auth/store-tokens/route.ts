@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { accessToken, userId, email, schoolUrl, subdomainUrl, tenantId, tenantName, tenantSubdomain } = body
+    const { accessToken, refreshToken, userId, email, schoolUrl, subdomainUrl, tenantId, tenantName, tenantSubdomain } = body
 
     if (!accessToken || !userId || !email) {
       return NextResponse.json(
@@ -24,6 +24,16 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7 // 7 days
     })
+    
+    // Set refresh token as HTTP-only for security
+    if (refreshToken) {
+      cookieStore.set('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30 // 30 days
+      })
+    }
     
     // Set user data as non-HTTP-only (accessible to client-side)
     cookieStore.set('userId', userId, {
