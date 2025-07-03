@@ -60,7 +60,7 @@ interface DrawerState {
 const mainNavigationItems: NavigationItem[] = [
   {
     title: "Home",
-    href: "/school/[subdomain]",
+    href: "/",
     icon: Home,
   },
   {

@@ -57,17 +57,36 @@ interface AcceptInvitationResponse {
 }
 
 function TeacherSignupContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const params = useParams()
+  const subdomain = params.subdomain as string
+  const teacherSignup = params['teacher-signup'] as string
+
+  // Validate the route synchronously
+  const tokenParam = searchParams.get('token')
+  const isValidTokenFormat = /^[A-Za-z0-9+/]+=*$/.test(teacherSignup) && teacherSignup.length > 20
+  const hasValidToken = tokenParam || isValidTokenFormat
+  
+  // Redirect immediately if invalid
+  useEffect(() => {
+    if (!hasValidToken) {
+      router.replace(`/school/${subdomain}/not-found`)
+    }
+  }, [hasValidToken, router, subdomain])
+
+  // Don't render anything if not a valid route
+  if (!hasValidToken) {
+    return <div className="min-h-screen bg-gray-50"></div> // Show blank page while redirecting
+  }
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<AcceptInvitationResponse | null>(null)
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const params = useParams()
-  const subdomain = params.subdomain as string
+  const [token, setToken] = useState<string | null>(tokenParam || teacherSignup)
 
   const form = useForm<TeacherSignupFormValues>({
     resolver: zodResolver(teacherSignupSchema),
@@ -76,16 +95,6 @@ function TeacherSignupContent() {
       confirmPassword: "",
     },
   })
-
-  // Extract token from URL on component mount
-  useEffect(() => {
-    const tokenParam = searchParams.get('token')
-    if (tokenParam) {
-      setToken(tokenParam)
-    } else {
-      setError("Invalid invitation link. Please check your email for the correct signup link.")
-    }
-  }, [searchParams])
 
   const getPasswordStrength = (password: string) => {
     let strength = 0
