@@ -56,7 +56,9 @@ export async function POST(request: Request) {
 
     console.log('🔍 Debug - Request details:');
     console.log('  - Endpoint:', GRAPHQL_ENDPOINT);
-    console.log('  - Level names:', levelNames);
+    console.log('  - Level names received:', levelNames);
+    console.log('  - Level names count:', levelNames?.length || 0);
+    console.log('  - Level names array:', JSON.stringify(levelNames, null, 2));
     console.log('  - Auth header:', `Bearer ${token.substring(0, 30)}...`);
     console.log('  - Request body:', JSON.stringify(requestBody, null, 2));
     

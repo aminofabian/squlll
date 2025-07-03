@@ -202,6 +202,11 @@ export default function SignupPage() {
             email
             schoolUrl
           }
+          tenant {
+            id
+            name
+            subdomain
+          }
           subdomainUrl
           tokens {
             accessToken
@@ -287,6 +292,9 @@ export default function SignupPage() {
           email: userData.user.email,
           schoolUrl: userData.user.schoolUrl || '',
           subdomainUrl: userData.subdomainUrl,
+          tenantId: userData.tenant.id,
+          tenantName: userData.tenant.name,
+          tenantSubdomain: userData.tenant.subdomain,
           accessToken: userData.tokens.accessToken,
           newRegistration: 'true'  // Flag to indicate this is a new registration
         }).toString()

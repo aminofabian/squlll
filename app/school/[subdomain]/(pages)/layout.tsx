@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { SchoolSidebar } from '@/components/dashboard/SchoolSidebar'
 import { Button } from '@/components/ui/button'
 import { 
@@ -28,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Toaster } from "sonner"
+import { debugAuth } from '@/lib/utils'
 
 // Loading component for Suspense fallback
 function LayoutLoading() {
@@ -69,8 +71,9 @@ function SchoolLayoutContent({
   const [userRole, setUserRole] = useState('Administrator')
   const [userName, setUserName] = useState('John Doe')
 
-  const searchParams = useSearchParams()
-  const router = useRouter()
+  // Check if school is configured
+  const { data: config, isLoading: isConfigLoading } = useSchoolConfig()
+  const isConfigured = config && config.selectedLevels && config.selectedLevels.length > 0
 
   const getCurrentKenyanTerm = () => {
     const now = new Date()
@@ -100,41 +103,8 @@ function SchoolLayoutContent({
   const [currentTerm, setCurrentTerm] = useState(getCurrentKenyanTerm())
 
   useEffect(() => {
-    // Check for URL parameters from registration
-    const userId = searchParams.get('userId')
-    const email = searchParams.get('email')
-    const schoolUrl = searchParams.get('schoolUrl')
-    const subdomainUrl = searchParams.get('subdomainUrl')
-    const accessToken = searchParams.get('accessToken')
-    const isNewRegistration = searchParams.get('newRegistration') === 'true'
-
-    // If this is a new registration, store the data in cookies
-    if (isNewRegistration && userId && email) {
-      console.log('New registration detected, storing user data in cookies')
-      
-      // Store user data in cookies (30 day expiry)
-      document.cookie = `userId=${userId}; max-age=${60 * 60 * 24 * 30}; path=/`
-      document.cookie = `email=${email}; max-age=${60 * 60 * 24 * 30}; path=/`
-      
-      if (schoolUrl) {
-        document.cookie = `schoolUrl=${schoolUrl}; max-age=${60 * 60 * 24 * 30}; path=/`
-      }
-      
-      if (subdomainUrl) {
-        document.cookie = `subdomainUrl=${subdomainUrl}; max-age=${60 * 60 * 24 * 30}; path=/`
-      }
-      
-      if (accessToken) {
-        document.cookie = `accessToken=${accessToken}; max-age=${60 * 60 * 24 * 30}; path=/`
-        console.log('Access token stored in cookies:', accessToken.substring(0, 20) + '...')
-      }
-      
-      // Remove parameters from URL to prevent sharing sensitive data
-      router.replace(`/`)
-    }
-
     // Fetch school-specific data based on the subdomain
-    console.log('School subdomain:', subdomain)
+    console.log('Pages Layout - School subdomain:', subdomain)
     
     // Simulate fetching school name from API
     if (subdomain) {
@@ -149,7 +119,7 @@ function SchoolLayoutContent({
     }, 86400000) // 24 hours
 
     return () => clearInterval(timer)
-  }, [subdomain, searchParams, router])
+  }, [subdomain])
 
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -194,6 +164,17 @@ function SchoolLayoutContent({
     }
   ]
 
+  // If not configured, show full-width layout without sidebar
+  if (!isConfigured && !isConfigLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Toaster position="top-right" closeButton richColors />
+        {children}
+      </div>
+    )
+  }
+
+  // If configured, show layout with sidebar
   return (
     <div className="flex h-screen bg-gray-50">
       <Toaster position="top-right" closeButton richColors />

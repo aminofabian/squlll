@@ -1,9 +1,9 @@
 'use client'
 
-import { useSchoolConfig } from '../../../../lib/hooks/useSchoolConfig'
-import { SchoolTypeSetup } from '../../components/schooltype'
-import { SchoolHomepage } from './components/SchoolHomepage'
-import { ClassHeader } from './components/ClassCard'
+import { useSchoolConfig } from '../../../lib/hooks/useSchoolConfig'
+import { SchoolTypeSetup } from '../components/schooltype'
+import { SchoolHomepage } from './(pages)/components/SchoolHomepage'
+import { ClassHeader } from './(pages)/components/ClassCard'
 
 export default function SchoolHome() {
   const { data: config, isLoading, error } = useSchoolConfig()
@@ -67,4 +67,4 @@ export default function SchoolHome() {
 
   // If configured, show the homepage
   return <SchoolHomepage />
-} 
+}

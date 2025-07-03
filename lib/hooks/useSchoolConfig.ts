@@ -79,13 +79,47 @@ export function useSchoolConfig() {
         setConfig(config);
         return config;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch school configuration';
+        console.error('School config error:', error);
+        
+        // Handle different types of errors
+        let errorMessage = 'Failed to fetch school configuration';
+        
+        if (error && typeof error === 'object' && 'response' in error) {
+          const graphQLError = error as any;
+          
+          // Check for 401 (unauthorized) errors
+          if (graphQLError.response?.status === 401) {
+            errorMessage = 'Authentication required. Please log in.';
+            console.log('401 error detected - user needs to authenticate or configure school');
+          } else if (graphQLError.response?.errors) {
+            // Handle other GraphQL errors
+            errorMessage = graphQLError.response.errors[0]?.message || errorMessage;
+          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        
         setError(errorMessage);
         throw error;
       } finally {
         setLoading(false);
       }
     },
+    // Retry configuration
+    retry: (failureCount, error) => {
+      // Don't retry 401 errors (authentication issues)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const graphQLError = error as any;
+        if (graphQLError.response?.status === 401) {
+          return false;
+        }
+      }
+      // Retry other errors up to 2 times
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Consider the query successful even if it fails with 401 (so we can show setup)
+    throwOnError: false,
   });
 
   return query;

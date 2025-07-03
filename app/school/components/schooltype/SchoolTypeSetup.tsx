@@ -42,7 +42,7 @@ interface ConfigureSchoolLevelsResponse {
   };
 }
 
-// Mapping from frontend level names to backend level names
+// Mapping from frontend level names to backend level names (exact match with GraphQL schema)
 const levelNameMapping: Record<string, Record<string, string>> = {
   madrasa: {
     'Pre-Primary': 'Madrasa Beginners',
@@ -52,22 +52,36 @@ const levelNameMapping: Record<string, Record<string, string>> = {
     'Senior Secondary': 'Madrasa Secondary'
   },
   cbc: {
-    'Pre-Primary': 'pre primary',
-    'Lower Primary': 'lower primary',
-    'Upper Primary': 'upper primary',
-    'Junior Secondary': 'junior secondary',
+    'Pre-Primary': 'Pre-Primary',
+    'Lower Primary': 'Lower Primary',
+    'Upper Primary': 'Upper Primary', 
+    'Junior Secondary': 'Junior Secondary',
     'Senior Secondary': 'Senior Secondary'
   },
   international: {
     'IGCSE Early Years': 'IGCSE Early Years',
     'IGCSE Primary': 'IGCSE Primary',
-    'IGCSE Secondary': 'IGCSE Secondary',
-    'A-Level': 'A-Level'
+    'IGCSE Lower Secondary': 'IGCSE Lower Secondary',
+    'IGCSE Upper Secondary': 'IGCSE Upper Secondary',
+    'A-Level': 'A Level'  // Fixed: removed hyphen
   },
   homeschool: {
-    'Elementary': 'Homeschool Elementary',
-    'Middle School': 'Homeschool Middle School',
-    'High School': 'Homeschool High School'
+    'Early Years': 'Homeschool Early Years',
+    'Lower Primary': 'Homeschool Lower Primary',
+    'Upper Primary': 'Homeschool Upper Primary',
+    'Junior Secondary': 'Homeschool Junior Secondary',
+    'Senior Secondary': 'Homeschool Senior Secondary'
+  }
+}
+
+// Fallback mappings to try if the main mapping fails
+const fallbackLevelMapping: Record<string, Record<string, string[]>> = {
+  cbc: {
+    'Pre-Primary': ['pre primary', 'preschool', 'pre-primary', 'Pre Primary'],
+    'Lower Primary': ['lower primary', 'Lower Primary', 'primary lower'],
+    'Upper Primary': ['upper primary', 'Upper Primary', 'primary upper'],
+    'Junior Secondary': ['junior secondary', 'Junior Secondary', 'secondary junior'],
+    'Senior Secondary': ['senior secondary', 'Senior Secondary', 'secondary senior']
   }
 }
 
@@ -183,12 +197,18 @@ export const SchoolTypeSetup = () => {
           ]
         },
         {
-          level: 'IGCSE Secondary',
-          description: 'British curriculum secondary',
+          level: 'IGCSE Lower Secondary',
+          description: 'British curriculum lower secondary',
           classes: [
             { name: 'Year 7', age: '11' },
             { name: 'Year 8', age: '12' },
-            { name: 'Year 9', age: '13' },
+            { name: 'Year 9', age: '13' }
+          ]
+        },
+        {
+          level: 'IGCSE Upper Secondary',
+          description: 'British curriculum upper secondary',
+          classes: [
             { name: 'Year 10', age: '14' },
             { name: 'Year 11', age: '15' }
           ]
@@ -267,23 +287,39 @@ export const SchoolTypeSetup = () => {
       menu: ['Home', 'Curriculum', 'Lessons', 'Assessment', 'Reports'],
       levels: [
         {
-          level: 'Elementary',
+          level: 'Early Years',
+          description: 'Early childhood homeschool education',
           classes: [
-            { name: 'Grade 1' }, { name: 'Grade 2' }, { name: 'Grade 3' },
-            { name: 'Grade 4' }, { name: 'Grade 5' }
+            { name: 'Nursery', age: '3' },
+            { name: 'Pre-K', age: '4' }
           ]
         },
         {
-          level: 'Middle School',
+          level: 'Lower Primary',
+          description: 'Foundation homeschool education',
           classes: [
-            { name: 'Grade 6' }, { name: 'Grade 7' }, { name: 'Grade 8' }
+            { name: 'Grade 1', age: '6' }, { name: 'Grade 2', age: '7' }, { name: 'Grade 3', age: '8' }
           ]
         },
         {
-          level: 'High School',
+          level: 'Upper Primary',
+          description: 'Intermediate homeschool education',
           classes: [
-            { name: 'Grade 9' }, { name: 'Grade 10' },
-            { name: 'Grade 11' }, { name: 'Grade 12' }
+            { name: 'Grade 4', age: '9' }, { name: 'Grade 5', age: '10' }, { name: 'Grade 6', age: '11' }
+          ]
+        },
+        {
+          level: 'Junior Secondary',
+          description: 'Middle school homeschool education',
+          classes: [
+            { name: 'Grade 7', age: '12' }, { name: 'Grade 8', age: '13' }, { name: 'Grade 9', age: '14' }
+          ]
+        },
+        {
+          level: 'Senior Secondary',
+          description: 'High school homeschool education',
+          classes: [
+            { name: 'Grade 10', age: '15' }, { name: 'Grade 11', age: '16' }, { name: 'Grade 12', age: '17' }
           ]
         }
       ]
@@ -339,76 +375,130 @@ export const SchoolTypeSetup = () => {
     const selectedLevelsList = Array.from(selectedLevels[selectedType]);
     
     try {
-      // Map frontend level names to backend level names
-      const mappedLevelNames = selectedLevelsList
-        .map(levelName => levelNameMapping[selectedType]?.[levelName] || levelName)
-        .filter(Boolean);
-
-      console.log('Configuring school levels:', { 
-        selectedType, 
-        frontendLevels: selectedLevelsList,
-        mappedLevels: mappedLevelNames 
-      });
-
-      // Call the API endpoint
-      const response = await fetch('/api/school/configure-levels', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ levelNames: mappedLevelNames }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
+      // Smart level mapping with fallback support
+      const attemptConfiguration = async (levelNames: string[], attemptNumber: number = 1): Promise<any> => {
+        console.log(`🔄 Configuration attempt #${attemptNumber} with levels:`, levelNames);
         
-        // Handle specific case where school is already configured
-        if (errorData.error === 'SCHOOL_ALREADY_CONFIGURED') {
-          toast.error(
-            <div className="space-y-3 p-2">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                  <School className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
-                    School Already Configured
-                  </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    Your school has already been set up. You can continue to your dashboard.
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    toast.dismiss();
-                    router.push('/dashboard');
-                  }}
-                  className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>,
-            { 
-              duration: 10000,
-              style: {
-                maxWidth: '420px',
-                background: 'white',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              }
-            }
-          );
-          return;
+        const response = await fetch('/api/school/configure-levels', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ levelNames }),
+        });
+
+        const responseData = await response.json();
+        
+        if (!response.ok && responseData.error && !responseData.error.includes('SCHOOL_ALREADY_CONFIGURED')) {
+          throw new Error(`Attempt ${attemptNumber} failed: ${responseData.error}`);
         }
         
-        throw new Error(errorData.error || 'Failed to configure school levels');
+        return { response, responseData };
+      };
+
+      // Primary mapping - try official KICD terms first
+      let mappedLevelNames = selectedLevelsList
+        .map(levelName => {
+          const mappedName = levelNameMapping[selectedType]?.[levelName] || levelName;
+          console.log(`📍 Level mapping: "${levelName}" → "${mappedName}"`);
+          return mappedName;
+        })
+        .filter(Boolean);
+
+      console.log('🔄 Primary attempt - Configuring school levels:', { 
+        selectedType, 
+        frontendLevels: selectedLevelsList,
+        mappedLevels: mappedLevelNames,
+        availableMapping: levelNameMapping[selectedType]
+      });
+
+      let configResult;
+      let successful = false;
+      
+      try {
+        // Try primary mapping first
+        configResult = await attemptConfiguration(mappedLevelNames, 1);
+        successful = true;
+        console.log('✅ Primary mapping succeeded!');
+      } catch (primaryError) {
+        console.warn('⚠️ Primary mapping failed:', primaryError);
+        
+        // Try fallback mappings for CBC system
+        if (selectedType === 'cbc' && fallbackLevelMapping.cbc) {
+          for (let attempt = 0; attempt < 4; attempt++) {
+            try {
+              const fallbackNames = selectedLevelsList.map(levelName => {
+                const fallbacks = fallbackLevelMapping.cbc[levelName];
+                return fallbacks?.[attempt] || levelName;
+              });
+              
+              console.log(`🔄 Trying fallback attempt ${attempt + 1}:`, fallbackNames);
+              configResult = await attemptConfiguration(fallbackNames, attempt + 2);
+              successful = true;
+              console.log(`✅ Fallback attempt ${attempt + 1} succeeded!`);
+              break;
+            } catch (fallbackError) {
+              console.warn(`⚠️ Fallback attempt ${attempt + 1} failed:`, fallbackError);
+              if (attempt === 3) {
+                throw new Error(`All configuration attempts failed. Last error: ${fallbackError}`);
+              }
+            }
+          }
+        } else {
+          throw primaryError;
+        }
+      }
+      
+      if (!successful) {
+        throw new Error('Failed to configure school levels with any mapping approach');
       }
 
-      const result: ConfigureSchoolLevelsResponse = await response.json();
+      const { response: finalResponse, responseData: finalResponseData } = configResult;
+
+      // Handle specific case where school is already configured
+      if (finalResponseData.error === 'SCHOOL_ALREADY_CONFIGURED') {
+        toast.error(
+          <div className="space-y-3 p-2">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <School className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  School Already Configured
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Your school has already been set up. You can continue to your dashboard.
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  toast.dismiss();
+                  router.push('/dashboard');
+                }}
+                className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>,
+          { 
+            duration: 10000,
+            style: {
+              maxWidth: '420px',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            }
+          }
+        );
+        return;
+      }
+
+      const result: ConfigureSchoolLevelsResponse = finalResponseData;
 
       console.log('School configuration response:', result);
 
