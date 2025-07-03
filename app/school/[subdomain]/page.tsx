@@ -105,6 +105,7 @@ export default function SchoolHome() {
 
   // Show loading state while checking auth or loading config
   if (isCheckingAuth || isLoading) {
+    console.log('SchoolHome - Showing loading state:', { isCheckingAuth, isLoading })
     return (
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -233,9 +234,10 @@ export default function SchoolHome() {
     )
   }
 
-  // If configured, show the homepage
-  if (!isCheckingAuth) {
-    return <SchoolHomepage />
+  // If configured and authenticated, show the homepage
+  if (!isCheckingAuth && isAuthenticated && config) {
+    console.log('SchoolHome - Rendering SchoolHomepage with config:', config)
+    return <SchoolHomepage config={config} />
   }
   
   // Fallback loading state
@@ -243,7 +245,7 @@ export default function SchoolHome() {
     <main className="flex min-h-screen flex-col items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       <p className="mt-4 text-sm text-gray-500">
-        Finalizing setup...
+        {isCheckingAuth ? 'Checking authentication...' : 'Loading school configuration...'}
       </p>
     </main>
   )

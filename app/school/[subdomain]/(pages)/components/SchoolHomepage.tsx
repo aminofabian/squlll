@@ -1,6 +1,5 @@
 'use client'
 
-import { useSchoolConfig } from '../../../../../lib/hooks/useSchoolConfig'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card'
 import { Button } from '../../../../../components/ui/button'
 import { Badge } from '../../../../../components/ui/badge'
@@ -39,35 +38,16 @@ import {
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
+import { SchoolConfiguration } from '../../../../../lib/types/school-config'
 
-export function SchoolHomepage() {
-  const { data: config, isLoading, error } = useSchoolConfig()
+interface SchoolHomepageProps {
+  config: SchoolConfiguration
+}
+
+export function SchoolHomepage({ config }: SchoolHomepageProps) {
   const params = useParams()
   const subdomain = params.subdomain as string
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent"></div>
-      </div>
-    )
-  }
-
-  if (error || !config) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="text-center bg-white p-8 border-2 border-gray-300">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Unable to load school configuration
-          </h2>
-          <p className="text-sm text-gray-500 mt-2">
-            Please try refreshing the page
-          </p>
-        </div>
-      </div>
-    )
-  }
 
   const totalLevels = config.selectedLevels.length
   const totalGrades = config.selectedLevels.reduce((acc, level) => acc + level.gradeLevels.length, 0)
