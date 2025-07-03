@@ -16,12 +16,14 @@ export async function POST(request: Request) {
     // Set HTTP-only cookies for security
     const cookieStore = await cookies()
     const isProduction = process.env.NODE_ENV === 'production'
+    const domain = isProduction ? '.squl.co.ke' : undefined
     
     // Set access token as HTTP-only for security
     cookieStore.set('accessToken', accessToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
+      domain,
       maxAge: 60 * 60 * 24 * 7 // 7 days
     })
     
@@ -31,6 +33,7 @@ export async function POST(request: Request) {
         httpOnly: true,
         secure: isProduction,
         sameSite: 'lax',
+        domain,
         maxAge: 60 * 60 * 24 * 30 // 30 days
       })
     }
@@ -40,6 +43,7 @@ export async function POST(request: Request) {
       httpOnly: false,
       secure: isProduction,
       sameSite: 'lax',
+      domain,
       maxAge: 60 * 60 * 24 * 30 // 30 days
     })
     
@@ -47,6 +51,7 @@ export async function POST(request: Request) {
       httpOnly: false,
       secure: isProduction,
       sameSite: 'lax',
+      domain,
       maxAge: 60 * 60 * 24 * 30
     })
     
@@ -55,6 +60,7 @@ export async function POST(request: Request) {
         httpOnly: false,
         secure: isProduction,
         sameSite: 'lax',
+        domain,
         maxAge: 60 * 60 * 24 * 30
       })
     }
@@ -64,6 +70,7 @@ export async function POST(request: Request) {
         httpOnly: false,
         secure: isProduction,
         sameSite: 'lax',
+        domain,
         maxAge: 60 * 60 * 24 * 30
       })
     }
@@ -73,6 +80,7 @@ export async function POST(request: Request) {
         httpOnly: false,
         secure: isProduction,
         sameSite: 'lax',
+        domain,
         maxAge: 60 * 60 * 24 * 30
       })
     }
@@ -82,6 +90,7 @@ export async function POST(request: Request) {
         httpOnly: false,
         secure: isProduction,
         sameSite: 'lax',
+        domain,
         maxAge: 60 * 60 * 24 * 30
       })
     }
@@ -91,6 +100,7 @@ export async function POST(request: Request) {
         httpOnly: false,
         secure: isProduction,
         sameSite: 'lax',
+        domain,
         maxAge: 60 * 60 * 24 * 30
       })
     }

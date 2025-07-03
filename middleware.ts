@@ -6,6 +6,13 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const isProd = process.env.NODE_ENV === 'production'
   
+  console.log('Middleware - Processing request:', {
+    hostname,
+    pathname: url.pathname,
+    search: url.search,
+    isProd
+  })
+  
   // Define your domains
   const currentHost = 
     process.env.NODE_ENV === 'production'
@@ -28,7 +35,13 @@ export function middleware(request: NextRequest) {
   if (isSubdomain) {
     // This is a school subdomain
     // Rewrite to /school/[subdomain]/pathname
-    url.pathname = `/school/${currentHost}${url.pathname}`
+    const newPathname = `/school/${currentHost}${url.pathname}`
+    console.log('Middleware - Rewriting subdomain:', {
+      from: url.pathname,
+      to: newPathname,
+      currentHost
+    })
+    url.pathname = newPathname
     return NextResponse.rewrite(url)
   }
 
