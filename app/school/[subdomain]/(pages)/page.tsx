@@ -66,5 +66,5 @@ export default function SchoolHome() {
   }
 
   // If configured, show the homepage
-  return <SchoolHomepage />
+  return <SchoolHomepage config={config} />
 } 
