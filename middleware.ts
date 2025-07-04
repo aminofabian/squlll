@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check if this is a subdomain
+  // Check if this is a subdomain (excluding www)
   const isSubdomain = hostname.includes(isProd ? '.squl.co.ke' : '.localhost:3000') &&
     !hostname.startsWith('www.') &&
     hostname !== (isProd ? 'squl.co.ke' : 'localhost:3000')
@@ -43,6 +43,18 @@ export function middleware(request: NextRequest) {
     })
     url.pathname = newPathname
     return NextResponse.rewrite(url)
+  }
+
+  // Handle www subdomain - ensure it works the same as root domain
+  const isWWW = hostname.startsWith('www.')
+  if (isWWW) {
+    // For www subdomain, just pass through to the normal routing
+    // This ensures www.example.com/school/abc works the same as example.com/school/abc
+    console.log('Middleware - Processing www subdomain:', {
+      hostname,
+      pathname: url.pathname
+    })
+    return NextResponse.next()
   }
 
   return NextResponse.next()
