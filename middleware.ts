@@ -42,7 +42,18 @@ export function middleware(request: NextRequest) {
       currentHost
     })
     url.pathname = newPathname
-    return NextResponse.rewrite(url)
+    
+    // Create response with cache control headers
+    const response = NextResponse.rewrite(url)
+    
+    // Add cache control headers for subdomain pages
+    if (isProd) {
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+    }
+    
+    return response
   }
 
   // Handle www subdomain - ensure it works the same as root domain

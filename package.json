@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "start:prod": "next start"
+    "start:prod": "next start",
+    "clear-cache": "node scripts/clear-cache.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
