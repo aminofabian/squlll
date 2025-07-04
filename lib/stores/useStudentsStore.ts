@@ -1,6 +1,34 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { GraphQLStudent, StudentsResponse } from '../../types/student';
+import { graphqlClient } from '../graphql-client';
+import { gql } from 'graphql-request';
+
+const GET_STUDENTS = gql`
+  query GetStudents {
+    students {
+      id
+      admission_number
+      user_id
+      feesOwed
+      gender
+      totalFeesPaid
+      createdAt
+      isActive
+      updatedAt
+      streamId
+      phone
+      grade
+      user {
+        email
+      }
+    }
+  }
+`;
+
+interface GetStudentsResponse {
+  students: GraphQLStudent[];
+}
 
 interface StudentsState {
   students: GraphQLStudent[];
@@ -109,17 +137,15 @@ export const useStudentsQuery = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/students');
+      // Use GraphQL client instead of REST API
+      const response = await graphqlClient.request<GetStudentsResponse>(GET_STUDENTS);
+      const data: StudentsResponse = { students: response.students };
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch students');
-      }
-
-      const data: StudentsResponse = await response.json();
+      console.log('Fetched students:', data.students.length);
       setStudents(data.students);
       return data;
     } catch (error) {
+      console.error('Error fetching students:', error);
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setError(errorMessage);
       throw error;

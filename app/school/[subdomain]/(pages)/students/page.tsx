@@ -180,6 +180,51 @@ const formatCurrency = (amount: number) => {
   return `KES ${amount.toLocaleString()}`;
 };
 
+// Helper function to generate stable mock data based on student ID
+const generateStableMockData = (studentId: string) => {
+  // Use a simple hash function to generate consistent values based on student ID
+  const hash = studentId.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  
+  const absHash = Math.abs(hash);
+  
+  return {
+    academicDetails: {
+      averageGrade: ["A", "A-", "B+", "B", "B-"][absHash % 5],
+      classRank: (absHash % 30) + 1,
+      streamRank: (absHash % 15) + 1,
+      yearRank: (absHash % 120) + 1,
+      kcpeScore: (absHash % 100) + 300,
+      kcsePrediction: ["A", "A-", "B+", "B", "B-"][absHash % 5]
+    },
+    feeStatus: {
+      currentBalance: (absHash % 20000),
+      lastPaymentDate: "2024-01-15", // Fixed date to avoid hydration issues
+      lastPaymentAmount: (absHash % 35000) + 10000,
+      scholarshipPercentage: absHash % 10 === 0 ? (absHash % 30) + 10 : undefined
+    },
+    attendance: {
+      rate: `${(absHash % 20) + 80}%`,
+      absentDays: absHash % 10,
+      lateDays: absHash % 5,
+      trend: ["improving", "declining", "stable"][absHash % 3] as "improving" | "declining" | "stable"
+    },
+    healthInfo: {
+      bloodGroup: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"][absHash % 8],
+      nhifNumber: `NHIF${studentId.slice(0, 8).toUpperCase()}`
+    },
+    extraCurricular: {
+      clubs: [["Debate Club", "Science Club", "Mathematics Club"][absHash % 3]],
+      sports: [["Football", "Basketball", "Athletics"][absHash % 3]],
+      achievements: [],
+      leadership: absHash % 10 === 0 ? ["Class Prefect"] : []
+    },
+    stream: ["East", "West", "North", "South"][absHash % 4]
+  };
+};
+
 // Mock data for grades
 const mockGrades: Grade[] = [
   // Preschool grades
@@ -344,66 +389,66 @@ export default function StudentsPage() {
 
   // Transform GraphQL data to match our Student type
   const students: Student[] = useMemo(() => {
-    return graphqlStudents.map((graphqlStudent: GraphQLStudent) => {
+    // Filter out any invalid student data
+    const validStudents = graphqlStudents.filter(student => 
+      student && 
+      student.id && 
+      student.admission_number
+    );
+
+    return validStudents.map((graphqlStudent: GraphQLStudent) => {
+      // Use stable mock data generation based on student ID
+      const mockData = generateStableMockData(graphqlStudent.id);
+      
       // Calculate age from admission date (assuming we have this data)
-      const admissionDate = new Date(); // Default to current date if not available
+      const admissionDate = "2024-01-15"; // Fixed date to avoid hydration issues
       const age = 16; // Default age, should be calculated from date of birth
       
-      // Generate mock data for fields not available in GraphQL
-      const mockAcademicDetails = {
-        averageGrade: "B+",
-        classRank: Math.floor(Math.random() * 30) + 1,
-        streamRank: Math.floor(Math.random() * 15) + 1,
-        yearRank: Math.floor(Math.random() * 120) + 1,
-        kcpeScore: Math.floor(Math.random() * 100) + 300,
-        kcsePrediction: ["A", "A-", "B+", "B", "B-"][Math.floor(Math.random() * 5)]
+      // Use actual name from GraphQL data or fallback to email-based name
+      const generateNameFromEmail = (email: string) => {
+        const username = email.split('@')[0];
+        return username
+          .replace(/[0-9]/g, '') // Remove numbers
+          .replace(/([A-Z])/g, ' $1') // Add spaces before capitals
+          .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+          .trim();
       };
-
-      const mockFeeStatus = {
-        currentBalance: Math.floor(Math.random() * 20000),
-        lastPaymentDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        lastPaymentAmount: Math.floor(Math.random() * 35000) + 10000,
-        scholarshipPercentage: Math.random() > 0.7 ? Math.floor(Math.random() * 30) + 10 : undefined
-      };
-
-      const mockAttendance = {
-        rate: `${Math.floor(Math.random() * 20) + 80}%`,
-        absentDays: Math.floor(Math.random() * 10),
-        lateDays: Math.floor(Math.random() * 5),
-        trend: ["improving", "declining", "stable"][Math.floor(Math.random() * 3)] as "improving" | "declining" | "stable"
-      };
-
+      
+      const studentName = graphqlStudent.user?.name 
+        ? graphqlStudent.user.name
+        : graphqlStudent.user?.email 
+          ? generateNameFromEmail(graphqlStudent.user.email)
+          : `Student ${graphqlStudent.admission_number}`;
+      
+      const guardianName = studentName.split(' ')[0] || 'Guardian';
+      
       return {
         id: graphqlStudent.id,
-        name: graphqlStudent.user.name,
+        name: studentName,
         admissionNumber: graphqlStudent.admission_number,
         photo: undefined, // No photo in GraphQL data
-        gender: graphqlStudent.gender as "male" | "female",
-        class: `Form ${graphqlStudent.grade}`,
-        stream: ["East", "West", "North", "South"][Math.floor(Math.random() * 4)],
-        grade: graphqlStudent.grade,
+        gender: graphqlStudent.gender as "male" | "female" || "male",
+        class: `Form ${graphqlStudent.grade || '1'}`,
+        stream: mockData.stream,
+        grade: graphqlStudent.grade || '1',
         age,
-        admissionDate: admissionDate.toISOString().split('T')[0],
-        status: "active" as const, // Default to active, should come from GraphQL
+        admissionDate,
+        status: graphqlStudent.isActive ? "active" : "inactive" as const,
         contacts: {
-          primaryGuardian: `Guardian of ${graphqlStudent.user.name.split(' ')[0]}`,
-          guardianPhone: graphqlStudent.phone,
-          guardianEmail: graphqlStudent.user.email,
+          primaryGuardian: `Guardian of ${guardianName}`,
+          guardianPhone: graphqlStudent.phone || 'N/A',
+          guardianEmail: graphqlStudent.user?.email || 'guardian@example.com',
           homeAddress: "Nairobi, Kenya"
         },
-        academicDetails: mockAcademicDetails,
-        feeStatus: mockFeeStatus,
-        attendance: mockAttendance,
-        healthInfo: {
-          bloodGroup: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"][Math.floor(Math.random() * 8)],
-          nhifNumber: `NHIF${Math.random().toString(36).substr(2, 8).toUpperCase()}`
+        academicDetails: mockData.academicDetails,
+        feeStatus: {
+          ...mockData.feeStatus,
+          currentBalance: graphqlStudent.feesOwed || 0,
+          lastPaymentAmount: graphqlStudent.totalFeesPaid || 0,
         },
-        extraCurricular: {
-          clubs: [["Debate Club", "Science Club", "Mathematics Club"][Math.floor(Math.random() * 3)]],
-          sports: [["Football", "Basketball", "Athletics"][Math.floor(Math.random() * 3)]],
-          achievements: [],
-          leadership: Math.random() > 0.7 ? ["Class Prefect"] : []
-        }
+        attendance: mockData.attendance,
+        healthInfo: mockData.healthInfo,
+        extraCurricular: mockData.extraCurricular
       };
     });
   }, [graphqlStudents]);
@@ -582,12 +627,73 @@ export default function StudentsPage() {
     }
   }, [students, selectedStudentId]);
 
+  // Add a mounted state to prevent hydration issues
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
 
   // Find the selected student details
   const selectedStudent = useMemo(() => {
     if (!selectedStudentId) return null;
     return students.find(student => student.id === selectedStudentId);
   }, [selectedStudentId, students]);
+
+  // Don't render until mounted to prevent hydration issues
+  if (!isMounted) {
+    return (
+      <div className="flex h-full">
+        <div className="hidden md:flex flex-col w-96 border-r overflow-y-auto p-6 shrink-0 bg-white">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-1">Search Students</h2>
+            <p className="text-sm text-muted-foreground">Find students by name</p>
+          </div>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Student Name</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name..."
+                  className="pl-9 h-12 text-base"
+                  disabled
+                />
+              </div>
+            </div>
+          </div>
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium">Students <span className="text-muted-foreground">(0)</span></h3>
+            </div>
+            <div className="space-y-2">
+              <div className="text-center py-8 text-muted-foreground">
+                Loading students...
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto p-8">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">Loading...</h1>
+            </div>
+          </div>
+          <div className="bg-muted/30 rounded-lg p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <Loader2 className="h-12 w-12 text-muted-foreground animate-spin" />
+            </div>
+            <h2 className="text-2xl font-medium mb-2">Loading student information</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Please wait while we load the student data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full">
@@ -1195,11 +1301,7 @@ function StudentCard({
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-indigo-600" />
               <span className="text-sm">
-                {new Date(student.admissionDate).toLocaleDateString("en-KE", { 
-                  day: "numeric", 
-                  month: "short", 
-                  year: "numeric" 
-                })}
+                {student.admissionDate}
               </span>
             </div>
           </div>
@@ -1284,10 +1386,7 @@ function StudentCard({
                 <span className="text-muted-foreground">Last payment:</span>
                 <span className="ml-1">
                   {formatCurrency(student.feeStatus.lastPaymentAmount)} on {' '}
-                  {new Date(student.feeStatus.lastPaymentDate).toLocaleDateString("en-KE", { 
-                    day: "numeric", 
-                    month: "short" 
-                  })}
+                  {student.feeStatus.lastPaymentDate}
                 </span>
               </div>
             )}

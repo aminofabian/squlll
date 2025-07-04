@@ -91,9 +91,9 @@ export const StudentsList: React.FC = () => {
                 <div className="space-y-2 text-sm">
                   <div><strong>ID:</strong> {student.id}</div>
                   <div><strong>Admission Number:</strong> {student.admission_number}</div>
-                  <div><strong>Name:</strong> {student.user.name}</div>
+                  <div><strong>Name:</strong> {student.user.name || (student.user.email ? student.user.email.split('@')[0].replace(/[0-9]/g, '').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim() : 'Unknown')}</div>
                   <div><strong>Email:</strong> {student.user.email}</div>
-                  <div><strong>User ID:</strong> {student.user.id}</div>
+                  <div><strong>User ID:</strong> {student.user_id}</div>
                   <div><strong>Phone:</strong> {student.phone}</div>
                   <div><strong>Gender:</strong> {student.gender}</div>
                   <div><strong>Grade:</strong> {student.grade}</div>

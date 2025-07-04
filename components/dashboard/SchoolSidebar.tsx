@@ -336,6 +336,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
   
   // State for the More drawer
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [isMounted, setIsMounted] = React.useState(false);
   
   // Generate school initials for logo
   const initials = getSchoolInitials(schoolName);
@@ -352,6 +353,13 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Don't render drawer content until mounted to prevent hydration issues
+  const shouldShowDrawer = isMounted && drawerOpen;
 
   return (
     <div className={cn(
@@ -606,7 +614,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
             </div>
             
             {/* More Drawer */}
-            {drawerOpen && (
+            {shouldShowDrawer && (
               <div 
                 className="mt-1 pl-3 ml-4 border-l-2 space-y-0.5 py-1"
                 style={{ borderColor: `${fromColor}33` }} // Using hex opacity

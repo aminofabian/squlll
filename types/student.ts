@@ -21,9 +21,16 @@ export interface Student {
 export interface GraphQLStudent {
   id: string;
   admission_number: string;
+  user_id: string;
+  feesOwed: number;
+  gender: string;
+  totalFeesPaid: number;
+  createdAt: string;
+  isActive: boolean;
+  updatedAt: string;
+  streamId: string | null;
   phone: string;
   grade: string;
-  gender: string;
   user: {
     id: string;
     email: string;

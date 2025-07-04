@@ -168,8 +168,8 @@ export function useSchoolConfig(enabled: boolean = true) {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     // Consider the query successful even if it fails with auth errors (so we can redirect)
     throwOnError: false,
-    // Only run the query on the client side and when enabled
-    enabled: typeof window !== 'undefined' && enabled,
+    // Always enable the query, but it will only run on the client side due to the window check
+    enabled: enabled,
   });
 
   return query;

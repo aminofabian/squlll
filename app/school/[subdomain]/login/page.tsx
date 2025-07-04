@@ -8,6 +8,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { GraduationCap, Shield, BookOpen, Users, Building2, Star, ArrowRight, Globe } from "lucide-react"
+import { debugAuth, checkAuthStatus } from "@/lib/utils"
 
 // School Logo Component matching homepage design
 function SchoolLogo({ schoolName }: { schoolName: string }) {
@@ -84,6 +85,18 @@ export default function SchoolLoginPage() {
       if (!response.ok) {
         throw new Error(data.error || 'Sign in failed')
       }
+
+      // Debug: Log the response data
+      console.log('Login response:', data)
+
+      // Debug: Check if cookies are set
+      setTimeout(() => {
+        console.log('=== Login Success Debug ===')
+        debugAuth()
+        const authStatus = checkAuthStatus()
+        console.log('Auth status after login:', authStatus)
+        console.log('=== End Login Debug ===')
+      }, 100)
 
       // Redirect based on user role to their specific school subdomain
       const role = data.membership?.role

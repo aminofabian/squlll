@@ -70,13 +70,25 @@ function SchoolLayoutContent({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [userRole, setUserRole] = useState('Administrator')
   const [userName, setUserName] = useState('John Doe')
+  const [isMounted, setIsMounted] = useState(false)
 
   // Check if school is configured
   const { data: config, isLoading: isConfigLoading } = useSchoolConfig()
   const isConfigured = config && config.selectedLevels && config.selectedLevels.length > 0
 
+  // Add a state to track if we're in a loading state that should show the loading UI
+  const [shouldShowLoading, setShouldShowLoading] = useState(true)
+
+  useEffect(() => {
+    // Only show loading state initially, then let the config loading state take over
+    if (isMounted) {
+      setShouldShowLoading(false)
+    }
+  }, [isMounted])
+
   const getCurrentKenyanTerm = () => {
-    const now = new Date()
+    // Use a fixed date for server-side rendering to prevent hydration issues
+    const now = new Date('2024-01-15') // Fixed date
     const year = now.getFullYear()
     const month = now.getMonth() + 1 // JavaScript months are 0-based
 
@@ -103,6 +115,10 @@ function SchoolLayoutContent({
   const [currentTerm, setCurrentTerm] = useState(getCurrentKenyanTerm())
 
   useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
     // Fetch school-specific data based on the subdomain
     console.log('Pages Layout - School subdomain:', subdomain)
     
@@ -115,7 +131,23 @@ function SchoolLayoutContent({
 
     // Update term when component mounts and every day at midnight
     const timer = setInterval(() => {
-      setCurrentTerm(getCurrentKenyanTerm())
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = now.getMonth() + 1
+      
+      let term = ''
+      if (month >= 1 && month <= 3) {
+        term = `Term 1, ${year}`
+      } else if (month >= 5 && month <= 7) {
+        term = `Term 2, ${year}`
+      } else if (month >= 9 && month <= 11) {
+        term = `Term 3, ${year}`
+      } else {
+        if (month === 4) term = `Term 2, ${year}`
+        if (month === 8) term = `Term 3, ${year}`
+        if (month === 12) term = `Term 1, ${year + 1}`
+      }
+      setCurrentTerm(term)
     }, 86400000) // 24 hours
 
     return () => clearInterval(timer)
@@ -170,6 +202,33 @@ function SchoolLayoutContent({
       <div className="min-h-screen bg-gray-50">
         <Toaster position="top-right" closeButton richColors />
         {children}
+      </div>
+    )
+  }
+
+  // Show loading state until mounted or while config is loading
+  if (!isMounted || shouldShowLoading || isConfigLoading) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <div className="w-64 bg-white border-r animate-pulse">
+          <div className="p-4 space-y-4">
+            <div className="h-8 bg-gray-200 rounded"></div>
+            <div className="space-y-2">
+              <div className="h-6 bg-gray-200 rounded"></div>
+              <div className="h-6 bg-gray-200 rounded"></div>
+              <div className="h-6 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col">
+          <div className="h-16 bg-white border-b animate-pulse">
+            <div className="h-full px-6 flex items-center justify-between">
+              <div className="h-8 w-32 bg-gray-200 rounded"></div>
+              <div className="h-8 w-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+          <div className="flex-1 bg-gray-50"></div>
+        </div>
       </div>
     )
   }

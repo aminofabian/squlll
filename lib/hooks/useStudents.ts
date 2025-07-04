@@ -2,16 +2,40 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStudentsStore } from '../stores/useStudentsStore';
 import { StudentsResponse } from '../../types/student';
+import { graphqlClient } from '../graphql-client';
+import { gql } from 'graphql-request';
+
+const GET_STUDENTS = gql`
+  query GetStudents {
+    students {
+      id
+      admission_number
+      user_id
+      feesOwed
+      gender
+      totalFeesPaid
+      createdAt
+      isActive
+      updatedAt
+      streamId
+      phone
+      grade
+      user {
+        id
+        email
+        name
+      }
+    }
+  }
+`;
+
+interface GetStudentsResponse {
+  students: any[];
+}
 
 const fetchStudents = async (): Promise<StudentsResponse> => {
-  const response = await fetch('/api/students');
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to fetch students');
-  }
-
-  return response.json();
+  const response = await graphqlClient.request<GetStudentsResponse>(GET_STUDENTS);
+  return { students: response.students };
 };
 
 export const useStudents = () => {
