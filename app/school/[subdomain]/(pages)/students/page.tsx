@@ -428,7 +428,7 @@ export default function StudentsPage() {
         admissionNumber: graphqlStudent.admission_number,
         photo: undefined, // No photo in GraphQL data
         gender: graphqlStudent.gender as "male" | "female" || "male",
-        class: `Form ${graphqlStudent.grade || '1'}`,
+        class: `Grade ${graphqlStudent.grade || '1'}`,
         stream: mockData.stream,
         grade: graphqlStudent.grade || '1',
         age,

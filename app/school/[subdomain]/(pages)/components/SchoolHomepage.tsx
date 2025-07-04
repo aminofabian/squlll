@@ -41,7 +41,7 @@ import { useState } from 'react'
 import { SchoolConfiguration } from '../../../../../lib/types/school-config'
 
 interface SchoolHomepageProps {
-  config: SchoolConfiguration
+  config?: SchoolConfiguration
 }
 
 export function SchoolHomepage({ config }: SchoolHomepageProps) {
@@ -61,9 +61,9 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
   }
 
   const schoolName = getSchoolNameFromSubdomain(subdomain)
-  const totalLevels = config.selectedLevels.length
-  const totalGrades = config.selectedLevels.reduce((acc, level) => acc + level.gradeLevels.length, 0)
-  const totalSubjects = config.selectedLevels.reduce((acc, level) => acc + level.subjects.length, 0)
+  const totalLevels = config?.selectedLevels?.length || 0
+  const totalGrades = config?.selectedLevels?.reduce((acc, level) => acc + level.gradeLevels.length, 0) || 0
+  const totalSubjects = config?.selectedLevels?.reduce((acc, level) => acc + level.subjects.length, 0) || 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -434,7 +434,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
           </div>
           
           <div className="grid gap-8 lg:grid-cols-2">
-            {config.selectedLevels.map((level, index) => (
+            {config?.selectedLevels?.map((level, index) => (
               <div key={level.id} className="bg-white border-4 border-gray-600 p-8 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between mb-6">
                   <div>

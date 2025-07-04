@@ -17,6 +17,11 @@ export async function POST(request: Request) {
             email
             schoolUrl
           }
+          tenant {
+            id
+            name
+            subdomain
+          }
           subdomainUrl
           tokens {
             accessToken
@@ -95,11 +100,35 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7
     })
+    
+    // Set tenant cookies
+    if (userData.tenant) {
+      cookieStore.set('tenantId', userData.tenant.id, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7
+      })
+      cookieStore.set('tenantName', userData.tenant.name, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7
+      })
+      cookieStore.set('tenantSubdomain', userData.tenant.subdomain, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7
+      })
+    }
 
     // Return success response
     return NextResponse.json({
       user: userData.user,
+      tenant: userData.tenant,
       subdomainUrl: userData.subdomainUrl,
+      tokens: userData.tokens,
       message: 'Registration successful'
     })
 

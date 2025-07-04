@@ -473,11 +473,11 @@ export const SchoolTypeSetup = () => {
               </div>
             </div>
             <div className="flex justify-end">
-              <button
-                onClick={() => {
-                  toast.dismiss();
-                  router.push('/dashboard');
-                }}
+                              <button
+                  onClick={() => {
+                    toast.dismiss();
+                    router.push(`/classes`);
+                  }}
                 className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
               >
                 Go to Dashboard
@@ -512,7 +512,7 @@ export const SchoolTypeSetup = () => {
         
         setTimeout(() => {
           console.log('Redirecting to dashboard...');
-          router.push(`/dashboard`);
+          router.push(`/classes`);
         }, 2000);
       }
     } catch (error) {

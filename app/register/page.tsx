@@ -300,10 +300,10 @@ export default function SignupPage() {
           newRegistration: 'true'  // Flag to indicate this is a new registration
         }).toString()
         
-        const dashboardUrl = `${baseUrl}${subdomainPrefix}.${domain}/?${params}`
+        const setupUrl = `${baseUrl}${subdomainPrefix}.${domain}/setup?${params}`
         
-        console.log('Redirecting to:', dashboardUrl)
-        window.location.href = dashboardUrl
+        console.log('Redirecting to setup page:', setupUrl)
+        window.location.href = setupUrl
       }, 3000)
 
     } catch (error) {
