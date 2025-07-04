@@ -7,11 +7,22 @@ export async function POST(request: Request) {
   try {
     const { levelNames } = await request.json();
     
-    // Get the token from cookies
+    // Get the token from cookies first
     const cookieStore = await cookies();
-    const token = cookieStore.get('accessToken')?.value;
+    let token = cookieStore.get('accessToken')?.value;
+    let tokenSource = 'cookies';
+    
+    // If no token in cookies, check Authorization header
+    if (!token) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        tokenSource = 'authorization_header';
+      }
+    }
     
     console.log('🔍 Debug - Token found:', token ? `${token.substring(0, 30)}...` : 'No token');
+    console.log('🔍 Debug - Token source:', tokenSource);
     console.log('🔍 Debug - All cookies:', Object.fromEntries(
       Array.from(cookieStore.getAll().map(cookie => [cookie.name, cookie.value.substring(0, 20) + '...']))
     ));

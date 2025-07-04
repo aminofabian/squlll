@@ -89,6 +89,175 @@ export const SchoolTypeSetup = () => {
   const params = useParams()
   const router = useRouter()
   const subdomain = params.subdomain as string
+  
+  // Extract access token from URL parameters
+  const getAccessToken = () => {
+    if (typeof window === 'undefined') return null
+    
+    // Try multiple sources for the access token
+    let token = null
+    
+    // 1. Try URL parameters
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      token = urlParams.get('accessToken')
+      
+      // URL decode the token if it exists
+      if (token) {
+        try {
+          token = decodeURIComponent(token)
+        } catch (error) {
+          console.warn('Failed to decode access token from URL:', error)
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to parse URL parameters:', error)
+    }
+    
+    // 2. If no token in URL, try cookies
+    if (!token) {
+      try {
+        const cookies = document.cookie.split(';')
+        const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='))
+        if (accessTokenCookie) {
+          token = accessTokenCookie.split('=')[1]
+        }
+      } catch (error) {
+        console.warn('Failed to read access token from cookies:', error)
+      }
+    }
+    
+    // 3. If still no token, try localStorage
+    if (!token) {
+      try {
+        token = localStorage.getItem('accessToken')
+      } catch (error) {
+        console.warn('Failed to read access token from localStorage:', error)
+      }
+    }
+    
+    console.log('🔍 Debug - getAccessToken:')
+    console.log('  - Current URL:', window.location.href)
+    console.log('  - URL search params:', window.location.search)
+    console.log('  - Access token found:', token ? `${token.substring(0, 30)}...` : 'No token')
+    console.log('  - Token length:', token?.length || 0)
+    console.log('  - Token source:', token ? 'URL/cookies/localStorage' : 'None')
+    
+    return token
+  }
+  
+  // Extract all authentication data from URL parameters
+  const getAuthDataFromURL = () => {
+    if (typeof window === 'undefined') return null
+    
+    const urlParams = new URLSearchParams(window.location.search)
+    
+    // Helper function to safely decode URL parameters
+    const safeDecode = (value: string | null) => {
+      if (!value) return value
+      try {
+        return decodeURIComponent(value)
+      } catch (error) {
+        console.warn('Failed to decode URL parameter:', error)
+        return value
+      }
+    }
+    
+    const authData = {
+      userId: safeDecode(urlParams.get('userId')),
+      email: safeDecode(urlParams.get('email')),
+      schoolUrl: safeDecode(urlParams.get('schoolUrl')),
+      subdomainUrl: safeDecode(urlParams.get('subdomainUrl')),
+      tenantId: safeDecode(urlParams.get('tenantId')),
+      tenantName: safeDecode(urlParams.get('tenantName')),
+      tenantSubdomain: safeDecode(urlParams.get('tenantSubdomain')),
+      accessToken: safeDecode(urlParams.get('accessToken')),
+      refreshToken: safeDecode(urlParams.get('refreshToken'))
+    }
+    
+    console.log('🔍 Debug - getAuthDataFromURL:')
+    console.log('  - Extracted auth data:', {
+      ...authData,
+      accessToken: authData.accessToken ? `${authData.accessToken.substring(0, 30)}...` : null,
+      refreshToken: authData.refreshToken ? `${authData.refreshToken.substring(0, 30)}...` : null
+    })
+    
+    return authData
+  }
+  
+  // Store authentication data in cookies
+  const storeAuthDataInCookies = async (authData: any) => {
+    if (!authData || !authData.accessToken || !authData.userId || !authData.email) {
+      console.log('Missing required auth data for cookie storage')
+      return
+    }
+    
+    try {
+      // Store tokens via API endpoint for HTTP-only cookies
+      const storeResponse = await fetch('/api/auth/store-tokens', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(authData),
+      })
+      
+      if (storeResponse.ok) {
+        console.log('HTTP-only cookies stored successfully')
+      } else {
+        console.error('Failed to store HTTP-only cookies:', storeResponse.status)
+      }
+      
+      // Also set client-side accessible cookies
+      const isProduction = process.env.NODE_ENV === 'production'
+      const cookieOptions = `max-age=${60 * 60 * 24 * 30}; path=/; SameSite=Lax${isProduction ? '; Secure' : ''}`
+      
+      // Set cookies one by one
+      document.cookie = `userId=${authData.userId}; ${cookieOptions}`
+      document.cookie = `email=${authData.email}; ${cookieOptions}`
+      document.cookie = `accessToken=${authData.accessToken}; ${cookieOptions}`
+      
+      if (authData.refreshToken) {
+        document.cookie = `refreshToken=${authData.refreshToken}; ${cookieOptions}`
+      }
+      if (authData.schoolUrl) {
+        document.cookie = `schoolUrl=${authData.schoolUrl}; ${cookieOptions}`
+      }
+      if (authData.subdomainUrl) {
+        document.cookie = `subdomainUrl=${authData.subdomainUrl}; ${cookieOptions}`
+      }
+      if (authData.tenantId) {
+        document.cookie = `tenantId=${authData.tenantId}; ${cookieOptions}`
+      }
+      if (authData.tenantName) {
+        document.cookie = `tenantName=${encodeURIComponent(authData.tenantName)}; ${cookieOptions}`
+      }
+      if (authData.tenantSubdomain) {
+        document.cookie = `tenantSubdomain=${authData.tenantSubdomain}; ${cookieOptions}`
+      }
+      
+      console.log('All authentication data stored in cookies successfully')
+      
+      // Clean URL parameters
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('userId')
+      newUrl.searchParams.delete('email')
+      newUrl.searchParams.delete('schoolUrl')
+      newUrl.searchParams.delete('subdomainUrl')
+      newUrl.searchParams.delete('tenantId')
+      newUrl.searchParams.delete('tenantName')
+      newUrl.searchParams.delete('tenantSubdomain')
+      newUrl.searchParams.delete('accessToken')
+      newUrl.searchParams.delete('refreshToken')
+      newUrl.searchParams.delete('newRegistration')
+      
+      window.history.replaceState({}, '', newUrl.toString())
+      console.log('URL parameters cleaned')
+      
+    } catch (error) {
+      console.error('Error storing authentication data in cookies:', error)
+    }
+  }
   const [selectedType, setSelectedType] = useState<string>('cbc')
   const [selectedLevels, setSelectedLevels] = useState<Record<string, Set<string>>>({
     cbc: new Set()
@@ -111,6 +280,69 @@ export const SchoolTypeSetup = () => {
       setPendingToast(null)
     }
   }, [pendingToast])
+
+  // Store access token in localStorage as fallback
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const accessToken = urlParams.get('accessToken')
+      
+      if (accessToken) {
+        try {
+          // Store in localStorage as fallback
+          localStorage.setItem('accessToken', accessToken)
+          console.log('🔍 Debug - Stored access token in localStorage as fallback')
+        } catch (error) {
+          console.warn('Failed to store access token in localStorage:', error)
+        }
+      }
+    }
+  }, [])
+
+  // Debug URL parameters on mount
+  useEffect(() => {
+    console.log('🔍 Debug - Component mounted')
+    console.log('  - Window location:', window.location.href)
+    console.log('  - Search params:', window.location.search)
+    
+    const urlParams = new URLSearchParams(window.location.search)
+    const allParams = Object.fromEntries(urlParams.entries())
+    console.log('  - All URL parameters:', allParams)
+    console.log('  - Access token present:', !!allParams.accessToken)
+    console.log('  - Access token length:', allParams.accessToken?.length || 0)
+    
+    // Test getAccessToken function
+    const token = getAccessToken()
+    console.log('  - getAccessToken result:', token ? `${token.substring(0, 30)}...` : 'No token')
+    
+    // Test API call with token
+    const testAuth = async () => {
+      try {
+        const testToken = getAccessToken()
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        
+        if (testToken) {
+          headers['Authorization'] = `Bearer ${testToken}`
+        }
+        
+        console.log('🔍 Debug - Testing auth API call with headers:', headers)
+        
+        const response = await fetch('/api/test-auth', {
+          method: 'GET',
+          headers,
+        })
+        
+        const result = await response.json()
+        console.log('🔍 Debug - Test auth API response:', result)
+      } catch (error) {
+        console.error('🔍 Debug - Test auth API error:', error)
+      }
+    }
+    
+    testAuth()
+  }, [])
 
   const schoolTypes: SchoolType[] = [
     {
@@ -379,11 +611,25 @@ export const SchoolTypeSetup = () => {
       const attemptConfiguration = async (levelNames: string[], attemptNumber: number = 1): Promise<any> => {
         console.log(`🔄 Configuration attempt #${attemptNumber} with levels:`, levelNames);
         
+        const accessToken = getAccessToken()
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        
+        // Add authorization header if access token is available
+        if (accessToken) {
+          headers['Authorization'] = `Bearer ${accessToken}`
+        }
+        
+        console.log('🔍 Debug - attemptConfiguration:')
+        console.log('  - Access token available:', !!accessToken)
+        console.log('  - Headers being sent:', headers)
+        console.log('  - Request URL:', '/api/school/configure-levels')
+        console.log('  - Request body:', { levelNames })
+        
         const response = await fetch('/api/school/configure-levels', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify({ levelNames }),
         });
 
@@ -509,6 +755,13 @@ export const SchoolTypeSetup = () => {
           { duration: 4000 }
         );
         setSetupComplete(true);
+        
+        // Store authentication data in cookies after successful configuration
+        const authData = getAuthDataFromURL();
+        if (authData) {
+          console.log('Storing authentication data in cookies...');
+          await storeAuthDataInCookies(authData);
+        }
         
         setTimeout(() => {
           console.log('Redirecting to dashboard...');
