@@ -49,6 +49,18 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
   const subdomain = params.subdomain as string
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  // Extract school name from subdomain
+  const getSchoolNameFromSubdomain = (subdomain: string) => {
+    // Convert subdomain to title case and handle special cases
+    const name = subdomain
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
+    
+    return name
+  }
+
+  const schoolName = getSchoolNameFromSubdomain(subdomain)
   const totalLevels = config.selectedLevels.length
   const totalGrades = config.selectedLevels.reduce((acc, level) => acc + level.gradeLevels.length, 0)
   const totalSubjects = config.selectedLevels.reduce((acc, level) => acc + level.subjects.length, 0)
@@ -84,13 +96,13 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                   
                   {/* School name abbreviation overlay */}
                   <div className="absolute -bottom-2 -right-1 w-6 h-6 bg-primary-dark border-2 border-white flex items-center justify-center text-xs font-black text-white">
-                    {config.tenant.schoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
+                    {schoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                 </div>
                 
                 <div className="ml-4">
                   <span className="text-lg font-black text-gray-900 tracking-tight block leading-tight">
-                    {config.tenant.schoolName.toUpperCase()}
+                    {schoolName.toUpperCase()}
                   </span>
                   <span className="text-xs font-semibold text-primary uppercase tracking-tight">
                     Excellence in Education
@@ -221,7 +233,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
               WELCOME TO
             </h1>
             <h2 className="text-4xl md:text-6xl font-black text-yellow-400 mb-8 leading-tight tracking-wider border-4 border-yellow-400 inline-block px-8 py-4">
-              {config.tenant.schoolName.toUpperCase()}
+              {schoolName.toUpperCase()}
             </h2>
             
             <p className="text-xl md:text-2xl text-green-100 mb-12 max-w-4xl mx-auto leading-relaxed font-semibold">
@@ -533,13 +545,13 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                   
                   {/* School name abbreviation overlay */}
                   <div className="absolute -bottom-1.5 -right-1 w-5 h-5 bg-primary border-2 border-gray-400 flex items-center justify-center text-xs font-black text-white">
-                    {config.tenant.schoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
+                    {schoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                 </div>
                 
                 <div className="ml-3">
                   <span className="text-xl font-black text-white block leading-tight">
-                    {config.tenant.schoolName.toUpperCase()}
+                    {schoolName.toUpperCase()}
                   </span>
                   <span className="text-xs font-semibold text-primary uppercase tracking-wider">
                     Excellence in Education
@@ -577,7 +589,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
           </div>
           
           <div className="mt-12 pt-8 border-t-2 border-gray-700 text-center font-semibold text-gray-400">
-            <p>&copy; {new Date().getFullYear()} {config.tenant.schoolName.toUpperCase()}. ALL RIGHTS RESERVED.</p>
+            <p>&copy; {new Date().getFullYear()} {schoolName.toUpperCase()}. ALL RIGHTS RESERVED.</p>
           </div>
         </div>
       </footer>
