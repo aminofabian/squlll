@@ -7,213 +7,112 @@ import { ClassHeader } from './(pages)/components/ClassCard'
 import { useEffect, useState } from 'react'
 
 export default function SchoolHome() {
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [shouldLoadConfig, setShouldLoadConfig] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [hasAuthData, setHasAuthData] = useState<boolean | null>(null)
   const [isClient, setIsClient] = useState(false)
   
-  // Only load school config after authentication is confirmed
-  const { data: config, isLoading, error } = useSchoolConfig(shouldLoadConfig)
+  // Only load school config if we have authentication data
+  const { data: config, isLoading, error } = useSchoolConfig(hasAuthData === true)
 
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Check if user is authenticated on component mount
+  // Check for cookies or query parameters on component mount
   useEffect(() => {
     if (!isClient) return
     
-    const checkAuth = () => {
-      console.log('SchoolHome - Starting authentication check...')
+    const checkAuthData = () => {
+      console.log('SchoolHome - Checking for authentication data...')
       
       // Ensure we're in a browser environment
       if (typeof window === 'undefined') {
         console.log('SchoolHome - Not in browser environment, skipping auth check')
-        setIsCheckingAuth(false)
+        setHasAuthData(false)
+        setUserRole(null)
         return
       }
       
       try {
-        // Check if access token exists in cookies
+        // Check if access token exists in cookies (even if expired)
         const cookies = document.cookie.split(';')
+        console.log('SchoolHome - All cookies:', document.cookie)
+        
         const accessToken = cookies.find(cookie => 
           cookie.trim().startsWith('accessToken=')
         )
         
-        console.log('SchoolHome - Access token in cookies:', !!accessToken)
+        // Check for role in cookies
+        const roleCookie = cookies.find(cookie => 
+          cookie.trim().startsWith('role=')
+        )
         
-        if (accessToken) {
-          console.log('SchoolHome - User is authenticated, enabling config loading')
-          setIsAuthenticated(true)
-          setShouldLoadConfig(true) // Enable config loading
-          setIsCheckingAuth(false)
-        } else {
-          // Check if we have authentication data in URL parameters (new registration)
-          try {
-            const urlParams = new URLSearchParams(window.location.search)
-            const hasAuthParams = urlParams.get('accessToken') || urlParams.get('newRegistration')
-            
-            console.log('SchoolHome - Has auth params:', !!hasAuthParams)
-            
-            if (hasAuthParams) {
-              console.log('SchoolHome - New registration detected, waiting for cookies...')
-              // Wait a bit longer for the layout to process the authentication data
-              setTimeout(() => {
-                try {
-                  const updatedCookies = document.cookie.split(';')
-                  const updatedAccessToken = updatedCookies.find(cookie => 
-                    cookie.trim().startsWith('accessToken=')
-                  )
-                  
-                  console.log('SchoolHome - After timeout, access token:', !!updatedAccessToken)
-                  
-                  if (updatedAccessToken) {
-                    console.log('SchoolHome - Authentication successful, enabling config loading')
-                    setIsAuthenticated(true)
-                    setShouldLoadConfig(true) // Enable config loading
-                  } else {
-                    console.log('SchoolHome - Authentication failed after timeout')
-                    setIsAuthenticated(false)
-                  }
-                } catch (timeoutError) {
-                  console.error('SchoolHome - Error during timeout check:', timeoutError)
-                  setIsAuthenticated(false)
-                }
-                setIsCheckingAuth(false)
-              }, 2000) // Wait 2 seconds for cookies to be set
-              return
-            } else {
-              console.log('SchoolHome - No authentication found')
-              setIsAuthenticated(false)
-              setIsCheckingAuth(false)
-            }
-          } catch (urlError) {
-            console.error('SchoolHome - Error parsing URL parameters:', urlError)
-            setIsAuthenticated(false)
-            setIsCheckingAuth(false)
-          }
+        console.log('SchoolHome - Access token in cookies:', !!accessToken)
+        console.log('SchoolHome - Access token value:', accessToken)
+        console.log('SchoolHome - Role cookie:', roleCookie)
+        
+        // Extract role value
+        let role = null
+        if (roleCookie) {
+          role = roleCookie.split('=')[1]?.trim()
+          console.log('SchoolHome - User role:', role)
         }
+        
+        // Set user role
+        setUserRole(role)
+        
+        // Set hasAuthData to true if we have any auth data (even expired token)
+        if (accessToken || role) {
+          console.log('SchoolHome - Found authentication data')
+          setHasAuthData(true)
+        } else {
+          console.log('SchoolHome - No authentication data found')
+          setHasAuthData(false)
+        }
+        
       } catch (error) {
-        console.error('SchoolHome - Error checking authentication:', error)
-        setIsAuthenticated(false)
-        setIsCheckingAuth(false)
+        console.error('SchoolHome - Error checking authentication data:', error)
+        setHasAuthData(false)
+        setUserRole(null)
       }
     }
 
-    checkAuth()
+    checkAuthData()
   }, [isClient])
 
-  // Show loading state while checking auth or loading config
-  if (isCheckingAuth || isLoading) {
-    console.log('SchoolHome - Showing loading state:', { isCheckingAuth, isLoading })
+  // Show loading state while checking auth data or loading config
+  if (hasAuthData === null || (hasAuthData === true && isLoading)) {
+    console.log('SchoolHome - Showing loading state:', { hasAuthData, isLoading })
     return (
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         <p className="mt-4 text-sm text-gray-500">
-          {isCheckingAuth ? 'Checking authentication...' : 'Loading school configuration...'}
+          {hasAuthData === null ? 'Checking authentication...' : 'Loading school configuration...'}
         </p>
       </main>
     )
   }
 
-  // Check if this is a 401 error (no authentication) or no configuration exists
-  const errorMessage = error instanceof Error ? error.message : (error || '')
-  const isAuthError = error && (
-    errorMessage.includes('401') || 
-    errorMessage.includes('Unauthorized') || 
-    errorMessage.includes('Authentication required') ||
-    errorMessage.includes('School not found or access denied')
-  )
-  
-  console.log('SchoolHome - Auth state:', {
-    isCheckingAuth,
-    isAuthenticated,
-    shouldLoadConfig,
-    hasError: !!error,
-    isAuthError,
-    hasConfig: !!config
-  })
-  
-  // If there's an auth error or no config data, show the setup flow
-  // This handles new registrations or schools that haven't been configured yet
-  const shouldShowSetup = isAuthError || !config || (config && (!config.selectedLevels || config.selectedLevels.length === 0))
-
-  // If user is not authenticated and we have an auth error, show login prompt
-  // But only if we're not still checking authentication
-  if (isAuthError && !isAuthenticated && !isCheckingAuth) {
-    // Check if this is a new registration
-    const urlParams = new URLSearchParams(window.location.search)
-    const isNewRegistration = urlParams.get('newRegistration') === 'true' || urlParams.get('accessToken')
-    
-    if (isNewRegistration) {
-      // For new registrations, show a loading state while authentication is being processed
-      return (
-        <main className="flex min-h-screen flex-col items-center justify-center">
-          <div className="text-center max-w-md mx-auto p-6">
-            <div className="mb-6">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Setting up your school
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Please wait while we configure your school portal...
-              </p>
-            </div>
-          </div>
-        </main>
-      )
+  // If no authentication data, show SchoolHomepage
+  if (hasAuthData === false) {
+    console.log('SchoolHome - No auth data, showing SchoolHomepage')
+    console.log('SchoolHome - Final state:', { hasAuthData, userRole, isLoading, error, config: !!config })
+    // Create a minimal config for public access
+    const publicConfig = {
+      id: 'public',
+      selectedLevels: [],
+      tenant: {
+        id: 'public',
+        schoolName: 'School Portal',
+        subdomain: 'public'
+      }
     }
-    
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Access Required
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              You need to be logged in to access this school portal.
-            </p>
-          </div>
-          
-          <div className="space-y-4">
-            <button 
-              onClick={() => window.location.href = '/login'} 
-              className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
-            >
-              Sign In
-            </button>
-            
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Don't have an account?{' '}
-              <button 
-                onClick={() => window.location.href = '/register'} 
-                className="text-primary hover:underline"
-              >
-                Contact your school administrator
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    )
+    return <SchoolHomepage config={publicConfig} />
   }
 
-  if (shouldShowSetup && !isCheckingAuth) {
-    return (
-      <main className="flex min-h-screen flex-col">
-        <div className="flex-1">
-          <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-            <ClassHeader />
-          </div>
-          <SchoolTypeSetup />
-        </div>
-      </main>
-    )
-  }
-
-  // Show other errors (not auth related)
-  if (error && !isAuthError && !isCheckingAuth) {
+  // If we have authentication data but there's an error loading config
+  if (error) {
+    console.log('SchoolHome - Error loading config:', error)
     return (
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="text-center">
@@ -234,18 +133,54 @@ export default function SchoolHome() {
     )
   }
 
-  // If configured and authenticated, show the homepage
-  if (!isCheckingAuth && isAuthenticated && config) {
-    console.log('SchoolHome - Rendering SchoolHomepage with config:', config)
-    return <SchoolHomepage config={config} />
+  // If we have authentication data, check if user is admin
+  if (hasAuthData === true) {
+    console.log('SchoolHome - Has auth data, checking role:', userRole)
+    console.log('SchoolHome - Final state:', { hasAuthData, userRole, isLoading, error, config: !!config })
+    
+    // If user is admin, show SchoolTypeSetup
+    if (userRole === 'admin') {
+      console.log('SchoolHome - User is admin, showing SchoolTypeSetup')
+      return (
+        <main className="flex min-h-screen flex-col">
+          <div className="flex-1">
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+              <ClassHeader />
+            </div>
+            <SchoolTypeSetup />
+          </div>
+        </main>
+      )
+    }
+    
+    // If user is not admin but has config, show SchoolHomepage
+    if (config) {
+      console.log('SchoolHome - User is not admin, showing SchoolHomepage with config')
+      return <SchoolHomepage config={config} />
+    }
+    
+    // If user is not admin and no config, show public SchoolHomepage
+    console.log('SchoolHome - User is not admin, showing public SchoolHomepage')
+    const publicConfig = {
+      id: 'public',
+      selectedLevels: [],
+      tenant: {
+        id: 'public',
+        schoolName: 'School Portal',
+        subdomain: 'public'
+      }
+    }
+    return <SchoolHomepage config={publicConfig} />
   }
+
+
   
   // Fallback loading state
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       <p className="mt-4 text-sm text-gray-500">
-        {isCheckingAuth ? 'Checking authentication...' : 'Loading school configuration...'}
+        Loading school configuration...
       </p>
     </main>
   )
