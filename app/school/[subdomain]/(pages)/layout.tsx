@@ -68,8 +68,8 @@ function SchoolLayoutContent({
   const subdomain = params.subdomain as string
   const [schoolName, setSchoolName] = useState('School Dashboard')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [userRole, setUserRole] = useState('Administrator')
-  const [userName, setUserName] = useState('John Doe')
+  const [userRole, setUserRole] = useState('')
+  const [userName, setUserName] = useState('')
   const [isMounted, setIsMounted] = useState(false)
 
   // Check if school is configured
@@ -129,6 +129,32 @@ function SchoolLayoutContent({
       setSchoolName(formattedName)
     }
 
+    // Read user information from cookies
+    const getUserFromCookies = () => {
+      if (typeof window === 'undefined') return
+      
+      const cookieValue = `; ${document.cookie}`
+      const getCookie = (name: string) => {
+        const parts = cookieValue.split(`; ${name}=`)
+        if (parts.length === 2) {
+          return parts.pop()?.split(';').shift() || null
+        }
+        return null
+      }
+      
+      const userNameFromCookie = getCookie('userName')
+      const userRoleFromCookie = getCookie('userRole')
+      
+      if (userNameFromCookie) {
+        setUserName(decodeURIComponent(userNameFromCookie))
+      }
+      if (userRoleFromCookie) {
+        setUserRole(decodeURIComponent(userRoleFromCookie))
+      }
+    }
+
+    getUserFromCookies()
+
     // Update term when component mounts and every day at midnight
     const timer = setInterval(() => {
       const now = new Date()
@@ -155,6 +181,9 @@ function SchoolLayoutContent({
 
   // Get initials for avatar
   const getInitials = (name: string) => {
+    if (!name || name.trim() === '') {
+      return 'U' // Default initial for unknown user
+    }
     return name
       .split(' ')
       .map(part => part.charAt(0))
@@ -195,6 +224,61 @@ function SchoolLayoutContent({
       action: () => {/* Add navigation logic */}
     }
   ]
+
+  // Progress indicator state (hardcoded for now)
+  const completedSteps = 2;
+  const totalSteps = 5;
+
+  // Progress steps definition
+  const progressSteps = [
+    { label: 'Set up classes', icon: BookOpen },
+    { label: 'Set up students', icon: UserPlus },
+    { label: 'Set up teachers', icon: GraduationCap },
+    { label: 'Set up subjects', icon: ClipboardList },
+    { label: 'School details', icon: School },
+  ];
+  const currentStepIndex = Math.min(completedSteps, progressSteps.length - 1);
+  const currentStep = progressSteps[currentStepIndex];
+
+  // ProgressIndicator component (themed for school management, blends with navbar)
+  const ProgressIndicator = () => (
+    <div className="flex items-center bg-white/90 rounded-lg shadow-sm px-3 py-1 mr-4 h-12 border border-gray-100">
+      <div className="relative flex items-center justify-center w-9 h-9 mr-2">
+        <svg className="w-9 h-9" viewBox="0 0 40 40">
+          <circle
+            cx="20"
+            cy="20"
+            r="18"
+            fill="none"
+            stroke="#f3f4f6" // gray-100
+            strokeWidth="4"
+          />
+          <circle
+            cx="20"
+            cy="20"
+            r="18"
+            fill="none"
+            stroke="#2563eb" // primary (blue-600)
+            strokeWidth="4"
+            strokeDasharray={2 * Math.PI * 18}
+            strokeDashoffset={2 * Math.PI * 18 * (1 - completedSteps / totalSteps)}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 0.4s' }}
+          />
+        </svg>
+        <span className="absolute text-[13px] font-bold text-primary select-none">
+          {completedSteps}/{totalSteps}
+        </span>
+      </div>
+      <div className="flex flex-col justify-center">
+        <div className="flex items-center gap-1 text-[14px] font-semibold text-primary leading-tight">
+          {currentStep.icon && <currentStep.icon className="w-4 h-4 mr-1 text-primary" />}
+          {currentStep.label}
+        </div>
+        <div className="text-xs text-gray-500 leading-tight">Finish all steps to unlock all features</div>
+      </div>
+    </div>
+  );
 
   // If not configured, show full-width layout without sidebar
   if (!isConfigured && !isConfigLoading) {
@@ -275,6 +359,10 @@ function SchoolLayoutContent({
                 <ChevronDown className="h-4 w-4 text-primary" />
               </div>
             </div>
+            {/* Progress Indicator Section */}
+            <div className="hidden md:block">
+              <ProgressIndicator />
+            </div>
           </div>
           
           <div className="flex items-center space-x-3">
@@ -341,8 +429,8 @@ function SchoolLayoutContent({
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium">{userName}</span>
-                      <span className="text-xs text-gray-500">{userRole}</span>
+                      <span className="text-sm font-medium">{userName || 'User'}</span>
+                      <span className="text-xs text-gray-500">{userRole || 'Member'}</span>
                     </div>
                     <ChevronDown className="h-4 w-4 text-gray-500" />
                   </Button>
@@ -363,7 +451,7 @@ function SchoolLayoutContent({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(userName || 'User')}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
