@@ -141,13 +141,13 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
             <div className="hidden md:block">
               <div className="ml-4 flex items-center md:ml-6 space-x-4">
                 <Button asChild variant="outline" className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold px-6 py-2">
-                  <Link href={`//student-portal`}>
+                  <Link href={`/login`}>
                     <Users className="w-4 h-4 mr-2" />
                     STUDENT PORTAL
                   </Link>
                 </Button>
                 <Button asChild className="bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-2 border-2 border-primary-dark">
-                  <Link href={`//apply`}>
+                  <Link href={`/apply`}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     APPLY NOW
                   </Link>
@@ -199,13 +199,13 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
             <div className="pt-4 pb-3 border-t-2 border-primary">
               <div className="px-2 space-y-2">
                 <Button asChild variant="outline" className="w-full justify-start border-2 border-primary text-primary font-semibold">
-                  <Link href={`//student-portal`}>
+                  <Link href={`/login`}>
                     <Users className="w-4 h-4 mr-2" />
                     STUDENT PORTAL
                   </Link>
                 </Button>
                 <Button asChild className="w-full justify-start bg-primary hover:bg-primary-dark border-2 border-primary-dark font-semibold">
-                  <Link href={`//apply`}>
+                  <Link href={`/apply`}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     APPLY NOW
                   </Link>
@@ -242,16 +242,15 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
               <Button asChild size="lg" className="bg-white text-primary hover:bg-yellow-400 hover:text-primary-dark font-black px-12 py-6 text-xl border-4 border-primary-dark transition-all">
-                <Link href={`//apply`}>
+                <Link href={`/apply`}>
                   APPLY NOW
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Link>
               </Button>
               <Button asChild size="lg" className="bg-yellow-400 text-primary-dark hover:bg-white hover:text-primary font-black px-12 py-6 text-xl border-4 border-primary-dark transition-all">
-                <Link href={`//virtual-tour`}>
+                <Link href={`/login`}>
                   <Globe className="mr-3 h-6 w-6" />
-                  VIRTUAL TOUR
-                </Link>
+                  Login (Teacher/Student/Parent)                </Link>
               </Button>
             </div>
           </div>
