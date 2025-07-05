@@ -1,7 +1,12 @@
 'use client'
 
 import { SchoolHomepage } from './components/SchoolHomepage'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 export default function SchoolHome() {
-  return <SchoolHomepage />
+  return (
+    <ErrorBoundary>
+      <SchoolHomepage />
+    </ErrorBoundary>
+  )
 } 

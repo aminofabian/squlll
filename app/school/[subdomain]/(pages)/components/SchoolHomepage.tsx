@@ -118,19 +118,19 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                   <Home className="w-4 h-4 inline mr-2" />
                   HOME
                 </Link>
-                <Link href={`//about`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
+                <Link href={`/about`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
                   <School className="w-4 h-4 inline mr-2" />
                   ABOUT
                 </Link>
-                <Link href={`//programs`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
+                <Link href={`/programs`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
                   <BookOpen className="w-4 h-4 inline mr-2" />
                   PROGRAMS
                 </Link>
-                <Link href={`//admissions`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
+                <Link href={`/admissions`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
                   <Users className="w-4 h-4 inline mr-2" />
                   ADMISSIONS
                 </Link>
-                <Link href={`//contact`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
+                <Link href={`/contact`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
                   <PhoneCall className="w-4 h-4 inline mr-2" />
                   CONTACT
                 </Link>
@@ -179,19 +179,19 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                 <Home className="w-4 h-4 inline mr-2" />
                 HOME
               </Link>
-              <Link href={`//about`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
+              <Link href={`/about`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
                 <School className="w-4 h-4 inline mr-2" />
                 ABOUT
               </Link>
-              <Link href={`//programs`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
+              <Link href={`/programs`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
                 <BookOpen className="w-4 h-4 inline mr-2" />
                 PROGRAMS
               </Link>
-              <Link href={`//admissions`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
+              <Link href={`/admissions`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
                 <Users className="w-4 h-4 inline mr-2" />
                 ADMISSIONS
               </Link>
-              <Link href={`//contact`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
+              <Link href={`/contact`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
                 <PhoneCall className="w-4 h-4 inline mr-2" />
                 CONTACT
               </Link>
@@ -348,7 +348,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                 </div>
               </div>
               <Button asChild className="w-full bg-primary hover:bg-primary-dark text-white font-black py-4 text-lg border-2 border-primary-dark">
-                <Link href={`//academics`}>
+                <Link href={`/academics`}>
                   EXPLORE ACADEMICS
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -379,7 +379,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                 </div>
               </div>
               <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 text-lg border-2 border-green-800">
-                <Link href={`//activities`}>
+                <Link href={`/activities`}>
                   VIEW ACTIVITIES
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -410,7 +410,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                 </div>
               </div>
               <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 text-lg border-2 border-purple-800">
-                <Link href={`//support`}>
+                <Link href={`/support`}>
                   LEARN MORE
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
@@ -480,7 +480,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
           
           <div className="text-center mt-12">
             <Button asChild size="lg" className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-black px-12 py-6 text-xl border-4 border-gray-900">
-              <Link href={`//programs`}>
+              <Link href={`/programs`}>
                 <BookOpen className="mr-3 h-6 w-6" />
                 VIEW ALL PROGRAMS
               </Link>
@@ -501,13 +501,13 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Button asChild size="lg" className="bg-white text-primary hover:bg-yellow-400 hover:text-primary-dark font-black px-12 py-6 text-xl border-4 border-primary-dark">
-              <Link href={`//apply`}>
+              <Link href={`/apply`}>
                 <UserPlus className="mr-3 h-6 w-6" />
                 APPLY FOR ADMISSION
               </Link>
             </Button>
             <Button asChild size="lg" className="bg-yellow-400 text-primary-dark hover:bg-white hover:text-primary font-black px-12 py-6 text-xl border-4 border-primary-dark">
-              <Link href={`//visit`}>
+              <Link href={`/visit`}>
                 <MapPin className="mr-3 h-6 w-6" />
                 SCHEDULE A VISIT
               </Link>
@@ -565,10 +565,10 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
             <div>
               <h3 className="font-black mb-6 text-lg">QUICK LINKS</h3>
               <ul className="space-y-3 font-semibold">
-                <li><Link href={`//about`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">ABOUT US</Link></li>
-                <li><Link href={`//admissions`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">ADMISSIONS</Link></li>
-                <li><Link href={`//programs`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">PROGRAMS</Link></li>
-                <li><Link href={`//news`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">NEWS & EVENTS</Link></li>
+                <li><Link href={`/about`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">ABOUT US</Link></li>
+                <li><Link href={`/admissions`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">ADMISSIONS</Link></li>
+                <li><Link href={`/programs`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">PROGRAMS</Link></li>
+                <li><Link href={`/news`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">NEWS & EVENTS</Link></li>
               </ul>
             </div>
             

@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Add experimental features to help with routing issues
+  experimental: {
+    // Enable better error handling
+    serverComponentsExternalPackages: [],
+  },
+  
   // Configure headers for better caching control
   async headers() {
     return [

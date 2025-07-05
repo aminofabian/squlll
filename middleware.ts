@@ -10,7 +10,8 @@ export function middleware(request: NextRequest) {
     hostname,
     pathname: url.pathname,
     search: url.search,
-    isProd
+    isProd,
+    userAgent: request.headers.get('user-agent')?.substring(0, 100)
   })
   
   // Define your domains
@@ -24,6 +25,7 @@ export function middleware(request: NextRequest) {
       url.pathname.startsWith('/api') || 
       url.pathname.startsWith('/static') ||
       url.pathname.includes('.')) {
+    console.log('Middleware - Skipping static/api route:', url.pathname)
     return NextResponse.next()
   }
 
@@ -32,9 +34,23 @@ export function middleware(request: NextRequest) {
     !hostname.startsWith('www.') &&
     hostname !== (isProd ? 'squl.co.ke' : 'localhost:3000')
 
+  console.log('Middleware - Subdomain check:', {
+    isSubdomain,
+    currentHost,
+    hostname,
+    isProd
+  })
+
   if (isSubdomain) {
-    // This is a school subdomain
-    // Rewrite to /school/[subdomain]/pathname
+    // Handle root path for subdomains - redirect to school page instead of rewrite
+    if (url.pathname === '/') {
+      console.log('Middleware - Redirecting subdomain root to school page')
+      const schoolUrl = new URL(`/school/${currentHost}`, request.url)
+      console.log('Middleware - Redirect URL:', schoolUrl.toString())
+      return NextResponse.redirect(schoolUrl)
+    }
+    
+    // This is a school subdomain - rewrite to /school/[subdomain]/pathname
     const newPathname = `/school/${currentHost}${url.pathname}`
     console.log('Middleware - Rewriting subdomain:', {
       from: url.pathname,
@@ -53,6 +69,7 @@ export function middleware(request: NextRequest) {
       response.headers.set('Expires', '0')
     }
     
+    console.log('Middleware - Returning rewritten response for:', newPathname)
     return response
   }
 
@@ -68,6 +85,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  console.log('Middleware - No special handling needed, passing through')
   return NextResponse.next()
 }
 
