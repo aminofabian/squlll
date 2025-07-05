@@ -50,12 +50,20 @@ import {
   Grid2x2PlusIcon,
   BookKeyIcon,
   BookOpen,
-  Loader2
+  Loader2,
+  Download,
+  Printer,
+  ChevronDown,
+  ChevronRight,
+  FileText
 } from "lucide-react";
 
 // Import hooks and types for real data
 import { useStudents, useStudentsFromStore } from '@/lib/hooks/useStudents';
 import { GraphQLStudent } from '@/types/student';
+import SchoolReportCard from './components/ReportCard';
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
 
 // Kenya-specific student type (adapted from GraphQL data)
 type Student = {
@@ -382,10 +390,16 @@ export default function StudentsPage() {
   const [selectedGrade, setSelectedGrade] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
+  const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(new Set());
+  const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
 
   // Fetch real data from the store
   const { students: graphqlStudents, isLoading, error } = useStudentsFromStore();
   const { refetch } = useStudents();
+  
+  // Fetch school configuration
+  const { data: schoolConfig } = useSchoolConfig();
+  const { config } = useSchoolConfigStore();
 
   // Transform GraphQL data to match our Student type
   const students: Student[] = useMemo(() => {
@@ -1193,9 +1207,147 @@ export default function StudentsPage() {
                     <CardTitle>Student Documents</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center p-8 text-muted-foreground">
-                      Student documents will appear here
-                    </div>
+                    {selectedStudent && (
+                      <div className="space-y-4">
+                        {/* Report Card Section */}
+                        <div className="border border-[#246a59]/20 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => {
+                              const newExpanded = new Set(expandedDocuments);
+                              if (newExpanded.has('report-card')) {
+                                newExpanded.delete('report-card');
+                              } else {
+                                newExpanded.add('report-card');
+                              }
+                              setExpandedDocuments(newExpanded);
+                            }}
+                            className="w-full p-4 bg-[#246a59]/5 hover:bg-[#246a59]/10 transition-colors flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-[#246a59] rounded-lg flex items-center justify-center">
+                                <BookOpen className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="text-left">
+                                <h3 className="font-semibold text-[#246a59]">Academic Report Card</h3>
+                                <p className="text-sm text-gray-600">Term 1, 2024</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {expandedDocuments.has('report-card') ? (
+                                <ChevronDown className="w-5 h-5 text-[#246a59]" />
+                              ) : (
+                                <ChevronRight className="w-5 h-5 text-[#246a59]" />
+                              )}
+                            </div>
+                          </button>
+                          
+                          {expandedDocuments.has('report-card') && (
+                            <div className="p-4 border-t border-[#246a59]/20 bg-white">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-700">Template:</span>
+                                    <select
+                                      value={selectedTemplate}
+                                      onChange={(e) => setSelectedTemplate(e.target.value as 'modern' | 'classic' | 'compact' | 'uganda-classic')}
+                                      className="border border-[#246a59]/30 rounded px-2 py-1 text-sm bg-white"
+                                    >
+                                      <option value="modern">Modern</option>
+                                      <option value="classic">Classic</option>
+                                      <option value="compact">Compact</option>
+                                      <option value="uganda-classic">Uganda Classic</option>
+                                    </select>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="border-[#246a59]/30 text-[#246a59] hover:bg-[#246a59]/10"
+                                    >
+                                      <Download className="w-4 h-4 mr-2" />
+                                      Download PDF
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="border-[#246a59]/30 text-[#246a59] hover:bg-[#246a59]/10"
+                                    >
+                                      <Printer className="w-4 h-4 mr-2" />
+                                      Print
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Report Card Component */}
+                              <div className="border border-[#246a59]/20 rounded-lg overflow-hidden">
+                                <SchoolReportCard
+                                  student={{
+                                    id: selectedStudent.id,
+                                    name: selectedStudent.name,
+                                    admissionNumber: selectedStudent.admissionNumber,
+                                    gender: selectedStudent.gender,
+                                    grade: selectedStudent.grade,
+                                    stream: selectedStudent.stream,
+                                    user: { email: selectedStudent.contacts?.guardianEmail || '' }
+                                  }}
+                                  school={{
+                                    id: config?.id || 'school-id',
+                                    schoolName: config?.tenant?.schoolName || 'School Name',
+                                    subdomain: config?.tenant?.subdomain || 'school'
+                                  }}
+                                  subjects={config?.selectedLevels?.flatMap(level => level.subjects) || []}
+                                  term="1"
+                                  year="2024"
+                                  template={selectedTemplate}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Other Documents Section */}
+                        <div className="border border-[#246a59]/20 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => {
+                              const newExpanded = new Set(expandedDocuments);
+                              if (newExpanded.has('other-docs')) {
+                                newExpanded.delete('other-docs');
+                              } else {
+                                newExpanded.add('other-docs');
+                              }
+                              setExpandedDocuments(newExpanded);
+                            }}
+                            className="w-full p-4 bg-[#246a59]/5 hover:bg-[#246a59]/10 transition-colors flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-[#246a59] rounded-lg flex items-center justify-center">
+                                <FileText className="w-5 h-5 text-white" />
+                              </div>
+                              <div className="text-left">
+                                <h3 className="font-semibold text-[#246a59]">Other Documents</h3>
+                                <p className="text-sm text-gray-600">Additional student documents</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {expandedDocuments.has('other-docs') ? (
+                                <ChevronDown className="w-5 h-5 text-[#246a59]" />
+                              ) : (
+                                <ChevronRight className="w-5 h-5 text-[#246a59]" />
+                              )}
+                            </div>
+                          </button>
+                          
+                          {expandedDocuments.has('other-docs') && (
+                            <div className="p-4 border-t border-[#246a59]/20 bg-white">
+                              <div className="text-center p-8 text-muted-foreground">
+                                Additional student documents will appear here
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

@@ -39,6 +39,7 @@ import { mockExams, mockStudentResults, subjects } from "@/lib/data/mockExams"
 import { Exam, StudentExamResult } from "@/types/exam"
 import { format } from "date-fns"
 import { CreateExamDrawer } from "./components/CreateExamDrawer"
+import { ReportCardTemplateModal } from "./components/ReportCardTemplateModal"
 
 // Student Performance View Component
 function StudentPerformanceView({ studentId }: { studentId: string }) {
@@ -151,10 +152,25 @@ function StudentPerformanceView({ studentId }: { studentId: string }) {
             
             <div className="text-right space-y-3">
               <div className="flex gap-2">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Report Card
-                </Button>
+                <ReportCardTemplateModal
+                  student={{
+                    id: student.id,
+                    name: `${student.firstName} ${student.lastName}`,
+                    admissionNumber: student.admissionNumber,
+                    gender: student.gender,
+                    grade: student.class,
+                    stream: student.stream,
+                    user: { email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@school.com` }
+                  }}
+                  school={{
+                    id: '',
+                    schoolName: '',
+                    subdomain: ''
+                  }}
+                  subjects={subjects}
+                  term="1"
+                  year="2024"
+                />
                 <Button variant="outline">
                   <FileText className="h-4 w-4 mr-2" />
                   Transcript
