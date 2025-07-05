@@ -42,14 +42,6 @@ export function middleware(request: NextRequest) {
   })
 
   if (isSubdomain) {
-    // Handle root path for subdomains - redirect to school page instead of rewrite
-    if (url.pathname === '/') {
-      console.log('Middleware - Redirecting subdomain root to school page')
-      const schoolUrl = new URL(`/school/${currentHost}`, request.url)
-      console.log('Middleware - Redirect URL:', schoolUrl.toString())
-      return NextResponse.redirect(schoolUrl)
-    }
-    
     // This is a school subdomain - rewrite to /school/[subdomain]/pathname
     const newPathname = `/school/${currentHost}${url.pathname}`
     console.log('Middleware - Rewriting subdomain:', {
