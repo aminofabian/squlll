@@ -9,8 +9,10 @@ const nextConfig: NextConfig = {
   // Add experimental features to help with routing issues
   experimental: {
     // Enable better error handling
-    serverComponentsExternalPackages: [],
   },
+  
+  // Configure server external packages
+  serverExternalPackages: [],
   
   // Configure headers for better caching control
   async headers() {

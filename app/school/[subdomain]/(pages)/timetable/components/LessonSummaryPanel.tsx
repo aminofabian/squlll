@@ -8,6 +8,7 @@ interface LessonStats {
   totalTeachers: number;
   totalSubjects: number;
   doubleLessons: number;
+  totalBreaks: number;
   mostBusyTeacher: string;
   mostBusyDay: string;
   mostBusyTime: string;
@@ -17,6 +18,7 @@ interface LessonStats {
   subjectDistribution: Record<string, number>;
   dayDistribution: Record<string, number>;
   timeSlotUsage: Record<string, number>;
+  breakDistribution: Record<string, number>;
 }
 
 interface LessonSummaryPanelProps {
