@@ -14,6 +14,7 @@ interface TimetableControlsProps {
   onToggleConflicts: () => void;
   onSaveTimetable: () => void;
   onLoadTimetable: () => void;
+  onLoadMockData: () => void;
   showConflicts: boolean;
   getGradeProgress: (grade: string) => number;
 }
@@ -31,6 +32,7 @@ export const TimetableControls: React.FC<TimetableControlsProps> = ({
   onToggleConflicts,
   onSaveTimetable,
   onLoadTimetable,
+  onLoadMockData,
   showConflicts,
   getGradeProgress
 }) => {
@@ -70,6 +72,13 @@ export const TimetableControls: React.FC<TimetableControlsProps> = ({
 
         {/* Action Buttons */}
         <div className="flex gap-2">
+          <button
+            onClick={onLoadMockData}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Load Mock Data
+          </button>
           <button
             onClick={onSaveTimetable}
             className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

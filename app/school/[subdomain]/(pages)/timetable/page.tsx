@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { CheckCircle, Clock } from 'lucide-react';
 import {
   TimetableHeader,
   TimetableControls,
@@ -9,37 +10,12 @@ import {
   LessonSummaryPanel,
   TeacherManagementModal,
   TimeSlotManager,
-  BreakManager
+  BreakManager,
+  TimeSlotModal
 } from './components';
+import { useTimetableStore, type Teacher, type CellData, type TimeSlot, type Break } from '@/lib/stores/useTimetableStore';
 
 // Type definitions
-interface Teacher {
-  id: number;
-  subjects: string[];
-  color: string;
-}
-
-interface CellData {
-  subject: string;
-  teacher: string;
-  isBreak?: boolean;
-  breakType?: string;
-}
-
-interface TimeSlot {
-  id: number;
-  time: string;
-  color: string;
-}
-
-interface Break {
-  id: string;
-  name: string;
-  type: 'lunch' | 'recess' | 'break' | 'assembly' | 'custom';
-  color: string;
-  icon: string;
-}
-
 interface Conflict {
   teacher: string;
   conflictingClasses: Array<{
@@ -78,37 +54,29 @@ interface LessonStats {
 }
 
 const SmartTimetable = () => {
-  const [selectedGrade, setSelectedGrade] = useState('Grade 1');
-  const [subjects, setSubjects] = useState<Record<string, CellData>>({});
-  const [teachers, setTeachers] = useState<Record<string, Teacher>>({
-    'John Smith': { id: 1, subjects: ['Mathematics', 'Physics'], color: 'bg-primary text-white' },
-    'Mary Johnson': { id: 2, subjects: ['English', 'Literature'], color: 'bg-emerald-600 text-white' },
-    'David Brown': { id: 3, subjects: ['Chemistry', 'Biology'], color: 'bg-amber-500 text-white' },
-    'Sarah Wilson': { id: 4, subjects: ['History', 'Geography'], color: 'bg-sky-500 text-white' },
-    'Michael Davis': { id: 5, subjects: ['Art', 'Music'], color: 'bg-orange-500 text-white' },
-    'Lisa Anderson': { id: 6, subjects: ['Physical Education', 'Health'], color: 'bg-green-600 text-white' }
-  });
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
-    { id: 1, time: '8:00 AM – 8:30 AM', color: 'border-l-primary' },
-    { id: 2, time: '8:30 AM – 9:30 AM', color: 'border-l-emerald-600' },
-    { id: 3, time: '9:30 AM – 10:30 AM', color: 'border-l-amber-500' },
-    { id: 4, time: '10:30 AM – 11:30 AM', color: 'border-l-sky-500' },
-    { id: 5, time: '11:30 AM – 12:15 PM', color: 'border-l-orange-500' },
-    { id: 6, time: '12:15 PM – 12:40 PM', color: 'border-l-green-600' },
-    { id: 7, time: '12:40 PM – 1:25 PM', color: 'border-l-primary' },
-    { id: 8, time: '1:25 PM – 2:10 PM', color: 'border-l-emerald-600' }
-  ]);
-  const [breaks, setBreaks] = useState<Break[]>([
-    { id: 'lunch-1', name: 'Lunch', type: 'lunch', color: 'bg-orange-500', icon: '🍽️' },
-    { id: 'recess-1', name: 'Morning Recess', type: 'recess', color: 'bg-green-500', icon: '🏃' },
-    { id: 'break-1', name: 'Break', type: 'break', color: 'bg-blue-500', icon: '☕' }
-  ]);
+  // Use shared store
+  const { 
+    mainTimetable, 
+    updateMainTimetable,
+    loadMockData
+  } = useTimetableStore();
+
+  // Local state
   const [editingCell, setEditingCell] = useState<string | null>(null);
   const [editingTimeSlot, setEditingTimeSlot] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [timeSlotEditValue, setTimeSlotEditValue] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
-  const [grades, setGrades] = useState([
+  const [showTimeSlotSuccess, setShowTimeSlotSuccess] = useState(false);
+  const [newTimeSlotData, setNewTimeSlotData] = useState({
+    startHour: '9',
+    startMinute: '00',
+    startPeriod: 'AM',
+    endHour: '10',
+    endMinute: '00',
+    endPeriod: 'AM'
+  });
+  const [grades] = useState([
     'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 
     'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
     'Grade 11', 'Grade 12'
@@ -117,19 +85,46 @@ const SmartTimetable = () => {
   const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [showBreakModal, setShowBreakModal] = useState(false);
+  const [showTimeSlotAddModal, setShowTimeSlotAddModal] = useState(false);
   const [conflicts, setConflicts] = useState<Record<string, Conflict>>({});
   const [showConflicts, setShowConflicts] = useState(false);
+
+  // Extract data from store
+  const { subjects, teachers, timeSlots, breaks, selectedGrade } = mainTimetable;
+
+    // Create a merged subjects object that includes breaks from all grades
+  const mergedSubjects = { ...subjects };
+  
+      // Add breaks from all grades to ensure they're always visible
+  Object.entries(subjects).forEach(([cellKey, cellData]) => {
+    if (cellData && cellData.isBreak) {
+      // Extract the time and day from the cell key
+      const [grade, dayIndex, timeId] = cellKey.split('-');
+      
+      // Create a cell key for the current grade with the same time and day
+      const currentGradeCellKey = `${selectedGrade}-${dayIndex}-${timeId}`;
+      
+      // Always add the break for the current grade, regardless of whether it exists
+      mergedSubjects[currentGradeCellKey] = cellData;
+    }
+  });
+  
+  // Debug: Log what we're doing
+  console.log('Selected grade:', selectedGrade);
+  console.log('Total subjects in mergedSubjects:', Object.keys(mergedSubjects).length);
+  console.log('Breaks in mergedSubjects:', Object.entries(mergedSubjects).filter(([key, data]) => data?.isBreak).length);
+
+
 
   const days = [
     { name: 'Mon', color: 'bg-primary' },
     { name: 'Tues', color: 'bg-emerald-600' },
     { name: 'Wed', color: 'bg-amber-500' },
     { name: 'Thurs', color: 'bg-sky-500' },
-    { name: 'Fri', color: 'bg-orange-500' },
-    { name: 'Sat', color: 'bg-green-600' }
+    { name: 'Fri', color: 'bg-orange-500' }
   ];
 
-  const getCellKey = (grade: string, timeId: number, dayIndex: number): string => `${grade}-${timeId}-${dayIndex}`;
+  const getCellKey = (grade: string, timeId: number, dayIndex: number): string => `${grade}-${dayIndex + 1}-${timeId - 1}`;
 
   // Check if input is a break
   const isBreakInput = (input: string): Break | null => {
@@ -150,7 +145,7 @@ const SmartTimetable = () => {
     let totalBreaks = 0;
 
     // Analyze each cell
-    Object.entries(subjects).forEach(([cellKey, cellData]) => {
+    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
       if (cellData && cellData.subject) {
         const isBreak = isBreakInput(cellData.subject);
         
@@ -185,7 +180,7 @@ const SmartTimetable = () => {
     });
 
     // Check for double lessons (same subject in consecutive time slots)
-    Object.entries(subjects).forEach(([cellKey, cellData]) => {
+    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
       if (cellData && cellData.subject && !isBreakInput(cellData.subject)) {
         const [grade, timeId, dayIndex] = cellKey.split('-');
         const currentTimeId = parseInt(timeId);
@@ -193,7 +188,7 @@ const SmartTimetable = () => {
         
         // Check next time slot
         const nextCellKey = getCellKey(selectedGrade, currentTimeId + 1, currentDayIndex);
-        const nextCellData = subjects[nextCellKey];
+        const nextCellData = mergedSubjects[nextCellKey];
         
         if (nextCellData && nextCellData.subject === cellData.subject && nextCellData.teacher === cellData.teacher) {
           doubleLessons++;
@@ -245,7 +240,7 @@ const SmartTimetable = () => {
     const teacherSchedule: TeacherSchedule = {};
 
     // Build teacher schedule map
-    Object.entries(subjects).forEach(([cellKey, cellData]) => {
+    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
       if (cellData && cellData.teacher && !isBreakInput(cellData.subject)) {
         const teacher = cellData.teacher;
         const [grade, timeId, dayIndex] = cellKey.split('-');
@@ -287,12 +282,12 @@ const SmartTimetable = () => {
 
   useEffect(() => {
     checkTeacherConflicts();
-  }, [subjects]);
+  }, [mainTimetable.subjects]);
 
   const handleCellClick = (timeId: number, dayIndex: number) => {
     const cellKey = getCellKey(selectedGrade, timeId, dayIndex);
     setEditingCell(cellKey);
-    const currentData = subjects[cellKey];
+    const currentData = mergedSubjects[cellKey];
     setInputValue(currentData?.subject || '');
     setSelectedTeacher(currentData?.teacher || '');
   };
@@ -310,7 +305,7 @@ const SmartTimetable = () => {
       const updatedTimeSlots = timeSlots.map(slot =>
         slot.id === timeId ? { ...slot, time: timeSlotEditValue.trim() } : slot
       );
-      setTimeSlots(updatedTimeSlots);
+      updateMainTimetable({ timeSlots: updatedTimeSlots });
     }
     setEditingTimeSlot(null);
     setTimeSlotEditValue('');
@@ -325,6 +320,75 @@ const SmartTimetable = () => {
     }
   };
 
+  const handleNewTimeSlotDataChange = (field: string, value: string) => {
+    setNewTimeSlotData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleNewTimeSlotKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAddTimeSlot();
+    } else if (e.key === 'Escape') {
+      setShowTimeSlotAddModal(false);
+    }
+  };
+
+  const handleStartAddTimeSlot = () => {
+    setShowTimeSlotAddModal(true);
+  };
+
+  const handleAddTimeSlot = () => {
+    const startTime = `${newTimeSlotData.startHour}:${newTimeSlotData.startMinute} ${newTimeSlotData.startPeriod}`;
+    const endTime = `${newTimeSlotData.endHour}:${newTimeSlotData.endMinute} ${newTimeSlotData.endPeriod}`;
+    const timeString = `${startTime} – ${endTime}`;
+    
+    const colors = [
+      'border-l-primary',
+      'border-l-emerald-600',
+      'border-l-amber-500',
+      'border-l-sky-500',
+      'border-l-orange-500',
+      'border-l-green-600'
+    ];
+    
+    const newTimeSlot: TimeSlot = {
+      id: Math.max(...timeSlots.map(slot => slot.id), 0) + 1,
+      time: timeString,
+      color: colors[timeSlots.length % colors.length]
+    };
+    
+    updateMainTimetable({ timeSlots: [...timeSlots, newTimeSlot] });
+    setShowTimeSlotAddModal(false);
+    
+    // Reset time slot data to default values
+    setNewTimeSlotData({
+      startHour: '9',
+      startMinute: '00',
+      startPeriod: 'AM',
+      endHour: '10',
+      endMinute: '00',
+      endPeriod: 'AM'
+    });
+    
+    // Show success feedback
+    setShowTimeSlotSuccess(true);
+    setTimeout(() => setShowTimeSlotSuccess(false), 3000);
+    
+    // Scroll to the new time slot
+    setTimeout(() => {
+      const newSlotElement = document.querySelector(`[data-time-slot-id="${newTimeSlot.id}"]`);
+      if (newSlotElement) {
+        newSlotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
+  const handleCancelAddTimeSlot = () => {
+    setShowTimeSlotAddModal(false);
+  };
+
   const handleInputSubmit = () => {
     if (editingCell && inputValue.trim()) {
       const breakInfo = isBreakInput(inputValue);
@@ -335,10 +399,18 @@ const SmartTimetable = () => {
         breakType: breakInfo?.type
       };
 
-      setSubjects(prev => ({
-        ...prev,
+      console.log('Adding lesson to main timetable:', {
+        cellKey: editingCell,
+        cellData: newCellData
+      });
+
+      // Update the subjects object properly
+      const updatedSubjects = {
+        ...mergedSubjects,
         [editingCell]: newCellData
-      }));
+      };
+
+      updateMainTimetable({ subjects: updatedSubjects });
       setEditingCell(null);
       setInputValue('');
       setSelectedTeacher('');
@@ -355,10 +427,13 @@ const SmartTimetable = () => {
         breakType: breakInfo.type
       };
 
-      setSubjects(prev => ({
-        ...prev,
+      // Update the subjects object properly
+      const updatedSubjects = {
+        ...mergedSubjects,
         [cellKey]: newCellData
-      }));
+      };
+
+      updateMainTimetable({ subjects: updatedSubjects });
     }
   };
 
@@ -387,14 +462,16 @@ const SmartTimetable = () => {
         'bg-green-600 text-white'
       ];
       
-      setTeachers(prev => ({
-        ...prev,
-        [name]: {
-          id: Object.keys(prev).length + 1,
-          subjects: teacherSubjects,
-          color: colors[Object.keys(prev).length % colors.length]
+      updateMainTimetable({
+        teachers: {
+          ...teachers,
+          [name]: {
+            id: Object.keys(teachers).length + 1,
+            subjects: teacherSubjects,
+            color: colors[Object.keys(teachers).length % colors.length]
+          }
         }
-      }));
+      });
     }
   };
 
@@ -413,7 +490,7 @@ const SmartTimetable = () => {
     timeSlots.forEach(slot => {
       days.forEach((day, dayIndex) => {
         const cellKey = getCellKey(grade, slot.id, dayIndex);
-        if (subjects[cellKey]) {
+        if (mergedSubjects[cellKey]) {
           filledCells++;
         }
       });
@@ -423,15 +500,15 @@ const SmartTimetable = () => {
   };
 
   const clearCell = (cellKey: string) => {
-    const newSubjects = { ...subjects };
+    const newSubjects = { ...mergedSubjects };
     delete newSubjects[cellKey];
-    setSubjects(newSubjects);
+    updateMainTimetable({ subjects: newSubjects });
   };
 
   const handleUpdateTimeSlots = (newTimeSlots: TimeSlot[]) => {
-    setTimeSlots(newTimeSlots);
+    updateMainTimetable({ timeSlots: newTimeSlots });
     // Clear any subjects that reference removed time slots
-    const newSubjects = { ...subjects };
+    const newSubjects = { ...mergedSubjects };
     Object.keys(newSubjects).forEach(cellKey => {
       const [grade, timeId, dayIndex] = cellKey.split('-');
       const timeSlotExists = newTimeSlots.some(slot => slot.id === parseInt(timeId));
@@ -439,11 +516,11 @@ const SmartTimetable = () => {
         delete newSubjects[cellKey];
       }
     });
-    setSubjects(newSubjects);
+    updateMainTimetable({ subjects: newSubjects });
   };
 
   const handleUpdateBreaks = (newBreaks: Break[]) => {
-    setBreaks(newBreaks);
+    updateMainTimetable({ breaks: newBreaks });
   };
 
   const handleSaveTimetable = () => {
@@ -460,7 +537,7 @@ const SmartTimetable = () => {
     };
 
     // Convert subjects to the required format
-    Object.entries(subjects).forEach(([cellKey, cellData]) => {
+    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
       if (cellData) {
         timetableData.timetable[cellKey] = {
           subject: cellData.subject,
@@ -514,20 +591,20 @@ const SmartTimetable = () => {
               });
 
               // Update state
-              setSubjects(newSubjects);
+              updateMainTimetable({ subjects: newSubjects });
               
               // Optionally load other data if available
               if (data.metadata.timeSlots) {
-                setTimeSlots(data.metadata.timeSlots);
+                updateMainTimetable({ timeSlots: data.metadata.timeSlots });
               }
               if (data.metadata.breaks) {
-                setBreaks(data.metadata.breaks);
+                updateMainTimetable({ breaks: data.metadata.breaks });
               }
               if (data.metadata.teachers) {
-                setTeachers(data.metadata.teachers);
+                updateMainTimetable({ teachers: data.metadata.teachers });
               }
               if (data.metadata.grade) {
-                setSelectedGrade(data.metadata.grade);
+                updateMainTimetable({ selectedGrade: data.metadata.grade });
               }
 
               alert(`Timetable loaded successfully!`);
@@ -549,13 +626,26 @@ const SmartTimetable = () => {
       <div className="max-w-7xl mx-auto">
         <TimetableHeader totalConflicts={getTotalConflicts()} />
 
+        {/* Success Notification */}
+        {showTimeSlotSuccess && (
+          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <div>
+                <div className="text-sm font-medium text-green-800">Time slot added successfully!</div>
+                <div className="text-xs text-green-600">The new time period is now available for scheduling</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <TimetableControls
           selectedGrade={selectedGrade}
           grades={grades}
           showGradeDropdown={showGradeDropdown}
           totalConflicts={getTotalConflicts()}
           onGradeSelect={(grade) => {
-            setSelectedGrade(grade);
+            updateMainTimetable({ selectedGrade: grade });
             setShowGradeDropdown(false);
           }}
           onGradeDropdownToggle={() => setShowGradeDropdown(!showGradeDropdown)}
@@ -565,6 +655,7 @@ const SmartTimetable = () => {
           onToggleConflicts={() => setShowConflicts(!showConflicts)}
           onSaveTimetable={handleSaveTimetable}
           onLoadTimetable={handleLoadTimetable}
+          onLoadMockData={loadMockData}
           showConflicts={showConflicts}
           getGradeProgress={getGradeProgress}
         />
@@ -579,11 +670,91 @@ const SmartTimetable = () => {
         )}
 
         {/* Main Content with Timetable and Summary */}
-        <div className="flex gap-6">
-          <div className="flex-1">
-            <TimetableGrid
+                            <div className="flex gap-6">
+            <div className="flex-1">
+              {/* Debug: Check lunch breaks */}
+              {(() => {
+                const lunchBreaksInSlot7 = Object.entries(mergedSubjects).filter(([key, data]) => {
+                  const [grade, dayIndex, timeId] = key.split('-');
+                  return data?.isBreak && data?.subject === 'Lunch' && timeId === '7';
+                });
+                console.log('Lunch breaks in slot 7 in mergedSubjects:', lunchBreaksInSlot7.length);
+                if (lunchBreaksInSlot7.length > 0) {
+                  console.log('Lunch breaks details:', lunchBreaksInSlot7);
+                }
+                
+                // Also check all breaks in mergedSubjects
+                const allBreaks = Object.entries(mergedSubjects).filter(([key, data]) => data?.isBreak);
+                console.log('All breaks in mergedSubjects:', allBreaks.length);
+                
+                // Check what's in the original mainTimetable.subjects
+                const originalLunchBreaks = Object.entries(mainTimetable.subjects).filter(([key, data]) => {
+                  const [grade, dayIndex, timeId] = key.split('-');
+                  return data?.isBreak && data?.subject === 'Lunch' && timeId === '7';
+                });
+                console.log('Original lunch breaks in mainTimetable:', originalLunchBreaks.length);
+                
+                // Let's see what breaks are actually in the data
+                const allBreaksInData = Object.entries(mainTimetable.subjects).filter(([key, data]) => data?.isBreak);
+                console.log('All breaks in mainTimetable:', allBreaksInData.length);
+                
+                // Show some examples of breaks
+                const sampleBreaks = allBreaksInData.slice(0, 5);
+                console.log('Sample breaks:', sampleBreaks.map(([key, data]) => ({ key, subject: data.subject, isBreak: data.isBreak })));
+                
+                // Check specifically for time slot 7 entries
+                const timeSlot7Entries = Object.entries(mainTimetable.subjects).filter(([key, data]) => {
+                  const [grade, dayIndex, timeId] = key.split('-');
+                  return timeId === '7';
+                });
+                console.log('All time slot 7 entries:', timeSlot7Entries.map(([key, data]) => ({ key, subject: data.subject, isBreak: data.isBreak })));
+                
+                // Let's see what time slots are actually in the data
+                const allTimeSlots = Object.entries(mainTimetable.subjects).map(([key, data]) => {
+                  const [grade, dayIndex, timeId] = key.split('-');
+                  return { key, timeId, dayIndex, subject: data.subject, isBreak: data.isBreak };
+                });
+                
+                // Get unique time slot IDs
+                const uniqueTimeSlots = [...new Set(allTimeSlots.map(item => item.timeId))].sort((a, b) => parseInt(a) - parseInt(b));
+                console.log('Unique time slot IDs in data:', uniqueTimeSlots);
+                
+                // Check what's in each time slot
+                uniqueTimeSlots.forEach(timeId => {
+                  const entriesInSlot = allTimeSlots.filter(item => item.timeId === timeId);
+                  const breaksInSlot = entriesInSlot.filter(item => item.isBreak);
+                  console.log(`Time slot ${timeId}: ${entriesInSlot.length} entries, ${breaksInSlot.length} breaks`);
+                  if (breaksInSlot.length > 0) {
+                    console.log(`  Breaks in slot ${timeId}:`, breaksInSlot.map(item => ({ key: item.key, subject: item.subject })));
+                  }
+                });
+                
+                // Debug: Show what cell keys are being generated for the current grade
+                console.log('Debug: Cell keys being generated for', selectedGrade);
+                for (let dayIndex = 0; dayIndex < 5; dayIndex++) {
+                  for (let timeId = 1; timeId <= 10; timeId++) {
+                    const cellKey = getCellKey(selectedGrade, timeId, dayIndex);
+                    const cellData = mergedSubjects[cellKey];
+                    if (cellData) {
+                      console.log(`  ${cellKey}: ${cellData.subject} (${cellData.isBreak ? 'break' : 'lesson'})`);
+                    }
+                  }
+                }
+                
+                // Debug: Show what's actually in mergedSubjects for the current grade
+                console.log('Debug: All data for', selectedGrade, 'in mergedSubjects:');
+                Object.entries(mergedSubjects)
+                  .filter(([key, data]) => key.startsWith(selectedGrade))
+                  .forEach(([key, data]) => {
+                    console.log(`  ${key}: ${data.subject} (${data.isBreak ? 'break' : 'lesson'})`);
+                  });
+                
+                return null;
+              })()}
+              
+              <TimetableGrid
               selectedGrade={selectedGrade}
-              subjects={subjects}
+              subjects={mergedSubjects}
               teachers={teachers}
               breaks={breaks}
               conflicts={conflicts}
@@ -594,6 +765,10 @@ const SmartTimetable = () => {
               inputValue={inputValue}
               selectedTeacher={selectedTeacher}
               timeSlotEditValue={timeSlotEditValue}
+              isAddingTimeSlot={false}
+              newTimeSlotValue=""
+              showTimeSlotSuccess={showTimeSlotSuccess}
+              newTimeSlotData={newTimeSlotData}
               onCellClick={handleCellClick}
               onTimeSlotClick={handleTimeSlotClick}
               onInputChange={setInputValue}
@@ -613,6 +788,12 @@ const SmartTimetable = () => {
               onKeyPress={handleKeyPress}
               onTimeSlotKeyPress={handleTimeSlotKeyPress}
               onAddBreak={handleAddBreak}
+              onStartAddTimeSlot={handleStartAddTimeSlot}
+              onAddTimeSlot={handleAddTimeSlot}
+              onNewTimeSlotChange={() => {}}
+              onNewTimeSlotKeyPress={() => {}}
+              onCancelAddTimeSlot={handleCancelAddTimeSlot}
+              onNewTimeSlotDataChange={handleNewTimeSlotDataChange}
               getCellKey={getCellKey}
             />
           </div>
@@ -642,12 +823,21 @@ const SmartTimetable = () => {
           onClose={() => setShowBreakModal(false)}
         />
 
+        <TimeSlotModal
+          isOpen={showTimeSlotAddModal}
+          onClose={() => setShowTimeSlotAddModal(false)}
+          onAdd={handleAddTimeSlot}
+          timeSlotData={newTimeSlotData}
+          onTimeSlotDataChange={handleNewTimeSlotDataChange}
+        />
+
         {/* Instructions */}
         <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
           <p>Click any cell to assign a subject and teacher. Click time slots to edit them directly.</p>
           <p>Type break names (like "Lunch", "Recess") to add break periods with special styling.</p>
           <p>Red cells indicate teacher conflicts. Use the conflict panel to resolve scheduling issues.</p>
           <p>Hover over time slots to see the edit icon, or use the management buttons for advanced options.</p>
+          <p>Click "Add New Time Slot" to open a modal with an intuitive time picker for start/end times.</p>
         </div>
       </div>
     </div>

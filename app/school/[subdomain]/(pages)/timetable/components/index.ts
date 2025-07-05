@@ -8,4 +8,5 @@ export { ScheduleAnalysis } from './ScheduleAnalysis';
 export { TeacherManagementModal } from './TeacherManagementModal';
 export { LessonSummaryPanel } from './LessonSummaryPanel';
 export { TimeSlotManager } from './TimeSlotManager';
-export { BreakManager } from './BreakManager'; 
+export { BreakManager } from './BreakManager';
+export { TimeSlotModal } from './TimeSlotModal'; 

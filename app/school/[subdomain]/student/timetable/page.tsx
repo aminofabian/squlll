@@ -1,654 +1,815 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { BookOpen, CalendarDays, CheckCircle2, Timer, MapPin, UserCircle, Clock, ArrowRight } from 'lucide-react'
-import { Button } from "@/components/ui/button"
+import React, { useState, useEffect } from 'react';
+import { CheckCircle2, Timer, Clock, Users, MapPin, BookOpen, Calendar, Save, Upload, RefreshCw, ChevronDown } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useTimetableStore, type CellData } from '@/lib/stores/useTimetableStore';
 
-interface Lesson {
-  id: string
-  subject: string
-  type?: 'CAS' | 'CORE' | 'LANG'
-  completed?: boolean
-  teacher?: string
-  room?: string
+// Type definitions
+interface StudentLesson {
+  id: string;
+  subject: string;
+  teacher: string;
+  room: string;
+  day: string;
+  period: number;
+  isBreak?: boolean;
+  breakType?: string;
+  completed?: boolean;
 }
 
-const periods = [
-  "8:20-8:55",
-  "8:55-9:30",
-  "9:30-9:50",
-  "9:50-10:25",
-  "10:25-11:00",
-  "11:00-11:30",
-  "11:30-12:05",
-  "12:05-12:40",
-  "12:40-2:00",
-  "2:00-2:35"
-]
-
-const weekDays = ["MONDAY", "TUESDAY", "WED", "THURS", "FRIDAY"]
-
-// CBC Lower Primary Timetable
-const mockWeekSchedule: Record<string, (Lesson | 'BREAK' | 'LUNCH' | null)[]> = {
-  "MONDAY": [
-    { id: "mon-1", subject: "ENGLISH", type: "CORE", teacher: "Mrs. Johnson", room: "Room 12A" },
-    { id: "mon-2", subject: "MATHS", type: "CORE", teacher: "Mr. Williams", room: "Room 14B" },
-    'BREAK',
-    { id: "mon-3", subject: "INDIG LANG", type: "LANG", teacher: "Mr. Omondi", room: "Language Lab" },
-    { id: "mon-4", subject: "MOVEMENT", type: "CAS", teacher: "Mrs. Njeri", room: "Field" },
-    'BREAK',
-    { id: "mon-5", subject: "ENVIRONMENTAL ACTIVITIES", type: "CORE", teacher: "Dr. Otieno", room: "Science Lab" },
-    { id: "mon-6", subject: "MOVEMENT", type: "CAS", teacher: "Mrs. Njeri", room: "Gymnasium" },
-    'LUNCH',
-    null
-  ],
-  "TUESDAY": [
-    { id: "tue-1", subject: "MATHS", type: "CORE", teacher: "Mr. Williams", room: "Room 14B" },
-    { id: "tue-2", subject: "KISWAHILI", type: "LANG", teacher: "Mrs. Wanjiku", room: "Room 10C" },
-    'BREAK',
-    { id: "tue-3", subject: "ENGLISH", type: "CORE", teacher: "Mrs. Johnson", room: "Room 12A" },
-    { id: "tue-4", subject: "ENVIRONMENTAL ACTIVITIES", type: "CORE", teacher: "Dr. Otieno", room: "Science Lab" },
-    'BREAK',
-    { id: "tue-5", subject: "MUSIC", type: "CAS", teacher: "Mr. Kamau", room: "Music Room" },
-    { id: "tue-6", subject: "RELIGIOUS EDUCATION", type: "CORE", teacher: "Mrs. Adhiambo", room: "Room 9B" },
-    'LUNCH',
-    null
-  ],
-  "WED": [
-    { id: "wed-1", subject: "ENGLISH", type: "CORE", teacher: "Mrs. Johnson", room: "Room 12A" },
-    { id: "wed-2", subject: "MATHS", type: "CORE", teacher: "Mr. Williams", room: "Room 14B" },
-    'BREAK',
-    { id: "wed-3", subject: "KISWAHILI", type: "LANG", teacher: "Mrs. Wanjiku", room: "Room 10C" },
-    { id: "wed-4", subject: "MUSIC", type: "CAS", teacher: "Mr. Kamau", room: "Music Room" },
-    'BREAK',
-    { id: "wed-5", subject: "RELIGIOUS EDUCATION", type: "CORE", teacher: "Mrs. Adhiambo", room: "Room 9B" },
-    { id: "wed-6", subject: "ENVIRONMENTAL ACTIVITIES", type: "CORE", teacher: "Dr. Otieno", room: "Science Lab" },
-    'LUNCH',
-    { id: "wed-7", subject: "INDIG LANG", type: "LANG", teacher: "Mr. Omondi", room: "Language Lab" },
-  ],
-  "THURS": [
-    { id: "thu-1", subject: "MATHS", type: "CORE", teacher: "Mr. Williams", room: "Room 14B" },
-    { id: "thu-2", subject: "KISWAHILI", type: "LANG", teacher: "Mrs. Wanjiku", room: "Room 10C" },
-    'BREAK',
-    { id: "thu-3", subject: "ENGLISH", type: "CORE", teacher: "Mrs. Johnson", room: "Room 12A" },
-    { id: "thu-4", subject: "MUSIC", type: "CAS", teacher: "Mr. Kamau", room: "Music Room" },
-    'BREAK',
-    { id: "thu-5", subject: "ART & CRAFT", type: "CAS", teacher: "Ms. Akinyi", room: "Art Studio" },
-    { id: "thu-6", subject: "RELIGIOUS EDUCATION", type: "CORE", teacher: "Mrs. Adhiambo", room: "Room 9B" },
-    'LUNCH',
-    { id: "thu-7", subject: "INDIG LANG", type: "LANG", teacher: "Mr. Omondi", room: "Language Lab" }
-  ],
-  "FRIDAY": [
-    { id: "fri-1", subject: "PPI", type: "CORE", teacher: "Mr. Mutua", room: "Hall" },
-    { id: "fri-2", subject: "ENGLISH", type: "CORE", teacher: "Mrs. Johnson", room: "Room 12A" },
-    'BREAK',
-    { id: "fri-3", subject: "MATHS", type: "CORE", teacher: "Mr. Williams", room: "Room 14B" },
-    { id: "fri-4", subject: "KISWAHILI", type: "LANG", teacher: "Mrs. Wanjiku", room: "Room 10C" },
-    'BREAK',
-    { id: "fri-5", subject: "ENVIRONMENTAL ACTIVITIES", type: "CORE", teacher: "Dr. Otieno", room: "Science Lab" },
-    { id: "fri-6", subject: "ART & CRAFT", type: "CAS", teacher: "Ms. Akinyi", room: "Art Studio" },
-    'LUNCH',
-    null
-  ]
+interface NextLessonInfo {
+  lesson: StudentLesson;
+  startsIn: number;
+  time: string;
+  nextDay?: boolean;
+  period: string;
+  periodIndex: number;
+  minutesUntil: number;
 }
 
-const lessonCounts = {
-  "MATHEMATICS": 5,
-  "ENGLISH": 5,
-  "KISWAHILI": 4,
-  "ENVIRONMENTAL": 4,
-  "INDIGENOUS LANGUAGE": 2,
-  "RELIGIOUS": 3,
-  "MUSIC": 3,
-  "ART & CRAFT": 2,
-  "MOVEMENT": 2
+interface StudentStats {
+  totalLessons: number;
+  completedLessons: number;
+  upcomingLessons: number;
+  totalSubjects: number;
+  subjectDistribution: Record<string, number>;
+  dayDistribution: Record<string, number>;
+  teacherDistribution: Record<string, number>;
 }
 
-// Constants for BREAK and LUNCH positions
-const BREAK_INDICES = [2, 5]
-const LUNCH_INDEX = 8
-const BREAK_LETTERS = ['B', 'R', 'E', 'A', 'K']
-const LUNCH_LETTERS = ['L', 'U', 'N', 'C', 'H']
-
-// Vertical text component for BREAK and LUNCH
-const VerticalBreak = ({ letters }: { letters: string[] }) => {
-  return (
-    <div className="flex flex-col items-center justify-center h-full">
-      {letters.map((letter, i) => (
-        <div key={i} className="font-semibold">{letter}</div>
-      ))}
-    </div>
-  )
+interface StudentTimetableData {
+  schedule: Record<string, (StudentLesson | null)[]>;
+  periods: string[];
+  stats: StudentStats;
 }
 
-export default function TimetablePage() {
-  const currentDate = new Date()
-  const currentTime = new Date('2025-06-25T14:45:35+03:00') // Using the latest provided time for consistent display
-  
-  // Demo data - completed lessons
-  const [completedLessons, setCompletedLessons] = useState<string[]>([
-    "mon-1", "mon-2", "mon-3", "tue-1"
-  ])
+const StudentTimetable = () => {
+  // Use shared store
+  const { 
+    mainTimetable, 
+    updateMainTimetable,
+    loadMockData,
+    forceReloadMockData
+  } = useTimetableStore();
 
-  const getCurrentPeriod = () => {
-    const now = currentTime
-    const hours = now.getHours()
-    const minutes = now.getMinutes()
-    const currentTimeInMinutes = hours * 60 + minutes
-
-    for (let i = 0; i < periods.length; i++) {
-      const [start, end] = periods[i].split('-')
-      
-      // Parse start time
-      let [startHour, startMinStr] = start.split(':')
-      let startHourNum = parseInt(startHour)
-      // Adjust hours for afternoon periods (after 12 PM)
-      if (startHourNum < 8) { // If hour is like 1, 2, etc. (PM)
-        startHourNum += 12
-      }
-      const startMin = parseInt(startMinStr || '0')
-      
-      // Parse end time
-      let [endHour, endMinStr] = end.split(':')
-      let endHourNum = parseInt(endHour)
-      // Adjust hours for afternoon periods (after 12 PM)
-      if (endHourNum < 8) { // If hour is like 1, 2, etc. (PM)
-        endHourNum += 12
-      }
-      const endMin = parseInt(endMinStr || '0')
-      
-      const periodStartInMinutes = startHourNum * 60 + startMin
-      const periodEndInMinutes = endHourNum * 60 + endMin
-
-      if (currentTimeInMinutes >= periodStartInMinutes && currentTimeInMinutes < periodEndInMinutes) {
-        return i
-      }
+  // State management
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState('Grade 1');
+  const [showGradeDropdown, setShowGradeDropdown] = useState(false);
+  const [timetableData, setTimetableData] = useState<StudentTimetableData>({
+    schedule: {
+      "MONDAY": Array(11).fill(null),
+      "TUESDAY": Array(11).fill(null),
+      "WEDNESDAY": Array(11).fill(null),
+      "THURSDAY": Array(11).fill(null),
+      "FRIDAY": Array(11).fill(null)
+    },
+    periods: mainTimetable.timeSlots.map(slot => slot.time),
+    stats: {
+      totalLessons: 0,
+      completedLessons: 0,
+      upcomingLessons: 0,
+      totalSubjects: 0,
+      subjectDistribution: {},
+      dayDistribution: {},
+      teacherDistribution: {}
     }
-    // If current time is after the last period, return a code indicating that
-    const lastPeriod = periods[periods.length - 1]
-    const [_, lastEndTime] = lastPeriod.split('-')
-    let [lastEndHour, lastEndMinStr] = lastEndTime.split(':')
-    let lastEndHourNum = parseInt(lastEndHour)
-    if (lastEndHourNum < 8) { // If hour is like 1, 2, etc. (PM)
-      lastEndHourNum += 12
-    }
-    const lastEndMin = parseInt(lastEndMinStr || '0')
-    const lastEndInMinutes = lastEndHourNum * 60 + lastEndMin
-    
-    if (currentTimeInMinutes >= lastEndInMinutes) {
-      return -2; // Special code for after school hours
-    }
-    
-    return -1; // Time is before first class or during a break
-  }
+  });
 
-  const getCurrentDay = (): string => {
-    const day = currentTime.getDay()
-    // 0 is Sunday, so we need to get the correct weekday
-    if (day === 0) return weekDays[4] // Return Friday for Sunday (demo purposes)
-    if (day === 6) return weekDays[4] // Return Friday for Saturday (demo purposes)
-    return weekDays[day - 1] // Adjust for zero-based indexing
-  }
+  const weekDays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
 
-  const findNextLesson = () => {
-    const currentDay = getCurrentDay()
-    const currentPeriod = getCurrentPeriod()
-    
-    // Check if we're after school hours (-2) or during regular school day
-    if (currentPeriod === -2) {
-      // We're after school hours, next lesson will be tomorrow
-      const weekDayIndex = weekDays.indexOf(currentDay)
-      if (weekDayIndex < weekDays.length - 1) {
-        // There's a next school day this week
-        const nextDay = weekDays[weekDayIndex + 1]
-        const tomorrowSchedule = mockWeekSchedule[nextDay]
-        for (let i = 0; i < tomorrowSchedule.length; i++) {
-          const lesson = tomorrowSchedule[i]
-          if (typeof lesson === 'object' && lesson !== null) {
-            return {
-              lesson,
-              time: periods[i],
-              nextDay: true,
-              periodIndex: i,
-              day: nextDay
+  // Filter timetable data by selected grade
+  const filterTimetableByGrade = (grade: string) => {
+    const filteredSchedule: Record<string, (StudentLesson | null)[]> = {
+      "MONDAY": Array(11).fill(null),
+      "TUESDAY": Array(11).fill(null),
+      "WEDNESDAY": Array(11).fill(null),
+      "THURSDAY": Array(11).fill(null),
+      "FRIDAY": Array(11).fill(null)
+    };
+
+    const subjectDistribution: Record<string, number> = {};
+    const dayDistribution: Record<string, number> = {};
+    const teacherDistribution: Record<string, number> = {};
+
+    let totalLessons = 0;
+    let completedCount = 0;
+    let upcomingCount = 0;
+
+    // Filter main timetable data for the selected grade
+    Object.entries(mainTimetable.subjects).forEach(([cellKey, cellData]) => {
+      const [cellGrade, dayIndex, timeId] = cellKey.split('-');
+      
+      if (cellGrade === grade && cellData) {
+        const dayName = weekDays[parseInt(dayIndex) - 1]; // Convert 1-based day to 0-based index
+        const periodIndex = parseInt(timeId); // Keep 0-based time slot
+        
+        if (dayName && periodIndex >= 0 && periodIndex < 11) {
+          const lesson: StudentLesson = {
+            id: `${dayName.toLowerCase()}-${periodIndex + 1}`,
+            subject: cellData.subject,
+            teacher: cellData.teacher || '',
+            room: `Room ${Math.floor(Math.random() * 20) + 1}`,
+            day: dayName,
+            period: periodIndex + 1,
+            isBreak: cellData.isBreak || false,
+            breakType: cellData.breakType || undefined,
+            completed: completedLessons.includes(`${dayName.toLowerCase()}-${periodIndex + 1}`)
+          };
+
+          filteredSchedule[dayName][periodIndex] = lesson;
+          
+          if (!cellData.isBreak) {
+            totalLessons++;
+            
+            // Subject distribution
+            subjectDistribution[cellData.subject] = (subjectDistribution[cellData.subject] || 0) + 1;
+            
+            // Day distribution
+            dayDistribution[dayName] = (dayDistribution[dayName] || 0) + 1;
+            
+            // Teacher distribution
+            if (cellData.teacher) {
+              teacherDistribution[cellData.teacher] = (teacherDistribution[cellData.teacher] || 0) + 1;
+            }
+            
+            // Completed/upcoming count
+            if (lesson.completed) {
+              completedCount++;
+            } else {
+              upcomingCount++;
             }
           }
         }
       }
-      // If we're Friday after school hours or couldn't find a lesson for tomorrow
+    });
+
+    return {
+      schedule: filteredSchedule,
+      periods: mainTimetable.timeSlots.map(slot => slot.time),
+      stats: {
+        totalLessons,
+        completedLessons: completedCount,
+        upcomingLessons: upcomingCount,
+        totalSubjects: Object.keys(subjectDistribution).length,
+        subjectDistribution,
+        dayDistribution,
+        teacherDistribution
+      }
+    };
+  };
+
+  // Force reload mock data when component mounts
+  useEffect(() => {
+    forceReloadMockData();
+  }, [forceReloadMockData]);
+
+  // Sync with store changes and filter by selected grade
+  useEffect(() => {
+    console.log('Student timetable data updated:', mainTimetable);
+    console.log('Main timetable subjects count:', Object.keys(mainTimetable.subjects).length);
+    console.log('Breaks in main timetable:', Object.entries(mainTimetable.subjects).filter(([key, data]) => data?.isBreak).length);
+    
+    const filteredData = filterTimetableByGrade(selectedGrade);
+    console.log('Filtered data for grade:', selectedGrade, filteredData);
+    setTimetableData(filteredData);
+  }, [mainTimetable, selectedGrade, completedLessons]);
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Helper functions
+  const parseTime = (timeStr: string): number => {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    let totalHours = hours;
+    if (hours >= 1 && hours <= 7) {
+      totalHours += 12;
+    }
+    return totalHours * 60 + minutes;
+  };
+
+  const formatTimeUntil = (minutesUntil: number): string => {
+    if (minutesUntil < 60) {
+      return `${minutesUntil} min`;
+    }
+    const hours = Math.floor(minutesUntil / 60);
+    const minutes = minutesUntil % 60;
+    return `${hours}h ${minutes}m`;
+  };
+
+  const getCurrentPeriod = () => {
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+    const periodTimes = [
+      { start: parseTime("8:00"), end: parseTime("8:45") },
+      { start: parseTime("8:50"), end: parseTime("9:35") },
+      { start: parseTime("9:40"), end: parseTime("10:25") },
+      { start: parseTime("10:45"), end: parseTime("11:30") },
+      { start: parseTime("11:35"), end: parseTime("12:20") },
+      { start: parseTime("13:15"), end: parseTime("14:00") },
+      { start: parseTime("14:05"), end: parseTime("14:50") }
+    ];
+
+    for (let i = 0; i < periodTimes.length; i++) {
+      if (currentTimeMinutes >= periodTimes[i].start && currentTimeMinutes <= periodTimes[i].end) {
+        return i + 1;
+      }
+    }
+    return null;
+  };
+
+  const getCurrentDay = () => {
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    return days[currentTime.getDay()];
+  };
+
+  const getNextLesson = (): NextLessonInfo | null => {
+    const currentDay = getCurrentDay();
+    const currentPeriod = getCurrentPeriod();
+    
+    if (!currentDay || currentDay === 'SUNDAY' || currentDay === 'SATURDAY') {
       return null;
     }
-    
-    // Regular school day - check remaining lessons today
-    const todaySchedule = mockWeekSchedule[currentDay]
-    if (todaySchedule) {
-      for (let i = currentPeriod + 1; i < todaySchedule.length; i++) {
-        const lesson = todaySchedule[i]
-        if (typeof lesson === 'object' && lesson !== null) {
-          return {
-            lesson,
-            startsIn: (i - currentPeriod) * 40, // Assuming 40 min periods
-            time: periods[i],
-            nextDay: false,
-            periodIndex: i,
-            day: currentDay
+
+    const daySchedule = timetableData.schedule[currentDay];
+    if (!daySchedule) return null;
+
+    let nextLessonIndex = -1;
+    let nextDay = false;
+
+    if (currentPeriod) {
+      // Find next lesson today
+      for (let i = currentPeriod; i < daySchedule.length; i++) {
+        if (daySchedule[i] && !daySchedule[i]?.isBreak) {
+          nextLessonIndex = i;
+          break;
+        }
+      }
+    } else {
+      // Find first lesson today
+      for (let i = 0; i < daySchedule.length; i++) {
+        if (daySchedule[i] && !daySchedule[i]?.isBreak) {
+          nextLessonIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (nextLessonIndex === -1) {
+      // Find first lesson tomorrow
+      const tomorrowIndex = weekDays.indexOf(currentDay) + 1;
+      if (tomorrowIndex < weekDays.length) {
+        const tomorrowDay = weekDays[tomorrowIndex];
+        const tomorrowSchedule = timetableData.schedule[tomorrowDay];
+        if (tomorrowSchedule) {
+          for (let i = 0; i < tomorrowSchedule.length; i++) {
+            if (tomorrowSchedule[i] && !tomorrowSchedule[i]?.isBreak) {
+              nextLessonIndex = i;
+              nextDay = true;
+              break;
+            }
           }
         }
       }
     }
-    
-    // No more lessons today - check tomorrow
-    const weekDayIndex = weekDays.indexOf(currentDay)
-    if (weekDayIndex < weekDays.length - 1) {
-      const nextDay = weekDays[weekDayIndex + 1]
-      const tomorrowSchedule = mockWeekSchedule[nextDay]
-      for (let i = 0; i < tomorrowSchedule.length; i++) {
-        const lesson = tomorrowSchedule[i]
-        if (typeof lesson === 'object' && lesson !== null) {
-          return {
-            lesson,
-            time: periods[i],
-            nextDay: true,
-            periodIndex: i,
-            day: nextDay
-          }
-        }
-      }
+
+    if (nextLessonIndex === -1) return null;
+
+    const lesson = nextDay 
+      ? timetableData.schedule[weekDays[weekDays.indexOf(currentDay) + 1]]?.[nextLessonIndex]
+      : daySchedule[nextLessonIndex];
+
+    if (!lesson) return null;
+
+    const periodTime = timetableData.periods[nextLessonIndex];
+    const [startTime] = periodTime.split(' – ');
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const lessonStartTime = new Date();
+    lessonStartTime.setHours(hours, minutes, 0, 0);
+
+    if (nextDay) {
+      lessonStartTime.setDate(lessonStartTime.getDate() + 1);
     }
-    
-    return null
-  }
 
-  const findCurrentLesson = () => {
-    const currentDay = getCurrentDay()
-    const currentPeriod = getCurrentPeriod()
-    
-    // Handle after-school hours case
-    if (currentPeriod === -2) {
-      return null; // No current lesson after school hours
-    }
-    
-    if (!currentDay) return null;
-    
-    const todaySchedule = mockWeekSchedule[currentDay]
-    if (todaySchedule && currentPeriod >= 0 && currentPeriod < todaySchedule.length) {
-      const lesson = todaySchedule[currentPeriod]
-      if (typeof lesson === 'object' && lesson !== null) {
-        return {
-          lesson,
-          time: periods[currentPeriod],
-          remainingTime: 40 - (currentTime.getMinutes() % 40), // Minutes remaining in current period
-          periodIndex: currentPeriod,
-          day: currentDay
-        }
-      }
-    }
-    return null
-  }
+    const minutesUntil = Math.floor((lessonStartTime.getTime() - currentTime.getTime()) / (1000 * 60));
 
-  // This line is now moved to where we calculate all lesson information before the return statement
-
-  const getTimeDifference = (targetTime: string) => {
-    const now = currentTime
-    const [targetHour, targetMin] = targetTime.split(':').map(str => {
-      if (str.includes('PM') && !str.startsWith('12')) {
-        return parseInt(str) + 12
-      }
-      return parseInt(str)
-    })
-    
-    const targetDate = new Date(now)
-    targetDate.setHours(targetHour, targetMin, 0)
-    
-    const diffInMinutes = Math.floor((targetDate.getTime() - now.getTime()) / (1000 * 60))
-    return diffInMinutes
-  }
-
-  const getLessonStatus = (lesson: Lesson | 'BREAK' | 'LUNCH' | null, periodIndex: number, day: string) => {
-    if (!lesson || typeof lesson === 'string') return 'break'
-    if (completedLessons.includes(lesson.id)) return 'completed'
-    if (getCurrentDay() === day && getCurrentPeriod() === periodIndex) return 'ongoing'
-    if (getCurrentDay() === day && getCurrentPeriod() < periodIndex) return 'upcoming'
-    return 'past'
-  }
-
-  const getLessonStyles = (lesson: Lesson | 'BREAK' | 'LUNCH' | null, periodIndex: number, day: string) => {
-    if (!lesson) return 'bg-white dark:bg-slate-900'
-    if (lesson === 'BREAK') return 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold'
-    if (lesson === 'LUNCH') return 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-bold'
-
-    // Style based on status
-    const status = getLessonStatus(lesson, periodIndex, day)
-    switch(status) {
-      case 'ongoing':
-        return 'bg-yellow-50 dark:bg-yellow-900/20'
-      case 'completed':
-        return 'bg-green-50 dark:bg-green-900/20'
-      case 'upcoming':
-        return 'bg-white dark:bg-slate-800/50'
-      case 'past':
-        return 'bg-slate-50 dark:bg-slate-800/20'
-      default:
-        return 'bg-white dark:bg-slate-900'
-    }
-  }
-
-  // Using the VerticalBreak component defined outside
-
-  const getCompletedLessonsByType = () => {
     return {
-      CORE: completedLessons.filter(id => {
-        const [day, periodIndex] = id.split('-')
-        const daySchedule = mockWeekSchedule[day.toUpperCase()]
-        if (!daySchedule) return false
-        const lesson = daySchedule[parseInt(periodIndex) - 1]
-        return typeof lesson === 'object' && lesson?.type === 'CORE'
-      }).length,
-      CAS: completedLessons.filter(id => {
-        const [day, periodIndex] = id.split('-')
-        const daySchedule = mockWeekSchedule[day.toUpperCase()]
-        if (!daySchedule) return false
-        const lesson = daySchedule[parseInt(periodIndex) - 1]
-        return typeof lesson === 'object' && lesson?.type === 'CAS'
-      }).length,
-      LANG: completedLessons.filter(id => {
-        const [day, periodIndex] = id.split('-')
-        const daySchedule = mockWeekSchedule[day.toUpperCase()]
-        if (!daySchedule) return false
-        const lesson = daySchedule[parseInt(periodIndex) - 1]
-        return typeof lesson === 'object' && lesson?.type === 'LANG'
-      }).length
-    }
-  }
+      lesson,
+      startsIn: minutesUntil,
+      time: periodTime,
+      nextDay,
+      period: `Period ${nextLessonIndex + 1}`,
+      periodIndex: nextLessonIndex,
+      minutesUntil
+    };
+  };
 
-  // Calculate the current and next lesson information
-  const nextLesson = findNextLesson()
-  const currentLesson = findCurrentLesson()
-  const completedByType = getCompletedLessonsByType()
+  const getCurrentLesson = () => {
+    const currentDay = getCurrentDay();
+    const currentPeriod = getCurrentPeriod();
+    
+    if (!currentDay || currentDay === 'SUNDAY' || currentDay === 'SATURDAY' || !currentPeriod) {
+      return null;
+    }
+
+    const daySchedule = timetableData.schedule[currentDay];
+    if (!daySchedule) return null;
+
+    const lesson = daySchedule[currentPeriod - 1];
+    return lesson && !lesson.isBreak ? lesson : null;
+  };
+
+  const getRemainingMinutes = () => {
+    const currentLesson = getCurrentLesson();
+    if (!currentLesson) return 0;
+
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+    const periodTime = timetableData.periods[currentLesson.period - 1];
+    const [, endTime] = periodTime.split(' – ');
+    const [hours, minutes] = endTime.split(':').map(Number);
+    const lessonEndTime = hours * 60 + minutes;
+
+    return Math.max(0, lessonEndTime - currentTimeMinutes);
+  };
+
+  const getLessonStyles = (lesson: StudentLesson | null, periodIndex: number, day: string) => {
+    if (!lesson) return 'bg-gray-50 hover:bg-gray-100';
+
+    const currentDay = getCurrentDay();
+    const currentPeriod = getCurrentPeriod();
+    const isCurrentLesson = currentDay === day && currentPeriod === periodIndex + 1;
+    const isCompleted = completedLessons.includes(lesson.id);
+
+    let baseStyles = 'border-l-4 transition-all duration-200 hover:shadow-md';
+
+    if (lesson.isBreak) {
+      if (lesson.breakType === 'lunch') {
+        baseStyles += ' bg-orange-50 border-l-orange-500';
+      } else if (lesson.breakType === 'recess') {
+        baseStyles += ' bg-green-50 border-l-green-500';
+      } else {
+        baseStyles += ' bg-blue-50 border-l-blue-500';
+      }
+    } else {
+      if (isCurrentLesson) {
+        baseStyles += ' bg-primary/10 border-l-primary shadow-lg';
+      } else if (isCompleted) {
+        baseStyles += ' bg-green-50 border-l-green-500';
+      } else {
+        baseStyles += ' bg-white border-l-gray-300';
+      }
+    }
+
+    return baseStyles;
+  };
+
+  const renderLessonIndicators = (lesson: StudentLesson, periodIndex: number, day: string) => {
+    const currentDay = getCurrentDay();
+    const currentPeriod = getCurrentPeriod();
+    const isCurrentLesson = currentDay === day && currentPeriod === periodIndex + 1;
+    const isCompleted = completedLessons.includes(lesson.id);
+
+    return (
+      <div className="flex items-center justify-between">
+        {isCurrentLesson && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <span className="text-xs text-primary font-medium">Now</span>
+          </div>
+        )}
+        {isCompleted && !isCurrentLesson && (
+          <div className="flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-green-600" />
+            <span className="text-xs text-green-600">Done</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const formatCurrentTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      // Simulate sync delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Student timetable synced with main timetable');
+    } catch (error) {
+      console.error('Error syncing student timetable:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSaveStudentTimetable = () => {
+    const studentTimetableData = {
+      timetable: {} as Record<string, { subject: string; teacher: string; isBreak?: boolean; breakType?: string }>,
+      metadata: {
+        grade: selectedGrade,
+        timeSlots: mainTimetable.timeSlots,
+        stats: timetableData.stats,
+        lastSaved: new Date().toISOString()
+      }
+    };
+
+    // Convert student schedule to the main timetable format
+    Object.entries(timetableData.schedule).forEach(([day, lessons]) => {
+      lessons.forEach((lesson, periodIndex) => {
+        if (lesson) {
+          const cellKey = `${selectedGrade}-${periodIndex + 1}-${weekDays.indexOf(day)}`;
+          studentTimetableData.timetable[cellKey] = {
+            subject: lesson.subject,
+            teacher: lesson.teacher,
+            isBreak: lesson.isBreak || false,
+            breakType: lesson.breakType || undefined
+          };
+        }
+      });
+    });
+
+    // Create and download the JSON file
+    const dataStr = JSON.stringify(studentTimetableData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `student-timetable-${selectedGrade}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    alert(`Student timetable for ${selectedGrade} saved successfully!`);
+  };
+
+  const handleLoadStudentTimetable = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target?.result as string);
+            
+            if (data.timetable && data.metadata) {
+              // Convert the main timetable format back to student schedule format
+              const newSchedule: Record<string, (StudentLesson | null)[]> = {
+                "MONDAY": Array(11).fill(null),
+                "TUESDAY": Array(11).fill(null),
+                "WEDNESDAY": Array(11).fill(null),
+                "THURSDAY": Array(11).fill(null),
+                "FRIDAY": Array(11).fill(null)
+              };
+              
+              Object.entries(data.timetable).forEach(([cellKey, cellData]: [string, any]) => {
+                const [grade, dayIndex, timeId] = cellKey.split('-');
+                const dayName = weekDays[parseInt(dayIndex) - 1]; // Convert 1-based day to 0-based index
+                const periodIndex = parseInt(timeId); // Keep 0-based time slot
+                
+                if (dayName && periodIndex >= 0 && periodIndex < 11) {
+                  const lesson: StudentLesson = {
+                    id: `${dayName.toLowerCase()}-${periodIndex + 1}`,
+                    subject: cellData.subject,
+                    teacher: cellData.teacher || '',
+                    room: `Room ${Math.floor(Math.random() * 20) + 1}`,
+                    day: dayName,
+                    period: periodIndex + 1,
+                    isBreak: cellData.isBreak || false,
+                    breakType: cellData.breakType || undefined,
+                    completed: false
+                  };
+                  
+                  newSchedule[dayName][periodIndex] = lesson;
+                }
+              });
+
+              // Update state
+              setTimetableData(prev => ({
+                ...prev,
+                schedule: newSchedule
+              }));
+              
+              if (data.metadata.grade) {
+                setSelectedGrade(data.metadata.grade);
+              }
+
+              alert(`Student timetable loaded successfully!`);
+            } else {
+              alert('Invalid student timetable file format.');
+            }
+          } catch (error) {
+            alert('Error loading student timetable file. Please check the file format.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
+  };
+
+  const stats = timetableData.stats;
+  const currentLesson = getCurrentLesson();
+  const nextLesson = getNextLesson();
+  const remainingMinutes = getRemainingMinutes();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-primary/20">
+    <div className="container py-8 mx-auto max-w-6xl">
+      {/* Header with Grade Selector */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">CBC Lower Primary Timetable</h1>
-          <p className="text-sm text-slate-600">
-            {currentTime.toLocaleDateString('en-KE', { 
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </p>
+          <h1 className="text-2xl font-bold text-[#246a59] mb-2">Student Timetable - {selectedGrade}</h1>
+          <p className="text-slate-600">View your class schedule and upcoming lessons</p>
         </div>
-        <div className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-lg">
-          <Clock className="h-5 w-5 text-primary" />
-          <span className="font-mono font-bold">
-            {currentTime.toLocaleTimeString('en-KE')}
-          </span>
-        </div>
-      </div>
-
-      {/* Timetable Grid */}
-      <div className="border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[auto_repeat(10,1fr)] text-sm">
-          {/* Time slots header */}
-          <div className="bg-primary/5 p-3 font-semibold text-center border-b border-r">
-            TIME/DAY
-          </div>
-          {periods.map((period) => (
-            <div 
-              key={period}
-              className="bg-primary/5 p-2 font-semibold text-center border-b border-r whitespace-nowrap"
+        <div className="flex gap-3">
+          <div className="relative">
+            <button
+              onClick={() => setShowGradeDropdown(!showGradeDropdown)}
+              className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
             >
-              {period}
-            </div>
-          ))}
-
-          {/* Vertical BREAK columns */}
-          {BREAK_INDICES.map((breakIndex, i) => (
-            <div 
-              key={`break-${i}`}
-              className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-b border-r"
-              style={{
-                gridColumnStart: breakIndex + 2,
-                gridRowStart: 2,
-                gridRowEnd: "span 5",
-              }}
-            >
-              <VerticalBreak letters={BREAK_LETTERS} />
-            </div>
-          ))}
-
-          {/* Vertical LUNCH column */}
-          <div 
-            className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-b border-r"
-            style={{
-              gridColumnStart: LUNCH_INDEX + 2,
-              gridRowStart: 2,
-              gridRowEnd: "span 5",
-            }}
-          >
-            <VerticalBreak letters={LUNCH_LETTERS} />
-          </div>
-
-          {/* Days and lessons */}
-          {weekDays.map(day => (
-            <>
-              <div 
-                key={day}
-                className={`p-3 font-semibold text-center border-b border-r ${
-                  day === getCurrentDay() ? 'bg-primary/10 text-primary' : 'bg-primary/5'
-                }`}
-              >
-                {day}
-              </div>
-              {mockWeekSchedule[day].map((lesson, periodIndex) => {
-                // Skip rendering individual BREAK and LUNCH cells
-                if (BREAK_INDICES.includes(periodIndex) || periodIndex === LUNCH_INDEX) return null;
-                
-                return (
+              <Users className="w-4 h-4" />
+              <span className="font-medium">{selectedGrade}</span>
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            
+            {showGradeDropdown && (
+              <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[200px]">
+                {grades.map((grade) => (
                   <div
-                    key={`${day}-${periodIndex}`}
-                    className={`p-2 text-center border-b border-r ${getLessonStyles(lesson, periodIndex, day)}`}
+                    key={grade}
+                    onClick={() => {
+                      setSelectedGrade(grade);
+                      setShowGradeDropdown(false);
+                    }}
+                    className={`px-4 py-3 cursor-pointer hover:bg-gray-50 ${
+                      selectedGrade === grade ? 'bg-blue-50 text-primary' : ''
+                    }`}
                   >
-                    {lesson && typeof lesson !== 'string' && (
-                      <div className="flex flex-col items-center justify-center h-full">
-                        <div className="font-medium text-xs">{lesson.subject}</div>
-                        {lesson.type === 'CAS' && (
-                          <div className="text-[10px] text-primary">(CAS)</div>
-                        )}
-                        <div className="text-[9px] text-slate-500 truncate max-w-full">{lesson.teacher}</div>
-                        {getCurrentDay() === day && 
-                         getCurrentPeriod() === periodIndex && 
-                         !completedLessons.includes(lesson.id) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="mt-1 text-xs py-0 h-6"
-                            onClick={() => setCompletedLessons(prev => [...prev, lesson.id])}
-                          >
-                            Complete
-                          </Button>
-                        )}
-                        {completedLessons.includes(lesson.id) && (
-                          <CheckCircle2 className="h-3 w-3 text-green-500 mt-1" />
-                        )}
-                      </div>
-                    )}
+                    <span>{grade}</span>
                   </div>
-                );
-              })}
-            </>
-          ))}
+                ))}
+              </div>
+            )}
+          </div>
+          <Button 
+            variant="outline"
+            onClick={forceReloadMockData}
+            className="border-purple-300 text-purple-600 hover:bg-purple-50"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Load Mock Data
+          </Button>
         </div>
       </div>
 
-      {/* Current and Next Lesson Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Current Lesson */}
-        <div className="border rounded-lg p-4 bg-gradient-to-r from-yellow-50 to-transparent dark:from-yellow-900/10 dark:to-transparent">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Current Lesson</h3>
-            </div>
-            {currentLesson && (
-              <span className="text-sm px-2 py-1 bg-yellow-100 dark:bg-yellow-800/30 rounded-md flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                {currentLesson.remainingTime} min left
-              </span>
-            )}
-          </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Total Lessons
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{stats.totalLessons}</div>
+            <p className="text-xs text-slate-500 mt-1">This week</p>
+          </CardContent>
+        </Card>
 
-          {currentLesson ? (
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xl font-medium">{currentLesson.lesson.subject}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">{currentLesson.time}</p>
-                </div>
-                {!completedLessons.includes(currentLesson.lesson.id) && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    onClick={() => setCompletedLessons(prev => [...prev, currentLesson.lesson.id])}
-                  >
-                    Mark Complete
-                  </Button>
-                )}
-                {completedLessons.includes(currentLesson.lesson.id) && (
-                  <span className="px-2 py-1 bg-green-100 dark:bg-green-800/30 rounded-md text-xs text-green-700 dark:text-green-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Completed
-                  </span>
-                )}
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Completed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{stats.completedLessons}</div>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="text-xs text-slate-500">
+                {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
               </div>
-
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <UserCircle className="h-4 w-4 text-slate-500" />
-                  <span>{currentLesson.lesson.teacher}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-slate-500" />
-                  <span>{currentLesson.lesson.room}</span>
-                </div>
+              <div className="flex-1 bg-slate-200 rounded-full h-1">
+                <div 
+                  className="bg-green-500 h-1 rounded-full" 
+                  style={{ width: `${stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}%` }}
+                ></div>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-24 border-dashed border-2 border-slate-200 dark:border-slate-700 rounded-md">
-              <p className="text-sm text-slate-500 dark:text-slate-400">No active lesson</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Break or lunch time</p>
-            </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Next Lesson */}
-        <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/10 dark:to-transparent">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Timer className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">Next Lesson</h3>
-            </div>
-            {nextLesson && !nextLesson.nextDay && (
-              <span className="text-sm px-2 py-1 bg-blue-100 dark:bg-blue-800/30 rounded-md flex items-center gap-1">
-                <ArrowRight className="h-3 w-3" />
-                In {nextLesson.startsIn} min
-              </span>
-            )}
-          </div>
+        <Card className="border-l-4 border-l-amber-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Upcoming
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{stats.upcomingLessons}</div>
+            <p className="text-xs text-slate-500 mt-1">Remaining this week</p>
+          </CardContent>
+        </Card>
 
-          {nextLesson ? (
-            <div className="space-y-3">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              Subjects
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{stats.totalSubjects}</div>
+            <p className="text-xs text-slate-500 mt-1">Different subjects</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Lesson Banner */}
+      {currentLesson && (
+        <Card className="mb-6 border-l-4 border-l-primary bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-xl font-medium">{nextLesson.lesson.subject}</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {nextLesson.nextDay ? `Tomorrow at ${nextLesson.time}` : nextLesson.time}
+                <h3 className="font-semibold text-primary">Current Lesson</h3>
+                <p className="text-sm text-slate-600">
+                  {currentLesson.subject} with {currentLesson.teacher} • Room {currentLesson.room}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {remainingMinutes} minutes remaining
                 </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <UserCircle className="h-4 w-4 text-slate-500" />
-                  <span>{nextLesson.lesson.teacher}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-slate-500" />
-                  <span>{nextLesson.lesson.room}</span>
-                </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-primary">{formatCurrentTime(currentTime)}</div>
+                <div className="text-xs text-slate-500">Current Time</div>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-24 border-dashed border-2 border-slate-200 dark:border-slate-700 rounded-md">
-              <p className="text-sm text-slate-500 dark:text-slate-400">No more lessons today</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Enjoy your free time!</p>
-            </div>
-          )}
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Lesson Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        {/* Today's Progress */}
-        <div className="border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <CalendarDays className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Today's Progress</h3>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Core Subjects</span>
-              <span className="font-medium">{completedByType.CORE} completed</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Creative Arts</span>
-              <span className="font-medium">{completedByType.CAS} completed</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Languages</span>
-              <span className="font-medium">{completedByType.LANG} completed</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Weekly Summary */}
-        <div className="border rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Weekly Lessons</h3>
-          </div>
-          <div className="space-y-2 text-sm">
-            {Object.entries(lessonCounts).map(([subject, count]) => (
-              <div key={subject} className="flex justify-between">
-                <span>{subject}</span>
-                <span className="font-medium">{count} lessons</span>
+      {/* Next Lesson Panel */}
+      {nextLesson && (
+        <Card className="mb-6 border-l-4 border-l-amber-500 bg-amber-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-amber-800">Next Lesson</h3>
+                <p className="text-sm text-amber-700">
+                  {nextLesson.lesson.subject} with {nextLesson.lesson.teacher}
+                </p>
+                <p className="text-xs text-amber-600">
+                  {nextLesson.nextDay ? 'Tomorrow' : 'Today'} • {nextLesson.time}
+                </p>
               </div>
-            ))}
+              <div className="text-right">
+                <div className="text-2xl font-bold text-amber-800">
+                  {formatTimeUntil(nextLesson.minutesUntil)}
+                </div>
+                <div className="text-xs text-amber-600">Until next lesson</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Timetable Grid */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-slate-800">Weekly Schedule</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="p-3 text-left font-medium text-slate-600 bg-gray-50">Time</th>
+                  {weekDays.map((day) => (
+                    <th key={day} className="p-3 text-center font-medium text-slate-600 bg-gray-50">
+                      {day.charAt(0) + day.slice(1).toLowerCase()}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {timetableData.periods.map((period, periodIndex) => (
+                  <tr key={periodIndex} className="border-b border-gray-100">
+                    <td className="p-3 text-sm text-slate-500 bg-gray-50 font-medium">
+                      {period}
+                    </td>
+                    {weekDays.map((day) => {
+                      const lesson = timetableData.schedule[day][periodIndex];
+                      return (
+                        <td key={day} className="p-2">
+                          {lesson ? (
+                            <div className={`p-3 rounded-lg ${getLessonStyles(lesson, periodIndex, day)}`}>
+                              <div className="font-medium text-sm">
+                                {lesson.isBreak ? (
+                                  <span className="flex items-center gap-1">
+                                    {lesson.breakType === 'lunch' && '🍽️'}
+                                    {lesson.breakType === 'recess' && '🏃'}
+                                    {lesson.breakType === 'break' && '☕'}
+                                    {lesson.subject}
+                                  </span>
+                                ) : (
+                                  lesson.subject
+                                )}
+                              </div>
+                              {!lesson.isBreak && (
+                                <>
+                                  <div className="text-xs text-slate-600 mt-1">
+                                    {lesson.teacher}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    Room {lesson.room}
+                                  </div>
+                                </>
+                              )}
+                              {renderLessonIndicators(lesson, periodIndex, day)}
+                            </div>
+                          ) : (
+                            <div className="p-3 text-center text-slate-400 text-sm">
+                              Free
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3 mt-6">
+        <Button 
+          variant="outline"
+          onClick={handleLoadStudentTimetable}
+          className="border-slate-300 text-slate-600 hover:bg-slate-50"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Load Timetable
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={handleSaveStudentTimetable}
+          className="border-[#246a59]/20 text-[#246a59] hover:bg-[#246a59]/10"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          Save Timetable
+        </Button>
+        <Button 
+          onClick={handleSync} 
+          disabled={isSyncing}
+          className="bg-[#246a59] hover:bg-[#1a4d3f] text-white"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Syncing...' : 'Sync with Main Timetable'}
+        </Button>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-6 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-yellow-50 dark:bg-yellow-900/20" />
-          <span>Current Lesson</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-green-50 dark:bg-green-900/20" />
-          <span>Completed / Lunch</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-50 dark:bg-blue-900/20" />
-          <span>Break</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-3 w-3 text-green-500" />
-          <span>Marked Complete</span>
-        </div>
+      {/* Status Badge */}
+      <div className="flex items-center gap-2 mt-6">
+        <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+          Timetable Synced
+        </Badge>
+        <span className="text-xs text-slate-500">
+          Last updated: {new Date().toLocaleTimeString()}
+        </span>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default StudentTimetable;

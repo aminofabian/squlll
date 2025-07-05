@@ -1,0 +1,837 @@
+{
+  "timetable": {
+    "Grade 1-1-0": {
+      "subject": "Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 1-1-1": {
+      "subject": "English",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 1-1-2": {
+      "subject": "Science",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 1-1-3": {
+      "subject": "History",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 1-1-4": {
+      "subject": "Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 1-2-0": {
+      "subject": "English",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 1-2-1": {
+      "subject": "Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 1-2-2": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 1-2-3": {
+      "subject": "Music",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 1-2-4": {
+      "subject": "Geography",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 1-3-0": {
+      "subject": "Science",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 1-3-1": {
+      "subject": "Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 1-3-2": {
+      "subject": "English",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 1-3-3": {
+      "subject": "Computer Science",
+      "teacher": "Robert Chen",
+      "isBreak": false
+    },
+    "Grade 1-3-4": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 1-4-0": {
+      "subject": "History",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 1-4-1": {
+      "subject": "English",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 1-4-2": {
+      "subject": "Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 1-4-3": {
+      "subject": "Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 1-4-4": {
+      "subject": "Science",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 1-5-0": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 1-5-1": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 1-5-2": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 1-5-3": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 1-5-4": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 1-6-0": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 1-6-1": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 1-6-2": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 1-6-3": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 1-6-4": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 1-7-0": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 1-7-1": {
+      "subject": "Music",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 1-7-2": {
+      "subject": "Computer Science",
+      "teacher": "Robert Chen",
+      "isBreak": false
+    },
+    "Grade 1-7-3": {
+      "subject": "Geography",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 1-7-4": {
+      "subject": "Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 1-8-0": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 1-8-1": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 1-8-2": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 1-8-3": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 1-8-4": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 2-1-0": {
+      "subject": "Advanced Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 2-1-1": {
+      "subject": "Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 2-1-2": {
+      "subject": "Chemistry",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 2-1-3": {
+      "subject": "World History",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 2-1-4": {
+      "subject": "Advanced Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 2-2-0": {
+      "subject": "Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 2-2-1": {
+      "subject": "Advanced Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 2-2-2": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 2-2-3": {
+      "subject": "Advanced Music",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 2-2-4": {
+      "subject": "Environmental Science",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 2-3-0": {
+      "subject": "Chemistry",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 2-3-1": {
+      "subject": "Advanced Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 2-3-2": {
+      "subject": "Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 2-3-3": {
+      "subject": "Programming",
+      "teacher": "Robert Chen",
+      "isBreak": false
+    },
+    "Grade 2-3-4": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 2-4-0": {
+      "subject": "World History",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 2-4-1": {
+      "subject": "Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 2-4-2": {
+      "subject": "Advanced Mathematics",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 2-4-3": {
+      "subject": "Advanced Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 2-4-4": {
+      "subject": "Chemistry",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 2-5-0": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 2-5-1": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 2-5-2": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 2-5-3": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 2-5-4": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 2-6-0": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 2-6-1": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 2-6-2": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 2-6-3": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 2-6-4": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 2-7-0": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 2-7-1": {
+      "subject": "Advanced Music",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 2-7-2": {
+      "subject": "Programming",
+      "teacher": "Robert Chen",
+      "isBreak": false
+    },
+    "Grade 2-7-3": {
+      "subject": "Environmental Science",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 2-7-4": {
+      "subject": "Advanced Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 2-8-0": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 2-8-1": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 2-8-2": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 2-8-3": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 2-8-4": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 3-1-0": {
+      "subject": "Calculus",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 3-1-1": {
+      "subject": "Advanced Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 3-1-2": {
+      "subject": "Physics",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 3-1-3": {
+      "subject": "Modern History",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 3-1-4": {
+      "subject": "Digital Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 3-2-0": {
+      "subject": "Advanced Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 3-2-1": {
+      "subject": "Calculus",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 3-2-2": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 3-2-3": {
+      "subject": "Orchestra",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 3-2-4": {
+      "subject": "Biology",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 3-3-0": {
+      "subject": "Physics",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 3-3-1": {
+      "subject": "Calculus",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 3-3-2": {
+      "subject": "Advanced Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 3-3-3": {
+      "subject": "Web Development",
+      "teacher": "Robert Chen",
+      "isBreak": false
+    },
+    "Grade 3-3-4": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 3-4-0": {
+      "subject": "Modern History",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 3-4-1": {
+      "subject": "Advanced Literature",
+      "teacher": "Mary Johnson",
+      "isBreak": false
+    },
+    "Grade 3-4-2": {
+      "subject": "Calculus",
+      "teacher": "John Smith",
+      "isBreak": false
+    },
+    "Grade 3-4-3": {
+      "subject": "Digital Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 3-4-4": {
+      "subject": "Physics",
+      "teacher": "David Brown",
+      "isBreak": false
+    },
+    "Grade 3-5-0": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 3-5-1": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 3-5-2": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 3-5-3": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 3-5-4": {
+      "subject": "Morning Recess",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "recess"
+    },
+    "Grade 3-6-0": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 3-6-1": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 3-6-2": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 3-6-3": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 3-6-4": {
+      "subject": "Lunch",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "lunch"
+    },
+    "Grade 3-7-0": {
+      "subject": "Physical Education",
+      "teacher": "Lisa Anderson",
+      "isBreak": false
+    },
+    "Grade 3-7-1": {
+      "subject": "Orchestra",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 3-7-2": {
+      "subject": "Web Development",
+      "teacher": "Robert Chen",
+      "isBreak": false
+    },
+    "Grade 3-7-3": {
+      "subject": "Biology",
+      "teacher": "Sarah Wilson",
+      "isBreak": false
+    },
+    "Grade 3-7-4": {
+      "subject": "Digital Art",
+      "teacher": "Michael Davis",
+      "isBreak": false
+    },
+    "Grade 3-8-0": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 3-8-1": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 3-8-2": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 3-8-3": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    },
+    "Grade 3-8-4": {
+      "subject": "Break",
+      "teacher": "",
+      "isBreak": true,
+      "breakType": "break"
+    }
+  },
+  "metadata": {
+    "grade": "All Grades",
+    "timeSlots": [
+      {
+        "id": 1,
+        "time": "8:00 AM – 8:45 AM",
+        "color": "border-l-primary"
+      },
+      {
+        "id": 2,
+        "time": "8:50 AM – 9:35 AM",
+        "color": "border-l-emerald-600"
+      },
+      {
+        "id": 3,
+        "time": "9:40 AM – 10:25 AM",
+        "color": "border-l-amber-500"
+      },
+      {
+        "id": 4,
+        "time": "10:30 AM – 11:15 AM",
+        "color": "border-l-sky-500"
+      },
+      {
+        "id": 5,
+        "time": "10:30 AM – 10:45 AM",
+        "color": "border-l-orange-500"
+      },
+      {
+        "id": 6,
+        "time": "12:00 PM – 1:00 PM",
+        "color": "border-l-green-600"
+      },
+      {
+        "id": 7,
+        "time": "1:05 PM – 1:50 PM",
+        "color": "border-l-primary"
+      },
+      {
+        "id": 8,
+        "time": "1:50 PM – 2:00 PM",
+        "color": "border-l-emerald-600"
+      }
+    ],
+    "breaks": [
+      {
+        "id": "lunch-1",
+        "name": "Lunch",
+        "type": "lunch",
+        "color": "bg-orange-500",
+        "icon": "🍽️"
+      },
+      {
+        "id": "recess-1",
+        "name": "Morning Recess",
+        "type": "recess",
+        "color": "bg-green-500",
+        "icon": "🏃"
+      },
+      {
+        "id": "break-1",
+        "name": "Break",
+        "type": "break",
+        "color": "bg-blue-500",
+        "icon": "☕"
+      }
+    ],
+    "teachers": {
+      "John Smith": {
+        "id": 1,
+        "subjects": [
+          "Mathematics",
+          "Advanced Mathematics",
+          "Calculus"
+        ],
+        "color": "bg-primary text-white"
+      },
+      "Mary Johnson": {
+        "id": 2,
+        "subjects": [
+          "English",
+          "Literature",
+          "Advanced Literature"
+        ],
+        "color": "bg-emerald-600 text-white"
+      },
+      "David Brown": {
+        "id": 3,
+        "subjects": [
+          "Science",
+          "Chemistry",
+          "Physics"
+        ],
+        "color": "bg-amber-500 text-white"
+      },
+      "Sarah Wilson": {
+        "id": 4,
+        "subjects": [
+          "History",
+          "World History",
+          "Modern History",
+          "Geography",
+          "Environmental Science",
+          "Biology"
+        ],
+        "color": "bg-sky-500 text-white"
+      },
+      "Michael Davis": {
+        "id": 5,
+        "subjects": [
+          "Art",
+          "Advanced Art",
+          "Digital Art",
+          "Music",
+          "Advanced Music",
+          "Orchestra"
+        ],
+        "color": "bg-orange-500 text-white"
+      },
+      "Lisa Anderson": {
+        "id": 6,
+        "subjects": [
+          "Physical Education",
+          "Health"
+        ],
+        "color": "bg-green-600 text-white"
+      },
+      "Robert Chen": {
+        "id": 7,
+        "subjects": [
+          "Computer Science",
+          "Programming",
+          "Web Development"
+        ],
+        "color": "bg-purple-600 text-white"
+      }
+    },
+    "stats": {
+      "totalLessons": 120,
+      "totalTeachers": 7,
+      "totalSubjects": 25,
+      "doubleLessons": 8,
+      "totalBreaks": 30,
+      "mostBusyTeacher": "John Smith",
+      "mostBusyDay": "Monday",
+      "mostBusyTime": "8:00 AM – 8:45 AM",
+      "averageLessonsPerDay": 24,
+      "completionPercentage": 85,
+      "teacherWorkload": {
+        "John Smith": 15,
+        "Mary Johnson": 15,
+        "David Brown": 12,
+        "Sarah Wilson": 18,
+        "Michael Davis": 18,
+        "Lisa Anderson": 15,
+        "Robert Chen": 9
+      },
+      "subjectDistribution": {
+        "Mathematics": 15,
+        "English": 15,
+        "Science": 12,
+        "History": 18,
+        "Art": 18,
+        "Physical Education": 15,
+        "Computer Science": 9
+      },
+      "dayDistribution": {
+        "Monday": 24,
+        "Tuesday": 24,
+        "Wednesday": 24,
+        "Thursday": 24,
+        "Friday": 24
+      },
+      "timeSlotUsage": {
+        "8:00 AM – 8:45 AM": 15,
+        "8:50 AM – 9:35 AM": 15,
+        "9:40 AM – 10:25 AM": 12,
+        "10:30 AM – 11:15 AM": 18,
+        "1:05 PM – 1:50 PM": 15
+      },
+      "breakDistribution": {
+        "Morning Recess": 15,
+        "Lunch": 15,
+        "Break": 15
+      }
+    },
+    "lastSaved": "2025-01-27T10:30:00.000Z"
+  }
+} 
