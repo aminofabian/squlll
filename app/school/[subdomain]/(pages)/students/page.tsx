@@ -399,7 +399,119 @@ export default function StudentsPage() {
   
   // Fetch school configuration
   const { data: schoolConfig } = useSchoolConfig();
-  const { config, getGradeById } = useSchoolConfigStore();
+  const { config, getGradeById, getAllGradeLevels } = useSchoolConfigStore();
+  
+  // Get all available grades from school config
+  const allGradeLevels = getAllGradeLevels();
+  
+  // Debug: Log what grades are available
+  console.log('Available grade levels:', allGradeLevels.map(level => ({
+    levelName: level.levelName,
+    grades: level.grades.map(g => g.name)
+  })));
+  
+  // Debug: Check if we have Senior Secondary level
+  const seniorSecondaryLevel = allGradeLevels.find(level => 
+    level.levelName.toLowerCase().includes('senior secondary')
+  );
+  console.log('Senior Secondary level found:', seniorSecondaryLevel ? {
+    name: seniorSecondaryLevel.levelName,
+    grades: seniorSecondaryLevel.grades.map(g => g.name)
+  } : 'NOT FOUND');
+  
+  // Add fallback grades if they're missing from the configuration
+  const enhancedGradeLevels = useMemo(() => {
+    const levels = [...allGradeLevels];
+    
+    // Check if we have Senior Secondary level but missing F4, F5, F6
+    let seniorSecondaryLevel = levels.find(level => 
+      level.levelName.toLowerCase().includes('senior secondary')
+    );
+    
+    // If no Senior Secondary level exists, create one
+    if (!seniorSecondaryLevel) {
+      console.log('Creating Senior Secondary level as fallback');
+      seniorSecondaryLevel = {
+        levelId: 'fallback-senior-secondary',
+        levelName: 'Senior Secondary',
+        grades: []
+      };
+      levels.push(seniorSecondaryLevel);
+    }
+    
+          if (seniorSecondaryLevel) {
+        const existingGradeNames = seniorSecondaryLevel.grades.map(g => g.name.toLowerCase());
+        console.log('Existing grades in Senior Secondary:', existingGradeNames);
+        const missingGrades = [];
+        
+        // Check for missing Form 4, 5, 6 (or Grade 10, 11, 12)
+        const hasGrade10 = existingGradeNames.some(name => name.includes('grade 10') || name.includes('form 4') || name.includes('f4'));
+        const hasGrade11 = existingGradeNames.some(name => name.includes('grade 11') || name.includes('form 5') || name.includes('f5'));
+        const hasGrade12 = existingGradeNames.some(name => name.includes('grade 12') || name.includes('form 6') || name.includes('f6'));
+        
+        console.log('Grade detection:', { hasGrade10, hasGrade11, hasGrade12 });
+        
+        if (!hasGrade10) {
+          missingGrades.push({
+            id: 'fallback-f4',
+            name: 'Grade 10',
+            age: 17,
+            streams: []
+          });
+        }
+        
+        if (!hasGrade11) {
+          missingGrades.push({
+            id: 'fallback-f5',
+            name: 'Grade 11',
+            age: 18,
+            streams: []
+          });
+        }
+        
+        if (!hasGrade12) {
+          missingGrades.push({
+            id: 'fallback-f6',
+            name: 'Grade 12',
+            age: 19,
+            streams: []
+          });
+        }
+        
+        if (missingGrades.length > 0) {
+          // Add missing grades to the senior secondary level
+          seniorSecondaryLevel.grades = [...seniorSecondaryLevel.grades, ...missingGrades];
+          console.log('Added fallback grades:', missingGrades.map(g => g.name));
+        } else {
+          console.log('No missing grades to add');
+        }
+      }
+    
+    return levels;
+  }, [allGradeLevels]);
+  
+  // Helper function to categorize levels for filtering
+  const getLevelCategory = (levelName: string): string => {
+    const lowerLevelName = levelName.toLowerCase();
+    if (lowerLevelName.includes('preschool') || lowerLevelName.includes('baby') || lowerLevelName.includes('nursery')) {
+      return 'preschool';
+    }
+    if (lowerLevelName.includes('primary') || lowerLevelName.includes('grade 1') || lowerLevelName.includes('grade 2') || 
+        lowerLevelName.includes('grade 3') || lowerLevelName.includes('grade 4') || lowerLevelName.includes('grade 5') || 
+        lowerLevelName.includes('grade 6')) {
+      return 'primary';
+    }
+    if (lowerLevelName.includes('junior') || lowerLevelName.includes('form 1') || lowerLevelName.includes('form 2') ||
+        lowerLevelName.includes('grade 7') || lowerLevelName.includes('grade 8')) {
+      return 'junior-secondary';
+    }
+    if (lowerLevelName.includes('senior') || lowerLevelName.includes('form 3') || lowerLevelName.includes('form 4') ||
+        lowerLevelName.includes('grade 9') || lowerLevelName.includes('grade 10') || lowerLevelName.includes('grade 11') || 
+        lowerLevelName.includes('grade 12')) {
+      return 'senior-secondary';
+    }
+    return 'primary'; // Default fallback
+  };
 
   // Transform GraphQL data to match our Student type
   const students: Student[] = useMemo(() => {
@@ -446,8 +558,8 @@ export default function StudentsPage() {
         const gradeMatch = gradeName.match(/Grade\s+(\d+)/i);
         if (gradeMatch) {
           const gradeNumber = parseInt(gradeMatch[1]);
-          // Convert Grade 7+ to Form 1+
-          if (gradeNumber >= 7) {
+          // Convert Grade 7+ to Form 1+ (up to Grade 12 = Form 6)
+          if (gradeNumber >= 7 && gradeNumber <= 12) {
             const formNumber = gradeNumber - 6; // Grade 7 = Form 1, Grade 8 = Form 2, etc.
             return `Form ${formNumber}`;
           }
@@ -514,18 +626,18 @@ export default function StudentsPage() {
       if (selectedGradeInfo) {
         const selectedGradeName = selectedGradeInfo.grade.name;
         
-        // Convert the selected grade to Form if it's Grade 7+
-        const convertGradeToForm = (gradeName: string): string => {
-          const gradeMatch = gradeName.match(/Grade\s+(\d+)/i);
-          if (gradeMatch) {
-            const gradeNumber = parseInt(gradeMatch[1]);
-            if (gradeNumber >= 7) {
-              const formNumber = gradeNumber - 6;
-              return `Form ${formNumber}`;
-            }
-          }
-          return gradeName;
-        };
+                 // Convert the selected grade to Form if it's Grade 7+
+         const convertGradeToForm = (gradeName: string): string => {
+           const gradeMatch = gradeName.match(/Grade\s+(\d+)/i);
+           if (gradeMatch) {
+             const gradeNumber = parseInt(gradeMatch[1]);
+             if (gradeNumber >= 7 && gradeNumber <= 12) {
+               const formNumber = gradeNumber - 6;
+               return `Form ${formNumber}`;
+             }
+           }
+           return gradeName;
+         };
         
         const convertedSelectedGrade = convertGradeToForm(selectedGradeName);
         
@@ -591,7 +703,9 @@ export default function StudentsPage() {
           const getGradeNumber = (grade: string): number => {
             const formMatch = grade.match(/Form\s*(\d+)/i);
             if (formMatch) {
-              return parseInt(formMatch[1]) + 6; // Form 1 = 7, Form 2 = 8, etc.
+              const formNumber = parseInt(formMatch[1]);
+              // Form 1 = 7, Form 2 = 8, Form 3 = 9, Form 4 = 10, Form 5 = 11, Form 6 = 12
+              return formNumber + 6;
             }
             const gradeMatch = grade.match(/Grade\s*(\d+)/i);
             if (gradeMatch) {
@@ -867,7 +981,7 @@ export default function StudentsPage() {
           }} />
         </div>
         
-        {/* Grade Filter Section - New Design */}
+        {/* Grade Filter Section - Simplified Design */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Filter by Grade</h2>
@@ -882,106 +996,130 @@ export default function StudentsPage() {
             )}
           </div>
           
-          {/* Education Level Cards - Grid Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Preschool Card */}
-            <div className="rounded-lg overflow-hidden border border-blue-100 shadow-sm">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 flex items-center gap-2 border-b border-blue-200">
-                {getLevelIcon('preschool')}
-                <h3 className="font-medium text-blue-900">Preschool</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'preschool')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-blue-50 border-blue-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
+          {/* All Grades Grid */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex flex-wrap gap-2">
+              {/* All Grades Button */}
+              <Button
+                variant={selectedGradeId === 'all' ? "default" : "outline"}
+                size="sm"
+                className={`font-mono ${selectedGradeId === 'all' ? 'bg-primary hover:bg-primary/90' : 'hover:bg-gray-50'}`}
+                onClick={() => setSelectedGradeId('all')}
+              >
+                All Grades
+              </Button>
+              
+              {/* Grade Buttons */}
+              {(() => {
+                const allGrades = enhancedGradeLevels.flatMap(level => level.grades);
+                console.log('All grades before processing:', allGrades.map(g => g.name));
+                console.log('Enhanced grade levels:', enhancedGradeLevels.map(level => ({
+                  levelName: level.levelName,
+                  grades: level.grades.map(g => g.name)
+                })));
+                return allGrades;
+              })()
+                .sort((a, b) => {
+                  // Sort grades logically: PP1, PP2, G1, G2, G3, G4, G5, G6, F1, F2, F3, F4, F5, F6
+                  const getGradeOrder = (gradeName: string): number => {
+                    const lowerName = gradeName.toLowerCase();
+                    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 1;
+                    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 2;
+                    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 3;
+                    // Check for higher grades first (more specific matches)
+                    if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 15;
+                    if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 14;
+                    if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 13;
+                    if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 12;
+                    if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 11;
+                    if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 10;
+                    if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 9;
+                    if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 8;
+                    if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 7;
+                    if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 6;
+                    if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 5;
+                    if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 4;
+                    return 999; // Unknown grades at the end
+                  };
+                  const orderA = getGradeOrder(a.name);
+                  const orderB = getGradeOrder(b.name);
+                  console.log(`Sorting: ${a.name} (${orderA}) vs ${b.name} (${orderB})`);
+                  return orderA - orderB;
+                })
+                .filter((grade, index, array) => {
+                  // Remove duplicates based on short name
+                  const getShortName = (gradeName: string): string => {
+                    const lowerName = gradeName.toLowerCase();
+                    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+                    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+                    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+                    // Check for higher grades first (more specific matches)
+                    if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 'F6';
+                    if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 'F5';
+                    if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 'F4';
+                    if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 'F3';
+                    if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 'F2';
+                    if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 'F1';
+                    if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 'G6';
+                    if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 'G5';
+                    if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 'G4';
+                    if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 'G3';
+                    if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 'G2';
+                    if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 'G1';
+                    return gradeName.substring(0, 3).toUpperCase(); // Fallback
+                  };
+                  
+                  const currentShortName = getShortName(grade.name);
+                  const firstIndex = array.findIndex(g => getShortName(g.name) === currentShortName);
+                  const shouldKeep = index === firstIndex;
+                  if (!shouldKeep) {
+                    console.log(`Filtering out duplicate grade: ${grade.name} (${currentShortName})`);
                   }
-                </div>
-              </div>
-            </div>
-            
-            {/* Primary Card */}
-            <div className="rounded-lg overflow-hidden border border-green-100 shadow-sm">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-3 flex items-center gap-2 border-b border-green-200">
-                {getLevelIcon('primary')}
-                <h3 className="font-medium text-green-900">Primary</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'primary')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-green-50 border-green-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-            
-            {/* Junior Secondary Card */}
-            <div className="rounded-lg overflow-hidden border border-amber-100 shadow-sm">
-              <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-3 flex items-center gap-2 border-b border-amber-200">
-                {getLevelIcon('junior-secondary')}
-                <h3 className="font-medium text-amber-900">Junior Secondary</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'junior-secondary')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-amber-600 hover:bg-amber-700' : 'hover:bg-amber-50 border-amber-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-            
-            {/* Senior Secondary Card */}
-            <div className="rounded-lg overflow-hidden border border-purple-100 shadow-sm">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 flex items-center gap-2 border-b border-purple-200">
-                {getLevelIcon('senior-secondary')}
-                <h3 className="font-medium text-purple-900">Senior Secondary</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'senior-secondary')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-purple-50 border-purple-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
+                  return shouldKeep; // Keep only the first occurrence of each short name
+                })
+                .map(grade => {
+                  // Create a short display name
+                  const getShortName = (gradeName: string): string => {
+                    const lowerName = gradeName.toLowerCase();
+                    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+                    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+                    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+                    // Check for higher grades first (more specific matches)
+                    if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 'F6';
+                    if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 'F5';
+                    if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 'F4';
+                    if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 'F3';
+                    if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 'F2';
+                    if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 'F1';
+                    if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 'G6';
+                    if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 'G5';
+                    if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 'G4';
+                    if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 'G3';
+                    if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 'G2';
+                    if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 'G1';
+                    return gradeName.substring(0, 3).toUpperCase(); // Fallback
+                  };
+                  
+                  const shortName = getShortName(grade.name);
+                  const isSelected = selectedGradeId === grade.id;
+                  
+                  return (
+                    <Button
+                      key={grade.id}
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      className={`font-mono min-w-[3rem] h-9 ${
+                        isSelected 
+                          ? 'bg-primary hover:bg-primary/90 text-white' 
+                          : 'hover:bg-gray-50 border-gray-300'
+                      }`}
+                      onClick={() => setSelectedGradeId(grade.id)}
+                      title={grade.name} // Show full name on hover
+                    >
+                      {shortName}
+                    </Button>
+                  );
+                })}
             </div>
           </div>
           
@@ -990,7 +1128,7 @@ export default function StudentsPage() {
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
               <span>Currently viewing:</span>
               <Badge variant="secondary" className="font-medium">
-                {mockGrades.find(g => g.id === selectedGradeId)?.displayName || 'All Grades'}
+                {getGradeById(selectedGradeId)?.grade.name || 'All Grades'}
               </Badge>
             </div>
           )}
