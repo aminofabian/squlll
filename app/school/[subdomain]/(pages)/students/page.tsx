@@ -64,6 +64,8 @@ import { GraphQLStudent } from '@/types/student';
 import SchoolReportCard from './components/ReportCard';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import AllGradesStudentsTable from "./components/AllGradesStudentsTable";
+import { StudentsStats } from "./components/StudentsStats";
 
 // Kenya-specific student type (adapted from GraphQL data)
 type Student = {
@@ -380,9 +382,9 @@ const mockGrades: Grade[] = [
 ]
 
 export default function StudentsPage() {
-  // State for selected student and mobile sidebar visibility
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  // State for mobile sidebar visibility and student selection
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
@@ -392,6 +394,8 @@ export default function StudentsPage() {
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
   const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(new Set());
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
+  const [displayedStudentsCount, setDisplayedStudentsCount] = useState(10);
+
 
   // Fetch real data from the store
   const { students: graphqlStudents, isLoading, error } = useStudentsFromStore();
@@ -649,8 +653,8 @@ export default function StudentsPage() {
           
           // Check for exact match with converted grade name
           if (studentGrade === selectedGrade || studentClass === selectedGrade) {
-            return true;
-          }
+              return true;
+            }
           
           // Check if student grade/class contains the selected grade
           if (studentGrade?.includes(selectedGrade) || studentClass?.includes(selectedGrade)) {
@@ -786,14 +790,6 @@ export default function StudentsPage() {
     if (gradeNum <= 10) return "junior-secondary";
     return "senior-secondary";
   };
-  
-  // Set initial selected student instead of waiting for selection
-  // Initially selecting Wanjiku Kamau (first student from our data)
-  useEffect(() => {
-    if (students.length > 0 && !selectedStudentId) {
-      setSelectedStudentId(students[0].id); // Select first student (Wanjiku Kamau)
-    }
-  }, [students, selectedStudentId]);
 
   // Add a mounted state to prevent hydration issues
   const [isMounted, setIsMounted] = useState(false);
@@ -801,7 +797,6 @@ export default function StudentsPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
 
   // Find the selected student details
   const selectedStudent = useMemo(() => {
@@ -873,25 +868,29 @@ export default function StudentsPage() {
         />
       )}
 
-      {/* Search filter column - simplified with only name search */}
-      <div className="hidden md:flex flex-col w-96 border-r overflow-y-auto p-6 shrink-0 bg-white">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-1">Search Students</h2>
-          <p className="text-sm text-muted-foreground">Find students by name</p>
-        </div>
+      {/* Search filter column - styled to match theme */}
+      <div className="hidden md:flex flex-col w-96 border-r border-primary/20 overflow-y-auto p-6 shrink-0 bg-white dark:bg-slate-900">
 
         <div className="space-y-6">
           {/* Name Search */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Student Name</label>
+          <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+            <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+              <label className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                <Search className="h-3 w-3 mr-2" />
+                Student Name
+              </label>
+            </div>
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-primary" />
               <Input
                 type="text"
                 placeholder="Search by name..."
-                className="pl-9 h-12 text-base"
+                className="pl-9 h-12 text-base font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setDisplayedStudentsCount(10); // Reset to show first 10 when searching
+                }}
               />
             </div>
           </div>
@@ -904,8 +903,9 @@ export default function StudentsPage() {
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedGradeId('all');
+                  setDisplayedStudentsCount(10); // Reset to show first 10
                 }} 
-                className="w-full"
+                className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
               >
                 Clear All Filters
               </Button>
@@ -913,38 +913,92 @@ export default function StudentsPage() {
           )}
         </div>
         
-        {/* Student List with Filtering */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">Students <span className="text-muted-foreground">({filteredAndSortedStudents.length})</span></h3>
+        {/* Student List with Filtering and Pagination */}
+        <div className="mt-8 border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">Students</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                Showing {Math.min(displayedStudentsCount, filteredAndSortedStudents.length)} of {filteredAndSortedStudents.length} students
+              </p>
+            </div>
+            <Badge className="bg-primary/10 text-primary border-primary/20 font-mono">
+              {filteredAndSortedStudents.length}
+            </Badge>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 mb-4">
             {filteredAndSortedStudents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-slate-600 dark:text-slate-400 font-medium">
                 No students match your search criteria
               </div>
             ) : (
-              filteredAndSortedStudents.map((student) => (
-                <div
-                  key={student.id}
-                  className={`p-3 rounded-md border transition-colors cursor-pointer ${student.id === selectedStudentId ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/30'}`}
-                  onClick={() => setSelectedStudentId(student.id)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${student.status === 'active' ? 'bg-green-500' : student.status === 'inactive' ? 'bg-gray-400' : 'bg-red-500'}`} />
-                        <div className="font-medium">{student.name}</div>
+              filteredAndSortedStudents.slice(0, displayedStudentsCount).map((student) => {
+                return (
+                  <div
+                    key={student.id}
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                      student.id === selectedStudentId 
+                        ? 'bg-primary/10 border-primary/40 shadow-md' 
+                        : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-sm'
+                    }`}
+                    onClick={() => setSelectedStudentId(student.id)}
+                    title="Click to view student details"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            student.status === 'active' ? 'bg-green-500' : 
+                            student.status === 'inactive' ? 'bg-gray-400' : 'bg-red-500'
+                          }`} />
+                          <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                            {student.name}
+                          </div>
+                        </div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                          {student.admissionNumber}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">{student.admissionNumber}</div>
+                      <div className="text-sm font-mono text-primary font-medium">
+                        {student.class}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">{student.class}</div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
+
+          {/* Pagination Info */}
+          {filteredAndSortedStudents.length > displayedStudentsCount && (
+            <div className="border-t border-primary/20 pt-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                  Showing {displayedStudentsCount} of {filteredAndSortedStudents.length} students
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDisplayedStudentsCount(prev => Math.min(prev + 10, filteredAndSortedStudents.length))}
+                  className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono text-xs"
+                >
+                  Load More ({Math.min(10, filteredAndSortedStudents.length - displayedStudentsCount)})
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* Show All Loaded Message */}
+          {displayedStudentsCount >= filteredAndSortedStudents.length && filteredAndSortedStudents.length > 10 && (
+            <div className="border-t border-primary/20 pt-4">
+              <div className="flex items-center justify-center">
+                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                  All {filteredAndSortedStudents.length} students loaded
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -953,7 +1007,7 @@ export default function StudentsPage() {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">
-              {selectedStudent ? 'Student Details' : 'Loading Student Information'}
+              Students
             </h1>
           </div>
           <CreateStudentDrawer onStudentCreated={(studentName) => {
@@ -966,183 +1020,43 @@ export default function StudentsPage() {
             // If student name is provided, search for the new student
             if (studentName) {
               setSearchTerm(studentName);
-              // Find and select the newly created student
-              setTimeout(() => {
-                const newStudent = students.find(student => 
-                  student.name.toLowerCase().includes(studentName.toLowerCase())
-                );
-                if (newStudent) {
-                  setSelectedStudentId(newStudent.id);
-                }
-              }, 100); // Small delay to ensure data is updated
             } else {
               setSearchTerm('');
             }
           }} />
         </div>
         
-        {/* Grade Filter Section - Simplified Design */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Filter by Grade</h2>
-            {selectedGradeId !== 'all' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setSelectedGradeId('all')}
-              >
-                Clear Filter
-              </Button>
-            )}
-          </div>
-          
-          {/* All Grades Grid */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex flex-wrap gap-2">
-              {/* All Grades Button */}
-              <Button
-                variant={selectedGradeId === 'all' ? "default" : "outline"}
-                size="sm"
-                className={`font-mono ${selectedGradeId === 'all' ? 'bg-primary hover:bg-primary/90' : 'hover:bg-gray-50'}`}
-                onClick={() => setSelectedGradeId('all')}
-              >
-                All Grades
-              </Button>
-              
-              {/* Grade Buttons */}
-              {(() => {
-                const allGrades = enhancedGradeLevels.flatMap(level => level.grades);
-                console.log('All grades before processing:', allGrades.map(g => g.name));
-                console.log('Enhanced grade levels:', enhancedGradeLevels.map(level => ({
-                  levelName: level.levelName,
-                  grades: level.grades.map(g => g.name)
-                })));
-                return allGrades;
-              })()
-                .sort((a, b) => {
-                  // Sort grades logically: PP1, PP2, G1, G2, G3, G4, G5, G6, F1, F2, F3, F4, F5, F6
-                  const getGradeOrder = (gradeName: string): number => {
-                    const lowerName = gradeName.toLowerCase();
-                    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 1;
-                    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 2;
-                    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 3;
-                    // Check for higher grades first (more specific matches)
-                    if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 15;
-                    if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 14;
-                    if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 13;
-                    if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 12;
-                    if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 11;
-                    if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 10;
-                    if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 9;
-                    if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 8;
-                    if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 7;
-                    if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 6;
-                    if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 5;
-                    if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 4;
-                    return 999; // Unknown grades at the end
-                  };
-                  const orderA = getGradeOrder(a.name);
-                  const orderB = getGradeOrder(b.name);
-                  console.log(`Sorting: ${a.name} (${orderA}) vs ${b.name} (${orderB})`);
-                  return orderA - orderB;
-                })
-                .filter((grade, index, array) => {
-                  // Remove duplicates based on short name
-                  const getShortName = (gradeName: string): string => {
-                    const lowerName = gradeName.toLowerCase();
-                    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
-                    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
-                    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
-                    // Check for higher grades first (more specific matches)
-                    if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 'F6';
-                    if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 'F5';
-                    if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 'F4';
-                    if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 'F3';
-                    if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 'F2';
-                    if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 'F1';
-                    if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 'G6';
-                    if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 'G5';
-                    if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 'G4';
-                    if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 'G3';
-                    if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 'G2';
-                    if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 'G1';
-                    return gradeName.substring(0, 3).toUpperCase(); // Fallback
-                  };
-                  
-                  const currentShortName = getShortName(grade.name);
-                  const firstIndex = array.findIndex(g => getShortName(g.name) === currentShortName);
-                  const shouldKeep = index === firstIndex;
-                  if (!shouldKeep) {
-                    console.log(`Filtering out duplicate grade: ${grade.name} (${currentShortName})`);
-                  }
-                  return shouldKeep; // Keep only the first occurrence of each short name
-                })
-                .map(grade => {
-                  // Create a short display name
-                  const getShortName = (gradeName: string): string => {
-                    const lowerName = gradeName.toLowerCase();
-                    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
-                    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
-                    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
-                    // Check for higher grades first (more specific matches)
-                    if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 'F6';
-                    if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 'F5';
-                    if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 'F4';
-                    if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 'F3';
-                    if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 'F2';
-                    if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 'F1';
-                    if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 'G6';
-                    if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 'G5';
-                    if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 'G4';
-                    if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 'G3';
-                    if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 'G2';
-                    if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 'G1';
-                    return gradeName.substring(0, 3).toUpperCase(); // Fallback
-                  };
-                  
-                  const shortName = getShortName(grade.name);
-                  const isSelected = selectedGradeId === grade.id;
-                  
-                  return (
-                    <Button
-                      key={grade.id}
-                      variant={isSelected ? "default" : "outline"}
-                      size="sm"
-                      className={`font-mono min-w-[3rem] h-9 ${
-                        isSelected 
-                          ? 'bg-primary hover:bg-primary/90 text-white' 
-                          : 'hover:bg-gray-50 border-gray-300'
-                      }`}
-                      onClick={() => setSelectedGradeId(grade.id)}
-                      title={grade.name} // Show full name on hover
-                    >
-                      {shortName}
-                    </Button>
-                  );
-                })}
-            </div>
-          </div>
-          
-          {/* Current Selection Indicator */}
-          {selectedGradeId !== 'all' && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Currently viewing:</span>
-              <Badge variant="secondary" className="font-medium">
-                {getGradeById(selectedGradeId)?.grade.name || 'All Grades'}
-              </Badge>
-            </div>
-          )}
-        </div>
-
         {/* Student Details Section */}
         {selectedStudent ? (
+          // Show detailed student view
           <div className="space-y-6">
+            {/* Back button */}
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedStudentId(null)}
+                className="flex items-center gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
+              >
+                ← Back to Students
+              </Button>
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-4">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-2">
+                  <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                    Student Details
+                  </span>
+                </div>
+                <h2 className="text-xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                  {selectedStudent.name}
+                </h2>
+              </div>
+          </div>
+          
             {/* Student profile header */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Student photo */}
                 <div className="flex-shrink-0">
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-slate-100">
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
                     {selectedStudent.photo ? (
                       <img 
                         src={selectedStudent.photo} 
@@ -1150,8 +1064,8 @@ export default function StudentsPage() {
                         className="object-cover w-full h-full"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                        <User className="h-12 w-12 text-slate-400" />
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-12 w-12 text-primary" />
                       </div>
                     )}
                     
@@ -1166,33 +1080,39 @@ export default function StudentsPage() {
                 {/* Student basic info */}
                 <div className="flex flex-col justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold">{selectedStudent.name}</h2>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                    <h2 className="text-2xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">{selectedStudent.name}</h2>
+                    <div className="flex items-center gap-3 mt-2 text-sm text-slate-600 dark:text-slate-400 font-mono">
                       <div className="flex items-center gap-1">
-                        <Info className="h-3.5 w-3.5" />
+                        <Info className="h-3.5 w-3.5 text-primary" />
                         <span>ID: {selectedStudent.admissionNumber}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <School className="h-3.5 w-3.5" />
+                        <School className="h-3.5 w-3.5 text-primary" />
                         <span>Class: {selectedStudent.class}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
+                        <CalendarDays className="h-3.5 w-3.5 text-primary" />
                         <span>Age: {selectedStudent.age}</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2 mt-4">
-                    <Badge className={`${selectedStudent.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' : 
-                      selectedStudent.status === 'inactive' ? 'bg-gray-100 text-gray-800 border-gray-200' : 
-                      selectedStudent.status === 'suspended' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}`}>
+                    <Badge className={`font-mono text-xs capitalize border-2 ${
+                      selectedStudent.status === 'active' 
+                        ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' 
+                        : selectedStudent.status === 'inactive' 
+                          ? 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
+                          : selectedStudent.status === 'suspended' 
+                            ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' 
+                            : 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800'
+                    }`}>
                       {selectedStudent.status.charAt(0).toUpperCase() + selectedStudent.status.slice(1)}
                     </Badge>
-                    <Badge variant="outline" className="capitalize">
+                    <Badge variant="outline" className="capitalize font-mono border-primary/20 text-primary">
                       {selectedStudent.gender}
                     </Badge>
-                    <Badge variant="outline" className="capitalize">
+                    <Badge variant="outline" className="capitalize font-mono border-primary/20 text-primary">
                       Grade {selectedStudent.grade}
                     </Badge>
                   </div>
@@ -1202,75 +1122,79 @@ export default function StudentsPage() {
             
             {/* Student details tabs */}
             <Tabs defaultValue="details">
-              <TabsList className="grid grid-cols-5 mb-4">
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="attendance">Attendance</TabsTrigger>
-                <TabsTrigger value="academics">Academics</TabsTrigger>
-                <TabsTrigger value="fees">Fees</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsList className="grid grid-cols-5 mb-6 border-2 border-primary/20 bg-primary/5 rounded-xl p-1">
+                <TabsTrigger value="details" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Details</TabsTrigger>
+                <TabsTrigger value="attendance" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Attendance</TabsTrigger>
+                <TabsTrigger value="academics" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Academics</TabsTrigger>
+                <TabsTrigger value="fees" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Fees</TabsTrigger>
+                <TabsTrigger value="documents" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Documents</TabsTrigger>
               </TabsList>
               
               <TabsContent value="details">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Student Information</CardTitle>
-                    <CardDescription>
+                <Card className="border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+                  <CardHeader className="border-b-2 border-primary/20 bg-primary/5">
+                    <CardTitle className="font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">Student Information</CardTitle>
+                    <CardDescription className="font-mono text-slate-600 dark:text-slate-400">
                       Detailed personal information about {selectedStudent.name}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Personal Details</h3>
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Full Name</div>
-                            <div>{selectedStudent.name}</div>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                        <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                          <h3 className="text-xs font-mono uppercase tracking-wide text-primary">Personal Details</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Full Name</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.name}</div>
                           </div>
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Age</div>
-                            <div>{selectedStudent.age} years</div>
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Age</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.age} years</div>
                           </div>
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Gender</div>
-                            <div className="capitalize">{selectedStudent.gender}</div>
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Gender</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100 capitalize">{selectedStudent.gender}</div>
                           </div>
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Admission Number</div>
-                            <div>{selectedStudent.admissionNumber}</div>
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Admission Number</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.admissionNumber}</div>
                           </div>
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Admission Date</div>
-                            <div>{selectedStudent.admissionDate}</div>
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Admission Date</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.admissionDate}</div>
                           </div>
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Status</div>
-                            <div className="capitalize">{selectedStudent.status}</div>
+                          <div className="flex justify-between items-center py-2">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Status</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100 capitalize">{selectedStudent.status}</div>
                           </div>
                         </div>
                       </div>
                       
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Contact Information</h3>
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Guardian Name</div>
-                            <div>{selectedStudent.contacts.primaryGuardian}</div>
+                      <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                        <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                          <h3 className="text-xs font-mono uppercase tracking-wide text-primary">Contact Information</h3>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Guardian Name</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.contacts.primaryGuardian}</div>
                           </div>
-                          <div className="grid grid-cols-2">
-                            <div className="font-medium text-sm">Guardian Phone</div>
-                            <div>{selectedStudent.contacts.guardianPhone}</div>
+                          <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                            <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Guardian Phone</div>
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.contacts.guardianPhone}</div>
                           </div>
                           {selectedStudent.contacts.guardianEmail && (
-                            <div className="grid grid-cols-2">
-                              <div className="font-medium text-sm">Guardian Email</div>
-                              <div>{selectedStudent.contacts.guardianEmail}</div>
+                            <div className="flex justify-between items-center py-2 border-b border-primary/10">
+                              <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Guardian Email</div>
+                              <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.contacts.guardianEmail}</div>
                             </div>
                           )}
                           {selectedStudent.contacts.homeAddress && (
-                            <div className="grid grid-cols-2">
-                              <div className="font-medium text-sm">Address</div>
-                              <div>{selectedStudent.contacts.homeAddress}</div>
+                            <div className="flex justify-between items-center py-2">
+                              <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Address</div>
+                              <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{selectedStudent.contacts.homeAddress}</div>
                             </div>
                           )}
                         </div>
@@ -1281,80 +1205,84 @@ export default function StudentsPage() {
               </TabsContent>
               
               <TabsContent value="academics">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Academic Performance</CardTitle>
+                <Card className="border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+                  <CardHeader className="border-b-2 border-primary/20 bg-primary/5">
+                    <CardTitle className="font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">Academic Performance</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6">
                     <div className="space-y-6">
-                      <div className="p-4 border rounded-md bg-blue-50">
-                        <h3 className="text-md font-semibold mb-3 flex items-center">
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          Current Performance
-                        </h3>
+                      <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                        <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                          <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                            <BookOpen className="h-3 w-3 mr-2" />
+                            Current Performance
+                          </h3>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="p-3 bg-white rounded-md border">
-                            <div className="text-xs text-muted-foreground mb-1">Average Grade</div>
-                            <div className="text-2xl font-bold text-blue-700">{selectedStudent.academicDetails?.averageGrade || 'N/A'}</div>
+                          <div className="border-2 border-primary/20 bg-white dark:bg-slate-700 rounded-xl p-4">
+                            <div className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Average Grade</div>
+                            <div className="text-2xl font-mono font-bold text-primary">{selectedStudent.academicDetails?.averageGrade || 'N/A'}</div>
                           </div>
-                          <div className="p-3 bg-white rounded-md border">
-                            <div className="text-xs text-muted-foreground mb-1">Class Rank</div>
-                            <div className="text-2xl font-bold">
+                          <div className="border-2 border-primary/20 bg-white dark:bg-slate-700 rounded-xl p-4">
+                            <div className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Class Rank</div>
+                            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
                               {selectedStudent.academicDetails?.classRank || 'N/A'}
-                              <span className="text-xs font-normal ml-1">/ {selectedStudent.academicDetails?.classRank ? '30' : '0'}</span>
+                              <span className="text-xs font-normal ml-1 text-slate-600 dark:text-slate-400">/ {selectedStudent.academicDetails?.classRank ? '30' : '0'}</span>
                             </div>
                           </div>
-                          <div className="p-3 bg-white rounded-md border">
-                            <div className="text-xs text-muted-foreground mb-1">Stream Rank</div>
-                            <div className="text-2xl font-bold">
+                          <div className="border-2 border-primary/20 bg-white dark:bg-slate-700 rounded-xl p-4">
+                            <div className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Stream Rank</div>
+                            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
                               {selectedStudent.academicDetails?.streamRank || 'N/A'}
-                              <span className="text-xs font-normal ml-1">/ {selectedStudent.academicDetails?.streamRank ? '15' : '0'}</span>
+                              <span className="text-xs font-normal ml-1 text-slate-600 dark:text-slate-400">/ {selectedStudent.academicDetails?.streamRank ? '15' : '0'}</span>
                             </div>
                           </div>
-                          <div className="p-3 bg-white rounded-md border">
-                            <div className="text-xs text-muted-foreground mb-1">Year Rank</div>
-                            <div className="text-2xl font-bold">
+                          <div className="border-2 border-primary/20 bg-white dark:bg-slate-700 rounded-xl p-4">
+                            <div className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Year Rank</div>
+                            <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
                               {selectedStudent.academicDetails?.yearRank || 'N/A'}
-                              <span className="text-xs font-normal ml-1">/ {selectedStudent.academicDetails?.yearRank ? '120' : '0'}</span>
+                              <span className="text-xs font-normal ml-1 text-slate-600 dark:text-slate-400">/ {selectedStudent.academicDetails?.yearRank ? '120' : '0'}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="p-4 border rounded-md">
-                        <h3 className="text-md font-semibold mb-3">Exam History</h3>
+                      <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                        <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                          <h3 className="text-xs font-mono uppercase tracking-wide text-primary">Exam History</h3>
+                        </div>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr className="border-b">
-                                <th className="text-left p-2">Term</th>
-                                <th className="text-left p-2">Average</th>
-                                <th className="text-left p-2">Class Rank</th>
-                                <th className="text-left p-2">Stream Rank</th>
-                                <th className="text-left p-2">Comments</th>
+                              <tr className="border-b-2 border-primary/20">
+                                <th className="text-left p-3 font-mono font-bold text-primary">Term</th>
+                                <th className="text-left p-3 font-mono font-bold text-primary">Average</th>
+                                <th className="text-left p-3 font-mono font-bold text-primary">Class Rank</th>
+                                <th className="text-left p-3 font-mono font-bold text-primary">Stream Rank</th>
+                                <th className="text-left p-3 font-mono font-bold text-primary">Comments</th>
                               </tr>
                             </thead>
                             <tbody>
-                              <tr className="border-b hover:bg-muted/30">
-                                <td className="p-2">Term 1, 2023</td>
-                                <td className="p-2 font-medium">A-</td>
-                                <td className="p-2">3 / 30</td>
-                                <td className="p-2">1 / 15</td>
-                                <td className="p-2">Excellent performance</td>
+                              <tr className="border-b border-primary/10 hover:bg-primary/5">
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">Term 1, 2023</td>
+                                <td className="p-3 font-mono font-medium text-primary">A-</td>
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">3 / 30</td>
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">1 / 15</td>
+                                <td className="p-3 font-mono text-slate-600 dark:text-slate-400">Excellent performance</td>
                               </tr>
-                              <tr className="border-b hover:bg-muted/30">
-                                <td className="p-2">Term 3, 2022</td>
-                                <td className="p-2 font-medium">B+</td>
-                                <td className="p-2">4 / 30</td>
-                                <td className="p-2">2 / 15</td>
-                                <td className="p-2">Good improvement</td>
+                              <tr className="border-b border-primary/10 hover:bg-primary/5">
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">Term 3, 2022</td>
+                                <td className="p-3 font-mono font-medium text-primary">B+</td>
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">4 / 30</td>
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">2 / 15</td>
+                                <td className="p-3 font-mono text-slate-600 dark:text-slate-400">Good improvement</td>
                               </tr>
-                              <tr className="border-b hover:bg-muted/30">
-                                <td className="p-2">Term 2, 2022</td>
-                                <td className="p-2 font-medium">B</td>
-                                <td className="p-2">6 / 30</td>
-                                <td className="p-2">3 / 15</td>
-                                <td className="p-2">Consistent performance</td>
+                              <tr className="border-b border-primary/10 hover:bg-primary/5">
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">Term 2, 2022</td>
+                                <td className="p-3 font-mono font-medium text-primary">B</td>
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">6 / 30</td>
+                                <td className="p-3 font-mono text-slate-700 dark:text-slate-300">3 / 15</td>
+                                <td className="p-3 font-mono text-slate-600 dark:text-slate-400">Consistent performance</td>
                               </tr>
                             </tbody>
                           </table>
@@ -1362,11 +1290,13 @@ export default function StudentsPage() {
                       </div>
                       
                       {selectedStudent.academicDetails?.kcsePrediction && (
-                        <div className="p-4 border rounded-md bg-green-50">
-                          <h3 className="text-md font-semibold mb-3">KCSE Prediction</h3>
-                          <div className="p-3 bg-white rounded-md border inline-block">
-                            <div className="text-xs text-muted-foreground mb-1">Predicted Grade</div>
-                            <div className="text-3xl font-bold text-green-700">{selectedStudent.academicDetails.kcsePrediction}</div>
+                        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                          <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                            <h3 className="text-xs font-mono uppercase tracking-wide text-primary">KCSE Prediction</h3>
+                          </div>
+                          <div className="border-2 border-primary/20 bg-white dark:bg-slate-700 rounded-xl p-4 inline-block">
+                            <div className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Predicted Grade</div>
+                            <div className="text-3xl font-mono font-bold text-primary">{selectedStudent.academicDetails.kcsePrediction}</div>
                           </div>
                         </div>
                       )}
@@ -1376,12 +1306,12 @@ export default function StudentsPage() {
               </TabsContent>
               
               <TabsContent value="attendance">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Attendance Records</CardTitle>
+                <Card className="border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+                  <CardHeader className="border-b-2 border-primary/20 bg-primary/5">
+                    <CardTitle className="font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">Attendance Records</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-center p-8 text-muted-foreground">
+                  <CardContent className="p-6">
+                    <div className="text-center p-8 text-slate-600 dark:text-slate-400 font-mono">
                       Attendance records will appear here
                     </div>
                   </CardContent>
@@ -1389,12 +1319,12 @@ export default function StudentsPage() {
               </TabsContent>
               
               <TabsContent value="fees">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Fee Information</CardTitle>
+                <Card className="border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+                  <CardHeader className="border-b-2 border-primary/20 bg-primary/5">
+                    <CardTitle className="font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">Fee Information</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-center p-8 text-muted-foreground">
+                  <CardContent className="p-6">
+                    <div className="text-center p-8 text-slate-600 dark:text-slate-400 font-mono">
                       Fee payment history will appear here
                     </div>
                   </CardContent>
@@ -1554,15 +1484,272 @@ export default function StudentsPage() {
             </Tabs>
           </div>
         ) : (
-          <div className="bg-muted/30 rounded-lg p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <User className="h-12 w-12 text-muted-foreground" />
+          // Show grade filter and table
+          <>
+            {/* Stats Section - Only show when viewing all grades */}
+            {selectedGradeId === 'all' && (
+              <div className="mb-8">
+                <StudentsStats
+                  totalStudents={students.length}
+                  studentsAddedToday={Math.floor(Math.random() * 5) + 1} // Mock data
+                  absentToday={Math.floor(Math.random() * 20) + 5}
+                  presentToday={students.length - (Math.floor(Math.random() * 20) + 5)}
+                  classesWithMarkedRegisters={Math.floor(Math.random() * 15) + 10}
+                  totalClasses={20}
+                  topPerformingGrade="Form 4"
+                  studentsWithScholarships={Math.floor(Math.random() * 15) + 5}
+                  newAdmissionsThisMonth={Math.floor(Math.random() * 20) + 10}
+                  feeDefaulters={Math.floor(Math.random() * 10) + 2}
+                  averageGrade="B+"
+                />
+              </div>
+            )}
+
+            {/* Grade Filter Section */}
+            <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-2">
+                    <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                      Grade Filter
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                    Filter by Grade Level
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 font-medium">
+                    Select a specific grade to view students or view all grades
+                  </p>
+                </div>
+                {selectedGradeId !== 'all' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setSelectedGradeId('all')}
+                    className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
+                  >
+                    Clear Filter
+                  </Button>
+                )}
+              </div>
+              
+              {/* All Grades Grid */}
+              <div className="bg-white dark:bg-slate-800 rounded-lg border-2 border-primary/20 p-6">
+                <div className="flex flex-wrap gap-3">
+                  {/* All Grades Button */}
+                  <Button
+                    variant={selectedGradeId === 'all' ? "default" : "outline"}
+                    size="sm"
+                    className={`font-mono min-w-[6rem] h-10 rounded-lg transition-all duration-200 font-semibold tracking-wide ${
+                      selectedGradeId === 'all' 
+                        ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-2 border-primary/80' 
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-2 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-md'
+                    }`}
+                    onClick={() => setSelectedGradeId('all')}
+                  >
+                    All Grades
+                  </Button>
+                  
+                  {/* Grade Buttons */}
+                  {(() => {
+                    const allGrades = enhancedGradeLevels.flatMap(level => level.grades);
+                    console.log('All grades before processing:', allGrades.map(g => g.name));
+                    console.log('Enhanced grade levels:', enhancedGradeLevels.map(level => ({
+                      levelName: level.levelName,
+                      grades: level.grades.map(g => g.name)
+                    })));
+                    return allGrades;
+                  })()
+                    .sort((a, b) => {
+                      // Sort grades logically: PP1, PP2, G1, G2, G3, G4, G5, G6, F1, F2, F3, F4, F5, F6
+                      const getGradeOrder = (gradeName: string): number => {
+                        const lowerName = gradeName.toLowerCase();
+                        if (lowerName.includes('pp1') || lowerName.includes('baby')) return 1;
+                        if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 2;
+                        if (lowerName.includes('pp3') || lowerName.includes('reception')) return 3;
+                        // Check for higher grades first (more specific matches)
+                        if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 15;
+                        if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 14;
+                        if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 13;
+                        if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 12;
+                        if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 11;
+                        if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 10;
+                        if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 9;
+                        if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 8;
+                        if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 7;
+                        if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 6;
+                        if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 5;
+                        if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 4;
+                        return 999; // Unknown grades at the end
+                      };
+                      const orderA = getGradeOrder(a.name);
+                      const orderB = getGradeOrder(b.name);
+                      console.log(`Sorting: ${a.name} (${orderA}) vs ${b.name} (${orderB})`);
+                      return orderA - orderB;
+                    })
+                    .filter((grade, index, array) => {
+                      // Remove duplicates based on short name
+                      const getShortName = (gradeName: string): string => {
+                        const lowerName = gradeName.toLowerCase();
+                        if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+                        if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+                        if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+                        // Check for higher grades first (more specific matches)
+                        if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 'F6';
+                        if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 'F5';
+                        if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 'F4';
+                        if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 'F3';
+                        if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 'F2';
+                        if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 'F1';
+                        if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 'G6';
+                        if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 'G5';
+                        if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 'G4';
+                        if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 'G3';
+                        if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 'G2';
+                        if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 'G1';
+                        return gradeName.substring(0, 3).toUpperCase(); // Fallback
+                      };
+                      
+                      const currentShortName = getShortName(grade.name);
+                      const firstIndex = array.findIndex(g => getShortName(g.name) === currentShortName);
+                      const shouldKeep = index === firstIndex;
+                      if (!shouldKeep) {
+                        console.log(`Filtering out duplicate grade: ${grade.name} (${currentShortName})`);
+                      }
+                      return shouldKeep; // Keep only the first occurrence of each short name
+                    })
+                    .map((grade, index, array) => {
+                      // Create a short display name
+                      const getShortName = (gradeName: string): string => {
+                        const lowerName = gradeName.toLowerCase();
+                        if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+                        if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+                        if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+                        // Check for higher grades first (more specific matches)
+                        if (lowerName.includes('grade 12') || lowerName.includes('form 6') || lowerName.includes('f6')) return 'F6';
+                        if (lowerName.includes('grade 11') || lowerName.includes('form 5') || lowerName.includes('f5')) return 'F5';
+                        if (lowerName.includes('grade 10') || lowerName.includes('form 4') || lowerName.includes('f4')) return 'F4';
+                        if (lowerName.includes('grade 9') || lowerName.includes('form 3') || lowerName.includes('f3')) return 'F3';
+                        if (lowerName.includes('grade 8') || lowerName.includes('form 2') || lowerName.includes('f2')) return 'F2';
+                        if (lowerName.includes('grade 7') || lowerName.includes('form 1') || lowerName.includes('f1')) return 'F1';
+                        if (lowerName.includes('grade 6') || lowerName.includes('g6')) return 'G6';
+                        if (lowerName.includes('grade 5') || lowerName.includes('g5')) return 'G5';
+                        if (lowerName.includes('grade 4') || lowerName.includes('g4')) return 'G4';
+                        if (lowerName.includes('grade 3') || lowerName.includes('g3')) return 'G3';
+                        if (lowerName.includes('grade 2') || lowerName.includes('g2')) return 'G2';
+                        if (lowerName.includes('grade 1') || lowerName.includes('g1')) return 'G1';
+                        return gradeName.substring(0, 3).toUpperCase(); // Fallback
+                      };
+                      
+                      const shortName = getShortName(grade.name);
+                      const isSelected = selectedGradeId === grade.id;
+                      
+                      // Determine grade level for styling
+                      const getGradeLevel = (shortName: string): string => {
+                        if (shortName.startsWith('PP')) return 'preschool';
+                        if (shortName.startsWith('G')) return 'primary';
+                        if (shortName.startsWith('F')) return 'secondary';
+                        return 'other';
+                      };
+                      
+                      const gradeLevel = getGradeLevel(shortName);
+                      
+                      // Get level-specific styling
+                      const getLevelStyles = (level: string, isSelected: boolean) => {
+                        const baseStyles = "font-mono min-w-[3.5rem] h-10 rounded-lg transition-all duration-200 font-semibold tracking-wide";
+                        
+                        if (isSelected) {
+                          switch (level) {
+                            case 'preschool':
+                              return `${baseStyles} bg-slate-800 text-white shadow-lg shadow-slate-800/25 border-2 border-slate-700`;
+                            case 'primary':
+                              return `${baseStyles} bg-slate-700 text-white shadow-lg shadow-slate-700/25 border-2 border-slate-600`;
+                            case 'secondary':
+                              return `${baseStyles} bg-slate-600 text-white shadow-lg shadow-slate-600/25 border-2 border-slate-500`;
+                            default:
+                              return `${baseStyles} bg-primary text-white shadow-lg shadow-primary/25 border-2 border-primary/80`;
+                          }
+                        } else {
+                          switch (level) {
+                            case 'preschool':
+                              return `${baseStyles} bg-slate-50 text-slate-700 border-2 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:shadow-md`;
+                            case 'primary':
+                              return `${baseStyles} bg-slate-100 text-slate-700 border-2 border-slate-300 hover:bg-slate-200 hover:border-slate-400 hover:shadow-md`;
+                            case 'secondary':
+                              return `${baseStyles} bg-white text-slate-700 border-2 border-slate-400 hover:bg-slate-50 hover:border-slate-500 hover:shadow-md`;
+                            default:
+                              return `${baseStyles} bg-white text-slate-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md`;
+                          }
+                        }
+                      };
+                      
+                      // Add level separators
+                      const shouldAddSeparator = () => {
+                        if (index === 0) return false;
+                        const prevGrade = array[index - 1];
+                        const prevShortName = getShortName(prevGrade.name);
+                        const prevLevel = getGradeLevel(prevShortName);
+                        return prevLevel !== gradeLevel;
+                      };
+                      
+                      return (
+                        <React.Fragment key={grade.id}>
+                          {shouldAddSeparator() && (
+                            <div className="w-px h-8 bg-primary/30 mx-2 self-center" />
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`font-mono min-w-[3.5rem] h-10 rounded-lg transition-all duration-200 font-semibold tracking-wide ${
+                              isSelected
+                                ? 'bg-primary text-white shadow-lg shadow-primary/25 border-2 border-primary/80'
+                                : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-2 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-md'
+                            }`}
+                            onClick={() => setSelectedGradeId(grade.id)}
+                            title={grade.name} // Show full name on hover
+                          >
+                            {shortName}
+                          </Button>
+                        </React.Fragment>
+                      );
+                    })}
+                </div>
+              </div>
+              
+                            {/* Current Selection Indicator */}
+              {selectedGradeId !== 'all' && (
+                <div className="mt-6 flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="bg-primary/10 border-2 border-primary/20 rounded-lg p-2">
+                    <School className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-mono text-slate-700 dark:text-slate-300">Currently viewing:</span>
+                    <Badge className="ml-2 bg-primary/10 text-primary border-primary/20 font-mono">
+                      {getGradeById(selectedGradeId)?.grade.name || 'All Grades'}
+                    </Badge>
+                  </div>
+                </div>
+              )}
             </div>
-            <h2 className="text-2xl font-medium mb-2">No student selected</h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Please select a student from the list on the left to view their complete details, attendance records, academic performance, and other information.
-            </p>
-          </div>
+
+            {/* Students Table */}
+            <AllGradesStudentsTable
+              students={filteredAndSortedStudents.map(s => ({
+                id: s.id,
+                name: s.name,
+                session: s.admissionDate, // or use a real session field if available
+                gender: s.gender,
+                dob: s.admissionDate, // or s.dob if available
+                class: s.class,
+                section: s.stream || "-",
+                guardianName: s.contacts?.primaryGuardian || "-",
+                guardianEmail: s.contacts?.guardianEmail || "-",
+                guardianMobile: s.contacts?.guardianPhone || "-",
+                status: s.status,
+              }))}
+              onStudentClick={setSelectedStudentId}
+            />
+          </>
         )}
       </div>
     </div>
