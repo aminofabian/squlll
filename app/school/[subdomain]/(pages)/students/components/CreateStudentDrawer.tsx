@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -83,11 +84,10 @@ const generateClassName = (gradeName: string, streamName?: string): string => {
 }
 
 interface CreateStudentDrawerProps {
-  onStudentCreated: () => void
+  onStudentCreated: (studentName?: string) => void
 }
 
 export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerProps) {
-  const [isLoading, setIsLoading] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successData, setSuccessData] = useState<{
@@ -96,7 +96,76 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
     generatedPassword: string
   } | null>(null)
   const { data: schoolConfig } = useSchoolConfig()
-    const { getAllGradeLevels, getStreamsByGradeId, getGradeById } = useSchoolConfigStore()
+  const { getAllGradeLevels, getStreamsByGradeId, getGradeById } = useSchoolConfigStore()
+  const queryClient = useQueryClient()
+  
+  // Create student mutation
+  const createStudentMutation = useMutation({
+    mutationFn: async (data: StudentFormData) => {
+      // Auto-generate email if not provided
+      let studentEmail = data.student_email
+      if (!studentEmail || studentEmail.trim() === '') {
+        const cleanName = data.name.toLowerCase()
+          .replace(/[^a-z\s]/g, '')
+          .replace(/\s+/g, '')
+        studentEmail = `${cleanName}@squl.ac.ke`
+      }
+
+      const submissionData = {
+        ...data,
+        student_email: studentEmail
+      }
+
+      const response = await fetch('/api/school/create-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create student')
+      }
+
+      return result.createStudent
+    },
+    onSuccess: (studentData) => {
+      // Optimistically update the cache
+      queryClient.setQueryData(['students'], (oldData: any) => {
+        if (!oldData?.students) return oldData
+        return {
+          ...oldData,
+          students: [...oldData.students, studentData.student]
+        }
+      })
+      
+      // Invalidate to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+      
+      // Store success data for display
+      setSuccessData(studentData)
+      setShowSuccessModal(true)
+      
+      // Show success toast
+      toast.success("Student Created Successfully!", {
+        description: `${studentData.user.name} has been registered with admission number ${studentData.student.admission_number}`
+      })
+      
+      // Reset form and close drawer
+      form.reset()
+      setIsDrawerOpen(false)
+      onStudentCreated(studentData.user.name)
+    },
+    onError: (error) => {
+      console.error('Error creating student:', error)
+      toast.error("Registration Failed", {
+        description: error instanceof Error ? error.message : "An error occurred while creating the student"
+      })
+    }
+  })
   
   // Form handling
   const form = useForm<StudentFormData>({
@@ -244,63 +313,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
 
   // Submit handler
   const onSubmit = async (data: StudentFormData) => {
-    setIsLoading(true)
-
-    try {
-      // Auto-generate email if not provided
-      let studentEmail = data.student_email
-      if (!studentEmail || studentEmail.trim() === '') {
-        // Generate email from name: "Kelvin Mwangi" -> "kelvinmwangi@squl.ac.ke"
-        const cleanName = data.name.toLowerCase()
-          .replace(/[^a-z\s]/g, '') // Remove non-alphabetic characters except spaces
-          .replace(/\s+/g, '') // Remove all spaces
-        studentEmail = `${cleanName}@squl.ac.ke`
-      }
-
-      // Prepare data with auto-generated email
-      const submissionData = {
-        ...data,
-        student_email: studentEmail
-      }
-
-      const response = await fetch('/api/school/create-student', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submissionData),
-      })
-
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create student')
-      }
-
-      const studentData = result.createStudent
-      
-      // Store success data for display
-      setSuccessData(studentData)
-      setShowSuccessModal(true)
-      
-      // Show success toast
-      toast.success("Student Created Successfully!", {
-        description: `${studentData.user.name} has been registered with admission number ${studentData.student.admission_number}`
-      })
-      
-      // Reset form and close drawer
-      form.reset()
-      setIsDrawerOpen(false)
-      onStudentCreated()
-      
-    } catch (error) {
-      console.error('Error creating student:', error)
-      toast.error("Registration Failed", {
-        description: error instanceof Error ? error.message : "An error occurred while creating the student"
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    createStudentMutation.mutate(data)
   }
 
   return (
@@ -310,7 +323,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
         <Button 
           variant="default" 
           className="flex items-center gap-2 font-mono"
-          disabled={isLoading}
+          disabled={createStudentMutation.isPending}
         >
           <UserPlus className="h-4 w-4" />
           Add New Student
@@ -342,7 +355,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
               
               {/* Loading Overlay */}
-              {isLoading && (
+              {createStudentMutation.isPending && (
                 <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 z-50 flex items-center justify-center">
                   <div className="text-center">
                     <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
@@ -404,7 +417,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                               variant="outline"
                               size="icon"
                               onClick={generateEmailFromName}
-                              disabled={isLoading}
+                              disabled={createStudentMutation.isPending}
                               className="shrink-0 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
                               title="Generate email from name"
                             >
@@ -729,10 +742,10 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
               <DrawerFooter className="border-t-2 border-primary/20 pt-6 space-y-3">
                 <Button 
                   type="submit" 
-                  disabled={isLoading}
+                  disabled={createStudentMutation.isPending}
                   className="bg-primary hover:bg-primary/90 text-white gap-2 font-mono transition-colors disabled:opacity-50"
                 >
-                  {isLoading ? (
+                  {createStudentMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Creating Student...
@@ -747,7 +760,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                 <Button 
                   variant="outline" 
                   onClick={() => setIsDrawerOpen(false)}
-                  disabled={isLoading}
+                  disabled={createStudentMutation.isPending}
                   className="border-primary/20 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:border-primary/40 font-mono transition-colors disabled:opacity-50"
                 >
                   Cancel

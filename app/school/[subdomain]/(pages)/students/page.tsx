@@ -399,7 +399,7 @@ export default function StudentsPage() {
   
   // Fetch school configuration
   const { data: schoolConfig } = useSchoolConfig();
-  const { config } = useSchoolConfigStore();
+  const { config, getGradeById } = useSchoolConfigStore();
 
   // Transform GraphQL data to match our Student type
   const students: Student[] = useMemo(() => {
@@ -436,15 +436,36 @@ export default function StudentsPage() {
       
       const guardianName = studentName.split(' ')[0] || 'Guardian';
       
+      // Get grade information from school config
+      const gradeInfo = graphqlStudent.grade ? getGradeById(graphqlStudent.grade) : null;
+      const gradeName = gradeInfo?.grade.name || 'Unknown Grade';
+      
+      // Convert Grade 7+ to Form 1, Grade 8 to Form 2, etc.
+      const convertGradeToForm = (gradeName: string): string => {
+        // Check if it's a numeric grade (Grade 7, Grade 8, etc.)
+        const gradeMatch = gradeName.match(/Grade\s+(\d+)/i);
+        if (gradeMatch) {
+          const gradeNumber = parseInt(gradeMatch[1]);
+          // Convert Grade 7+ to Form 1+
+          if (gradeNumber >= 7) {
+            const formNumber = gradeNumber - 6; // Grade 7 = Form 1, Grade 8 = Form 2, etc.
+            return `Form ${formNumber}`;
+          }
+        }
+        return gradeName; // Return original if not a Grade 7+ or doesn't match pattern
+      };
+      
+      const convertedGradeName = convertGradeToForm(gradeName);
+      
       return {
         id: graphqlStudent.id,
         name: studentName,
         admissionNumber: graphqlStudent.admission_number,
         photo: undefined, // No photo in GraphQL data
         gender: graphqlStudent.gender as "male" | "female" || "male",
-        class: `Grade ${graphqlStudent.grade || '1'}`,
+        class: convertedGradeName,
         stream: mockData.stream,
-        grade: graphqlStudent.grade || '1',
+        grade: convertedGradeName,
         age,
         admissionDate,
         status: graphqlStudent.isActive ? "active" : "inactive" as const,
@@ -465,7 +486,7 @@ export default function StudentsPage() {
         extraCurricular: mockData.extraCurricular
       };
     });
-  }, [graphqlStudents]);
+  }, [graphqlStudents, getGradeById]);
 
   // Filter and sort students based on selected criteria
   const filteredAndSortedStudents = useMemo(() => {
@@ -488,46 +509,53 @@ export default function StudentsPage() {
     
     // Apply grade filter
     if (selectedGradeId && selectedGradeId !== 'all') {
-      // Find the grade name from the selected grade id
-      const selectedGradeObj = mockGrades.find(g => g.id === selectedGradeId);
-      if (selectedGradeObj) {
-        // Check for various matching patterns between mockGrades and student records
+      // Find the grade name from the selected grade id using school config
+      const selectedGradeInfo = getGradeById(selectedGradeId);
+      if (selectedGradeInfo) {
+        const selectedGradeName = selectedGradeInfo.grade.name;
+        
+        // Convert the selected grade to Form if it's Grade 7+
+        const convertGradeToForm = (gradeName: string): string => {
+          const gradeMatch = gradeName.match(/Grade\s+(\d+)/i);
+          if (gradeMatch) {
+            const gradeNumber = parseInt(gradeMatch[1]);
+            if (gradeNumber >= 7) {
+              const formNumber = gradeNumber - 6;
+              return `Form ${formNumber}`;
+            }
+          }
+          return gradeName;
+        };
+        
+        const convertedSelectedGrade = convertGradeToForm(selectedGradeName);
+        
+        // Filter students based on converted grade names
         result = result.filter(student => {
           const studentGrade = student.grade?.toLowerCase();
           const studentClass = student.class?.toLowerCase();
-          const gradeName = selectedGradeObj.name?.toLowerCase();
-          const gradeDisplayName = selectedGradeObj.displayName?.toLowerCase();
+          const selectedGrade = convertedSelectedGrade.toLowerCase();
           
-          // Special case handling for Form 4 (matches both F4 and 12)
-          if (selectedGradeObj.id === 'form4' || selectedGradeObj.name === 'F4') {
-            if (studentGrade === 'f4' || studentGrade === '12' || studentClass?.includes('form 4')) {
+          // Check for exact match with converted grade name
+          if (studentGrade === selectedGrade || studentClass === selectedGrade) {
+            return true;
+          }
+          
+          // Check if student grade/class contains the selected grade
+          if (studentGrade?.includes(selectedGrade) || studentClass?.includes(selectedGrade)) {
+            return true;
+          }
+          
+          // Handle Form matching (e.g., "Form 1" matches "form 1", "form1")
+          const formMatch = selectedGrade.match(/form\s*(\d+)/i);
+          if (formMatch) {
+            const formNumber = formMatch[1];
+            if (studentGrade?.includes(`form ${formNumber}`) || 
+                studentGrade?.includes(`form${formNumber}`) ||
+                studentClass?.includes(`form ${formNumber}`) ||
+                studentClass?.includes(`form${formNumber}`)) {
               return true;
             }
           }
-          
-          // Check for exact match with name
-          if (studentGrade === gradeName) return true;
-          
-          // Check for class match (e.g., "Form 4" in student.class)
-          if (studentClass?.includes(gradeDisplayName)) return true;
-          
-          // Check if student grade contains the grade name (e.g., "F4" matches "F4")
-          if (studentGrade?.includes(gradeName)) return true;
-          
-          // Check if student grade matches display name without spaces (e.g., "Form4" matches "Form 4")
-          const displayNameNoSpaces = gradeDisplayName?.replace(/\s+/g, '');
-          if (studentGrade === displayNameNoSpaces) return true;
-          
-          // Check if student.class contains the grade name (e.g., "Form 4" contains "4")
-          const gradeNumber = selectedGradeObj.name.replace(/[^0-9]/g, '');
-          if (gradeNumber && studentClass?.includes(gradeNumber)) return true;
-          
-          // Check for numerical equivalence (e.g., grade "12" matches "Form 4" which is 12th grade)
-          // Form 1 = 9th grade, Form 2 = 10th grade, Form 3 = 11th grade, Form 4 = 12th grade
-          if (selectedGradeObj.id === 'form1' && studentGrade === '9') return true;
-          if (selectedGradeObj.id === 'form2' && studentGrade === '10') return true;
-          if (selectedGradeObj.id === 'form3' && studentGrade === '11') return true;
-          if (selectedGradeObj.id === 'form4' && studentGrade === '12') return true;
           
           return false;
         });
@@ -559,8 +587,20 @@ export default function StudentsPage() {
           valB = b.class;
           break;
         case "grade":
-          valA = parseInt(a.grade);
-          valB = parseInt(b.grade);
+          // Handle Form grades for sorting (Form 1, Form 2, etc.)
+          const getGradeNumber = (grade: string): number => {
+            const formMatch = grade.match(/Form\s*(\d+)/i);
+            if (formMatch) {
+              return parseInt(formMatch[1]) + 6; // Form 1 = 7, Form 2 = 8, etc.
+            }
+            const gradeMatch = grade.match(/Grade\s*(\d+)/i);
+            if (gradeMatch) {
+              return parseInt(gradeMatch[1]);
+            }
+            return parseInt(grade) || 0;
+          };
+          valA = getGradeNumber(a.grade);
+          valB = getGradeNumber(b.grade);
           break;
         case "age":
           valA = a.age;
@@ -802,7 +842,29 @@ export default function StudentsPage() {
               {selectedStudent ? 'Student Details' : 'Loading Student Information'}
             </h1>
           </div>
-          <CreateStudentDrawer onStudentCreated={() => {}} />
+          <CreateStudentDrawer onStudentCreated={(studentName) => {
+            // Refetch students data to ensure search filter updates
+            refetch();
+            // Clear grade and status filters to show the new student
+            setSelectedGradeId('all');
+            setSelectedStatus('');
+            setSelectedClass('');
+            // If student name is provided, search for the new student
+            if (studentName) {
+              setSearchTerm(studentName);
+              // Find and select the newly created student
+              setTimeout(() => {
+                const newStudent = students.find(student => 
+                  student.name.toLowerCase().includes(studentName.toLowerCase())
+                );
+                if (newStudent) {
+                  setSelectedStudentId(newStudent.id);
+                }
+              }, 100); // Small delay to ensure data is updated
+            } else {
+              setSearchTerm('');
+            }
+          }} />
         </div>
         
         {/* Grade Filter Section - New Design */}
