@@ -4,8 +4,70 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, Circle } from "lucide-react"
+import { Search, Filter, Circle, GraduationCap, Users } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
+import { useStudentsStore } from '@/lib/stores/useStudentsStore'
+import { mockClasses } from '@/lib/data/mockclasses'
+
+// Helper function to get the numeric value from a grade name (e.g., "Grade 1" -> 1)
+function getGradeNumber(gradeName: string): number {
+  const match = gradeName.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 999;
+}
+
+// Helper function to convert grade names to display names
+function getGradeDisplayName(gradeName: string): string {
+  const lowerName = gradeName.toLowerCase();
+  
+  // Handle special cases first
+  if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+  if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+  if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+  
+  // Handle Form grades (Grade 7+ becomes Form 1+)
+  if (lowerName.includes('grade 7') || lowerName.includes('g7')) return 'Form 1';
+  if (lowerName.includes('grade 8') || lowerName.includes('g8')) return 'Form 2';
+  if (lowerName.includes('grade 9') || lowerName.includes('g9')) return 'Form 3';
+  if (lowerName.includes('grade 10') || lowerName.includes('g10')) return 'Form 4';
+  if (lowerName.includes('grade 11') || lowerName.includes('g11')) return 'Form 5';
+  if (lowerName.includes('grade 12') || lowerName.includes('g12')) return 'Form 6';
+  
+  // Handle regular grade numbers
+  const match = gradeName.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0], 10);
+    if (num >= 1 && num <= 6) {
+      return `Grade ${num}`;
+    }
+  }
+  
+  // If no pattern matches, return the original name
+  return gradeName;
+}
+
+// Helper function to sort grades
+function sortGrades(grades: Array<Omit<Grade, 'displayName'>>): Array<Omit<Grade, 'displayName'>> {
+  return [...grades].sort((a, b) => {
+    const aNum = getGradeNumber(a.name);
+    const bNum = getGradeNumber(b.name);
+    
+    // Special handling for PP grades
+    const aIsPP = a.name.toLowerCase().includes('pp');
+    const bIsPP = b.name.toLowerCase().includes('pp');
+    
+    if (aIsPP && !bIsPP) return -1;
+    if (!aIsPP && bIsPP) return 1;
+    
+    // For PP grades, sort by number
+    if (aIsPP && bIsPP) {
+      return aNum - bNum;
+    }
+    
+    // For regular grades, sort in ascending order
+    return aNum - bNum;
+  });
+}
 
 interface Store {
   id: number
@@ -45,6 +107,19 @@ interface Log {
   status: 'success' | 'failed'
   timestamp: string
   request_id: string
+}
+
+interface Grade {
+  id: string
+  name: string
+  displayName: string
+  studentCount: number
+  subjectCount: number
+  classCount: number
+  streams: Array<{
+    id: string
+    name: string
+  }>
 }
 
 interface DashboardFilter {
@@ -217,33 +292,46 @@ const mockLogs: Log[] = [
   }
 ]
 
-// Add mock dashboard filters
-const mockDashboardFilters: DashboardFilter[] = [
-  {
-    id: 1,
-    name: "Active Stores",
-    type: "store",
-    value: "active",
-    count: 15,
-    created_at: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: 2,
-    name: "Failed Requests",
-    type: "status",
-    value: "failed",
-    count: 23,
-    created_at: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: 3,
-    name: "GAMEROOM Issues",
-    type: "provider",
-    value: "GAMEROOM",
-    count: 5,
-    created_at: "2024-01-15T10:30:00Z"
-  }
-]
+// Get grades from school config store
+const useGradesFromStore = () => {
+  const { getAllGradeLevels, config } = useSchoolConfigStore();
+  const { students } = useStudentsStore();
+  const allGradeLevels = getAllGradeLevels();
+  
+  // Flatten all grades from all levels into a single array
+  const grades = allGradeLevels.flatMap(level => 
+    level.grades.map(grade => {
+      // Count students in this grade
+      const studentCount = students.filter(student => 
+        student.grade.toLowerCase() === grade.name.toLowerCase()
+      ).length;
+      
+      // Get subject count for this level
+      const levelSubjects = config?.selectedLevels.find(l => l.id === level.levelId)?.subjects || [];
+      const subjectCount = levelSubjects.length;
+      
+      // Count classes for this grade
+      const classCount = mockClasses.filter(cls => 
+        cls.grade.toLowerCase() === grade.name.toLowerCase() && cls.status === 'active'
+      ).length;
+      
+      return {
+        id: grade.id,
+        name: grade.name,
+        studentCount,
+        subjectCount,
+        classCount,
+        streams: grade.streams || []
+      };
+    })
+  );
+  
+  // Sort grades and add display names
+  return sortGrades(grades).map(grade => ({
+    ...grade,
+    displayName: getGradeDisplayName(grade.name)
+  }));
+};
 
 export function SearchFilter({ 
   className, 
@@ -258,7 +346,10 @@ export function SearchFilter({
   const [credentials, setCredentials] = useState<Credential[]>([])
   const [providers, setProviders] = useState<Provider[]>([])
   const [logs, setLogs] = useState<Log[]>([])
-  const [dashboardFilters, setDashboardFilters] = useState<DashboardFilter[]>([])
+  const [visibleGrades, setVisibleGrades] = useState(5)
+  
+  // Get grades from store
+  const grades = useGradesFromStore()
 
   useEffect(() => {
     if (type === 'stores') {
@@ -280,10 +371,6 @@ export function SearchFilter({
     } else if (type === 'logs') {
       setTimeout(() => {
         setLogs(mockLogs)
-      }, 500)
-    } else if (type === 'dashboard') {
-      setTimeout(() => {
-        setDashboardFilters(mockDashboardFilters)
       }, 500)
     }
   }, [type])
@@ -338,14 +425,33 @@ export function SearchFilter({
     )
   }, [logs, searchTerm])
 
-  // Add dashboard filters section
-  const filteredDashboardFilters = useMemo(() => {
-    if (!searchTerm) return dashboardFilters
+  // Add grades filter
+  const filteredGrades = useMemo(() => {
+    if (!searchTerm) return grades
     const term = searchTerm.toLowerCase()
-    return dashboardFilters.filter(filter => 
-      filter.name.toLowerCase().includes(term)
+    return grades.filter(grade => 
+      grade.name.toLowerCase().includes(term) ||
+      grade.displayName.toLowerCase().includes(term) ||
+      grade.id.toLowerCase().includes(term)
     )
-  }, [dashboardFilters, searchTerm])
+  }, [grades, searchTerm])
+
+  // Get visible grades for pagination
+  const visibleGradesList = useMemo(() => {
+    return filteredGrades.slice(0, visibleGrades)
+  }, [filteredGrades, visibleGrades])
+
+  // Check if there are more grades to show
+  const hasMoreGrades = visibleGrades < filteredGrades.length
+
+  // Handle expand/collapse grades
+  const handleExpandGrades = () => {
+    setVisibleGrades(prev => prev + 5)
+  }
+
+  const handleCollapseGrades = () => {
+    setVisibleGrades(5)
+  }
 
   const filterConfigs: FilterConfigs = {
     'stores': {
@@ -466,9 +572,9 @@ export function SearchFilter({
           label: 'Filter',
           options: [
             { value: 'all', label: 'All Filters' },
-            ...dashboardFilters.map(filter => ({
-              value: filter.id.toString(),
-              label: filter.name
+            ...grades.map(grade => ({
+              value: grade.id,
+              label: grade.name
             }))
           ]
         }
@@ -488,6 +594,8 @@ export function SearchFilter({
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value
     setSearchTerm(term)
+    // Reset visible grades when search changes
+    setVisibleGrades(5)
     onSearch?.(term)
     // Reset store selection when searching
     setSelectedStore('all')
@@ -750,39 +858,78 @@ export function SearchFilter({
         {type === 'dashboard' && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
-              <Filter className="h-3.5 w-3.5" />
-              Quick Filters
+              <GraduationCap className="h-3.5 w-3.5" />
+              Grade Filters
             </div>
             
             <div className="space-y-2">
-              {filteredDashboardFilters.length === 0 ? (
+              {filteredGrades.length === 0 ? (
                 <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
-                  <p className="font-mono text-sm text-slate-500 dark:text-slate-400">No filters found</p>
+                  <p className="font-mono text-sm text-slate-500 dark:text-slate-400">No grades found</p>
                 </div>
               ) : (
-                filteredDashboardFilters.map((filter) => (
+                <>
+                  {visibleGradesList.map((grade) => (
                   <button
-                    key={filter.id}
-                    onClick={() => handleItemClick(filter.id.toString())}
+                    key={grade.id}
+                    onClick={() => handleItemClick(grade.id)}
                     className={`w-full p-4 text-left rounded-lg transition-all duration-200 group cursor-pointer
-                      ${selectedStore === filter.id.toString()
+                      ${selectedStore === grade.id
                         ? 'bg-[#246a59]/5 dark:bg-[#246a59]/10 shadow-sm border border-[#246a59]/20' 
                         : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-[#246a59]/30 hover:shadow-md'
                       }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="font-mono font-medium group-hover:text-[#246a59] transition-colors">
-                        {filter.name}
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-[#246a59]/10 rounded-full flex items-center justify-center">
+                          <Users className="h-4 w-4 text-[#246a59]" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-mono font-medium group-hover:text-[#246a59] transition-colors">
+                            {grade.displayName}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {grade.studentCount} students • {grade.subjectCount} subjects
+                            {grade.streams.length > 0 && ` • ${grade.streams.length} streams`}
+                          </div>
+                        </div>
                       </div>
-                      <div className="px-2.5 py-1 bg-[#246a59]/5 dark:bg-[#246a59]/10 text-[#246a59] dark:text-[#246a59]/90 text-xs font-mono rounded-md border border-[#246a59]/20">
-                        {filter.count}
-                      </div>
+                      {grade.streams.length > 0 && (
+                        <div className="px-2.5 py-1 bg-[#246a59]/5 dark:bg-[#246a59]/10 text-[#246a59] dark:text-[#246a59]/90 text-xs font-mono rounded-md border border-[#246a59]/20">
+                          {grade.streams.length} streams
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                      {filter.type.charAt(0).toUpperCase() + filter.type.slice(1)} Filter
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-2">
+                      <span>{grade.classCount} classes</span>
                     </div>
                   </button>
-                ))
+                  ))}
+                  
+                  {/* Expand/Collapse Button */}
+                  {hasMoreGrades && (
+                    <button
+                      onClick={handleExpandGrades}
+                      className="w-full p-3 text-center rounded-lg transition-all duration-200 group cursor-pointer bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-[#246a59]/30 hover:shadow-md"
+                    >
+                      <div className="text-sm font-mono text-[#246a59] group-hover:text-[#246a59]/80 transition-colors">
+                        Show {Math.min(5, filteredGrades.length - visibleGrades)} more grades
+                      </div>
+                    </button>
+                  )}
+                  
+                  {/* Collapse Button - Show when more than 5 grades are visible */}
+                  {visibleGrades > 5 && (
+                    <button
+                      onClick={handleCollapseGrades}
+                      className="w-full p-3 text-center rounded-lg transition-all duration-200 group cursor-pointer bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:border-[#246a59]/30 hover:shadow-md"
+                    >
+                      <div className="text-sm font-mono text-[#246a59] group-hover:text-[#246a59]/80 transition-colors">
+                        Show less
+                      </div>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

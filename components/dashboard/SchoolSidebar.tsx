@@ -59,8 +59,8 @@ interface DrawerState {
 // Main navigation items that will always be visible
 const mainNavigationItems: NavigationItem[] = [
   {
-    title: "Home",
-    href: "/",
+    title: "Overview",
+    href: "/dashboard",
     icon: Home,
   },
   {
@@ -363,11 +363,11 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
 
   return (
     <div className={cn(
-      "flex flex-col h-full bg-white dark:bg-slate-900 shadow-xl",
+      "flex flex-col h-full bg-white dark:bg-slate-900 shadow-xl border-r-2 border-primary/20",
       className
     )}>
       {/* Header with School Logo */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700">
+      <div className="p-4 bg-primary/5 border-b-2 border-primary/20">
         <Link href={`/school/${subdomain}/dashboard`} className="flex items-center gap-3 group relative">
           <div className="relative">
             {/* Main logo container with stacked layout */}
@@ -451,7 +451,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        <div className="rounded-xl overflow-hidden shadow-md">
+        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl overflow-hidden shadow-sm">
           <div className="p-1.5 space-y-0.5">
             {/* Main Navigation Items */}
             {mainNavigationItems.map((item) => {
@@ -466,8 +466,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                     className={cn(
                       "w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group",
                       isActive 
-                        ? "bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-white border-l-4 transform translate-x-1" 
-                        : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md hover:translate-x-1"
+                        ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white border-l-4 transform translate-x-1" 
+                        : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm hover:translate-x-1"
                     )}
                     style={isActive ? { borderLeftColor: fromColor } : {}}
                   >
@@ -525,7 +525,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                     </div>
                     
                     {/* Title with hover effect */}
-                    <span className="flex-1 font-medium text-xs uppercase tracking-wide">{item.title}</span>
+                    <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">{item.title}</span>
                     
                     {/* Subtle indicator dot for active item */}
                     {isActive && (
@@ -541,8 +541,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
               className={cn(
                 "w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer mt-2",
                 drawerOpen 
-                  ? "bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-white" 
-                  : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md"
+                  ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white" 
+                  : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
               )}
               onClick={toggleDrawer}
             >
@@ -600,7 +600,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
               </div>
               
               {/* Title with hover effect */}
-              <span className="flex-1 font-medium text-xs uppercase tracking-wide">More</span>
+              <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">More</span>
               
               {/* Animated chevron */}
               <div 
@@ -690,7 +690,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                         </div>
                         
                         {/* Title with hover effect */}
-                        <span className="flex-1 font-medium text-xs uppercase tracking-wide">{item.title}</span>
+                        <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">{item.title}</span>
                       </div>
                     </Link>
                   );
@@ -702,24 +702,24 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
       </nav>
 
       {/* School Status */}
-      <div className="px-4 py-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 shadow-sm">
-        <div className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400 mb-3">
+      <div className="px-4 py-4 bg-primary/5 border-t-2 border-primary/20">
+        <div className="text-xs font-mono uppercase tracking-wide text-primary mb-3">
           School Status
         </div>
         <div className="space-y-2.5">
-          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></div>
+              <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
               <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">ATTENDANCE</span>
             </div>
-            <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">95.8%</span>
+            <span className="text-xs font-mono text-primary">95.8%</span>
           </div>
-          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></div>
+              <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
               <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">PERFORMANCE</span>
             </div>
-            <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">87.5%</span>
+            <span className="text-xs font-mono text-primary">87.5%</span>
           </div>
         </div>
         
@@ -727,7 +727,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
         <div className="mt-4">
           <Link href={getHref("/school/[subdomain]/settings")} className="block">
             <div 
-              className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group bg-white dark:bg-slate-800 shadow-sm hover:shadow-md"
+              className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-primary/20"
             >
               {/* Colored background indicator on hover */}
               <div 
@@ -763,16 +763,16 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
               </div>
               
               {/* Title */}
-              <span className="flex-1 font-medium text-xs uppercase tracking-wide text-slate-800 dark:text-slate-200">Settings</span>
+              <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-slate-800 dark:text-slate-200">Settings</span>
             </div>
           </Link>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-slate-700 space-y-2 shadow-sm">
+      <div className="p-4 bg-primary/5 border-t-2 border-primary/20 space-y-2">
         <div 
-          className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer bg-white dark:bg-slate-800 shadow-sm hover:shadow-md"
+          className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-red-200 dark:border-red-800"
         >
           {/* Colored background indicator on hover */}
           <div 
@@ -808,7 +808,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
           </div>
           
           {/* Title */}
-          <span className="flex-1 font-medium text-xs uppercase tracking-wide text-red-600 dark:text-red-400">Sign Out</span>
+          <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-red-600 dark:text-red-400">Sign Out</span>
         </div>
       </div>
     </div>

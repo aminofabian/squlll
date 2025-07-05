@@ -1,9 +1,16 @@
+'use client'
+
 import { Header } from "@/components/Header"
 import { AuthWrapper } from "@/components/auth/AuthFormWrapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { useStudentsStore } from "@/lib/stores/useStudentsStore"
+import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
+import { mockClasses } from "@/lib/data/mockclasses"
+import { useEffect, useMemo } from "react"
+import { Users, GraduationCap, BookOpen, TrendingUp, DollarSign, Award } from "lucide-react"
 
 // SQUL Logo Component
 function SQULLogo() {
@@ -20,6 +27,38 @@ function SQULLogo() {
 }
 
 export default function Home() {
+  const { students } = useStudentsStore()
+  const { config } = useSchoolConfigStore()
+  
+  // Calculate real statistics from the stores
+  const stats = useMemo(() => {
+    const totalStudents = students.length
+    const activeStudents = students.filter(s => s.isActive).length
+    const totalFeesOwed = students.reduce((sum, s) => sum + s.feesOwed, 0)
+    const totalFeesPaid = students.reduce((sum, s) => sum + s.totalFeesPaid, 0)
+    const totalClasses = mockClasses.filter(c => c.status === 'active').length
+    const totalSubjects = config?.selectedLevels.reduce((sum, level) => sum + level.subjects.length, 0) || 0
+    
+    // Calculate gender distribution
+    const maleStudents = students.filter(s => s.gender.toLowerCase() === 'male').length
+    const femaleStudents = students.filter(s => s.gender.toLowerCase() === 'female').length
+    
+    // Calculate fee collection rate
+    const feeCollectionRate = totalFeesPaid > 0 ? Math.round((totalFeesPaid / (totalFeesPaid + totalFeesOwed)) * 100) : 0
+    
+    return {
+      totalStudents,
+      activeStudents,
+      totalFeesOwed,
+      totalFeesPaid,
+      totalClasses,
+      totalSubjects,
+      maleStudents,
+      femaleStudents,
+      feeCollectionRate
+    }
+  }, [students, config])
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -57,6 +96,121 @@ export default function Home() {
                   Try if for Free
                 </Button>
               </Link>
+            </div>
+            
+            {/* Live Statistics Section */}
+            <div className="relative my-24">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-3xl"></div>
+              <div className="relative p-8 md:p-12">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-mono font-bold mb-4 bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                    Live School Statistics
+                  </h2>
+                  <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                    Real-time data from your institution showing the impact of SQUL's management system
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-primary/20 hover:border-primary/40 transition-all duration-300 group">
+                    <div className="flex items-center justify-between mb-4">
+                      <Users className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                      <div className="text-2xl font-mono font-bold text-primary">{stats.totalStudents}</div>
+                    </div>
+                    <div className="text-sm font-medium text-slate-700">Total Students</div>
+                    <div className="text-xs text-slate-500 mt-1">{stats.activeStudents} active</div>
+                  </div>
+                  
+                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-primary/20 hover:border-primary/40 transition-all duration-300 group">
+                    <div className="flex items-center justify-between mb-4">
+                      <GraduationCap className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                      <div className="text-2xl font-mono font-bold text-primary">{stats.totalClasses}</div>
+                    </div>
+                    <div className="text-sm font-medium text-slate-700">Active Classes</div>
+                    <div className="text-xs text-slate-500 mt-1">Across all grades</div>
+                  </div>
+                  
+                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-primary/20 hover:border-primary/40 transition-all duration-300 group">
+                    <div className="flex items-center justify-between mb-4">
+                      <BookOpen className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                      <div className="text-2xl font-mono font-bold text-primary">{stats.totalSubjects}</div>
+                    </div>
+                    <div className="text-sm font-medium text-slate-700">Subjects Offered</div>
+                    <div className="text-xs text-slate-500 mt-1">Comprehensive curriculum</div>
+                  </div>
+                  
+                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-primary/20 hover:border-primary/40 transition-all duration-300 group">
+                    <div className="flex items-center justify-between mb-4">
+                      <DollarSign className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
+                      <div className="text-2xl font-mono font-bold text-primary">{stats.feeCollectionRate}%</div>
+                    </div>
+                    <div className="text-sm font-medium text-slate-700">Fee Collection</div>
+                    <div className="text-xs text-slate-500 mt-1">Efficiency rate</div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                    <h3 className="font-mono font-bold text-lg mb-4 text-primary">Gender Distribution</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Male Students</span>
+                        <span className="font-mono font-bold text-primary">{stats.maleStudents}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Female Students</span>
+                        <span className="font-mono font-bold text-primary">{stats.femaleStudents}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-primary to-primary-dark h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${stats.totalStudents > 0 ? (stats.maleStudents / stats.totalStudents) * 100 : 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                    <h3 className="font-mono font-bold text-lg mb-4 text-primary">Financial Overview</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Total Fees Paid</span>
+                        <span className="font-mono font-bold text-emerald-600">KES {stats.totalFeesPaid.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Outstanding Fees</span>
+                        <span className="font-mono font-bold text-orange-600">KES {stats.totalFeesOwed.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${stats.feeCollectionRate}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-primary/20">
+                    <h3 className="font-mono font-bold text-lg mb-4 text-primary">Academic Structure</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Active Classes</span>
+                        <span className="font-mono font-bold text-primary">{stats.totalClasses}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Subjects Offered</span>
+                        <span className="font-mono font-bold text-primary">{stats.totalSubjects}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Student-Teacher Ratio</span>
+                        <span className="font-mono font-bold text-primary">
+                          {stats.totalClasses > 0 ? Math.round(stats.totalStudents / stats.totalClasses) : 0}:1
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             {/* Class Environment Section */}
@@ -398,13 +552,36 @@ export default function Home() {
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       {[
-                        { label: "Task Automation", value: "85%" },
-                        { label: "Time Saved", value: "60%" },
-                        { label: "Paper Reduced", value: "90%" },
-                        { label: "Staff Satisfaction", value: "95%" }
+                        { 
+                          label: "Active Students", 
+                          value: stats.activeStudents.toString(),
+                          icon: Users,
+                          color: "text-emerald-600"
+                        },
+                        { 
+                          label: "Fee Collection", 
+                          value: `${stats.feeCollectionRate}%`,
+                          icon: DollarSign,
+                          color: "text-blue-600"
+                        },
+                        { 
+                          label: "Total Classes", 
+                          value: stats.totalClasses.toString(),
+                          icon: GraduationCap,
+                          color: "text-purple-600"
+                        },
+                        { 
+                          label: "Subjects Offered", 
+                          value: stats.totalSubjects.toString(),
+                          icon: BookOpen,
+                          color: "text-orange-600"
+                        }
                       ].map((stat) => (
                         <div key={stat.label} className="p-4 bg-primary/5 group-hover:bg-primary/10 transition-colors">
-                          <div className="font-mono text-xl text-primary mb-1">{stat.value}</div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                            <div className={`font-mono text-xl font-bold ${stat.color}`}>{stat.value}</div>
+                          </div>
                           <div className="text-sm text-slate-600">{stat.label}</div>
                         </div>
                       ))}

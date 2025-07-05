@@ -8,6 +8,9 @@ import { SchoolSidebar } from "@/components/dashboard/SchoolSidebar"
 import { SearchFilter } from "@/components/dashboard/SearchFilter"
 import { MobileNav } from "@/components/dashboard/MobileNav"
 import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen } from "lucide-react"
+import { useStudentsStore } from '@/lib/stores/useStudentsStore'
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
+import { mockClasses } from '@/lib/data/mockclasses'
 
 export default function SchoolDashboard() {
   const params = useParams()
@@ -65,76 +68,227 @@ export default function SchoolDashboard() {
 
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
+
+  // Get real data from stores
+  const { students } = useStudentsStore()
+  const { config: schoolConfig } = useSchoolConfigStore()
+  
+  // Get selected grade information
+  const selectedGradeInfo = useMemo(() => {
+    if (!selectedGrade || !schoolConfig) return null
+    
+    for (const level of schoolConfig.selectedLevels) {
+      const grade = level.gradeLevels?.find(g => g.id === selectedGrade)
+      if (grade) {
+        return {
+          grade,
+          level,
+          displayName: getGradeDisplayName(grade.name)
+        }
+      }
+    }
+    return null
+  }, [selectedGrade, schoolConfig])
+
+  // Helper function to get grade display name
+  function getGradeDisplayName(gradeName: string): string {
+    const lowerName = gradeName.toLowerCase();
+    
+    // Handle special cases first
+    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+    
+    // Handle Form grades (Grade 7+ becomes Form 1+)
+    if (lowerName.includes('grade 7') || lowerName.includes('g7')) return 'Form 1';
+    if (lowerName.includes('grade 8') || lowerName.includes('g8')) return 'Form 2';
+    if (lowerName.includes('grade 9') || lowerName.includes('g9')) return 'Form 3';
+    if (lowerName.includes('grade 10') || lowerName.includes('g10')) return 'Form 4';
+    if (lowerName.includes('grade 11') || lowerName.includes('g11')) return 'Form 5';
+    if (lowerName.includes('grade 12') || lowerName.includes('g12')) return 'Form 6';
+    
+    // Handle regular grade numbers
+    const match = gradeName.match(/\d+/);
+    if (match) {
+      const num = parseInt(match[0], 10);
+      if (num >= 1 && num <= 6) {
+        return `Grade ${num}`;
+      }
+    }
+    
+    // If no pattern matches, return the original name
+    return gradeName;
+  }
+
+  // Filter students based on selected grade
+  const filteredStudents = useMemo(() => {
+    if (!selectedGrade || !selectedGradeInfo) return students
+    
+    return students.filter(student => 
+      student.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
+    )
+  }, [students, selectedGrade, selectedGradeInfo])
+
+  // Calculate real statistics
+  const realStats = useMemo(() => {
+    const studentsToUse = selectedGrade ? filteredStudents : students
+    const totalStudents = studentsToUse.length
+    const activeStudents = studentsToUse.filter(s => s.isActive).length
+    const totalFeesOwed = studentsToUse.reduce((sum, s) => sum + s.feesOwed, 0)
+    const totalFeesPaid = studentsToUse.reduce((sum, s) => sum + s.totalFeesPaid, 0)
+    
+    // Filter classes based on selected grade
+    const classesToUse = selectedGrade && selectedGradeInfo 
+      ? mockClasses.filter(c => 
+          c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
+          c.status === 'active'
+        )
+      : mockClasses.filter(c => c.status === 'active')
+    const totalClasses = classesToUse.length
+    
+    // Filter subjects based on selected grade
+    const totalSubjects = selectedGrade && selectedGradeInfo 
+      ? selectedGradeInfo.level.subjects.length
+      : (schoolConfig?.selectedLevels.reduce((sum, level) => sum + level.subjects.length, 0) || 0)
+    
+    // Calculate attendance rate (mock data for now)
+    const attendanceRate = selectedGrade ? 92.5 : 95.8
+    
+    // Calculate academic progress (mock data for now)
+    const academicProgress = selectedGrade ? 89.2 : 87.5
+    
+    // Calculate monthly change (mock data for now)
+    const monthlyChange = selectedGrade ? Math.floor(Math.random() * 10) + 2 : Math.floor(Math.random() * 20) + 5
+    
+    return {
+      totalStudents,
+      activeStudents,
+      totalClasses,
+      totalSubjects,
+      attendanceRate,
+      academicProgress,
+      monthlyChange,
+      totalFeesOwed,
+      totalFeesPaid
+    }
+  }, [students, filteredStudents, selectedGrade, selectedGradeInfo, schoolConfig])
 
   const dashboardStats = [
     {
       title: "Total Students",
-      value: "1,234",
-      change: "+12 this month",
+      value: realStats.totalStudents.toLocaleString(),
+      change: `+${realStats.monthlyChange} this month`,
       icon: Users,
       color: "text-[#246a59]"
     },
     {
       title: "Attendance Rate",
-      value: "95.8%",
+      value: `${realStats.attendanceRate}%`,
       change: "+0.6% vs last week",
       icon: CalendarDays,
       color: "text-green-600"
     },
     {
       title: "Active Classes",
-      value: "48",
+      value: realStats.totalClasses.toString(),
       change: "Current semester",
       icon: BookOpen,
       color: "text-purple-600"
     },
     {
       title: "Academic Progress",
-      value: "87.5%",
+      value: `${realStats.academicProgress}%`,
       change: "+2.3% this term",
       icon: TrendingUp,
       color: "text-blue-600"
     }
   ]
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'attendance',
-      action: 'marked attendance',
-      target: 'Grade 10A',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 2,
-      type: 'grade',
-      action: 'updated grades',
-      target: 'Mathematics Class',
-      timestamp: new Date(Date.now() - 30 * 60000).toISOString()
-    },
-    {
-      id: 3,
-      type: 'event',
-      action: 'scheduled',
-      target: 'Parent-Teacher Meeting',
-      timestamp: new Date(Date.now() - 60 * 60000).toISOString()
+  // Generate grade-specific activities
+  const recentActivities = useMemo(() => {
+    const baseActivities = [
+      {
+        id: 1,
+        type: 'attendance',
+        action: 'marked attendance',
+        target: selectedGrade && selectedGradeInfo ? `${selectedGradeInfo.displayName}A` : 'Grade 10A',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 2,
+        type: 'grade',
+        action: 'updated grades',
+        target: selectedGrade ? 'Mathematics Class' : 'Mathematics Class',
+        timestamp: new Date(Date.now() - 30 * 60000).toISOString()
+      },
+      {
+        id: 3,
+        type: 'event',
+        action: 'scheduled',
+        target: selectedGrade ? 'Parent-Teacher Meeting' : 'Parent-Teacher Meeting',
+        timestamp: new Date(Date.now() - 60 * 60000).toISOString()
+      }
+    ]
+
+    if (selectedGrade && selectedGradeInfo) {
+      return baseActivities.map(activity => ({
+        ...activity,
+        target: activity.target.replace('Grade 10A', `${selectedGradeInfo.displayName}A`)
+      }))
     }
-  ]
 
-  const upcomingEvents = [
-    { name: "Parent-Teacher Conference", date: "Mar 15", attendees: 45 },
-    { name: "Science Fair", date: "Mar 20", attendees: 120 },
-    { name: "Sports Day", date: "Mar 25", attendees: 200 }
-  ]
+    return baseActivities
+  }, [selectedGrade, selectedGradeInfo])
 
-  const classPerformance = [
-    { name: "Grade 10A", average: 85.6, students: 32 },
-    { name: "Grade 11B", average: 82.3, students: 28 },
-    { name: "Grade 12C", average: 88.9, students: 30 }
-  ]
+  // Generate grade-specific events
+  const upcomingEvents = useMemo(() => {
+    const baseEvents = [
+      { name: "Parent-Teacher Conference", date: "Mar 15", attendees: selectedGrade ? 25 : 45 },
+      { name: "Science Fair", date: "Mar 20", attendees: selectedGrade ? 60 : 120 },
+      { name: "Sports Day", date: "Mar 25", attendees: selectedGrade ? 100 : 200 }
+    ]
+
+    if (selectedGrade && selectedGradeInfo) {
+      return baseEvents.map(event => ({
+        ...event,
+        name: `${selectedGradeInfo.displayName} ${event.name}`,
+        attendees: Math.floor(event.attendees * (filteredStudents.length / students.length))
+      }))
+    }
+
+    return baseEvents
+  }, [selectedGrade, selectedGradeInfo, filteredStudents, students])
+
+  // Generate grade-specific class performance
+  const classPerformance = useMemo(() => {
+    if (selectedGrade && selectedGradeInfo) {
+      // Show streams for the selected grade
+      const streams = selectedGradeInfo.grade.streams || []
+      return streams.map((stream, index) => ({
+        name: `${selectedGradeInfo.displayName}${stream.name}`,
+        average: 85 + Math.random() * 10, // Random average between 85-95
+        students: Math.floor(filteredStudents.length / Math.max(streams.length, 1))
+      }))
+    }
+
+    // Show overall class performance
+    return [
+      { name: "Grade 10A", average: 85.6, students: 32 },
+      { name: "Grade 11B", average: 82.3, students: 28 },
+      { name: "Grade 12C", average: 88.9, students: 30 }
+    ]
+  }, [selectedGrade, selectedGradeInfo, filteredStudents])
 
   const handleFilterSelect = (filterId: string) => {
     setSelectedFilter(filterId)
+    
+    // Check if this is a grade selection (grades have UUID-like IDs)
+    if (filterId !== 'all' && filterId.length > 20) {
+      setSelectedGrade(filterId)
+    } else {
+      setSelectedGrade(null)
+    }
   }
 
   const handleSearch = (term: string) => {
@@ -144,7 +298,6 @@ export default function SchoolDashboard() {
 
   return (
     <DashboardLayout
-      sidebar={<SchoolSidebar subdomain={subdomain} schoolName={schoolName} />}
       searchFilter={
         <SearchFilter 
           type="dashboard" 
@@ -158,16 +311,35 @@ export default function SchoolDashboard() {
         {/* Page Header */}
         <div className="border-b-2 border-[#246a59]/20 pb-8">
           <div className="flex flex-col gap-2">
-            <div className="inline-block w-fit px-3 py-1 bg-[#246a59]/5 border border-[#246a59]/20 rounded-md">
-              <span className="text-xs font-mono uppercase tracking-wide text-[#246a59]">
-                School Overview
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="inline-block w-fit px-3 py-1 bg-[#246a59]/5 border border-[#246a59]/20 rounded-md">
+                <span className="text-xs font-mono uppercase tracking-wide text-[#246a59]">
+                  {selectedGrade ? 'Grade Overview' : 'School Overview'}
+                </span>
+              </div>
+              {selectedGrade && (
+                <button
+                  onClick={() => {
+                    setSelectedGrade(null)
+                    setSelectedFilter('all')
+                  }}
+                  className="px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  ← Back to All Grades
+                </button>
+              )}
             </div>
             <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
-              {schoolName} Dashboard
+              {selectedGrade && selectedGradeInfo 
+                ? `${selectedGradeInfo.displayName} Dashboard`
+                : `${schoolName} Dashboard`
+              }
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-              Monitor school performance and activities
+              {selectedGrade 
+                ? `Monitor ${selectedGradeInfo?.displayName} performance and activities`
+                : 'Monitor school performance and activities'
+              }
             </p>
           </div>
         </div>
@@ -193,6 +365,127 @@ export default function SchoolDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Grade-Specific Information */}
+        {selectedGrade && selectedGradeInfo && (
+          <div className="border-2 border-[#246a59]/20 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-[#246a59]/10 rounded-full flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-[#246a59]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-mono font-bold">{selectedGradeInfo.displayName} Details</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {selectedGradeInfo.level.name} • {selectedGradeInfo.level.subjects.length} subjects
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Student Demographics */}
+              <div className="space-y-4">
+                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Student Demographics</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Male Students</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {filteredStudents.filter(s => s.gender.toLowerCase() === 'male').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Female Students</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {filteredStudents.filter(s => s.gender.toLowerCase() === 'female').length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Active Students</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {filteredStudents.filter(s => s.isActive).length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Overview */}
+              <div className="space-y-4">
+                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Financial Overview</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Total Fees Paid</span>
+                    <span className="font-mono font-bold text-emerald-600">
+                      KES {filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Outstanding Fees</span>
+                    <span className="font-mono font-bold text-orange-600">
+                      KES {filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Collection Rate</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {(() => {
+                        const totalPaid = filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0)
+                        const totalOwed = filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0)
+                        const total = totalPaid + totalOwed
+                        return total > 0 ? Math.round((totalPaid / total) * 100) : 0
+                      })()}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Structure */}
+              <div className="space-y-4">
+                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Academic Structure</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Subjects Offered</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {selectedGradeInfo.level.subjects.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Active Classes</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {mockClasses.filter(c => 
+                        c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
+                        c.status === 'active'
+                      ).length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-slate-600">Streams</span>
+                    <span className="font-mono font-bold text-[#246a59]">
+                      {selectedGradeInfo.grade.streams?.length || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Streams List */}
+            {selectedGradeInfo.grade.streams && selectedGradeInfo.grade.streams.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-[#246a59]/20">
+                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600 mb-4">Streams</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {selectedGradeInfo.grade.streams.map((stream) => (
+                    <div key={stream.id} className="p-4 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-medium">{stream.name}</span>
+                        <span className="text-sm text-slate-500">
+                          {Math.floor(filteredStudents.length / selectedGradeInfo.grade.streams.length)} students
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
