@@ -169,7 +169,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
         <Button
           variant="outline"
           onClick={() => setShowStatsSection(!showStatsSection)}
-          className="border-primary/30 text-primary hover:bg-primary/10 shadow-sm transition-all duration-300"
+          className="border-primary/30 text-primary hover:bg-primary/50 shadow-sm transition-all duration-300"
         >
           {showStatsSection ? (
             <>
@@ -178,7 +178,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
             </>
           ) : (
             <>
-              <BarChart3 className="w-4 h-4 mr-2" />
+              <BarChart3 className="w-4 h-4 mr-2 hover:text-blue-500" />
               Show Dashboard Stats
             </>
           )}

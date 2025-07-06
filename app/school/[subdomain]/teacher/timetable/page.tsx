@@ -384,7 +384,7 @@ const TeacherTimetable = () => {
 
   const getLessonStyles = (lesson: TeacherLesson | null, periodIndex: number, day: string) => {
     if (!lesson) {
-      return "bg-slate-50/80 text-slate-400 border-slate-200/50 hover:bg-slate-100/80 transition-all duration-200";
+      return "bg-slate-50 text-slate-300 border-slate-200 hover:bg-slate-100 transition-all duration-200";
     }
 
     const currentDay = getCurrentDay();
@@ -393,21 +393,21 @@ const TeacherTimetable = () => {
     const isCompleted = completedLessons.includes(lesson.id);
 
     if (isCurrentLesson) {
-      return "bg-primary/15 border-2 border-primary text-primary font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 transform hover:scale-[1.02]";
+      return "bg-slate-100 border-slate-300 text-slate-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200";
     }
 
     if (isCompleted) {
-      return "bg-success/10 border-2 border-success/30 text-success-foreground shadow-md shadow-success/10 hover:shadow-lg hover:shadow-success/20 transition-all duration-200 transform hover:scale-[1.01]";
+      return "bg-slate-50 border-slate-200 text-slate-600 shadow-sm hover:shadow-md transition-all duration-200";
     }
 
     // Check if this is the next lesson
     const nextLesson = getNextLesson();
     if (nextLesson && nextLesson.lesson.id === lesson.id) {
-      return "bg-secondary/15 border-2 border-secondary text-secondary-foreground font-semibold shadow-lg shadow-secondary/20 hover:shadow-xl hover:shadow-secondary/30 transition-all duration-300 transform hover:scale-[1.02]";
+      return "bg-slate-200 border-slate-400 text-slate-900 font-semibold shadow-sm hover:shadow-md transition-all duration-200";
     }
 
-    // Default lesson styling with theme colors
-    return "bg-white border-2 border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 transform hover:scale-[1.01]";
+    // Default lesson styling with professional monochromatic design
+    return "bg-white border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm transition-all duration-200";
   };
 
   const renderLessonIndicators = (lesson: TeacherLesson, periodIndex: number, day: string) => {
@@ -418,8 +418,8 @@ const TeacherTimetable = () => {
     const currentPeriod = getCurrentPeriod();
     if (currentDay === day && currentPeriod === periodIndex + 1) {
       indicators.push(
-        <div key="current" className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
-          <Timer className="w-3 h-3" />
+        <div key="current" className="flex items-center gap-0.5 text-[9px] text-slate-700 bg-slate-200 px-1 py-0.5 rounded-sm">
+          <Timer className="w-2 h-2" />
           <span className="font-medium">Now</span>
         </div>
       );
@@ -429,8 +429,8 @@ const TeacherTimetable = () => {
     const nextLesson = getNextLesson();
     if (nextLesson && nextLesson.lesson.id === lesson.id) {
       indicators.push(
-        <div key="next" className="flex items-center gap-1 text-xs text-secondary bg-secondary/10 px-2 py-1 rounded-full">
-          <Timer className="w-3 h-3" />
+        <div key="next" className="flex items-center gap-0.5 text-[9px] text-slate-700 bg-slate-300 px-1 py-0.5 rounded-sm">
+          <Timer className="w-2 h-2" />
           <span className="font-medium">Next</span>
         </div>
       );
@@ -626,10 +626,9 @@ const TeacherTimetable = () => {
 
     Object.values(timetableData.schedule).forEach(daySchedule => {
       daySchedule.forEach(lesson => {
-        if (lesson) {
+        if (lesson && lesson.subject !== 'Break' && lesson.subject !== 'Lunch' && lesson.class !== 'Break') {
           totalLessons++;
           totalStudents += lesson.totalStudents || 0;
-          
           if (completedLessons.includes(lesson.id)) {
             completedCount++;
           } else {

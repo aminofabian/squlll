@@ -34,121 +34,122 @@ const TeacherTimetableGrid: React.FC<TeacherTimetableGridProps> = ({
 }) => {
   return (
     <>
-      <h2 className="text-xl font-semibold text-primary mb-6 flex items-center gap-2">
-        <div className="w-1 h-6 bg-primary rounded-full"></div>
+      <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="w-0.5 h-4 bg-slate-400 rounded-full"></div>
         Weekly Schedule
       </h2>
       
-      <div className="grid gap-3 mt-6 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden" 
-           style={{ gridTemplateColumns: `220px repeat(${periods.length}, 1fr)` }}>
-        {/* Empty top-left corner */}
-        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 border-r border-b border-slate-200"></div>
-        
-        {/* Period Headers */}
-        {periods.map((period, periodIndex) => (
-          <div key={`header-${periodIndex}`} className="p-4 text-center font-semibold bg-gradient-to-br from-primary/5 to-primary/10 border-b border-slate-200 text-slate-700">
-            <div className="text-sm font-bold text-primary">{period}</div>
-            <div className="text-xs text-slate-500 mt-1">Period {periodIndex + 1}</div>
-          </div>
-        ))}
-        
-        {/* Day Rows */}
-        {weekDays.map(day => (
-          <React.Fragment key={`day-${day}`}>
-            {/* Day Column Header */}
-            <div className="p-4 font-semibold text-slate-700 bg-gradient-to-br from-slate-50 to-slate-100 border-r border-slate-200 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-sm font-bold text-primary">{day}</div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {schedule[day]?.filter(lesson => lesson !== null).length || 0} classes
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        <div className="grid" style={{ gridTemplateColumns: `180px repeat(${periods.length}, 1fr)` }}>
+          {/* Empty top-left corner */}
+          <div className="p-3 bg-slate-50 border-r border-b border-slate-200"></div>
+          
+          {/* Period Headers */}
+          {periods.map((period, periodIndex) => (
+            <div key={`header-${periodIndex}`} className="p-3 text-center bg-slate-50 border-r border-b border-slate-200">
+              <div className="text-xs font-medium text-slate-700 mb-1">{period}</div>
+              <div className="text-[10px] text-slate-500 font-mono">P{periodIndex + 1}</div>
+            </div>
+          ))}
+          
+          {/* Day Rows */}
+          {weekDays.map(day => (
+            <React.Fragment key={`day-${day}`}>
+              {/* Day Column Header */}
+              <div className="p-3 font-medium text-slate-700 bg-slate-50 border-r border-slate-200 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-xs font-semibold text-slate-800">{day}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 font-mono">
+                    {schedule[day]?.filter(lesson => lesson !== null).length || 0}
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Lesson Cells for this Day */}
-            {periods.map((period, periodIndex) => {
-              const lesson = schedule[day]?.[periodIndex];
-              return (
-                <div 
-                  key={`${day}-${periodIndex}`}
-                  className={cn(
-                    "p-4 border-r border-b border-slate-200 relative min-h-[140px] flex flex-col justify-center rounded-none",
-                    getLessonStyles(lesson, periodIndex, day)
-                  )}
-                >
-                  {lesson ? (
-                    <div className="text-center space-y-3">
-                      {/* Subject */}
-                      <div className="font-bold text-sm text-slate-900 leading-tight">
-                        {lesson.subject}
-                      </div>
-                      
-                      {/* Class Info */}
-                      <div className="text-xs text-slate-600 space-y-2">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-primary" />
-                          <span className="font-medium">{lesson.class}</span>
+              
+              {/* Lesson Cells for this Day */}
+              {periods.map((period, periodIndex) => {
+                const lesson = schedule[day]?.[periodIndex];
+                return (
+                  <div 
+                    key={`${day}-${periodIndex}`}
+                    className={cn(
+                      "p-2 border-r border-b border-slate-200 relative min-h-[80px] flex flex-col justify-center",
+                      getLessonStyles(lesson, periodIndex, day)
+                    )}
+                  >
+                    {lesson ? (
+                      <div className="text-center space-y-1.5">
+                        {/* Subject */}
+                        <div className="font-semibold text-xs text-slate-900 leading-tight line-clamp-2">
+                          {lesson.subject}
                         </div>
-                        <div className="flex items-center justify-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-secondary" />
-                          <span>{lesson.room}</span>
+                        
+                        {/* Class Info */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-center gap-1">
+                            <Users className="w-2.5 h-2.5 text-slate-500" />
+                            <span className="text-[10px] font-medium text-slate-600">{lesson.class}</span>
+                          </div>
+                          <div className="flex items-center justify-center gap-1">
+                            <MapPin className="w-2.5 h-2.5 text-slate-500" />
+                            <span className="text-[10px] text-slate-500">{lesson.room}</span>
+                          </div>
+                          {lesson.totalStudents && (
+                            <div className="text-[9px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-sm inline-block">
+                              {lesson.totalStudents}
+                            </div>
+                          )}
                         </div>
-                        {lesson.totalStudents && (
-                          <div className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full inline-block">
-                            {lesson.totalStudents} students
+                        
+                        {/* Indicators */}
+                        <div className="flex items-center justify-center gap-0.5">
+                          {renderLessonIndicators(lesson, periodIndex, day)}
+                        </div>
+                        
+                        {/* Completed Check */}
+                        {completedLessons.includes(lesson.id) && (
+                          <div className="absolute top-1 right-1">
+                            <div className="h-4 w-4 bg-white rounded-full shadow-sm flex items-center justify-center border border-slate-200">
+                              <CheckCircle2 className="h-2.5 w-2.5 text-slate-600" />
+                            </div>
                           </div>
                         )}
                       </div>
-                      
-                      {/* Indicators */}
-                      <div className="flex items-center justify-center gap-1">
-                        {renderLessonIndicators(lesson, periodIndex, day)}
-                      </div>
-                      
-                      {/* Completed Check */}
-                      {completedLessons.includes(lesson.id) && (
-                        <div className="absolute top-3 right-3">
-                          <div className="h-7 w-7 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-success">
-                            <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <div className="text-center text-slate-300 text-[10px] flex items-center justify-center h-full">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="w-4 h-4 bg-slate-100 rounded-sm flex items-center justify-center">
+                            <Timer className="w-2 h-2" />
                           </div>
+                          <span className="font-mono">Free</span>
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center text-slate-400 text-xs flex items-center justify-center h-full">
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
-                          <Timer className="w-4 h-4" />
-                        </div>
-                        <span>Free Period</span>
                       </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
+                    )}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
       
       {/* Legend */}
-      <div className="mt-6 p-6 bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200 shadow-md">
-        <div className="flex items-center gap-6 text-xs">
+      <div className="mt-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-primary/15 border-2 border-primary rounded-md"></div>
-            <span className="font-medium">Current Lesson</span>
+            <div className="w-3 h-3 bg-slate-100 border border-slate-300 rounded-sm"></div>
+            <span className="text-slate-600">Current Lesson</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-secondary/15 border-2 border-secondary rounded-md"></div>
-            <span className="font-medium">Next Lesson</span>
+            <div className="w-3 h-3 bg-slate-200 border border-slate-400 rounded-sm"></div>
+            <span className="text-slate-600">Next Lesson</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-success/10 border-2 border-success/30 rounded-md"></div>
-            <span className="font-medium">Completed</span>
+            <div className="w-3 h-3 bg-slate-50 border border-slate-200 rounded-sm"></div>
+            <span className="text-slate-600">Completed</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-slate-100 border-2 border-slate-300 rounded-md"></div>
-            <span className="font-medium">Free Period</span>
+            <div className="w-3 h-3 bg-slate-100 border border-slate-300 rounded-sm"></div>
+            <span className="text-slate-600">Free Period</span>
           </div>
         </div>
       </div>

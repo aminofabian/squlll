@@ -257,7 +257,7 @@ const mockPaymentPlans: PaymentPlan[] = [
     id: "plan-001",
     studentId: "st-001",
     studentName: "John Doe",
-    totalAmount: 45000,
+    totalAmount: 885000,
     downPayment: 15000,
     numberOfInstallments: 3,
     installmentAmount: 10000,
