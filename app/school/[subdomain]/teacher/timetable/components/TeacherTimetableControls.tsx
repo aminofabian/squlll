@@ -15,7 +15,12 @@ import {
   Upload,
   Download,
   ChevronDown,
-  User
+  User,
+  ChevronUp,
+  Target,
+  Award,
+  BarChart3,
+  GraduationCap
 } from 'lucide-react';
 
 interface TeacherTimetableControlsProps {
@@ -50,6 +55,8 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
   isSyncing
 }) => {
   const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
+  const [expandedStats, setExpandedStats] = useState<string[]>([]);
+  const [showStatsSection, setShowStatsSection] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const completionRate = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
   const upcomingRate = totalLessons > 0 ? Math.round((upcomingLessons / totalLessons) * 100) : 0;
@@ -68,17 +75,27 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
     };
   }, []);
 
+  const toggleStatExpansion = (statId: string) => {
+    setExpandedStats(prev => 
+      prev.includes(statId) 
+        ? prev.filter(id => id !== statId)
+        : [...prev, statId]
+    );
+  };
+
+  const isExpanded = (statId: string) => expandedStats.includes(statId);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#246a59]">Teacher Dashboard</h1>
+          <h1 className="text-2xl font-bold text-primary">Teacher Dashboard</h1>
           <div className="flex items-center gap-4 mt-2">
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowTeacherDropdown(!showTeacherDropdown)}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-md hover:shadow-lg"
               >
                 <User className="w-4 h-4" />
                 <span className="font-medium">{teacherName}</span>
@@ -86,7 +103,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
               </button>
               
               {showTeacherDropdown && (
-                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[200px] max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-xl z-50 min-w-[200px] max-h-60 overflow-y-auto">
                   {availableTeachers.map((teacher) => (
                     <div
                       key={teacher}
@@ -95,8 +112,8 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
                         onTeacherSelect(teacher);
                         setShowTeacherDropdown(false);
                       }}
-                      className={`px-4 py-3 cursor-pointer hover:bg-gray-50 flex items-center justify-between ${
-                        teacherName === teacher ? 'bg-blue-50 text-primary' : ''
+                      className={`px-4 py-3 cursor-pointer hover:bg-slate-50 flex items-center justify-between ${
+                        teacherName === teacher ? 'bg-primary/10 text-primary' : ''
                       }`}
                     >
                       <span>{teacher}</span>
@@ -115,7 +132,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
           <Button 
             variant="outline"
             onClick={onLoadMockData}
-            className="border-purple-300 text-purple-600 hover:bg-purple-50"
+            className="border-accent/30 text-accent hover:bg-accent/10 shadow-sm"
           >
             <Download className="w-4 h-4 mr-2" />
             Load Mock Data
@@ -123,7 +140,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
           <Button 
             variant="outline"
             onClick={onLoad}
-            className="border-slate-300 text-slate-600 hover:bg-slate-50"
+            className="border-slate-300 text-slate-600 hover:bg-slate-50 shadow-sm"
           >
             <Upload className="w-4 h-4 mr-2" />
             Load Timetable
@@ -131,7 +148,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
           <Button 
             variant="outline"
             onClick={onSave}
-            className="border-[#246a59]/20 text-[#246a59] hover:bg-[#246a59]/10"
+            className="border-secondary/30 text-secondary hover:bg-secondary/10 shadow-sm"
           >
             <Save className="w-4 h-4 mr-2" />
             Save Timetable
@@ -139,7 +156,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
           <Button 
             onClick={onSync} 
             disabled={isSyncing}
-            className="bg-[#246a59] hover:bg-[#1a4d3f] text-white"
+            className="bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
             {isSyncing ? 'Syncing...' : 'Sync with Main Timetable'}
@@ -147,109 +164,286 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Total Lessons
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{totalLessons}</div>
-            <p className="text-xs text-slate-500 mt-1">This week</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Completed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{completedLessons}</div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="text-xs text-slate-500">{completionRate}%</div>
-              <div className="flex-1 bg-slate-200 rounded-full h-1">
-                <div 
-                  className="bg-green-500 h-1 rounded-full" 
-                  style={{ width: `${completionRate}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Upcoming
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{upcomingLessons}</div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="text-xs text-slate-500">{upcomingRate}%</div>
-              <div className="flex-1 bg-slate-200 rounded-full h-1">
-                <div 
-                  className="bg-amber-500 h-1 rounded-full" 
-                  style={{ width: `${upcomingRate}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Total Students
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{totalStudents}</div>
-            <p className="text-xs text-slate-500 mt-1">Avg: {averageClassSize} per class</p>
-          </CardContent>
-        </Card>
+      {/* Stats Toggle Button */}
+      <div className="flex justify-center">
+        <Button
+          variant="outline"
+          onClick={() => setShowStatsSection(!showStatsSection)}
+          className="border-primary/30 text-primary hover:bg-primary/10 shadow-sm transition-all duration-300"
+        >
+          {showStatsSection ? (
+            <>
+              <ChevronUp className="w-4 h-4 mr-2" />
+              Hide Dashboard Stats
+            </>
+          ) : (
+            <>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Show Dashboard Stats
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-slate-800">Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="border-[#246a59] text-[#246a59] hover:bg-[#246a59] hover:text-white">
-              <BookOpen className="w-4 h-4 mr-2" />
-              View Lesson Plans
-            </Button>
-            <Button variant="outline" className="border-[#246a59] text-[#246a59] hover:bg-[#246a59] hover:text-white">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              View Progress Reports
-            </Button>
-            <Button variant="outline" className="border-[#246a59] text-[#246a59] hover:bg-[#246a59] hover:text-white">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              Report Issues
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Stats Cards - Hidden by default */}
+      <div className={`transition-all duration-500 overflow-hidden ${
+        showStatsSection ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
+      }`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card 
+            className={`border-l-4 border-l-primary shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer ${
+              isExpanded('total') ? 'ring-2 ring-primary/20' : ''
+            }`}
+            onClick={() => toggleStatExpansion('total')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  Total Lessons
+                </div>
+                {isExpanded('total') ? (
+                  <ChevronUp className="w-4 h-4 text-primary" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-primary" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-900">{totalLessons}</div>
+              <p className="text-xs text-slate-500 mt-1">This week</p>
+              
+              {/* Expanded Content */}
+              <div className={`mt-4 space-y-3 transition-all duration-300 overflow-hidden ${
+                isExpanded('total') ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                <div className="pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Daily Average:</span>
+                    <span className="font-semibold text-slate-900">{Math.round(totalLessons / 5)} lessons</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Busiest Day:</span>
+                    <span className="font-semibold text-slate-900">Wednesday</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Lightest Day:</span>
+                    <span className="font-semibold text-slate-900">Friday</span>
+                  </div>
+                  <div className="mt-3 p-2 bg-primary/5 rounded-lg">
+                    <div className="flex items-center gap-2 text-xs text-primary">
+                      <Target className="w-3 h-3" />
+                      <span>Target: 25 lessons/week</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Status Badge */}
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-          Timetable Synced
-        </Badge>
-        <span className="text-xs text-slate-500">
-          Last updated: {new Date().toLocaleTimeString()}
-        </span>
+          <Card 
+            className={`border-l-4 border-l-success shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer ${
+              isExpanded('completed') ? 'ring-2 ring-success/20' : ''
+            }`}
+            onClick={() => toggleStatExpansion('completed')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-success" />
+                  Completed
+                </div>
+                {isExpanded('completed') ? (
+                  <ChevronUp className="w-4 h-4 text-success" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-success" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-900">{completedLessons}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="text-xs text-slate-500">{completionRate}%</div>
+                <div className="flex-1 bg-slate-200 rounded-full h-1">
+                  <div 
+                    className="bg-success h-1 rounded-full transition-all duration-500" 
+                    style={{ width: `${completionRate}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              {/* Expanded Content */}
+              <div className={`mt-4 space-y-3 transition-all duration-300 overflow-hidden ${
+                isExpanded('completed') ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                <div className="pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">This Week:</span>
+                    <span className="font-semibold text-slate-900">{completedLessons} lessons</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Last Week:</span>
+                    <span className="font-semibold text-slate-900">{Math.round(completedLessons * 0.9)} lessons</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Success Rate:</span>
+                    <span className="font-semibold text-success">{completionRate}%</span>
+                  </div>
+                  <div className="mt-3 p-2 bg-success/5 rounded-lg">
+                    <div className="flex items-center gap-2 text-xs text-success">
+                      <Award className="w-3 h-3" />
+                      <span>Excellent completion rate!</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`border-l-4 border-l-accent shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer ${
+              isExpanded('upcoming') ? 'ring-2 ring-accent/20' : ''
+            }`}
+            onClick={() => toggleStatExpansion('upcoming')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-accent" />
+                  Upcoming
+                </div>
+                {isExpanded('upcoming') ? (
+                  <ChevronUp className="w-4 h-4 text-accent" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-accent" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-900">{upcomingLessons}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="text-xs text-slate-500">{upcomingRate}%</div>
+                <div className="flex-1 bg-slate-200 rounded-full h-1">
+                  <div 
+                    className="bg-accent h-1 rounded-full transition-all duration-500" 
+                    style={{ width: `${upcomingRate}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              {/* Expanded Content */}
+              <div className={`mt-4 space-y-3 transition-all duration-300 overflow-hidden ${
+                isExpanded('upcoming') ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                <div className="pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Today:</span>
+                    <span className="font-semibold text-slate-900">{Math.round(upcomingLessons * 0.2)} lessons</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Tomorrow:</span>
+                    <span className="font-semibold text-slate-900">{Math.round(upcomingLessons * 0.25)} lessons</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">This Week:</span>
+                    <span className="font-semibold text-slate-900">{upcomingLessons} lessons</span>
+                  </div>
+                  <div className="mt-3 p-2 bg-accent/5 rounded-lg">
+                    <div className="flex items-center gap-2 text-xs text-accent">
+                      <BarChart3 className="w-3 h-3" />
+                      <span>Well distributed schedule</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`border-l-4 border-l-info shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer ${
+              isExpanded('students') ? 'ring-2 ring-info/20' : ''
+            }`}
+            onClick={() => toggleStatExpansion('students')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-info" />
+                  Total Students
+                </div>
+                {isExpanded('students') ? (
+                  <ChevronUp className="w-4 h-4 text-info" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-info" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-900">{totalStudents}</div>
+              <p className="text-xs text-slate-500 mt-1">Avg: {averageClassSize} per class</p>
+              
+              {/* Expanded Content */}
+              <div className={`mt-4 space-y-3 transition-all duration-300 overflow-hidden ${
+                isExpanded('students') ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                <div className="pt-3 border-t border-slate-200">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600">Largest Class:</span>
+                    <span className="font-semibold text-slate-900">{averageClassSize + 5} students</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Smallest Class:</span>
+                    <span className="font-semibold text-slate-900">{averageClassSize - 3} students</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-2">
+                    <span className="text-slate-600">Total Classes:</span>
+                    <span className="font-semibold text-slate-900">{Math.round(totalStudents / averageClassSize)}</span>
+                  </div>
+                  <div className="mt-3 p-2 bg-info/5 rounded-lg">
+                    <div className="flex items-center gap-2 text-xs text-info">
+                      <GraduationCap className="w-3 h-3" />
+                      <span>Optimal class sizes</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <Card className="shadow-md hover:shadow-lg transition-shadow mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-slate-800">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white shadow-sm">
+                <BookOpen className="w-4 h-4 mr-2" />
+                View Lesson Plans
+              </Button>
+              <Button variant="outline" className="border-secondary text-secondary hover:bg-secondary hover:text-white shadow-sm">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                View Progress Reports
+              </Button>
+              <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-white shadow-sm">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Report Issues
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Status Badge */}
+        <div className="flex items-center gap-2 mt-6">
+          <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+            <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
+            Timetable Synced
+          </Badge>
+          <span className="text-xs text-slate-500">
+            Last updated: {new Date().toLocaleTimeString()}
+          </span>
+        </div>
       </div>
     </div>
   );

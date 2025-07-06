@@ -384,7 +384,7 @@ const TeacherTimetable = () => {
 
   const getLessonStyles = (lesson: TeacherLesson | null, periodIndex: number, day: string) => {
     if (!lesson) {
-      return "bg-slate-50 text-slate-400";
+      return "bg-slate-50/80 text-slate-400 border-slate-200/50 hover:bg-slate-100/80 transition-all duration-200";
     }
 
     const currentDay = getCurrentDay();
@@ -393,20 +393,21 @@ const TeacherTimetable = () => {
     const isCompleted = completedLessons.includes(lesson.id);
 
     if (isCurrentLesson) {
-      return "bg-primary/20 border-primary text-primary font-semibold";
+      return "bg-primary/15 border-2 border-primary text-primary font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 transform hover:scale-[1.02]";
     }
 
     if (isCompleted) {
-      return "bg-green-50 border-green-200 text-green-800";
+      return "bg-success/10 border-2 border-success/30 text-success-foreground shadow-md shadow-success/10 hover:shadow-lg hover:shadow-success/20 transition-all duration-200 transform hover:scale-[1.01]";
     }
 
     // Check if this is the next lesson
     const nextLesson = getNextLesson();
     if (nextLesson && nextLesson.lesson.id === lesson.id) {
-      return "bg-[#246a59]/20 border-[#246a59] text-[#246a59] font-semibold";
+      return "bg-secondary/15 border-2 border-secondary text-secondary-foreground font-semibold shadow-lg shadow-secondary/20 hover:shadow-xl hover:shadow-secondary/30 transition-all duration-300 transform hover:scale-[1.02]";
     }
 
-    return "bg-white border-slate-200 text-slate-900 hover:bg-slate-50";
+    // Default lesson styling with theme colors
+    return "bg-white border-2 border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 transform hover:scale-[1.01]";
   };
 
   const renderLessonIndicators = (lesson: TeacherLesson, periodIndex: number, day: string) => {
@@ -417,9 +418,9 @@ const TeacherTimetable = () => {
     const currentPeriod = getCurrentPeriod();
     if (currentDay === day && currentPeriod === periodIndex + 1) {
       indicators.push(
-        <div key="current" className="flex items-center gap-1 text-xs text-primary">
+        <div key="current" className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
           <Timer className="w-3 h-3" />
-          <span>Now</span>
+          <span className="font-medium">Now</span>
         </div>
       );
     }
@@ -428,9 +429,9 @@ const TeacherTimetable = () => {
     const nextLesson = getNextLesson();
     if (nextLesson && nextLesson.lesson.id === lesson.id) {
       indicators.push(
-        <div key="next" className="flex items-center gap-1 text-xs text-[#246a59]">
+        <div key="next" className="flex items-center gap-1 text-xs text-secondary bg-secondary/10 px-2 py-1 rounded-full">
           <Timer className="w-3 h-3" />
-          <span>Next</span>
+          <span className="font-medium">Next</span>
         </div>
       );
     }
@@ -660,45 +661,47 @@ const TeacherTimetable = () => {
   const remainingMinutes = getRemainingMinutes();
 
   return (
-    <div className="container py-8 mx-auto max-w-6xl">
-      <TeacherTimetableControls
-        teacherName={selectedTeacher}
-        availableTeachers={availableTeachers}
-        totalLessons={stats.totalLessons}
-        completedLessons={stats.completedLessons}
-        upcomingLessons={stats.upcomingLessons}
-        totalStudents={stats.totalStudents}
-        averageClassSize={stats.averageClassSize}
-        onTeacherSelect={setSelectedTeacher}
-        onSync={handleSync}
-        onSave={handleSaveTeacherTimetable}
-        onLoad={handleLoadTeacherTimetable}
-        onLoadMockData={forceReloadMockData}
-        isSyncing={isSyncing}
-      />
-      
-      <TeacherTimetableHeader currentTime={currentTime} />
-      
-      <CurrentLessonBanner 
-        currentLesson={currentLesson} 
-        remainingMinutes={remainingMinutes} 
-      />
-      
-      <TeacherTimetableGrid
-        schedule={timetableData.schedule}
-        periods={timetableData.periods}
-        weekDays={weekDays}
-        completedLessons={completedLessons}
-        getLessonStyles={getLessonStyles}
-        renderLessonIndicators={renderLessonIndicators}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="container py-8 mx-auto max-w-7xl px-4">
+        <TeacherTimetableControls
+          teacherName={selectedTeacher}
+          availableTeachers={availableTeachers}
+          totalLessons={stats.totalLessons}
+          completedLessons={stats.completedLessons}
+          upcomingLessons={stats.upcomingLessons}
+          totalStudents={stats.totalStudents}
+          averageClassSize={stats.averageClassSize}
+          onTeacherSelect={setSelectedTeacher}
+          onSync={handleSync}
+          onSave={handleSaveTeacherTimetable}
+          onLoad={handleLoadTeacherTimetable}
+          onLoadMockData={forceReloadMockData}
+          isSyncing={isSyncing}
+        />
+        
+        <TeacherTimetableHeader currentTime={currentTime} />
+        
+        <CurrentLessonBanner 
+          currentLesson={currentLesson} 
+          remainingMinutes={remainingMinutes} 
+        />
+        
+        <TeacherTimetableGrid
+          schedule={timetableData.schedule}
+          periods={timetableData.periods}
+          weekDays={weekDays}
+          completedLessons={completedLessons}
+          getLessonStyles={getLessonStyles}
+          renderLessonIndicators={renderLessonIndicators}
+        />
 
-      <NextLessonPanel 
-        nextLesson={nextLesson} 
-        formatTimeUntil={formatTimeUntil} 
-      />
+        <NextLessonPanel 
+          nextLesson={nextLesson} 
+          formatTimeUntil={formatTimeUntil} 
+        />
 
-      <TimetableLegend />
+        <TimetableLegend />
+      </div>
     </div>
   );
 };
