@@ -686,7 +686,7 @@ export default function StudentsPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
+              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
               title={isSidebarCollapsed ? "Show search sidebar" : "Hide search sidebar"}
             >
               {isSidebarCollapsed ? (

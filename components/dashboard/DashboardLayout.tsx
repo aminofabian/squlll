@@ -85,7 +85,7 @@ export function DashboardLayout({
                     variant="outline"
                     size="sm"
                     onClick={() => setIsFilterMinimized(!isFilterMinimized)}
-                    className="border-primary/30 hover:bg-primary/5"
+                    className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
                     title={isFilterMinimized ? "Expand sidebar" : "Minimize sidebar"}
                   >
                     {isFilterMinimized ? (
@@ -108,12 +108,12 @@ export function DashboardLayout({
             <main className="flex-1 min-w-0 relative">
               {/* Floating toggle button when filter is minimized */}
               {isFilterMinimized && (
-                <div className="absolute top-4 left-4 z-10">
+                <div className="absolute top-6 left-6 z-10">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsFilterMinimized(false)}
-                    className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+                    className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
                     title="Expand sidebar"
                   >
                     <PanelLeftOpen className="h-4 w-4" />

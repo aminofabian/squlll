@@ -46,7 +46,7 @@ export function StudentSearchSidebar({
         variant="outline"
         size="sm"
         onClick={onCollapse}
-        className="absolute top-4 right-4 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 z-10"
+        className="absolute top-4 right-4 border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200 z-10"
         title="Hide search sidebar"
       >
         <PanelLeftClose className="h-4 w-4" />

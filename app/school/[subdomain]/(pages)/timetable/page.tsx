@@ -674,20 +674,20 @@ const SmartTimetable = () => {
         {/* Main Content with Timetable and Summary */}
         <div className="flex gap-6 relative">
           <div className="flex-1">
-            {/* Floating toggle button when summary panel is minimized */}
-            {isSummaryPanelMinimized && (
-              <div className="absolute top-4 right-4 z-10">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsSummaryPanelMinimized(false)}
-                  className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
-                  title="Expand summary panel"
-                >
-                  <PanelLeftOpen className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+                    {/* Floating toggle button when summary panel is minimized */}
+        {isSummaryPanelMinimized && (
+          <div className="absolute top-6 right-6 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSummaryPanelMinimized(false)}
+              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
+              title="Expand summary panel"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
               {/* Debug: Check lunch breaks */}
               {(() => {
                 const lunchBreaksInSlot7 = Object.entries(mergedSubjects).filter(([key, data]) => {
@@ -836,7 +836,7 @@ const SmartTimetable = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsSummaryPanelMinimized(true)}
-                  className="border-primary/30 hover:bg-primary/5"
+                  className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
                   title="Minimize summary panel"
                 >
                   <PanelLeftClose className="h-4 w-4" />

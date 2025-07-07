@@ -7,10 +7,14 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { SchoolSidebar } from "@/components/dashboard/SchoolSidebar"
 import { SearchFilter } from "@/components/dashboard/SearchFilter"
 import { MobileNav } from "@/components/dashboard/MobileNav"
-import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen } from "lucide-react"
+import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen, PanelLeftClose, PanelLeftOpen, Loader2 } from "lucide-react"
 import { useStudentsStore } from '@/lib/stores/useStudentsStore'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { mockClasses } from '@/lib/data/mockclasses'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ChevronDown, ChevronRight } from 'lucide-react'
+import { DashboardSearchSidebar } from './components/DashboardSearchSidebar'
 
 export default function SchoolDashboard() {
   const params = useParams()
@@ -69,6 +73,8 @@ export default function SchoolDashboard() {
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [showStats, setShowStats] = useState(false)
 
   // Get real data from stores
   const { students } = useStudentsStore()
@@ -180,7 +186,7 @@ export default function SchoolDashboard() {
       value: realStats.totalStudents.toLocaleString(),
       change: `+${realStats.monthlyChange} this month`,
       icon: Users,
-      color: "text-[#246a59]"
+      color: "text-primary"
     },
     {
       title: "Attendance Rate",
@@ -296,300 +302,399 @@ export default function SchoolDashboard() {
     setSelectedFilter('all')
   }
 
+  const handleGradeSelect = (gradeId: string) => {
+    if (gradeId === 'all') {
+      setSelectedGrade(null)
+    } else {
+      setSelectedGrade(gradeId)
+    }
+  }
+
+  const handleClearFilters = () => {
+    setSearchTerm('')
+    setSelectedGrade(null)
+  }
+
   return (
-    <DashboardLayout
-      searchFilter={
-        <SearchFilter 
-          type="dashboard" 
-          onStoreSelect={handleFilterSelect}
-          onSearch={handleSearch}
+    <div className="flex h-full">
+      {/* Search filter column - styled to match theme */}
+      {!isSidebarCollapsed && (
+        <DashboardSearchSidebar
+          searchTerm={searchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+          }}
+          onClearFilters={handleClearFilters}
+          selectedGradeId={selectedFilter}
+          onCollapse={() => setIsSidebarCollapsed(true)}
+          students={students}
+          selectedGrade={selectedGrade}
+          onGradeSelect={handleGradeSelect}
+          schoolConfig={schoolConfig}
         />
-      }
-      mobileNav={<MobileNav />}
-    >
-      <div className="space-y-8">
-        {/* Page Header */}
-        <div className="border-b-2 border-[#246a59]/20 pb-8">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-4">
-              <div className="inline-block w-fit px-3 py-1 bg-[#246a59]/5 border border-[#246a59]/20 rounded-md">
-                <span className="text-xs font-mono uppercase tracking-wide text-[#246a59]">
-                  {selectedGrade ? 'Grade Overview' : 'School Overview'}
-                </span>
-              </div>
-              {selectedGrade && (
-                <button
-                  onClick={() => {
-                    setSelectedGrade(null)
-                    setSelectedFilter('all')
-                  }}
-                  className="px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                >
-                  ← Back to All Grades
-                </button>
-              )}
-            </div>
-            <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
-              {selectedGrade && selectedGradeInfo 
-                ? `${selectedGradeInfo.displayName} Dashboard`
-                : `${schoolName} Dashboard`
-              }
+      )}
+
+      {/* Main content column */}
+      <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
+        {/* Floating toggle button when sidebar is collapsed */}
+        {isSidebarCollapsed && (
+          <div className="absolute top-6 left-6 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
+              title="Show search sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">
+              Dashboard
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-              {selectedGrade 
-                ? `Monitor ${selectedGradeInfo?.displayName} performance and activities`
-                : 'Monitor school performance and activities'
-              }
-            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Sidebar toggle button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
+              title={isSidebarCollapsed ? "Show search sidebar" : "Hide search sidebar"}
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {dashboardStats.map((stat) => (
-            <div key={stat.title} className="border-2 border-[#246a59]/20 bg-[#246a59]/5 p-4 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className={stat.color}>
-                  <stat.icon className="h-5 w-5" />
+        <div className="space-y-8">
+          {/* Page Header */}
+          <div className="border-b-2 border-primary/20 pb-8">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
+                  <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                    {selectedGrade ? 'Grade Overview' : 'School Overview'}
+                  </span>
+                </div>
+                {selectedGrade && (
+                  <button
+                    onClick={() => {
+                      setSelectedGrade(null)
+                      setSelectedFilter('all')
+                    }}
+                    className="px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    ← Back to All Grades
+                  </button>
+                )}
+              </div>
+              <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                {selectedGrade && selectedGradeInfo 
+                  ? `${selectedGradeInfo.displayName} Dashboard`
+                  : `${schoolName} Dashboard`
+                }
+              </h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                {selectedGrade 
+                  ? `Monitor ${selectedGradeInfo?.displayName} performance and activities`
+                  : 'Monitor school performance and activities'
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Expandable Stats Section - Only show when viewing all grades */}
+          {!selectedGrade && (
+            <div className="mb-8">
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setShowStats(!showStats)}
+                  className="w-full p-4 flex items-center justify-between hover:bg-primary/10 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-mono font-semibold text-slate-900 dark:text-slate-100">School Statistics</h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">View comprehensive school statistics and metrics</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs">
+                      {students.length} Students
+                    </Badge>
+                    {showStats ? (
+                      <ChevronDown className="w-5 h-5 text-primary" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                </button>
+                
+                {showStats && (
+                  <div className="border-t-2 border-primary/20 bg-white dark:bg-slate-800 p-6">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {dashboardStats.map((stat) => (
+                        <div key={stat.title} className="border-2 border-primary/20 bg-primary/5 p-4 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <div className={stat.color}>
+                              <stat.icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                {stat.title}
+                              </p>
+                              <p className="text-2xl font-mono font-bold mt-1">{stat.value}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                {stat.change}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Grade-Specific Information */}
+          {selectedGrade && selectedGradeInfo && (
+            <div className="border-2 border-primary/20 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                    {stat.title}
-                  </p>
-                  <p className="text-2xl font-mono font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {stat.change}
+                  <h2 className="text-xl font-mono font-bold">{selectedGradeInfo.displayName} Details</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {selectedGradeInfo.level.name} • {selectedGradeInfo.level.subjects.length} subjects
                   </p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Student Demographics */}
+                <div className="space-y-4">
+                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Student Demographics</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Male Students</span>
+                      <span className="font-mono font-bold text-primary">
+                        {filteredStudents.filter(s => s.gender.toLowerCase() === 'male').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Female Students</span>
+                      <span className="font-mono font-bold text-primary">
+                        {filteredStudents.filter(s => s.gender.toLowerCase() === 'female').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Active Students</span>
+                      <span className="font-mono font-bold text-primary">
+                        {filteredStudents.filter(s => s.isActive).length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-        {/* Grade-Specific Information */}
-        {selectedGrade && selectedGradeInfo && (
-          <div className="border-2 border-[#246a59]/20 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-[#246a59]/10 rounded-full flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-[#246a59]" />
-              </div>
-              <div>
-                <h2 className="text-xl font-mono font-bold">{selectedGradeInfo.displayName} Details</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {selectedGradeInfo.level.name} • {selectedGradeInfo.level.subjects.length} subjects
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Student Demographics */}
-              <div className="space-y-4">
-                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Student Demographics</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Male Students</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {filteredStudents.filter(s => s.gender.toLowerCase() === 'male').length}
-                    </span>
+                {/* Financial Overview */}
+                <div className="space-y-4">
+                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Financial Overview</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Total Fees Paid</span>
+                      <span className="font-mono font-bold text-emerald-600">
+                        KES {filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Outstanding Fees</span>
+                      <span className="font-mono font-bold text-orange-600">
+                        KES {filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Collection Rate</span>
+                      <span className="font-mono font-bold text-primary">
+                        {(() => {
+                          const totalPaid = filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0)
+                          const totalOwed = filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0)
+                          const total = totalPaid + totalOwed
+                          return total > 0 ? Math.round((totalPaid / total) * 100) : 0
+                        })()}%
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Female Students</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {filteredStudents.filter(s => s.gender.toLowerCase() === 'female').length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Active Students</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {filteredStudents.filter(s => s.isActive).length}
-                    </span>
+                </div>
+
+                {/* Academic Structure */}
+                <div className="space-y-4">
+                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Academic Structure</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Subjects Offered</span>
+                      <span className="font-mono font-bold text-primary">
+                        {selectedGradeInfo.level.subjects.length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Active Classes</span>
+                      <span className="font-mono font-bold text-primary">
+                        {mockClasses.filter(c => 
+                          c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
+                          c.status === 'active'
+                        ).length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-slate-600">Streams</span>
+                      <span className="font-mono font-bold text-primary">
+                        {selectedGradeInfo.grade.streams?.length || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Financial Overview */}
-              <div className="space-y-4">
-                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Financial Overview</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Total Fees Paid</span>
-                    <span className="font-mono font-bold text-emerald-600">
-                      KES {filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Outstanding Fees</span>
-                    <span className="font-mono font-bold text-orange-600">
-                      KES {filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Collection Rate</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {(() => {
-                        const totalPaid = filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0)
-                        const totalOwed = filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0)
-                        const total = totalPaid + totalOwed
-                        return total > 0 ? Math.round((totalPaid / total) * 100) : 0
-                      })()}%
-                    </span>
+              {/* Streams List */}
+              {selectedGradeInfo.grade.streams && selectedGradeInfo.grade.streams.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-primary/20">
+                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600 mb-4">Streams</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedGradeInfo.grade.streams.map((stream) => (
+                      <div key={stream.id} className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-medium">{stream.name}</span>
+                          <span className="text-sm text-slate-500">
+                            {Math.floor(filteredStudents.length / selectedGradeInfo.grade.streams.length)} students
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-
-              {/* Academic Structure */}
-              <div className="space-y-4">
-                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Academic Structure</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Subjects Offered</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {selectedGradeInfo.level.subjects.length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Active Classes</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {mockClasses.filter(c => 
-                        c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
-                        c.status === 'active'
-                      ).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-600">Streams</span>
-                    <span className="font-mono font-bold text-[#246a59]">
-                      {selectedGradeInfo.grade.streams?.length || 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
+          )}
 
-            {/* Streams List */}
-            {selectedGradeInfo.grade.streams && selectedGradeInfo.grade.streams.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-[#246a59]/20">
-                <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600 mb-4">Streams</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {selectedGradeInfo.grade.streams.map((stream) => (
-                    <div key={stream.id} className="p-4 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono font-medium">{stream.name}</span>
-                        <span className="text-sm text-slate-500">
-                          {Math.floor(filteredStudents.length / selectedGradeInfo.grade.streams.length)} students
-                        </span>
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Activities */}
+            <div className="border-2 border-primary/20 rounded-xl">
+              <div className="p-4 border-b-2 border-primary/20">
+                <h2 className="font-mono font-bold">Recent Activities</h2>
+              </div>
+              <div className="p-4">
+                <div className="space-y-4">
+                  {recentActivities.map(activity => (
+                    <div key={activity.id} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-primary" />
+                        <div>
+                          <div className="font-mono font-medium">{activity.target}</div>
+                          <div className="text-xs text-slate-500">{activity.action}</div>
+                        </div>
+                      </div>
+                      <div className="text-xs font-mono">
+                        {new Date(activity.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activities */}
-          <div className="border-2 border-[#246a59]/20 rounded-xl">
-            <div className="p-4 border-b-2 border-[#246a59]/20">
-              <h2 className="font-mono font-bold">Recent Activities</h2>
             </div>
-            <div className="p-4">
-              <div className="space-y-4">
-                {recentActivities.map(activity => (
-                  <div key={activity.id} className="flex items-center justify-between p-3 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-[#246a59]" />
-                      <div>
-                        <div className="font-mono font-medium">{activity.target}</div>
-                        <div className="text-xs text-slate-500">{activity.action}</div>
+
+            {/* Upcoming Events */}
+            <div className="border-2 border-primary/20 rounded-xl">
+              <div className="p-4 border-b-2 border-primary/20">
+                <h2 className="font-mono font-bold">Upcoming Events</h2>
+              </div>
+              <div className="p-4">
+                <div className="space-y-4">
+                  {upcomingEvents.map(event => (
+                    <div key={event.name} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <CalendarDays className="h-5 w-5 text-primary" />
+                        <div>
+                          <div className="font-mono font-medium">{event.name}</div>
+                          <div className="text-xs text-slate-500">{event.date} • {event.attendees} attendees</div>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-xs font-mono">
-                      {new Date(activity.timestamp).toLocaleTimeString()}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Upcoming Events */}
-          <div className="border-2 border-[#246a59]/20 rounded-xl">
-            <div className="p-4 border-b-2 border-[#246a59]/20">
-              <h2 className="font-mono font-bold">Upcoming Events</h2>
-            </div>
-            <div className="p-4">
-              <div className="space-y-4">
-                {upcomingEvents.map(event => (
-                  <div key={event.name} className="flex items-center justify-between p-3 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <CalendarDays className="h-5 w-5 text-[#246a59]" />
-                      <div>
-                        <div className="font-mono font-medium">{event.name}</div>
-                        <div className="text-xs text-slate-500">{event.date} • {event.attendees} attendees</div>
+            {/* Class Performance */}
+            <div className="border-2 border-primary/20 rounded-xl">
+              <div className="p-4 border-b-2 border-primary/20">
+                <h2 className="font-mono font-bold">Class Performance</h2>
+              </div>
+              <div className="p-4">
+                <div className="space-y-4">
+                  {classPerformance.map(classData => (
+                    <div key={classData.name} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono">{classData.name}</span>
+                        <span className="text-xs font-mono">{classData.average}% avg</span>
                       </div>
+                      <div className="h-2 bg-primary/10 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary rounded-full" 
+                          style={{ width: `${classData.average}%` }} 
+                        />
+                      </div>
+                      <div className="text-xs text-slate-500">{classData.students} students</div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Class Performance */}
-          <div className="border-2 border-[#246a59]/20 rounded-xl">
-            <div className="p-4 border-b-2 border-[#246a59]/20">
-              <h2 className="font-mono font-bold">Class Performance</h2>
-            </div>
-            <div className="p-4">
-              <div className="space-y-4">
-                {classPerformance.map(classData => (
-                  <div key={classData.name} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono">{classData.name}</span>
-                      <span className="text-xs font-mono">{classData.average}% avg</span>
-                    </div>
-                    <div className="h-2 bg-[#246a59]/10 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#246a59] rounded-full" 
-                        style={{ width: `${classData.average}%` }} 
-                      />
-                    </div>
-                    <div className="text-xs text-slate-500">{classData.students} students</div>
-                  </div>
-                ))}
+            {/* Quick Actions */}
+            <div className="border-2 border-primary/20 rounded-xl">
+              <div className="p-4 border-b-2 border-primary/20">
+                <h2 className="font-mono font-bold">Quick Actions</h2>
               </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="border-2 border-[#246a59]/20 rounded-xl">
-            <div className="p-4 border-b-2 border-[#246a59]/20">
-              <h2 className="font-mono font-bold">Quick Actions</h2>
-            </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <button className="p-4 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg hover:bg-[#246a59]/10 transition-colors">
-                  <Users className="h-6 w-6 text-[#246a59] mx-auto mb-2" />
-                  <span className="text-sm font-mono">Take Attendance</span>
-                </button>
-                <button className="p-4 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg hover:bg-[#246a59]/10 transition-colors">
-                  <GraduationCap className="h-6 w-6 text-[#246a59] mx-auto mb-2" />
-                  <span className="text-sm font-mono">Enter Grades</span>
-                </button>
-                <button className="p-4 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg hover:bg-[#246a59]/10 transition-colors">
-                  <CalendarDays className="h-6 w-6 text-[#246a59] mx-auto mb-2" />
-                  <span className="text-sm font-mono">Schedule Event</span>
-                </button>
-                <button className="p-4 bg-[#246a59]/5 border border-[#246a59]/20 rounded-lg hover:bg-[#246a59]/10 transition-colors">
-                  <ClipboardList className="h-6 w-6 text-[#246a59] mx-auto mb-2" />
-                  <span className="text-sm font-mono">Create Report</span>
-                </button>
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
+                    <Users className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <span className="text-sm font-mono">Take Attendance</span>
+                  </button>
+                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
+                    <GraduationCap className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <span className="text-sm font-mono">Enter Grades</span>
+                  </button>
+                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
+                    <CalendarDays className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <span className="text-sm font-mono">Schedule Event</span>
+                  </button>
+                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
+                    <ClipboardList className="h-6 w-6 text-primary mx-auto mb-2" />
+                    <span className="text-sm font-mono">Create Report</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   )
 } 

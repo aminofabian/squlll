@@ -831,7 +831,7 @@ export default function FeesPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-            className="border-primary/30 hover:bg-primary/5"
+            className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
             title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
           >
             {isSidebarMinimized ? (
@@ -944,12 +944,12 @@ export default function FeesPage() {
       <div className="flex-1 p-8 space-y-8 relative">
         {/* Floating toggle button when sidebar is minimized */}
         {isSidebarMinimized && (
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-6 left-6 z-10">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsSidebarMinimized(false)}
-              className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
               title="Expand sidebar"
             >
               <PanelLeftOpen className="h-4 w-4" />
@@ -999,13 +999,13 @@ export default function FeesPage() {
             {/* Action Buttons - Moved to header right */}
             <div className="flex flex-wrap gap-3 items-start">
               {/* Sidebar toggle button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-                className="border-primary/30 hover:bg-primary/5"
-                title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
-              >
+                          <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
+              title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            >
                 {isSidebarMinimized ? (
                   <PanelLeftOpen className="h-4 w-4" />
                 ) : (

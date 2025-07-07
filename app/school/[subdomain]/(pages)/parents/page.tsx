@@ -51,7 +51,11 @@ import {
   UserPlus,
   BookOpen,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Loader2,
+  BarChart3,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 // Parent/Guardian type
@@ -134,19 +138,6 @@ const getLevelColor = (level: EducationLevel): string => {
       return 'bg-gray-100 text-gray-800 border-gray-200'
   }
 }
-
-// Grade Button Component
-const GradeButton = ({ grade, selectedGradeId, onClick }: { grade: Grade, selectedGradeId: string, onClick: (id: string) => void }) => (
-  <Button
-    key={grade.id}
-    size="sm"
-    variant={selectedGradeId === grade.id ? "default" : "outline"}
-    className={`text-xs px-2 py-1 h-8 font-mono ${selectedGradeId === grade.id ? 'shadow-sm' : ''}`}
-    onClick={() => onClick(grade.id)}
-  >
-    {grade.name}
-  </Button>
-)
 
 // Helper function to format currency (Kenya Shillings)
 const formatCurrency = (amount: number) => {
@@ -244,10 +235,10 @@ export default function ParentsPage() {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRelationship, setSelectedRelationship] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [displayedParentsCount, setDisplayedParentsCount] = useState(10);
+  const [showStats, setShowStats] = useState(false);
 
   // Mock data for parents
   const parents: Parent[] = [
@@ -405,14 +396,11 @@ export default function ParentsPage() {
                              student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                              student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())
                            );
-
-      const matchesRelationship = selectedRelationship === '' || parent.relationship === selectedRelationship;
-      const matchesStatus = selectedStatus === '' || parent.status === selectedStatus;
       
       const matchesGrade = selectedGradeId === 'all' || 
                           parent.students.some(student => student.grade === selectedGradeId);
 
-      return matchesSearch && matchesRelationship && matchesStatus && matchesGrade;
+      return matchesSearch && matchesGrade;
     });
 
     // Sort parents
@@ -449,17 +437,12 @@ export default function ParentsPage() {
     });
 
     return filtered;
-  }, [parents, searchTerm, selectedRelationship, selectedStatus, selectedGradeId, sortField, sortDirection]);
+  }, [parents, searchTerm, selectedGradeId, sortField, sortDirection]);
 
   // Get selected parent
   const selectedParent = parents.find(parent => parent.id === selectedParentId);
 
-    // Set initial selected parent when component mounts
-  useEffect(() => {
-    if (parents.length > 0 && !selectedParentId) {
-      setSelectedParentId(parents[0].id);
-    }
-  }, [parents, selectedParentId]);
+  // Set initial selected parent when component mounts
   useEffect(() => {
     if (parents.length > 0 && !selectedParentId) {
       setSelectedParentId(parents[0].id);
@@ -509,149 +492,111 @@ export default function ParentsPage() {
 
   return (
     <div className="flex h-full">
-      {/* Search filter column - Parents list */}
-      <div className={`hidden md:flex flex-col border-r overflow-y-auto shrink-0 bg-white transition-all duration-300 ease-in-out ${
-        isSidebarMinimized ? 'w-16 p-2' : 'w-96 p-6'
-      }`}>
-        {/* Toggle button for minimize/expand */}
-        <div className={`mb-4 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-between items-center'}`}>
-          {!isSidebarMinimized && (
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold mb-1">Search Parents</h2>
-              <p className="text-sm text-muted-foreground">Find parents and guardians</p>
-            </div>
-          )}
+      {/* Search filter column - styled to match students page */}
+      {!isSidebarCollapsed && (
+        <div className="hidden md:flex flex-col w-96 border-r border-primary/20 overflow-y-auto p-6 shrink-0 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out relative">
+          {/* Collapse button positioned at top-right of sidebar */}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-            className="border-primary/30 hover:bg-primary/5"
-            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            onClick={() => setIsSidebarCollapsed(true)}
+            className="absolute top-4 right-4 border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200 z-10"
+            title="Hide search sidebar"
           >
-            {isSidebarMinimized ? (
-              <PanelLeftOpen className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
-            )}
+            <PanelLeftClose className="h-4 w-4" />
           </Button>
-        </div>
-
-        {isSidebarMinimized ? (
-          // Minimized view - only filters icon when active
-          <div className="space-y-4">
-            {/* Filters icon - only show when filters are active */}
-            {(searchTerm || selectedRelationship || selectedStatus || selectedGradeId !== 'all') && (
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-1">
-                  <Filter className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-xs text-primary font-mono">Filters</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          // Full view
+          
           <div className="space-y-6">
-            {/* Name Search */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Parent/Guardian Name</label>
+            <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+              <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                <label className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
+                  <Search className="h-3 w-3 mr-2" />
+                  Parent Name
+                </label>
+              </div>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-primary" />
                 <Input
                   type="text"
                   placeholder="Search by name, phone, email..."
-                  className="pl-9 h-12 text-base"
+                  className="pl-9 h-12 text-base font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
 
-            {/* Filter by Relationship */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Relationship</label>
-              <select
-                value={selectedRelationship}
-                onChange={(e) => setSelectedRelationship(e.target.value)}
-                className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background"
-              >
-                <option value="">All Relationships</option>
-                <option value="father">Father</option>
-                <option value="mother">Mother</option>
-                <option value="guardian">Guardian</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
 
-            {/* Filter by Status */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background"
-              >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
 
             {/* Clear Search Button */}
-            {(searchTerm || selectedRelationship || selectedStatus || selectedGradeId !== 'all') && (
+            {(searchTerm || selectedGradeId !== 'all') && (
               <div className="pt-1">
                 <Button 
                   variant="outline" 
                   onClick={() => {
                     setSearchTerm('');
-                    setSelectedRelationship('');
-                    setSelectedStatus('');
                     setSelectedGradeId('all');
+                    setDisplayedParentsCount(10);
                   }} 
-                  className="w-full"
+                  className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
                 >
                   Clear All Filters
                 </Button>
               </div>
             )}
           </div>
-        )}
-        
-        {/* Parent List with Filtering */}
-        {!isSidebarMinimized && (
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium">Parents <span className="text-muted-foreground">({filteredParents.length})</span></h3>
+          
+          <div className="mt-8 border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">Parents</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                  Showing {Math.min(displayedParentsCount, filteredParents.length)} of {filteredParents.length} parents
+                </p>
+              </div>
+              <Badge className="bg-primary/10 text-primary border border-primary/20 font-mono">
+                {filteredParents.length}
+              </Badge>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               {filteredParents.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-slate-600 dark:text-slate-400 font-medium">
                   No parents match your search criteria
                 </div>
               ) : (
-                filteredParents.map((parent) => (
+                filteredParents.slice(0, displayedParentsCount).map((parent) => (
                   <div
                     key={parent.id}
-                    className={`p-3 rounded-md border transition-colors cursor-pointer ${parent.id === selectedParentId ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/30'}`}
+                    className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                      parent.id === selectedParentId 
+                        ? 'bg-primary/10 border-primary/40 shadow-md' 
+                        : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-sm'
+                    }`}
                     onClick={() => setSelectedParentId(parent.id)}
+                    title="Click to view parent details"
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex justify-between items-center">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${parent.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-                          <div className="font-medium">{parent.name}</div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            parent.status === 'active' ? 'bg-green-500' : 
+                            parent.status === 'inactive' ? 'bg-gray-400' : 'bg-red-500'
+                          }`} />
+                          <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                            {parent.name}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-slate-600 dark:text-slate-400 font-mono mb-1">
                           <Badge className={getRelationshipColor(parent.relationship)} variant="outline">
                             {parent.relationship}
                           </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
                           {parent.students.length} student{parent.students.length !== 1 ? 's' : ''}
                         </div>
                         {parent.feeStatus && parent.feeStatus.totalOwed > 0 && (
-                          <div className="text-xs text-red-600 mt-1">
+                          <div className="text-xs text-red-600 mt-1 font-mono">
                             Owes: {formatCurrency(parent.feeStatus.totalOwed)}
                           </div>
                         )}
@@ -661,30 +606,59 @@ export default function ParentsPage() {
                 ))
               )}
             </div>
+
+            {filteredParents.length > displayedParentsCount && (
+              <div className="border-t border-primary/20 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                    Showing {displayedParentsCount} of {filteredParents.length} parents
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDisplayedParentsCount(prev => Math.min(prev + 10, filteredParents.length))}
+                    className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono text-xs"
+                  >
+                    Load More ({Math.min(10, filteredParents.length - displayedParentsCount)})
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {displayedParentsCount >= filteredParents.length && filteredParents.length > 10 && (
+              <div className="border-t border-primary/20 pt-4">
+                <div className="flex items-center justify-center">
+                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                    All {filteredParents.length} parents loaded
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main content column - Grade Filter and Parent Details */}
-      <div className="flex-1 overflow-auto p-8 relative">
-        {/* Floating toggle button when sidebar is minimized */}
-        {isSidebarMinimized && (
-          <div className="absolute top-4 left-4 z-10">
+      <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
+        {/* Floating toggle button when sidebar is collapsed */}
+        {isSidebarCollapsed && (
+          <div className="absolute top-6 left-6 z-10">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsSidebarMinimized(false)}
-              className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
-              title="Expand sidebar"
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
+              title="Show search sidebar"
             >
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           </div>
         )}
+        
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">
-              {selectedParent ? 'Parent Details' : 'Select a Parent'}
+              {selectedParent ? 'Parent Details' : 'Parents'}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -692,11 +666,11 @@ export default function ParentsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-              className="border-primary/30 hover:bg-primary/5"
-              title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
+              title={isSidebarCollapsed ? "Show search sidebar" : "Hide search sidebar"}
             >
-              {isSidebarMinimized ? (
+              {isSidebarCollapsed ? (
                 <PanelLeftOpen className="h-4 w-4" />
               ) : (
                 <PanelLeftClose className="h-4 w-4" />
@@ -706,138 +680,238 @@ export default function ParentsPage() {
           </div>
         </div>
         
-        {/* Grade Filter Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Filter by Student Grade</h2>
-            {selectedGradeId !== 'all' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setSelectedGradeId('all')}
-              >
-                Clear Filter
-              </Button>
-            )}
-          </div>
-          
-          {/* Education Level Cards - Grid Layout */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Preschool Card */}
-            <div className="rounded-lg overflow-hidden border border-purple-100 shadow-sm">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-3 flex items-center gap-2 border-b border-purple-200">
-                {getLevelIcon('preschool')}
-                <h3 className="font-medium text-purple-900">Preschool</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'preschool')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-purple-50 border-purple-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-            
-            {/* Primary Card */}
-            <div className="rounded-lg overflow-hidden border border-blue-100 shadow-sm">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-3 flex items-center gap-2 border-b border-blue-200">
-                {getLevelIcon('primary')}
-                <h3 className="font-medium text-blue-900">Primary</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'primary')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-blue-600 hover:bg-blue-700' : 'hover:bg-blue-50 border-blue-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-            
-            {/* Junior Secondary Card */}
-            <div className="rounded-lg overflow-hidden border border-yellow-100 shadow-sm">
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-3 flex items-center gap-2 border-b border-yellow-200">
-                {getLevelIcon('junior-secondary')}
-                <h3 className="font-medium text-yellow-900">Junior Secondary</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'junior-secondary')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-yellow-600 hover:bg-yellow-700' : 'hover:bg-yellow-50 border-yellow-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-            
-            {/* Senior Secondary Card */}
-            <div className="rounded-lg overflow-hidden border border-red-100 shadow-sm">
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-3 flex items-center gap-2 border-b border-red-200">
-                {getLevelIcon('senior-secondary')}
-                <h3 className="font-medium text-red-900">Senior Secondary</h3>
-              </div>
-              <div className="p-3 space-y-2 bg-white/80 backdrop-blur-sm">
-                <div className="grid grid-cols-3 gap-2">
-                  {mockGrades
-                    .filter(grade => grade.level === 'senior-secondary')
-                    .map(grade => (
-                      <Button
-                        key={grade.id}
-                        variant={selectedGradeId === grade.id ? "default" : "outline"}
-                        className={`h-10 ${selectedGradeId === grade.id ? 'bg-red-600 hover:bg-red-700' : 'hover:bg-red-50 border-red-200'}`}
-                        onClick={() => setSelectedGradeId(grade.id)}
-                      >
-                        {grade.name}
-                      </Button>
-                    ))
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Parent Details */}
         {selectedParent ? (
           <ParentDetailView parent={selectedParent} formatCurrency={formatCurrency} />
         ) : (
-          <div className="text-center py-12">
-            <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-mono font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              Select a parent to view details
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              Choose a parent from the list on the left to see their information.
-            </p>
-          </div>
+          // Show grade filter and stats
+          <>
+            {/* Expandable Stats Section - Only show when viewing all grades */}
+            {selectedGradeId === 'all' && (
+              <div className="mb-8">
+                <div className="border-2 border-primary/20 bg-primary/5 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setShowStats(!showStats)}
+                    className="w-full p-4 flex items-center justify-between hover:bg-primary/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <BarChart3 className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-mono font-semibold text-slate-900 dark:text-slate-100">Parent Statistics</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">View comprehensive parent statistics and metrics</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs">
+                        {parents.length} Parents
+                      </Badge>
+                      {showStats ? (
+                        <ChevronDown className="w-5 h-5 text-primary" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-primary" />
+                      )}
+                    </div>
+                  </button>
+                  
+                  {showStats && (
+                    <div className="border-t-2 border-primary/20 bg-white dark:bg-slate-800 p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                              <Users className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                                {parents.length}
+                              </div>
+                              <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                Total Parents
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <UserCheck className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                                {parents.filter(p => p.status === 'active').length}
+                              </div>
+                              <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                Active Parents
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <User className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                                {parents.reduce((total, parent) => total + parent.students.length, 0)}
+                              </div>
+                              <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                Total Students
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                              <Receipt className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div>
+                              <div className="text-2xl font-mono font-bold text-slate-900 dark:text-slate-100">
+                                {parents.filter(p => p.feeStatus && p.feeStatus.totalOwed > 0).length}
+                              </div>
+                              <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                                Fee Defaulters
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Grade Filter Section */}
+            <div className="mb-8">
+              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-2">
+                      <span className="text-xs font-mono uppercase tracking-wide text-primary">
+                        Grade Filter
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+                      Filter by Student Grade
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 font-medium">
+                      Select a specific grade to view parents or view all grades
+                    </p>
+                  </div>
+                  {selectedGradeId !== 'all' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setSelectedGradeId('all')}
+                      className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
+                    >
+                      Clear Filter
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="bg-white dark:bg-slate-800 rounded-lg border-2 border-primary/20 p-6">
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      variant={selectedGradeId === 'all' ? "default" : "outline"}
+                      size="sm"
+                      className={`font-mono min-w-[6rem] h-10 rounded-lg transition-all duration-200 font-semibold tracking-wide ${
+                        selectedGradeId === 'all' 
+                          ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-2 border-primary/80' 
+                          : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-2 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-md'
+                      }`}
+                      onClick={() => setSelectedGradeId('all')}
+                    >
+                      All Grades
+                    </Button>
+                    
+                    {mockGrades.map((grade) => (
+                      <Button
+                        key={grade.id}
+                        variant={selectedGradeId === grade.id ? "default" : "outline"}
+                        size="sm"
+                        className={`font-mono min-w-[6rem] h-10 rounded-lg transition-all duration-200 font-semibold tracking-wide ${
+                          selectedGradeId === grade.id 
+                            ? 'bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 border-2 border-primary/80' 
+                            : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-2 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-md'
+                        }`}
+                        onClick={() => setSelectedGradeId(grade.id)}
+                      >
+                        {grade.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Parents Table/Grid */}
+            <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">All Parents</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    Showing {filteredParents.length} parents
+                  </p>
+                </div>
+              </div>
+              
+              {filteredParents.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-mono font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    No parents found
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium">
+                    Try adjusting your search criteria or add a new parent.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredParents.map((parent) => (
+                    <div
+                      key={parent.id}
+                      className="p-4 bg-white dark:bg-slate-800 rounded-lg border-2 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all duration-200 cursor-pointer"
+                      onClick={() => setSelectedParentId(parent.id)}
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          parent.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                        }`} />
+                        <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                          {parent.name}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-xs text-slate-600 dark:text-slate-400">
+                          <Badge className={getRelationshipColor(parent.relationship)} variant="outline">
+                            {parent.relationship}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                          {parent.phone}
+                        </div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400">
+                          {parent.students.length} student{parent.students.length !== 1 ? 's' : ''}
+                        </div>
+                        {parent.feeStatus && parent.feeStatus.totalOwed > 0 && (
+                          <div className="text-xs text-red-600 font-mono">
+                            Owes: {formatCurrency(parent.feeStatus.totalOwed)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
