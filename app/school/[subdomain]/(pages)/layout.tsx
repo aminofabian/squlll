@@ -245,7 +245,7 @@ function SchoolLayoutContent({
 
   // ProgressIndicator component (themed for school management, blends with navbar)
   const ProgressIndicator = () => (
-    <div className="flex items-center bg-white/90 rounded-lg shadow-sm px-3 py-1 mr-4 h-12 border border-gray-100">
+    <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg border-2 border-primary/20 px-3 py-1 mr-4 h-12">
       <div className="relative flex items-center justify-center w-9 h-9 mr-2">
         <svg className="w-9 h-9" viewBox="0 0 40 40">
           <circle
@@ -253,7 +253,7 @@ function SchoolLayoutContent({
             cy="20"
             r="18"
             fill="none"
-            stroke="#f3f4f6" // gray-100
+            stroke="rgb(241 245 249)" // slate-100
             strokeWidth="4"
           />
           <circle
@@ -261,7 +261,7 @@ function SchoolLayoutContent({
             cy="20"
             r="18"
             fill="none"
-            stroke="#2563eb" // primary (blue-600)
+            stroke="hsl(var(--primary))"
             strokeWidth="4"
             strokeDasharray={2 * Math.PI * 18}
             strokeDashoffset={2 * Math.PI * 18 * (1 - completedSteps / totalSteps)}
@@ -269,16 +269,16 @@ function SchoolLayoutContent({
             style={{ transition: 'stroke-dashoffset 0.4s' }}
           />
         </svg>
-        <span className="absolute text-[13px] font-bold text-primary select-none">
+        <span className="absolute text-[13px] font-mono font-bold text-primary select-none">
           {completedSteps}/{totalSteps}
         </span>
       </div>
       <div className="flex flex-col justify-center">
-        <div className="flex items-center gap-1 text-[14px] font-semibold text-primary leading-tight">
+        <div className="flex items-center gap-1 text-[14px] font-mono font-semibold text-primary leading-tight">
           {currentStep.icon && <currentStep.icon className="w-4 h-4 mr-1 text-primary" />}
           {currentStep.label}
         </div>
-        <div className="text-xs text-gray-500 leading-tight">Finish all steps to unlock all features</div>
+        <div className="text-xs font-mono text-slate-600 dark:text-slate-400 leading-tight">Finish all steps to unlock all features</div>
       </div>
     </div>
   );
@@ -286,7 +286,7 @@ function SchoolLayoutContent({
   // If not configured, show full-width layout without sidebar
   if (!isConfigured && !isConfigLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
         <Toaster position="top-right" closeButton richColors />
         {children}
       </div>
@@ -296,25 +296,25 @@ function SchoolLayoutContent({
   // Show loading state until mounted or while config is loading
   if (!isMounted || shouldShowLoading || isConfigLoading) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <div className="w-64 bg-white border-r animate-pulse">
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="w-64 bg-white dark:bg-slate-900 border-r-2 border-primary/20 animate-pulse">
           <div className="p-4 space-y-4">
-            <div className="h-8 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded"></div>
             <div className="space-y-2">
-              <div className="h-6 bg-gray-200 rounded"></div>
-              <div className="h-6 bg-gray-200 rounded"></div>
-              <div className="h-6 bg-gray-200 rounded"></div>
+              <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded"></div>
             </div>
           </div>
         </div>
         <div className="flex-1 flex flex-col">
-          <div className="h-16 bg-white border-b animate-pulse">
+          <div className="h-16 bg-white dark:bg-slate-900 border-b-2 border-primary/20 animate-pulse">
             <div className="h-full px-6 flex items-center justify-between">
-              <div className="h-8 w-32 bg-gray-200 rounded"></div>
-              <div className="h-8 w-20 bg-gray-200 rounded"></div>
+              <div className="h-8 w-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
             </div>
           </div>
-          <div className="flex-1 bg-gray-50"></div>
+          <div className="flex-1 bg-slate-50 dark:bg-slate-900"></div>
         </div>
       </div>
     )
@@ -322,7 +322,7 @@ function SchoolLayoutContent({
 
   // If configured, show layout with sidebar
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
       <Toaster position="top-right" closeButton richColors />
       {/* Mobile sidebar overlay */}
       {isMobileSidebarOpen && (
@@ -334,7 +334,7 @@ function SchoolLayoutContent({
       
       {/* Sidebar */}
       <div className={`
-        fixed top-0 bottom-0 left-0 z-50 bg-white border-r transform transition-all duration-300 ease-in-out
+        fixed top-0 bottom-0 left-0 z-50 bg-white dark:bg-slate-900 border-r-2 border-primary/20 transform transition-all duration-300 ease-in-out
         md:relative md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         ${isSidebarMinimized ? 'w-16' : 'w-64'}
       `}>
@@ -350,36 +350,36 @@ function SchoolLayoutContent({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-gradient-to-r from-white to-gray-50 border-b shadow-sm h-16 flex items-center justify-between px-6 sticky top-0 z-30">
+        <header className="bg-white dark:bg-slate-900 border-b-2 border-primary/20 h-16 flex items-center justify-between px-6 sticky top-0 z-30">
           <div className="flex items-center space-x-4">
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon" 
-              className="md:hidden hover:bg-gray-100 transition-colors"
+              className="md:hidden border-primary/20 hover:bg-primary/5 transition-all duration-200"
               onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             >
-              <Menu className="h-5 w-5 text-gray-600" />
+              <Menu className="h-4 w-4 text-primary" />
             </Button>
             
             {/* Desktop sidebar toggle button */}
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon" 
-              className="hidden md:flex hover:bg-gray-100 transition-colors"
+              className="hidden md:flex border-primary/20 hover:bg-primary/5 transition-all duration-200"
               onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
               title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
             >
               {isSidebarMinimized ? (
-                <PanelLeftOpen className="h-5 w-5 text-gray-600" />
+                <PanelLeftOpen className="h-4 w-4 text-primary" />
               ) : (
-                <PanelLeftClose className="h-5 w-5 text-gray-600" />
+                <PanelLeftClose className="h-4 w-4 text-primary" />
               )}
             </Button>
 
             <div className="hidden md:flex items-center space-x-2 min-w-[240px]">
-              <div className="flex items-center space-x-2 bg-primary/5 px-3 py-1.5 rounded-md">
+              <div className="flex items-center space-x-2 bg-primary/5 border border-primary/20 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-primary/10 transition-all duration-200">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">{currentTerm}</span>
+                <span className="text-sm font-mono font-medium text-primary">{currentTerm}</span>
                 <ChevronDown className="h-4 w-4 text-primary" />
               </div>
             </div>
@@ -393,29 +393,29 @@ function SchoolLayoutContent({
             <div className="hidden md:flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="space-x-2">
-                    <Plus className="h-4 w-4" />
-                    <span>New</span>
-                    <ChevronDown className="h-4 w-4 ml-1" />
+                  <Button variant="outline" size="sm" className="space-x-2 border-primary/20 hover:bg-primary/5 transition-all duration-200">
+                    <Plus className="h-4 w-4 text-primary" />
+                    <span className="font-mono text-sm">New</span>
+                    <ChevronDown className="h-4 w-4 ml-1 text-primary" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[220px]">
-                  <DropdownMenuLabel>Create New</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                <DropdownMenuContent align="end" className="w-[220px] border-2 border-primary/20 bg-white dark:bg-slate-800">
+                  <DropdownMenuLabel className="font-mono text-xs uppercase tracking-wide text-primary">Create New</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-primary/20" />
                   {newItemOptions.map((option, index) => {
                     const Icon = option.icon
                     return (
-                      <DropdownMenuItem
-                        key={index}
-                        className="flex items-center space-x-2 py-2"
-                        onClick={option.action}
-                      >
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+                                        <DropdownMenuItem
+                    key={index}
+                    className="flex items-center space-x-2 py-2 hover:bg-primary/5 transition-all duration-200 cursor-pointer"
+                    onClick={option.action}
+                  >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 border border-primary/20">
                           <Icon className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium">{option.title}</span>
-                          <span className="text-xs text-gray-500">{option.description}</span>
+                          <span className="text-sm font-mono font-medium">{option.title}</span>
+                          <span className="text-xs font-mono text-slate-600 dark:text-slate-400">{option.description}</span>
                         </div>
                       </DropdownMenuItem>
                     )
@@ -425,48 +425,48 @@ function SchoolLayoutContent({
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:bg-gray-100 transition-colors relative">
-                    <Bell className="h-5 w-5 text-gray-600" />
+                  <Button variant="outline" size="icon" className="border-primary/20 hover:bg-primary/5 transition-all duration-200 relative">
+                    <Bell className="h-4 w-4 text-primary" />
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[300px]">
-                  <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="flex flex-col items-start">
-                    <span className="font-medium">New Student Registration</span>
-                    <span className="text-sm text-gray-500">Sarah Johnson has submitted enrollment forms</span>
+                <DropdownMenuContent align="end" className="w-[300px] border-2 border-primary/20 bg-white dark:bg-slate-800">
+                  <DropdownMenuLabel className="font-mono text-xs uppercase tracking-wide text-primary">Notifications</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-primary/20" />
+                  <DropdownMenuItem className="flex flex-col items-start hover:bg-primary/5 transition-all duration-200 cursor-pointer">
+                    <span className="font-mono font-medium">New Student Registration</span>
+                    <span className="text-sm font-mono text-slate-600 dark:text-slate-400">Sarah Johnson has submitted enrollment forms</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex flex-col items-start">
-                    <span className="font-medium">Attendance Alert</span>
-                    <span className="text-sm text-gray-500">3 students marked absent in Class 10A</span>
+                  <DropdownMenuItem className="flex flex-col items-start hover:bg-primary/5 transition-all duration-200 cursor-pointer">
+                    <span className="font-mono font-medium">Attendance Alert</span>
+                    <span className="text-sm font-mono text-slate-600 dark:text-slate-400">3 students marked absent in Class 10A</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-gray-100">
-                    <Avatar className="h-8 w-8 ring-2 ring-gray-100">
-                      <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                  <Button variant="outline" className="flex items-center space-x-2 border-primary/20 hover:bg-primary/5 transition-all duration-200">
+                    <Avatar className="h-8 w-8 border-2 border-primary/20">
+                      <AvatarFallback className="bg-primary/10 text-primary font-mono font-medium">
                         {getInitials(userName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium">{userName || 'User'}</span>
-                      <span className="text-xs text-gray-500">{userRole || 'Member'}</span>
+                      <span className="text-sm font-mono font-medium">{userName || 'User'}</span>
+                      <span className="text-xs font-mono text-slate-600 dark:text-slate-400">{userRole || 'Member'}</span>
                     </div>
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                    <ChevronDown className="h-4 w-4 text-primary" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-                  <DropdownMenuItem>School Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Help & Support</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">Log out</DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-[200px] border-2 border-primary/20 bg-white dark:bg-slate-800">
+                  <DropdownMenuLabel className="font-mono text-xs uppercase tracking-wide text-primary">My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-primary/20" />
+                  <DropdownMenuItem className="font-mono hover:bg-primary/5 transition-all duration-200 cursor-pointer">Profile Settings</DropdownMenuItem>
+                  <DropdownMenuItem className="font-mono hover:bg-primary/5 transition-all duration-200 cursor-pointer">School Settings</DropdownMenuItem>
+                  <DropdownMenuItem className="font-mono hover:bg-primary/5 transition-all duration-200 cursor-pointer">Help & Support</DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-primary/20" />
+                  <DropdownMenuItem className="font-mono text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer">Log out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -474,15 +474,15 @@ function SchoolLayoutContent({
             <div className="md:hidden">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{getInitials(userName || 'User')}</AvatarFallback>
+                  <Avatar className="h-8 w-8 border-2 border-primary/20">
+                    <AvatarFallback className="bg-primary/10 text-primary font-mono font-medium">{getInitials(userName || 'User')}</AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">Log out</DropdownMenuItem>
+                <DropdownMenuContent align="end" className="border-2 border-primary/20 bg-white dark:bg-slate-800">
+                  <DropdownMenuItem className="font-mono hover:bg-primary/5 transition-all duration-200 cursor-pointer">Profile</DropdownMenuItem>
+                  <DropdownMenuItem className="font-mono hover:bg-primary/5 transition-all duration-200 cursor-pointer">Settings</DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-primary/20" />
+                  <DropdownMenuItem className="font-mono text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer">Log out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

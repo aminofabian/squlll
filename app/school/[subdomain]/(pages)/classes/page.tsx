@@ -52,9 +52,9 @@ function EmptyState({ selectedGrade = null, searchTerm = '' }: {
   }
 
   return (
-    <div className="bg-gray-50 border p-8 text-center animate-fadeIn">
-      <h3 className="text-lg font-medium text-gray-900">No classes found</h3>
-      <p className="mt-1 text-sm text-gray-500">
+    <div className="bg-slate-50 dark:bg-slate-800 border-2 border-primary/20 p-8 text-center animate-fadeIn rounded-lg">
+      <h3 className="text-lg font-mono font-medium text-primary">No classes found</h3>
+      <p className="mt-1 text-sm font-mono text-slate-600 dark:text-slate-400">
         {message}
       </p>
     </div>
@@ -152,10 +152,10 @@ function ClassesPage() {
     return null;
   }, [selectedGradeId, selectedStreamId, config]);
 
-  if (error) return <div>Error: {error instanceof Error ? error.message : 'An error occurred'}</div>
+  if (error) return <div className="font-mono text-red-600">Error: {error instanceof Error ? error.message : 'An error occurred'}</div>
   if (!config && !isLoading) {
     return (
-      <div className="flex h-screen">
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="grid grid-cols-1 gap-6">
             {Array.from({ length: 3 }).map((_, index) => (
@@ -168,10 +168,10 @@ function ClassesPage() {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 bg-white border-r transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r-2 border-primary/20 transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out
         ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         ${isSidebarMinimized ? 'w-16' : 'w-64'}
       `}>
@@ -181,7 +181,7 @@ function ClassesPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-            className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
+            className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-200"
             title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
           >
             {isSidebarMinimized ? (
@@ -213,7 +213,7 @@ function ClassesPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsSidebarMinimized(false)}
-              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
+              className="border-primary/20 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-primary hover:bg-white dark:hover:bg-slate-800 hover:text-primary shadow-sm transition-all duration-200"
               title="Expand sidebar"
             >
               <PanelLeftOpen className="h-4 w-4" />
@@ -224,7 +224,7 @@ function ClassesPage() {
           <div></div>
           <div className="flex items-center gap-4">
             <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#246a59] via-emerald-500 to-teal-500 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-primary/80 to-primary/60 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
               <div className="relative">
                 <CreateClassDrawer onClassCreated={() => {
                   // TODO: Refresh class list
@@ -232,7 +232,7 @@ function ClassesPage() {
                 }} />
               </div>
               <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-mono px-2 py-1 rounded whitespace-nowrap">
                   Create a new class
                 </div>
               </div>
@@ -243,7 +243,7 @@ function ClassesPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-                className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
+                className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-200"
                 title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
               >
                 {isSidebarMinimized ? (
@@ -256,7 +256,7 @@ function ClassesPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="lg:hidden"
+                className="lg:hidden border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-200"
                 onClick={() => setShowMobileFilter(true)}
               >
                 <Filter className="h-4 w-4" />
@@ -268,13 +268,13 @@ function ClassesPage() {
         {/* Active filter indicators */}
         {!isLoading && config && (selectedGrade || searchTerm) && (
           <div className="flex flex-wrap gap-2 mb-6 items-center">
-            <p className="text-sm font-medium mr-2">Active filters:</p>
+            <p className="text-sm font-mono font-medium mr-2 text-primary">Active filters:</p>
             
             {selectedGrade && (
-              <Badge variant="outline" className="flex gap-1 items-center">
+              <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary font-mono">
                 Grade: {selectedGrade.name} {selectedGrade.streamName && `(${selectedGrade.streamName})`} ({selectedGrade.levelName})
                 <X 
-                  className="h-3 w-3 cursor-pointer" 
+                  className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" 
                   onClick={() => {
                     setSelectedGradeId('');
                     setSelectedLevelId('');
@@ -285,16 +285,16 @@ function ClassesPage() {
             )}
             
             {searchTerm && (
-              <Badge variant="outline" className="flex gap-1 items-center">
+              <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary font-mono">
                 Search: {searchTerm}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchTerm('')} />
+                <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
               </Badge>
             )}
             
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm" 
-              className="ml-auto text-gray-500 hover:text-gray-700" 
+              className="ml-auto text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 border-primary/20 font-mono transition-all duration-200" 
               onClick={() => {
                 setSelectedGradeId('');
                 setSelectedLevelId('');
