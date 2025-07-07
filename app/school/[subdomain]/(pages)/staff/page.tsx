@@ -486,7 +486,7 @@ export default function StaffPage() {
             </div>
 
             {/* Staff Table */}
-            <div className="border-2 border-primary/20 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
+            <div className="border-primary/20 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-primary/5 border-b-2 border-primary/20">
@@ -510,96 +510,78 @@ export default function StaffPage() {
                   </thead>
                   <tbody>
                     {filteredStaff.map((staff, index) => (
-                      <>
-                        {/* First row - Main information */}
-                        <tr 
-                          key={`${staff.id}-row1`}
-                          className={`hover:bg-primary/5 transition-all duration-200 cursor-pointer border-b-2 border-slate-200 dark:border-slate-700 ${
-                            index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/30 dark:bg-slate-800/30'
-                          }`}
-                          onClick={() => setSelectedStaff(staff)}
-                          style={{ borderTop: index !== 0 ? '8px solid #f1f5f9' : undefined }} // subtle vertical spacing
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                <User className="h-5 w-5 text-primary" />
+                      <tr key={staff.id}>
+                        <td colSpan={5} className="bg-transparent border-none p-0">
+                          <div className="mb-3 p-4 bg-white dark:bg-slate-900 shadow border border-primary/20 transition hover:bg-primary/5">
+                            {/* Main info (name, position, contact, etc.) */}
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="w-10 h-10 bg-primary/10 flex items-center justify-center">
+                                  <User className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                                    {staff.name}
+                                  </div>
+                                  <div className="text-xs font-mono text-slate-500">
+                                    {staff.employeeId}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  {getStaffTypeIcon(staff.staffType)}
+                                  <span className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                                    {staff.position}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Building className="h-3 w-3 text-slate-400" />
+                                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                    {staff.department}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-3 w-3 text-slate-400" />
+                                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                    {staff.email}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-3 w-3 text-slate-400" />
+                                  <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                    {staff.phone}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                  Experience: {staff.experience} years
+                                </div>
+                                {staff.rating && (
+                                  <div className="flex items-center gap-1">
+                                    <Award className="h-3 w-3 text-yellow-500" />
+                                    <span className="text-xs font-mono">{staff.rating}/5</span>
+                                  </div>
+                                )}
                               </div>
                               <div>
-                                <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
-                                  {staff.name}
-                                </div>
-                                <div className="text-xs font-mono text-slate-500">
-                                  {staff.employeeId}
-                                </div>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs font-mono ${getStatusColor(staff.status)}`}
+                                >
+                                  {staff.status.replace('-', ' ')}
+                                </Badge>
                               </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                {getStaffTypeIcon(staff.staffType)}
-                                <span className="font-mono font-medium text-slate-900 dark:text-slate-100">
-                                  {staff.position}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Building className="h-3 w-3 text-slate-400" />
-                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                                  {staff.department}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-3 w-3 text-slate-400" />
-                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                                  {staff.email}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Phone className="h-3 w-3 text-slate-400" />
-                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                                  {staff.phone}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="space-y-1">
-                              <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                                Experience: {staff.experience} years
-                              </div>
-                              {staff.rating && (
-                                <div className="flex items-center gap-1">
-                                  <Award className="h-3 w-3 text-yellow-500" />
-                                  <span className="text-xs font-mono">{staff.rating}/5</span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs font-mono ${getStatusColor(staff.status)}`}
-                            >
-                              {staff.status.replace('-', ' ')}
-                            </Badge>
-                          </td>
-                        </tr>
-                        {/* Second row - Additional details */}
-                        <tr 
-                          key={`${staff.id}-row2`}
-                          className="hover:bg-primary/5 transition-colors cursor-pointer bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-700/80 border-b-4 border-primary/20 mb-8"
-                          onClick={() => setSelectedStaff(staff)}
-                        >
-                          <td className="px-6 py-3" colSpan={5}>
-                            <div className="relative">
+                            <div className="border-t border-primary/10 mt-4 mb-3"></div>
+                            {/* Additional details (badge, action buttons, etc.) */}
+                            <div className="relative pt-10">
                               {/* Staff member indicator */}
-                              <div className="absolute -top-3 left-0 right-0 flex justify-center">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
+                              <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                                <div className="inline-flex items-center gap-2 px-4 py-1 bg-primary/10 border border-primary/30 mt-2">
                                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                                   <span className="text-xs font-mono text-primary font-medium">
                                     {staff.name.split(' ')[0]} {staff.name.split(' ')[1]}
@@ -608,7 +590,7 @@ export default function StaffPage() {
                                 </div>
                               </div>
                               {/* Action buttons */}
-                              <div className="flex justify-center gap-3 mt-8 mb-4">
+                              <div className="flex justify-center gap-3 mt-6 mb-2">
                                 <Button size="sm" variant="outline" className="flex items-center gap-1 text-green-700 border-green-200 hover:bg-green-50" onClick={e => { e.stopPropagation(); window.open(`tel:${staff.phone.replace(/\s+/g, '')}`); }}>
                                   <Phone className="h-4 w-4" /> Call
                                 </Button>
@@ -622,8 +604,8 @@ export default function StaffPage() {
                                   <User className="h-4 w-4" /> Profile
                                 </Button>
                               </div>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono pt-4">
-                                <div className="space-y-1">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono pt-2">
+                                <div className="space-y-2">
                                   <div className="text-slate-500 uppercase tracking-wide">Qualifications</div>
                                   <div className="flex flex-wrap gap-1">
                                     {staff.qualifications.slice(0, 2).map((qual, index) => (
@@ -638,7 +620,7 @@ export default function StaffPage() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="space-y-1">
+                                <div className="space-y-2">
                                   <div className="text-slate-500 uppercase tracking-wide">Responsibilities</div>
                                   <div className="flex flex-wrap gap-1">
                                     {staff.responsibilities.slice(0, 2).map((resp, index) => (
@@ -653,7 +635,7 @@ export default function StaffPage() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="space-y-1">
+                                <div className="space-y-2">
                                   <div className="text-slate-500 uppercase tracking-wide">Additional Info</div>
                                   <div className="space-y-1">
                                     {staff.officeLocation && (
@@ -672,9 +654,9 @@ export default function StaffPage() {
                                 </div>
                               </div>
                             </div>
-                          </td>
-                        </tr>
-                      </>
+                          </div>
+                        </td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
