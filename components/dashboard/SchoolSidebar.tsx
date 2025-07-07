@@ -372,7 +372,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
     )}>
       {/* Header with School Logo */}
       <div className={`bg-primary/5 border-b-2 border-primary/20 ${isMinimized ? 'p-2' : 'p-4'}`}>
-        <Link href={`/school/${subdomain}/dashboard`} className="flex items-center gap-3 group relative">
+        <Link href={`/school`} className="flex items-center gap-3 group relative">
           <div className="relative">
             {/* Main logo container with stacked layout */}
             <div 
@@ -458,7 +458,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
         {onToggleMinimize && (
           <button
             onClick={onToggleMinimize}
-            className={`mt-2 w-full flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-primary/20 hover:bg-primary/5 transition-all duration-200 ${
+            className={`mt-2 w-full flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 border-2 border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 ${
               isMinimized ? 'mt-2' : 'mt-3'
             }`}
             title={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
@@ -551,7 +551,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
                     
                     {/* Title with hover effect - hidden when minimized */}
                     {!isMinimized && (
-                      <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">{item.title}</span>
+                      <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">{item.title}</span>
                     )}
                     
                     {/* Subtle indicator dot for active item */}
@@ -630,7 +630,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
               
               {/* Title with hover effect - hidden when minimized */}
               {!isMinimized && (
-                <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">More</span>
+                <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">More</span>
               )}
               
               {/* Animated chevron - hidden when minimized */}
@@ -723,7 +723,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
                         </div>
                         
                         {/* Title with hover effect */}
-                        <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">{item.title}</span>
+                        <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">{item.title}</span>
                       </div>
                     </Link>
                   );
@@ -742,14 +742,14 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
               School Status
             </div>
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
+              <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border-2 border-primary/20">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
                   <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">ATTENDANCE</span>
                 </div>
                 <span className="text-xs font-mono text-primary">95.8%</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
+              <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border-2 border-primary/20">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
                   <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">PERFORMANCE</span>
@@ -765,7 +765,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
           <Link href={getHref("/school/[subdomain]/settings")} className="block">
             <div 
               className={cn(
-                "w-full flex items-center rounded-lg transition-all duration-200 relative group bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-primary/20",
+                "w-full flex items-center rounded-lg transition-all duration-200 relative group bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border-2 border-primary/20 hover:border-primary/30",
                 isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2.5"
               )}
             >
@@ -817,7 +817,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
       {/* Footer */}
       <div className="p-4 bg-primary/5 border-t-2 border-primary/20 space-y-2">
         <div 
-          className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-red-200 dark:border-red-800"
+          className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border-2 border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700"
         >
           {/* Colored background indicator on hover */}
           <div 
