@@ -6,12 +6,14 @@ const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.
 export async function POST(request: Request) {
   try {
     const staffData = await request.json();
+    console.log('Received staff data:', staffData);
     
     // Get the token from cookies
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
     
     if (!token) {
+      console.error('No access token found in cookies');
       return NextResponse.json(
         { error: 'Authentication required. Please log in.' },
         { status: 401 }
@@ -52,25 +54,13 @@ export async function POST(request: Request) {
       qualifications: staffData.qualifications || "Not specified"
     };
 
-    // Use the exact mutation structure that works (inline input objects)
+    console.log('Mapped staff DTO:', createStaffDto);
+
+    // Use proper GraphQL variables instead of string interpolation
     const inviteStaffMutation = `
-      mutation InviteTeacher($tenantId: String!) {
+      mutation InviteTeacher($tenantId: String!, $createTeacherDto: CreateTeacherInvitationDto!) {
         inviteTeacher(
-          createTeacherDto: {
-            email: "${createStaffDto.email}"
-            fullName: "${createStaffDto.fullName}"
-            firstName: "${createStaffDto.firstName}"
-            lastName: "${createStaffDto.lastName}"
-            role: "${createStaffDto.role}"
-            gender: "${createStaffDto.gender}"
-            department: "${createStaffDto.department}"
-            phoneNumber: "${createStaffDto.phoneNumber}"
-            address: "${createStaffDto.address}"
-            subject: "${createStaffDto.subject}"
-            employeeId: "${createStaffDto.employeeId}"
-            dateOfBirth: "${createStaffDto.dateOfBirth}"
-            qualifications: "${createStaffDto.qualifications}"
-          }
+          createTeacherDto: $createTeacherDto
           tenantId: $tenantId
         ) {
           email
@@ -81,21 +71,53 @@ export async function POST(request: Request) {
       }
     `;
 
+    const requestBody = {
+      query: inviteStaffMutation,
+      variables: {
+        tenantId: staffData.tenantId,
+        createTeacherDto: {
+          email: createStaffDto.email,
+          fullName: createStaffDto.fullName,
+          firstName: createStaffDto.firstName,
+          lastName: createStaffDto.lastName,
+          role: createStaffDto.role,
+          gender: createStaffDto.gender,
+          department: createStaffDto.department,
+          phoneNumber: createStaffDto.phoneNumber,
+          address: createStaffDto.address,
+          subject: createStaffDto.subject,
+          employeeId: createStaffDto.employeeId,
+          dateOfBirth: createStaffDto.dateOfBirth,
+          qualifications: createStaffDto.qualifications
+        }
+      }
+    };
+
+    console.log('Sending GraphQL request to:', GRAPHQL_ENDPOINT);
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        query: inviteStaffMutation,
-        variables: {
-          tenantId: staffData.tenantId
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
 
+    console.log('GraphQL response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('GraphQL request failed:', errorText);
+      return NextResponse.json(
+        { error: 'GraphQL request failed', details: errorText },
+        { status: response.status }
+      );
+    }
+
     const result = await response.json();
+    console.log('GraphQL response:', result);
     
     if (result.errors) {
       console.error('InviteStaff mutation failed:', result.errors);
@@ -106,6 +128,7 @@ export async function POST(request: Request) {
     }
 
     const staffRecord = result.data.inviteTeacher;
+    console.log('Successfully created staff record:', staffRecord);
 
     return NextResponse.json({
       inviteStaff: staffRecord
@@ -113,7 +136,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating staff:', error);
     return NextResponse.json(
-      { error: 'Failed to create staff record' },
+      { error: 'Failed to create staff record', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
