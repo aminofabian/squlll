@@ -49,10 +49,9 @@ export function middleware(request: NextRequest) {
       to: newPathname,
       currentHost
     })
-    url.pathname = newPathname
     
     // Create response with cache control headers
-    const response = NextResponse.rewrite(url)
+    const response = NextResponse.rewrite(new URL(newPathname, request.url))
     
     // Add cache control headers for subdomain pages
     if (isProd) {
