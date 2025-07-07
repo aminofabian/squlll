@@ -7,7 +7,7 @@ import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { ClassCard } from '../components/ClassCard'
 import { ClassCardSkeleton } from '../components/ClassCardSkeleton'
-import { Filter, X } from 'lucide-react'
+import { Filter, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
 import CreateClassDrawer from '@/app/school/components/CreateClassDrawer'
 
@@ -71,6 +71,7 @@ function ClassesPage() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [showMobileFilter, setShowMobileFilter] = useState(false)
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
 
   // Filter and sort levels
   const filteredLevels = useMemo(() => {
@@ -170,21 +171,55 @@ function ClassesPage() {
     <div className="flex h-screen">
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r transform md:relative md:translate-x-0 transition-transform duration-200 ease-in-out
+        fixed inset-y-0 left-0 z-50 bg-white border-r transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out
         ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isSidebarMinimized ? 'w-16' : 'w-64'}
       `}>
-        <SchoolSearchFilter
-          className="p-4"
-          type="grades"
-          onSearch={setSearchTerm}
-          onGradeSelect={handleGradeSelect}
-          onStreamSelect={handleStreamSelect}
-          isLoading={isLoading}
-        />
+        {/* Toggle button for minimize/expand */}
+        <div className={`p-2 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-end'}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            className="border-primary/30 hover:bg-primary/5"
+            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        
+        {!isSidebarMinimized && (
+          <SchoolSearchFilter
+            className="p-4"
+            type="grades"
+            onSearch={setSearchTerm}
+            onGradeSelect={handleGradeSelect}
+            onStreamSelect={handleStreamSelect}
+            isLoading={isLoading}
+          />
+        )}
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="flex-1 p-6 overflow-y-auto relative">
+        {/* Floating toggle button when sidebar is minimized */}
+        {isSidebarMinimized && (
+          <div className="absolute top-4 left-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(false)}
+              className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         <div className="flex justify-between items-start">
           <div></div>
           <div className="flex items-center gap-4">
@@ -203,6 +238,20 @@ function ClassesPage() {
               </div>
             </div>
             <div className="flex gap-2">
+              {/* Sidebar toggle button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+                className="border-primary/30 hover:bg-primary/5"
+                title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+              >
+                {isSidebarMinimized ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
               {/* Show filter button on mobile */}
               <Button
                 variant="outline"

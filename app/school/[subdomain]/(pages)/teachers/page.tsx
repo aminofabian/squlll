@@ -60,6 +60,8 @@ import {
   Calculator,
   Music,
   Briefcase,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import { CreateTeacherDrawer } from "./components/CreateTeacherDrawer";
 
@@ -1031,6 +1033,7 @@ function TeachersPage() {
   // Add state for selected teacher and mobile sidebar
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   
   // Extract unique teacher names for the filter
   const teacherNames = useMemo(() => {
@@ -1126,83 +1129,134 @@ function TeachersPage() {
       )}
 
       {/* Search filter sidebar */}
-      <div className="hidden md:flex flex-col w-96 border-r overflow-y-auto p-6 shrink-0 bg-white">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-1 flex items-center">
-            <Users className="h-6 w-6 mr-2" />
-            Teachers
-          </h2>
-          <p className="text-sm text-muted-foreground">Search and filter teaching staff</p>
+      <div className={`hidden md:flex flex-col border-r overflow-y-auto shrink-0 bg-white transition-all duration-300 ease-in-out ${
+        isSidebarMinimized ? 'w-16 p-2' : 'w-96 p-6'
+      }`}>
+        {/* Toggle button for minimize/expand */}
+        <div className={`mb-4 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-between items-center'}`}>
+          {!isSidebarMinimized && (
+            <div>
+              <h2 className="text-2xl font-bold mb-1 flex items-center">
+                <Users className="h-6 w-6 mr-2" />
+                Teachers
+              </h2>
+              <p className="text-sm text-muted-foreground">Search and filter teaching staff</p>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            className="border-gray-200 hover:bg-gray-50"
+            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
-        <div className="space-y-6">
-          {/* Name Search */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Teacher Name</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by name..."
-                className="pl-9 h-12 text-base"
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
+        {isSidebarMinimized ? (
+          // Minimized view - only filters icon when active
+          <div className="space-y-4">
+            {/* Filters icon - only show when filters are active */}
+            {(searchQuery || filters.teacherName) && (
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-1">
+                  <Filter className="h-5 w-5 text-blue-600" />
+                </div>
+                <span className="text-xs text-gray-600">Filters</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          // Full view
+          <div className="space-y-6">
+            {/* Name Search */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Teacher Name</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name..."
+                  className="pl-9 h-12 text-base"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Designation Filter removed as requested */}
+
+            {/* Teacher Name Filter */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium">Filter by Teacher Name</label>
+                {filters.teacherName && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleFilterChange({...filters, teacherName: undefined})} 
+                    className="h-7 px-2 text-xs"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto pr-1">
+                {teacherNames.map(name => (
+                  <Button
+                    key={name}
+                    variant={filters.teacherName === name ? "default" : "outline"}
+                    size="sm"
+                    className={`text-xs ${filters.teacherName === name ? "" : "border-gray-200 bg-white"}`}
+                    onClick={() => handleFilterChange({...filters, teacherName: name})}
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reset all filters */}
+            <div className="pt-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full border-gray-200"
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilters({});
+                  filterTeachers('', {});
+                }}
+              >
+                Reset All Filters
+              </Button>
             </div>
           </div>
-
-          {/* Designation Filter removed as requested */}
-
-          {/* Teacher Name Filter */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">Filter by Teacher Name</label>
-              {filters.teacherName && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleFilterChange({...filters, teacherName: undefined})} 
-                  className="h-7 px-2 text-xs"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto pr-1">
-              {teacherNames.map(name => (
-                <Button
-                  key={name}
-                  variant={filters.teacherName === name ? "default" : "outline"}
-                  size="sm"
-                  className={`text-xs ${filters.teacherName === name ? "" : "border-gray-200 bg-white"}`}
-                  onClick={() => handleFilterChange({...filters, teacherName: name})}
-                >
-                  {name}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Reset all filters */}
-          <div className="pt-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full border-gray-200"
-              onClick={() => {
-                setSearchQuery('');
-                setFilters({});
-                filterTeachers('', {});
-              }}
-            >
-              Reset All Filters
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="flex-1 overflow-y-auto bg-gray-50 relative">
+        {/* Floating toggle button when sidebar is minimized */}
+        {isSidebarMinimized && (
+          <div className="absolute top-4 left-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(false)}
+              className="border-gray-200 hover:bg-gray-50 shadow-lg bg-white"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        
         <div className="px-4 py-6 md:px-8 md:py-8">
           {/* Mobile header */}
           <div className="flex items-center justify-between mb-6 md:hidden">
@@ -1233,7 +1287,21 @@ function TeachersPage() {
               </h1>
               <p className="text-gray-600">Manage your teaching staff and their information</p>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
+              {/* Sidebar toggle button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+                className="border-gray-200 hover:bg-gray-50"
+                title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+              >
+                {isSidebarMinimized ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
               <CreateTeacherDrawer onTeacherCreated={handleTeacherCreated} />
             </div>
           </div>

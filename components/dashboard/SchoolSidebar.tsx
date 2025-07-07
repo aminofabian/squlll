@@ -30,7 +30,9 @@ import {
   MessageSquare,
   BarChart,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  PanelLeftOpen,
+  PanelLeftClose
 } from "lucide-react"
 import { LucideIcon } from "lucide-react"
 
@@ -38,6 +40,8 @@ interface SchoolSidebarProps {
   className?: string;
   subdomain: string;
   schoolName: string;
+  isMinimized?: boolean;
+  onToggleMinimize?: () => void;
 }
 
 interface NavigationItem {
@@ -331,7 +335,7 @@ const getSchoolColor = (schoolName: string): { from: string; to: string } => {
   return colorPairs[hash % colorPairs.length];
 };
 
-export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSidebarProps) => {
+export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = false, onToggleMinimize }: SchoolSidebarProps) => {
   const pathname = usePathname();
   
   // State for the More drawer
@@ -367,7 +371,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
       className
     )}>
       {/* Header with School Logo */}
-      <div className="p-4 bg-primary/5 border-b-2 border-primary/20">
+      <div className={`bg-primary/5 border-b-2 border-primary/20 ${isMinimized ? 'p-2' : 'p-4'}`}>
         <Link href={`/school/${subdomain}/dashboard`} className="flex items-center gap-3 group relative">
           <div className="relative">
             {/* Main logo container with stacked layout */}
@@ -409,50 +413,69 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
             />
           </div>
 
-          {/* School name and details with refined typography */}
-          <div className="relative py-0.5">
-            <div className="flex flex-col">
-              <div className="flex items-baseline gap-1">
-                <span className="font-mono font-bold text-sm tracking-[0.15em] text-slate-900 dark:text-slate-100 relative group-hover:translate-x-1 transition-all duration-300">
-                  {styleSchoolName(schoolName)}
-                  {/* Animated underline */}
+          {/* School name and details with refined typography - hidden when minimized */}
+          {!isMinimized && (
+            <div className="relative py-0.5">
+              <div className="flex flex-col">
+                <div className="flex items-baseline gap-1">
+                  <span className="font-mono font-bold text-sm tracking-[0.15em] text-slate-900 dark:text-slate-100 relative group-hover:translate-x-1 transition-all duration-300">
+                    {styleSchoolName(schoolName)}
+                    {/* Animated underline */}
+                    <div 
+                      className="absolute bottom-0 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
+                      style={{ 
+                        background: `linear-gradient(to right, ${fromColor}, ${toColor})` 
+                      }}
+                    />
+                  </span>
                   <div 
-                    className="absolute bottom-0 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
-                    style={{ 
-                      background: `linear-gradient(to right, ${fromColor}, ${toColor})` 
-                    }}
-                  />
-                </span>
-                <div 
-                  className="text-[0.6rem] font-medium px-1 rounded"
-                  style={{ color: fromColor }}
-                >
-                  PRO
+                    className="text-[0.6rem] font-medium px-1 rounded"
+                    style={{ color: fromColor }}
+                  >
+                    PRO
+                  </div>
+                </div>
+                
+                {/* Tagline with dot separator */}
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span 
+                    className="text-[0.65rem] tracking-wider opacity-60 group-hover:opacity-90 transition-all duration-300"
+                    style={{ color: fromColor }}
+                  >
+                    ACADEMY
+                  </span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                  <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
+                    DASHBOARD v2
+                  </span>
                 </div>
               </div>
-              
-              {/* Tagline with dot separator */}
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span 
-                  className="text-[0.65rem] tracking-wider opacity-60 group-hover:opacity-90 transition-all duration-300"
-                  style={{ color: fromColor }}
-                >
-                  ACADEMY
-                </span>
-                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-                <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                  DASHBOARD v2
-                </span>
-              </div>
             </div>
-          </div>
+          )}
         </Link>
+        
+        {/* Toggle button for minimize/expand */}
+        {onToggleMinimize && (
+          <button
+            onClick={onToggleMinimize}
+            className={`mt-2 w-full flex items-center justify-center p-2 rounded-lg bg-white dark:bg-slate-800 border border-primary/20 hover:bg-primary/5 transition-all duration-200 ${
+              isMinimized ? 'mt-2' : 'mt-3'
+            }`}
+            title={isMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            {isMinimized ? (
+              <PanelLeftOpen className="h-4 w-4 text-primary" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4 text-primary" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className={`flex-1 overflow-y-auto ${isMinimized ? 'p-2' : 'p-4'} space-y-1`}>
         <div className="border-2 border-primary/20 bg-primary/5 rounded-xl overflow-hidden shadow-sm">
-          <div className="p-1.5 space-y-0.5">
+          <div className={`space-y-0.5 ${isMinimized ? 'p-1' : 'p-1.5'}`}>
             {/* Main Navigation Items */}
             {mainNavigationItems.map((item) => {
               const Icon = item.icon;
@@ -464,7 +487,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                 <Link key={item.href} href={href} className="block">
                   <div 
                     className={cn(
-                      "w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group",
+                      "w-full flex items-center rounded-lg transition-all duration-200 relative group",
+                      isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2.5",
                       isActive 
                         ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white border-l-4 transform translate-x-1" 
                         : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm hover:translate-x-1"
@@ -483,7 +507,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                     {/* Icon with creative styling */}
                     <div 
                       className={cn(
-                        "relative flex items-center justify-center w-8 h-8 mr-3 overflow-hidden",
+                        "relative flex items-center justify-center w-8 h-8 overflow-hidden",
+                        !isMinimized && "mr-3",
                         isActive 
                           ? "text-white" 
                           : "text-slate-600 dark:text-slate-400 group-hover:text-white"
@@ -524,11 +549,13 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                       )} />
                     </div>
                     
-                    {/* Title with hover effect */}
-                    <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">{item.title}</span>
+                    {/* Title with hover effect - hidden when minimized */}
+                    {!isMinimized && (
+                      <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">{item.title}</span>
+                    )}
                     
                     {/* Subtle indicator dot for active item */}
-                    {isActive && (
+                    {isActive && !isMinimized && (
                       <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: fromColor }}></div>
                     )}
                   </div>
@@ -539,7 +566,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
             {/* More Button */}
             <div 
               className={cn(
-                "w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer mt-2",
+                "w-full flex items-center rounded-lg transition-all duration-200 relative group cursor-pointer mt-2",
+                isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2.5",
                 drawerOpen 
                   ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white" 
                   : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
@@ -558,7 +586,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
               {/* Icon with creative styling */}
               <div 
                 className={cn(
-                  "relative flex items-center justify-center w-8 h-8 mr-3 overflow-hidden",
+                  "relative flex items-center justify-center w-8 h-8 overflow-hidden",
+                  !isMinimized && "mr-3",
                   drawerOpen 
                     ? "text-white" 
                     : "text-slate-600 dark:text-slate-400 group-hover:text-white"
@@ -599,22 +628,26 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                 )} />
               </div>
               
-              {/* Title with hover effect */}
-              <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">More</span>
+              {/* Title with hover effect - hidden when minimized */}
+              {!isMinimized && (
+                <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide">More</span>
+              )}
               
-              {/* Animated chevron */}
-              <div 
-                className={cn(
-                  "w-5 h-5 flex items-center justify-center transition-transform duration-300",
-                  drawerOpen ? "rotate-180" : ""
-                )}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </div>
+              {/* Animated chevron - hidden when minimized */}
+              {!isMinimized && (
+                <div 
+                  className={cn(
+                    "w-5 h-5 flex items-center justify-center transition-transform duration-300",
+                    drawerOpen ? "rotate-180" : ""
+                  )}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+              )}
             </div>
             
-            {/* More Drawer */}
-            {shouldShowDrawer && (
+            {/* More Drawer - hidden when minimized */}
+            {shouldShowDrawer && !isMinimized && (
               <div 
                 className="mt-1 pl-3 ml-4 border-l-2 space-y-0.5 py-1"
                 style={{ borderColor: `${fromColor}33` }} // Using hex opacity
@@ -702,32 +735,39 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
       </nav>
 
       {/* School Status */}
-      <div className="px-4 py-4 bg-primary/5 border-t-2 border-primary/20">
-        <div className="text-xs font-mono uppercase tracking-wide text-primary mb-3">
-          School Status
-        </div>
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
-              <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">ATTENDANCE</span>
+      <div className={`bg-primary/5 border-t-2 border-primary/20 ${isMinimized ? 'px-2 py-2' : 'px-4 py-4'}`}>
+        {!isMinimized && (
+          <>
+            <div className="text-xs font-mono uppercase tracking-wide text-primary mb-3">
+              School Status
             </div>
-            <span className="text-xs font-mono text-primary">95.8%</span>
-          </div>
-          <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
-              <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">PERFORMANCE</span>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
+                  <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">ATTENDANCE</span>
+                </div>
+                <span className="text-xs font-mono text-primary">95.8%</span>
+              </div>
+              <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-primary/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
+                  <span className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">PERFORMANCE</span>
+                </div>
+                <span className="text-xs font-mono text-primary">87.5%</span>
+              </div>
             </div>
-            <span className="text-xs font-mono text-primary">87.5%</span>
-          </div>
-        </div>
+          </>
+        )}
         
-        {/* Settings Button (moved below school status) */}
-        <div className="mt-4">
+        {/* Settings Button */}
+        <div className={isMinimized ? "mt-2" : "mt-4"}>
           <Link href={getHref("/school/[subdomain]/settings")} className="block">
             <div 
-              className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-primary/20"
+              className={cn(
+                "w-full flex items-center rounded-lg transition-all duration-200 relative group bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border border-primary/20",
+                isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2.5"
+              )}
             >
               {/* Colored background indicator on hover */}
               <div 
@@ -737,7 +777,10 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
               
               {/* Icon with creative styling */}
               <div 
-                className="relative flex items-center justify-center w-8 h-8 mr-3 overflow-hidden"
+                className={cn(
+                  "relative flex items-center justify-center w-8 h-8 overflow-hidden",
+                  !isMinimized && "mr-3"
+                )}
               >
                 {/* Background gradient circle */}
                 <div 
@@ -762,8 +805,10 @@ export const SchoolSidebar = ({ className, subdomain, schoolName }: SchoolSideba
                 <Settings className="h-4 w-4 z-10 transition-all duration-300 text-slate-600 dark:text-slate-300 group-hover:text-white group-hover:drop-shadow-md group-hover:scale-110" />
               </div>
               
-              {/* Title */}
-              <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-slate-800 dark:text-slate-200">Settings</span>
+              {/* Title - hidden when minimized */}
+              {!isMinimized && (
+                <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-slate-800 dark:text-slate-200">Settings</span>
+              )}
             </div>
           </Link>
         </div>

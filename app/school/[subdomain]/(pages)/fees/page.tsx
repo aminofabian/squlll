@@ -35,7 +35,9 @@ import {
   Edit2,
   Pause,
   Play,
-  RotateCcw
+  RotateCcw,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -437,6 +439,7 @@ export default function FeesPage() {
   const [showRecordPaymentDrawer, setShowRecordPaymentDrawer] = useState(false)
   const [showPaymentPlanDrawer, setShowPaymentPlanDrawer] = useState(false)
   const [selectedPaymentPlan, setSelectedPaymentPlan] = useState<PaymentPlan | null>(null)
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   
   // New Invoice Form State
   const [newInvoiceForm, setNewInvoiceForm] = useState({
@@ -806,102 +809,153 @@ export default function FeesPage() {
   return (
     <div className="flex min-h-screen">
       {/* Search Sidebar */}
-      <div className="w-80 border-r-2 border-primary/20 bg-primary/5 p-6 space-y-6 sticky top-0 h-screen overflow-y-auto">
-        {/* Search Header */}
-        <div className="space-y-2">
-          <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/30 rounded-md">
-            <span className="text-xs font-mono uppercase tracking-wide text-primary font-bold">
-              <Search className="inline h-3 w-3 mr-1" />
-              Student Search
-            </span>
-          </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
-            Search students by name
-          </p>
-        </div>
-
-        {/* Search Input */}
-        <div className="space-y-2">
-          <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
-            Search Students
-          </Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search by name or admission no..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
-            />
-          </div>
-          {searchTerm && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSearchTerm('')}
-              className="w-full font-mono text-xs"
-            >
-              Clear Search
-            </Button>
+      <div className={`border-r-2 border-primary/20 bg-primary/5 sticky top-0 h-screen overflow-y-auto transition-all duration-300 ease-in-out ${
+        isSidebarMinimized ? 'w-16 p-2' : 'w-80 p-6'
+      }`}>
+        {/* Toggle button for minimize/expand */}
+        <div className={`mb-4 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-between items-center'}`}>
+          {!isSidebarMinimized && (
+            <div className="space-y-2">
+              <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/30 rounded-md">
+                <span className="text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                  <Search className="inline h-3 w-3 mr-1" />
+                  Student Search
+                </span>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
+                Search students by name
+              </p>
+            </div>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            className="border-primary/30 hover:bg-primary/5"
+            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
-        {/* Students List */}
-        <div className="border-t border-primary/20 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
-              All Students ({filteredStudents.length})
-            </Label>
-            {selectedStudent && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBackToAll}
-                className="font-mono text-xs"
-              >
-                View All
-              </Button>
+        {isSidebarMinimized ? (
+          // Minimized view - only filters icon when active
+          <div className="space-y-4">
+            {/* Filters icon - only show when search is active */}
+            {searchTerm && (
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-1">
+                  <Filter className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-xs text-primary font-mono">Filters</span>
+              </div>
             )}
           </div>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredStudents.map((student) => (
-              <div
-                key={student.id}
-                className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                  selectedStudent === student.id
-                    ? 'bg-primary/10 border-primary/30'
-                    : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5'
-                }`}
-                onClick={() => handleStudentSelect(student.id)}
-              >
-                <div className="font-mono text-sm font-medium">{student.name}</div>
-                <div className="font-mono text-xs text-slate-500 mb-1">
-                  {student.admissionNumber} • {student.class} {student.section}
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  {student.totalOutstanding > 0 ? (
-                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 font-mono">
-                      {formatCurrency(student.totalOutstanding)} due
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 font-mono">
-                      Paid up
-                    </Badge>
-                  )}
-                  {student.overdueCount > 0 && (
-                    <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 font-mono">
-                      {student.overdueCount} overdue
-                    </Badge>
-                  )}
-                </div>
+        ) : (
+          // Full view
+          <div className="space-y-6">
+            {/* Search Input */}
+            <div className="space-y-2">
+              <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                Search Students
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search by name or admission no..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                />
               </div>
-            ))}
+              {searchTerm && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSearchTerm('')}
+                  className="w-full font-mono text-xs"
+                >
+                  Clear Search
+                </Button>
+              )}
+            </div>
+
+            {/* Students List */}
+            <div className="border-t border-primary/20 pt-4">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                  All Students ({filteredStudents.length})
+                </Label>
+                {selectedStudent && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBackToAll}
+                    className="font-mono text-xs"
+                  >
+                    View All
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {filteredStudents.map((student) => (
+                  <div
+                    key={student.id}
+                    className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                      selectedStudent === student.id
+                        ? 'bg-primary/10 border-primary/30'
+                        : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5'
+                    }`}
+                    onClick={() => handleStudentSelect(student.id)}
+                  >
+                    <div className="font-mono text-sm font-medium">{student.name}</div>
+                    <div className="font-mono text-xs text-slate-500 mb-1">
+                      {student.admissionNumber} • {student.class} {student.section}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      {student.totalOutstanding > 0 ? (
+                        <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 font-mono">
+                          {formatCurrency(student.totalOutstanding)} due
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 font-mono">
+                          Paid up
+                        </Badge>
+                      )}
+                      {student.overdueCount > 0 && (
+                        <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 font-mono">
+                          {student.overdueCount} overdue
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8 space-y-8">
+      <div className="flex-1 p-8 space-y-8 relative">
+        {/* Floating toggle button when sidebar is minimized */}
+        {isSidebarMinimized && (
+          <div className="absolute top-4 left-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(false)}
+              className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         {/* Page Header */}
         <div className="border-b-2 border-primary/20 pb-6">
           <div className="flex justify-between items-start">
@@ -944,6 +998,20 @@ export default function FeesPage() {
 
             {/* Action Buttons - Moved to header right */}
             <div className="flex flex-wrap gap-3 items-start">
+              {/* Sidebar toggle button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+                className="border-primary/30 hover:bg-primary/5"
+                title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+              >
+                {isSidebarMinimized ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
               <Button 
                 onClick={handleNewInvoice}
                 className="bg-primary hover:bg-primary/90 text-white font-mono"

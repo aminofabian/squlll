@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   TimetableHeader,
   TimetableControls,
@@ -88,6 +89,7 @@ const SmartTimetable = () => {
   const [showTimeSlotAddModal, setShowTimeSlotAddModal] = useState(false);
   const [conflicts, setConflicts] = useState<Record<string, Conflict>>({});
   const [showConflicts, setShowConflicts] = useState(false);
+  const [isSummaryPanelMinimized, setIsSummaryPanelMinimized] = useState(false);
 
   // Extract data from store
   const { subjects, teachers, timeSlots, breaks, selectedGrade } = mainTimetable;
@@ -670,8 +672,22 @@ const SmartTimetable = () => {
         )}
 
         {/* Main Content with Timetable and Summary */}
-                            <div className="flex gap-6">
-            <div className="flex-1">
+        <div className="flex gap-6 relative">
+          <div className="flex-1">
+            {/* Floating toggle button when summary panel is minimized */}
+            {isSummaryPanelMinimized && (
+              <div className="absolute top-4 right-4 z-10">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSummaryPanelMinimized(false)}
+                  className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+                  title="Expand summary panel"
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
               {/* Debug: Check lunch breaks */}
               {(() => {
                 const lunchBreaksInSlot7 = Object.entries(mergedSubjects).filter(([key, data]) => {
@@ -798,7 +814,37 @@ const SmartTimetable = () => {
             />
           </div>
 
-          <LessonSummaryPanel stats={stats} />
+          {isSummaryPanelMinimized ? (
+            // Minimized view - only toggle button
+            <div className="w-16 flex flex-col items-center space-y-4 p-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSummaryPanelMinimized(false)}
+                className="border-primary/30 hover:bg-primary/5"
+                title="Expand summary panel"
+              >
+                <PanelLeftOpen className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            // Full view
+            <div className="w-80 space-y-6 relative">
+              {/* Toggle button for minimize/expand */}
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSummaryPanelMinimized(true)}
+                  className="border-primary/30 hover:bg-primary/5"
+                  title="Minimize summary panel"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </Button>
+              </div>
+              <LessonSummaryPanel stats={stats} />
+            </div>
+          )}
         </div>
 
         <TeacherManagementModal

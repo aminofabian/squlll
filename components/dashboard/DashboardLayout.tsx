@@ -3,7 +3,7 @@
 import { ReactNode, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 
 interface DashboardLayoutProps {
   sidebar?: ReactNode
@@ -22,6 +22,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
+  const [isFilterMinimized, setIsFilterMinimized] = useState(false)
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,14 +75,51 @@ export function DashboardLayout({
         <div className={`flex-1 ${sidebar ? 'lg:pl-64' : ''}`}>
           <div className="flex">
             {/* Desktop Search/Filter Column */}
-            <div className={`hidden md:block border-r border-border bg-card/50 ${sidebar ? 'md:w-80' : 'md:w-96'}`}>
-              <div className="sticky top-0 h-screen overflow-y-auto">
-                {searchFilter}
+            <div className={`hidden md:block border-r border-border bg-card/50 transition-all duration-300 ease-in-out ${
+              isFilterMinimized ? 'md:w-16' : (sidebar ? 'md:w-80' : 'md:w-96')
+            }`}>
+              <div className="sticky top-0 h-screen overflow-y-auto relative">
+                {/* Toggle button for minimize/expand */}
+                <div className={`p-2 ${isFilterMinimized ? 'flex justify-center' : 'flex justify-end'}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsFilterMinimized(!isFilterMinimized)}
+                    className="border-primary/30 hover:bg-primary/5"
+                    title={isFilterMinimized ? "Expand sidebar" : "Minimize sidebar"}
+                  >
+                    {isFilterMinimized ? (
+                      <PanelLeftOpen className="h-4 w-4" />
+                    ) : (
+                      <PanelLeftClose className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                
+                {!isFilterMinimized && (
+                  <div className="px-2">
+                    {searchFilter}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Main Content */}
-            <main className="flex-1 min-w-0">
+            <main className="flex-1 min-w-0 relative">
+              {/* Floating toggle button when filter is minimized */}
+              {isFilterMinimized && (
+                <div className="absolute top-4 left-4 z-10">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsFilterMinimized(false)}
+                    className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+                    title="Expand sidebar"
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
               <div className="p-4 md:p-6 pb-20 lg:pb-6">
                 {children}
               </div>

@@ -17,7 +17,9 @@ import {
   BookOpen,
   ClipboardList,
   School,
-  X
+  X,
+  PanelLeftOpen,
+  PanelLeftClose
 } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -67,7 +69,8 @@ function SchoolLayoutContent({
   const params = useParams()
   const subdomain = params.subdomain as string
   const [schoolName, setSchoolName] = useState('School Dashboard')
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [userRole, setUserRole] = useState('')
   const [userName, setUserName] = useState('')
   const [isMounted, setIsMounted] = useState(false)
@@ -331,11 +334,17 @@ function SchoolLayoutContent({
       
       {/* Sidebar */}
       <div className={`
-        fixed top-0 bottom-0 left-0 z-50 w-64 bg-white border-r transform transition-transform duration-200 ease-in-out
+        fixed top-0 bottom-0 left-0 z-50 bg-white border-r transform transition-all duration-300 ease-in-out
         md:relative md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isSidebarMinimized ? 'w-16' : 'w-64'}
       `}>
         
-        <SchoolSidebar subdomain={subdomain} schoolName={schoolName} />
+        <SchoolSidebar 
+          subdomain={subdomain} 
+          schoolName={schoolName} 
+          isMinimized={isSidebarMinimized}
+          onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
+        />
       </div>
       
       {/* Main content */}
@@ -350,6 +359,21 @@ function SchoolLayoutContent({
               onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             >
               <Menu className="h-5 w-5 text-gray-600" />
+            </Button>
+            
+            {/* Desktop sidebar toggle button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden md:flex hover:bg-gray-100 transition-colors"
+              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+              title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            >
+              {isSidebarMinimized ? (
+                <PanelLeftOpen className="h-5 w-5 text-gray-600" />
+              ) : (
+                <PanelLeftClose className="h-5 w-5 text-gray-600" />
+              )}
             </Button>
 
             <div className="hidden md:flex items-center space-x-2 min-w-[240px]">

@@ -49,7 +49,9 @@ import {
   UserCheck,
   Baby,
   UserPlus,
-  BookOpen
+  BookOpen,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 
 // Parent/Guardian type
@@ -245,6 +247,7 @@ export default function ParentsPage() {
   const [selectedRelationship, setSelectedRelationship] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
   // Mock data for parents
   const parents: Parent[] = [
@@ -507,132 +510,200 @@ export default function ParentsPage() {
   return (
     <div className="flex h-full">
       {/* Search filter column - Parents list */}
-      <div className="hidden md:flex flex-col w-96 border-r overflow-y-auto p-6 shrink-0 bg-white">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-1">Search Parents</h2>
-          <p className="text-sm text-muted-foreground">Find parents and guardians</p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Name Search */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Parent/Guardian Name</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by name, phone, email..."
-                className="pl-9 h-12 text-base"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Filter by Relationship */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Relationship</label>
-            <select
-              value={selectedRelationship}
-              onChange={(e) => setSelectedRelationship(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background"
-            >
-              <option value="">All Relationships</option>
-              <option value="father">Father</option>
-              <option value="mother">Mother</option>
-              <option value="guardian">Guardian</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          {/* Filter by Status */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Status</label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* Clear Search Button */}
-          {(searchTerm || selectedRelationship || selectedStatus || selectedGradeId !== 'all') && (
-            <div className="pt-1">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedRelationship('');
-                  setSelectedStatus('');
-                  setSelectedGradeId('all');
-                }} 
-                className="w-full"
-              >
-                Clear All Filters
-              </Button>
+      <div className={`hidden md:flex flex-col border-r overflow-y-auto shrink-0 bg-white transition-all duration-300 ease-in-out ${
+        isSidebarMinimized ? 'w-16 p-2' : 'w-96 p-6'
+      }`}>
+        {/* Toggle button for minimize/expand */}
+        <div className={`mb-4 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-between items-center'}`}>
+          {!isSidebarMinimized && (
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-1">Search Parents</h2>
+              <p className="text-sm text-muted-foreground">Find parents and guardians</p>
             </div>
           )}
-        </div>
-        
-        {/* Parent List with Filtering */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium">Parents <span className="text-muted-foreground">({filteredParents.length})</span></h3>
-          </div>
-          
-          <div className="space-y-2">
-            {filteredParents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No parents match your search criteria
-              </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            className="border-primary/30 hover:bg-primary/5"
+            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
             ) : (
-              filteredParents.map((parent) => (
-                <div
-                  key={parent.id}
-                  className={`p-3 rounded-md border transition-colors cursor-pointer ${parent.id === selectedParentId ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/30'}`}
-                  onClick={() => setSelectedParentId(parent.id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${parent.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-                        <div className="font-medium">{parent.name}</div>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        <Badge className={getRelationshipColor(parent.relationship)} variant="outline">
-                          {parent.relationship}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {parent.students.length} student{parent.students.length !== 1 ? 's' : ''}
-                      </div>
-                      {parent.feeStatus && parent.feeStatus.totalOwed > 0 && (
-                        <div className="text-xs text-red-600 mt-1">
-                          Owes: {formatCurrency(parent.feeStatus.totalOwed)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {isSidebarMinimized ? (
+          // Minimized view - only filters icon when active
+          <div className="space-y-4">
+            {/* Filters icon - only show when filters are active */}
+            {(searchTerm || selectedRelationship || selectedStatus || selectedGradeId !== 'all') && (
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-1">
+                  <Filter className="h-5 w-5 text-primary" />
                 </div>
-              ))
+                <span className="text-xs text-primary font-mono">Filters</span>
+              </div>
             )}
           </div>
-        </div>
+        ) : (
+          // Full view
+          <div className="space-y-6">
+            {/* Name Search */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Parent/Guardian Name</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by name, phone, email..."
+                  className="pl-9 h-12 text-base"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Filter by Relationship */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Relationship</label>
+              <select
+                value={selectedRelationship}
+                onChange={(e) => setSelectedRelationship(e.target.value)}
+                className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background"
+              >
+                <option value="">All Relationships</option>
+                <option value="father">Father</option>
+                <option value="mother">Mother</option>
+                <option value="guardian">Guardian</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            {/* Filter by Status */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Status</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background"
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            {/* Clear Search Button */}
+            {(searchTerm || selectedRelationship || selectedStatus || selectedGradeId !== 'all') && (
+              <div className="pt-1">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedRelationship('');
+                    setSelectedStatus('');
+                    setSelectedGradeId('all');
+                  }} 
+                  className="w-full"
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Parent List with Filtering */}
+        {!isSidebarMinimized && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium">Parents <span className="text-muted-foreground">({filteredParents.length})</span></h3>
+            </div>
+            
+            <div className="space-y-2">
+              {filteredParents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No parents match your search criteria
+                </div>
+              ) : (
+                filteredParents.map((parent) => (
+                  <div
+                    key={parent.id}
+                    className={`p-3 rounded-md border transition-colors cursor-pointer ${parent.id === selectedParentId ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/30'}`}
+                    onClick={() => setSelectedParentId(parent.id)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${parent.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
+                          <div className="font-medium">{parent.name}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          <Badge className={getRelationshipColor(parent.relationship)} variant="outline">
+                            {parent.relationship}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {parent.students.length} student{parent.students.length !== 1 ? 's' : ''}
+                        </div>
+                        {parent.feeStatus && parent.feeStatus.totalOwed > 0 && (
+                          <div className="text-xs text-red-600 mt-1">
+                            Owes: {formatCurrency(parent.feeStatus.totalOwed)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main content column - Grade Filter and Parent Details */}
-      <div className="flex-1 overflow-auto p-8">
+      <div className="flex-1 overflow-auto p-8 relative">
+        {/* Floating toggle button when sidebar is minimized */}
+        {isSidebarMinimized && (
+          <div className="absolute top-4 left-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(false)}
+              className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">
               {selectedParent ? 'Parent Details' : 'Select a Parent'}
             </h1>
           </div>
-          <CreateParentDrawer onParentCreated={() => {}} />
+          <div className="flex items-center gap-2">
+            {/* Sidebar toggle button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+              className="border-primary/30 hover:bg-primary/5"
+              title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+            >
+              {isSidebarMinimized ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </Button>
+            <CreateParentDrawer onParentCreated={() => {}} />
+          </div>
         </div>
         
         {/* Grade Filter Section */}

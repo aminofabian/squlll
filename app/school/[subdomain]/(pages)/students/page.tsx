@@ -661,12 +661,12 @@ export default function StudentsPage() {
       <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
         {/* Floating toggle button when sidebar is collapsed */}
         {isSidebarCollapsed && (
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-6 left-6 z-10">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsSidebarCollapsed(false)}
-              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 shadow-lg bg-white dark:bg-slate-800"
+              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
               title="Show search sidebar"
             >
               <PanelLeftOpen className="h-4 w-4" />

@@ -22,7 +22,9 @@ import {
   Settings,
   Shield,
   User,
-  Building
+  Building,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -217,6 +219,7 @@ export default function StaffPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
   const [showCreateDrawer, setShowCreateDrawer] = useState(false)
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
 
   // Filter staff by name search only - only non-teaching staff
   const filteredStaff = useMemo(() => {
@@ -263,113 +266,164 @@ export default function StaffPage() {
   return (
     <div className="flex min-h-screen">
       {/* Filter Column */}
-      <div className="w-80 border-r-2 border-primary/20 bg-primary/5 p-6 space-y-6 sticky top-0 h-screen overflow-y-auto">
-        {/* Filter Header */}
-        <div className="space-y-2">
-          <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/30 rounded-md">
-            <span className="text-xs font-mono uppercase tracking-wide text-primary font-bold">
-              <Search className="inline h-3 w-3 mr-1" />
-              Staff Search
-            </span>
-          </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
-            Find non-teaching staff by name
-          </p>
+      <div className={`border-r-2 border-primary/20 bg-primary/5 sticky top-0 h-screen overflow-y-auto transition-all duration-300 ease-in-out ${
+        isSidebarMinimized ? 'w-16 p-2' : 'w-80 p-6'
+      }`}>
+        {/* Toggle button for minimize/expand */}
+        <div className={`mb-4 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-between items-center'}`}>
+          {!isSidebarMinimized && (
+            <div className="space-y-2">
+              <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/30 rounded-md">
+                <span className="text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                  <Search className="inline h-3 w-3 mr-1" />
+                  Staff Search
+                </span>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
+                Find non-teaching staff by name
+              </p>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            className="border-primary/30 hover:bg-primary/5"
+            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
-        {/* Search */}
-        <div className="space-y-2">
-          <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
-            Search by Name
-          </Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Enter staff name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
-            />
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="border-2 border-primary/30 rounded-lg p-4 bg-white dark:bg-slate-900">
-          <div className="inline-block w-fit px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-            Non-Teaching Staff Stats
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="p-2 bg-primary/5 rounded border border-primary/20">
-              <div className="text-lg font-mono font-bold text-primary">{stats.total}</div>
-              <div className="text-xs font-mono text-slate-600">Total</div>
-            </div>
-            <div className="p-2 bg-green-50 rounded border border-green-200 dark:bg-green-900/20 dark:border-green-800">
-              <div className="text-lg font-mono font-bold text-green-600">{stats.active}</div>
-              <div className="text-xs font-mono text-slate-600">Active</div>
-            </div>
-            <div className="p-2 bg-blue-50 rounded border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
-              <div className="text-lg font-mono font-bold text-blue-600">{stats.administrative}</div>
-              <div className="text-xs font-mono text-slate-600">Admin</div>
-            </div>
-            <div className="p-2 bg-purple-50 rounded border border-purple-200 dark:bg-purple-900/20 dark:border-purple-800">
-              <div className="text-lg font-mono font-bold text-purple-600">{stats.avgExperience}y</div>
-              <div className="text-xs font-mono text-slate-600">Avg Exp</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Staff Names List */}
-        <div className="border-2 border-primary/30 rounded-lg p-4 bg-white dark:bg-slate-900 max-h-96 overflow-y-auto">
-          <div className="inline-block w-fit px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-            Staff Directory ({filteredStaff.length})
-          </div>
-          <div className="space-y-2">
-            {filteredStaff.map((staff) => (
-              <button
-                key={staff.id}
-                onClick={() => setSelectedStaff(staff)}
-                className="w-full text-left p-2 rounded border border-primary/20 hover:bg-primary/5 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  {getStaffTypeIcon(staff.staffType)}
-                  <div className="flex-1">
-                    <div className="text-sm font-mono font-medium">{staff.name}</div>
-                    <div className="text-xs text-slate-500 font-mono">{staff.position}</div>
-                  </div>
+        {isSidebarMinimized ? (
+          // Minimized view - only filters icon when active
+          <div className="space-y-4">
+            {/* Filters icon - only show when search is active */}
+            {searchTerm && (
+              <div className="flex flex-col items-center">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-1">
+                  <Filter className="h-5 w-5 text-primary" />
                 </div>
-              </button>
-            ))}
-            {filteredStaff.length === 0 && (
-              <div className="text-center py-4 text-sm text-slate-500 font-mono">
-                No staff found matching "{searchTerm}"
+                <span className="text-xs text-primary font-mono">Filters</span>
               </div>
             )}
           </div>
-        </div>
+        ) : (
+          // Full view
+          <div className="space-y-6">
+            {/* Search */}
+            <div className="space-y-2">
+              <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                Search by Name
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Enter staff name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                />
+              </div>
+            </div>
 
-        {/* Clear Search */}
-        {searchTerm && (
-          <Button
-            variant="outline"
-            onClick={() => setSearchTerm('')}
-            className="w-full border-primary/30 bg-white dark:bg-slate-900 font-mono hover:bg-primary/5"
-          >
-            Clear Search
-          </Button>
+            {/* Quick Stats */}
+            <div className="border-2 border-primary/30 rounded-lg p-4 bg-white dark:bg-slate-900">
+              <div className="inline-block w-fit px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
+                Non-Teaching Staff Stats
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="p-2 bg-primary/5 rounded border border-primary/20">
+                  <div className="text-lg font-mono font-bold text-primary">{stats.total}</div>
+                  <div className="text-xs font-mono text-slate-600">Total</div>
+                </div>
+                <div className="p-2 bg-green-50 rounded border border-green-200 dark:bg-green-900/20 dark:border-green-800">
+                  <div className="text-lg font-mono font-bold text-green-600">{stats.active}</div>
+                  <div className="text-xs font-mono text-slate-600">Active</div>
+                </div>
+                <div className="p-2 bg-blue-50 rounded border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+                  <div className="text-lg font-mono font-bold text-blue-600">{stats.administrative}</div>
+                  <div className="text-xs font-mono text-slate-600">Admin</div>
+                </div>
+                <div className="p-2 bg-purple-50 rounded border border-purple-200 dark:bg-purple-900/20 dark:border-purple-800">
+                  <div className="text-lg font-mono font-bold text-purple-600">{stats.avgExperience}y</div>
+                  <div className="text-xs font-mono text-slate-600">Avg Exp</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Staff Names List */}
+            <div className="border-2 border-primary/30 rounded-lg p-4 bg-white dark:bg-slate-900 max-h-96 overflow-y-auto">
+              <div className="inline-block w-fit px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
+                Staff Directory ({filteredStaff.length})
+              </div>
+              <div className="space-y-2">
+                {filteredStaff.map((staff) => (
+                  <button
+                    key={staff.id}
+                    onClick={() => setSelectedStaff(staff)}
+                    className="w-full text-left p-2 rounded border border-primary/20 hover:bg-primary/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {getStaffTypeIcon(staff.staffType)}
+                      <div className="flex-1">
+                        <div className="text-sm font-mono font-medium">{staff.name}</div>
+                        <div className="text-xs text-slate-500 font-mono">{staff.position}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                {filteredStaff.length === 0 && (
+                  <div className="text-center py-4 text-sm text-slate-500 font-mono">
+                    No staff found matching "{searchTerm}"
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Clear Search */}
+            {searchTerm && (
+              <Button
+                variant="outline"
+                onClick={() => setSearchTerm('')}
+                className="w-full border-primary/30 bg-white dark:bg-slate-900 font-mono hover:bg-primary/5"
+              >
+                Clear Search
+              </Button>
+            )}
+
+            {/* Add Staff Button */}
+            <Button
+              onClick={() => setShowCreateDrawer(true)}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-mono"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add Non-Teaching Staff
+            </Button>
+          </div>
         )}
-
-        {/* Add Staff Button */}
-        <Button
-          onClick={() => setShowCreateDrawer(true)}
-          className="w-full bg-primary hover:bg-primary/90 text-white font-mono"
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Non-Teaching Staff
-        </Button>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8 space-y-8">
+      <div className="flex-1 p-8 space-y-8 relative">
+        {/* Floating toggle button when sidebar is minimized */}
+        {isSidebarMinimized && (
+          <div className="absolute top-4 left-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarMinimized(false)}
+              className="border-primary/30 hover:bg-primary/5 shadow-lg bg-white"
+              title="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         {!selectedStaff ? (
           <>
             {/* Page Header */}
@@ -387,9 +441,25 @@ export default function StaffPage() {
                   <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                     Manage administrative, support, and non-teaching staff members
                   </p>
-                  <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                    Showing {filteredStaff.length} of {nonTeachingStaff.length} staff members
-                  </p>
+                  <div className="flex items-center gap-2">
+                    {/* Sidebar toggle button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+                      className="border-primary/30 hover:bg-primary/5"
+                      title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+                    >
+                      {isSidebarMinimized ? (
+                        <PanelLeftOpen className="h-4 w-4" />
+                      ) : (
+                        <PanelLeftClose className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                      Showing {filteredStaff.length} of {nonTeachingStaff.length} staff members
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
