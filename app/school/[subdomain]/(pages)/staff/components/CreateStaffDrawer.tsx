@@ -34,6 +34,8 @@ import {
   Clock,
   Shield
 } from "lucide-react"
+import { toast } from 'sonner'
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 
 interface CreateStaffDrawerProps {
   open: boolean
@@ -62,9 +64,11 @@ interface StaffFormData {
   emergencyContactName: string
   emergencyContactRelationship: string
   emergencyContactPhone: string
+  gender: string
 }
 
 export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: CreateStaffDrawerProps) {
+  const { data: schoolConfig } = useSchoolConfig()
   const [formData, setFormData] = useState<StaffFormData>({
     name: '',
     employeeId: '',
@@ -85,7 +89,8 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
     responsibilities: '',
     emergencyContactName: '',
     emergencyContactRelationship: '',
-    emergencyContactPhone: ''
+    emergencyContactPhone: '',
+    gender: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -109,36 +114,118 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!schoolConfig?.tenant?.id) {
+      toast.error("Configuration Error", {
+        description: "School configuration not available. Please refresh and try again."
+      });
+      return;
+    }
+
+    // Validate required fields
+    const requiredFields = {
+      name: formData.name,
+      employeeId: formData.employeeId,
+      email: formData.email,
+      phone: formData.phone,
+      gender: formData.gender,
+      department: formData.department,
+      position: formData.position,
+      qualifications: formData.qualifications
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value || value.trim() === '')
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      toast.error("Validation Error", {
+        description: `Please fill in all required fields: ${missingFields.join(', ')}`
+      });
+      return;
+    }
+
     setIsSubmitting(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    console.log('Creating staff member:', formData)
-    setFormData({
-      name: '', employeeId: '', email: '', phone: '', dateOfBirth: '', address: '',
-      position: '', department: '', staffType: 'teaching', joinDate: '', workSchedule: 'Full-time',
-      officeLocation: '', qualifications: '', experience: '', subjects: '', specializations: '',
-      responsibilities: '', emergencyContactName: '', emergencyContactRelationship: '', emergencyContactPhone: ''
-    })
-    setIsSubmitting(false)
-    onStaffCreated()
-    onOpenChange(false)
+
+    try {
+      const response = await fetch('/api/school/create-staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          tenantId: schoolConfig.tenant.id
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        // Handle specific validation errors
+        if (result.details && Array.isArray(result.details)) {
+          const errorMessages = result.details.map((error: any) => error.message).join(', ');
+          throw new Error(`Validation failed: ${errorMessages}`);
+        }
+        throw new Error(result.error || 'Failed to create staff member');
+      }
+
+      const staffData = result.inviteStaff;
+      
+      toast.success("Staff Member Created", {
+        description: `Successfully created staff member ${staffData.fullName}. An invitation email has been sent to ${staffData.email}.`
+      });
+      
+      // Reset form
+      setFormData({
+        name: '', employeeId: '', email: '', phone: '', dateOfBirth: '', address: '',
+        position: '', department: '', staffType: 'teaching', joinDate: '', workSchedule: 'Full-time',
+        officeLocation: '', qualifications: '', experience: '', subjects: '', specializations: '',
+        responsibilities: '', emergencyContactName: '', emergencyContactRelationship: '', emergencyContactPhone: '', gender: ''
+      })
+      
+      onStaffCreated()
+      onOpenChange(false)
+      
+    } catch (error) {
+      console.error('Error creating staff member:', error);
+      toast.error("Creation Failed", {
+        description: error instanceof Error ? error.message : "An error occurred while creating the staff member"
+      });
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[90vh]">
-        <div className="mx-auto w-full max-w-4xl">
-          <DrawerHeader className="border-b-2 border-primary/20">
-            <DrawerTitle className="font-mono text-xl">Add New Staff Member</DrawerTitle>
-            <DrawerDescription className="font-mono text-sm">
-              Enter the staff member's information below
-            </DrawerDescription>
+      <DrawerContent className="h-full w-full md:w-1/2 bg-background" data-vaul-drawer-direction="right">
+        <div className="flex flex-col h-full">
+          <DrawerHeader className="border-b-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-primary/10 border border-primary/20 flex items-center justify-center rounded-lg">
+                <UserPlus className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <DrawerTitle className="text-xl font-mono font-bold text-foreground uppercase tracking-wide">
+                  Staff Registration
+                </DrawerTitle>
+                <DrawerDescription className="text-sm text-muted-foreground font-medium">
+                  Send an invitation email to a new staff member
+                </DrawerDescription>
+              </div>
+              <div className="px-3 py-1 bg-primary/10 border border-primary/30 text-xs font-mono text-primary uppercase tracking-wide rounded-md">
+                New Entry
+              </div>
+            </div>
           </DrawerHeader>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-8 overflow-y-auto max-h-[calc(90vh-200px)]">
+          <form onSubmit={handleSubmit} className="flex-1 p-6 space-y-8 overflow-y-auto">
+            <div className="max-w-none">
             {/* Personal Information */}
             <div className="space-y-4">
-              <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-                <span className="text-xs font-mono uppercase tracking-wide text-primary">
+              <div className="inline-block w-fit px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg shadow-sm">
+                <span className="text-sm font-mono uppercase tracking-wide text-primary font-semibold">
                   Personal Information
                 </span>
               </div>
@@ -153,7 +240,7 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                       placeholder="Enter full name"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className="pl-10 border-primary/20 font-mono"
+                      className="pl-10 border-primary/20 font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                       required
                     />
                   </div>
@@ -220,6 +307,20 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="gender" className="text-sm font-mono">Gender *</Label>
+                  <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
+                    <SelectTrigger className="border-primary/20 font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="address" className="text-sm font-mono">Address</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -237,8 +338,8 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
 
             {/* Professional Information */}
             <div className="space-y-4">
-              <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-                <span className="text-xs font-mono uppercase tracking-wide text-primary">
+              <div className="inline-block w-fit px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg shadow-sm">
+                <span className="text-sm font-mono uppercase tracking-wide text-primary font-semibold">
                   Professional Information
                 </span>
               </div>
@@ -247,7 +348,7 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                 <div className="space-y-2">
                   <Label htmlFor="staffType" className="text-sm font-mono">Staff Type *</Label>
                   <Select value={formData.staffType} onValueChange={(value) => handleInputChange('staffType', value)}>
-                    <SelectTrigger className="border-primary/20 font-mono">
+                    <SelectTrigger className="border-primary/20 font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -263,7 +364,7 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                 <div className="space-y-2">
                   <Label htmlFor="position" className="text-sm font-mono">Position *</Label>
                   <Select value={formData.position} onValueChange={(value) => handleInputChange('position', value)}>
-                    <SelectTrigger className="border-primary/20 font-mono">
+                    <SelectTrigger className="border-primary/20 font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
                       <SelectValue placeholder="Select position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -277,7 +378,7 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                 <div className="space-y-2">
                   <Label htmlFor="department" className="text-sm font-mono">Department *</Label>
                   <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
-                    <SelectTrigger className="border-primary/20 font-mono">
+                    <SelectTrigger className="border-primary/20 font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
                     <SelectContent>
@@ -345,7 +446,7 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                       placeholder="List qualifications (comma separated)"
                       value={formData.qualifications}
                       onChange={(e) => handleInputChange('qualifications', e.target.value)}
-                      className="pl-10 border-primary/20 font-mono min-h-[80px]"
+                      className="pl-10 border-primary/20 font-mono min-h-[80px] focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                       required
                     />
                   </div>
@@ -382,8 +483,8 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
 
             {/* Emergency Contact */}
             <div className="space-y-4">
-              <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-                <span className="text-xs font-mono uppercase tracking-wide text-primary">
+              <div className="inline-block w-fit px-4 py-2 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg shadow-sm">
+                <span className="text-sm font-mono uppercase tracking-wide text-primary font-semibold">
                   Emergency Contact
                 </span>
               </div>
@@ -438,21 +539,22 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                 </div>
               </div>
             </div>
+            </div>
           </form>
 
-          <DrawerFooter className="border-t-2 border-primary/20">
+          <DrawerFooter className="border-t-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 p-6">
             <div className="flex gap-3">
               <Button
                 type="submit"
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-mono"
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-mono h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                <UserPlus className="h-4 w-4 mr-2" />
+                <UserPlus className="h-5 w-5 mr-2" />
                 {isSubmitting ? 'Adding Staff...' : 'Add Staff Member'}
               </Button>
               <DrawerClose asChild>
-                <Button variant="outline" className="flex-1 border-primary/20 font-mono">
+                <Button variant="outline" className="flex-1 border-primary/20 font-mono h-12 text-base hover:bg-primary/5 transition-all duration-200">
                   Cancel
                 </Button>
               </DrawerClose>
