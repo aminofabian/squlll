@@ -24,7 +24,8 @@ import {
   User,
   Building,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Copy
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -517,6 +518,7 @@ export default function StaffPage() {
                             index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/30 dark:bg-slate-800/30'
                           }`}
                           onClick={() => setSelectedStaff(staff)}
+                          style={{ borderTop: index !== 0 ? '8px solid #f1f5f9' : undefined }} // subtle vertical spacing
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -590,7 +592,7 @@ export default function StaffPage() {
                         {/* Second row - Additional details */}
                         <tr 
                           key={`${staff.id}-row2`}
-                          className="hover:bg-primary/5 transition-colors cursor-pointer bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-700/80 border-b-4 border-primary/20 mb-4"
+                          className="hover:bg-primary/5 transition-colors cursor-pointer bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-700/80 border-b-4 border-primary/20 mb-8"
                           onClick={() => setSelectedStaff(staff)}
                         >
                           <td className="px-6 py-3" colSpan={5}>
@@ -604,6 +606,21 @@ export default function StaffPage() {
                                   </span>
                                   <div className="w-2 h-2 bg-primary rounded-full"></div>
                                 </div>
+                              </div>
+                              {/* Action buttons */}
+                              <div className="flex justify-center gap-3 mt-8 mb-4">
+                                <Button size="sm" variant="outline" className="flex items-center gap-1 text-green-700 border-green-200 hover:bg-green-50" onClick={e => { e.stopPropagation(); window.open(`tel:${staff.phone.replace(/\s+/g, '')}`); }}>
+                                  <Phone className="h-4 w-4" /> Call
+                                </Button>
+                                <Button size="sm" variant="outline" className="flex items-center gap-1 text-blue-700 border-blue-200 hover:bg-blue-50" onClick={e => { e.stopPropagation(); window.open(`mailto:${staff.email}`); }}>
+                                  <Mail className="h-4 w-4" /> Email
+                                </Button>
+                                <Button size="sm" variant="outline" className="flex items-center gap-1 text-slate-700 border-slate-200 hover:bg-slate-100" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(staff.email); }}>
+                                  <Copy className="h-4 w-4" /> Copy Email
+                                </Button>
+                                <Button size="sm" variant="outline" className="flex items-center gap-1 text-purple-700 border-purple-200 hover:bg-purple-50" onClick={e => { e.stopPropagation(); alert('Show profile for ' + staff.name); }}>
+                                  <User className="h-4 w-4" /> Profile
+                                </Button>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono pt-4">
                                 <div className="space-y-1">
