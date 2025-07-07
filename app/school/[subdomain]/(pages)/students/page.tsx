@@ -55,7 +55,9 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
-  BarChart3
+  BarChart3,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 
 // Import hooks and types for real data
@@ -251,6 +253,7 @@ export default function StudentsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
   const [displayedStudentsCount, setDisplayedStudentsCount] = useState(10);
   const [showStats, setShowStats] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
 
   // Fetch real data from the store
@@ -632,47 +635,81 @@ export default function StudentsPage() {
       )}
 
       {/* Search filter column - styled to match theme */}
-      <StudentSearchSidebar
-        searchTerm={searchTerm}
-        onSearchChange={(value) => {
-          setSearchTerm(value);
-          setDisplayedStudentsCount(10);
-        }}
-        filteredStudents={filteredAndSortedStudents}
-        selectedStudentId={selectedStudentId}
-        onStudentSelect={setSelectedStudentId}
-        displayedStudentsCount={displayedStudentsCount}
-        onLoadMore={() => setDisplayedStudentsCount(prev => Math.min(prev + 10, filteredAndSortedStudents.length))}
-        onClearFilters={() => {
-          setSearchTerm('');
-          setSelectedGradeId('all');
-          setDisplayedStudentsCount(10);
-        }}
-        selectedGradeId={selectedGradeId}
-      />
+      {!isSidebarCollapsed && (
+        <StudentSearchSidebar
+          searchTerm={searchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+            setDisplayedStudentsCount(10);
+          }}
+          filteredStudents={filteredAndSortedStudents}
+          selectedStudentId={selectedStudentId}
+          onStudentSelect={setSelectedStudentId}
+          displayedStudentsCount={displayedStudentsCount}
+          onLoadMore={() => setDisplayedStudentsCount(prev => Math.min(prev + 10, filteredAndSortedStudents.length))}
+          onClearFilters={() => {
+            setSearchTerm('');
+            setSelectedGradeId('all');
+            setDisplayedStudentsCount(10);
+          }}
+          selectedGradeId={selectedGradeId}
+          onCollapse={() => setIsSidebarCollapsed(true)}
+        />
+      )}
 
       {/* Main content column - Grade Filter and Student Details */}
-      <div className="flex-1 overflow-auto p-8">
+      <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
+        {/* Floating toggle button when sidebar is collapsed */}
+        {isSidebarCollapsed && (
+          <div className="absolute top-4 left-4 z-10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 shadow-lg bg-white dark:bg-slate-800"
+              title="Show search sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">
               Students
             </h1>
           </div>
-          <CreateStudentDrawer onStudentCreated={(studentName) => {
-            // Refetch students data to ensure search filter updates
-            refetch();
-            // Clear grade and status filters to show the new student
-            setSelectedGradeId('all');
-            setSelectedStatus('');
-            setSelectedClass('');
-            // If student name is provided, search for the new student
-            if (studentName) {
-              setSearchTerm(studentName);
-            } else {
-              setSearchTerm('');
-            }
-          }} />
+          <div className="flex items-center gap-2">
+            {/* Sidebar toggle button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
+              title={isSidebarCollapsed ? "Show search sidebar" : "Hide search sidebar"}
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </Button>
+            <CreateStudentDrawer onStudentCreated={(studentName) => {
+              // Refetch students data to ensure search filter updates
+              refetch();
+              // Clear grade and status filters to show the new student
+              setSelectedGradeId('all');
+              setSelectedStatus('');
+              setSelectedClass('');
+              // If student name is provided, search for the new student
+              if (studentName) {
+                setSearchTerm(studentName);
+              } else {
+                setSearchTerm('');
+              }
+            }} />
+          </div>
         </div>
         
         {selectedStudent ? (

@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Search, PanelLeftClose } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -24,6 +24,7 @@ interface StudentSearchSidebarProps {
   onLoadMore: () => void;
   onClearFilters: () => void;
   selectedGradeId: string;
+  onCollapse: () => void;
 }
 
 export function StudentSearchSidebar({
@@ -35,10 +36,22 @@ export function StudentSearchSidebar({
   displayedStudentsCount,
   onLoadMore,
   onClearFilters,
-  selectedGradeId
+  selectedGradeId,
+  onCollapse
 }: StudentSearchSidebarProps) {
   return (
-    <div className="hidden md:flex flex-col w-96 border-r border-primary/20 overflow-y-auto p-6 shrink-0 bg-white dark:bg-slate-900">
+    <div className="hidden md:flex flex-col w-96 border-r border-primary/20 overflow-y-auto p-6 shrink-0 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out relative">
+      {/* Collapse button positioned at top-right of sidebar */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onCollapse}
+        className="absolute top-4 right-4 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 z-10"
+        title="Hide search sidebar"
+      >
+        <PanelLeftClose className="h-4 w-4" />
+      </Button>
+      
       <div className="space-y-6">
         <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
           <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
