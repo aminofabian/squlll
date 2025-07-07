@@ -273,18 +273,15 @@ export default function StaffPage() {
         <div className={`mb-4 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-between items-center'}`}>
           {!isSidebarMinimized && (
             <div className="space-y-2">
-              <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/30 rounded-md">
+              {/* <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/30 rounded-md">
                 <span className="text-xs font-mono uppercase tracking-wide text-primary font-bold">
-                  <Search className="inline h-3 w-3 mr-1" />
-                  Staff Search
                 </span>
-              </div>
+              </div> */}
               <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
-                Find non-teaching staff by name
               </p>
             </div>
           )}
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
@@ -296,7 +293,7 @@ export default function StaffPage() {
             ) : (
               <PanelLeftClose className="h-4 w-4" />
             )}
-          </Button>
+          </Button> */}
         </div>
 
         {isSidebarMinimized ? (
@@ -315,46 +312,43 @@ export default function StaffPage() {
         ) : (
           // Full view
           <div className="space-y-6">
-            {/* Search */}
-            <div className="space-y-2">
-              <Label className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300">
-                Search by Name
-              </Label>
+            {/* Staff Search Styled Like Image */}
+            <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 mt-2 mb-6 shadow-sm">
+              {/* Minimize icon at top right */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+                className="absolute -top-3 right-2 shadow border border-slate-200 bg-white w-8 h-8 p-0 flex items-center justify-center"
+                style={{ zIndex: 10 }}
+                title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+              >
+                {isSidebarMinimized ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
+
+              {/* Pill label */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 mb-3 bg-green-50 border border-green-200 rounded-full text-xs font-mono text-green-900">
+                <Search className="h-4 w-4 mr-1 text-green-700" />
+                STAFF NAME
+              </div>
+
+              {/* Search input */}
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-green-400" />
                 <Input
-                  placeholder="Enter staff name..."
+                  placeholder="Search by name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 border-primary/30 bg-white dark:bg-slate-900 font-mono"
+                  className="pl-10 font-mono border border-slate-200 bg-white text-green-900"
                 />
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="border-2 border-primary/30 rounded-lg p-4 bg-white dark:bg-slate-900">
-              <div className="inline-block w-fit px-2 py-1 bg-primary/10 border border-primary/20 rounded text-xs font-mono uppercase tracking-wide text-primary mb-3">
-                Non-Teaching Staff Stats
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="p-2 bg-primary/5 rounded border border-primary/20">
-                  <div className="text-lg font-mono font-bold text-primary">{stats.total}</div>
-                  <div className="text-xs font-mono text-slate-600">Total</div>
-                </div>
-                <div className="p-2 bg-green-50 rounded border border-green-200 dark:bg-green-900/20 dark:border-green-800">
-                  <div className="text-lg font-mono font-bold text-green-600">{stats.active}</div>
-                  <div className="text-xs font-mono text-slate-600">Active</div>
-                </div>
-                <div className="p-2 bg-blue-50 rounded border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
-                  <div className="text-lg font-mono font-bold text-blue-600">{stats.administrative}</div>
-                  <div className="text-xs font-mono text-slate-600">Admin</div>
-                </div>
-                <div className="p-2 bg-purple-50 rounded border border-purple-200 dark:bg-purple-900/20 dark:border-purple-800">
-                  <div className="text-lg font-mono font-bold text-purple-600">{stats.avgExperience}y</div>
-                  <div className="text-xs font-mono text-slate-600">Avg Exp</div>
-                </div>
-              </div>
-            </div>
+
 
             {/* Staff Names List */}
             <div className="border-2 border-primary/30 rounded-lg p-4 bg-white dark:bg-slate-900 max-h-96 overflow-y-auto">
@@ -395,15 +389,6 @@ export default function StaffPage() {
                 Clear Search
               </Button>
             )}
-
-            {/* Add Staff Button */}
-            <Button
-              onClick={() => setShowCreateDrawer(true)}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-mono"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Non-Teaching Staff
-            </Button>
           </div>
         )}
       </div>
@@ -442,6 +427,14 @@ export default function StaffPage() {
                     Manage administrative, support, and non-teaching staff members
                   </p>
                   <div className="flex items-center gap-2">
+                    {/* Add Staff Button */}
+                    <Button
+                      onClick={() => setShowCreateDrawer(true)}
+                      className="bg-primary hover:bg-primary/90 text-white font-mono"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add Non-Teaching Staff
+                    </Button>
                     {/* Sidebar toggle button */}
                     <Button
                       variant="outline"
@@ -464,77 +457,211 @@ export default function StaffPage() {
               </div>
             </div>
 
-            {/* Staff Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredStaff.map((staff) => (
-                <Card 
-                  key={staff.id} 
-                  className="border-2 border-primary/20 hover:border-primary/40 transition-all duration-200 cursor-pointer hover:shadow-lg"
-                  onClick={() => setSelectedStaff(staff)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                          <User className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-base font-mono">{staff.name}</CardTitle>
-                          <CardDescription className="text-xs font-mono">
-                            {staff.employeeId}
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <Badge 
-                        variant="outline" 
-                        className={`text-xs font-mono ${getStatusColor(staff.status)}`}
-                      >
-                        {staff.status.replace('-', ' ')}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getStaffTypeIcon(staff.staffType)}
-                        <span className="text-sm font-mono font-medium">{staff.position}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-slate-400" />
-                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                          {staff.department}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-slate-400" />
-                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
-                          {staff.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-slate-400" />
-                        <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                          {staff.phone}
-                        </span>
-                      </div>
-                    </div>
+            {/* Quick Stats */}
+            <div className="border-2 border-primary/30 rounded-lg p-6 bg-white dark:bg-slate-900 shadow-sm">
+              <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+                <span className="text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                  Non-Teaching Staff Stats
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="text-2xl font-mono font-bold text-primary">{stats.total}</div>
+                  <div className="text-sm font-mono text-slate-600">Total</div>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200 dark:bg-green-900/20 dark:border-green-800">
+                  <div className="text-2xl font-mono font-bold text-green-600">{stats.active}</div>
+                  <div className="text-sm font-mono text-slate-600">Active</div>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+                  <div className="text-2xl font-mono font-bold text-blue-600">{stats.administrative}</div>
+                  <div className="text-sm font-mono text-slate-600">Admin</div>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 dark:bg-purple-900/20 dark:border-purple-800">
+                  <div className="text-2xl font-mono font-bold text-purple-600">{stats.avgExperience}y</div>
+                  <div className="text-sm font-mono text-slate-600">Avg Exp</div>
+                </div>
+              </div>
+            </div>
 
-                    <div className="pt-2 border-t border-primary/20">
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs font-mono text-slate-500">
-                          Experience: {staff.experience} years
-                        </div>
-                        {staff.rating && (
-                          <div className="flex items-center gap-1">
-                            <Award className="h-3 w-3 text-yellow-500" />
-                            <span className="text-xs font-mono">{staff.rating}/5</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Staff Table */}
+            <div className="border-2 border-primary/20 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-primary/5 border-b-2 border-primary/20">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                        Staff Member
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                        Position & Department
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                        Contact Information
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                        Experience & Rating
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-mono uppercase tracking-wide text-primary font-bold">
+                        Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredStaff.map((staff, index) => (
+                      <>
+                        {/* First row - Main information */}
+                        <tr 
+                          key={`${staff.id}-row1`}
+                          className={`hover:bg-primary/5 transition-all duration-200 cursor-pointer border-b-2 border-slate-200 dark:border-slate-700 ${
+                            index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/30 dark:bg-slate-800/30'
+                          }`}
+                          onClick={() => setSelectedStaff(staff)}
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                <User className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                                  {staff.name}
+                                </div>
+                                <div className="text-xs font-mono text-slate-500">
+                                  {staff.employeeId}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                {getStaffTypeIcon(staff.staffType)}
+                                <span className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                                  {staff.position}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Building className="h-3 w-3 text-slate-400" />
+                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                  {staff.department}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Mail className="h-3 w-3 text-slate-400" />
+                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                  {staff.email}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-3 w-3 text-slate-400" />
+                                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                  {staff.phone}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <div className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                                Experience: {staff.experience} years
+                              </div>
+                              {staff.rating && (
+                                <div className="flex items-center gap-1">
+                                  <Award className="h-3 w-3 text-yellow-500" />
+                                  <span className="text-xs font-mono">{staff.rating}/5</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs font-mono ${getStatusColor(staff.status)}`}
+                            >
+                              {staff.status.replace('-', ' ')}
+                            </Badge>
+                          </td>
+                        </tr>
+                        {/* Second row - Additional details */}
+                        <tr 
+                          key={`${staff.id}-row2`}
+                          className="hover:bg-primary/5 transition-colors cursor-pointer bg-gradient-to-r from-slate-50/80 to-slate-100/80 dark:from-slate-800/80 dark:to-slate-700/80 border-b-4 border-primary/20 mb-4"
+                          onClick={() => setSelectedStaff(staff)}
+                        >
+                          <td className="px-6 py-3" colSpan={5}>
+                            <div className="relative">
+                              {/* Staff member indicator */}
+                              <div className="absolute -top-3 left-0 right-0 flex justify-center">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/30 rounded-full">
+                                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                  <span className="text-xs font-mono text-primary font-medium">
+                                    {staff.name.split(' ')[0]} {staff.name.split(' ')[1]}
+                                  </span>
+                                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono pt-4">
+                                <div className="space-y-1">
+                                  <div className="text-slate-500 uppercase tracking-wide">Qualifications</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {staff.qualifications.slice(0, 2).map((qual, index) => (
+                                      <Badge key={index} variant="outline" className="text-xs">
+                                        {qual}
+                                      </Badge>
+                                    ))}
+                                    {staff.qualifications.length > 2 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        +{staff.qualifications.length - 2} more
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="text-slate-500 uppercase tracking-wide">Responsibilities</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {staff.responsibilities.slice(0, 2).map((resp, index) => (
+                                      <Badge key={index} variant="outline" className="text-xs">
+                                        {resp}
+                                      </Badge>
+                                    ))}
+                                    {staff.responsibilities.length > 2 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        +{staff.responsibilities.length - 2} more
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="text-slate-500 uppercase tracking-wide">Additional Info</div>
+                                  <div className="space-y-1">
+                                    {staff.officeLocation && (
+                                      <div className="flex items-center gap-1">
+                                        <MapPin className="h-3 w-3 text-slate-400" />
+                                        <span>{staff.officeLocation}</span>
+                                      </div>
+                                    )}
+                                    {staff.workSchedule && (
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3 text-slate-400" />
+                                        <span>{staff.workSchedule}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Empty State */}
