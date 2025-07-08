@@ -69,6 +69,8 @@ import {
 } from "lucide-react";
 import { CreateTeacherDrawer } from "./components/CreateTeacherDrawer";
 import { usePendingInvitationsStore, PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
+import { useTeachersByTenant, useTeacherStaffUsersFromStore } from "@/lib/hooks/useTeachers";
+import { getTenantInfo } from "@/lib/utils";
 
 
 // Teacher type definition
@@ -180,161 +182,46 @@ const departments = [
   'Administration'
 ];
 
-// Mock data for teachers
-const mockTeachers: Teacher[] = [
-  {
-    id: "t1",
-    name: "Dr. Alice Johnson",
-    employeeId: "TCH/2023/001",
-    photo: "/images/teacher1.jpg",
-    gender: "female",
-    dateOfBirth: "1980-05-15",
-    joinDate: "2020-01-10",
+// Function to transform store data to Teacher format
+const transformStoreDataToTeacher = (storeUser: { id: string; fullName: string; email: string }): Teacher => {
+  return {
+    id: storeUser.id,
+    name: storeUser.fullName,
+    employeeId: `TCH/${new Date().getFullYear()}/${storeUser.id.slice(-3)}`,
+    gender: "male", // Default value
+    dateOfBirth: "1980-01-01", // Default value
+    joinDate: new Date().toISOString().split('T')[0], // Default to today
     status: "active",
-    subjects: ["Mathematics", "Physics"],
-    classesAssigned: ["Form 3A", "Form 4B"],
-    grades: ["Form 3", "Form 4"],
-    designation: "senior_teacher",
-    department: "mathematics",
-    contacts: {
-      phone: "+254712345678",
-      email: "alice.johnson@kenyaschools.edu",
-      address: "123 Nairobi Avenue"
-    },
-    academic: {
-      qualification: "phd",
-      specialization: "Applied Mathematics",
-      experience: 12,
-      certifications: ["Advanced Pedagogical Training"]
-    },
-    performance: {
-      rating: 4.8,
-      lastEvaluation: "2023-06-15",
-      studentPerformance: "Excellent",
-      trend: "improving"
-    },
-    responsibilities: ["Math Department Coordinator", "Examination Committee"],
-    extraCurricular: {
-      clubs: ["Mathematics Club"],
-      sports: [],
-      committees: ["Academic Council"]
-    }
-  },
-  {
-    id: "t2",
-    name: "James Omondi",
-    employeeId: "TCH/2023/002",
-    photo: "/images/teacher2.jpg",
-    gender: "male",
-    dateOfBirth: "1985-09-22",
-    joinDate: "2019-05-15",
-    status: "active",
-    subjects: ["English", "Literature"],
-    classesAssigned: ["Form 2A", "Form 3C"],
-    grades: ["Form 2", "Form 3"],
+    subjects: ["General"], // Default value
+    classesAssigned: [],
+    grades: [],
     designation: "teacher",
-    department: "english",
+    department: "general",
     contacts: {
-      phone: "+254723456789",
-      email: "james.omondi@kenyaschools.edu",
-      address: "45 Moi Avenue"
-    },
-    academic: {
-      qualification: "masters",
-      specialization: "English Literature",
-      experience: 8,
-      certifications: ["Creative Writing Workshop"]
-    },
-    performance: {
-      rating: 4.5,
-      lastEvaluation: "2023-05-20",
-      studentPerformance: "Very Good",
-      trend: "stable"
-    },
-    responsibilities: ["Drama Club Advisor"],
-    extraCurricular: {
-      clubs: ["Debating Club", "Creative Writing Club"],
-      sports: [],
-      committees: ["Cultural Committee"]
-    }
-  },
-  {
-    id: "t3",
-    name: "Wangari Muthoni",
-    employeeId: "TCH/2023/003",
-    photo: "/images/teacher3.jpg",
-    gender: "female",
-    dateOfBirth: "1990-03-12",
-    joinDate: "2021-08-30",
-    status: "active",
-    subjects: ["Biology", "Chemistry"],
-    classesAssigned: ["Form 1B", "Form 2D"],
-    grades: ["Form 1", "Form 2"],
-    designation: "teacher",
-    department: "science",
-    contacts: {
-      phone: "+254734567890",
-      email: "wangari.muthoni@kenyaschools.edu",
-      address: "78 Kenyatta Street"
+      phone: "+254700000000", // Default value
+      email: storeUser.email,
+      address: "Address not provided"
     },
     academic: {
       qualification: "bachelors",
-      specialization: "Biological Sciences",
-      experience: 3,
-      certifications: ["Laboratory Safety Training"]
+      specialization: "General Education",
+      experience: 1,
+      certifications: []
     },
     performance: {
-      rating: 4.2,
-      lastEvaluation: "2023-06-10",
+      rating: 4.0,
+      lastEvaluation: new Date().toISOString().split('T')[0],
       studentPerformance: "Good",
-      trend: "improving"
-    },
-    responsibilities: ["Laboratory Coordinator"],
-    extraCurricular: {
-      clubs: ["Environmental Club"],
-      sports: ["Volleyball Coach"],
-      committees: ["Field Trip Committee"]
-    }
-  },
-  {
-    id: "t4",
-    name: "Mohammed Hassan",
-    employeeId: "TCH/2023/004",
-    photo: "/images/teacher4.jpg",
-    gender: "male",
-    dateOfBirth: "1975-12-05",
-    joinDate: "2015-01-05",
-    status: "active",
-    subjects: ["History", "Religious Studies"],
-    classesAssigned: ["Form 3D", "Form 4A"],
-    grades: ["Form 3", "Form 4"],
-    designation: "head_teacher",
-    department: "social studies",
-    contacts: {
-      phone: "+254745678901",
-      email: "mohammed.hassan@kenyaschools.edu",
-      address: "123 Unity Road"
-    },
-    academic: {
-      qualification: "masters",
-      specialization: "African History",
-      experience: 15,
-      certifications: ["Educational Leadership Program"]
-    },
-    performance: {
-      rating: 4.9,
-      lastEvaluation: "2023-05-05",
-      studentPerformance: "Excellent",
       trend: "stable"
     },
-    responsibilities: ["Social Studies Department Head", "School Discipline Committee Chair"],
+    responsibilities: [],
     extraCurricular: {
-      clubs: ["History Club"],
+      clubs: [],
       sports: [],
-      committees: ["School Board Representative"]
+      committees: []
     }
-  }
-];
+  };
+};
 
 // Teacher detail view component for drawer and panel
 function TeacherDetailView({ teacher }: { teacher: Teacher }) {
@@ -1029,7 +916,20 @@ function TeacherCard({ teacher, isSelected }: { teacher: Teacher; isSelected?: b
 
 // Main teacher page component
 function TeachersPage() {
-  const [teachers] = useState<Teacher[]>(mockTeachers);
+  const tenantInfo = getTenantInfo();
+  const tenantId = tenantInfo?.tenantId;
+  
+  // Debug logging
+  console.log('TeachersPage: Tenant info:', tenantInfo);
+  console.log('TeachersPage: Tenant ID:', tenantId);
+  
+  const { data, isLoading: teachersLoading, error: teachersError, refetch: refetchTeachers } = useTeachersByTenant(tenantId || "");
+  const { teacherStaffUsers } = useTeacherStaffUsersFromStore();
+  
+  // Transform store data to Teacher format
+  const teachers = useMemo(() => {
+    return teacherStaffUsers.map(transformStoreDataToTeacher);
+  }, [teacherStaffUsers]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -1043,15 +943,15 @@ function TeachersPage() {
   // Ref to track if fetch has been called for this component instance
   const hasFetchedRef = useRef(false);
   
-  // Fetch pending invitations on component mount
+  // Fetch data on component mount
   useEffect(() => {
-    if (!hasFetchedRef.current) {
-      console.log('TeachersPage: Initial fetch triggered');
+    if (!hasFetchedRef.current && tenantId) {
+      console.log('TeachersPage: Initial fetch triggered for tenant:', tenantId);
       hasFetchedRef.current = true;
-      const tenantId = "f4f414c6-47f8-4d60-b996-42c5db86aa61";
       fetchPendingInvitations(tenantId);
+      // Teachers data is automatically fetched by the useTeachersByTenant hook
     }
-  }, []); // Empty dependency array - fetch only once on mount
+  }, [fetchPendingInvitations, tenantId]); // Fetch when tenantId is available
   
   // Extract unique teacher names, departments, and designations for the filter
   const teacherNames = useMemo(() => {
@@ -1074,7 +974,8 @@ function TeachersPage() {
 
   const handleTeacherCreated = () => {
     setTeacherCreated(true);
-    // In a real application, we would fetch the updated list from the backend
+    // Refresh teachers data when a new teacher is created
+    refetchTeachers();
     setTimeout(() => {
       setTeacherCreated(false);
     }, 3000);
@@ -1279,6 +1180,38 @@ function TeachersPage() {
             <CreateTeacherDrawer onTeacherCreated={handleTeacherCreated} />
           </div>
         </div>
+
+        {/* Teachers Loading and Error States */}
+        {!tenantId && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md flex items-center">
+            <Info className="h-5 w-5 mr-2" />
+            Tenant ID not found. Please log in again to access teacher data.
+          </div>
+        )}
+
+        {teachersLoading && tenantId && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md flex items-center">
+            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+            Loading teachers data...
+          </div>
+        )}
+
+        {teachersError && tenantId && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
+            <div className="flex items-center">
+              <Info className="h-5 w-5 mr-2" />
+              Error loading teachers: {teachersError.message}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchTeachers()}
+              className="border-red-200 text-red-700 hover:bg-red-100"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
 
         {selectedTeacher ? (
           <TeacherDetailView teacher={selectedTeacher} />

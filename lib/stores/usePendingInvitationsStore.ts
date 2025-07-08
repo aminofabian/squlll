@@ -1,9 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { graphqlClient } from '../graphql-client';
-import { gql } from 'graphql-request';
 
-const GET_PENDING_INVITATIONS = gql`
+// GraphQL query for fetching pending invitations
+const GET_PENDING_INVITATIONS_QUERY = `
   query GetPendingInvitations($tenantId: String!) {
     getPendingInvitations(tenantId: $tenantId) {
       id
@@ -137,17 +136,9 @@ export const usePendingInvitationsStore = create<PendingInvitationsState>()(
         console.log('Store: Global fetch in progress:', globalFetchInProgress);
         console.log('Store: Module initialized:', moduleInitialized);
         
-        // If we have cached data, return it immediately
-        if (state.hasFetched && state.invitations.length > 0) {
-          console.log('Store: Returning cached data, no fetch needed');
-          return { getPendingInvitations: state.invitations };
-        }
-        
-        // If module is already initialized and we have data, return it
-        if (moduleInitialized && state.invitations.length > 0) {
-          console.log('Store: Module already initialized with data, returning existing data');
-          return { getPendingInvitations: state.invitations };
-        }
+        // Always fetch fresh data for now to debug the issue
+        // Remove caching logic temporarily
+        console.log('Store: Forcing fresh fetch to debug issue');
         
         // If there's already a global fetch in progress, wait for it
         if (globalFetchInProgress && globalFetchPromise) {
@@ -171,22 +162,32 @@ export const usePendingInvitationsStore = create<PendingInvitationsState>()(
         // Create the fetch promise
         globalFetchPromise = (async () => {
           try {
-            const response = await graphqlClient.request<GetPendingInvitationsResponse>(
-              GET_PENDING_INVITATIONS,
-              { tenantId }
-            );
+            // Use the dedicated API endpoint
+            const response = await fetch(`/api/teachers/pending-invitations?tenantId=${tenantId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
             
-            console.log('Store: Successfully fetched pending invitations:', response.getPendingInvitations.length);
+            console.log('Store: Successfully fetched pending invitations:', data.getPendingInvitations?.length || 0);
             
             // Update store with new data
             set({ 
-              invitations: response.getPendingInvitations, 
+              invitations: data.getPendingInvitations || [], 
               error: null, 
               hasFetched: true,
               isLoading: false 
             });
             
-            return response;
+            return data;
           } catch (error) {
             console.error('Store: Error fetching pending invitations:', error);
             const errorMessage = error instanceof Error ? error.message : 'An error occurred';
