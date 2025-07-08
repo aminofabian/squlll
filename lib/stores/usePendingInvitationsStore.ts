@@ -41,6 +41,7 @@ interface PendingInvitationsState {
   invitations: PendingInvitation[];
   isLoading: boolean;
   error: string | null;
+  hasFetched: boolean; // Add flag to track if we've already fetched
   
   // Setters
   setInvitations: (invitations: PendingInvitation[]) => void;
@@ -57,6 +58,9 @@ interface PendingInvitationsState {
   updateInvitation: (invitationId: string, updates: Partial<PendingInvitation>) => void;
   removeInvitation: (invitationId: string) => void;
   
+  // Fetch function
+  fetchPendingInvitations: (tenantId: string) => Promise<GetPendingInvitationsResponse>;
+  
   // Reset
   reset: () => void;
 }
@@ -65,7 +69,13 @@ const initialState = {
   invitations: [],
   isLoading: false,
   error: null,
+  hasFetched: false,
 };
+
+// Global flag to prevent multiple simultaneous fetches
+let globalFetchInProgress = false;
+let globalFetchPromise: Promise<GetPendingInvitationsResponse> | null = null;
+let moduleInitialized = false; // Module-level flag to ensure fetch only happens once
 
 export const usePendingInvitationsStore = create<PendingInvitationsState>()(
   devtools(
@@ -118,8 +128,87 @@ export const usePendingInvitationsStore = create<PendingInvitationsState>()(
         });
       },
 
+      // Fetch function - now part of the store with global protection
+      fetchPendingInvitations: async (tenantId: string): Promise<GetPendingInvitationsResponse> => {
+        const state = get();
+        
+        console.log('Store: fetchPendingInvitations called with tenantId:', tenantId);
+        console.log('Store: Current state - isLoading:', state.isLoading, 'hasFetched:', state.hasFetched, 'invitations count:', state.invitations.length);
+        console.log('Store: Global fetch in progress:', globalFetchInProgress);
+        console.log('Store: Module initialized:', moduleInitialized);
+        
+        // If we have cached data, return it immediately
+        if (state.hasFetched && state.invitations.length > 0) {
+          console.log('Store: Returning cached data, no fetch needed');
+          return { getPendingInvitations: state.invitations };
+        }
+        
+        // If module is already initialized and we have data, return it
+        if (moduleInitialized && state.invitations.length > 0) {
+          console.log('Store: Module already initialized with data, returning existing data');
+          return { getPendingInvitations: state.invitations };
+        }
+        
+        // If there's already a global fetch in progress, wait for it
+        if (globalFetchInProgress && globalFetchPromise) {
+          console.log('Store: Global fetch in progress, waiting for existing promise...');
+          return globalFetchPromise;
+        }
+        
+        // If local loading state is true, return current data
+        if (state.isLoading) {
+          console.log('Store: Local loading state is true, returning current data');
+          return { getPendingInvitations: state.invitations };
+        }
+        
+        console.log('Store: Starting new fetch for pending invitations...');
+        
+        // Set global flags
+        globalFetchInProgress = true;
+        moduleInitialized = true;
+        set({ isLoading: true, error: null });
+        
+        // Create the fetch promise
+        globalFetchPromise = (async () => {
+          try {
+            const response = await graphqlClient.request<GetPendingInvitationsResponse>(
+              GET_PENDING_INVITATIONS,
+              { tenantId }
+            );
+            
+            console.log('Store: Successfully fetched pending invitations:', response.getPendingInvitations.length);
+            
+            // Update store with new data
+            set({ 
+              invitations: response.getPendingInvitations, 
+              error: null, 
+              hasFetched: true,
+              isLoading: false 
+            });
+            
+            return response;
+          } catch (error) {
+            console.error('Store: Error fetching pending invitations:', error);
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+          } finally {
+            // Reset global flags
+            globalFetchInProgress = false;
+            globalFetchPromise = null;
+          }
+        })();
+        
+        return globalFetchPromise;
+      },
+
       // Reset
-      reset: () => set(initialState),
+      reset: () => {
+        globalFetchInProgress = false;
+        globalFetchPromise = null;
+        moduleInitialized = false;
+        set(initialState);
+      },
     }),
     {
       name: 'pending-invitations-store',
@@ -127,35 +216,12 @@ export const usePendingInvitationsStore = create<PendingInvitationsState>()(
   )
 );
 
-// React Query hook for fetching pending invitations
+// React Query hook for fetching pending invitations - now just returns the store function
 export const usePendingInvitationsQuery = () => {
-  const { setInvitations, setLoading, setError } = usePendingInvitationsStore();
-
-  const fetchPendingInvitations = async (tenantId: string): Promise<GetPendingInvitationsResponse> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await graphqlClient.request<GetPendingInvitationsResponse>(
-        GET_PENDING_INVITATIONS,
-        { tenantId }
-      );
-      
-      console.log('Fetched pending invitations:', response.getPendingInvitations.length);
-      setInvitations(response.getPendingInvitations);
-      return response;
-    } catch (error) {
-      console.error('Error fetching pending invitations:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { fetchPendingInvitations } = usePendingInvitationsStore();
 
   return {
     fetchPendingInvitations,
-    refetch: (tenantId: string) => fetchPendingInvitations(tenantId),
+    refetch: fetchPendingInvitations,
   };
 }; 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,7 @@ import {
   Loader2
 } from "lucide-react";
 import { CreateTeacherDrawer } from "./components/CreateTeacherDrawer";
-import { usePendingInvitationsStore, usePendingInvitationsQuery, PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
+import { usePendingInvitationsStore, PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
 
 
 // Teacher type definition
@@ -1038,14 +1038,20 @@ function TeachersPage() {
   const [teacherCreated, setTeacherCreated] = useState(false);
   
   // Pending invitations store and query
-  const { invitations, isLoading: invitationsLoading, error: invitationsError } = usePendingInvitationsStore();
-  const { fetchPendingInvitations } = usePendingInvitationsQuery();
+  const { invitations, isLoading: invitationsLoading, error: invitationsError, fetchPendingInvitations } = usePendingInvitationsStore();
+  
+  // Ref to track if fetch has been called for this component instance
+  const hasFetchedRef = useRef(false);
   
   // Fetch pending invitations on component mount
   useEffect(() => {
-    const tenantId = "f4f414c6-47f8-4d60-b996-42c5db86aa61"; // You might want to get this from context or props
-    fetchPendingInvitations(tenantId);
-  }, [fetchPendingInvitations]);
+    if (!hasFetchedRef.current) {
+      console.log('TeachersPage: Initial fetch triggered');
+      hasFetchedRef.current = true;
+      const tenantId = "f4f414c6-47f8-4d60-b996-42c5db86aa61";
+      fetchPendingInvitations(tenantId);
+    }
+  }, []); // Empty dependency array - fetch only once on mount
   
   // Extract unique teacher names, departments, and designations for the filter
   const teacherNames = useMemo(() => {
@@ -1379,8 +1385,6 @@ function TeachersPage() {
               </div>
             </div>
 
-
-
             {/* Success message */}
             {teacherCreated && (
               <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-md flex items-center">
@@ -1568,12 +1572,12 @@ function TeachersPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-primary/10">
-                  {filteredTeachers.map((teacher) => (
+                        {filteredTeachers.map((teacher) => (
                           <tr 
-                      key={teacher.id}
+                            key={teacher.id}
                             className="hover:bg-primary/5 transition-colors cursor-pointer"
-                      onClick={() => setSelectedTeacherId(teacher.id)}
-                    >
+                            onClick={() => setSelectedTeacherId(teacher.id)}
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10">
@@ -1591,21 +1595,21 @@ function TeachersPage() {
                                 </div>
                                 <div className="ml-4">
                                   <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100">
-                          {teacher.name}
-                        </div>
+                                    {teacher.name}
+                                  </div>
                                   <div className="text-sm text-slate-500 dark:text-slate-400">
                                     {teacher.designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                      </div>
+                                  </div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                            {teacher.department}
-                          </Badge>
+                              <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
+                                {teacher.department}
+                              </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-900 dark:text-slate-100">
-                          {teacher.employeeId}
+                              {teacher.employeeId}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-wrap gap-1">
@@ -1614,7 +1618,7 @@ function TeachersPage() {
                                     {subject}
                                   </Badge>
                                 ))}
-                        </div>
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               {teacher.performance?.rating ? (
@@ -1628,11 +1632,11 @@ function TeachersPage() {
                                         }`}
                                       />
                                     ))}
-                        </div>
+                                  </div>
                                   <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
                                     {teacher.performance.rating}/5
                                   </span>
-                          </div>
+                                </div>
                               ) : (
                                 <span className="text-sm text-slate-400">No rating</span>
                               )}
@@ -1657,10 +1661,10 @@ function TeachersPage() {
                                 `}>
                                   {teacher.status.charAt(0).toUpperCase() + teacher.status.slice(1)}
                                 </Badge>
-                      </div>
+                              </div>
                             </td>
                           </tr>
-                  ))}
+                        ))}
                       </tbody>
                     </table>
                   </div>
@@ -1674,5 +1678,6 @@ function TeachersPage() {
   );
 }
 
-  // Teachers page component
-  export default TeachersPage;
+// Teachers page component
+export default TeachersPage;
+             
