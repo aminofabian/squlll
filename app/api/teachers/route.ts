@@ -26,25 +26,16 @@ export async function GET(request: Request) {
       );
     }
 
-    // GraphQL query for fetching teachers by tenant
+    console.log('Teachers API - Token present:', !!token);
+    console.log('Teachers API - Tenant ID:', tenantId);
+
+    // GraphQL query for fetching teachers by tenant with role TEACHER
     const query = `
-      query GetTeachersByTenant($tenantId: String!) {
-        getTeachersByTenant(tenantId: $tenantId) {
+      query GetTeachersByTenant($tenantId: String!, $role: String!) {
+        usersByTenant(tenantId: $tenantId, role: $role) {
           id
-          fullName
-          firstName
-          lastName
+          name
           email
-          phoneNumber
-          gender
-          department
-          address
-          subject
-          employeeId
-          dateOfBirth
-          isActive
-          hasCompletedProfile
-          userId
         }
       }
     `;
@@ -59,7 +50,8 @@ export async function GET(request: Request) {
       body: JSON.stringify({
         query,
         variables: {
-          tenantId
+          tenantId,
+          role: 'TEACHER'
         }
       })
     });

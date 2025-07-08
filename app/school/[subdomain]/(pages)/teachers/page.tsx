@@ -69,7 +69,7 @@ import {
 } from "lucide-react";
 import { CreateTeacherDrawer } from "./components/CreateTeacherDrawer";
 import { usePendingInvitationsStore, PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
-import { useTeachersByTenant, useTeacherStaffUsersFromStore } from "@/lib/hooks/useTeachers";
+import { useTeachersByTenantQuery, useTeacherData } from "@/lib/stores/useTeachersStore";
 import { getTenantInfo } from "@/lib/utils";
 
 
@@ -918,18 +918,20 @@ function TeacherCard({ teacher, isSelected }: { teacher: Teacher; isSelected?: b
 function TeachersPage() {
   const tenantInfo = getTenantInfo();
   const tenantId = tenantInfo?.tenantId;
+  const hasInitialFetch = useRef(false);
   
   // Debug logging
   console.log('TeachersPage: Tenant info:', tenantInfo);
   console.log('TeachersPage: Tenant ID:', tenantId);
   
-  const { data, isLoading: teachersLoading, error: teachersError, refetch: refetchTeachers } = useTeachersByTenant(tenantId || "", "TEACHER");
-  const { teacherStaffUsers } = useTeacherStaffUsersFromStore();
+  // Fetch teachers data
+  const { fetchTeachersByTenant } = useTeachersByTenantQuery()
+  const { teacherStaffUsers: graphqlTeachers, isLoading: teachersLoading, error: teachersError } = useTeacherData()
   
   // Transform store data to Teacher format
   const teachers = useMemo(() => {
-    return teacherStaffUsers.map(transformStoreDataToTeacher);
-  }, [teacherStaffUsers]);
+    return graphqlTeachers.map(transformStoreDataToTeacher);
+  }, [graphqlTeachers]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTeacherId, setSelectedTeacherId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -940,18 +942,14 @@ function TeachersPage() {
   // Pending invitations store and query
   const { invitations, isLoading: invitationsLoading, error: invitationsError, fetchPendingInvitations } = usePendingInvitationsStore();
   
-  // Ref to track if fetch has been called for this component instance
-  const hasFetchedRef = useRef(false);
-  
-  // Fetch data on component mount
+  // Fetch data on component mount (only once)
   useEffect(() => {
-    if (!hasFetchedRef.current && tenantId) {
-      console.log('TeachersPage: Initial fetch triggered for tenant:', tenantId);
-      hasFetchedRef.current = true;
+    if (tenantId && !hasInitialFetch.current) {
+      hasInitialFetch.current = true
+      fetchTeachersByTenant(tenantId).catch(console.error)
       fetchPendingInvitations(tenantId);
-      // Teachers data is automatically fetched by the useTeachersByTenant hook
     }
-  }, [fetchPendingInvitations, tenantId]); // Fetch when tenantId is available
+  }, [tenantId, fetchTeachersByTenant, fetchPendingInvitations])
   
   // Extract unique teacher names, departments, and designations for the filter
   const teacherNames = useMemo(() => {
@@ -975,7 +973,9 @@ function TeachersPage() {
   const handleTeacherCreated = () => {
     setTeacherCreated(true);
     // Refresh teachers data when a new teacher is created
-    refetchTeachers();
+    if (tenantId) {
+      fetchTeachersByTenant(tenantId).catch(console.error);
+    }
     setTimeout(() => {
       setTeacherCreated(false);
     }, 3000);
@@ -983,11 +983,11 @@ function TeachersPage() {
 
   // Filter teachers based on search and filters
   const filteredTeachers = useMemo(() => {
-    let filtered = teachers.filter(teacher => {
+    let filtered = teachers.filter((teacher: Teacher) => {
       const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            teacher.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            teacher.contacts.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           teacher.subjects.some(subject => 
+                           teacher.subjects.some((subject: string) => 
                              subject.toLowerCase().includes(searchTerm.toLowerCase())
                            );
 
@@ -1196,16 +1196,16 @@ function TeachersPage() {
           </div>
         )}
 
-        {teachersError && tenantId && (
+        {teachersError && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
             <div className="flex items-center">
               <Info className="h-5 w-5 mr-2" />
-              Error loading teachers: {teachersError.message}
+              Error loading teachers: {teachersError}
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refetchTeachers()}
+              onClick={() => tenantId && fetchTeachersByTenant(tenantId)}
               className="border-red-200 text-red-700 hover:bg-red-100"
             >
               Retry

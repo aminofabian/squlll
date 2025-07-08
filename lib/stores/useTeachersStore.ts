@@ -145,6 +145,7 @@ export const useTeachersStore = create<TeachersState>()(
 // React Query hook for fetching teachers/staff by tenant
 export const useTeachersByTenantQuery = () => {
   const { setTeacherStaffUsers, setLoading, setError } = useTeachersStore();
+  const isFetchingRef = useRef(false);
 
   const fetchTeachersByTenant = useCallback(async (tenantId: string, role: string = "TEACHER"): Promise<GetTeachersByTenantResponse> => {
     if (!tenantId || tenantId.trim() === '') {
@@ -153,27 +154,45 @@ export const useTeachersByTenantQuery = () => {
       throw error;
     }
 
+    // Prevent multiple simultaneous requests
+    if (isFetchingRef.current) {
+      console.log('Teachers fetch already in progress, skipping...');
+      return { usersByTenant: [] };
+    }
+
+    isFetchingRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      const response = await graphqlClient.request<GetTeachersByTenantResponse>(GET_TEACHERS_BY_TENANT, {
-        tenantId,
-        role
+      // Use the simple API route instead of GraphQL client
+      const response = await fetch('/api/teachers', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch teachers');
+      }
+
+      const result = await response.json();
       
-      console.log('Fetched teachers/staff by tenant:', response.usersByTenant.length);
-      setTeacherStaffUsers(response.usersByTenant);
-      return response;
+      console.log('Fetched teachers by tenant:', result.usersByTenant?.length || 0);
+      setTeacherStaffUsers(result.usersByTenant || []);
+      return { usersByTenant: result.usersByTenant || [] };
     } catch (error) {
-      console.error('Error fetching teachers/staff by tenant:', error);
+      console.error('Error fetching teachers by tenant:', error);
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setError(errorMessage);
       throw error;
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  }, []); // Empty dependency array since Zustand functions are stable
+  }, []); // Empty dependency array
 
   return {
     fetchTeachersByTenant,
