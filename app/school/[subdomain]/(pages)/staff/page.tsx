@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { 
   Users, 
   UserPlus, 
@@ -43,6 +43,8 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { CreateStaffDrawer } from "./components/CreateStaffDrawer"
+import { useStaffByTenantQuery, useStaffData } from "@/lib/stores/useStaffStore"
+// Removed: import { getCookie } from 'cookies-next'
 
 // Staff type definition
 interface Staff {
@@ -90,151 +92,67 @@ interface Staff {
   updatedAt: string
 }
 
-// Mock staff data
-const mockStaff: Staff[] = [
-  {
-    id: "s1",
-    name: "Dr. Sarah Thompson",
-    employeeId: "STF/2020/001",
-    email: "sarah.thompson@school.edu",
-    phone: "+254 712 345 678",
-    position: "Principal",
-    department: "Administration",
-    staffType: "administrative",
-    status: "active",
-    joinDate: "2020-01-15",
-    dateOfBirth: "1975-08-20",
-    address: "Nairobi, Kenya",
-    qualifications: ["PhD in Educational Leadership", "M.Ed in Administration"],
-    experience: 18,
-    rating: 4.9,
-    lastEvaluation: "2024-01-15",
-    attendanceRate: 98,
-    responsibilities: ["School Leadership", "Strategic Planning", "Staff Management"],
-    workSchedule: "Full-time",
-    officeLocation: "Principal's Office - Block A",
-    emergencyContact: {
-      name: "John Thompson",
-      relationship: "Spouse",
-      phone: "+254 723 456 789"
-    },
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-20"
-  },
-  {
-    id: "s2",
-    name: "Mr. David Kimani",
-    employeeId: "STF/2021/025",
-    email: "david.kimani@school.edu",
-    phone: "+254 734 567 890",
-    position: "Mathematics Teacher",
-    department: "Mathematics",
-    staffType: "teaching",
-    status: "active",
-    joinDate: "2021-03-01",
-    dateOfBirth: "1985-03-12",
-    qualifications: ["B.Sc Mathematics", "Diploma in Education"],
-    experience: 8,
-    subjects: ["Mathematics", "Computer Science"],
-    classesAssigned: ["Form 2A", "Form 3B", "Form 4C"],
-    rating: 4.7,
-    attendanceRate: 96,
-    responsibilities: ["Class Teaching", "Student Mentoring", "Mathematics Club"],
-    workSchedule: "Full-time",
-    officeLocation: "Mathematics Department - Block B",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-18"
-  },
-  {
-    id: "s3",
-    name: "Ms. Grace Wanjiku",
-    employeeId: "STF/2022/012",
-    email: "grace.wanjiku@school.edu",
-    phone: "+254 745 678 901",
-    position: "Librarian",
-    department: "Library Services",
-    staffType: "support",
-    status: "active",
-    joinDate: "2022-08-15",
-    qualifications: ["Diploma in Library Science", "Certificate in Information Management"],
-    experience: 5,
-    rating: 4.5,
-    attendanceRate: 94,
-    responsibilities: ["Library Management", "Book Cataloging", "Student Research Support"],
-    workSchedule: "Full-time",
-    officeLocation: "Main Library",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-15"
-  },
-  {
-    id: "s4",
-    name: "Dr. James Ochieng",
-    employeeId: "STF/2019/008",
-    email: "james.ochieng@school.edu",
-    phone: "+254 756 789 012",
-    position: "Deputy Principal",
-    department: "Administration",
-    staffType: "administrative",
-    status: "active",
-    joinDate: "2019-09-01",
-    qualifications: ["PhD in Educational Psychology", "M.Ed in Curriculum Development"],
-    experience: 15,
-    rating: 4.8,
-    attendanceRate: 97,
-    responsibilities: ["Academic Oversight", "Curriculum Development", "Staff Coordination"],
-    workSchedule: "Full-time",
-    officeLocation: "Deputy Principal's Office - Block A",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-22"
-  },
-  {
-    id: "s5",
-    name: "Mr. Peter Mwangi",
-    employeeId: "STF/2023/045",
-    email: "peter.mwangi@school.edu",
-    phone: "+254 767 890 123",
-    position: "Lab Technician",
-    department: "Science Laboratory",
-    staffType: "support",
-    status: "active",
-    joinDate: "2023-02-10",
-    qualifications: ["Diploma in Laboratory Technology", "Certificate in Safety Management"],
-    experience: 3,
-    rating: 4.3,
-    attendanceRate: 92,
-    responsibilities: ["Lab Equipment Maintenance", "Experiment Setup", "Safety Compliance"],
-    workSchedule: "Full-time",
-    officeLocation: "Science Laboratory - Block C",
-    createdAt: "2024-01-01",
-    updatedAt: "2024-01-12"
+// Transform GraphQL data to Staff interface
+const transformGraphQLToStaff = (graphqlStaff: { id: string; name: string; email: string }): Staff => {
+  return {
+    id: graphqlStaff.id,
+    name: graphqlStaff.name,
+    employeeId: `STF/${new Date().getFullYear()}/${graphqlStaff.id.slice(-3)}`,
+    email: graphqlStaff.email,
+    phone: "+254 700 000 000", // Default phone since not in GraphQL
+    position: "Staff Member", // Default position
+    department: "General", // Default department
+    staffType: "administrative" as const, // Default staff type
+    status: "active" as const, // Default status
+    joinDate: new Date().toISOString().split('T')[0], // Default join date
+    qualifications: ["Staff Member"], // Default qualifications
+    experience: 1, // Default experience
+    responsibilities: ["General Staff Duties"], // Default responsibilities
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
-]
+}
 
 // Filter and search functions
 const nonTeachingStaffTypes = ['administrative', 'support', 'part-time', 'substitute']
-
-// Filter mock data to only include non-teaching staff
-const nonTeachingStaff = mockStaff.filter(staff => nonTeachingStaffTypes.includes(staff.staffType))
 
 export default function StaffPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
   const [showCreateDrawer, setShowCreateDrawer] = useState(false)
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
+  const hasInitialFetch = useRef(false)
+
+  // Get tenant ID from cookies (client-side)
+  const tenantId = typeof document !== 'undefined'
+    ? document.cookie
+        .split('; ')
+        .find(row => row.startsWith('tenantId='))
+        ?.split('=')[1]
+    : undefined;
+
+  // Fetch staff data
+  const { fetchStaffByTenant } = useStaffByTenantQuery()
+  const { staff: graphqlStaff, isLoading, error } = useStaffData()
+
+  // Transform GraphQL data to Staff interface
+  const transformedStaff: Staff[] = useMemo(() => {
+    return graphqlStaff.map(transformGraphQLToStaff)
+  }, [graphqlStaff])
 
   // Filter staff by name search only - only non-teaching staff
   const filteredStaff = useMemo(() => {
-    return nonTeachingStaff.filter(staff => 
+    return transformedStaff.filter(staff => 
       staff.name.toLowerCase().includes(searchTerm.toLowerCase())
     ).sort((a, b) => a.name.localeCompare(b.name))
-  }, [searchTerm])
+  }, [transformedStaff, searchTerm])
 
   // Calculate statistics for non-teaching staff only
   const stats = useMemo(() => {
-    const total = nonTeachingStaff.length
-    const active = nonTeachingStaff.filter(s => s.status === 'active').length
-    const administrative = nonTeachingStaff.filter(s => s.staffType === 'administrative').length
-    const avgExperience = nonTeachingStaff.reduce((sum, s) => sum + s.experience, 0) / total
+    const total = transformedStaff.length
+    const active = transformedStaff.filter(s => s.status === 'active').length
+    const administrative = transformedStaff.filter(s => s.staffType === 'administrative').length
+    const avgExperience = total > 0 ? transformedStaff.reduce((sum, s) => sum + s.experience, 0) / total : 0
 
     return {
       total,
@@ -242,7 +160,15 @@ export default function StaffPage() {
       administrative,
       avgExperience: Math.round(avgExperience * 10) / 10
     }
-  }, [])
+  }, [transformedStaff])
+
+  // Fetch staff data on component mount (only once)
+  useEffect(() => {
+    if (tenantId && !hasInitialFetch.current) {
+      hasInitialFetch.current = true
+      fetchStaffByTenant(tenantId).catch(console.error)
+    }
+  }, [tenantId, fetchStaffByTenant])
 
   const getStaffTypeIcon = (type: string) => {
     switch (type) {
@@ -262,6 +188,37 @@ export default function StaffPage() {
       case 'retired': return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
       default: return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
     }
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg font-mono">Loading staff data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-mono font-bold text-red-600 mb-2">Error Loading Staff Data</h2>
+          <p className="text-slate-600 font-mono">{error}</p>
+          <Button 
+            onClick={() => tenantId && fetchStaffByTenant(tenantId)} 
+            className="mt-4"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -451,7 +408,7 @@ export default function StaffPage() {
                       )}
                     </Button>
                     <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                      Showing {filteredStaff.length} of {nonTeachingStaff.length} staff members
+                      Showing {filteredStaff.length} of {transformedStaff.length} staff members
                     </p>
                   </div>
                 </div>

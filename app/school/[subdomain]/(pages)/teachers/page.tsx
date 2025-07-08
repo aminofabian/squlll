@@ -183,10 +183,10 @@ const departments = [
 ];
 
 // Function to transform store data to Teacher format
-const transformStoreDataToTeacher = (storeUser: { id: string; fullName: string; email: string }): Teacher => {
+const transformStoreDataToTeacher = (storeUser: { id: string; name: string; email: string }): Teacher => {
   return {
     id: storeUser.id,
-    name: storeUser.fullName,
+    name: storeUser.name,
     employeeId: `TCH/${new Date().getFullYear()}/${storeUser.id.slice(-3)}`,
     gender: "male", // Default value
     dateOfBirth: "1980-01-01", // Default value
@@ -923,7 +923,7 @@ function TeachersPage() {
   console.log('TeachersPage: Tenant info:', tenantInfo);
   console.log('TeachersPage: Tenant ID:', tenantId);
   
-  const { data, isLoading: teachersLoading, error: teachersError, refetch: refetchTeachers } = useTeachersByTenant(tenantId || "");
+  const { data, isLoading: teachersLoading, error: teachersError, refetch: refetchTeachers } = useTeachersByTenant(tenantId || "", "TEACHER");
   const { teacherStaffUsers } = useTeacherStaffUsersFromStore();
   
   // Transform store data to Teacher format

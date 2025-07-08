@@ -3,49 +3,26 @@ import { devtools } from 'zustand/middleware';
 import { GraphQLTeacher } from '../../types/teacher';
 import { graphqlClient } from '../graphql-client';
 import { gql } from 'graphql-request';
+import { useCallback, useRef } from 'react';
 
 const GET_TEACHERS_BY_TENANT = gql`
-  query GetTeachersByTenant($tenantId: String!) {
-    getTeachersByTenant(tenantId: $tenantId) {
+  query GetTeachersByTenant($tenantId: String!, $role: String!) {
+    usersByTenant(tenantId: $tenantId, role: $role) {
       id
-      fullName
-      firstName
-      lastName
+      name
       email
-      phoneNumber
-      gender
-      department
-      address
-      subject
-      employeeId
-      dateOfBirth
-      isActive
-      hasCompletedProfile
-      userId
     }
   }
 `;
 
 interface TeacherStaffUser {
   id: string;
-  fullName: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
-  phoneNumber: string;
-  gender: string;
-  department: string;
-  address: string;
-  subject: string;
-  employeeId: string;
-  dateOfBirth: string | null;
-  isActive: boolean;
-  hasCompletedProfile: boolean;
-  userId: string | null;
 }
 
 interface GetTeachersByTenantResponse {
-  getTeachersByTenant: TeacherStaffUser[];
+  usersByTenant: TeacherStaffUser[];
 }
 
 interface TeachersState {
@@ -169,7 +146,7 @@ export const useTeachersStore = create<TeachersState>()(
 export const useTeachersByTenantQuery = () => {
   const { setTeacherStaffUsers, setLoading, setError } = useTeachersStore();
 
-  const fetchTeachersByTenant = async (tenantId: string): Promise<GetTeachersByTenantResponse> => {
+  const fetchTeachersByTenant = useCallback(async (tenantId: string, role: string = "TEACHER"): Promise<GetTeachersByTenantResponse> => {
     if (!tenantId || tenantId.trim() === '') {
       const error = new Error('Tenant ID is required');
       setError(error.message);
@@ -181,11 +158,12 @@ export const useTeachersByTenantQuery = () => {
 
     try {
       const response = await graphqlClient.request<GetTeachersByTenantResponse>(GET_TEACHERS_BY_TENANT, {
-        tenantId
+        tenantId,
+        role
       });
       
-      console.log('Fetched teachers/staff by tenant:', response.getTeachersByTenant.length);
-      setTeacherStaffUsers(response.getTeachersByTenant);
+      console.log('Fetched teachers/staff by tenant:', response.usersByTenant.length);
+      setTeacherStaffUsers(response.usersByTenant);
       return response;
     } catch (error) {
       console.error('Error fetching teachers/staff by tenant:', error);
@@ -195,10 +173,22 @@ export const useTeachersByTenantQuery = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array since Zustand functions are stable
 
   return {
     fetchTeachersByTenant,
-    refetch: (tenantId: string) => fetchTeachersByTenant(tenantId),
+    refetch: (tenantId: string, role: string = "TEACHER") => fetchTeachersByTenant(tenantId, role),
+  };
+};
+
+// Hook to access teacher data from the store
+export const useTeacherData = () => {
+  const { teachers, teacherStaffUsers, isLoading, error } = useTeachersStore();
+  
+  return {
+    teachers,
+    teacherStaffUsers, // Keep this for backward compatibility
+    isLoading,
+    error,
   };
 }; 

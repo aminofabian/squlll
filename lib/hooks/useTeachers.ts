@@ -89,12 +89,12 @@ export const useTeacherStaffUserByEmail = (email: string) => {
 };
 
 // Hook to fetch teachers/staff by tenant using GraphQL
-export const useTeachersByTenant = (tenantId: string) => {
+export const useTeachersByTenant = (tenantId: string, role: string = "TEACHER") => {
   const { fetchTeachersByTenant } = useTeachersByTenantQuery();
 
   const query = useQuery({
-    queryKey: ['teachers-by-tenant', tenantId],
-    queryFn: () => fetchTeachersByTenant(tenantId),
+    queryKey: ['teachers-by-tenant', tenantId, role],
+    queryFn: () => fetchTeachersByTenant(tenantId, role),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!tenantId, // Only run query if tenantId is provided

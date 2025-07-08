@@ -7,12 +7,14 @@ import { Loader2, RefreshCw, Users } from 'lucide-react';
 
 interface TeacherStaffListProps {
   tenantId: string;
+  role?: string;
 }
 
 export const TeacherStaffList: React.FC<TeacherStaffListProps> = ({ 
-  tenantId
+  tenantId,
+  role = "TEACHER"
 }) => {
-  const { data, isLoading, error, refetch } = useTeachersByTenant(tenantId);
+  const { data, isLoading, error, refetch } = useTeachersByTenant(tenantId, role);
   const { teacherStaffUsers } = useTeacherStaffUsersFromStore();
 
   const handleRefresh = () => {
@@ -95,11 +97,11 @@ export const TeacherStaffList: React.FC<TeacherStaffListProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 font-semibold">
-                      {user.fullName.charAt(0).toUpperCase()}
+                      {user.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium">{user.fullName}</p>
+                    <p className="font-medium">{user.name}</p>
                     <p className="text-sm text-gray-600">{user.email}</p>
                   </div>
                 </div>

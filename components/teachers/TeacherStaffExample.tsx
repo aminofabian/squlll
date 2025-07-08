@@ -9,13 +9,14 @@ import { Loader2, Search, Users } from 'lucide-react';
 
 export const TeacherStaffExample: React.FC = () => {
   const [tenantId, setTenantId] = useState('f4f414c6-47f8-4d60-b996-42c5db86aa61');
+  const [role, setRole] = useState('TEACHER');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading, error, refetch } = useTeachersByTenant(tenantId);
+  const { data, isLoading, error, refetch } = useTeachersByTenant(tenantId, role);
   const { teacherStaffUsers } = useTeacherStaffUsersFromStore();
 
   const filteredUsers = teacherStaffUsers.filter(user =>
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -43,7 +44,18 @@ export const TeacherStaffExample: React.FC = () => {
                 placeholder="Enter tenant ID"
               />
             </div>
-
+            <div>
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TEACHER">Teacher</SelectItem>
+                  <SelectItem value="STAFF">Staff</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex items-end">
               <Button onClick={handleFetch} disabled={isLoading} className="w-full">
                 {isLoading ? (
@@ -72,7 +84,7 @@ export const TeacherStaffExample: React.FC = () => {
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-green-600 font-medium">Success!</p>
               <p className="text-green-500 text-sm">
-                Fetched {data.getTeachersByTenant.length} users for tenant: {tenantId}
+                Fetched {data.usersByTenant.length} users for tenant: {tenantId}
               </p>
             </div>
           )}
@@ -113,12 +125,12 @@ export const TeacherStaffExample: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold">
-                        {user.fullName.charAt(0).toUpperCase()}
+                                            <span className="text-blue-600 font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                                          <p className="font-medium">{user.fullName}</p>
+                      <p className="font-medium">{user.name}</p>
                     <p className="text-sm text-gray-600">{user.email}</p>
                   </div>
                 </div>
