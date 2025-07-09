@@ -28,6 +28,7 @@ export async function GET(request: Request) {
 
     console.log('Teachers API - Token present:', !!token);
     console.log('Teachers API - Tenant ID:', tenantId);
+    console.log('Teachers API - Role being queried: TEACHER');
 
     // GraphQL query for fetching teachers by tenant with role TEACHER
     const query = `
@@ -40,6 +41,13 @@ export async function GET(request: Request) {
       }
     `;
 
+    const variables = {
+      tenantId,
+      role: 'TEACHER'
+    };
+
+    console.log('Teachers API - GraphQL variables:', variables);
+
     // Call external GraphQL API
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
@@ -49,14 +57,12 @@ export async function GET(request: Request) {
       },
       body: JSON.stringify({
         query,
-        variables: {
-          tenantId,
-          role: 'TEACHER'
-        }
+        variables
       })
     });
 
     const result = await response.json();
+    console.log('Teachers API - GraphQL response:', result);
 
     // Check for GraphQL errors
     if (result.errors) {
@@ -67,6 +73,7 @@ export async function GET(request: Request) {
       );
     }
 
+    console.log('Teachers API - Returning data:', result.data);
     return NextResponse.json(result.data);
   } catch (error) {
     console.error('Error fetching teachers:', error);

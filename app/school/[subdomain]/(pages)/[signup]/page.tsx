@@ -73,13 +73,14 @@ function SignupContent() {
 
   // Validate the route synchronously
   const tokenParam = searchParams.get('token')
-  const isValidTokenFormat = /^[A-Za-z0-9+/]+=*$/.test(signupToken) && signupToken.length > 20
-  const hasValidToken = tokenParam || isValidTokenFormat
+  // Check if signupToken is actually a token (not the literal "signup" string)
+  const isSignupTokenValid = signupToken && signupToken !== 'signup' && /^[A-Za-z0-9+/]+=*$/.test(signupToken) && signupToken.length > 20
+  const hasValidToken = tokenParam || isSignupTokenValid
   
   // Determine signup type based on token or URL pattern
   const determineSignupType = (): SignupType => {
     // Check if the token contains any indicators of type
-    const token = tokenParam || signupToken
+    const token = tokenParam || (isSignupTokenValid ? signupToken : null)
     if (token) {
       // You can add logic here to determine type from token if needed
       // For now, we'll use a simple heuristic or default to staff
@@ -108,7 +109,7 @@ function SignupContent() {
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [token, setToken] = useState<string | null>(tokenParam || signupToken)
+  const [token, setToken] = useState<string | null>(tokenParam || (isSignupTokenValid ? signupToken : null))
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
