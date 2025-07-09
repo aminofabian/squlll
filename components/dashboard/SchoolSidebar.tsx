@@ -74,7 +74,7 @@ const mainNavigationItems: NavigationItem[] = [
   },
   {
     title: "Time Table",
-    href: "/time-table",
+    href: "/timetable",
     icon: Calendar,
   },
   {
@@ -170,7 +170,7 @@ const navigationCategories: NavigationCategory[] = [
       },
       {
         title: "Time Table",
-        href: "/time-table",
+        href: "/timetable",
         icon: Calendar,
       },
     ]
