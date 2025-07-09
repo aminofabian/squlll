@@ -73,7 +73,7 @@ const mainNavigationItems: NavigationItem[] = [
     icon: BookOpen,
   },
   {
-    title: "Time Table",
+    title: "Timetable",
     href: "/timetable",
     icon: Calendar,
   },
