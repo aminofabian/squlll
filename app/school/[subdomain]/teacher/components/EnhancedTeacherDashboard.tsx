@@ -30,6 +30,7 @@ import {
   Copy
 } from "lucide-react";
 import CreateTestSection from "./CreateTestSection";
+import { DynamicLogo } from '../../parent/components/DynamicLogo';
 
 // Mock data for demonstration
 const mockData = {
@@ -71,7 +72,11 @@ interface Action {
   bgClass: string; // Added bgClass to the interface
 }
 
-export default function EnhancedTeacherDashboard() {
+interface EnhancedTeacherDashboardProps {
+  subdomain: string;
+}
+
+export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherDashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
   const [showCreateTest, setShowCreateTest] = useState(false);
@@ -272,8 +277,11 @@ export default function EnhancedTeacherDashboard() {
       {/* Main Content */}
       <div className="px-4 py-6 lg:px-8 lg:py-8">
         <div className="max-w-7xl mx-auto">
+          <div className="w-full flex justify-center py-6">
+            <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
+          </div>
           {showCreateTest ? (
-            <CreateTestSection onBack={() => setShowCreateTest(false)} />
+            <CreateTestSection subdomain={subdomain} onBack={() => setShowCreateTest(false)} />
           ) : (
             <>
               {renderTeacherStats()}

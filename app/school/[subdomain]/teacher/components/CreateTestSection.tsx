@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { DynamicLogo } from '../../parent/components/DynamicLogo';
 
 const mockSubjects = ["Mathematics", "English", "Science", "Social Studies", "Kiswahili"];
 const mockGrades = ["Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8"];
@@ -18,11 +19,12 @@ function emptyQuestion() {
   };
 }
 
-export default function CreateTestSection({ onBack }: { onBack?: () => void }) {
+export default function CreateTestSection({ subdomain, onBack }: { subdomain?: string; onBack?: () => void }) {
   // Step state
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showA4Preview, setShowA4Preview] = useState(false);
 
   // Test details
   const [title, setTitle] = useState("");
@@ -389,11 +391,19 @@ export default function CreateTestSection({ onBack }: { onBack?: () => void }) {
                     rightHeading = "Short Answer Questions";
                     instructions = "Answer all questions in the space provided.";
                   }
-                  return (
-                    <div className="flex flex-col gap-6 animate-fadeIn">
-                      <h3 className="text-lg font-bold text-foreground mb-2">Review & Save</h3>
-                      {/* Exam Paper Style */}
-                      <div className="bg-white font-serif rounded-lg p-10 border border-primary/10 shadow-md flex flex-col items-center mb-6 max-w-2xl mx-auto">
+                  // A4 Preview content (reuse the review card)
+                  const A4Preview = (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 print:bg-transparent">
+                      <div className="relative bg-white font-serif shadow-xl border border-gray-300 rounded-none w-[210mm] h-[297mm] max-w-full max-h-full overflow-auto p-12 print:w-full print:h-full print:shadow-none print:border-none">
+                        <button
+                          className="absolute top-4 right-4 bg-primary text-white rounded px-3 py-1 font-bold shadow hover:bg-primary/80 print:hidden"
+                          onClick={() => setShowA4Preview(false)}
+                        >
+                          Close
+                        </button>
+                        <div className="flex flex-col items-center mb-6">
+                          <DynamicLogo subdomain={subdomain || ''} size="lg" showText={true} />
+                        </div>
                         {/* Header */}
                         <div className="w-full flex flex-row items-start justify-between mb-2">
                           <div>
@@ -431,23 +441,94 @@ export default function CreateTestSection({ onBack }: { onBack?: () => void }) {
                           ))}
                         </ol>
                       </div>
-                      <div className="flex justify-between gap-2 mt-6">
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 px-4 py-2 bg-muted text-foreground rounded font-semibold hover:bg-muted/70 transition"
-                          onClick={() => setStep(2)}
-                        >
-                          <ChevronLeft className="w-4 h-4" /> Back
-                        </button>
-                        <button
-                          type="submit"
-                          className="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded font-semibold hover:bg-primary/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                          disabled={saving}
-                        >
-                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Create Test
-                        </button>
-                      </div>
+                      <style>{`
+                        @media print {
+                          body * { visibility: hidden !important; }
+                          .print\:bg-transparent { background: transparent !important; }
+                          .print\:w-full { width: 100% !important; }
+                          .print\:h-full { height: 100% !important; }
+                          .print\:shadow-none { box-shadow: none !important; }
+                          .print\:border-none { border: none !important; }
+                          .print\:hidden { display: none !important; }
+                          .print\:block { display: block !important; }
+                          .print-area, .print-area * { visibility: visible !important; }
+                          .print-area { position: absolute !important; left: 0; top: 0; width: 100vw !important; height: 100vh !important; background: white !important; }
+                        }
+                      `}</style>
                     </div>
+                  );
+                  return (
+                    <>
+                      <div className="flex flex-col gap-6 animate-fadeIn">
+                        <h3 className="text-lg font-bold text-foreground mb-2">Review & Save</h3>
+                        {/* Exam Paper Style */}
+                        <div className="bg-white font-serif rounded-lg p-10 border border-primary/10 shadow-md flex flex-col items-center mb-6 max-w-2xl mx-auto">
+                          <div className="flex flex-col items-center mb-6"><DynamicLogo subdomain={subdomain || ''} size="lg" showText={true} /></div>
+                          {/* Header */}
+                          <div className="w-full flex flex-row items-start justify-between mb-2">
+                            <div>
+                              <div className="text-2xl font-extrabold text-black mb-1">{title || <span className="italic text-gray-400">Test Title</span>}</div>
+                              <div className="text-lg italic text-gray-700">{subject} {grade && `– ${grade}`}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-base font-semibold text-black">{rightHeading}</div>
+                              <div className="text-sm text-gray-700">Date: {date}</div>
+                              <div className="text-sm text-gray-700">Start: {startTime}</div>
+                              <div className="text-sm text-gray-700">Duration: {duration} min</div>
+                            </div>
+                          </div>
+                          <hr className="w-full border-t border-gray-300 my-4" />
+                          {/* Instructions */}
+                          <div className="w-full text-center text-sm italic text-gray-600 mb-6">
+                            {instructions}
+                          </div>
+                          {/* Questions */}
+                          <ol className="list-decimal pl-6 w-full space-y-6">
+                            {questions.map((q, idx) => (
+                              <li key={idx} className="text-black text-base mb-2">
+                                <div className="mb-2 font-medium">{q.text}</div>
+                                {q.type === "mcq" && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
+                                    {q.options.map((opt, oIdx) => (
+                                      <div key={oIdx} className="flex items-start gap-2">
+                                        <span className="font-bold text-black w-6">{String.fromCharCode(65 + oIdx)})</span>
+                                        <span className="text-black">{opt}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                        <div className="flex justify-between gap-2 mt-6">
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 px-4 py-2 bg-muted text-foreground rounded font-semibold hover:bg-muted/70 transition"
+                            onClick={() => setStep(2)}
+                          >
+                            <ChevronLeft className="w-4 h-4" /> Back
+                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 px-4 py-2 bg-secondary text-foreground rounded font-semibold hover:bg-secondary/80 transition border border-primary/30"
+                              onClick={() => setShowA4Preview(true)}
+                            >
+                              Preview as A4
+                            </button>
+                            <button
+                              type="submit"
+                              className="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded font-semibold hover:bg-primary/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                              disabled={saving}
+                            >
+                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Create Test
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      {showA4Preview && A4Preview}
+                    </>
                   );
                 })()
               )}

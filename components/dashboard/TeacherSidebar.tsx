@@ -18,6 +18,8 @@ import {
   Settings,
   LogOut
 } from "lucide-react"
+import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
+import { useParams } from 'next/navigation';
 
 interface SidebarProps {
   className?: string
@@ -26,7 +28,7 @@ interface SidebarProps {
 const navigation = [
   {
     title: "Dashboard",
-    href: "/teacher/dashboard",
+    href: "/teacher",
     icon: LayoutDashboard,
   },
   {
@@ -63,7 +65,9 @@ const navigation = [
 ]
 
 export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const params = useParams();
+  const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
 
   return (
     <div className={cn(
@@ -71,16 +75,8 @@ export function Sidebar({ className }: SidebarProps) {
       className
     )}>
       {/* Header */}
-      <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700 shadow-sm">
-        <Link href="/" className="flex items-center gap-4 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-[#246a59] to-[#1a4d41] dark:from-[#246a59] dark:to-[#153d34] rounded-lg shadow-lg flex items-center justify-center transform transition-all duration-200 ease-out group-hover:scale-105 group-hover:shadow-xl group-hover:rotate-3">
-            <div className="text-white font-mono font-bold text-base tracking-wider">SQ</div>
-          </div>
-          <div className="font-mono font-bold text-xl tracking-wider transform transition-all duration-200 ease-out group-hover:translate-x-1">
-            <span className="text-slate-900 dark:text-slate-100">SQ</span>
-            <span className="bg-gradient-to-r from-[#246a59] to-[#1a4d41] dark:from-[#246a59] dark:to-[#153d34] text-transparent bg-clip-text">UL</span>
-          </div>
-        </Link>
+      <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700 shadow-sm flex flex-col items-center">
+        <DynamicLogo subdomain={subdomain} size="md" showText={true} />
       </div>
 
       {/* Navigation */}
