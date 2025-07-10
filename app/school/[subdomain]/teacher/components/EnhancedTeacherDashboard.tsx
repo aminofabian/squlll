@@ -190,12 +190,12 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   ];
 
   const renderQuickActions = () => (
-    <div className="mb-8">
+    <div className="mb-2">
       <div className="flex items-center gap-3 mb-8 justify-center">
         <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
       </div>
       <div className="flex justify-center">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-3xl w-full">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-3xl w-full">
           {quickActions.map((action) => (
             <button
               key={action.id}

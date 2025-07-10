@@ -10,11 +10,13 @@ export default function TeacherLayout({
   children: React.ReactNode
 }) {
   return (
-    <DashboardLayout
-      sidebar={<Sidebar />}
-      mobileNav={<MobileNav />}
-    >
-      {children}
-    </DashboardLayout>
+    <div className="font-outfit">
+      <DashboardLayout
+        sidebar={<Sidebar />}
+        mobileNav={<MobileNav />}
+      >
+        {children}
+      </DashboardLayout>
+    </div>
   )
 } 

@@ -444,10 +444,6 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
                   >
                     ACADEMY
                   </span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-                  <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                    DASHBOARD v2
-                  </span>
                 </div>
               </div>
             </div>
