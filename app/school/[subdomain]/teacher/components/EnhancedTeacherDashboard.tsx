@@ -27,9 +27,13 @@ import {
   CheckCircle2,
   User,
   TrendingUp,
-  Copy
+  Copy,
+  Search
 } from "lucide-react";
 import CreateTestSection from "./CreateTestSection";
+import MarkRegisterSection from "./MarkRegisterSection";
+import SendMessageSection from "./SendMessageSection";
+import IndividualSearchSection from "./IndividualSearchSection";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 
 // Mock data for demonstration
@@ -80,6 +84,9 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedMenuItem, setSelectedMenuItem] = useState<string | null>(null);
   const [showCreateTest, setShowCreateTest] = useState(false);
+  const [showMarkRegister, setShowMarkRegister] = useState(false);
+  const [showSendMessage, setShowSendMessage] = useState(false);
+  const [showIndividualSearch, setShowIndividualSearch] = useState(false);
 
   const handleActionClick = (actionId: string, menuId: string) => {
     console.log(`Action ${actionId} clicked for menu ${menuId}`);
@@ -100,14 +107,14 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
       id: 'mark-register',
       title: 'Mark Register',
       icon: <ClipboardList className="w-6 h-6" />,
-      onClick: () => handleActionClick('mark-register', 'quick-actions'),
+      onClick: () => setShowMarkRegister(true),
       bgClass: 'bg-primary',
     },
     {
       id: 'send-message',
       title: 'Send Message',
       icon: <Send className="w-6 h-6" />,
-      onClick: () => handleActionClick('send-message', 'quick-actions'),
+      onClick: () => setShowSendMessage(true),
       bgClass: 'bg-primary',
     },
     {
@@ -144,6 +151,13 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
       icon: <Eye className="w-6 h-6" />,
       onClick: () => handleActionClick('review-submissions', 'quick-actions'),
       bgClass: 'bg-primary/80',
+    },
+    {
+      id: 'search-individuals',
+      title: 'Search Individuals',
+      icon: <Search className="w-6 h-6" />,
+      onClick: () => setShowIndividualSearch(true),
+      bgClass: 'bg-primary',
     },
     {
       id: 'track-student-progress',
@@ -254,21 +268,21 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
       {/* Header */}
-      <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border sticky top-0 z-50">
-        <div className="px-4 py-4 lg:px-8 lg:py-6">
+      <div className="bg-gradient-to-r from-card/95 via-white/90 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
+        <div className="px-6 py-6 lg:px-10 lg:py-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-lg">
-                <BookOpen className="w-5 h-5 text-primary-foreground" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <BookOpen className="w-6 h-6 text-primary-foreground text-white" />
               </div>
-              <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-foreground">Teacher Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Welcome back! Manage your classes efficiently.</p>
+              <div className="space-y-1">
+                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Teacher Dashboard</h1>
+                <p className="text-sm text-muted-foreground/90 font-medium">Welcome back! Manage your classes efficiently.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date().toLocaleDateString()}</span>
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
+              <Calendar className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-foreground/80">{new Date().toLocaleDateString()}</span>
             </div>
           </div>
         </div>
@@ -282,6 +296,12 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
           </div>
           {showCreateTest ? (
             <CreateTestSection subdomain={subdomain} onBack={() => setShowCreateTest(false)} />
+          ) : showMarkRegister ? (
+            <MarkRegisterSection subdomain={subdomain} onBack={() => setShowMarkRegister(false)} />
+          ) : showSendMessage ? (
+            <SendMessageSection subdomain={subdomain} onBack={() => setShowSendMessage(false)} />
+          ) : showIndividualSearch ? (
+            <IndividualSearchSection subdomain={subdomain} onBack={() => setShowIndividualSearch(false)} />
           ) : (
             <>
               {renderTeacherStats()}
