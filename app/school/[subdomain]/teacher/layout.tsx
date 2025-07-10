@@ -2,7 +2,6 @@
 import {metadata} from './metadata'
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { Sidebar } from "@/components/dashboard/TeacherSidebar"
-import { SearchFilter } from "@/components/dashboard/SearchFilter"
 import { MobileNav } from "@/components/dashboard/MobileNav"
 
 export default function TeacherLayout({
@@ -13,7 +12,6 @@ export default function TeacherLayout({
   return (
     <DashboardLayout
       sidebar={<Sidebar />}
-      searchFilter={<SearchFilter type="dashboard" />}
       mobileNav={<MobileNav />}
     >
       {children}
