@@ -34,6 +34,9 @@ import CreateTestSection from "./CreateTestSection";
 import MarkRegisterSection from "./MarkRegisterSection";
 import SendMessageSection from "./SendMessageSection";
 import IndividualSearchSection from "./IndividualSearchSection";
+import ShareResourcesSection from "./ShareResourcesSection";
+import AssignHomeworkSection from "./AssignHomeworkSection";
+import EnterMarksSection from "./EnterMarksSection";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 
 // Mock data for demonstration
@@ -87,6 +90,17 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   const [showMarkRegister, setShowMarkRegister] = useState(false);
   const [showSendMessage, setShowSendMessage] = useState(false);
   const [showIndividualSearch, setShowIndividualSearch] = useState(false);
+  const [showShareResources, setShowShareResources] = useState(false);
+  const [showAssignHomework, setShowAssignHomework] = useState(false);
+  const [showEnterMarks, setShowEnterMarks] = useState(false);
+  const [newlyCreatedTest, setNewlyCreatedTest] = useState<{
+    title: string;
+    subject: string;
+    grade: string;
+    date: string;
+    startTime: string;
+    duration: string;
+  } | undefined>(undefined);
 
   const handleActionClick = (actionId: string, menuId: string) => {
     console.log(`Action ${actionId} clicked for menu ${menuId}`);
@@ -128,7 +142,7 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
       id: 'enter-marks',
       title: 'Enter Marks',
       icon: <CheckSquare className="w-6 h-6" />,
-      onClick: () => handleActionClick('enter-marks', 'quick-actions'),
+      onClick: () => setShowEnterMarks(true),
       bgClass: 'bg-primary',
     },
     {
@@ -142,7 +156,7 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
       id: 'assign-homework',
       title: 'Assign Homework',
       icon: <BookOpen className="w-6 h-6" />,
-      onClick: () => handleActionClick('assign-homework', 'quick-actions'),
+      onClick: () => setShowAssignHomework(true),
       bgClass: 'bg-primary',
     },
     {
@@ -170,7 +184,7 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
       id: 'share-resources',
       title: 'Share Resources',
       icon: <Upload className="w-6 h-6" />,
-      onClick: () => handleActionClick('share-resources', 'quick-actions'),
+      onClick: () => setShowShareResources(true),
       bgClass: 'bg-primary/80',
     },
   ];
@@ -295,13 +309,38 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
             <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
           </div>
           {showCreateTest ? (
-            <CreateTestSection subdomain={subdomain} onBack={() => setShowCreateTest(false)} />
+            <CreateTestSection 
+              subdomain={subdomain} 
+              onBack={() => setShowCreateTest(false)}
+              onAssignHomework={(testData) => {
+                setNewlyCreatedTest(testData);
+                setShowCreateTest(false);
+                setShowAssignHomework(true);
+              }}
+            />
           ) : showMarkRegister ? (
             <MarkRegisterSection subdomain={subdomain} onBack={() => setShowMarkRegister(false)} />
           ) : showSendMessage ? (
             <SendMessageSection subdomain={subdomain} onBack={() => setShowSendMessage(false)} />
           ) : showIndividualSearch ? (
             <IndividualSearchSection subdomain={subdomain} onBack={() => setShowIndividualSearch(false)} />
+          ) : showShareResources ? (
+            <ShareResourcesSection subdomain={subdomain} onBack={() => setShowShareResources(false)} />
+          ) : showAssignHomework ? (
+            <AssignHomeworkSection 
+              subdomain={subdomain} 
+              onBack={() => {
+                setShowAssignHomework(false);
+                setNewlyCreatedTest(undefined);
+              }}
+              onCreateTest={() => setShowCreateTest(true)}
+              newlyCreatedTest={newlyCreatedTest}
+            />
+          ) : showEnterMarks ? (
+            <EnterMarksSection 
+              subdomain={subdomain} 
+              onBack={() => setShowEnterMarks(false)}
+            />
           ) : (
             <>
               {renderTeacherStats()}

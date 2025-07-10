@@ -19,7 +19,18 @@ function emptyQuestion() {
   };
 }
 
-export default function CreateTestSection({ subdomain, onBack }: { subdomain?: string; onBack?: () => void }) {
+export default function CreateTestSection({ subdomain, onBack, onAssignHomework }: { 
+  subdomain?: string; 
+  onBack?: () => void; 
+  onAssignHomework?: (testData: {
+    title: string;
+    subject: string;
+    grade: string;
+    date: string;
+    startTime: string;
+    duration: string;
+  }) => void;
+}) {
   // Step state
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -108,12 +119,34 @@ export default function CreateTestSection({ subdomain, onBack }: { subdomain?: s
               <div className="w-16 h-16 flex items-center justify-center bg-primary text-white rounded-full mb-4">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <div className="text-lg font-semibold text-primary mb-2">Test Created!</div>
-              <div className="text-muted-foreground text-sm">Your test has been saved successfully.</div>
-              <button
-                className="mt-6 px-4 py-2 bg-primary text-white rounded font-semibold hover:bg-primary/90 transition"
-                onClick={onBack}
-              >Back to Dashboard</button>
+              <div className="text-lg font-semibold text-primary mb-2">Test Created Successfully!</div>
+              <div className="text-muted-foreground text-sm mb-6">Your test has been saved successfully.</div>
+              
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                <button
+                  className="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors shadow-lg"
+                  onClick={() => onAssignHomework?.({
+                    title,
+                    subject,
+                    grade,
+                    date,
+                    startTime,
+                    duration
+                  })}
+                >
+                  Assign to Students
+                </button>
+                <button
+                  className="flex-1 px-6 py-3 border border-primary/20 text-primary rounded-lg font-semibold hover:bg-primary/5 transition-colors"
+                  onClick={onBack}
+                >
+                  Back to Dashboard
+                </button>
+              </div>
+              
+              <div className="text-xs text-muted-foreground mt-4 text-center">
+                Choose "Assign to Students" to immediately share this test with classes, individuals, or parents
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSave}>
