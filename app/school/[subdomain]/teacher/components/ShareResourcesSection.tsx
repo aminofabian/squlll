@@ -65,6 +65,7 @@ interface Recipient {
   phone?: string;
   class?: string;
   grade?: string;
+  department?: string;
   avatar?: string;
   isSelected?: boolean;
 }
