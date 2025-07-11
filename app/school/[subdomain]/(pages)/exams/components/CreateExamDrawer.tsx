@@ -862,7 +862,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           Streams (Optional)
-                          {field.value.length > 0 && (
+                          {field.value && field.value.length > 0 && (
                             <Badge variant="secondary" className="ml-2 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
                               {field.value.length} selected
                             </Badge>
@@ -871,7 +871,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                         <div className="relative">
                           <div 
                             className={`min-h-10 p-3 rounded-md border-2 cursor-pointer transition-all duration-200 font-mono bg-white dark:bg-slate-800 ${
-                              field.value.length > 0 
+                              field.value && field.value.length > 0 
                                 ? 'border-purple-300 bg-purple-50 dark:bg-purple-950/20' 
                                 : 'border-primary/20 hover:border-primary/40'
                             } focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${
@@ -889,18 +889,18 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                               <span className="text-slate-500">Select classes first</span>
                             ) : availableStreams.length === 0 ? (
                               <span className="text-slate-500">No streams available</span>
-                            ) : field.value.length === 0 ? (
+                            ) : !field.value || field.value.length === 0 ? (
                               <span className="text-slate-500">Select streams...</span>
                             ) : (
                               <div className="flex flex-wrap gap-1">
-                                {field.value.map(streamName => (
+                                {field.value?.map(streamName => (
                                   <Badge 
                                     key={streamName} 
                                     variant="secondary" 
                                     className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      const newValue = field.value.filter(name => name !== streamName);
+                                      const newValue = field.value?.filter(name => name !== streamName) || [];
                                       field.onChange(newValue);
                                       setSelectedStreams(newValue);
                                     }}
@@ -927,12 +927,12 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                                     size="sm"
                                     className="h-6 px-2 text-xs"
                                     onClick={() => {
-                                      const newValue = field.value.length === availableStreams.length ? [] : availableStreams;
+                                      const newValue = (field.value?.length || 0) === availableStreams.length ? [] : availableStreams;
                                       field.onChange(newValue);
                                       setSelectedStreams(newValue);
                                     }}
                                   >
-                                    {field.value.length === availableStreams.length ? 'Clear All' : 'Select All'}
+                                    {(field.value?.length || 0) === availableStreams.length ? 'Clear All' : 'Select All'}
                                   </Button>
                                 </div>
                               </div>
@@ -941,24 +941,25 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                                   <div
                                     key={streamName}
                                     className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
-                                      field.value.includes(streamName)
+                                      field.value?.includes(streamName)
                                         ? 'bg-purple-50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-100'
                                         : 'hover:bg-slate-50 dark:hover:bg-slate-700'
                                     }`}
                                     onClick={() => {
-                                      const newValue = field.value.includes(streamName)
-                                        ? field.value.filter(name => name !== streamName)
-                                        : [...field.value, streamName];
+                                      const currentValue = field.value || [];
+                                      const newValue = currentValue.includes(streamName)
+                                        ? currentValue.filter(name => name !== streamName)
+                                        : [...currentValue, streamName];
                                       field.onChange(newValue);
                                       setSelectedStreams(newValue);
                                     }}
                                   >
                                     <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                                      field.value.includes(streamName)
+                                      field.value?.includes(streamName)
                                         ? 'bg-purple-600 border-purple-600'
                                         : 'border-slate-300'
                                     }`}>
-                                      {field.value.includes(streamName) && (
+                                      {field.value?.includes(streamName) && (
                                         <CheckCircle className="h-3 w-3 text-white" />
                                       )}
                                     </div>
