@@ -50,7 +50,8 @@ import {
   Timer,
   PenTool,
   Wand2,
-  MessageSquare
+  MessageSquare,
+  X
 } from "lucide-react";
 import { toast } from 'sonner';
 import { subjects } from "@/lib/data/mockExams";
@@ -61,10 +62,10 @@ import { useQueryClient } from '@tanstack/react-query';
 const examFormSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
   description: z.string().min(5, { message: 'Description must be at least 5 characters' }),
-  subject: z.string({ required_error: "Please select a subject" }),
+  subjects: z.array(z.string()).min(1, { message: "Please select at least one subject" }),
   examType: z.string({ required_error: "Please select exam type" }),
-  class: z.string({ required_error: "Please select a class" }),
-  stream: z.string().optional(),
+  classes: z.array(z.string()).min(1, { message: "Please select at least one class" }),
+  streams: z.array(z.string()).optional(),
   term: z.string({ required_error: "Please select a term" }),
   academicYear: z.string({ required_error: "Please select academic year" }),
   dateAdministered: z.string().min(1, { message: 'Exam date is required' }),
@@ -99,6 +100,12 @@ interface CreateExamDrawerProps {
 export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [allSubjectsSelected, setAllSubjectsSelected] = useState(false);
+  const [allGradesSelected, setAllGradesSelected] = useState(false);
+  const [allStreamsSelected, setAllStreamsSelected] = useState(false);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [selectedStreams, setSelectedStreams] = useState<string[]>([]);
   const queryClient = useQueryClient();
   
   // Get data from school config store
@@ -188,10 +195,10 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
     defaultValues: {
       title: '',
       description: '',
-      subject: '',
+      subjects: [],
       examType: '',
-      class: '',
-      stream: '',
+      classes: [],
+      streams: [],
       term: '',
       academicYear: new Date().getFullYear().toString(),
       dateAdministered: '',
@@ -204,38 +211,73 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
   });
 
   // Watch form values for dynamic updates
-  const watchedClass = form.watch('class');
-  const watchedStream = form.watch('stream');
+  const watchedClasses = form.watch('classes');
+  const watchedStreams = form.watch('streams');
   
-  // Find the selected grade ID from the class name
-  const selectedGradeId = useMemo(() => {
-    if (!watchedClass || !allGrades) return null;
-    const grade = allGrades.find(g => g.name === watchedClass);
-    return grade?.id || null;
-  }, [watchedClass, allGrades]);
+  // Find the selected grade IDs from the class names
+  const selectedGradeIds = useMemo(() => {
+    if (!watchedClasses || !allGrades) return [];
+    return watchedClasses.map(className => {
+      const grade = allGrades.find(g => g.name === className);
+      return grade?.id || null;
+    }).filter(Boolean);
+  }, [watchedClasses, allGrades]);
   
-  // Get streams for selected grade
-  const availableStreams = selectedGradeId ? getStreamsByGradeId(selectedGradeId) : [];
+  // Get streams for selected grades
+  const availableStreams = useMemo(() => {
+    if (!selectedGradeIds.length) return [];
+    const allStreams = selectedGradeIds.flatMap(gradeId => 
+      gradeId ? getStreamsByGradeId(gradeId) : []
+    );
+    return [...new Set(allStreams.map(s => s.name))]; // Remove duplicates
+  }, [selectedGradeIds, getStreamsByGradeId]);
   
   // Get grade info for display
-  const selectedGradeInfo = selectedGradeId ? getGradeById(selectedGradeId) : null;
+  const selectedGradeInfos = selectedGradeIds.map(gradeId => 
+    gradeId ? getGradeById(gradeId) : null
+  ).filter(Boolean);
+
+  // Close dropdowns when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdowns = ['subjects-dropdown', 'classes-dropdown', 'streams-dropdown'];
+      dropdowns.forEach(id => {
+        const dropdown = document.getElementById(id);
+        if (dropdown && !dropdown.contains(event.target as Node)) {
+          dropdown.classList.add('hidden');
+        }
+      });
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Generate exam title automatically
   const generateExamTitle = () => {
     const examType = form.getValues('examType');
-    const subject = subjects.find(s => s.id === form.getValues('subject'))?.name;
+    const selectedSubjects = form.getValues('subjects');
     const term = form.getValues('term');
     
-    if (examType && subject && term) {
-      const title = `${term} ${examType} ${subject}`;
-      form.setValue('title', title);
+    if (examType && selectedSubjects.length > 0 && term) {
+      const subjectNames = selectedSubjects.map(subjectId => 
+        subjects.find(s => s.id === subjectId)?.name
+      ).filter(Boolean);
+      
+      if (subjectNames.length === 1) {
+        const title = `${term} ${examType} ${subjectNames[0]}`;
+        form.setValue('title', title);
+      } else if (subjectNames.length > 1) {
+        const title = `${term} ${examType} (${subjectNames.length} Subjects)`;
+        form.setValue('title', title);
+      }
     }
   };
 
   // Watch for changes in key fields to auto-generate title
   React.useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name === 'examType' || name === 'subject' || name === 'term') {
+      if (name === 'examType' || name === 'subjects' || name === 'term') {
         generateExamTitle();
       }
     });
@@ -350,6 +392,117 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
           </div>
         </DrawerHeader>
 
+        {/* Bulk Selection Section */}
+        <div className="px-6 pt-4 pb-2">
+          <div className="flex flex-col md:flex-row gap-3 items-center justify-center bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4">
+            <span className="font-mono text-sm text-primary">Quick Bulk Selection:</span>
+            <Button
+              variant={allSubjectsSelected ? "default" : "secondary"}
+              className="font-mono text-xs"
+              onClick={() => {
+                const newValue = !allSubjectsSelected;
+                setAllSubjectsSelected(newValue);
+                if (newValue) {
+                  const allSubjectIds = subjects.map(s => s.id);
+                  setSelectedSubjects(allSubjectIds);
+                  form.setValue('subjects', allSubjectIds);
+                } else {
+                  setSelectedSubjects([]);
+                  form.setValue('subjects', []);
+                }
+              }}
+            >
+              {allSubjectsSelected ? "Unselect All Subjects" : "Select All Subjects"}
+            </Button>
+            <Button
+              variant={allGradesSelected ? "default" : "secondary"}
+              className="font-mono text-xs"
+              onClick={() => {
+                const newValue = !allGradesSelected;
+                setAllGradesSelected(newValue);
+                if (newValue) {
+                  const allGradeNames = allGrades.map(g => g.name);
+                  setSelectedGrades(allGradeNames);
+                  form.setValue('classes', allGradeNames);
+                } else {
+                  setSelectedGrades([]);
+                  form.setValue('classes', []);
+                }
+              }}
+            >
+              {allGradesSelected ? "Unselect All Grades" : "Select All Grades"}
+            </Button>
+            <Button
+              variant={allStreamsSelected ? "default" : "secondary"}
+              className="font-mono text-xs"
+              onClick={() => {
+                const newValue = !allStreamsSelected;
+                setAllStreamsSelected(newValue);
+                if (newValue) {
+                  setSelectedStreams(streams);
+                  form.setValue('streams', streams);
+                } else {
+                  setSelectedStreams([]);
+                  form.setValue('streams', []);
+                }
+              }}
+            >
+              {allStreamsSelected ? "Unselect All Streams" : "Select All Streams"}
+            </Button>
+          </div>
+          
+          {/* Selected Items Display */}
+          {(selectedSubjects.length > 0 || selectedGrades.length > 0 || selectedStreams.length > 0) && (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+              <h4 className="font-mono text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Selected Items
+              </h4>
+              <div className="space-y-3">
+                {selectedSubjects.length > 0 && (
+                  <div>
+                    <span className="text-xs font-mono text-blue-700 dark:text-blue-300">Subjects ({selectedSubjects.length}):</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedSubjects.map(subjectId => {
+                        const subject = subjects.find(s => s.id === subjectId);
+                        return (
+                          <Badge key={subjectId} variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {subject?.name || subjectId}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {selectedGrades.length > 0 && (
+                  <div>
+                    <span className="text-xs font-mono text-blue-700 dark:text-blue-300">Grades ({selectedGrades.length}):</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedGrades.map(grade => (
+                        <Badge key={grade} variant="secondary" className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          {grade}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedStreams.length > 0 && (
+                  <div>
+                    <span className="text-xs font-mono text-blue-700 dark:text-blue-300">Streams ({selectedStreams.length}):</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedStreams.map(stream => (
+                        <Badge key={stream} variant="secondary" className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                          {stream}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="px-6 py-4 overflow-y-auto relative">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
@@ -376,27 +529,120 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="subject"
+                    name="subjects"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <BookOpen className="h-4 w-4" />
-                          Subject *
+                          Subjects *
+                          {field.value.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              {field.value.length} selected
+                            </Badge>
+                          )}
                         </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
-                              <SelectValue placeholder="Select subject" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
-                            {subjects.map((subject) => (
-                              <SelectItem key={subject.id} value={subject.id}>
-                                {subject.name} ({subject.code})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <div 
+                            className={`min-h-10 p-3 rounded-md border-2 cursor-pointer transition-all duration-200 font-mono bg-white dark:bg-slate-800 ${
+                              field.value.length > 0 
+                                ? 'border-blue-300 bg-blue-50 dark:bg-blue-950/20' 
+                                : 'border-primary/20 hover:border-primary/40'
+                            } focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20`}
+                            onClick={() => {
+                              const dropdown = document.getElementById('subjects-dropdown');
+                              if (dropdown) {
+                                dropdown.classList.toggle('hidden');
+                              }
+                            }}
+                          >
+                            {field.value.length === 0 ? (
+                              <span className="text-slate-500">Select subjects...</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {field.value.map(subjectId => {
+                                  const subject = subjects.find(s => s.id === subjectId);
+                                  return (
+                                    <Badge 
+                                      key={subjectId} 
+                                      variant="secondary" 
+                                      className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const newValue = field.value.filter(id => id !== subjectId);
+                                        field.onChange(newValue);
+                                        setSelectedSubjects(newValue);
+                                      }}
+                                    >
+                                      {subject?.name || subjectId}
+                                      <X className="h-3 w-3 ml-1" />
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Custom Dropdown */}
+                          <div 
+                            id="subjects-dropdown"
+                            className="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-slate-800 border-2 border-primary/20 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                          >
+                            <div className="p-2 border-b border-primary/10">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-mono text-primary">Select Subjects</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() => {
+                                    const newValue = field.value.length === subjects.length ? [] : subjects.map(s => s.id);
+                                    field.onChange(newValue);
+                                    setSelectedSubjects(newValue);
+                                  }}
+                                >
+                                  {field.value.length === subjects.length ? 'Clear All' : 'Select All'}
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="p-1">
+                              {subjects.map((subject) => (
+                                <div
+                                  key={subject.id}
+                                  className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
+                                    field.value.includes(subject.id)
+                                      ? 'bg-blue-50 dark:bg-blue-950/20 text-blue-900 dark:text-blue-100'
+                                      : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                                  }`}
+                                  onClick={() => {
+                                    const newValue = field.value.includes(subject.id)
+                                      ? field.value.filter(id => id !== subject.id)
+                                      : [...field.value, subject.id];
+                                    field.onChange(newValue);
+                                    setSelectedSubjects(newValue);
+                                  }}
+                                >
+                                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                    field.value.includes(subject.id)
+                                      ? 'bg-blue-600 border-blue-600'
+                                      : 'border-slate-300'
+                                  }`}>
+                                    {field.value.includes(subject.id) && (
+                                      <CheckCircle className="h-3 w-3 text-white" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-medium text-slate-900 dark:text-slate-100">
+                                      {subject.name}
+                                    </div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                                      {subject.code}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -483,54 +729,126 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
-                    name="class"
+                    name="classes"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Users className="h-4 w-4" />
-                          Class *
+                          Classes *
+                          {field.value.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              {field.value.length} selected
+                            </Badge>
+                          )}
                         </FormLabel>
-                        <Select 
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
-                              <SelectValue placeholder="Select class" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
-                            {allGrades.map(grade => {
-                              const gradeStreams = getStreamsByGradeId(grade.id)
-                              return (
-                                <SelectItem 
-                                  key={grade.id} 
-                                  value={grade.name}
-                                  className="hover:bg-primary/5 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer"
+                        <div className="relative">
+                          <div 
+                            className={`min-h-10 p-3 rounded-md border-2 cursor-pointer transition-all duration-200 font-mono bg-white dark:bg-slate-800 ${
+                              field.value.length > 0 
+                                ? 'border-green-300 bg-green-50 dark:bg-green-950/20' 
+                                : 'border-primary/20 hover:border-primary/40'
+                            } focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20`}
+                            onClick={() => {
+                              const dropdown = document.getElementById('classes-dropdown');
+                              if (dropdown) {
+                                dropdown.classList.toggle('hidden');
+                              }
+                            }}
+                          >
+                            {field.value.length === 0 ? (
+                              <span className="text-slate-500">Select classes...</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {field.value.map(className => (
+                                  <Badge 
+                                    key={className} 
+                                    variant="secondary" 
+                                    className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newValue = field.value.filter(name => name !== className);
+                                      field.onChange(newValue);
+                                      setSelectedGrades(newValue);
+                                    }}
+                                  >
+                                    {className}
+                                    <X className="h-3 w-3 ml-1" />
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Custom Dropdown */}
+                          <div 
+                            id="classes-dropdown"
+                            className="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-slate-800 border-2 border-primary/20 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                          >
+                            <div className="p-2 border-b border-primary/10">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-mono text-primary">Select Classes</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs"
+                                  onClick={() => {
+                                    const newValue = field.value.length === allGrades.length ? [] : allGrades.map(g => g.name);
+                                    field.onChange(newValue);
+                                    setSelectedGrades(newValue);
+                                  }}
                                 >
-                                  <div className="flex items-center justify-between w-full py-1">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-2 h-2 rounded-full bg-primary/30"></div>
-                                      <span className="font-medium text-slate-700 dark:text-slate-300">{grade.name}</span>
+                                  {field.value.length === allGrades.length ? 'Clear All' : 'Select All'}
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="p-1">
+                              {allGrades.map(grade => {
+                                const gradeStreams = getStreamsByGradeId(grade.id);
+                                return (
+                                  <div
+                                    key={grade.id}
+                                    className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
+                                      field.value.includes(grade.name)
+                                        ? 'bg-green-50 dark:bg-green-950/20 text-green-900 dark:text-green-100'
+                                        : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                                    }`}
+                                    onClick={() => {
+                                      const newValue = field.value.includes(grade.name)
+                                        ? field.value.filter(name => name !== grade.name)
+                                        : [...field.value, grade.name];
+                                      field.onChange(newValue);
+                                      setSelectedGrades(newValue);
+                                    }}
+                                  >
+                                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                      field.value.includes(grade.name)
+                                        ? 'bg-green-600 border-green-600'
+                                        : 'border-slate-300'
+                                    }`}>
+                                      {field.value.includes(grade.name) && (
+                                        <CheckCircle className="h-3 w-3 text-white" />
+                                      )}
                                     </div>
-                                    {gradeStreams.length > 0 && (
-                                      <Badge 
-                                        variant="secondary" 
-                                        className="ml-2 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
-                                      >
-                                        {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''}
-                                      </Badge>
-                                    )}
+                                    <div className="flex-1">
+                                      <div className="font-medium text-slate-900 dark:text-slate-100">
+                                        {grade.name}
+                                      </div>
+                                      {gradeStreams.length > 0 && (
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                          {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''} available
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </SelectItem>
-                              )
-                            })}
-                          </SelectContent>
-                        </Select>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
                         <FormMessage />
-                        {selectedGradeInfo && availableStreams.length > 0 && (
+                        {selectedGradeInfos.length > 0 && availableStreams.length > 0 && (
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {availableStreams.length} stream{availableStreams.length !== 1 ? 's' : ''} available for {selectedGradeInfo.grade.name}
+                            {availableStreams.length} stream{availableStreams.length !== 1 ? 's' : ''} available for selected classes
                           </p>
                         )}
                       </FormItem>
@@ -539,41 +857,126 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
 
                   <FormField
                     control={form.control}
-                    name="stream"
+                    name="streams"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-mono text-sm">Stream (Optional)</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={!watchedClass || availableStreams.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                              <SelectValue placeholder={
-                                !watchedClass 
-                                  ? "Select a class first" 
-                                  : availableStreams.length === 0 
-                                    ? "No streams available" 
-                                    : "Select stream"
-                              } />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
-                            {availableStreams.map((stream) => (
-                              <SelectItem key={stream.id} value={stream.name}>
-                                <div className="flex items-center gap-3 py-1">
-                                  <div className="w-2 h-2 rounded-full bg-primary/20"></div>
-                                  <span className="font-medium text-slate-700 dark:text-slate-300">{stream.name}</span>
+                        <FormLabel className="flex items-center gap-2 font-mono text-sm">
+                          Streams (Optional)
+                          {field.value.length > 0 && (
+                            <Badge variant="secondary" className="ml-2 text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                              {field.value.length} selected
+                            </Badge>
+                          )}
+                        </FormLabel>
+                        <div className="relative">
+                          <div 
+                            className={`min-h-10 p-3 rounded-md border-2 cursor-pointer transition-all duration-200 font-mono bg-white dark:bg-slate-800 ${
+                              field.value.length > 0 
+                                ? 'border-purple-300 bg-purple-50 dark:bg-purple-950/20' 
+                                : 'border-primary/20 hover:border-primary/40'
+                            } focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${
+                              watchedClasses.length === 0 || availableStreams.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            onClick={() => {
+                              if (watchedClasses.length === 0 || availableStreams.length === 0) return;
+                              const dropdown = document.getElementById('streams-dropdown');
+                              if (dropdown) {
+                                dropdown.classList.toggle('hidden');
+                              }
+                            }}
+                          >
+                            {watchedClasses.length === 0 ? (
+                              <span className="text-slate-500">Select classes first</span>
+                            ) : availableStreams.length === 0 ? (
+                              <span className="text-slate-500">No streams available</span>
+                            ) : field.value.length === 0 ? (
+                              <span className="text-slate-500">Select streams...</span>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {field.value.map(streamName => (
+                                  <Badge 
+                                    key={streamName} 
+                                    variant="secondary" 
+                                    className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newValue = field.value.filter(name => name !== streamName);
+                                      field.onChange(newValue);
+                                      setSelectedStreams(newValue);
+                                    }}
+                                  >
+                                    {streamName}
+                                    <X className="h-3 w-3 ml-1" />
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Custom Dropdown */}
+                          {watchedClasses.length > 0 && availableStreams.length > 0 && (
+                            <div 
+                              id="streams-dropdown"
+                              className="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-slate-800 border-2 border-primary/20 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                            >
+                              <div className="p-2 border-b border-primary/10">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-mono text-primary">Select Streams</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs"
+                                    onClick={() => {
+                                      const newValue = field.value.length === availableStreams.length ? [] : availableStreams;
+                                      field.onChange(newValue);
+                                      setSelectedStreams(newValue);
+                                    }}
+                                  >
+                                    {field.value.length === availableStreams.length ? 'Clear All' : 'Select All'}
+                                  </Button>
                                 </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                              </div>
+                              <div className="p-1">
+                                {availableStreams.map((streamName) => (
+                                  <div
+                                    key={streamName}
+                                    className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
+                                      field.value.includes(streamName)
+                                        ? 'bg-purple-50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-100'
+                                        : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                                    }`}
+                                    onClick={() => {
+                                      const newValue = field.value.includes(streamName)
+                                        ? field.value.filter(name => name !== streamName)
+                                        : [...field.value, streamName];
+                                      field.onChange(newValue);
+                                      setSelectedStreams(newValue);
+                                    }}
+                                  >
+                                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                      field.value.includes(streamName)
+                                        ? 'bg-purple-600 border-purple-600'
+                                        : 'border-slate-300'
+                                    }`}>
+                                      {field.value.includes(streamName) && (
+                                        <CheckCircle className="h-3 w-3 text-white" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="font-medium text-slate-900 dark:text-slate-100">
+                                        {streamName}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         <FormMessage />
-                        {watchedClass && availableStreams.length === 0 && (
+                        {watchedClasses.length > 0 && availableStreams.length === 0 && (
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            No streams configured for this class
+                            No streams configured for selected classes
                           </p>
                         )}
                       </FormItem>

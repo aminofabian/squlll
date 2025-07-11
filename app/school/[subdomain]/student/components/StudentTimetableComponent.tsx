@@ -414,13 +414,13 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
         {isCurrentLesson && (
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-white animate-pulse"></div>
-            <span className="text-xs font-medium">Now</span>
+            <span className="text-xs font-medium text-white">Now</span>
           </div>
         )}
         {isCompleted && !isBreak && (
           <div className="flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-gray-600" />
-            <span className="text-xs font-medium">Done</span>
+            <CheckCircle2 className={`w-3 h-3 ${isCurrentLesson ? 'text-white/80' : 'text-gray-600'}`} />
+            <span className={`text-xs font-medium ${isCurrentLesson ? 'text-white/90' : 'text-gray-600'}`}>Done</span>
           </div>
         )}
         {isBreak && (
@@ -431,7 +431,7 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
                                   lesson.breakType === 'recess' ? '#2d8570' : '#6b7280'
                  }}>
             </div>
-            <span className="text-xs font-medium">
+            <span className={`text-xs font-medium ${isCurrentLesson ? 'text-white/90' : 'text-gray-600'}`}>
               {lesson.breakType === 'lunch' ? 'Lunch' : 
                lesson.breakType === 'recess' ? 'Recess' : 'Break'}
             </span>
@@ -773,6 +773,7 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
                     </td>
                     {weekDays.map((day) => {
                       const lesson = timetableData.schedule[day][periodIndex];
+                      const isCurrentLesson = day === getCurrentDay() && periodIndex === getCurrentPeriod();
                       return (
                         <td key={day} className="p-3 border-r border-gray-100 last:border-r-0">
                           {lesson ? (
@@ -785,23 +786,23 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
                                       {lesson.breakType === 'recess' && '🏃'}
                                       {lesson.breakType === 'break' && '☕'}
                                     </span>
-                                    <span className="text-gray-700">{lesson.subject}</span>
+                                    <span className={isCurrentLesson ? 'text-white' : 'text-gray-700'}>{lesson.subject}</span>
                                   </span>
                                 ) : (
-                                  <span className="text-gray-900">{lesson.subject}</span>
+                                  <span className={isCurrentLesson ? 'text-white' : 'text-gray-900'}>{lesson.subject}</span>
                                 )}
                               </div>
                               {!lesson.isBreak && (
                                 <div className="space-y-2 mb-3">
                                   <div className="flex items-center gap-1">
-                                    <Users className="w-3 h-3 text-gray-500" />
-                                    <span className="text-xs text-gray-600 font-medium">
+                                    <Users className={`w-3 h-3 ${isCurrentLesson ? 'text-white/80' : 'text-gray-500'}`} />
+                                    <span className={`text-xs font-medium ${isCurrentLesson ? 'text-white/90' : 'text-gray-600'}`}>
                                       {lesson.teacher}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3 text-gray-500" />
-                                    <span className="text-xs text-gray-500">
+                                    <MapPin className={`w-3 h-3 ${isCurrentLesson ? 'text-white/80' : 'text-gray-500'}`} />
+                                    <span className={`text-xs ${isCurrentLesson ? 'text-white/80' : 'text-gray-500'}`}>
                                       Room {lesson.room}
                                     </span>
                                   </div>
