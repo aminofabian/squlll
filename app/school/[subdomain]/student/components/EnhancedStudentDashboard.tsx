@@ -190,8 +190,8 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
       case 'view-upcoming-tests':
         router.push(`/school/${subdomain}/student/upcoming-tests`);
         break;
-      case 'contact-class-teacher':
-        router.push(`/school/${subdomain}/student/contact-teachers`);
+      case 'view-exam-timetable':
+        router.push(`view exam timetable`);
         break;
       case 'download-report-card':
         router.push(`/school/${subdomain}/student/report-cards`);
