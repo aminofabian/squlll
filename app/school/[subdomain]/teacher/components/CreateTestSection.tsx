@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar } from "lucide-react";
+import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 
 const mockSubjects = ["Mathematics", "English", "Science", "Social Studies", "Kiswahili"];
@@ -102,8 +102,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50">
       <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-0 flex flex-col relative overflow-hidden">
-        {/* Header with gradient */}
-        {/* <div className="bg-gradient-to-r from-[#246a59] via-[#2d8570] to-[#1a4c40] text-white p-8">
+        {/* Header with gradient and Return to Main Menu button */}
+        <div className="bg-gradient-to-r from-[#246a59] via-[#2d8570] to-[#1a4c40] text-white p-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/20 flex items-center justify-center">
@@ -114,9 +114,18 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                 <p className="text-green-100 text-sm">Design comprehensive assessments for your students</p>
               </div>
             </div>
-            <DynamicLogo subdomain={subdomain || ''} size="md" showText={false} />
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold transition-all duration-300 rounded-lg border border-white/30 hover:border-white/50"
+              >
+                <Home className="w-4 h-4" />
+                Return to Main Menu
+              </button>
+              <DynamicLogo subdomain={subdomain || ''} size="md" showText={false} />
+            </div>
           </div>
-        </div> */}
+        </div>
 
         {/* Progress Bar */}
         <div className="bg-gray-50 border-b border-gray-200 px-8 py-3">

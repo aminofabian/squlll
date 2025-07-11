@@ -21,7 +21,8 @@ import {
   Plus,
   Minus,
   Eye,
-  EyeOff
+  EyeOff,
+  Home
 } from "lucide-react";
 
 interface Recipient {
@@ -467,6 +468,17 @@ export default function SendMessageSection({ subdomain, onBack }: SendMessageSec
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Return to Main Menu Button */}
+      <div className="flex justify-end mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-primary/90 text-white font-semibold rounded-lg hover:bg-primary transition-all duration-300 shadow-lg"
+        >
+          <Home className="w-4 h-4" />
+          Return to Main Menu
+        </button>
+      </div>
+      
       {step === 'recipient' && renderRecipientSelection()}
       {step === 'compose' && renderComposeMessage()}
       {step === 'preview' && renderPreview()}

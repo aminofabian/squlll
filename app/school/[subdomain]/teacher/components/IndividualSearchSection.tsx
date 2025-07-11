@@ -32,7 +32,8 @@ import {
   MoreHorizontal,
   CheckCircle2,
   AlertCircle,
-  Info
+  Info,
+  Home
 } from "lucide-react";
 
 interface Individual {
@@ -458,12 +459,21 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Return to Main Menu Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-primary/90 text-white font-semibold rounded-lg hover:bg-primary transition-all duration-300 shadow-lg"
+        >
+          <Home className="w-4 h-4" />
+          Return to Main Menu
+        </button>
+      </div>
+
+      {/* Search Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent mb-2">
-          Find Individuals
-        </h2>
-        <p className="text-muted-foreground">Search and discover teachers and students</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Search Individuals</h2>
+        <p className="text-muted-foreground">Find teachers, students, and other members of the school community</p>
       </div>
 
       {/* Search Bar */}

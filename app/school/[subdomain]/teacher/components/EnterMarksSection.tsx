@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react";
-import { ArrowLeft, CheckSquare, Calendar } from "lucide-react";
+import { ArrowLeft, CheckSquare, Calendar, Home } from "lucide-react";
 import ExamsMarksComponent from "./ExamsMarksComponent";
 
 interface EnterMarksSectionProps {
@@ -31,9 +31,18 @@ export default function EnterMarksSection({ subdomain, onBack }: EnterMarksSecti
                 <p className="text-sm text-muted-foreground/90 font-medium">Manage student exam results and performance tracking.</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
-              <Calendar className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-foreground/80">{new Date().toLocaleDateString()}</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-2 px-4 py-2 bg-primary/90 text-white font-semibold rounded-lg hover:bg-primary transition-all duration-300 shadow-lg"
+              >
+                <Home className="w-4 h-4" />
+                Return to Main Menu
+              </button>
+              <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
+                <Calendar className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground/80">{new Date().toLocaleDateString()}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -50,7 +50,8 @@ import {
   ClipboardList,
   BarChart3,
   TrendingUp,
-  Info
+  Info,
+  Home
 } from "lucide-react";
 
 interface Assignment {
@@ -905,6 +906,17 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Return to Main Menu Button */}
+      <div className="flex justify-end mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-primary/90 text-white font-semibold rounded-lg hover:bg-primary transition-all duration-300 shadow-lg"
+        >
+          <Home className="w-4 h-4" />
+          Return to Main Menu
+        </button>
+      </div>
+      
       {step === 'assignments' && renderAssignmentSelection()}
       {step === 'recipients' && renderRecipientSelection()}
       {step === 'preview' && renderPreview()}

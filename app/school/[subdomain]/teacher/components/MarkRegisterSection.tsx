@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CheckCircle2, XCircle, ChevronLeft, Loader2, CalendarDays, BookOpen, Users, ClipboardList } from "lucide-react";
+import { CheckCircle2, XCircle, ChevronLeft, Loader2, CalendarDays, BookOpen, Users, ClipboardList, Home } from "lucide-react";
 
 // Mock students data
 const mockStudents = [
@@ -117,6 +117,17 @@ export default function MarkRegisterSection({ subdomain, onBack }: { subdomain?:
           >
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
+          
+          {/* Return to Main Menu Button */}
+          <button
+            type="button"
+            className="absolute top-3 right-3 sm:top-6 sm:right-6 z-10 flex items-center gap-2 px-3 py-1.5 bg-primary/90 text-white border border-primary/20 font-semibold shadow hover:bg-primary transition text-sm backdrop-blur"
+            onClick={onBack}
+          >
+            <Home className="w-4 h-4" />
+            Main Menu
+          </button>
+          
           {/* Date with Icon */}
           <div className="flex flex-col items-center gap-2">
             <span className="flex items-center justify-center w-14 h-14 bg-primary shadow-lg mb-1">
