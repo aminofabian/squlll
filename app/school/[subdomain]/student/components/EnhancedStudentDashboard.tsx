@@ -55,6 +55,7 @@ import StudentExamResultsComponent from './StudentExamResultsComponent';
 import DownloadNotesComponent from './DownloadNotesComponent';
 import ReadSchoolMessageComponent from './ReadSchoolMessageComponent';
 import ViewAttendanceComponent from './ViewAttendanceComponent';
+import CurrentLessonStatus from './CurrentLessonStatus';
 
 // Mock data for demonstration
 const mockData = {
@@ -396,6 +397,9 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
           </div>
           {currentView === 'dashboard' ? (
             <>
+              <div className="mb-8">
+                <CurrentLessonStatus selectedGrade="Grade 1" />
+              </div>
               {renderStudentStats()}
               {renderQuickActions()}
             </>

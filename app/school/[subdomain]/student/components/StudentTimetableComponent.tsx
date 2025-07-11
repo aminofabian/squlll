@@ -80,6 +80,8 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState('Grade 1');
   const [showGradeDropdown, setShowGradeDropdown] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showNextLesson, setShowNextLesson] = useState(false);
   const [timetableData, setTimetableData] = useState<StudentTimetableData>({
     schedule: {
       "MONDAY": Array(11).fill(null),
@@ -199,13 +201,30 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
   }, []);
 
   // Helper functions
-  const parseTime = (timeStr: string): number => {
-    const [hours, minutes] = timeStr.split(":").map(Number);
-    let totalHours = hours;
-    if (hours >= 1 && hours <= 7) {
-      totalHours += 12;
-    }
-    return totalHours * 60 + minutes;
+  const parseTimeSlot = (timeSlotStr: string): { start: number, end: number } => {
+    // Parse time slot like "7:30 AM – 8:15 AM"
+    const parts = timeSlotStr.split(' – ');
+    const startTime = parts[0]; // "7:30 AM"
+    const endTime = parts[1];   // "8:15 AM"
+    
+    const parseTime = (timeStr: string): number => {
+      const [time, period] = timeStr.split(' ');
+      const [hours, minutes] = time.split(':').map(Number);
+      
+      let totalHours = hours;
+      if (period === 'PM' && hours !== 12) {
+        totalHours += 12;
+      } else if (period === 'AM' && hours === 12) {
+        totalHours = 0;
+      }
+      
+      return totalHours * 60 + minutes;
+    };
+    
+    return {
+      start: parseTime(startTime),
+      end: parseTime(endTime)
+    };
   };
 
   const formatTimeUntil = (minutesUntil: number): string => {
@@ -225,12 +244,9 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     const currentTimeInMinutes = currentHour * 60 + currentMinute;
 
     for (let i = 0; i < timetableData.periods.length; i++) {
-      const periodTime = parseTime(timetableData.periods[i]);
-      const nextPeriodTime = i < timetableData.periods.length - 1 
-        ? parseTime(timetableData.periods[i + 1]) 
-        : periodTime + 60;
+      const timeSlot = parseTimeSlot(timetableData.periods[i]);
 
-      if (currentTimeInMinutes >= periodTime && currentTimeInMinutes < nextPeriodTime) {
+      if (currentTimeInMinutes >= timeSlot.start && currentTimeInMinutes < timeSlot.end) {
         return i;
       }
     }
@@ -239,7 +255,64 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
 
   const getCurrentDay = () => {
     const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    return days[currentTime.getDay()];
+    const currentDay = days[currentTime.getDay()];
+    return currentDay;
+  };
+
+  const getCurrentLesson = () => {
+    const currentDay = getCurrentDay();
+    const currentPeriod = getCurrentPeriod();
+    
+    if (currentPeriod === -1 || !weekDays.includes(currentDay)) {
+      return null;
+    }
+    
+    const lesson = timetableData.schedule[currentDay]?.[currentPeriod];
+    return lesson || null;
+  };
+
+  const getRemainingMinutes = () => {
+    const currentPeriod = getCurrentPeriod();
+    if (currentPeriod === -1) return 0;
+    
+    const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+    const timeSlot = parseTimeSlot(timetableData.periods[currentPeriod]);
+    
+    const remaining = timeSlot.end - currentTimeInMinutes;
+    return remaining;
+  };
+
+  const getCurrentLessonStatus = () => {
+    const currentDay = getCurrentDay();
+    const currentPeriod = getCurrentPeriod();
+    
+    if (currentPeriod === -1) {
+      return { status: 'outside', message: 'Outside school hours' };
+    }
+    
+    if (!weekDays.includes(currentDay)) {
+      return { status: 'weekend', message: 'Weekend - No classes' };
+    }
+    
+    const currentLesson = timetableData.schedule[currentDay]?.[currentPeriod];
+    
+    if (!currentLesson) {
+      return { status: 'free', message: 'Free period' };
+    }
+    
+    if (currentLesson.isBreak) {
+      return { 
+        status: 'break', 
+        message: `${currentLesson.breakType === 'lunch' ? 'Lunch' : currentLesson.breakType === 'recess' ? 'Recess' : 'Break'} time`,
+        lesson: currentLesson
+      };
+    }
+    
+    return { 
+      status: 'lesson', 
+      message: 'Current lesson in progress',
+      lesson: currentLesson
+    };
   };
 
   const getNextLesson = (): NextLessonInfo | null => {
@@ -252,13 +325,13 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     for (let periodIndex = currentPeriod + 1; periodIndex < timetableData.periods.length; periodIndex++) {
       const lesson = timetableData.schedule[currentDay]?.[periodIndex];
       if (lesson && !lesson.isBreak) {
-        const periodTime = parseTime(timetableData.periods[periodIndex]);
+        const periodTime = parseTimeSlot(timetableData.periods[periodIndex]);
         const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-        const minutesUntil = periodTime - currentTimeInMinutes;
+        const minutesUntil = periodTime.start - currentTimeInMinutes;
         
         return {
           lesson,
-          startsIn: periodTime,
+          startsIn: periodTime.start,
           time: timetableData.periods[periodIndex],
           nextDay: false,
           period: `Period ${periodIndex + 1}`,
@@ -276,13 +349,13 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
         for (let periodIndex = 0; periodIndex < timetableData.periods.length; periodIndex++) {
           const lesson = timetableData.schedule[nextDay]?.[periodIndex];
           if (lesson && !lesson.isBreak) {
-            const periodTime = parseTime(timetableData.periods[periodIndex]);
+            const periodTime = parseTimeSlot(timetableData.periods[periodIndex]);
             const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-            const minutesUntil = (24 * 60 - currentTimeInMinutes) + periodTime;
+            const minutesUntil = (24 * 60 - currentTimeInMinutes) + periodTime.start;
             
             return {
               lesson,
-              startsIn: periodTime,
+              startsIn: periodTime.start,
               time: timetableData.periods[periodIndex],
               nextDay: true,
               period: `Period ${periodIndex + 1}`,
@@ -297,28 +370,6 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     return null;
   };
 
-  const getCurrentLesson = () => {
-    const currentDay = getCurrentDay();
-    const currentPeriod = getCurrentPeriod();
-    
-    if (currentPeriod === -1 || !weekDays.includes(currentDay)) return null;
-    
-    return timetableData.schedule[currentDay]?.[currentPeriod] || null;
-  };
-
-  const getRemainingMinutes = () => {
-    const currentPeriod = getCurrentPeriod();
-    if (currentPeriod === -1) return 0;
-    
-    const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-    const periodTime = parseTime(timetableData.periods[currentPeriod]);
-    const nextPeriodTime = currentPeriod < timetableData.periods.length - 1 
-      ? parseTime(timetableData.periods[currentPeriod + 1]) 
-      : periodTime + 60;
-    
-    return nextPeriodTime - currentTimeInMinutes;
-  };
-
   const getLessonStyles = (lesson: StudentLesson | null, periodIndex: number, day: string) => {
     if (!lesson) return '';
     
@@ -329,18 +380,26 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     const isBreak = lesson.isBreak;
     
     if (isBreak) {
-      return 'bg-amber-50 border border-amber-200 text-amber-800';
+      // Creative break styling with different patterns based on break type
+      if (lesson.breakType === 'lunch') {
+        return 'bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/30 text-primary-dark shadow-sm';
+      } else if (lesson.breakType === 'recess') {
+        return 'bg-gradient-to-br from-primary/8 to-primary/15 border-2 border-primary/40 text-primary-dark shadow-sm';
+      } else {
+        return 'bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 text-gray-700 shadow-sm';
+      }
     }
     
     if (isCurrentLesson) {
-      return 'bg-primary text-white shadow-lg border-2 border-primary/20';
+      return 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-lg border-2 border-primary/30 ring-2 ring-primary/20';
     }
     
     if (isCompleted) {
-      return 'bg-green-50 border border-green-200 text-green-800';
+      return 'bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 text-gray-700 shadow-sm';
     }
     
-    return 'bg-white border border-gray-200 hover:border-primary/30 transition-colors';
+    // Regular lesson with enhanced borders
+    return 'bg-white border-2 border-gray-200 hover:border-primary/40 hover:shadow-md transition-all duration-200';
   };
 
   const renderLessonIndicators = (lesson: StudentLesson, periodIndex: number, day: string) => {
@@ -348,19 +407,34 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     const currentPeriod = getCurrentPeriod();
     const isCurrentLesson = currentDay === day && currentPeriod === periodIndex;
     const isCompleted = lesson.completed;
+    const isBreak = lesson.isBreak;
     
     return (
       <div className="flex items-center gap-1 mt-2">
         {isCurrentLesson && (
           <div className="flex items-center gap-1">
-            <Play className="w-3 h-3 text-primary" />
-            <span className="text-xs">Now</span>
+            <div className="w-2 h-2 bg-white animate-pulse"></div>
+            <span className="text-xs font-medium">Now</span>
           </div>
         )}
-        {isCompleted && (
+        {isCompleted && !isBreak && (
           <div className="flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-green-600" />
-            <span className="text-xs">Done</span>
+            <CheckCircle2 className="w-3 h-3 text-gray-600" />
+            <span className="text-xs font-medium">Done</span>
+          </div>
+        )}
+        {isBreak && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 animate-bounce" 
+                 style={{
+                   backgroundColor: lesson.breakType === 'lunch' ? '#246a59' : 
+                                  lesson.breakType === 'recess' ? '#2d8570' : '#6b7280'
+                 }}>
+            </div>
+            <span className="text-xs font-medium">
+              {lesson.breakType === 'lunch' ? 'Lunch' : 
+               lesson.breakType === 'recess' ? 'Recess' : 'Break'}
+            </span>
           </div>
         )}
       </div>
@@ -389,26 +463,27 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
   const currentLesson = getCurrentLesson();
   const nextLesson = getNextLesson();
   const remainingMinutes = getRemainingMinutes();
+  const currentStatus = getCurrentLessonStatus();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-6">
+        <div className="flex items-center gap-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="p-2 hover:bg-primary/10"
+            className="p-2 hover:bg-gray-100 text-gray-600"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="space-y-1">
-            <h2 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-              My Timetable
-            </h2>
-            <p className="text-sm text-muted-foreground/90 font-medium">
-              View your class schedule and upcoming lessons
+            <h1 className="text-3xl font-bold text-gray-900">
+              Academic Schedule
+            </h1>
+            <p className="text-gray-600 font-medium">
+              {selectedGrade} • Weekly Timetable
             </p>
           </div>
         </div>
@@ -417,15 +492,15 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
         <div className="relative">
           <button
             onClick={() => setShowGradeDropdown(!showGradeDropdown)}
-            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+            className="flex items-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2 hover:bg-gray-50 transition-colors shadow-sm"
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-4 h-4 text-gray-500" />
             <span className="font-medium">{selectedGrade}</span>
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-4 h-4 text-gray-500" />
           </button>
           
           {showGradeDropdown && (
-            <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[200px]">
+            <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 shadow-xl z-50 min-w-[200px]">
               {grades.map((grade) => (
                 <div
                   key={grade}
@@ -433,11 +508,11 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
                     setSelectedGrade(grade);
                     setShowGradeDropdown(false);
                   }}
-                  className={`px-4 py-3 cursor-pointer hover:bg-gray-50 ${
-                    selectedGrade === grade ? 'bg-blue-50 text-primary' : ''
+                  className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                    selectedGrade === grade ? 'bg-primary text-white' : 'text-gray-700'
                   }`}
                 >
-                  <span>{grade}</span>
+                  <span className="font-medium">{grade}</span>
                 </div>
               ))}
             </div>
@@ -445,168 +520,301 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-card border border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold">Total Lessons</span>
-            </div>
-            <div className="text-2xl font-bold">{stats.totalLessons}</div>
-            <p className="text-xs text-muted-foreground">This week</p>
-          </CardContent>
-        </Card>
+      {/* Stats Overview */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900">Weekly Statistics</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowStats(!showStats)}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+          >
+            {showStats ? 'Hide Stats' : 'Show Stats'}
+            <ChevronDown className={`w-4 h-4 transition-transform ${showStats ? 'rotate-180' : ''}`} />
+          </Button>
+        </div>
+        
+        {showStats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-gray-100">
+                    <Calendar className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Lessons</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalLessons}</p>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">This week</div>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-card border border-green-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span className="text-sm font-semibold">Completed</span>
-            </div>
-            <div className="text-2xl font-bold">{stats.completedLessons}</div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="text-xs text-muted-foreground">
-                {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
-              </div>
-              <div className="flex-1 bg-gray-200 rounded-full h-1">
-                <div 
-                  className="bg-green-500 h-1 rounded-full" 
-                  style={{ width: `${stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-gray-100">
+                      <CheckCircle2 className="w-5 h-5 text-gray-600" />
+                    </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Completed</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.completedLessons}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-gray-500">
+                    {stats.totalLessons > 0 ? Math.round((stats.completedLessons / stats.totalLessons) * 100) : 0}%
+                  </div>
+                  <div className="flex-1 bg-gray-200 h-1.5">
+                    <div 
+                      className="bg-primary h-1.5 transition-all duration-300" 
+                      style={{ width: `${stats.totalLessons > 0 ? (stats.completedLessons / stats.totalLessons) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-card border border-amber-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-5 h-5 text-amber-500" />
-              <span className="text-sm font-semibold">Upcoming</span>
-            </div>
-            <div className="text-2xl font-bold">{stats.upcomingLessons}</div>
-            <p className="text-xs text-muted-foreground">Remaining this week</p>
-          </CardContent>
-        </Card>
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-gray-100">
+                      <Clock className="w-5 h-5 text-gray-600" />
+                    </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Upcoming</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.upcomingLessons}</p>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">Remaining this week</div>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-card border border-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen className="w-5 h-5 text-blue-500" />
-              <span className="text-sm font-semibold">Subjects</span>
-            </div>
-            <div className="text-2xl font-bold">{stats.totalSubjects}</div>
-            <p className="text-xs text-muted-foreground">Different subjects</p>
-          </CardContent>
-        </Card>
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-gray-100">
+                      <BookOpen className="w-5 h-5 text-gray-600" />
+                    </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Subjects</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalSubjects}</p>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500">Different subjects</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
-      {/* Current Lesson Banner */}
-      {currentLesson && (
-        <Card className="border-l-4 border-l-primary bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-primary">Current Lesson</h3>
-                <p className="text-sm text-muted-foreground">
-                  {currentLesson.subject} with {currentLesson.teacher} • Room {currentLesson.room}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {remainingMinutes} minutes remaining
-                </p>
+      {/* Current Status Banner */}
+      <Card className={`bg-white border-l-4 shadow-sm ${
+        currentStatus.status === 'lesson' ? 'border-l-primary' :
+        currentStatus.status === 'break' ? 'border-l-primary/60' :
+        currentStatus.status === 'free' ? 'border-l-gray-400' :
+        'border-l-gray-300'
+      }`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 animate-pulse ${
+                  currentStatus.status === 'lesson' ? 'bg-primary' :
+                  currentStatus.status === 'break' ? 'bg-primary/60' :
+                  currentStatus.status === 'free' ? 'bg-gray-400' :
+                  'bg-gray-300'
+                }`}></div>
+                <h3 className="font-bold text-gray-900 text-lg">
+                  {currentStatus.status === 'lesson' ? 'Current Lesson' :
+                   currentStatus.status === 'break' ? 'Current Break' :
+                   currentStatus.status === 'free' ? 'Free Period' :
+                   currentStatus.status === 'weekend' ? 'Weekend' :
+                   'Outside School Hours'}
+                </h3>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-primary">{formatCurrentTime(currentTime)}</div>
-                <div className="text-xs text-muted-foreground">Current Time</div>
+              
+              {currentStatus.status === 'lesson' && currentStatus.lesson && (
+                <>
+                  <p className="text-gray-700 font-semibold text-base">
+                    {currentStatus.lesson.subject} • {currentStatus.lesson.teacher}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Room {currentStatus.lesson.room} • {remainingMinutes} minutes remaining
+                  </p>
+                </>
+              )}
+              
+              {currentStatus.status === 'break' && currentStatus.lesson && (
+                <>
+                  <p className="text-gray-700 font-semibold text-base">
+                    {currentStatus.lesson.breakType === 'lunch' ? '🍽️ Lunch Time' :
+                     currentStatus.lesson.breakType === 'recess' ? '🏃 Recess Time' :
+                     '☕ Break Time'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {remainingMinutes} minutes remaining
+                  </p>
+                </>
+              )}
+              
+              {currentStatus.status === 'free' && (
+                <p className="text-gray-700 font-semibold text-base">
+                  Free period • {remainingMinutes} minutes remaining
+                </p>
+              )}
+              
+              {currentStatus.status === 'weekend' && (
+                <p className="text-gray-700 font-semibold text-base">
+                  No classes scheduled for today
+                </p>
+              )}
+              
+              {currentStatus.status === 'outside' && (
+                <p className="text-gray-700 font-semibold text-base">
+                  School is currently closed
+                </p>
+              )}
+            </div>
+            
+            <div className="text-right">
+              <div className="text-3xl font-bold text-gray-900">{formatCurrentTime(currentTime)}</div>
+              <div className="text-sm text-gray-500">Current Time</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {currentTime.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Next Lesson Panel */}
       {nextLesson && (
-        <Card className="border-l-4 border-l-amber-500 bg-amber-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-amber-800">Next Lesson</h3>
-                <p className="text-sm text-amber-700">
-                  {nextLesson.lesson.subject} with {nextLesson.lesson.teacher}
-                </p>
-                <p className="text-xs text-amber-600">
-                  {nextLesson.nextDay ? 'Tomorrow' : 'Today'} • {nextLesson.time}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-amber-800">
-                  {formatTimeUntil(nextLesson.minutesUntil)}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Next Lesson</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowNextLesson(!showNextLesson)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            >
+              {showNextLesson ? 'Hide Next Lesson' : 'Show Next Lesson'}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showNextLesson ? 'rotate-180' : ''}`} />
+            </Button>
+          </div>
+          
+          {showNextLesson && (
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <p className="text-gray-700 font-medium">
+                      {nextLesson.lesson.subject} • {nextLesson.lesson.teacher}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {nextLesson.nextDay ? 'Tomorrow' : 'Today'} • {nextLesson.time} • Room {nextLesson.lesson.room}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">
+                      {formatTimeUntil(nextLesson.minutesUntil)}
+                    </div>
+                    <div className="text-sm text-gray-500">Until next lesson</div>
+                  </div>
                 </div>
-                <div className="text-xs text-amber-600">Until next lesson</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Timetable Grid */}
-      <Card className="bg-card border border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Weekly Schedule</CardTitle>
+      <Card className="bg-white border border-gray-200 shadow-sm">
+        <CardHeader className="border-b border-gray-100 pb-4">
+          <CardTitle className="text-xl font-semibold text-gray-900">Weekly Schedule</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="p-3 text-left font-medium text-muted-foreground bg-muted/50">Time</th>
+                <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+                  <th className="p-4 text-left font-bold text-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-600" />
+                      <span>Time</span>
+                    </div>
+                  </th>
                   {weekDays.map((day) => (
-                    <th key={day} className="p-3 text-center font-medium text-muted-foreground bg-muted/50">
-                      {day.charAt(0) + day.slice(1).toLowerCase()}
+                    <th key={day} className="p-4 text-center font-bold text-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 last:border-r-0">
+                      <div className="flex flex-col items-center gap-1">
+                        <span>{day.charAt(0) + day.slice(1).toLowerCase()}</span>
+                        <div className="w-8 h-0.5 bg-primary"></div>
+                      </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {timetableData.periods.map((period, periodIndex) => (
-                  <tr key={periodIndex} className="border-b border-gray-100">
-                    <td className="p-3 text-sm text-muted-foreground bg-muted/50 font-medium">
-                      {period}
+                  <tr key={periodIndex} className="border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
+                    <td className="p-4 text-sm font-semibold text-gray-700 bg-gradient-to-b from-gray-50 to-gray-100 border-r border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary"></div>
+                        <span>{period}</span>
+                      </div>
                     </td>
                     {weekDays.map((day) => {
                       const lesson = timetableData.schedule[day][periodIndex];
                       return (
-                        <td key={day} className="p-2">
+                        <td key={day} className="p-3 border-r border-gray-100 last:border-r-0">
                           {lesson ? (
-                            <div className={`p-3 rounded-lg ${getLessonStyles(lesson, periodIndex, day)}`}>
-                              <div className="font-medium text-sm">
+                            <div className={`p-4 border-2 transition-all duration-300 transform hover:scale-[1.02] ${getLessonStyles(lesson, periodIndex, day)}`}>
+                              <div className="font-bold text-sm mb-3">
                                 {lesson.isBreak ? (
-                                  <span className="flex items-center gap-1">
-                                    {lesson.breakType === 'lunch' && '🍽️'}
-                                    {lesson.breakType === 'recess' && '🏃'}
-                                    {lesson.breakType === 'break' && '☕'}
-                                    {lesson.subject}
+                                  <span className="flex items-center gap-2">
+                                    <span className="text-lg">
+                                      {lesson.breakType === 'lunch' && '🍽️'}
+                                      {lesson.breakType === 'recess' && '🏃'}
+                                      {lesson.breakType === 'break' && '☕'}
+                                    </span>
+                                    <span className="text-gray-700">{lesson.subject}</span>
                                   </span>
                                 ) : (
-                                  lesson.subject
+                                  <span className="text-gray-900">{lesson.subject}</span>
                                 )}
                               </div>
                               {!lesson.isBreak && (
-                                <>
-                                  <div className="text-xs text-muted-foreground mt-1">
-                                    {lesson.teacher}
+                                <div className="space-y-2 mb-3">
+                                  <div className="flex items-center gap-1">
+                                    <Users className="w-3 h-3 text-gray-500" />
+                                    <span className="text-xs text-gray-600 font-medium">
+                                      {lesson.teacher}
+                                    </span>
                                   </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    Room {lesson.room}
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="w-3 h-3 text-gray-500" />
+                                    <span className="text-xs text-gray-500">
+                                      Room {lesson.room}
+                                    </span>
                                   </div>
-                                </>
+                                </div>
                               )}
                               {renderLessonIndicators(lesson, periodIndex, day)}
                             </div>
                           ) : (
-                            <div className="p-3 text-center text-muted-foreground text-sm">
-                              Free
+                            <div className="p-4 text-center text-gray-400 text-sm font-medium border-2 border-dashed border-gray-200 bg-gray-50/50">
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="w-6 h-6 border-2 border-gray-300 border-dashed"></div>
+                                <span>Free Period</span>
+                              </div>
                             </div>
                           )}
                         </td>
@@ -621,34 +829,36 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button 
-          variant="outline"
-          onClick={forceReloadMockData}
-          className="border-primary/20 text-primary hover:bg-primary/10"
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Load Mock Data
-        </Button>
-        <Button 
-          onClick={handleSync} 
-          disabled={isSyncing}
-          className="bg-primary hover:bg-primary/90 text-white"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? 'Syncing...' : 'Sync Timetable'}
-        </Button>
-      </div>
+      <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline"
+            onClick={forceReloadMockData}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Load Mock Data
+          </Button>
+          <Button 
+            onClick={handleSync} 
+            disabled={isSyncing}
+            className="bg-primary hover:bg-primary-dark text-white"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Timetable'}
+          </Button>
+        </div>
 
-      {/* Status Badge */}
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-          Timetable Synced
-        </Badge>
-        <span className="text-xs text-muted-foreground">
-          Last updated: {new Date().toLocaleTimeString()}
-        </span>
+        {/* Status Badge */}
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">
+            <div className="w-2 h-2 bg-green-500 mr-2"></div>
+            Timetable Synced
+          </Badge>
+          <span className="text-sm text-gray-500">
+            Last updated: {new Date().toLocaleTimeString()}
+          </span>
+        </div>
       </div>
     </div>
   );
