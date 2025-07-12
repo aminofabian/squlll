@@ -120,7 +120,7 @@ export default function SchoolLoginPage() {
           window.location.href = `http://${userSubdomain}.${baseUrl}/parent`
           break
         case 'STAFF':
-          window.location.href = `http://${userSubdomain}.${baseUrl}/staff`
+          window.location.href = `http://${userSubdomain}.${baseUrl}/staff-portal`
           break
         default:
           // Fallback to dashboard for unknown roles

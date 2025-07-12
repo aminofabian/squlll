@@ -535,16 +535,16 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                         <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <BookOpen className="h-4 w-4" />
                           Subjects *
-                          {field.value.length > 0 && (
+                          {(field.value || []).length > 0 && (
                             <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                              {field.value.length} selected
+                              {(field.value || []).length} selected
                             </Badge>
                           )}
                         </FormLabel>
                         <div className="relative">
                           <div 
                             className={`min-h-10 p-3 rounded-md border-2 cursor-pointer transition-all duration-200 font-mono bg-white dark:bg-slate-800 ${
-                              field.value.length > 0 
+                              (field.value || []).length > 0 
                                 ? 'border-blue-300 bg-blue-50 dark:bg-blue-950/20' 
                                 : 'border-primary/20 hover:border-primary/40'
                             } focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20`}
@@ -559,7 +559,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                               <span className="text-slate-500">Select subjects...</span>
                             ) : (
                               <div className="flex flex-wrap gap-1">
-                                {field.value.map(subjectId => {
+                                {(field.value || []).map(subjectId => {
                                   const subject = subjects.find(s => s.id === subjectId);
                                   return (
                                     <Badge 
@@ -568,7 +568,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                                       className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        const newValue = field.value.filter(id => id !== subjectId);
+                                        const newValue = (field.value || []).filter(id => id !== subjectId);
                                         field.onChange(newValue);
                                         setSelectedSubjects(newValue);
                                       }}
@@ -595,12 +595,12 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                                   size="sm"
                                   className="h-6 px-2 text-xs"
                                   onClick={() => {
-                                    const newValue = field.value.length === subjects.length ? [] : subjects.map(s => s.id);
+                                    const newValue = (field.value || []).length === subjects.length ? [] : subjects.map(s => s.id);
                                     field.onChange(newValue);
                                     setSelectedSubjects(newValue);
                                   }}
                                 >
-                                  {field.value.length === subjects.length ? 'Clear All' : 'Select All'}
+                                  {(field.value || []).length === subjects.length ? 'Clear All' : 'Select All'}
                                 </Button>
                               </div>
                             </div>
@@ -735,9 +735,9 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                         <FormLabel className="flex items-center gap-2 font-mono text-sm">
                           <Users className="h-4 w-4" />
                           Classes *
-                          {field.value.length > 0 && (
+                          {(field.value || []).length > 0 && (
                             <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              {field.value.length} selected
+                              {(field.value || []).length} selected
                             </Badge>
                           )}
                         </FormLabel>
@@ -932,7 +932,7 @@ export function CreateExamDrawer({ onExamCreated, trigger }: CreateExamDrawerPro
                                       setSelectedStreams(newValue);
                                     }}
                                   >
-                                    {(field.value?.length || 0) === availableStreams.length ? 'Clear All' : 'Select All'}
+                                    {(field.value?.length || 0) === availableStreams.length ? 'Clear All' : 'Select All'}gi
                                   </Button>
                                 </div>
                               </div>
