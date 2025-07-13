@@ -29,6 +29,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     date: string;
     startTime: string;
     duration: string;
+    points: string;
+    resourceUrl: string;
   }) => void;
 }) {
   // Step state
@@ -44,6 +46,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [duration, setDuration] = useState("");
+  const [points, setPoints] = useState("");
+  const [resourceUrl, setResourceUrl] = useState("");
   const [instructions, setInstructions] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
@@ -55,7 +59,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const [aiSample, setAiSample] = useState("");
 
   // Step 1 validation
-  const detailsValid = title && subject && grade && date && startTime && duration;
+  const detailsValid = title && subject && grade && date && startTime && duration && points;
   // Step 2 validation
   const questionsValid = questions.every(q => q.text && (q.type !== "mcq" || q.options.every(opt => opt))) && questions.length > 0;
 
@@ -189,7 +193,9 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                     grade,
                     date,
                     startTime,
-                    duration
+                    duration,
+                    points,
+                    resourceUrl
                   })}
                 >
                   <Users className="w-4 h-4 mr-2 inline" />
@@ -297,22 +303,56 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             </div>
                           </div>
                           
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                <Clock className="w-4 h-4" />
+                                Duration (minutes)
+                              </label>
+                              <input
+                                type="number"
+                                min="10"
+                                max="300"
+                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                                placeholder="e.g. 90"
+                                value={duration}
+                                onChange={e => setDuration(e.target.value)}
+                                required
+                              />
+                              <div className="text-xs text-gray-500 mt-1">Recommended: 60-120 minutes</div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Total Points/Marks
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="1000"
+                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                                placeholder="e.g. 100"
+                                value={points}
+                                onChange={e => setPoints(e.target.value)}
+                                required
+                              />
+                              <div className="text-xs text-gray-500 mt-1">Total marks for this test</div>
+                            </div>
+                          </div>
+                          
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              Duration (minutes)
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Resource URL <span className="text-gray-500 font-normal">(optional)</span>
                             </label>
                             <input
-                              type="number"
-                              min="10"
-                              max="300"
+                              type="url"
                               className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
-                              placeholder="e.g. 90"
-                              value={duration}
-                              onChange={e => setDuration(e.target.value)}
-                              required
+                              placeholder="https://example.com/additional-resources"
+                              value={resourceUrl}
+                              onChange={e => setResourceUrl(e.target.value)}
                             />
-                            <div className="text-xs text-gray-500 mt-1">Recommended: 60-120 minutes</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Link to additional study materials or resources for students
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -321,9 +361,9 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
 
                   {/* Instructions and Files Section */}
                   <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-l-4 border-[#3b82f6]">
+                    <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 border-l-4 border-[#0d9488]">
                       <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-[#3b82f6]" />
+                        <FileText className="w-5 h-5 text-[#0d9488]" />
                         Test Instructions & Resources
                       </h3>
                       
@@ -334,7 +374,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             Custom Instructions for Students
                           </label>
                           <textarea
-                            className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#3b82f6] focus:ring-0 transition-colors"
+                            className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#0d9488] focus:ring-0 transition-colors"
                             placeholder="Enter any specific instructions for this test (e.g., 'Show all working', 'Use a calculator where necessary', etc.)"
                             value={instructions}
                             onChange={e => setInstructions(e.target.value)}
@@ -350,7 +390,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
                             Upload Reference Materials
                           </label>
-                          <div className="border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center hover:border-[#3b82f6] hover:bg-blue-50 transition-colors">
+                          <div className="border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center hover:border-[#0d9488] hover:bg-teal-50 transition-colors">
                             <input
                               type="file"
                               id="file-upload"
@@ -385,7 +425,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                   className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <File className="w-4 h-4 text-[#3b82f6]" />
+                                    <File className="w-4 h-4 text-[#0d9488]" />
                                     <div>
                                       <div className="text-sm font-medium text-gray-700">
                                         {file.name}
@@ -651,6 +691,12 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             <div className="text-sm text-gray-700">Date: {date}</div>
                             <div className="text-sm text-gray-700">Start: {startTime}</div>
                             <div className="text-sm text-gray-700">Duration: {duration} min</div>
+                            <div className="text-sm text-gray-700">Total Marks: {points}</div>
+                            {resourceUrl && (
+                              <div className="text-sm text-gray-700">
+                                Resource: <a href={resourceUrl} target="_blank" rel="noopener noreferrer" className="text-[#059669] underline">{resourceUrl}</a>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <hr className="w-full border-t border-gray-300 my-4" />
@@ -672,7 +718,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {uploadedFiles.map((file, index) => (
                                 <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
-                                  <File className="w-4 h-4 text-[#3b82f6]" />
+                                  <File className="w-4 h-4 text-[#0d9488]" />
                                   <span>{file.name}</span>
                                 </div>
                               ))}
@@ -743,6 +789,12 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                               <div className="text-sm text-gray-700">Date: {date}</div>
                               <div className="text-sm text-gray-700">Start: {startTime}</div>
                               <div className="text-sm text-gray-700">Duration: {duration} min</div>
+                              <div className="text-sm text-gray-700">Total Marks: {points}</div>
+                              {resourceUrl && (
+                                <div className="text-sm text-gray-700">
+                                  Resource: <a href={resourceUrl} target="_blank" rel="noopener noreferrer" className="text-[#059669] underline">{resourceUrl}</a>
+                                </div>
+                              )}
                             </div>
                           </div>
                           
@@ -766,7 +818,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {uploadedFiles.map((file, index) => (
                                   <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
-                                    <File className="w-4 h-4 text-[#3b82f6]" />
+                                    <File className="w-4 h-4 text-[#0d9488]" />
                                     <span>{file.name}</span>
                                   </div>
                                 ))}
