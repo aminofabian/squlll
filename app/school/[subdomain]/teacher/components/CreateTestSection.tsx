@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home } from "lucide-react";
+import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home, Upload, File, X } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 
 const mockSubjects = ["Mathematics", "English", "Science", "Social Studies", "Kiswahili"];
@@ -44,6 +44,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [duration, setDuration] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   // Questions state
   const [questions, setQuestions] = useState([emptyQuestion()]);
@@ -85,6 +87,23 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
       setAiSample("");
       setAiNumQuestions(5);
     }, 1800);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -300,6 +319,102 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                     </div>
                   </div>
 
+                  {/* Instructions and Files Section */}
+                  <div className="space-y-6">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-l-4 border-[#3b82f6]">
+                      <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-[#3b82f6]" />
+                        Test Instructions & Resources
+                      </h3>
+                      
+                      <div className="space-y-6">
+                        {/* Test Instructions */}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Custom Instructions for Students
+                          </label>
+                          <textarea
+                            className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#3b82f6] focus:ring-0 transition-colors"
+                            placeholder="Enter any specific instructions for this test (e.g., 'Show all working', 'Use a calculator where necessary', etc.)"
+                            value={instructions}
+                            onChange={e => setInstructions(e.target.value)}
+                            rows={3}
+                          />
+                          <div className="text-xs text-gray-500 mt-1">
+                            These instructions will appear on the test paper below the default instructions
+                          </div>
+                        </div>
+
+                        {/* File Upload */}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Upload Reference Materials
+                          </label>
+                          <div className="border-2 border-dashed border-gray-300 bg-gray-50 p-6 text-center hover:border-[#3b82f6] hover:bg-blue-50 transition-colors">
+                            <input
+                              type="file"
+                              id="file-upload"
+                              className="hidden"
+                              multiple
+                              accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                              onChange={handleFileUpload}
+                            />
+                            <label
+                              htmlFor="file-upload"
+                              className="cursor-pointer flex flex-col items-center gap-2"
+                            >
+                              <Upload className="w-8 h-8 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-700">
+                                Click to upload files or drag and drop
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                PDF, DOC, TXT, Images (Max 10MB each)
+                              </span>
+                            </label>
+                          </div>
+                          
+                          {/* Uploaded Files List */}
+                          {uploadedFiles.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                              <div className="text-sm font-semibold text-gray-700">
+                                Uploaded Files ({uploadedFiles.length})
+                              </div>
+                              {uploadedFiles.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <File className="w-4 h-4 text-[#3b82f6]" />
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-700">
+                                        {file.name}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {formatFileSize(file.size)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveFile(index)}
+                                    className="text-red-500 hover:text-red-700 transition-colors"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-gray-500 mt-2">
+                            These files will be available to students during the test as reference materials
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex justify-between gap-4 pt-6 border-t border-gray-200">
                     <button
                       type="button"
@@ -503,13 +618,13 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                   const allMCQ = questions.every(q => q.type === "mcq");
                   const allShort = questions.every(q => q.type === "short");
                   let rightHeading = "Test Questions";
-                  let instructions = "Answer all questions as instructed.";
+                  let defaultInstructions = "Answer all questions as instructed.";
                   if (allMCQ) {
                     rightHeading = "Multiple Choice Questions";
-                    instructions = "For each of these questions, choose the option (A, B, C or D) that is TRUE.";
+                    defaultInstructions = "For each of these questions, choose the option (A, B, C or D) that is TRUE.";
                   } else if (allShort) {
                     rightHeading = "Short Answer Questions";
-                    instructions = "Answer all questions in the space provided.";
+                    defaultInstructions = "Answer all questions in the space provided.";
                   }
                   
                   // A4 Preview content
@@ -541,8 +656,32 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                         <hr className="w-full border-t border-gray-300 my-4" />
                         {/* Instructions */}
                         <div className="w-full text-center text-sm italic text-gray-600 mb-6">
-                          {instructions}
+                          {defaultInstructions}
+                          {instructions && (
+                            <div className="mt-4 text-left">
+                              <div className="font-semibold text-gray-800">Additional Instructions:</div>
+                              <div className="whitespace-pre-wrap text-gray-700 mt-2">{instructions}</div>
+                            </div>
+                          )}
                         </div>
+                        
+                        {/* Uploaded Files Section */}
+                        {uploadedFiles.length > 0 && (
+                          <div className="w-full mb-6 p-4 bg-gray-50 border border-gray-200">
+                            <div className="font-semibold text-gray-800 mb-2">Reference Materials:</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {uploadedFiles.map((file, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
+                                  <File className="w-4 h-4 text-[#3b82f6]" />
+                                  <span>{file.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-2">
+                              These files are available as reference materials for this test
+                            </div>
+                          </div>
+                        )}
                         {/* Questions */}
                         <ol className="list-decimal pl-6 w-full space-y-6">
                           {questions.map((q, idx) => (
@@ -611,8 +750,32 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                           
                           {/* Instructions */}
                           <div className="w-full text-center text-base italic text-gray-600 mb-8">
-                            {instructions}
+                            {defaultInstructions}
+                            {instructions && (
+                              <div className="mt-4 text-left">
+                                <div className="font-semibold text-gray-800">Additional Instructions:</div>
+                                <div className="whitespace-pre-wrap text-gray-700 mt-2">{instructions}</div>
+                              </div>
+                            )}
                           </div>
+                          
+                          {/* Uploaded Files Section */}
+                          {uploadedFiles.length > 0 && (
+                            <div className="w-full mb-8 p-4 bg-gray-50 border border-gray-200">
+                              <div className="font-semibold text-gray-800 mb-2">Reference Materials:</div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {uploadedFiles.map((file, index) => (
+                                  <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
+                                    <File className="w-4 h-4 text-[#3b82f6]" />
+                                    <span>{file.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-2">
+                                These files are available as reference materials for this test
+                              </div>
+                            </div>
+                          )}
                           
                           {/* Questions */}
                           <ol className="list-decimal pl-8 w-full space-y-8">
