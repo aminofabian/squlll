@@ -58,6 +58,18 @@ export async function POST(request: Request) {
     if (data.errors) {
       console.error('GraphQL API Route - GraphQL errors:', data.errors);
       
+      // Check if it's a permission denied error
+      const hasPermissionError = data.errors.some((error: any) => 
+        error.extensions?.code === 'FORBIDDENEXCEPTION' ||
+        error.message?.includes('Permission denied')
+      );
+      
+      if (hasPermissionError) {
+        console.log('GraphQL API Route - Permission denied error detected, returning 403');
+        // Return the original error structure so useSchoolConfig can handle the redirect
+        return NextResponse.json(data, { status: 403 });
+      }
+      
       // Check if it's an authentication error
       const hasAuthError = data.errors.some((error: any) => 
         error.message?.includes('School (tenant) not found') ||

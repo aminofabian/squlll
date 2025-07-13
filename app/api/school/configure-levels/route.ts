@@ -92,6 +92,23 @@ export async function POST(request: Request) {
     if (result.errors) {
       console.error('GraphQL errors:', result.errors);
       
+      // Check for permission denied errors
+      const permissionDeniedError = result.errors.find((error: any) => 
+        error.extensions?.code === 'FORBIDDENEXCEPTION' || 
+        error.message?.includes('Permission denied')
+      );
+      
+      if (permissionDeniedError) {
+        return NextResponse.json(
+          { 
+            error: 'PERMISSION_DENIED',
+            message: 'Permission denied. You may not have admin rights to configure school levels.',
+            action: 'redirect_to_login'
+          },
+          { status: 403 }
+        );
+      }
+      
       // Check if the school is already configured
       const alreadyConfiguredError = result.errors.find((error: any) => 
         error.extensions?.code === 'BADREQUESTEXCEPTION' && 

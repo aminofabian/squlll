@@ -98,8 +98,14 @@ export function useSchoolConfig(enabled: boolean = true) {
         if (error && typeof error === 'object' && 'response' in error) {
           const graphQLError = error as any;
           
+          // Check for 403 (forbidden) errors
+          if (graphQLError.response?.status === 403) {
+            errorMessage = 'Permission denied. You may not have admin rights to access this school.';
+            shouldRedirectToLogin = true;
+            console.log('403 error detected - permission denied, redirecting to school login');
+          }
           // Check for 401 (unauthorized) errors
-          if (graphQLError.response?.status === 401) {
+          else if (graphQLError.response?.status === 401) {
             errorMessage = 'Authentication required. Please log in.';
             shouldRedirectToLogin = true;
             console.log('401 error detected - user needs to authenticate');
@@ -108,8 +114,15 @@ export function useSchoolConfig(enabled: boolean = true) {
             const graphQLErrors = graphQLError.response.errors;
             const firstError = graphQLErrors[0];
             
+            // Check for permission denied errors (FORBIDDENEXCEPTION)
+            if (firstError?.extensions?.code === 'FORBIDDENEXCEPTION' || 
+                firstError?.message?.includes('Permission denied')) {
+              errorMessage = 'Permission denied. You may not have admin rights to access this school.';
+              shouldRedirectToLogin = true;
+              console.log('Permission denied error - redirecting to school login');
+            }
             // Check for "School (tenant) not found" error
-            if (firstError?.message?.includes('School (tenant) not found') || 
+            else if (firstError?.message?.includes('School (tenant) not found') || 
                 firstError?.extensions?.code === 'NOTFOUNDEXCEPTION') {
               errorMessage = 'School not found or access denied. Please check your credentials.';
               shouldRedirectToLogin = true;
@@ -133,9 +146,26 @@ export function useSchoolConfig(enabled: boolean = true) {
                                    urlParams.get('token') // Also check for token parameter (signup flow)
           
           if (!isNewRegistration) {
-            // Only redirect to login if this is not a new registration
-            // Use window.location for full page redirect to login
-            window.location.href = '/login';
+            // Determine redirect URL based on error type
+            let redirectUrl = '/login'; // Default to global login
+            
+            // For permission denied errors, try to redirect to school login if we can determine the subdomain
+            if (errorMessage.includes('Permission denied') || errorMessage.includes('admin rights')) {
+              const currentPath = window.location.pathname;
+              const schoolPathMatch = currentPath.match(/^\/school\/([^\/]+)/);
+              if (schoolPathMatch && schoolPathMatch[1]) {
+                const subdomain = schoolPathMatch[1];
+                redirectUrl = `/school/${subdomain}/login`;
+                console.log(`Permission denied - redirecting to school login: ${redirectUrl}`);
+                console.log(`Current path: ${currentPath}, Subdomain: ${subdomain}`);
+              } else {
+                console.log(`Could not determine subdomain from path: ${currentPath}`);
+              }
+            }
+            
+            // Use window.location for full page redirect
+            console.log(`Executing redirect to: ${redirectUrl}`);
+            window.location.href = redirectUrl;
           } else {
             console.log('New registration detected - not redirecting to login, waiting for authentication to complete')
           }
@@ -148,16 +178,26 @@ export function useSchoolConfig(enabled: boolean = true) {
     },
     // Retry configuration
     retry: (failureCount, error) => {
-      // Don't retry 401 errors or "School not found" errors (authentication issues)
+      // Don't retry 401, 403 errors, permission denied errors, or "School not found" errors
       if (error && typeof error === 'object' && 'response' in error) {
         const graphQLError = error as any;
-        if (graphQLError.response?.status === 401) {
+        
+        // Don't retry 403 (forbidden) or 401 (unauthorized) errors
+        if (graphQLError.response?.status === 403 || graphQLError.response?.status === 401) {
           return false;
         }
         
-        // Don't retry "School not found" errors
+        // Don't retry GraphQL errors that indicate authentication/permission issues
         if (graphQLError.response?.errors) {
           const firstError = graphQLError.response.errors[0];
+          
+          // Don't retry permission denied errors
+          if (firstError?.extensions?.code === 'FORBIDDENEXCEPTION' || 
+              firstError?.message?.includes('Permission denied')) {
+            return false;
+          }
+          
+          // Don't retry "School not found" errors
           if (firstError?.message?.includes('School (tenant) not found') || 
               firstError?.extensions?.code === 'NOTFOUNDEXCEPTION') {
             return false;
