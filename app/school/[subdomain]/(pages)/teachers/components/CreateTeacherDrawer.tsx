@@ -134,7 +134,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/school/invite-teacher', {
+      const response = await fetch('/api/school/create-teacher', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       const result = await response.json();
       
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to invite teacher');
+        throw new Error(result.error || 'Failed to create teacher');
       }
 
       const inviteData = result.inviteTeacher;
