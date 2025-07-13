@@ -44,6 +44,7 @@ export async function POST(request: Request) {
             id
             name
           }
+          role
         }
       }
     `
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
       user: acceptData.user,
       tokens: acceptData.tokens,
       teacher: acceptData.teacher,
+      role: acceptData.role,
       success: true
     })
 
