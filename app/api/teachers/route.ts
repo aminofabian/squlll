@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     }
 
     console.log('Teachers API - Token present:', !!token);
+    console.log('Teachers API - Token value:', token?.substring(0, 20) + '...');
     console.log('Teachers API - Tenant ID:', tenantId);
     console.log('Teachers API - Role being queried: TEACHER');
 
@@ -63,10 +64,29 @@ export async function GET(request: Request) {
 
     const result = await response.json();
     console.log('Teachers API - GraphQL response:', result);
+    console.log('Teachers API - Response status:', response.status);
 
     // Check for GraphQL errors
     if (result.errors) {
       console.error('GraphQL errors:', result.errors);
+      
+      // Check if it's an authentication error
+      const hasAuthError = result.errors.some((error: any) => 
+        error.message?.includes('Unauthorized') ||
+        error.message?.includes('Authentication') ||
+        error.message?.includes('School (tenant) not found') ||
+        error.extensions?.code === 'UNAUTHENTICATED' ||
+        error.extensions?.code === 'UNAUTHORIZEDEXCEPTION' ||
+        error.extensions?.code === 'NOTFOUNDEXCEPTION'
+      );
+      
+      if (hasAuthError) {
+        return NextResponse.json(
+          { error: 'Authentication failed. Please log in again.' },
+          { status: 401 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Error fetching teachers', details: result.errors },
         { status: 500 }
@@ -74,6 +94,15 @@ export async function GET(request: Request) {
     }
 
     console.log('Teachers API - Returning data:', result.data);
+    console.log('Teachers API - Teachers count:', result.data?.usersByTenant?.length || 0);
+    
+    // Log each teacher for debugging
+    if (result.data?.usersByTenant) {
+      result.data.usersByTenant.forEach((teacher: any, index: number) => {
+        console.log(`Teachers API - Teacher ${index + 1}:`, teacher);
+      });
+    }
+    
     return NextResponse.json(result.data);
   } catch (error) {
     console.error('Error fetching teachers:', error);

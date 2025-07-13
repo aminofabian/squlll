@@ -33,17 +33,17 @@ export async function GET(request: Request) {
     const results: any = {};
 
     for (const role of roles) {
-      const query = `
-        query GetUsersByTenant($tenantId: String!, $role: String!) {
-          usersByTenant(tenantId: $tenantId, role: $role) {
-            id
-            name
-            email
-          }
-        }
-      `;
-
       try {
+        const query = `
+          query GetUsersByTenant($tenantId: String!, $role: String!) {
+            usersByTenant(tenantId: $tenantId, role: $role) {
+              id
+              name
+              email
+            }
+          }
+        `;
+
         const response = await fetch(GRAPHQL_ENDPOINT, {
           method: 'POST',
           headers: {
@@ -52,28 +52,39 @@ export async function GET(request: Request) {
           },
           body: JSON.stringify({
             query,
-            variables: { tenantId, role }
+            variables: {
+              tenantId,
+              role
+            }
           })
         });
 
         const result = await response.json();
-        results[role] = {
-          count: result.data?.usersByTenant?.length || 0,
-          users: result.data?.usersByTenant || [],
-          errors: result.errors || null
-        };
+        
+        console.log(`Test Users API - ${role} query result:`, result);
+        
+        if (result.errors) {
+          results[role] = { error: result.errors[0].message, users: [] };
+        } else {
+          results[role] = { 
+            count: result.data.usersByTenant.length,
+            users: result.data.usersByTenant 
+          };
+        }
       } catch (error) {
-        results[role] = {
-          count: 0,
-          users: [],
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
+        console.error(`Test Users API - Error querying ${role}:`, error);
+        results[role] = { error: 'Request failed', users: [] };
       }
     }
 
-    return NextResponse.json({
-      tenantId,
-      results
+    return NextResponse.json({ 
+      tenantId, 
+      results,
+      summary: Object.keys(results).map(role => ({
+        role,
+        count: results[role].count || 0,
+        hasError: !!results[role].error
+      }))
     });
   } catch (error) {
     console.error('Error in test users API:', error);

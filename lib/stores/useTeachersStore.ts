@@ -165,12 +165,15 @@ export const useTeachersByTenantQuery = () => {
     setError(null);
 
     try {
-      // Use the simple API route instead of GraphQL client
+      console.log('Fetching teachers by tenant:', { tenantId, role });
+      
+      // Use the API route that handles authentication properly
       const response = await fetch('/api/teachers', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
