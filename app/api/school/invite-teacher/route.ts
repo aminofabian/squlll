@@ -43,25 +43,11 @@ export async function POST(request: Request) {
       experience: teacherData.experience
     };
 
-        // Use the exact mutation structure that works (inline input objects)
+        // Use proper GraphQL variables instead of string interpolation
     const inviteTeacherMutation = `
-      mutation InviteTeacher($tenantId: String!) {
+      mutation InviteTeacher($tenantId: String!, $createTeacherDto: CreateTeacherInvitationDto!) {
         inviteTeacher(
-          createTeacherDto: {
-            email: "${createTeacherDto.email}"
-            fullName: "${createTeacherDto.fullName}"
-            firstName: "${createTeacherDto.firstName}"
-            lastName: "${createTeacherDto.lastName}"
-            role: "${createTeacherDto.role}"
-            gender: "${createTeacherDto.gender}"
-            department: "${createTeacherDto.department}"
-            phoneNumber: "${createTeacherDto.phoneNumber}"
-            address: "${createTeacherDto.address}"
-            subject: "${createTeacherDto.subject}"
-            employeeId: "${createTeacherDto.employeeId}"
-            dateOfBirth: "${createTeacherDto.dateOfBirth}"
-            qualifications: "${createTeacherDto.qualifications}"
-          }
+          createTeacherDto: $createTeacherDto
           tenantId: $tenantId
         ) {
           email
@@ -72,18 +58,38 @@ export async function POST(request: Request) {
       }
     `;
 
+    const requestBody = {
+      query: inviteTeacherMutation,
+      variables: {
+        tenantId: teacherData.tenantId,
+        createTeacherDto: {
+          email: createTeacherDto.email,
+          fullName: createTeacherDto.fullName,
+          firstName: createTeacherDto.firstName,
+          lastName: createTeacherDto.lastName,
+          role: createTeacherDto.role,
+          gender: createTeacherDto.gender,
+          department: createTeacherDto.department,
+          phoneNumber: createTeacherDto.phoneNumber,
+          address: createTeacherDto.address,
+          subject: createTeacherDto.subject,
+          employeeId: createTeacherDto.employeeId,
+          dateOfBirth: createTeacherDto.dateOfBirth,
+          qualifications: createTeacherDto.qualifications
+        }
+      }
+    };
+
+    console.log('Sending GraphQL request to:', GRAPHQL_ENDPOINT);
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        query: inviteTeacherMutation,
-        variables: {
-          tenantId: teacherData.tenantId
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const result = await response.json();
