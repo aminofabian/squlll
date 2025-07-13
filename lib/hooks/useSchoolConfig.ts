@@ -128,7 +128,9 @@ export function useSchoolConfig(enabled: boolean = true) {
         if (shouldRedirectToLogin && typeof window !== 'undefined') {
           // Check if this is a new registration (has URL parameters)
           const urlParams = new URLSearchParams(window.location.search)
-          const isNewRegistration = urlParams.get('newRegistration') === 'true' || urlParams.get('accessToken')
+          const isNewRegistration = urlParams.get('newRegistration') === 'true' || 
+                                   urlParams.get('accessToken') || 
+                                   urlParams.get('token') // Also check for token parameter (signup flow)
           
           if (!isNewRegistration) {
             // Only redirect to login if this is not a new registration

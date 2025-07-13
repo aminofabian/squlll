@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { SchoolSidebar } from '@/components/dashboard/SchoolSidebar'
 import { Button } from '@/components/ui/button'
@@ -67,6 +67,7 @@ function SchoolLayoutContent({
   children: React.ReactNode
 }) {
   const params = useParams()
+  const pathname = usePathname()
   const subdomain = params.subdomain as string
   const [schoolName, setSchoolName] = useState('School Dashboard')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -75,8 +76,21 @@ function SchoolLayoutContent({
   const [userName, setUserName] = useState('')
   const [isMounted, setIsMounted] = useState(false)
 
-  // Check if school is configured
-  const { data: config, isLoading: isConfigLoading } = useSchoolConfig()
+  // Check if this is a signup page - don't fetch school config for signup pages
+  const isSignupPage = pathname?.includes('/signup') || pathname?.includes('/login')
+  
+  // For signup pages, render minimal layout without authentication checks
+  if (isSignupPage) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <Toaster position="top-right" closeButton richColors />
+        {children}
+      </div>
+    )
+  }
+  
+  // Check if school is configured - but only for non-signup pages
+  const { data: config, isLoading: isConfigLoading } = useSchoolConfig(!isSignupPage)
   const isConfigured = config && config.selectedLevels && config.selectedLevels.length > 0
 
   // Add a state to track if we're in a loading state that should show the loading UI
