@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CheckCircle, Clock, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import {
   TimetableHeader,
   TimetableControls,
@@ -12,7 +13,8 @@ import {
   TeacherManagementModal,
   TimeSlotManager,
   BreakManager,
-  TimeSlotModal
+  TimeSlotModal,
+  TimetableFilter
 } from './components';
 import { useTimetableStore, type Teacher, type CellData, type TimeSlot, type Break } from '@/lib/stores/useTimetableStore';
 
@@ -82,7 +84,6 @@ const SmartTimetable = () => {
     'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
     'Grade 11', 'Grade 12'
   ]);
-  const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [showBreakModal, setShowBreakModal] = useState(false);
@@ -90,14 +91,15 @@ const SmartTimetable = () => {
   const [conflicts, setConflicts] = useState<Record<string, Conflict>>({});
   const [showConflicts, setShowConflicts] = useState(false);
   const [isSummaryPanelMinimized, setIsSummaryPanelMinimized] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Extract data from store
   const { subjects, teachers, timeSlots, breaks, selectedGrade } = mainTimetable;
 
-    // Create a merged subjects object that includes breaks from all grades
+  // Create a merged subjects object that includes breaks from all grades
   const mergedSubjects = { ...subjects };
   
-      // Add breaks from all grades to ensure they're always visible
+  // Add breaks from all grades to ensure they're always visible
   Object.entries(subjects).forEach(([cellKey, cellData]) => {
     if (cellData && cellData.isBreak) {
       // Extract the time and day from the cell key
@@ -110,13 +112,27 @@ const SmartTimetable = () => {
       mergedSubjects[currentGradeCellKey] = cellData;
     }
   });
-  
+
+  // Filter subjects based on search term
+  const filteredSubjects = useMemo(() => {
+    if (!searchTerm.trim()) return mergedSubjects;
+    
+    const filtered: Record<string, CellData> = {};
+    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
+      if (cellData && (
+        cellData.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cellData.teacher.toLowerCase().includes(searchTerm.toLowerCase())
+      )) {
+        filtered[cellKey] = cellData;
+      }
+    });
+    return filtered;
+  }, [mergedSubjects, searchTerm]);
+
   // Debug: Log what we're doing
   console.log('Selected grade:', selectedGrade);
   console.log('Total subjects in mergedSubjects:', Object.keys(mergedSubjects).length);
   console.log('Breaks in mergedSubjects:', Object.entries(mergedSubjects).filter(([key, data]) => data?.isBreak).length);
-
-
 
   const days = [
     { name: 'Mon', color: 'bg-primary' },
@@ -624,70 +640,78 @@ const SmartTimetable = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <TimetableHeader totalConflicts={getTotalConflicts()} />
+    <DashboardLayout
+      searchFilter={
+        <TimetableFilter
+          selectedGrade={selectedGrade}
+          onGradeSelect={(grade) => updateMainTimetable({ selectedGrade: grade })}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+        />
+      }
+    >
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <TimetableHeader totalConflicts={getTotalConflicts()} />
 
-        {/* Success Notification */}
-        {showTimeSlotSuccess && (
-          <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <div>
-                <div className="text-sm font-medium text-green-800">Time slot added successfully!</div>
-                <div className="text-xs text-green-600">The new time period is now available for scheduling</div>
+          {/* Success Notification */}
+          {showTimeSlotSuccess && (
+            <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-lg flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <div className="text-sm font-medium text-green-800">Time slot added successfully!</div>
+                  <div className="text-xs text-green-600">The new time period is now available for scheduling</div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <TimetableControls
-          selectedGrade={selectedGrade}
-          grades={grades}
-          showGradeDropdown={showGradeDropdown}
-          totalConflicts={getTotalConflicts()}
-          onGradeSelect={(grade) => {
-            updateMainTimetable({ selectedGrade: grade });
-            setShowGradeDropdown(false);
-          }}
-          onGradeDropdownToggle={() => setShowGradeDropdown(!showGradeDropdown)}
-          onManageTeachers={() => setShowTeacherModal(true)}
-          onManageTimeSlots={() => setShowTimeSlotModal(true)}
-          onManageBreaks={() => setShowBreakModal(true)}
-          onToggleConflicts={() => setShowConflicts(!showConflicts)}
-          onSaveTimetable={handleSaveTimetable}
-          onLoadTimetable={handleLoadTimetable}
-          onLoadMockData={loadMockData}
-          showConflicts={showConflicts}
-          getGradeProgress={getGradeProgress}
-        />
-
-        {showConflicts && (
-          <ConflictsPanel
-            conflicts={conflicts}
-            timeSlots={timeSlots}
-            days={days}
-            onClearCell={clearCell}
+          <TimetableControls
+            selectedGrade={selectedGrade}
+            grades={grades}
+            showGradeDropdown={false}
+            totalConflicts={getTotalConflicts()}
+            onGradeSelect={() => {}}
+            onGradeDropdownToggle={() => {}}
+            onManageTeachers={() => setShowTeacherModal(true)}
+            onManageTimeSlots={() => setShowTimeSlotModal(true)}
+            onManageBreaks={() => setShowBreakModal(true)}
+            onToggleConflicts={() => setShowConflicts(!showConflicts)}
+            onSaveTimetable={handleSaveTimetable}
+            onLoadTimetable={handleLoadTimetable}
+            onLoadMockData={loadMockData}
+            showConflicts={showConflicts}
+            getGradeProgress={getGradeProgress}
           />
-        )}
 
-        {/* Main Content with Timetable and Summary */}
-        <div className="flex gap-6 relative">
-          <div className="flex-1">
-                    {/* Floating toggle button when summary panel is minimized */}
-        {isSummaryPanelMinimized && (
-          <div className="absolute top-6 right-6 z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSummaryPanelMinimized(false)}
-              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
-              title="Expand summary panel"
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+          {showConflicts && (
+            <ConflictsPanel
+              conflicts={conflicts}
+              timeSlots={timeSlots}
+              days={days}
+              onClearCell={clearCell}
+            />
+          )}
+
+          {/* Main Content with Timetable and Summary */}
+          <div className="flex gap-6 relative">
+            <div className="flex-1">
+              {/* Floating toggle button when summary panel is minimized */}
+              {isSummaryPanelMinimized && (
+                <div className="absolute top-6 right-6 z-10">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSummaryPanelMinimized(false)}
+                    className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
+                    title="Expand summary panel"
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
               {/* Debug: Check lunch breaks */}
               {(() => {
                 const lunchBreaksInSlot7 = Object.entries(mergedSubjects).filter(([key, data]) => {
@@ -769,124 +793,125 @@ const SmartTimetable = () => {
               })()}
               
               <TimetableGrid
-              selectedGrade={selectedGrade}
-              subjects={mergedSubjects}
-              teachers={teachers}
-              breaks={breaks}
-              conflicts={conflicts}
-              days={days}
-              timeSlots={timeSlots}
-              editingCell={editingCell}
-              editingTimeSlot={editingTimeSlot}
-              inputValue={inputValue}
-              selectedTeacher={selectedTeacher}
-              timeSlotEditValue={timeSlotEditValue}
-              isAddingTimeSlot={false}
-              newTimeSlotValue=""
-              showTimeSlotSuccess={showTimeSlotSuccess}
-              newTimeSlotData={newTimeSlotData}
-              onCellClick={handleCellClick}
-              onTimeSlotClick={handleTimeSlotClick}
-              onInputChange={setInputValue}
-              onTimeSlotEditChange={setTimeSlotEditValue}
-              onTeacherChange={setSelectedTeacher}
-              onInputSubmit={handleInputSubmit}
-              onTimeSlotSave={handleTimeSlotSave}
-              onCancelEdit={() => {
-                setEditingCell(null);
-                setInputValue('');
-                setSelectedTeacher('');
-              }}
-              onCancelTimeSlotEdit={() => {
-                setEditingTimeSlot(null);
-                setTimeSlotEditValue('');
-              }}
-              onKeyPress={handleKeyPress}
-              onTimeSlotKeyPress={handleTimeSlotKeyPress}
-              onAddBreak={handleAddBreak}
-              onStartAddTimeSlot={handleStartAddTimeSlot}
-              onAddTimeSlot={handleAddTimeSlot}
-              onNewTimeSlotChange={() => {}}
-              onNewTimeSlotKeyPress={() => {}}
-              onCancelAddTimeSlot={handleCancelAddTimeSlot}
-              onNewTimeSlotDataChange={handleNewTimeSlotDataChange}
-              getCellKey={getCellKey}
-            />
-          </div>
-
-          {isSummaryPanelMinimized ? (
-            // Minimized view - only toggle button
-            <div className="w-16 flex flex-col items-center space-y-4 p-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSummaryPanelMinimized(false)}
-                className="border-primary/30 hover:bg-primary/5"
-                title="Expand summary panel"
-              >
-                <PanelLeftOpen className="h-4 w-4" />
-              </Button>
+                selectedGrade={selectedGrade}
+                subjects={searchTerm ? filteredSubjects : mergedSubjects}
+                teachers={teachers}
+                breaks={breaks}
+                conflicts={conflicts}
+                days={days}
+                timeSlots={timeSlots}
+                editingCell={editingCell}
+                editingTimeSlot={editingTimeSlot}
+                inputValue={inputValue}
+                selectedTeacher={selectedTeacher}
+                timeSlotEditValue={timeSlotEditValue}
+                isAddingTimeSlot={false}
+                newTimeSlotValue=""
+                showTimeSlotSuccess={showTimeSlotSuccess}
+                newTimeSlotData={newTimeSlotData}
+                onCellClick={handleCellClick}
+                onTimeSlotClick={handleTimeSlotClick}
+                onInputChange={setInputValue}
+                onTimeSlotEditChange={setTimeSlotEditValue}
+                onTeacherChange={setSelectedTeacher}
+                onInputSubmit={handleInputSubmit}
+                onTimeSlotSave={handleTimeSlotSave}
+                onCancelEdit={() => {
+                  setEditingCell(null);
+                  setInputValue('');
+                  setSelectedTeacher('');
+                }}
+                onCancelTimeSlotEdit={() => {
+                  setEditingTimeSlot(null);
+                  setTimeSlotEditValue('');
+                }}
+                onKeyPress={handleKeyPress}
+                onTimeSlotKeyPress={handleTimeSlotKeyPress}
+                onAddBreak={handleAddBreak}
+                onStartAddTimeSlot={handleStartAddTimeSlot}
+                onAddTimeSlot={handleAddTimeSlot}
+                onNewTimeSlotChange={() => {}}
+                onNewTimeSlotKeyPress={() => {}}
+                onCancelAddTimeSlot={handleCancelAddTimeSlot}
+                onNewTimeSlotDataChange={handleNewTimeSlotDataChange}
+                getCellKey={getCellKey}
+              />
             </div>
-          ) : (
-            // Full view
-            <div className="w-80 space-y-6 relative">
-              {/* Toggle button for minimize/expand */}
-              <div className="flex justify-end">
+
+            {isSummaryPanelMinimized ? (
+              // Minimized view - only toggle button
+              <div className="w-16 flex flex-col items-center space-y-4 p-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsSummaryPanelMinimized(true)}
-                  className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
-                  title="Minimize summary panel"
+                  onClick={() => setIsSummaryPanelMinimized(false)}
+                  className="border-primary/30 hover:bg-primary/5"
+                  title="Expand summary panel"
                 >
-                  <PanelLeftClose className="h-4 w-4" />
+                  <PanelLeftOpen className="h-4 w-4" />
                 </Button>
               </div>
-              <LessonSummaryPanel stats={stats} />
-            </div>
-          )}
-        </div>
+            ) : (
+              // Full view
+              <div className="w-80 space-y-6 relative">
+                {/* Toggle button for minimize/expand */}
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSummaryPanelMinimized(true)}
+                    className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
+                    title="Minimize summary panel"
+                  >
+                    <PanelLeftClose className="h-4 w-4" />
+                  </Button>
+                </div>
+                <LessonSummaryPanel stats={stats} />
+              </div>
+            )}
+          </div>
 
-        <TeacherManagementModal
-          isOpen={showTeacherModal}
-          teachers={teachers}
-          onClose={() => setShowTeacherModal(false)}
-          onAddTeacher={addNewTeacher}
-          getTeacherConflictCount={getTeacherConflictCount}
-        />
+          <TeacherManagementModal
+            isOpen={showTeacherModal}
+            teachers={teachers}
+            onClose={() => setShowTeacherModal(false)}
+            onAddTeacher={addNewTeacher}
+            getTeacherConflictCount={getTeacherConflictCount}
+          />
 
-        <TimeSlotManager
-          timeSlots={timeSlots}
-          onUpdateTimeSlots={handleUpdateTimeSlots}
-          isOpen={showTimeSlotModal}
-          onClose={() => setShowTimeSlotModal(false)}
-        />
+          <TimeSlotManager
+            timeSlots={timeSlots}
+            onUpdateTimeSlots={handleUpdateTimeSlots}
+            isOpen={showTimeSlotModal}
+            onClose={() => setShowTimeSlotModal(false)}
+          />
 
-        <BreakManager
-          breaks={breaks}
-          onUpdateBreaks={handleUpdateBreaks}
-          isOpen={showBreakModal}
-          onClose={() => setShowBreakModal(false)}
-        />
+          <BreakManager
+            breaks={breaks}
+            onUpdateBreaks={handleUpdateBreaks}
+            isOpen={showBreakModal}
+            onClose={() => setShowBreakModal(false)}
+          />
 
-        <TimeSlotModal
-          isOpen={showTimeSlotAddModal}
-          onClose={() => setShowTimeSlotAddModal(false)}
-          onAdd={handleAddTimeSlot}
-          timeSlotData={newTimeSlotData}
-          onTimeSlotDataChange={handleNewTimeSlotDataChange}
-        />
+          <TimeSlotModal
+            isOpen={showTimeSlotAddModal}
+            onClose={() => setShowTimeSlotAddModal(false)}
+            onAdd={handleAddTimeSlot}
+            timeSlotData={newTimeSlotData}
+            onTimeSlotDataChange={handleNewTimeSlotDataChange}
+          />
 
-        {/* Instructions */}
-        <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
-          <p>Click any cell to assign a subject and teacher. Click time slots to edit them directly.</p>
-          <p>Type break names (like "Lunch", "Recess") to add break periods with special styling.</p>
-          <p>Red cells indicate teacher conflicts. Use the conflict panel to resolve scheduling issues.</p>
-          <p>Hover over time slots to see the edit icon, or use the management buttons for advanced options.</p>
-          <p>Click "Add New Time Slot" to open a modal with an intuitive time picker for start/end times.</p>
+          {/* Instructions */}
+          <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
+            <p>Click any cell to assign a subject and teacher. Click time slots to edit them directly.</p>
+            <p>Type break names (like "Lunch", "Recess") to add break periods with special styling.</p>
+            <p>Red cells indicate teacher conflicts. Use the conflict panel to resolve scheduling issues.</p>
+            <p>Hover over time slots to see the edit icon, or use the management buttons for advanced options.</p>
+            <p>Click "Add New Time Slot" to open a modal with an intuitive time picker for start/end times.</p>
+          </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
