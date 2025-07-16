@@ -8,19 +8,22 @@ import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 interface TimetableFilterProps {
   selectedGrade: string;
   onGradeSelect: (grade: string) => void;
   searchTerm?: string;
-  onSearchChange?: (term: string) => void;
+  onSearchChange: (value: string) => void;
+  getDisplayGradeName?: (gradeName: string) => string;
 }
 
 export function TimetableFilter({ 
   selectedGrade, 
   onGradeSelect, 
   searchTerm = '', 
-  onSearchChange 
+  onSearchChange,
+  getDisplayGradeName = (name) => name
 }: TimetableFilterProps) {
   const { getAllGradeLevels } = useSchoolConfigStore();
   
@@ -72,91 +75,6 @@ export function TimetableFilter({
     }
   ], []);
 
-  // Enhanced grade levels merging config store data with predefined structure
-  const enhancedGradeLevels = React.useMemo(() => {
-    const configLevels = getAllGradeLevels();
-    const mergedLevels = [...educationalLevels];
-    
-    // Add any additional levels from config that aren't in our predefined structure
-    configLevels.forEach(configLevel => {
-      const existingLevel = mergedLevels.find(level => 
-        level.levelName.toLowerCase().includes(configLevel.levelName.toLowerCase())
-      );
-      
-             if (!existingLevel) {
-         mergedLevels.push({
-           levelId: configLevel.levelId,
-           levelName: configLevel.levelName,
-           grades: configLevel.grades.map(grade => ({
-             id: grade.id,
-             name: grade.name,
-             age: grade.age || 0,
-             streams: []
-           }))
-         });
-      } else {
-                 // Merge grades from config into existing level
-         configLevel.grades.forEach(configGrade => {
-           const existingGrade = existingLevel.grades.find(grade =>
-             grade.name.toLowerCase() === configGrade.name.toLowerCase()
-           );
-           
-           if (!existingGrade) {
-             existingLevel.grades.push({
-               id: configGrade.id,
-               name: configGrade.name,
-               age: configGrade.age || 0,
-               streams: []
-             });
-           }
-         });
-      }
-    });
-    
-    return mergedLevels;
-  }, [getAllGradeLevels, educationalLevels]);
-
-  const getShortName = (gradeName: string): string => {
-    const name = gradeName.toLowerCase();
-    
-    // Pre-primary
-    if (name.includes('pp1')) return 'PP1';
-    if (name.includes('pp2')) return 'PP2';
-    
-    // Primary grades
-    if (name.includes('grade 1') || name === 'grade 1') return 'G1';
-    if (name.includes('grade 2') || name === 'grade 2') return 'G2';
-    if (name.includes('grade 3') || name === 'grade 3') return 'G3';
-    if (name.includes('grade 4') || name === 'grade 4') return 'G4';
-    if (name.includes('grade 5') || name === 'grade 5') return 'G5';
-    if (name.includes('grade 6') || name === 'grade 6') return 'G6';
-    
-    // Secondary grades
-    if (name.includes('grade 7') || name === 'grade 7') return 'G7';
-    if (name.includes('grade 8') || name === 'grade 8') return 'G8';
-    if (name.includes('grade 9') || name === 'grade 9') return 'G9';
-    if (name.includes('grade 10') || name === 'grade 10') return 'G10';
-    if (name.includes('grade 11') || name === 'grade 11') return 'G11';
-    if (name.includes('grade 12') || name === 'grade 12') return 'G12';
-    
-    // Form system (alternative naming)
-    if (name.includes('form 1') || name.includes('f1')) return 'F1';
-    if (name.includes('form 2') || name.includes('f2')) return 'F2';
-    if (name.includes('form 3') || name.includes('f3')) return 'F3';
-    if (name.includes('form 4') || name.includes('f4')) return 'F4';
-    if (name.includes('form 5') || name.includes('f5')) return 'F5';
-    if (name.includes('form 6') || name.includes('f6')) return 'F6';
-    
-    // Fallback: take first letter and any numbers
-    const match = gradeName.match(/^([A-Za-z]+)?\s*(\d+)/);
-    if (match) {
-      const prefix = match[1] ? match[1].charAt(0).toUpperCase() : 'G';
-      return `${prefix}${match[2]}`;
-    }
-    
-    return gradeName.substring(0, 3).toUpperCase();
-  };
-
   const getGradePriority = (gradeName: string): number => {
     const name = gradeName.toLowerCase();
     
@@ -191,6 +109,128 @@ export function TimetableFilter({
     // Extract number for fallback
     const match = gradeName.match(/(\d+)/);
     return match ? parseInt(match[1]) + 100 : 999;
+  };
+
+  // Enhanced grade levels merging config store data with predefined structure
+  const enhancedGradeLevels = React.useMemo(() => {
+    // Use the predefined structure as the base
+    const finalLevels = educationalLevels.map(level => ({
+      ...level,
+      grades: [...level.grades] // Create a copy
+    }));
+    
+    // Get config levels to check for any additional grades
+    const configLevels = getAllGradeLevels();
+    
+    configLevels.forEach(configLevel => {
+      const matchingLevel = finalLevels.find(level => 
+        level.levelName.toLowerCase().includes(configLevel.levelName.toLowerCase()) ||
+        configLevel.levelName.toLowerCase().includes(level.levelName.toLowerCase())
+      );
+      
+      if (matchingLevel) {
+        // Add any grades from config that aren't already in our predefined structure
+        configLevel.grades.forEach(configGrade => {
+          const existingGrade = matchingLevel.grades.find(grade =>
+            grade.name.toLowerCase() === configGrade.name.toLowerCase()
+          );
+          
+          if (!existingGrade) {
+            matchingLevel.grades.push({
+              id: configGrade.id,
+              name: configGrade.name,
+              age: configGrade.age || 0,
+              streams: []
+            });
+          }
+        });
+      } else {
+        // Add completely new level if it doesn't match any existing one
+        finalLevels.push({
+          levelId: configLevel.levelId,
+          levelName: configLevel.levelName,
+          grades: configLevel.grades.map(grade => ({
+            id: grade.id,
+            name: grade.name,
+            age: grade.age || 0,
+            streams: []
+          }))
+        });
+      }
+    });
+    
+    // Remove duplicates and sort grades within each level
+    return finalLevels.map(level => ({
+      ...level,
+      grades: level.grades
+        .filter((grade, index, array) => 
+          // Remove duplicates by name
+          array.findIndex(g => g.name.toLowerCase() === grade.name.toLowerCase()) === index
+        )
+        .sort((a, b) => getGradePriority(a.name) - getGradePriority(b.name))
+    }));
+  }, [getAllGradeLevels, educationalLevels]);
+
+  const getShortName = (gradeName: string): string => {
+    const name = gradeName.toLowerCase();
+    
+    console.log(`Processing grade: "${gradeName}" (lowercase: "${name}")`);
+    
+    // Pre-primary
+    if (name.includes('pp1')) return 'PP1';
+    if (name.includes('pp2')) return 'PP2';
+    
+    // Primary grades (1-6) - check exact matches first
+    if (name === 'grade 1' || name.includes('grade 1 ')) return 'G1';
+    if (name === 'grade 2' || name.includes('grade 2 ')) return 'G2';
+    if (name === 'grade 3' || name.includes('grade 3 ')) return 'G3';
+    if (name === 'grade 4' || name.includes('grade 4 ')) return 'G4';
+    if (name === 'grade 5' || name.includes('grade 5 ')) return 'G5';
+    if (name === 'grade 6' || name.includes('grade 6 ')) return 'G6';
+    
+    // Secondary grades - Use Form system (check double digits first and be more specific)
+    if (name === 'grade 10' || name.includes('grade 10 ')) {
+      console.log('Matched Grade 10 -> F4');
+      return 'F4';
+    }
+    if (name === 'grade 11' || name.includes('grade 11 ')) {
+      console.log('Matched Grade 11 -> F5');
+      return 'F5';
+    }
+    if (name === 'grade 12' || name.includes('grade 12 ')) {
+      console.log('Matched Grade 12 -> F6');
+      return 'F6';
+    }
+    if (name === 'grade 7' || name.includes('grade 7 ')) return 'F1';
+    if (name === 'grade 8' || name.includes('grade 8 ')) return 'F2';
+    if (name === 'grade 9' || name.includes('grade 9 ')) return 'F3';
+    
+    // Form system (alternative naming)
+    if (name.includes('form 1') || name.includes('f1')) return 'F1';
+    if (name.includes('form 2') || name.includes('f2')) return 'F2';
+    if (name.includes('form 3') || name.includes('f3')) return 'F3';
+    if (name.includes('form 4') || name.includes('f4')) return 'F4';
+    if (name.includes('form 5') || name.includes('f5')) return 'F5';
+    if (name.includes('form 6') || name.includes('f6')) return 'F6';
+    
+    // Fallback: extract all digits (handles multi-digit numbers)
+    const match = gradeName.match(/(\d+)/);
+    if (match) {
+      const num = parseInt(match[1]);
+      console.log(`Fallback: extracted number ${num} from "${gradeName}"`);
+      if (num >= 7 && num <= 12) {
+        const formNum = num - 6;
+        console.log(`Converting Grade ${num} to F${formNum}`);
+        return `F${formNum}`;
+      } else if (num >= 1 && num <= 6) {
+        console.log(`Converting Grade ${num} to G${num}`);
+        return `G${num}`;
+      }
+      return `G${num}`;
+    }
+    
+    console.log(`No match found for "${gradeName}", using fallback`);
+    return gradeName.substring(0, 3).toUpperCase();
   };
 
   const getLevelColor = (levelId: string): string => {

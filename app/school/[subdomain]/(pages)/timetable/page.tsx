@@ -81,9 +81,55 @@ const SmartTimetable = () => {
   });
   const [grades] = useState([
     'PP1', 'PP2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 
-    'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10',
-    'Grade 11', 'Grade 12'
+    'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
   ]);
+
+  const days = [
+    { name: 'MON', color: 'bg-primary' },
+    { name: 'TUE', color: 'bg-primary/80' },
+    { name: 'WED', color: 'bg-primary/70' },
+    { name: 'THU', color: 'bg-primary/60' },
+    { name: 'FRI', color: 'bg-primary/50' }
+  ];
+
+  // Function to transform grade names for display
+  const getDisplayGradeName = (gradeName: string): string => {
+    if (gradeName.startsWith('Grade')) {
+      const gradeNum = parseInt(gradeName.split(' ')[1]);
+      if (gradeNum >= 7 && gradeNum <= 12) {
+        return `F${gradeNum - 6}`;
+      }
+    }
+    return gradeName;
+  };
+
+  // Use display names in UI but keep internal grade names for logic
+  const displayGrades = grades.map(grade => ({
+    internal: grade,
+    display: getDisplayGradeName(grade)
+  }));
+
+  const getCellKey = (grade: string, timeId: number, dayIndex: number): string => {
+    // If we're passed a display name, convert it back to internal name
+    const internalGrade = displayGrades.find(g => g.display === grade)?.internal || grade;
+    return `${internalGrade}-${dayIndex + 1}-${timeId - 1}`;
+  };
+
+  const getGradeProgress = (grade: string): number => {
+    let totalCells = timeSlots.length * days.length;
+    let filledCells = 0;
+    
+    timeSlots.forEach(slot => {
+      days.forEach((day, dayIndex) => {
+        const cellKey = getCellKey(grade, slot.id, dayIndex);
+        if (mergedSubjects[cellKey]) {
+          filledCells++;
+        }
+      });
+    });
+    
+    return Math.round((filledCells / totalCells) * 100);
+  };
   const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [showBreakModal, setShowBreakModal] = useState(false);
@@ -141,16 +187,6 @@ const SmartTimetable = () => {
   console.log('Selected grade:', selectedGrade);
   console.log('Total subjects in mergedSubjects:', Object.keys(mergedSubjects).length);
   console.log('Breaks in mergedSubjects:', Object.entries(mergedSubjects).filter(([key, data]) => data?.isBreak).length);
-
-  const days = [
-    { name: 'Mon', color: 'bg-primary' },
-    { name: 'Tues', color: 'bg-emerald-600' },
-    { name: 'Wed', color: 'bg-amber-500' },
-    { name: 'Thurs', color: 'bg-sky-500' },
-    { name: 'Fri', color: 'bg-orange-500' }
-  ];
-
-  const getCellKey = (grade: string, timeId: number, dayIndex: number): string => `${grade}-${dayIndex + 1}-${timeId - 1}`;
 
   // Check if input is a break
   const isBreakInput = (input: string): Break | null => {
@@ -509,22 +545,6 @@ const SmartTimetable = () => {
     return Object.keys(conflicts).length;
   };
 
-  const getGradeProgress = (grade: string): number => {
-    let totalCells = timeSlots.length * days.length;
-    let filledCells = 0;
-    
-    timeSlots.forEach(slot => {
-      days.forEach((day, dayIndex) => {
-        const cellKey = getCellKey(grade, slot.id, dayIndex);
-        if (mergedSubjects[cellKey]) {
-          filledCells++;
-        }
-      });
-    });
-    
-    return Math.round((filledCells / totalCells) * 100);
-  };
-
   const clearCell = (cellKey: string) => {
     const newSubjects = { ...mergedSubjects };
     delete newSubjects[cellKey];
@@ -663,36 +683,37 @@ const SmartTimetable = () => {
           onGradeSelect={(grade) => updateMainTimetable({ selectedGrade: grade })}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
+          getDisplayGradeName={getDisplayGradeName}
         />
       }
     >
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10">
         {/* Mobile-optimized container with no overflow */}
         <div className="w-full max-w-full overflow-hidden">
           {/* Mobile Header - Sticky with App-like Design */}
           <div className="sticky top-0 z-40 md:hidden">
-            <div className="bg-white/95 backdrop-blur-lg border-b border-gray-200/50 px-4 py-4 shadow-sm">
+            <div className="bg-white/95 backdrop-blur-lg border-b border-primary/10 px-4 py-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                     <Calendar className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900">Timetable</h1>
-                    <p className="text-xs text-gray-500">Schedule Management</p>
+                    <h1 className="text-xl font-bold text-primary">Timetable</h1>
+                    <p className="text-xs text-primary/70">Schedule Management</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="px-3 py-1.5 bg-gradient-to-r from-primary/10 to-primary/5 text-primary text-sm font-medium rounded-full border border-primary/20">
+                  <div className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full border border-primary/20">
                     {selectedGrade}
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                    className="p-2 hover:bg-primary/10 rounded-xl transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
                   >
-                    {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                    {showMobileMenu ? <X className="h-5 w-5 text-primary" /> : <Menu className="h-5 w-5 text-primary" />}
                   </Button>
                 </div>
               </div>
@@ -701,17 +722,17 @@ const SmartTimetable = () => {
               <div className="mt-3 flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-1.5">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs text-gray-600">{stats.completionPercentage}% Complete</span>
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span className="text-xs text-primary/80">{stats.completionPercentage}% Complete</span>
                   </div>
                   <div className="flex items-center space-x-1.5">
-                    <Users className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs text-gray-600">{stats.totalTeachers} Teachers</span>
+                    <Users className="h-3 w-3 text-primary/60" />
+                    <span className="text-xs text-primary/80">{stats.totalTeachers} Teachers</span>
                   </div>
                 </div>
                 {getTotalConflicts() > 0 && (
                   <div className="flex items-center space-x-1.5 px-2 py-1 bg-red-50 rounded-full">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <AlertTriangle className="h-3 w-3 text-red-600" />
                     <span className="text-xs text-red-600 font-medium">{getTotalConflicts()} conflicts</span>
                   </div>
                 )}
@@ -724,79 +745,79 @@ const SmartTimetable = () => {
             <div className="fixed inset-0 z-50 md:hidden">
               <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)} />
               <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-primary/5 to-primary/10">
+                <div className="flex items-center justify-between p-6 border-b border-primary/10 bg-primary/5">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                       <Settings className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900">Tools</h2>
-                      <p className="text-xs text-gray-500">Timetable Management</p>
+                      <h2 className="text-lg font-bold text-primary">Tools</h2>
+                      <p className="text-xs text-primary/70">Timetable Management</p>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowMobileMenu(false)}
-                    className="p-2 hover:bg-white/50 rounded-xl transition-colors"
+                    className="p-2 hover:bg-primary/10 rounded-xl transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-5 w-5 text-primary" />
                   </Button>
                 </div>
                 
                 <div className="p-4 space-y-1">
                   {/* Management Section */}
                   <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">Management</h3>
+                    <h3 className="text-xs font-semibold text-primary/60 uppercase tracking-wide mb-3 px-3">Management</h3>
                     <div className="space-y-1">
                       <Button
                         variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/5 hover:text-primary transition-colors rounded-xl"
+                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
                         onClick={() => {
                           setShowTeacherModal(true);
                           setShowMobileMenu(false);
                         }}
                       >
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                          <Users className="h-4 w-4 text-white" />
+                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
+                          <Users className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-medium text-gray-900">Teachers</p>
-                          <p className="text-xs text-gray-500">Manage staff & subjects</p>
+                          <p className="font-semibold text-primary">Teachers</p>
+                          <p className="text-xs text-primary/70">Manage staff & subjects</p>
                         </div>
                       </Button>
                       
                       <Button
                         variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/5 hover:text-primary transition-colors rounded-xl"
+                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
                         onClick={() => {
                           setShowTimeSlotModal(true);
                           setShowMobileMenu(false);
                         }}
                       >
-                        <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3">
-                          <Clock className="h-4 w-4 text-white" />
+                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
+                          <Clock className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-medium text-gray-900">Time Slots</p>
-                          <p className="text-xs text-gray-500">Configure periods</p>
+                          <p className="font-semibold text-primary">Time Slots</p>
+                          <p className="text-xs text-primary/70">Configure periods</p>
                         </div>
                       </Button>
                       
                       <Button
                         variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/5 hover:text-primary transition-colors rounded-xl"
+                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
                         onClick={() => {
                           setShowBreakModal(true);
                           setShowMobileMenu(false);
                         }}
                       >
-                        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
-                          <Coffee className="h-4 w-4 text-white" />
+                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
+                          <Coffee className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-medium text-gray-900">Breaks</p>
-                          <p className="text-xs text-gray-500">Manage break periods</p>
+                          <p className="font-semibold text-primary">Breaks</p>
+                          <p className="text-xs text-primary/70">Manage break periods</p>
                         </div>
                       </Button>
                     </div>
@@ -804,25 +825,25 @@ const SmartTimetable = () => {
 
                   {/* Quick Actions */}
                   <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">Quick Actions</h3>
+                    <h3 className="text-xs font-semibold text-primary/60 uppercase tracking-wide mb-3 px-3">Quick Actions</h3>
                     <div className="space-y-1">
                       <Button
                         variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/5 hover:text-primary transition-colors rounded-xl"
+                        className="w-full justify-start h-12 px-3 hover:bg-red-50 hover:text-red-700 transition-all duration-200 rounded-xl border border-transparent hover:border-red-200 hover:shadow-sm"
                         onClick={() => {
                           toggleSection('conflicts');
                           setShowMobileMenu(false);
                         }}
                       >
-                        <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mr-3">
-                          <AlertTriangle className="h-4 w-4 text-white" />
+                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-red-100">
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-medium text-gray-900">Conflicts</p>
-                          <p className="text-xs text-gray-500">{getTotalConflicts()} issues to resolve</p>
+                          <p className="font-semibold text-red-700">Conflicts</p>
+                          <p className="text-xs text-red-600">{getTotalConflicts()} issues to resolve</p>
                         </div>
                         {getTotalConflicts() > 0 && (
-                          <div className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                          <div className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                             {getTotalConflicts()}
                           </div>
                         )}
@@ -830,29 +851,29 @@ const SmartTimetable = () => {
                       
                       <Button
                         variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/5 hover:text-primary transition-colors rounded-xl"
+                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
                         onClick={() => {
                           toggleSection('stats');
                           setShowMobileMenu(false);
                         }}
                       >
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                          <BarChart3 className="h-4 w-4 text-white" />
+                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
+                          <BarChart3 className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 text-left">
-                          <p className="font-medium text-gray-900">Statistics</p>
-                          <p className="text-xs text-gray-500">View analytics</p>
+                          <p className="font-semibold text-primary">Statistics</p>
+                          <p className="text-xs text-primary/70">View analytics</p>
                         </div>
                       </Button>
                     </div>
                   </div>
                   
                   {/* File Operations */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">File Operations</h3>
+                  <div className="pt-4 border-t border-primary/10">
+                    <h3 className="text-xs font-semibold text-primary/60 uppercase tracking-wide mb-3 px-3">File Operations</h3>
                     <div className="space-y-2">
                       <Button
-                        className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg text-white rounded-xl font-medium"
+                        className="w-full h-11 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl text-white rounded-xl font-semibold transition-all duration-200 border border-primary/20 hover:border-primary/30 hover:scale-[1.02]"
                         onClick={() => {
                           handleSaveTimetable();
                           setShowMobileMenu(false);
@@ -864,7 +885,7 @@ const SmartTimetable = () => {
                       
                       <Button
                         variant="outline"
-                        className="w-full h-11 border-gray-200 hover:bg-gray-50 rounded-xl font-medium"
+                        className="w-full h-11 border-primary/30 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl font-semibold transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
                         onClick={() => {
                           handleLoadTimetable();
                           setShowMobileMenu(false);
@@ -876,7 +897,7 @@ const SmartTimetable = () => {
                       
                       <Button
                         variant="outline"
-                        className="w-full h-11 border-gray-200 hover:bg-gray-50 rounded-xl font-medium"
+                        className="w-full h-11 border-primary/30 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl font-semibold transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
                         onClick={() => {
                           loadMockData();
                           setShowMobileMenu(false);
@@ -941,14 +962,14 @@ const SmartTimetable = () => {
           <div className="md:hidden">
             {/* Conflicts Section */}
             {(showConflicts || expandedSections.conflicts) && getTotalConflicts() > 0 && (
-              <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-sm">
+              <div className="bg-white/95 backdrop-blur-sm border-b border-primary/10 shadow-sm">
                 <div className="px-4 py-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center">
-                        <AlertTriangle className="h-3 w-3 text-white" />
+                      <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
+                        <AlertTriangle className="h-3 w-3 text-red-600" />
                       </div>
-                      <h3 className="text-sm font-semibold text-gray-900">Conflicts</h3>
+                      <h3 className="text-sm font-semibold text-primary">Conflicts</h3>
                       <div className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">
                         {getTotalConflicts()}
                       </div>
@@ -960,12 +981,12 @@ const SmartTimetable = () => {
                         setShowConflicts(false);
                         toggleSection('conflicts');
                       }}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg"
+                      className="p-1.5 hover:bg-primary/10 rounded-lg transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
                     >
-                      <ChevronUp className="h-4 w-4 text-gray-500" />
+                      <ChevronUp className="h-4 w-4 text-primary/60" />
                     </Button>
                   </div>
-                  <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50/50">
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-primary/20 bg-primary/5">
                     <ConflictsPanel
                       conflicts={conflicts}
                       timeSlots={timeSlots}
@@ -979,25 +1000,25 @@ const SmartTimetable = () => {
 
             {/* Statistics Section */}
             {expandedSections.stats && (
-              <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-sm">
+              <div className="bg-white/95 backdrop-blur-sm border-b border-primary/10 shadow-sm">
                 <div className="px-4 py-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <BarChart3 className="h-3 w-3 text-white" />
+                      <div className="w-6 h-6 bg-primary/20 rounded-lg flex items-center justify-center">
+                        <BarChart3 className="h-3 w-3 text-primary" />
                       </div>
-                      <h3 className="text-sm font-semibold text-gray-900">Statistics</h3>
+                      <h3 className="text-sm font-semibold text-primary">Statistics</h3>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleSection('stats')}
-                      className="p-1.5 hover:bg-gray-100 rounded-lg"
+                      className="p-1.5 hover:bg-primary/10 rounded-lg transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
                     >
-                      <ChevronUp className="h-4 w-4 text-gray-500" />
+                      <ChevronUp className="h-4 w-4 text-primary/60" />
                     </Button>
                   </div>
-                  <div className="max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50/50">
+                  <div className="max-h-60 overflow-y-auto rounded-xl border border-primary/20 bg-primary/5">
                     <LessonSummaryPanel stats={stats} />
                   </div>
                 </div>
@@ -1124,29 +1145,29 @@ const SmartTimetable = () => {
           </div>
 
           {/* Mobile Instructions - Enhanced */}
-          <div className="md:hidden px-4 py-6 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
+          <div className="md:hidden px-4 py-6 bg-primary/5 border-t border-primary/20">
             <div className="text-center space-y-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+              <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-lg">
                 <Calendar className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Getting Started</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-sm font-semibold text-primary mb-1">Getting Started</h3>
+                <p className="text-sm text-primary/70">
                   Tap any cell to add subjects and teachers
                 </p>
               </div>
               <div className="flex justify-center space-x-6 pt-2">
                 <div className="text-center">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-1">
-                    <Coffee className="h-4 w-4 text-blue-600" />
+                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-1">
+                    <Coffee className="h-4 w-4 text-primary" />
                   </div>
-                  <p className="text-xs text-gray-500">Add breaks</p>
+                  <p className="text-xs text-primary/60">Add breaks</p>
                 </div>
                 <div className="text-center">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-1">
-                    <Menu className="h-4 w-4 text-green-600" />
+                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-1">
+                    <Menu className="h-4 w-4 text-primary" />
                   </div>
-                  <p className="text-xs text-gray-500">Use menu</p>
+                  <p className="text-xs text-primary/60">Use menu</p>
                 </div>
               </div>
             </div>

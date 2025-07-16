@@ -1,13 +1,14 @@
-import React, { useState } from "react";
-import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home, Upload, File, X } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home, Upload, File, X, BookOpen } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
-
-const mockSubjects = ["Mathematics", "English", "Science", "Social Studies", "Kiswahili"];
-const mockGrades = ["Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8"];
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
+import { toast } from 'sonner';
 
 const QUESTION_TYPES = [
   { value: "mcq", label: "Multiple Choice" },
   { value: "short", label: "Short Answer" },
+  { value: "tf", label: "True/False" },
 ];
 
 function emptyQuestion() {
@@ -33,6 +34,31 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     resourceUrl: string;
   }) => void;
 }) {
+  // School config hooks
+  const { data: schoolConfig, isLoading: configLoading } = useSchoolConfig();
+  const { config, getAllSubjects, getAllGradeLevels, getGradeById, setConfig } = useSchoolConfigStore();
+
+  // Sync school config from hook to store
+  useEffect(() => {
+    if (schoolConfig && !config) {
+      setConfig(schoolConfig);
+    }
+  }, [schoolConfig, config, setConfig]);
+  
+  // Get subjects and grades from store (use whichever data source is available)
+  const currentConfig = config || schoolConfig;
+  const allSubjects = getAllSubjects();
+  const allGradeLevels = getAllGradeLevels();
+  
+  // Flatten grades for easier access
+  const gradeLevels = allGradeLevels.flatMap(level => 
+    (level.grades || []).map(grade => ({
+      ...grade,
+      levelName: level.levelName,
+      levelId: level.levelId
+    }))
+  );
+
   // Step state
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -41,8 +67,67 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
 
   // Test details
   const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState(mockSubjects[0]);
-  const [grade, setGrade] = useState(mockGrades[0]);
+  const [subject, setSubject] = useState("");
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+
+  // Filter subjects based on selected grades (only show subjects when grades are selected)
+  const availableSubjects = useMemo(() => {
+    if (selectedGrades.length === 0) {
+      // No grades selected = no subjects to show
+      return [];
+    }
+
+    // Find which levels contain the selected grades
+    const selectedLevelIds = new Set<string>();
+    selectedGrades.forEach(gradeName => {
+      const grade = gradeLevels.find(g => g.name === gradeName);
+      if (grade) {
+        selectedLevelIds.add(grade.levelId);
+      }
+    });
+
+    // Get subjects from those levels
+    const subjectsFromSelectedLevels = new Set<string>();
+          allGradeLevels.forEach(level => {
+        if (selectedLevelIds.has(level.levelId)) {
+          // Find the level data in config that contains this grade
+          const levelInConfig = currentConfig?.selectedLevels.find(l => l.id === level.levelId);
+          if (levelInConfig) {
+            levelInConfig.subjects.forEach(subject => {
+              subjectsFromSelectedLevels.add(subject.name);
+            });
+          }
+        }
+      });
+
+    return Array.from(subjectsFromSelectedLevels).sort();
+  }, [selectedGrades, gradeLevels, allGradeLevels, currentConfig]);
+
+  console.log('Debug - School config data:', { 
+    hookSchoolConfig: schoolConfig,
+    storeConfig: config,
+    currentConfig,
+    configLoading,
+    allSubjects: allSubjects.length,
+    allGradeLevels: allGradeLevels.length,
+    gradeLevels: gradeLevels.length,
+    selectedGrades, 
+    availableSubjects,
+    hookSelectedLevels: schoolConfig?.selectedLevels?.length || 0,
+    storeSelectedLevels: config?.selectedLevels?.length || 0,
+    currentConfigLevels: currentConfig?.selectedLevels?.length || 0
+  });
+  
+  // Set default subject when subjects are loaded and reset when grades change
+  useEffect(() => {
+    if (availableSubjects.length > 0) {
+      // Auto-select first subject when subjects become available
+      setSubject(availableSubjects[0]);
+    } else {
+      // Clear subject when no grades are selected
+      setSubject("");
+    }
+  }, [availableSubjects]);
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [duration, setDuration] = useState("");
@@ -58,15 +143,44 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const [aiNumQuestions, setAiNumQuestions] = useState(5);
   const [aiSample, setAiSample] = useState("");
 
-  // Step 1 validation
-  const detailsValid = title && subject && grade && date && startTime && duration && points;
+  // Step 1 validation (grades must be selected first, then subject becomes available)
+  const detailsValid = title && selectedGrades.length > 0 && subject && date && startTime && duration && points;
   // Step 2 validation
-  const questionsValid = questions.every(q => q.text && (q.type !== "mcq" || q.options.every(opt => opt))) && questions.length > 0;
+  const questionsValid = questions.every(q => {
+    if (!q.text) return false;
+    if (q.type === "mcq" || q.type === "tf") {
+      return q.options && q.options.every(opt => opt.trim() !== '');
+    }
+    return true; // For short answer questions, only text is required
+  }) && questions.length > 0;
 
   // Handlers (same as before)
   const handleAddQuestion = () => setQuestions(qs => [...qs, emptyQuestion()]);
   const handleRemoveQuestion = (idx: number) => setQuestions(qs => qs.length === 1 ? qs : qs.filter((_, i) => i !== idx));
-  const handleQuestionChange = (idx: number, field: string, value: any) => setQuestions(qs => qs.map((q, i) => i === idx ? { ...q, [field]: value } : q));
+  const handleQuestionChange = (idx: number, field: string, value: any) => {
+    setQuestions(qs => qs.map((q, i) => {
+      if (i === idx) {
+        const updatedQuestion = { ...q, [field]: value };
+        
+        // Handle type changes - set appropriate options
+        if (field === 'type') {
+          if (value === 'tf') {
+            updatedQuestion.options = ['True', 'False'];
+            updatedQuestion.correct = 0;
+          } else if (value === 'mcq' && q.type === 'tf') {
+            updatedQuestion.options = ['', '', '', ''];
+            updatedQuestion.correct = 0;
+          } else if (value === 'short') {
+            updatedQuestion.options = [];
+            updatedQuestion.correct = 0;
+          }
+        }
+        
+        return updatedQuestion;
+      }
+      return q;
+    }));
+  };
   const handleOptionChange = (qIdx: number, optIdx: number, value: string) => setQuestions(qs => qs.map((q, i) => i === qIdx ? { ...q, options: q.options.map((opt, j) => (j === optIdx ? value : opt)) } : q));
   const handleAddOption = (qIdx: number) => setQuestions(qs => qs.map((q, i) => i === qIdx ? { ...q, options: [...q.options, ""] } : q));
   const handleRemoveOption = (qIdx: number, optIdx: number) => setQuestions(qs => qs.map((q, i) => i === qIdx && q.options.length > 2 ? { ...q, options: q.options.filter((_, j) => j !== optIdx) } : q));
@@ -110,20 +224,83 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setTimeout(() => {
+
+    try {
+      // Get grade level IDs from selected grade names
+      const gradeLevelIds = selectedGrades.map(gradeName => {
+        const gradeLevel = gradeLevels.find(g => g.name === gradeName);
+        return gradeLevel?.id;
+      }).filter(Boolean);
+
+      if (gradeLevelIds.length === 0) {
+        throw new Error('Please select at least one grade level');
+      }
+
+      // Prepare reference materials from uploaded files
+      const referenceMaterials = uploadedFiles.map(file => ({
+        fileUrl: URL.createObjectURL(file), // In production, upload to cloud storage first
+        fileType: file.type.includes('image') ? 'image' : 
+                  file.type.includes('pdf') ? 'pdf' : 'document',
+        fileSize: file.size
+      }));
+
+      const testData = {
+        title,
+        subject,
+        gradeLevelIds,
+        date,
+        startTime,
+        duration,
+        points,
+        resourceUrl,
+        instructions,
+        questions: questions.map(q => ({
+          ...q,
+          marks: 10, // Default marks per question
+          isAIGenerated: q.text.startsWith('AI:')
+        })),
+        referenceMaterials
+      };
+
+      console.log('Submitting test data:', testData);
+
+      const response = await fetch('/api/school/create-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create test');
+      }
+
+      toast.success("Test Created Successfully!", {
+        description: `${title} has been created and is ready to be assigned to students.`
+      });
+
       setSaving(false);
       setSuccess(true);
-    }, 1200);
+    } catch (error) {
+      console.error('Error creating test:', error);
+      toast.error("Test Creation Failed", {
+        description: error instanceof Error ? error.message : "An error occurred while creating the test"
+      });
+      setSaving(false);
+    }
   };
 
   // Progress indicator
   const steps = ["Test Details", "Questions", "Review & Save"];
 
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50">
+                <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
       <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-0 flex flex-col relative overflow-hidden">
         {/* Header with gradient and Return to Main Menu button */}
         <div className="bg-gradient-to-r from-[#246a59] via-[#2d8570] to-[#1a4c40] text-white p-8">
@@ -190,7 +367,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                   onClick={() => onAssignHomework?.({
                     title,
                     subject,
-                    grade,
+                    grade: selectedGrades.join(', '),
                     date,
                     startTime,
                     duration,
@@ -218,66 +395,221 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
               {/* Step 1: Test Details */}
               {step === 1 && (
                 <div className="flex flex-col gap-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column - Basic Info */}
-                    <div className="space-y-6">
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-l-4 border-[#246a59]">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                          <FileText className="w-5 h-5 text-[#246a59]" />
-                          Test Information
-                        </h3>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Test Title</label>
-                            <input
-                              type="text"
-                              className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#246a59] focus:ring-0 transition-colors"
-                              placeholder="e.g. End of Term 1 Mathematics"
-                              value={title}
-                              onChange={e => setTitle(e.target.value)}
-                              required
-                            />
-                            <div className="text-xs text-gray-500 mt-1">This is the title students will see</div>
+                  {/* Step 1: Grade Selection - First and Most Important */}
+                  <div className="mb-8">
+                    <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary-light/10 p-8 border-2 border-primary/30 shadow-lg">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary-dark flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                          1
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-800">Select Target Grades</h3>
+                          <p className="text-sm text-gray-600">Choose which grade levels this test is for</p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                                                     <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                             <Users className="w-4 h-4 text-primary" />
+                             Available Grades
+                           </label>
+                           <div className="bg-white border-2 border-gray-200 p-4 max-h-[200px] overflow-y-auto">
+                             {configLoading || !currentConfig ? (
+                               <div className="flex items-center justify-center py-8">
+                                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                 <span className="ml-2 text-gray-600">Loading grades...</span>
+                               </div>
+                             ) : gradeLevels.length > 0 ? (
+                               <div className="space-y-2">
+                                 {gradeLevels.map(gr => (
+                                   <label key={gr.id} className="flex items-center gap-3 p-3 hover:bg-primary/5 cursor-pointer transition-colors border border-transparent hover:border-primary/20">
+                                     <input
+                                       type="checkbox"
+                                       className="w-4 h-4 text-primary border-2 border-gray-300 focus:ring-primary"
+                                       checked={selectedGrades.includes(gr.name)}
+                                       onChange={e => {
+                                         if (e.target.checked) {
+                                           setSelectedGrades(prev => [...prev, gr.name]);
+                                         } else {
+                                           setSelectedGrades(prev => prev.filter(g => g !== gr.name));
+                                         }
+                                       }}
+                                     />
+                                     <div className="flex-1">
+                                       <div className="font-medium text-gray-800">{gr.name}</div>
+                                       <div className="text-xs text-gray-500">{gr.levelName}</div>
+                                     </div>
+                                   </label>
+                                 ))}
+                               </div>
+                             ) : (
+                               <div className="text-center py-8 text-gray-500">
+                                 <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                 <p>No grades available</p>
+                                 <p className="text-xs">Configure your school levels in settings</p>
+                               </div>
+                             )}
                           </div>
-                          
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                              <select
-                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#246a59] focus:ring-0 transition-colors"
-                                value={subject}
-                                onChange={e => setSubject(e.target.value)}
-                              >
-                                {mockSubjects.map(subj => (
-                                  <option key={subj} value={subj}>{subj}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">Class/Grade</label>
-                              <select
-                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#246a59] focus:ring-0 transition-colors"
-                                value={grade}
-                                onChange={e => setGrade(e.target.value)}
-                              >
-                                {mockGrades.map(gr => (
-                                  <option key={gr} value={gr}>{gr}</option>
-                                ))}
-                              </select>
-                            </div>
+                        </div>
+                        
+                                                 <div>
+                           <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                             <CheckCircle2 className="w-4 h-4 text-primary" />
+                             Selected Grades ({selectedGrades.length})
+                           </label>
+                           <div className="bg-white border-2 border-gray-200 p-4 min-h-[200px]">
+                             {selectedGrades.length > 0 ? (
+                               <div className="space-y-2">
+                                 {selectedGrades.map((grade, index) => (
+                                   <div key={index} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20">
+                                     <div>
+                                       <div className="font-medium text-primary-dark">{grade}</div>
+                                       <div className="text-xs text-primary">
+                                         {gradeLevels.find(g => g.name === grade)?.levelName}
+                                       </div>
+                                     </div>
+                                     <button
+                                       type="button"
+                                       onClick={() => setSelectedGrades(prev => prev.filter(g => g !== grade))}
+                                       className="text-primary hover:text-red-600 transition-colors"
+                                     >
+                                       <X className="w-4 h-4" />
+                                     </button>
+                                   </div>
+                                 ))}
+                               </div>
+                             ) : (
+                               <div className="flex items-center justify-center h-full text-gray-400">
+                                 <div className="text-center">
+                                   <CheckCircle2 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                   <p className="text-sm">Select grades from the left</p>
+                                 </div>
+                               </div>
+                             )}
                           </div>
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Right Column - Schedule */}
-                    <div className="space-y-6">
-                      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 border-l-4 border-[#059669]">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                          <Calendar className="w-5 h-5 text-[#059669]" />
-                          Schedule & Timing
-                        </h3>
+                                     {/* Step 2: Subject Selection - Appears after grade selection */}
+                   {selectedGrades.length > 0 && (
+                     <div className="mb-8">
+                       <div className="bg-gradient-to-r from-primary/8 via-primary/12 to-primary-light/12 p-8 border-2 border-primary/40 shadow-lg">
+                         <div className="flex items-center gap-3 mb-6">
+                           <div className="w-10 h-10 bg-gradient-to-r from-primary-light to-primary rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                             2
+                           </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800">Choose Subject</h3>
+                            <p className="text-sm text-gray-600">Select from subjects available for the chosen grades</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                                     <div className="lg:col-span-2">
+                             <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                               <BookOpen className="w-4 h-4 text-primary" />
+                               Available Subjects ({availableSubjects.length})
+                             </label>
+                             {availableSubjects.length > 0 ? (
+                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                 {availableSubjects.map((subj: string) => (
+                                   <button
+                                     key={subj}
+                                     type="button"
+                                     onClick={() => setSubject(subj)}
+                                     className={`p-4 border-2 transition-all duration-200 text-left ${
+                                       subject === subj
+                                         ? 'bg-primary/10 border-primary text-primary-dark shadow-md'
+                                         : 'bg-white border-gray-200 text-gray-700 hover:border-primary/50 hover:bg-primary/5'
+                                     }`}
+                                   >
+                                     <div className="flex items-center gap-2">
+                                       <BookOpen className={`w-4 h-4 ${subject === subj ? 'text-primary' : 'text-gray-400'}`} />
+                                       <span className="font-medium">{subj}</span>
+                                     </div>
+                                     {subject === subj && (
+                                       <div className="mt-1 text-xs text-primary flex items-center gap-1">
+                                         <CheckCircle2 className="w-3 h-3" />
+                                         Selected
+                                       </div>
+                                     )}
+                                   </button>
+                                 ))}
+                               </div>
+                             ) : (
+                               <div className="bg-white border-2 border-gray-200 p-8 text-center">
+                                 <BookOpen className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                                 <p className="text-gray-600">No subjects available for selected grades</p>
+                               </div>
+                             )}
+                          </div>
+                          
+                                                     {subject && (
+                             <div>
+                               <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                 <CheckCircle2 className="w-4 h-4 text-primary" />
+                                 Selected Subject
+                               </label>
+                               <div className="bg-white border-2 border-primary/30 p-4">
+                                 <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 bg-primary/10 flex items-center justify-center">
+                                     <BookOpen className="w-5 h-5 text-primary" />
+                                   </div>
+                                   <div>
+                                     <div className="font-semibold text-primary-dark">{subject}</div>
+                                     <div className="text-xs text-primary">
+                                       For {selectedGrades.length} grade{selectedGrades.length !== 1 ? 's' : ''}
+                                     </div>
+                                   </div>
+                                 </div>
+                               </div>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                                     {/* Step 3: Test Details - Only after grades and subject are selected */}
+                   {selectedGrades.length > 0 && subject && (
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                       {/* Left Column - Basic Info */}
+                       <div className="space-y-6">
+                         <div className="bg-gradient-to-r from-primary/6 to-primary-light/8 p-6 border-2 border-primary/30 shadow-lg">
+                           <div className="flex items-center gap-3 mb-4">
+                             <div className="w-8 h-8 bg-gradient-to-r from-primary-dark to-primary flex items-center justify-center text-white font-bold">
+                               3
+                             </div>
+                            <h3 className="text-lg font-bold text-gray-800">Test Information</h3>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">Test Title</label>
+                                                             <input
+                                 type="text"
+                                 className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-primary focus:ring-0 transition-colors"
+                                 placeholder="e.g. End of Term 1 Mathematics"
+                                 value={title}
+                                 onChange={e => setTitle(e.target.value)}
+                                 required
+                               />
+                              <div className="text-xs text-gray-500 mt-1">This is the title students will see</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                                             {/* Right Column - Schedule */}
+                       <div className="space-y-6">
+                         <div className="bg-gradient-to-r from-primary/8 to-primary-light/10 p-6 border-2 border-primary/40 shadow-lg">
+                                                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-primary" />
+                            Schedule & Timing
+                          </h3>
                         
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-4">
@@ -285,7 +617,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                               <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
                               <input
                                 type="date"
-                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-primary focus:ring-0 transition-colors"
                                 value={date}
                                 onChange={e => setDate(e.target.value)}
                                 required
@@ -295,7 +627,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                               <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time</label>
                               <input
                                 type="time"
-                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-primary focus:ring-0 transition-colors"
                                 value={startTime}
                                 onChange={e => setStartTime(e.target.value)}
                                 required
@@ -313,7 +645,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                 type="number"
                                 min="10"
                                 max="300"
-                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-primary focus:ring-0 transition-colors"
                                 placeholder="e.g. 90"
                                 value={duration}
                                 onChange={e => setDuration(e.target.value)}
@@ -329,7 +661,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                 type="number"
                                 min="1"
                                 max="1000"
-                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                                className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-primary focus:ring-0 transition-colors"
                                 placeholder="e.g. 100"
                                 value={points}
                                 onChange={e => setPoints(e.target.value)}
@@ -345,7 +677,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             </label>
                             <input
                               type="url"
-                              className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#059669] focus:ring-0 transition-colors"
+                              className="w-full px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-primary focus:ring-0 transition-colors"
                               placeholder="https://example.com/additional-resources"
                               value={resourceUrl}
                               onChange={e => setResourceUrl(e.target.value)}
@@ -358,12 +690,13 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                       </div>
                     </div>
                   </div>
+                    )}
 
                   {/* Instructions and Files Section */}
                   <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 border-l-4 border-[#0d9488]">
+                                          <div className="bg-gradient-to-r from-primary/8 to-primary-light/10 p-6 border-l-4 border-primary">
                       <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-[#0d9488]" />
+                        <FileText className="w-5 h-5 text-primary" />
                         Test Instructions & Resources
                       </h3>
                       
@@ -425,7 +758,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                   className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <File className="w-4 h-4 text-[#0d9488]" />
+                                    <File className="w-4 h-4 text-primary" />
                                     <div>
                                       <div className="text-sm font-medium text-gray-700">
                                         {file.name}
@@ -479,9 +812,9 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
               {step === 2 && (
                 <div className="flex flex-col gap-8">
                   {/* AI Section */}
-                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-[#f59e0b] p-6">
+                                        <div className="bg-gradient-to-r from-primary/6 to-primary-light/8 border-l-4 border-primary-dark p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white flex items-center justify-center">
+                                              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary-dark text-white flex items-center justify-center">
                         <Sparkles className="w-4 h-4" />
                       </div>
                       <h3 className="text-lg font-bold text-gray-800">Generate Questions with AI</h3>
@@ -532,7 +865,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                     
                     <button
                       type="button"
-                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white font-semibold hover:from-[#d97706] hover:to-[#b45309] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:from-primary-dark hover:to-primary-dark transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                       onClick={handleGenerateAI}
                       disabled={aiLoading || !aiPrompt.trim() || aiNumQuestions < 1}
                     >
@@ -587,9 +920,11 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                           required
                         />
                         
-                        {q.type === "mcq" && (
+                        {(q.type === "mcq" || q.type === "tf") && (
                           <div className="space-y-3">
-                            <div className="text-sm font-semibold text-gray-700 mb-2">Options:</div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2">
+                              {q.type === "tf" ? "True/False:" : "Options:"}
+                            </div>
                             {q.options.map((opt, oIdx) => (
                               <div key={oIdx} className="flex items-center gap-3">
                                 <input
@@ -602,12 +937,12 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                 <input
                                   type="text"
                                   className="flex-1 px-4 py-3 border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:border-[#246a59] focus:ring-0 transition-colors"
-                                  placeholder={`Option ${oIdx + 1}`}
+                                  placeholder={q.type === "tf" ? (oIdx === 0 ? "True" : "False") : `Option ${oIdx + 1}`}
                                   value={opt}
                                   onChange={e => handleOptionChange(idx, oIdx, e.target.value)}
                                   required
                                 />
-                                {q.options.length > 2 && (
+                                {q.options.length > 2 && q.type !== "tf" && (
                                   <button
                                     type="button"
                                     className="text-red-600 hover:text-red-700 px-2 py-1 font-semibold transition-colors"
@@ -619,13 +954,15 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                 )}
                               </div>
                             ))}
-                            <button
-                              type="button"
-                              className="flex items-center gap-1 text-[#246a59] border-2 border-[#246a59]/20 px-4 py-2 hover:bg-[#246a59]/5 transition-colors font-semibold"
-                              onClick={() => handleAddOption(idx)}
-                            >
-                              <PlusCircle className="w-4 h-4" /> Add Option
-                            </button>
+                            {q.type !== "tf" && (
+                              <button
+                                type="button"
+                                className="flex items-center gap-1 text-[#246a59] border-2 border-[#246a59]/20 px-4 py-2 hover:bg-[#246a59]/5 transition-colors font-semibold"
+                                onClick={() => handleAddOption(idx)}
+                              >
+                                <PlusCircle className="w-4 h-4" /> Add Option
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -684,7 +1021,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                         <div className="w-full flex flex-row items-start justify-between mb-2">
                           <div>
                             <div className="text-2xl font-extrabold text-black mb-1">{title || <span className="italic text-gray-400">Test Title</span>}</div>
-                            <div className="text-lg italic text-gray-700">{subject} {grade && `– ${grade}`}</div>
+                            <div className="text-lg italic text-gray-700">{subject} {selectedGrades.length > 0 && `– ${selectedGrades.join(', ')}`}</div>
                           </div>
                           <div className="text-right">
                             <div className="text-base font-semibold text-black">{rightHeading}</div>
@@ -733,16 +1070,18 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                           {questions.map((q, idx) => (
                             <li key={idx} className="text-black text-base mb-2">
                               <div className="mb-2 font-medium">{q.text}</div>
-                              {q.type === "mcq" && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
-                                  {q.options.map((opt, oIdx) => (
-                                    <div key={oIdx} className="flex items-start gap-2">
-                                      <span className="font-bold text-black w-6">{String.fromCharCode(65 + oIdx)})</span>
-                                      <span className="text-black">{opt}</span>
-                                    </div>
-                                  ))}
+                                                        {(q.type === "mcq" || q.type === "tf") && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
+                              {q.options.map((opt, oIdx) => (
+                                <div key={oIdx} className="flex items-start gap-2">
+                                  <span className="font-bold text-black w-6">
+                                    {q.type === "tf" ? (oIdx === 0 ? "T)" : "F)") : `${String.fromCharCode(65 + oIdx)})`}
+                                  </span>
+                                  <span className="text-black">{opt}</span>
                                 </div>
-                              )}
+                              ))}
+                            </div>
+                          )}
                             </li>
                           ))}
                         </ol>
@@ -782,7 +1121,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                           <div className="w-full flex flex-row items-start justify-between mb-4">
                             <div>
                               <div className="text-3xl font-extrabold text-black mb-2">{title || <span className="italic text-gray-400">Test Title</span>}</div>
-                              <div className="text-xl italic text-gray-700">{subject} {grade && `– ${grade}`}</div>
+                              <div className="text-xl italic text-gray-700">{subject} {selectedGrades.length > 0 && `– ${selectedGrades.join(', ')}`}</div>
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-semibold text-black">{rightHeading}</div>
@@ -818,7 +1157,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {uploadedFiles.map((file, index) => (
                                   <div key={index} className="flex items-center gap-2 text-sm text-gray-700">
-                                    <File className="w-4 h-4 text-[#0d9488]" />
+                                    <File className="w-4 h-4 text-primary" />
                                     <span>{file.name}</span>
                                   </div>
                                 ))}
@@ -834,16 +1173,18 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                             {questions.map((q, idx) => (
                               <li key={idx} className="text-black text-lg mb-4">
                                 <div className="mb-3 font-semibold">{q.text}</div>
-                                {q.type === "mcq" && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6">
-                                    {q.options.map((opt, oIdx) => (
-                                      <div key={oIdx} className="flex items-start gap-3">
-                                        <span className="font-bold text-black w-8">{String.fromCharCode(65 + oIdx)})</span>
-                                        <span className="text-black">{opt}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                                                              {(q.type === "mcq" || q.type === "tf") && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6">
+                                  {q.options.map((opt, oIdx) => (
+                                    <div key={oIdx} className="flex items-start gap-3">
+                                      <span className="font-bold text-black w-8">
+                                        {q.type === "tf" ? (oIdx === 0 ? "T)" : "F)") : `${String.fromCharCode(65 + oIdx)})`}
+                                      </span>
+                                      <span className="text-black">{opt}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                               </li>
                             ))}
                           </ol>
