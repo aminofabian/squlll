@@ -87,86 +87,91 @@ export async function POST(request: Request) {
     // Get domain for cookies (for subdomain support)
     const requestUrl = new URL(request.url)
     let domain: string | undefined = undefined
+    let sameSite: 'lax' | 'none' = 'lax';
+    let secure = false;
     
     if (process.env.NODE_ENV === 'production') {
       domain = '.squl.co.ke'
+      sameSite = 'none';
+      secure = true;
     } else if (requestUrl.hostname.includes('localhost')) {
-      // For localhost development, don't set domain to allow cookies to work
       domain = undefined
+      sameSite = 'lax';
+      secure = false;
     }
     
     // Set authentication cookies
     const cookieStore = await cookies()
     cookieStore.set('accessToken', userData.tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7, // 7 days
       domain
     })
     cookieStore.set('refreshToken', userData.tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 30, // 30 days
       domain
     })
     cookieStore.set('userId', userData.user.id, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       domain
     })
     cookieStore.set('email', userData.user.email, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       domain
     })
     cookieStore.set('userName', userData.user.name, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       domain
     })
     cookieStore.set('membershipId', userData.membership.id, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       domain
     })
     cookieStore.set('userRole', userData.membership.role, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       domain
     })
     
     cookieStore.set('tenantId', userData.membership.tenant.id, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
       domain
     })
     cookieStore.set('tenantName', userData.membership.tenant.name, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
       domain
     })
     cookieStore.set('subdomainUrl', userData.subdomainUrl, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 24 * 7,
       domain
     })

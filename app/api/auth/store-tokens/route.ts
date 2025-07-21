@@ -27,13 +27,20 @@ export async function POST(request: Request) {
     const cookieStore = await cookies()
     const isProduction = process.env.NODE_ENV === 'production'
     // In production, don't set domain for subdomain cookies to avoid issues
-    const domain = undefined
+    let domain: string | undefined = undefined;
+    let sameSite: 'lax' | 'none' = 'lax';
+    let secure = false;
+    if (isProduction) {
+      domain = '.squl.co.ke';
+      sameSite = 'none';
+      secure = true;
+    }
     
     // Set access token as HTTP-only for security
     cookieStore.set('accessToken', accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: 'lax',
+      secure,
+      sameSite,
       domain,
       maxAge: 60 * 60 * 24 * 7 // 7 days
     })
@@ -42,8 +49,8 @@ export async function POST(request: Request) {
     if (refreshToken) {
       cookieStore.set('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'lax',
+        secure,
+        sameSite,
         domain,
         maxAge: 60 * 60 * 24 * 30 // 30 days
       })
@@ -52,16 +59,16 @@ export async function POST(request: Request) {
     // Set user data as non-HTTP-only (accessible to client-side)
     cookieStore.set('userId', userId, {
       httpOnly: false,
-      secure: isProduction,
-      sameSite: 'lax',
+      secure,
+      sameSite,
       domain,
       maxAge: 60 * 60 * 24 * 30 // 30 days
     })
     
     cookieStore.set('email', email, {
       httpOnly: false,
-      secure: isProduction,
-      sameSite: 'lax',
+      secure,
+      sameSite,
       domain,
       maxAge: 60 * 60 * 24 * 30
     })
@@ -69,8 +76,8 @@ export async function POST(request: Request) {
     if (schoolUrl) {
       cookieStore.set('schoolUrl', schoolUrl, {
         httpOnly: false,
-        secure: isProduction,
-        sameSite: 'lax',
+        secure,
+        sameSite,
         domain,
         maxAge: 60 * 60 * 24 * 30
       })
@@ -79,8 +86,8 @@ export async function POST(request: Request) {
     if (subdomainUrl) {
       cookieStore.set('subdomainUrl', subdomainUrl, {
         httpOnly: false,
-        secure: isProduction,
-        sameSite: 'lax',
+        secure,
+        sameSite,
         domain,
         maxAge: 60 * 60 * 24 * 30
       })
@@ -89,8 +96,8 @@ export async function POST(request: Request) {
     if (tenantId) {
       cookieStore.set('tenantId', tenantId, {
         httpOnly: false,
-        secure: isProduction,
-        sameSite: 'lax',
+        secure,
+        sameSite,
         domain,
         maxAge: 60 * 60 * 24 * 30
       })
@@ -99,8 +106,8 @@ export async function POST(request: Request) {
     if (tenantName) {
       cookieStore.set('tenantName', tenantName, {
         httpOnly: false,
-        secure: isProduction,
-        sameSite: 'lax',
+        secure,
+        sameSite,
         domain,
         maxAge: 60 * 60 * 24 * 30
       })
@@ -109,8 +116,8 @@ export async function POST(request: Request) {
     if (tenantSubdomain) {
       cookieStore.set('tenantSubdomain', tenantSubdomain, {
         httpOnly: false,
-        secure: isProduction,
-        sameSite: 'lax',
+        secure,
+        sameSite,
         domain,
         maxAge: 60 * 60 * 24 * 30
       })

@@ -4,7 +4,7 @@ import { useSchoolConfigStore } from '../stores/useSchoolConfigStore';
 import { SchoolConfiguration } from '../types/school-config';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface GetSchoolConfigResponse {
   getSchoolConfiguration: SchoolConfiguration;
@@ -54,38 +54,119 @@ const GET_SCHOOL_CONFIG = gql`
 `;
 
 export function useSchoolConfig(enabled: boolean = true) {
-  const { setConfig, setLoading, setError } = useSchoolConfigStore();
-  const router = useRouter();
+  const [config, setConfig] = useState<SchoolConfiguration | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ['schoolConfig'],
     queryFn: async () => {
-      console.log('useSchoolConfig - Starting GraphQL request...')
+      // Only run on client side
+      if (typeof window === 'undefined') {
+        throw new Error('useSchoolConfig can only be used on the client side');
+      }
+
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
+        // Debug: Check cookies before making the request
+        console.log('=== useSchoolConfig Debug ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Current pathname:', window.location.pathname);
         
-        // Ensure we're in a client environment
-        if (typeof window === 'undefined') {
-          throw new Error('This hook can only be used in client-side components');
-        }
+        // Check if we have the required cookies
+        const cookieValue = `; ${document.cookie}`;
+        const getCookie = (name: string) => {
+          const parts = cookieValue.split(`; ${name}=`);
+          if (parts.length === 2) {
+            return parts.pop()?.split(';').shift() || null;
+          }
+          return null;
+        };
         
-        const response = await graphqlClient.request<GetSchoolConfigResponse>(GET_SCHOOL_CONFIG);
-        const config = response.getSchoolConfiguration;
+        const accessToken = getCookie('accessToken');
+        const userId = getCookie('userId');
+        const tenantId = getCookie('tenantId');
+        const userRole = getCookie('userRole');
         
-        // Debug: Log the response to see if we're getting gradeLevels
-        console.log('School config response:', {
-          id: config.id,
-          levels: config.selectedLevels.map(l => ({
-            name: l.name,
-            subjects: l.subjects.length,
-            grades: l.gradeLevels?.map(g => ({
-              id: g.id,
-              name: g.name,
-              age: g.age
-            }))
-          }))
+        console.log('Cookie check:', {
+          hasAccessToken: !!accessToken,
+          accessTokenLength: accessToken?.length || 0,
+          hasUserId: !!userId,
+          hasTenantId: !!tenantId,
+          userRole: userRole,
+          allCookies: document.cookie.split(';').map(c => c.trim().split('=')[0])
         });
         
+        if (!accessToken) {
+          console.log('No accessToken found in cookies - this will cause a 401');
+        }
+        
+        console.log('=== End useSchoolConfig Debug ===');
+
+        const response = await fetch('/api/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: `
+              query GetSchoolConfiguration {
+                getSchoolConfiguration {
+                  id
+                  selectedLevels {
+                    id
+                    name
+                    gradeLevels {
+                      id
+                      name
+                      code
+                      order
+                    }
+                  }
+                  tenant {
+                    id
+                    schoolName
+                  }
+                  createdAt
+                }
+              }
+            `,
+          }),
+        });
+
+        if (!response.ok) {
+          console.log('GraphQL response not ok:', {
+            status: response.status,
+            statusText: response.statusText
+          });
+          
+          const errorData = await response.json();
+          console.log('Error response data:', errorData);
+          
+          throw {
+            response: {
+              status: response.status,
+              errors: errorData.errors || [{ message: errorData.error || 'Unknown error' }]
+            }
+          };
+        }
+
+        const data = await response.json();
+        console.log('GraphQL success response:', data);
+
+        if (data.errors) {
+          console.log('GraphQL errors in response:', data.errors);
+          throw {
+            response: {
+              status: 500,
+              errors: data.errors
+            }
+          };
+        }
+
+        const config = data.data.getSchoolConfiguration;
         setConfig(config);
         return config;
       } catch (error) {
@@ -97,6 +178,11 @@ export function useSchoolConfig(enabled: boolean = true) {
         
         if (error && typeof error === 'object' && 'response' in error) {
           const graphQLError = error as any;
+          
+          console.log('Processing error response:', {
+            status: graphQLError.response?.status,
+            errors: graphQLError.response?.errors
+          });
           
           // Check for 403 (forbidden) errors
           if (graphQLError.response?.status === 403) {
@@ -113,6 +199,8 @@ export function useSchoolConfig(enabled: boolean = true) {
             // Handle GraphQL errors
             const graphQLErrors = graphQLError.response.errors;
             const firstError = graphQLErrors[0];
+            
+            console.log('Processing GraphQL error:', firstError);
             
             // Check for permission denied errors (FORBIDDENEXCEPTION)
             if (firstError?.extensions?.code === 'FORBIDDENEXCEPTION' || 

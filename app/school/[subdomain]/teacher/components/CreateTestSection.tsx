@@ -91,9 +91,9 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
           allGradeLevels.forEach(level => {
         if (selectedLevelIds.has(level.levelId)) {
           // Find the level data in config that contains this grade
-          const levelInConfig = currentConfig?.selectedLevels.find(l => l.id === level.levelId);
+          const levelInConfig = currentConfig?.selectedLevels.find((l: { id: string }) => l.id === level.levelId);
           if (levelInConfig) {
-            levelInConfig.subjects.forEach(subject => {
+            levelInConfig.subjects.forEach((subject: { name: string }) => {
               subjectsFromSelectedLevels.add(subject.name);
             });
           }
@@ -247,32 +247,42 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         fileSize: file.size
       }));
 
-      const testData = {
+      // Map frontend data to GraphQL input structure
+      const createTestInput = {
         title,
         subject,
         gradeLevelIds,
         date,
         startTime,
-        duration,
-        points,
-        resourceUrl,
-        instructions,
-        questions: questions.map(q => ({
-          ...q,
+        duration: parseInt(duration, 10),
+        totalMarks: parseInt(points, 10),
+        resourceUrl: resourceUrl || '',
+        instructions: instructions || '',
+        questions: questions.map((q, index) => ({
+          text: q.text,
           marks: 10, // Default marks per question
-          isAIGenerated: q.text.startsWith('AI:')
+          order: index + 1,
+          type: q.type === 'mcq' ? 'MULTIPLE_CHOICE' : q.type === 'short' ? 'SHORT_ANSWER' : q.type === 'tf' ? 'TRUE_FALSE' : 'MULTIPLE_CHOICE',
+          isAIGenerated: q.text.startsWith('AI:'),
+          ...(q.options && q.options.length > 0 && {
+            options: q.options.map((option: string, optIndex: number) => ({
+              text: option,
+              isCorrect: q.correct === optIndex,
+              order: optIndex + 1
+            }))
+          })
         })),
         referenceMaterials
       };
 
-      console.log('Submitting test data:', testData);
+      console.log('Submitting createTestInput:', createTestInput);
 
-      const response = await fetch('/api/school/create-test', {
+      const response = await fetch('/api/teacher-portal/create-test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(testData),
+        body: JSON.stringify({ createTestInput }),
       });
 
       const result = await response.json();
@@ -281,7 +291,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         throw new Error(result.error || 'Failed to create test');
       }
 
-      toast.success("Test Created Successfully!", {
+      toast.success('Test Created Successfully!', {
         description: `${title} has been created and is ready to be assigned to students.`
       });
 
