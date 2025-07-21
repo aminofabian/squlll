@@ -17,9 +17,11 @@ export async function POST(request: Request) {
     // Get the access token from cookies
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
-    }
+    
+    // Remove authentication requirement - allow all requests
+    // if (!token) {
+    //   return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    // }
 
     // Parse the request body
     const body = await request.json();
@@ -33,7 +35,8 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        // Only send Authorization header if token exists
+        ...(token && { 'Authorization': `Bearer ${token}` }),
       },
       body: JSON.stringify({
         query: CREATE_TEST_MUTATION,

@@ -30,10 +30,19 @@ export async function POST(request: Request) {
     let domain: string | undefined = undefined;
     let sameSite: 'lax' | 'none' = 'lax';
     let secure = false;
+    
+    // Get the request URL to check hostname
+    const requestUrl = new URL(request.url);
+    
     if (isProduction) {
       domain = '.squl.co.ke';
       sameSite = 'none';
       secure = true;
+    } else if (requestUrl.hostname.endsWith('.localhost')) {
+      // For .localhost subdomains in dev, set domain to .localhost to share cookies
+      domain = '.localhost';
+      sameSite = 'lax';
+      secure = false;
     }
     
     // Set access token as HTTP-only for security

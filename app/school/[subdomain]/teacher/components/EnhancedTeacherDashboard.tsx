@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   BookOpen, 
   FileText, 
@@ -101,6 +101,16 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
     startTime: string;
     duration: string;
   } | undefined>(undefined);
+  const [currentDate, setCurrentDate] = useState<string>('');
+
+  // Set current date only on client side to avoid hydration issues
+  useEffect(() => {
+    setCurrentDate(new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    }));
+  }, []);
 
   const handleActionClick = (actionId: string, menuId: string) => {
     console.log(`Action ${actionId} clicked for menu ${menuId}`);
@@ -296,7 +306,9 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
             </div>
             <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
               <Calendar className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-foreground/80">{new Date().toLocaleDateString()}</span>
+              <span className="text-sm font-medium text-foreground/80">
+                {currentDate}
+              </span>
             </div>
           </div>
         </div>

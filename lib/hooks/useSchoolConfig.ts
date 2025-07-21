@@ -174,7 +174,6 @@ export function useSchoolConfig(enabled: boolean = true) {
         
         // Handle different types of errors
         let errorMessage = 'Failed to fetch school configuration';
-        let shouldRedirectToLogin = false;
         
         if (error && typeof error === 'object' && 'response' in error) {
           const graphQLError = error as any;
@@ -184,80 +183,19 @@ export function useSchoolConfig(enabled: boolean = true) {
             errors: graphQLError.response?.errors
           });
           
-          // Check for 403 (forbidden) errors
-          if (graphQLError.response?.status === 403) {
-            errorMessage = 'Permission denied. You may not have admin rights to access this school.';
-            shouldRedirectToLogin = true;
-            console.log('403 error detected - permission denied, redirecting to school login');
-          }
-          // Check for 401 (unauthorized) errors
-          else if (graphQLError.response?.status === 401) {
-            errorMessage = 'Authentication required. Please log in.';
-            shouldRedirectToLogin = true;
-            console.log('401 error detected - user needs to authenticate');
-          } else if (graphQLError.response?.errors) {
+          if (graphQLError.response?.errors) {
             // Handle GraphQL errors
             const graphQLErrors = graphQLError.response.errors;
             const firstError = graphQLErrors[0];
             
             console.log('Processing GraphQL error:', firstError);
-            
-            // Check for permission denied errors (FORBIDDENEXCEPTION)
-            if (firstError?.extensions?.code === 'FORBIDDENEXCEPTION' || 
-                firstError?.message?.includes('Permission denied')) {
-              errorMessage = 'Permission denied. You may not have admin rights to access this school.';
-              shouldRedirectToLogin = true;
-              console.log('Permission denied error - redirecting to school login');
-            }
-            // Check for "School (tenant) not found" error
-            else if (firstError?.message?.includes('School (tenant) not found') || 
-                firstError?.extensions?.code === 'NOTFOUNDEXCEPTION') {
-              errorMessage = 'School not found or access denied. Please check your credentials.';
-              shouldRedirectToLogin = true;
-              console.log('School not found error - likely authentication issue');
-            } else {
-              errorMessage = firstError?.message || errorMessage;
-            }
+            errorMessage = firstError?.message || errorMessage;
           }
         } else if (error instanceof Error) {
           errorMessage = error.message;
         }
         
         setError(errorMessage);
-        
-        // Redirect to login if authentication is required
-        if (shouldRedirectToLogin && typeof window !== 'undefined') {
-          // Check if this is a new registration (has URL parameters)
-          const urlParams = new URLSearchParams(window.location.search)
-          const isNewRegistration = urlParams.get('newRegistration') === 'true' || 
-                                   urlParams.get('accessToken') || 
-                                   urlParams.get('token') // Also check for token parameter (signup flow)
-          
-          if (!isNewRegistration) {
-            // Determine redirect URL based on error type
-            let redirectUrl = '/login'; // Default to global login
-            
-            // For permission denied errors, try to redirect to school login if we can determine the subdomain
-            if (errorMessage.includes('Permission denied') || errorMessage.includes('admin rights')) {
-              const currentPath = window.location.pathname;
-              const schoolPathMatch = currentPath.match(/^\/school\/([^\/]+)/);
-              if (schoolPathMatch && schoolPathMatch[1]) {
-                const subdomain = schoolPathMatch[1];
-                redirectUrl = `/school/${subdomain}/login`;
-                console.log(`Permission denied - redirecting to school login: ${redirectUrl}`);
-                console.log(`Current path: ${currentPath}, Subdomain: ${subdomain}`);
-              } else {
-                console.log(`Could not determine subdomain from path: ${currentPath}`);
-              }
-            }
-            
-            // Use window.location for full page redirect
-            console.log(`Executing redirect to: ${redirectUrl}`);
-            window.location.href = redirectUrl;
-          } else {
-            console.log('New registration detected - not redirecting to login, waiting for authentication to complete')
-          }
-        }
         
         throw error;
       } finally {

@@ -94,6 +94,11 @@ export async function POST(request: Request) {
       domain = '.squl.co.ke'
       sameSite = 'none';
       secure = true;
+    } else if (requestUrl.hostname.endsWith('.localhost')) {
+      // For .localhost subdomains in dev, set domain to .localhost to share cookies
+      domain = '.localhost';
+      sameSite = 'lax';
+      secure = false;
     } else if (requestUrl.hostname.includes('localhost')) {
       domain = undefined
       sameSite = 'lax';

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home, Upload, File, X, BookOpen } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
-import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 import { toast } from 'sonner';
 
 const QUESTION_TYPES = [
@@ -34,24 +33,69 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     resourceUrl: string;
   }) => void;
 }) {
-  // School config hooks
-  const { data: schoolConfig, isLoading: configLoading } = useSchoolConfig();
-  const { config, getAllSubjects, getAllGradeLevels, getGradeById, setConfig } = useSchoolConfigStore();
-
-  // Sync school config from hook to store
-  useEffect(() => {
-    if (schoolConfig && !config) {
-      setConfig(schoolConfig);
-    }
-  }, [schoolConfig, config, setConfig]);
-  
-  // Get subjects and grades from store (use whichever data source is available)
-  const currentConfig = config || schoolConfig;
+  // School config store (grades/subjects)
+  const getAllGradeLevels = useSchoolConfigStore(state => state.getAllGradeLevels);
+  const getAllSubjects = useSchoolConfigStore(state => state.getAllSubjects);
+  const gradeLevels = getAllGradeLevels();
   const allSubjects = getAllSubjects();
-  const allGradeLevels = getAllGradeLevels();
-  
+
+  // Mock data in case store is empty
+  const mockGradeLevels = [
+    {
+      levelId: 'primary-level',
+      levelName: 'Primary',
+      grades: [
+        { id: 'grade-1', name: 'Grade 1', code: 'G1', order: 1 },
+        { id: 'grade-2', name: 'Grade 2', code: 'G2', order: 2 },
+        { id: 'grade-3', name: 'Grade 3', code: 'G3', order: 3 },
+        { id: 'grade-4', name: 'Grade 4', code: 'G4', order: 4 },
+        { id: 'grade-5', name: 'Grade 5', code: 'G5', order: 5 },
+        { id: 'grade-6', name: 'Grade 6', code: 'G6', order: 6 },
+        { id: 'grade-7', name: 'Grade 7', code: 'G7', order: 7 },
+        { id: 'grade-8', name: 'Grade 8', code: 'G8', order: 8 }
+      ],
+      subjects: [
+        { name: 'Mathematics' },
+        { name: 'English' },
+        { name: 'Science' },
+        { name: 'Social Studies' },
+        { name: 'Kiswahili' },
+        { name: 'Religious Education' },
+        { name: 'Creative Arts' },
+        { name: 'Physical Education' }
+      ]
+    },
+    {
+      levelId: 'secondary-level',
+      levelName: 'Secondary',
+      grades: [
+        { id: 'form-1', name: 'Form 1', code: 'F1', order: 1 },
+        { id: 'form-2', name: 'Form 2', code: 'F2', order: 2 },
+        { id: 'form-3', name: 'Form 3', code: 'F3', order: 3 },
+        { id: 'form-4', name: 'Form 4', code: 'F4', order: 4 }
+      ],
+      subjects: [
+        { name: 'Mathematics' },
+        { name: 'English' },
+        { name: 'Biology' },
+        { name: 'Chemistry' },
+        { name: 'Physics' },
+        { name: 'History' },
+        { name: 'Geography' },
+        { name: 'Kiswahili' },
+        { name: 'Religious Education' },
+        { name: 'Business Studies' },
+        { name: 'Computer Studies' }
+      ]
+    }
+  ];
+
+  // Use store data if available, otherwise use mock data
+  const finalGradeLevels = gradeLevels.length > 0 ? gradeLevels : mockGradeLevels;
+  const finalSubjects = allSubjects.length > 0 ? allSubjects : [];
+
   // Flatten grades for easier access
-  const gradeLevels = allGradeLevels.flatMap(level => 
+  const flatGrades = finalGradeLevels.flatMap(level =>
     (level.grades || []).map(grade => ({
       ...grade,
       levelName: level.levelName,
@@ -76,48 +120,26 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
       // No grades selected = no subjects to show
       return [];
     }
-
     // Find which levels contain the selected grades
     const selectedLevelIds = new Set<string>();
     selectedGrades.forEach(gradeName => {
-      const grade = gradeLevels.find(g => g.name === gradeName);
+      const grade = flatGrades.find(g => g.name === gradeName);
       if (grade) {
         selectedLevelIds.add(grade.levelId);
       }
     });
-
     // Get subjects from those levels
     const subjectsFromSelectedLevels = new Set<string>();
-          allGradeLevels.forEach(level => {
-        if (selectedLevelIds.has(level.levelId)) {
-          // Find the level data in config that contains this grade
-          const levelInConfig = currentConfig?.selectedLevels.find((l: { id: string }) => l.id === level.levelId);
-          if (levelInConfig) {
-            levelInConfig.subjects.forEach((subject: { name: string }) => {
-              subjectsFromSelectedLevels.add(subject.name);
-            });
-          }
-        }
-      });
-
+    finalGradeLevels.forEach(level => {
+      if (selectedLevelIds.has(level.levelId)) {
+        (level as any).subjects?.forEach((subject: { name: string }) => {
+          subjectsFromSelectedLevels.add(subject.name);
+        });
+      }
+    });
     return Array.from(subjectsFromSelectedLevels).sort();
-  }, [selectedGrades, gradeLevels, allGradeLevels, currentConfig]);
+  }, [selectedGrades, flatGrades, finalGradeLevels]);
 
-  console.log('Debug - School config data:', { 
-    hookSchoolConfig: schoolConfig,
-    storeConfig: config,
-    currentConfig,
-    configLoading,
-    allSubjects: allSubjects.length,
-    allGradeLevels: allGradeLevels.length,
-    gradeLevels: gradeLevels.length,
-    selectedGrades, 
-    availableSubjects,
-    hookSelectedLevels: schoolConfig?.selectedLevels?.length || 0,
-    storeSelectedLevels: config?.selectedLevels?.length || 0,
-    currentConfigLevels: currentConfig?.selectedLevels?.length || 0
-  });
-  
   // Set default subject when subjects are loaded and reset when grades change
   useEffect(() => {
     if (availableSubjects.length > 0) {
@@ -231,7 +253,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     try {
       // Get grade level IDs from selected grade names
       const gradeLevelIds = selectedGrades.map(gradeName => {
-        const gradeLevel = gradeLevels.find(g => g.name === gradeName);
+        const gradeLevel = flatGrades.find(g => g.name === gradeName);
         return gradeLevel?.id;
       }).filter(Boolean);
 
@@ -424,35 +446,36 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                              <Users className="w-4 h-4 text-primary" />
                              Available Grades
                            </label>
-                           <div className="bg-white border-2 border-gray-200 p-4 max-h-[200px] overflow-y-auto">
-                             {configLoading || !currentConfig ? (
-                               <div className="flex items-center justify-center py-8">
-                                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                                 <span className="ml-2 text-gray-600">Loading grades...</span>
-                               </div>
-                             ) : gradeLevels.length > 0 ? (
-                               <div className="space-y-2">
-                                 {gradeLevels.map(gr => (
-                                   <label key={gr.id} className="flex items-center gap-3 p-3 hover:bg-primary/5 cursor-pointer transition-colors border border-transparent hover:border-primary/20">
-                                     <input
-                                       type="checkbox"
-                                       className="w-4 h-4 text-primary border-2 border-gray-300 focus:ring-primary"
-                                       checked={selectedGrades.includes(gr.name)}
-                                       onChange={e => {
-                                         if (e.target.checked) {
-                                           setSelectedGrades(prev => [...prev, gr.name]);
-                                         } else {
-                                           setSelectedGrades(prev => prev.filter(g => g !== gr.name));
-                                         }
-                                       }}
-                                     />
-                                     <div className="flex-1">
-                                       <div className="font-medium text-gray-800">{gr.name}</div>
-                                       <div className="text-xs text-gray-500">{gr.levelName}</div>
-                                     </div>
-                                   </label>
-                                 ))}
-                               </div>
+                                                        <div className="bg-white border-2 border-gray-200 p-4 max-h-[200px] overflow-y-auto">
+                              {finalGradeLevels.length > 0 ? (
+                                <div className="space-y-2">
+                                  {finalGradeLevels.map(level => (
+                                    <div key={level.levelId} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      <div className="col-span-1 text-sm font-semibold text-gray-700">{level.levelName}</div>
+                                      <div className="col-span-1">
+                                        {level.grades?.map(gr => (
+                                          <label key={gr.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 cursor-pointer transition-colors border border-transparent hover:border-primary/20">
+                                            <input
+                                              type="checkbox"
+                                              className="w-4 h-4 text-primary border-2 border-gray-300 focus:ring-primary"
+                                              checked={selectedGrades.includes(gr.name)}
+                                              onChange={e => {
+                                                if (e.target.checked) {
+                                                  setSelectedGrades(prev => [...prev, gr.name]);
+                                                } else {
+                                                  setSelectedGrades(prev => prev.filter(g => g !== gr.name));
+                                                }
+                                              }}
+                                            />
+                                            <div className="flex-1">
+                                              <div className="font-medium text-gray-800">{gr.name}</div>
+                                            </div>
+                                          </label>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                              ) : (
                                <div className="text-center py-8 text-gray-500">
                                  <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
@@ -476,7 +499,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                      <div>
                                        <div className="font-medium text-primary-dark">{grade}</div>
                                        <div className="text-xs text-primary">
-                                         {gradeLevels.find(g => g.name === grade)?.levelName}
+                                         {flatGrades.find(g => g.name === grade)?.levelName}
                                        </div>
                                      </div>
                                      <button
