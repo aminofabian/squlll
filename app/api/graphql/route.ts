@@ -26,6 +26,8 @@ export async function POST(request: Request) {
     });
 
     // DEV MOCK: Allow teachers to access admin-limited school config
+    // Temporarily disabled to test with real API
+    /*
     if (process.env.NODE_ENV !== 'production' && body.query && body.query.includes('getSchoolConfiguration')) {
       return NextResponse.json({
         data: {
@@ -52,6 +54,7 @@ export async function POST(request: Request) {
         }
       });
     }
+    */
 
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',

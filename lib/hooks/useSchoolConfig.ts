@@ -57,6 +57,7 @@ export function useSchoolConfig(enabled: boolean = true) {
   const [config, setConfig] = useState<SchoolConfiguration | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setConfig: setStoreConfig } = useSchoolConfigStore();
 
   const query = useQuery({
     queryKey: ['schoolConfig'],
@@ -70,39 +71,11 @@ export function useSchoolConfig(enabled: boolean = true) {
       setError(null);
 
       try {
-        // Debug: Check cookies before making the request
+        // Debug: Log the request being made
         console.log('=== useSchoolConfig Debug ===');
         console.log('Current URL:', window.location.href);
         console.log('Current pathname:', window.location.pathname);
-        
-        // Check if we have the required cookies
-        const cookieValue = `; ${document.cookie}`;
-        const getCookie = (name: string) => {
-          const parts = cookieValue.split(`; ${name}=`);
-          if (parts.length === 2) {
-            return parts.pop()?.split(';').shift() || null;
-          }
-          return null;
-        };
-        
-        const accessToken = getCookie('accessToken');
-        const userId = getCookie('userId');
-        const tenantId = getCookie('tenantId');
-        const userRole = getCookie('userRole');
-        
-        console.log('Cookie check:', {
-          hasAccessToken: !!accessToken,
-          accessTokenLength: accessToken?.length || 0,
-          hasUserId: !!userId,
-          hasTenantId: !!tenantId,
-          userRole: userRole,
-          allCookies: document.cookie.split(';').map(c => c.trim().split('=')[0])
-        });
-        
-        if (!accessToken) {
-          console.log('No accessToken found in cookies - this will cause a 401');
-        }
-        
+        console.log('Making GraphQL request to /api/graphql');
         console.log('=== End useSchoolConfig Debug ===');
 
         const response = await fetch('/api/graphql', {
@@ -118,18 +91,38 @@ export function useSchoolConfig(enabled: boolean = true) {
                   selectedLevels {
                     id
                     name
-                    gradeLevels {
+                    description
+                    subjects {
                       id
                       name
                       code
-                      order
+                      subjectType
+                      category
+                      department
+                      shortName
+                      isCompulsory
+                      totalMarks
+                      passingMarks
+                      creditHours
+                      curriculum
+                    }
+                    gradeLevels {
+                      id
+                      name
+                      age
+                      streams {
+                        id
+                        name
+                        capacity
+                        isActive
+                      }
                     }
                   }
                   tenant {
                     id
                     schoolName
+                    subdomain
                   }
-                  createdAt
                 }
               }
             `,
@@ -167,36 +160,16 @@ export function useSchoolConfig(enabled: boolean = true) {
         }
 
         const config = data.data.getSchoolConfiguration;
+        console.log('Full config from API:', config);
+        
+        // Update both local state and store
         setConfig(config);
+        setStoreConfig(config);
+        
         return config;
       } catch (error) {
-        console.error('School config error:', error);
-        
-        // Handle different types of errors
-        let errorMessage = 'Failed to fetch school configuration';
-        
-        if (error && typeof error === 'object' && 'response' in error) {
-          const graphQLError = error as any;
-          
-          console.log('Processing error response:', {
-            status: graphQLError.response?.status,
-            errors: graphQLError.response?.errors
-          });
-          
-          if (graphQLError.response?.errors) {
-            // Handle GraphQL errors
-            const graphQLErrors = graphQLError.response.errors;
-            const firstError = graphQLErrors[0];
-            
-            console.log('Processing GraphQL error:', firstError);
-            errorMessage = firstError?.message || errorMessage;
-          }
-        } else if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-        
-        setError(errorMessage);
-        
+        console.error('useSchoolConfig error:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred');
         throw error;
       } finally {
         setLoading(false);

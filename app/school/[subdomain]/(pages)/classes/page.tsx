@@ -75,8 +75,19 @@ function ClassesPage() {
 
   // Filter and sort levels
   const filteredLevels = useMemo(() => {
-    if (!config?.selectedLevels) return [];
+    console.log('=== ClassesPage Debug ===');
+    console.log('Config from store:', config);
+    console.log('Selected grade ID:', selectedGradeId);
+    console.log('Selected level ID:', selectedLevelId);
+    console.log('Selected stream ID:', selectedStreamId);
+    console.log('Search term:', searchTerm);
     
+    if (!config?.selectedLevels) {
+      console.log('No config or selectedLevels found');
+      return [];
+    }
+    
+    console.log('Original levels count:', config.selectedLevels.length);
     let levels = config.selectedLevels;
     
     // Filter based on grade selection, stream selection, and search
@@ -114,8 +125,10 @@ function ClassesPage() {
       return levelMatches || gradeMatches || subjectMatches;
     });
 
+    console.log('Filtered levels count:', levels.length);
+    console.log('=== End ClassesPage Debug ===');
     return levels;
-  }, [config?.selectedLevels, selectedGradeId, selectedLevelId, searchTerm]);
+  }, [config?.selectedLevels, selectedGradeId, selectedLevelId, selectedStreamId, searchTerm]);
 
   const handleGradeSelect = (gradeId: string, levelId: string) => {
     setSelectedGradeId(gradeId);
