@@ -33,66 +33,36 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     resourceUrl: string;
   }) => void;
 }) {
-  // School config store (grades/subjects)
+  // School config store (grades/subjects) - using live data only
   const getAllGradeLevels = useSchoolConfigStore(state => state.getAllGradeLevels);
   const getAllSubjects = useSchoolConfigStore(state => state.getAllSubjects);
   const gradeLevels = getAllGradeLevels();
   const allSubjects = getAllSubjects();
 
-  // Mock data in case store is empty
-  const mockGradeLevels = [
-    {
-      levelId: 'primary-level',
-      levelName: 'Primary',
-      grades: [
-        { id: 'grade-1', name: 'Grade 1', code: 'G1', order: 1 },
-        { id: 'grade-2', name: 'Grade 2', code: 'G2', order: 2 },
-        { id: 'grade-3', name: 'Grade 3', code: 'G3', order: 3 },
-        { id: 'grade-4', name: 'Grade 4', code: 'G4', order: 4 },
-        { id: 'grade-5', name: 'Grade 5', code: 'G5', order: 5 },
-        { id: 'grade-6', name: 'Grade 6', code: 'G6', order: 6 },
-        { id: 'grade-7', name: 'Grade 7', code: 'G7', order: 7 },
-        { id: 'grade-8', name: 'Grade 8', code: 'G8', order: 8 }
-      ],
-      subjects: [
-        { name: 'Mathematics' },
-        { name: 'English' },
-        { name: 'Science' },
-        { name: 'Social Studies' },
-        { name: 'Kiswahili' },
-        { name: 'Religious Education' },
-        { name: 'Creative Arts' },
-        { name: 'Physical Education' }
-      ]
-    },
-    {
-      levelId: 'secondary-level',
-      levelName: 'Secondary',
-      grades: [
-        { id: 'form-1', name: 'Form 1', code: 'F1', order: 1 },
-        { id: 'form-2', name: 'Form 2', code: 'F2', order: 2 },
-        { id: 'form-3', name: 'Form 3', code: 'F3', order: 3 },
-        { id: 'form-4', name: 'Form 4', code: 'F4', order: 4 }
-      ],
-      subjects: [
-        { name: 'Mathematics' },
-        { name: 'English' },
-        { name: 'Biology' },
-        { name: 'Chemistry' },
-        { name: 'Physics' },
-        { name: 'History' },
-        { name: 'Geography' },
-        { name: 'Kiswahili' },
-        { name: 'Religious Education' },
-        { name: 'Business Studies' },
-        { name: 'Computer Studies' }
-      ]
-    }
-  ];
+  // Use only live data from the store - no mock fallback
+  const finalGradeLevels = gradeLevels;
+  const finalSubjects = allSubjects;
 
-  // Use store data if available, otherwise use mock data
-  const finalGradeLevels = gradeLevels.length > 0 ? gradeLevels : mockGradeLevels;
-  const finalSubjects = allSubjects.length > 0 ? allSubjects : [];
+  // Debug: Log the live data being used
+  console.log('=== CreateTestSection Debug ===');
+  console.log('Live grade levels from store:', finalGradeLevels);
+  console.log('Live subjects from store:', finalSubjects);
+  console.log('Number of levels:', finalGradeLevels.length);
+  console.log('Number of subjects:', finalSubjects.length);
+  console.log('=== End CreateTestSection Debug ===');
+
+  // Show loading state if no data is available yet
+  if (finalGradeLevels.length === 0) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
+        <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Loading School Configuration</h3>
+          <p className="text-gray-600">Please wait while we load your school's grades and subjects...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Flatten grades for easier access
   const flatGrades = finalGradeLevels.flatMap(level =>
@@ -480,7 +450,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                <div className="text-center py-8 text-gray-500">
                                  <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                                  <p>No grades available</p>
-                                 <p className="text-xs">Configure your school levels in settings</p>
+                                 <p className="text-xs">School configuration is being loaded or not configured</p>
+                                 <p className="text-xs mt-1">Please contact your school administrator</p>
                                </div>
                              )}
                           </div>
