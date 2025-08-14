@@ -42,26 +42,21 @@ export function middleware(request: NextRequest) {
   })
 
   if (isSubdomain) {
-    // This is a school subdomain - rewrite to /school/[subdomain]/pathname
-    const newPathname = `/school/${currentHost}${url.pathname}`
-    console.log('Middleware - Rewriting subdomain:', {
-      from: url.pathname,
-      to: newPathname,
-      currentHost
+    // For subdomains, rewrite the path to include /school/[subdomain]
+    const rewritePath = `/school/${currentHost}${url.pathname}`
+    
+    console.log('Middleware - Subdomain request, rewriting:', {
+      hostname,
+      originalPath: url.pathname,
+      rewritePath,
+      currentHost,
+      search: url.search
     })
     
-    // Create response with cache control headers
-    const response = NextResponse.rewrite(new URL(newPathname, request.url))
+    // Create the rewrite URL
+    const rewriteUrl = new URL(rewritePath + url.search, request.url)
     
-    // Add cache control headers for subdomain pages
-    if (isProd) {
-      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
-      response.headers.set('Pragma', 'no-cache')
-      response.headers.set('Expires', '0')
-    }
-    
-    console.log('Middleware - Returning rewritten response for:', newPathname)
-    return response
+    return NextResponse.rewrite(rewriteUrl)
   }
 
   // Handle www subdomain - ensure it works the same as root domain

@@ -39,8 +39,6 @@ const GET_SCHOOL_CONFIG = gql`
           streams {
             id
             name
-            capacity
-            isActive
           }
         }
       }
@@ -113,8 +111,6 @@ export function useSchoolConfig(enabled: boolean = true) {
                       streams {
                         id
                         name
-                        capacity
-                        isActive
                       }
                     }
                   }

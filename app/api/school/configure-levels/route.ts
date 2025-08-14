@@ -35,9 +35,12 @@ export async function POST(request: Request) {
     }
 
     // Prepare GraphQL mutation
+    const levelNamesString = levelNames.map((name: string) => `"${name}"`).join(',\n');
     const mutation = `
-      mutation ConfigureSchoolLevelsByNames($levelNames: [String!]!) {
-        configureSchoolLevelsByNames(levelNames: $levelNames) {
+      mutation {
+        configureSchoolLevelsByNames(levelNames: [
+          ${levelNamesString}
+        ]) {
           id
           selectedLevels {
             id
@@ -60,8 +63,7 @@ export async function POST(request: Request) {
 
     // Call external GraphQL API
     const requestBody = {
-      query: mutation,
-      variables: { levelNames }
+      query: mutation
     };
     
 

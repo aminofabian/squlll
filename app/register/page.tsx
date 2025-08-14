@@ -39,13 +39,18 @@ interface SignupResponse {
   user: {
     id: string
     email: string
-    name: string
-    userRole: string
+    schoolUrl: string
   }
-  school: {
-    schoolName: string
+  tenant: {
+    id: string
+    name: string
+    subdomain: string
   }
   subdomainUrl: string
+  tokens: {
+    accessToken: string
+    refreshToken: string
+  }
 }
 
 const steps = [
