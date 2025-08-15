@@ -10,6 +10,7 @@ import { EditSubjectDialog } from './EditSubjectDialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import CreateClassDrawer from "@/app/school/components/CreateClassDrawer"
 import { AddStreamModal } from './AddStreamModal'
+import AddSubjectDrawer from '../classes/components/AddSubjectDrawer'
 
 interface ClassCardProps {
   level: Level;
@@ -96,10 +97,7 @@ export function ClassCard({ level, tenantSubjects, convertTenantSubjectToLegacy,
     console.log('Delete subject:', subjectId);
   };
 
-  const handleAddSubject = () => {
-    // TODO: Implement add subject functionality
-    console.log('Add new subject to level:', level.id);
-  };
+
 
   const handleEditSubject = (subject: Subject) => {
     setEditingSubject(subject);
@@ -217,10 +215,10 @@ export function ClassCard({ level, tenantSubjects, convertTenantSubjectToLegacy,
                 Optional
               </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={handleAddSubject}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Subject
-            </Button>
+            <AddSubjectDrawer onSubjectCreated={() => {
+              // TODO: Refresh subjects list
+              console.log('Subject created from ClassCard');
+            }} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
