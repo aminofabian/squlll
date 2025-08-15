@@ -10,6 +10,7 @@ import { ClassCardSkeleton } from '../components/ClassCardSkeleton'
 import { Filter, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
 import CreateClassDrawer from '@/app/school/components/CreateClassDrawer'
+import AddSubjectDrawer from './components/AddSubjectDrawer'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -62,7 +63,7 @@ function EmptyState({ selectedGrade = null, searchTerm = '' }: {
 }
 
 function ClassesPage() {
-  const { config } = useSchoolConfigStore()
+  const { config, getTenantSubjects, convertTenantSubjectToLegacy } = useSchoolConfigStore()
   const { isLoading, error } = useSchoolConfig()
   
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
@@ -117,7 +118,11 @@ function ClassesPage() {
         grade.name.toLowerCase().includes(search)
       );
       
-      const subjectMatches = level.subjects.some(subject =>
+      // Get tenant subjects and convert to legacy format for searching
+      const tenantSubjects = getTenantSubjects();
+      const legacySubjects = tenantSubjects.map(ts => convertTenantSubjectToLegacy(ts));
+      
+      const subjectMatches = legacySubjects.some(subject =>
         subject.name.toLowerCase().includes(search) ||
         subject.code.toLowerCase().includes(search)
       );
@@ -250,6 +255,21 @@ function ClassesPage() {
                 </div>
               </div>
             </div>
+            
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-primary/80 to-primary/60 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+              <div className="relative">
+                <AddSubjectDrawer onSubjectCreated={() => {
+                  // TODO: Refresh subjects/class list
+                  console.log('Subject created successfully');
+                }} />
+              </div>
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-mono px-2 py-1 rounded whitespace-nowrap">
+                  Add a custom subject
+                </div>
+              </div>
+            </div>
             <div className="flex gap-2">
               {/* Sidebar toggle button */}
               <Button
@@ -330,6 +350,8 @@ function ClassesPage() {
               <ClassCard 
                 key={level.id} 
                 level={level} 
+                tenantSubjects={getTenantSubjects()}
+                convertTenantSubjectToLegacy={convertTenantSubjectToLegacy}
                 selectedGradeId={selectedGradeId}
                 selectedStreamId={selectedStreamId}
               />

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers } from 'lucide-react'
-import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
+import type { Level, Subject, GradeLevel, TenantSubject } from '@/lib/types/school-config'
 import { useState, useMemo } from 'react'
 import { EditSubjectDialog } from './EditSubjectDialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -13,6 +13,8 @@ import { AddStreamModal } from './AddStreamModal'
 
 interface ClassCardProps {
   level: Level;
+  tenantSubjects: TenantSubject[];
+  convertTenantSubjectToLegacy: (tenantSubject: TenantSubject) => Subject;
   selectedGradeId?: string;
   selectedStreamId?: string;
 }
@@ -45,7 +47,7 @@ export function ClassHeader() {
   )
 }
 
-export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCardProps) {
+export function ClassCard({ level, tenantSubjects, convertTenantSubjectToLegacy, selectedGradeId, selectedStreamId }: ClassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'optional'>('all')
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
@@ -54,7 +56,8 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
 
   // Filter subjects based on selected grade, stream, and filter type
   const filteredSubjects = useMemo(() => {
-    let subjects = level.subjects;
+    // Convert tenant subjects to legacy format
+    let subjects = tenantSubjects.map(ts => convertTenantSubjectToLegacy(ts));
 
     // First filter based on selected type
     subjects = subjects.filter(subject => {
@@ -75,7 +78,7 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
       // Then sort alphabetically by name within each group
       return a.name.localeCompare(b.name);
     });
-  }, [level.subjects, selectedFilter]);
+  }, [tenantSubjects, convertTenantSubjectToLegacy, selectedFilter]);
 
   // Get the selected grade and stream if any
   const selectedGrade = useMemo(() => {

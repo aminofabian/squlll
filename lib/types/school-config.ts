@@ -1,3 +1,34 @@
+// Base subject information that can come from either subject or customSubject
+export interface BaseSubject {
+  id: string;
+  name: string;
+  code: string;
+  category: string | null;
+  department: string | null;
+  shortName: string | null;
+}
+
+// Curriculum information
+export interface Curriculum {
+  id: string;
+  name: string;
+}
+
+// Tenant subject that wraps either a system subject or custom subject
+export interface TenantSubject {
+  id: string;
+  subjectType: 'core' | 'elective' | 'optional';
+  isCompulsory: boolean;
+  totalMarks: number;
+  passingMarks: number;
+  creditHours: number;
+  isActive: boolean;
+  curriculum: Curriculum;
+  subject: BaseSubject | null; // System subject
+  customSubject: BaseSubject | null; // Custom subject
+}
+
+// Legacy Subject interface for backward compatibility
 export interface Subject {
   id: string;
   name: string;
@@ -29,7 +60,7 @@ export interface Level {
   id: string;
   name: string;
   description: string;
-  subjects: Subject[];
+  subjects?: Subject[]; // Optional for backward compatibility
   gradeLevels: GradeLevel[];
 }
 

@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { graphqlClient } from '../graphql-client';
 import { useSchoolConfigStore } from '../stores/useSchoolConfigStore';
-import { SchoolConfiguration } from '../types/school-config';
+import { SchoolConfiguration, TenantSubject } from '../types/school-config';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface GetSchoolConfigResponse {
   getSchoolConfiguration: SchoolConfiguration;
+  tenantSubjects: TenantSubject[];
 }
 
 const GET_SCHOOL_CONFIG = gql`
@@ -18,20 +19,6 @@ const GET_SCHOOL_CONFIG = gql`
         id
         name
         description
-        subjects {
-          id
-          name
-          code
-          subjectType
-          category
-          department
-          shortName
-          isCompulsory
-          totalMarks
-          passingMarks
-          creditHours
-          curriculum
-        }
         gradeLevels {
           id
           name
@@ -46,6 +33,35 @@ const GET_SCHOOL_CONFIG = gql`
         id
         schoolName
         subdomain
+      }
+    }
+    tenantSubjects {
+      id
+      subjectType
+      isCompulsory
+      totalMarks
+      passingMarks
+      creditHours
+      isActive
+      curriculum {
+        id
+        name
+      }
+      subject {
+        id
+        name
+        code
+        category
+        department
+        shortName
+      }
+      customSubject {
+        id
+        name
+        code
+        category
+        department
+        shortName
       }
     }
   }
@@ -90,20 +106,6 @@ export function useSchoolConfig(enabled: boolean = true) {
                     id
                     name
                     description
-                    subjects {
-                      id
-                      name
-                      code
-                      subjectType
-                      category
-                      department
-                      shortName
-                      isCompulsory
-                      totalMarks
-                      passingMarks
-                      creditHours
-                      curriculum
-                    }
                     gradeLevels {
                       id
                       name
@@ -118,6 +120,35 @@ export function useSchoolConfig(enabled: boolean = true) {
                     id
                     schoolName
                     subdomain
+                  }
+                }
+                tenantSubjects {
+                  id
+                  subjectType
+                  isCompulsory
+                  totalMarks
+                  passingMarks
+                  creditHours
+                  isActive
+                  curriculum {
+                    id
+                    name
+                  }
+                  subject {
+                    id
+                    name
+                    code
+                    category
+                    department
+                    shortName
+                  }
+                  customSubject {
+                    id
+                    name
+                    code
+                    category
+                    department
+                    shortName
                   }
                 }
               }
@@ -156,13 +187,15 @@ export function useSchoolConfig(enabled: boolean = true) {
         }
 
         const config = data.data.getSchoolConfiguration;
+        const tenantSubjects = data.data.tenantSubjects || [];
         console.log('Full config from API:', config);
+        console.log('Tenant subjects from API:', tenantSubjects);
         
         // Update both local state and store
         setConfig(config);
-        setStoreConfig(config);
+        setStoreConfig(config, tenantSubjects);
         
-        return config;
+        return { config, tenantSubjects };
       } catch (error) {
         console.error('useSchoolConfig error:', error);
         setError(error instanceof Error ? error.message : 'An error occurred');

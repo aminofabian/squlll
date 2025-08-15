@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { SchoolConfiguration, Level, Subject, GradeLevel, Stream } from '../types/school-config';
+import { SchoolConfiguration, Level, Subject, GradeLevel, Stream, TenantSubject } from '../types/school-config';
 
 interface SchoolConfigState {
   config: SchoolConfiguration | null;
+  tenantSubjects: TenantSubject[];
   isLoading: boolean;
   error: string | null;
   
   // Setters
-  setConfig: (config: SchoolConfiguration) => void;
+  setConfig: (config: SchoolConfiguration, tenantSubjects?: TenantSubject[]) => void;
+  setTenantSubjects: (tenantSubjects: TenantSubject[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   
@@ -16,6 +18,9 @@ interface SchoolConfigState {
   getLevelById: (levelId: string) => Level | undefined;
   getSubjectsByLevelId: (levelId: string) => Subject[];
   getAllSubjects: () => Subject[];
+  getTenantSubjects: () => TenantSubject[];
+  getTenantSubjectsByCurriculum: (curriculumId: string) => TenantSubject[];
+  convertTenantSubjectToLegacy: (tenantSubject: TenantSubject) => Subject;
   getGradeLevelsByLevelId: (levelId: string) => GradeLevel[];
   getAllGradeLevels: () => { levelId: string; levelName: string; grades: GradeLevel[] }[];
   getGradeById: (gradeId: string) => { grade: GradeLevel; levelId: string; levelName: string } | undefined;
@@ -27,6 +32,7 @@ interface SchoolConfigState {
 
 const initialState = {
   config: null,
+  tenantSubjects: [],
   isLoading: false,
   error: null,
 };
@@ -37,23 +43,30 @@ export const useSchoolConfigStore = create<SchoolConfigState>()(
       ...initialState,
 
       // Setters
-      setConfig: (config) => {
+      setConfig: (config, tenantSubjects) => {
         // Debug: Log the config being set
         console.log('Setting config:', {
           id: config.id,
           levels: config.selectedLevels.map(l => ({
             name: l.name,
-            subjects: l.subjects.length,
+            subjects: l.subjects?.length || 0,
             grades: l.gradeLevels?.map(g => ({
               id: g.id,
               name: g.name,
               age: g.age,
               streams: g.streams?.length || 0
             }))
-          }))
+          })),
+          tenantSubjectsCount: tenantSubjects?.length || 0
         });
-        set({ config, error: null });
+        
+        const updates: Partial<SchoolConfigState> = { config, error: null };
+        if (tenantSubjects) {
+          updates.tenantSubjects = tenantSubjects;
+        }
+        set(updates);
       },
+      setTenantSubjects: (tenantSubjects) => set({ tenantSubjects }),
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
 
@@ -71,8 +84,41 @@ export const useSchoolConfigStore = create<SchoolConfigState>()(
       getAllSubjects: () => {
         const state = get();
         return state.config?.selectedLevels.reduce((acc, level) => {
-          return [...acc, ...level.subjects];
+          return [...acc, ...(level.subjects || [])];
         }, [] as Subject[]) || [];
+      },
+
+      getTenantSubjects: () => {
+        const state = get();
+        return state.tenantSubjects;
+      },
+
+      getTenantSubjectsByCurriculum: (curriculumId) => {
+        const state = get();
+        return state.tenantSubjects.filter(subject => subject.curriculum.id === curriculumId);
+      },
+
+      convertTenantSubjectToLegacy: (tenantSubject) => {
+        // Convert TenantSubject to legacy Subject format for backward compatibility
+        const baseSubject = tenantSubject.subject || tenantSubject.customSubject;
+        if (!baseSubject) {
+          throw new Error('TenantSubject must have either subject or customSubject');
+        }
+        
+        return {
+          id: tenantSubject.id,
+          name: baseSubject.name,
+          code: baseSubject.code,
+          subjectType: tenantSubject.subjectType,
+          category: baseSubject.category,
+          department: baseSubject.department,
+          shortName: baseSubject.shortName,
+          isCompulsory: tenantSubject.isCompulsory,
+          totalMarks: tenantSubject.totalMarks,
+          passingMarks: tenantSubject.passingMarks,
+          creditHours: tenantSubject.creditHours,
+          curriculum: tenantSubject.curriculum.id,
+        };
       },
 
       getGradeLevelsByLevelId: (levelId) => {
