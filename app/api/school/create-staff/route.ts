@@ -48,7 +48,6 @@ export async function POST(request: Request) {
       department: staffData.department?.charAt(0).toUpperCase() + staffData.department?.slice(1) || "General",
       phoneNumber: staffData.phone,
       address: staffData.address || "",
-      subject: staffData.subjects || staffData.position || "General",
       employeeId: staffData.employeeId,
       dateOfBirth: staffData.dateOfBirth || "",
       qualifications: staffData.qualifications || "Not specified"
@@ -85,7 +84,6 @@ export async function POST(request: Request) {
           department: createStaffDto.department,
           phoneNumber: createStaffDto.phoneNumber,
           address: createStaffDto.address,
-          subject: createStaffDto.subject,
           employeeId: createStaffDto.employeeId,
           dateOfBirth: createStaffDto.dateOfBirth,
           qualifications: createStaffDto.qualifications

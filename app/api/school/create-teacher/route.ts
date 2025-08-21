@@ -39,14 +39,9 @@ export async function POST(request: Request) {
       department: teacherData.department?.charAt(0).toUpperCase() + teacherData.department?.slice(1) || "General",
       phoneNumber: teacherData.phone,
       address: teacherData.address || "",
-      subject: teacherData.subject_list || teacherData.specialization || "General",
       employeeId: teacherData.employee_id,
       dateOfBirth: teacherData.date_of_birth || "",
-      qualifications: `${teacherData.qualification} - ${teacherData.specialization}${teacherData.experience ? ` (${teacherData.experience} years experience)` : ''}`,
-      // Additional teacher-specific fields
-      designation: teacherData.designation,
-      joinDate: teacherData.join_date,
-      experience: teacherData.experience
+      qualifications: `${teacherData.qualification} - ${teacherData.specialization}${teacherData.experience ? ` (${teacherData.experience} years experience)` : ''}`
     };
 
     console.log('Mapped teacher DTO:', createTeacherDto);
@@ -80,7 +75,6 @@ export async function POST(request: Request) {
           department: createTeacherDto.department,
           phoneNumber: createTeacherDto.phoneNumber,
           address: createTeacherDto.address,
-          subject: createTeacherDto.subject,
           employeeId: createTeacherDto.employeeId,
           dateOfBirth: createTeacherDto.dateOfBirth,
           qualifications: createTeacherDto.qualifications
