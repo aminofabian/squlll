@@ -160,24 +160,37 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       if (!response.ok) {
         // Handle API errors with detailed information
         if (result.error) {
-          let errorMessage = result.error;
+          let userFriendlyMessage = '';
+          
+          // Transform technical errors into user-friendly messages
+          if (result.error.includes('User already exists') || result.error.includes('already exists in this tenant')) {
+            userFriendlyMessage = 'This teacher is already registered in your school.';
+          } else if (result.error.includes('Error creating teacher record')) {
+            userFriendlyMessage = 'We encountered an issue while creating the teacher account.';
+          } else if (result.error.includes('Invalid') || result.error.includes('BADREQUESTEXCEPTION')) {
+            userFriendlyMessage = 'The information provided is not valid.';
+          } else if (result.error.includes('NOTFOUNDEXCEPTION')) {
+            userFriendlyMessage = 'The requested resource was not found.';
+          } else {
+            userFriendlyMessage = result.error;
+          }
           
           // Add error code if available
           if (result.code) {
-            errorMessage += ` (${result.code})`;
+            userFriendlyMessage += ` (${result.code})`;
           }
           
           // Add additional details if available
           if (result.details && Array.isArray(result.details)) {
             const detailMessages = result.details.map((detail: any) => detail.message).filter(Boolean);
             if (detailMessages.length > 0) {
-              errorMessage += `\n\nDetails:\n${detailMessages.join('\n')}`;
+              userFriendlyMessage += `\n\nDetails:\n${detailMessages.join('\n')}`;
             }
           }
           
-          throw new Error(errorMessage);
+          throw new Error(userFriendlyMessage);
         } else {
-          throw new Error('Failed to create teacher');
+          throw new Error('We encountered an unexpected issue while creating the teacher account.');
         }
       }
 
@@ -195,19 +208,21 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     } catch (error) {
       console.error('Error inviting teacher:', error);
       
-      let errorMessage = "An error occurred while sending the teacher invitation";
-      let errorTitle = "Invitation Failed";
+      let errorMessage = "We couldn't send the teacher invitation. Please try again.";
+      let errorTitle = "Invitation Not Sent";
       
       if (error instanceof Error) {
         errorMessage = error.message;
         
         // Handle specific error types with better titles
-        if (error.message.includes('User already exists')) {
-          errorTitle = "User Already Exists";
+        if (error.message.includes('already registered')) {
+          errorTitle = "Teacher Already Exists";
         } else if (error.message.includes('BADREQUESTEXCEPTION')) {
-          errorTitle = "Invalid Request";
+          errorTitle = "Please Check Your Information";
         } else if (error.message.includes('NOTFOUNDEXCEPTION')) {
-          errorTitle = "Not Found";
+          errorTitle = "Resource Not Found";
+        } else if (error.message.includes('unexpected issue')) {
+          errorTitle = "Something Went Wrong";
         }
       }
       
@@ -269,7 +284,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
-                        Error Creating Teacher
+                        Unable to Create Teacher Account
                       </h4>
                       <div className="text-sm text-red-700 dark:text-red-300 whitespace-pre-line">
                         {error}
@@ -280,7 +295,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
               )}
 
               {/* Helpful Guidance for Specific Errors */}
-              {error && error.includes('User already exists') && (
+              {error && error.includes('already registered') && (
                 <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <div className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -288,16 +303,44 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                     </div>
                     <div className="flex-1">
                       <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-                        What to do next
+                        Here's what you can do:
                       </h4>
-                      <div className="text-sm text-blue-700 dark:text-blue-300">
-                        This email address is already registered in your school. You can:
+                      <div className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                        It looks like this teacher already has an account in your school. Don't worry, here are your options:
                       </div>
-                      <ul className="text-sm text-blue-700 dark:text-blue-300 mt-2 ml-4 list-disc space-y-1">
-                        <li>Check if the teacher already has an account</li>
-                        <li>Use a different email address</li>
-                        <li>Contact the existing user to reset their password</li>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-2">
+                        <li className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                          <span>Check if they already have access to their account</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                          <span>Try using a different email address</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+                          <span>Ask them to reset their password if they can't access their account</span>
+                        </li>
                       </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* General Helpful Message for Other Errors */}
+              {error && !error.includes('already registered') && (
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Info className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-2">
+                        Need help?
+                      </h4>
+                      <div className="text-sm text-amber-700 dark:text-amber-300">
+                        If this issue persists, try refreshing the page or contact your system administrator for assistance.
+                      </div>
                     </div>
                   </div>
                 </div>
