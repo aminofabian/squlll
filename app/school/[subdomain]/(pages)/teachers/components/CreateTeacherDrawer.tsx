@@ -94,6 +94,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [invitationData, setInvitationData] = useState<{
     email: string;
     fullName: string;
@@ -101,6 +102,14 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     createdAt: string;
   } | null>(null);
   const { data: schoolConfig } = useSchoolConfig();
+  
+  // Clear error when drawer opens
+  const handleDrawerOpenChange = (open: boolean) => {
+    setIsDrawerOpen(open);
+    if (open) {
+      setError(null);
+    }
+  };
   
   const form = useForm<TeacherFormData>({
     resolver: zodResolver(teacherFormSchema),
@@ -132,6 +141,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     }
 
     setIsLoading(true);
+    setError(null); // Clear any previous errors
 
     try {
       const response = await fetch('/api/school/create-teacher', {
@@ -148,7 +158,27 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       const result = await response.json();
       
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create teacher');
+        // Handle API errors with detailed information
+        if (result.error) {
+          let errorMessage = result.error;
+          
+          // Add error code if available
+          if (result.code) {
+            errorMessage += ` (${result.code})`;
+          }
+          
+          // Add additional details if available
+          if (result.details && Array.isArray(result.details)) {
+            const detailMessages = result.details.map((detail: any) => detail.message).filter(Boolean);
+            if (detailMessages.length > 0) {
+              errorMessage += `\n\nDetails:\n${detailMessages.join('\n')}`;
+            }
+          }
+          
+          throw new Error(errorMessage);
+        } else {
+          throw new Error('Failed to create teacher');
+        }
       }
 
       const inviteData = result.inviteTeacher;
@@ -164,8 +194,30 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       
     } catch (error) {
       console.error('Error inviting teacher:', error);
-      toast.error("Invitation Failed", {
-        description: error instanceof Error ? error.message : "An error occurred while sending the teacher invitation"
+      
+      let errorMessage = "An error occurred while sending the teacher invitation";
+      let errorTitle = "Invitation Failed";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Handle specific error types with better titles
+        if (error.message.includes('User already exists')) {
+          errorTitle = "User Already Exists";
+        } else if (error.message.includes('BADREQUESTEXCEPTION')) {
+          errorTitle = "Invalid Request";
+        } else if (error.message.includes('NOTFOUNDEXCEPTION')) {
+          errorTitle = "Not Found";
+        }
+      }
+      
+      // Set error for UI display
+      setError(errorMessage);
+      
+      // Also show toast notification
+      toast.error(errorTitle, {
+        description: errorMessage,
+        duration: 8000, // Show longer for detailed errors
       });
     } finally {
       setIsLoading(false);
@@ -174,7 +226,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
 
   return (
     <>
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+      <Drawer open={isDrawerOpen} onOpenChange={handleDrawerOpenChange}>
       <DrawerTrigger asChild>
         <Button 
           variant="default" 
@@ -207,6 +259,49 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
         <div className="flex-1 overflow-y-auto bg-background">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-8">
+              
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Info className="h-3 w-3 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">
+                        Error Creating Teacher
+                      </h4>
+                      <div className="text-sm text-red-700 dark:text-red-300 whitespace-pre-line">
+                        {error}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Helpful Guidance for Specific Errors */}
+              {error && error.includes('User already exists') && (
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Info className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                        What to do next
+                      </h4>
+                      <div className="text-sm text-blue-700 dark:text-blue-300">
+                        This email address is already registered in your school. You can:
+                      </div>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 mt-2 ml-4 list-disc space-y-1">
+                        <li>Check if the teacher already has an account</li>
+                        <li>Use a different email address</li>
+                        <li>Contact the existing user to reset their password</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Loading Overlay */}
               {isLoading && (
