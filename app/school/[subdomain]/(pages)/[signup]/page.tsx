@@ -256,7 +256,27 @@ function SignupContent() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || `${signupType} invitation acceptance failed`)
+        // Handle API errors with detailed information
+        if (result.error) {
+          let errorMessage = result.error
+          
+          // Add error code if available
+          if (result.code) {
+            errorMessage += ` (${result.code})`
+          }
+          
+          // Add additional details if available
+          if (result.details && Array.isArray(result.details)) {
+            const detailMessages = result.details.map((detail: any) => detail.message).filter(Boolean)
+            if (detailMessages.length > 0) {
+              errorMessage += `\n\nDetails:\n${detailMessages.join('\n')}`
+            }
+          }
+          
+          throw new Error(errorMessage)
+        } else {
+          throw new Error(`${signupType} invitation acceptance failed`)
+        }
       }
 
       // Handle different response formats
@@ -290,7 +310,36 @@ function SignupContent() {
       }, 3000)
     } catch (error) {
       console.error(`${signupType} signup error:`, error)
-      setError(error instanceof Error ? error.message : 'An error occurred during signup')
+      
+      // Handle API errors with detailed information
+      if (error instanceof Error) {
+        setError(error.message)
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle API response errors with detailed information
+        const apiError = error as any
+        if (apiError.error) {
+          let errorMessage = apiError.error
+          
+          // Add error code if available
+          if (apiError.code) {
+            errorMessage += ` (${apiError.code})`
+          }
+          
+          // Add additional details if available
+          if (apiError.details && Array.isArray(apiError.details)) {
+            const detailMessages = apiError.details.map((detail: any) => detail.message).filter(Boolean)
+            if (detailMessages.length > 0) {
+              errorMessage += `\n\nDetails:\n${detailMessages.join('\n')}`
+            }
+          }
+          
+          setError(errorMessage)
+        } else {
+          setError('An error occurred during signup')
+        }
+      } else {
+        setError('An error occurred during signup')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -387,7 +436,19 @@ function SignupContent() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="whitespace-pre-line">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {error && error.includes('expired') && (
+            <Alert variant="default" className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30">
+              <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <AlertTitle className="text-yellow-800 dark:text-yellow-200">What to do next</AlertTitle>
+              <AlertDescription className="text-yellow-700 dark:text-yellow-300">
+                Your invitation link has expired. Please contact your school administrator to request a new invitation.
+              </AlertDescription>
             </Alert>
           )}
 
