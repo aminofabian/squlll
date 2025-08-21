@@ -78,19 +78,78 @@ function SignupContent() {
   const hasValidToken = tokenParam || isSignupTokenValid
   
   // Determine signup type based on token or URL pattern
-  const determineSignupType = (): SignupType => {
-    // Check if the token contains any indicators of type
+  const determineSignupType = async (): Promise<SignupType> => {
     const token = tokenParam || (isSignupTokenValid ? signupToken : null)
-    if (token) {
-      // You can add logic here to determine type from token if needed
-      // For now, we'll use a simple heuristic or default to staff
-      return 'staff'
+    if (!token) return 'teacher' // fallback
+    
+    try {
+      // Test both endpoints to see which one accepts the token
+      // We'll use a simple password to test the token validity
+      const testPassword = "TestPassword123!"
+      
+      // Test teacher invitation first
+      const teacherResponse = await fetch('/api/auth/accept-teacher-invitation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password: testPassword })
+      })
+      
+      if (teacherResponse.ok) {
+        const teacherData = await teacherResponse.json()
+        if (teacherData.error && !teacherData.error.includes('Password')) {
+          // Token is valid for teacher but password is wrong (which is expected)
+          return 'teacher'
+        }
+      }
+      
+      // Test staff invitation
+      const staffResponse = await fetch('/api/auth/accept-staff-invitation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password: testPassword })
+      })
+      
+      if (staffResponse.ok) {
+        const staffData = await staffResponse.json()
+        if (staffData.error && !staffData.error.includes('Password')) {
+          // Token is valid for staff but password is wrong (which is expected)
+          return 'staff'
+        }
+      }
+      
+      // If we can't determine, default to teacher
+      return 'teacher'
+    } catch (error) {
+      console.error('Error determining signup type:', error)
+      return 'teacher' // fallback to teacher
     }
-    return 'staff' // default fallback
   }
 
-  const signupType = determineSignupType()
+  const [signupType, setSignupType] = useState<SignupType>('teacher')
+  const [isDetectingType, setIsDetectingType] = useState(true)
   
+  // Determine signup type on component mount
+  useEffect(() => {
+    const detectType = async () => {
+      setIsDetectingType(true)
+      try {
+        const detectedType = await determineSignupType()
+        setSignupType(detectedType)
+      } catch (error) {
+        console.error('Error detecting signup type:', error)
+        setSignupType('teacher') // fallback
+      } finally {
+        setIsDetectingType(false)
+      }
+    }
+    
+    if (hasValidToken) {
+      detectType()
+    } else {
+      setIsDetectingType(false)
+    }
+  }, [hasValidToken])
+
   // Redirect immediately if invalid
   useEffect(() => {
     if (!hasValidToken) {
@@ -101,6 +160,29 @@ function SignupContent() {
   // Don't render anything if not a valid route
   if (!hasValidToken) {
     return <div className="min-h-screen bg-gray-50"></div> // Show blank page while redirecting
+  }
+
+  // Show loading state while detecting signup type
+  if (isDetectingType) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-blue-200 dark:border-blue-800 shadow-xl">
+          <CardHeader className="text-center pb-4">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            </div>
+            <CardTitle className="text-xl font-semibold text-blue-800 dark:text-blue-200">
+              Detecting Invitation Type
+            </CardTitle>
+            <CardDescription className="text-blue-600 dark:text-blue-400">
+              Please wait while we determine your invitation type...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
   }
 
   const [isLoading, setIsLoading] = useState(false)
@@ -157,6 +239,8 @@ function SignupContent() {
       const endpoint = signupType === 'staff' 
         ? '/api/auth/accept-staff-invitation'
         : '/api/auth/accept-teacher-invitation'
+
+      console.log('Submitting to endpoint:', endpoint, 'with signup type:', signupType)
 
       const response = await fetch(endpoint, {
         method: 'POST',
