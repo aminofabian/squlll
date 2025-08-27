@@ -175,7 +175,7 @@ export function DashboardSearchSidebar({
   };
 
   return (
-    <div className="hidden md:flex flex-col w-96 border-r border-primary/20 overflow-y-auto p-6 shrink-0 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out relative">
+    <div className="hidden md:flex flex-col w-80 lg:w-96 border-r border-primary/20 overflow-y-auto p-4 lg:p-6 shrink-0 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out relative">
       {/* Collapse button positioned at top-right of sidebar */}
       <Button
         variant="outline"
@@ -188,7 +188,7 @@ export function DashboardSearchSidebar({
       </Button>
       
       <div className="space-y-6">
-        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-4 lg:p-6">
           <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
             <label className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
               <Search className="h-3 w-3 mr-2" />
@@ -220,7 +220,7 @@ export function DashboardSearchSidebar({
         )}
       </div>
       
-      <div className="mt-8 border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+      <div className="mt-6 lg:mt-8 border-2 border-primary/20 bg-primary/5 rounded-xl p-4 lg:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">Grade Overview</h3>
@@ -236,7 +236,7 @@ export function DashboardSearchSidebar({
         <div className="space-y-2 mb-4">
           {/* All Grades Option */}
           <div
-            className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+            className={`p-3 lg:p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
               !selectedGrade 
                 ? 'bg-primary/10 border-primary/40 shadow-md' 
                 : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-sm'
@@ -245,20 +245,20 @@ export function DashboardSearchSidebar({
             title="View all grades overview"
           >
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                <div className="w-7 h-7 lg:w-8 lg:h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                  <BarChart3 className="h-3 w-3 lg:h-4 lg:w-4 text-primary" />
                 </div>
-                <div>
-                  <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                <div className="min-w-0 flex-1">
+                  <div className="font-mono font-medium text-slate-900 dark:text-slate-100 text-sm lg:text-base truncate">
                     All Grades
                   </div>
-                  <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                  <div className="text-xs text-slate-600 dark:text-slate-400 font-mono truncate">
                     School Overview
                   </div>
                 </div>
               </div>
-              <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs">
+              <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs shrink-0 ml-2">
                 {students.length}
               </Badge>
             </div>
@@ -268,7 +268,7 @@ export function DashboardSearchSidebar({
           {displayedGrades.map((grade) => (
             <div
               key={grade.id}
-              className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+              className={`p-3 lg:p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
                 selectedGrade === grade.id 
                   ? 'bg-primary/10 border-primary/40 shadow-md' 
                   : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-sm'
@@ -277,20 +277,20 @@ export function DashboardSearchSidebar({
               title={`View ${grade.displayName} details`}
             >
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <GraduationCap className="h-4 w-4 text-primary" />
+                <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                  <div className="w-7 h-7 lg:w-8 lg:h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                    <GraduationCap className="h-3 w-3 lg:h-4 lg:w-4 text-primary" />
                   </div>
-                  <div>
-                    <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono font-medium text-slate-900 dark:text-slate-100 text-sm lg:text-base truncate">
                       {grade.displayName}
                     </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
+                    <div className="text-xs text-slate-600 dark:text-slate-400 font-mono truncate">
                       {grade.level}
                     </div>
                   </div>
                 </div>
-                <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs">
+                <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs shrink-0 ml-2">
                   {grade.studentCount}
                 </Badge>
               </div>
@@ -301,7 +301,7 @@ export function DashboardSearchSidebar({
           {availableGrades.length > displayedGradesCount && (
             <div className="pt-4 border-t border-primary/20">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                <span className="text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
                   Showing {displayedGradesCount} of {availableGrades.length} grades
                 </span>
                 <Button
@@ -344,7 +344,7 @@ export function DashboardSearchSidebar({
           {displayedGradesCount >= availableGrades.length && availableGrades.length > 7 && !showAllGrades && (
             <div className="border-t border-primary/20 pt-4">
               <div className="flex items-center justify-center">
-                <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                <span className="text-xs font-mono text-slate-600 dark:text-slate-400 truncate">
                   All {availableGrades.length} grades loaded
                 </span>
               </div>

@@ -75,6 +75,7 @@ function SchoolLayoutContent({
   const [userRole, setUserRole] = useState('')
   const [userName, setUserName] = useState('')
   const [isMounted, setIsMounted] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // Check if this is a signup page - don't fetch school config for signup pages
   const isSignupPage = pathname?.includes('/signup') || pathname?.includes('/login')
@@ -134,6 +135,40 @@ function SchoolLayoutContent({
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  // Handle responsive sidebar state based on screen size for 11-inch devices
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth
+      
+      if (isInitialLoad) {
+        // On initial load, default to minimized on 11-inch and medium devices (768px - 1200px)
+        // 11-inch devices are typically around 820-834px width
+        if (width >= 768 && width < 1200) {
+          setIsSidebarMinimized(true)
+        }
+        setIsInitialLoad(false)
+      } else {
+        // On subsequent resizes, auto-adjust based on screen size
+        // Keep sidebar minimized for 11-inch devices and smaller tablets/laptops
+        if (width >= 768 && width < 1200) {
+          setIsSidebarMinimized(true)
+        } else if (width >= 1200) {
+          setIsSidebarMinimized(false)
+        }
+        // Keep current state on small devices (< 768px) as sidebar behavior is different
+      }
+    }
+
+    // Add event listener
+    window.addEventListener('resize', handleResize)
+    
+    // Call once on mount to handle initial state
+    handleResize()
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isInitialLoad])
 
   useEffect(() => {
     // Fetch school-specific data based on the subdomain

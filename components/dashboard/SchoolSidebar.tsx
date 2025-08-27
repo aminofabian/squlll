@@ -32,7 +32,27 @@ import {
   Calendar,
   ChevronDown,
   PanelLeftOpen,
-  PanelLeftClose
+  PanelLeftClose,
+  // New more representative icons
+  Building2,
+  Clock,
+  Users2,
+  Briefcase,
+  CreditCard,
+  FileCheck,
+  BookMarked,
+  CalendarCheck,
+  TrendingDown,
+  UserCog,
+  Mail,
+  ChartLine,
+  UserRoundPlus,
+  Medal,
+  CheckSquare,
+  Trophy,
+  MessageCircle,
+  PieChart,
+  MoreHorizontal
 } from "lucide-react"
 import { LucideIcon } from "lucide-react"
 
@@ -65,47 +85,47 @@ const mainNavigationItems: NavigationItem[] = [
   {
     title: "Overview",
     href: "/dashboard",
-    icon: Home,
+    icon: LayoutDashboard, // More specific than Home for dashboard/overview
   },
   {
     title: "Classes",
     href: "/classes",
-    icon: BookOpen,
+    icon: Building2, // Represents classroom/building better than BookOpen
   },
   {
     title: "Timetable",
     href: "/timetable",
-    icon: Calendar,
+    icon: Clock, // More representative of time scheduling than Calendar
   },
   {
     title: "Students",
     href: "/students",
-    icon: Users,
+    icon: Users2, // More specific student group icon
   },
   {
     title: "Teachers",
     href: "/teachers",
-    icon: GraduationCap,
+    icon: GraduationCap, // Keep this as it's already perfect for teachers
   },
   {
     title: "Parents",
     href: "/parents",
-    icon: Users,
+    icon: Users, // Keep Users but distinguish from students
   },
   {
     title: "Staff",
     href: "/staff",
-    icon: UserCheck,
+    icon: Briefcase, // More representative of staff/employees than UserCheck
   },
   {
     title: "Fees & Invoices",
     href: "/fees",
-    icon: DollarSign,
+    icon: CreditCard, // More specific for payments/billing than DollarSign
   },
   {
     title: "Exams",
     href: "/exams",
-    icon: ClipboardList,
+    icon: FileCheck, // More representative of exam/testing than ClipboardList
   }
 ];
 
@@ -114,47 +134,47 @@ const moreNavigationItems: NavigationItem[] = [
   {
     title: "Curriculum",
     href: "/curriculum",
-    icon: BookOpen,
+    icon: BookMarked, // More representative of structured curriculum than BookOpen
   },
   {
     title: "School Years",
     href: "/school-years",
-    icon: School,
+    icon: CalendarCheck, // Better represents academic years/terms than School
   },
   {
     title: "Reports",
     href: "/reports",
-    icon: FileText,
+    icon: FileText, // Keep this as it's already good for reports
   },
   {
     title: "Analytics",
     href: "/analytics",
-    icon: BarChart,
+    icon: PieChart, // More representative of data analytics than BarChart
   },
   {
     title: "New Applications",
     href: "/admissions/applications",
-    icon: UserPlus,
+    icon: UserRoundPlus, // More specific for new student applications
   },
   {
     title: "Enrollment",
     href: "/enrollment",
-    icon: Award,
+    icon: Medal, // Better represents achievement/enrollment than Award
   },
   {
     title: "Attendances",
     href: "/attendances",
-    icon: UserCheck,
+    icon: CheckSquare, // More representative of attendance checking than UserCheck
   },
   {
     title: "Grading",
     href: "/grading",
-    icon: Award,
+    icon: Trophy, // More representative of grades/achievements than Award
   },
   {
     title: "Communication",
     href: "/communication",
-    icon: MessageSquare,
+    icon: MessageCircle, // More modern/friendly than MessageSquare
   }
 ];
 
@@ -483,14 +503,21 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
                 <Link key={item.href} href={href} className="block">
                   <div 
                     className={cn(
-                      "w-full flex items-center rounded-lg transition-all duration-200 relative group",
-                      isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2.5",
+                      "w-full flex items-center rounded-lg transition-all duration-200 relative group h-10", // Fixed height
+                      isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2",
                       isActive 
-                        ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white border-l-4 transform translate-x-1" 
-                        : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm hover:translate-x-1"
+                        ? "bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-white" 
+                        : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
                     )}
-                    style={isActive ? { borderLeftColor: fromColor } : {}}
                   >
+                    {/* Active indicator - left border */}
+                    {isActive && (
+                      <div 
+                        className="absolute left-0 top-1 bottom-1 w-1 rounded-r-full"
+                        style={{ backgroundColor: fromColor }}
+                      />
+                    )}
+                    
                     {/* Colored background indicator on hover */}
                     <div 
                       className={cn(
@@ -562,10 +589,10 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
             {/* More Button */}
             <div 
               className={cn(
-                "w-full flex items-center rounded-lg transition-all duration-200 relative group cursor-pointer mt-2",
-                isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2.5",
+                "w-full flex items-center rounded-lg transition-all duration-200 relative group cursor-pointer mt-2 h-10", // Fixed height
+                isMinimized ? "px-2 py-2 justify-center" : "px-3 py-2",
                 drawerOpen 
-                  ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white" 
+                  ? "bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-white" 
                   : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
               )}
               onClick={toggleDrawer}
@@ -616,7 +643,7 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
                 />
                 
                 {/* Icon with subtle shadow */}
-                <LayoutDashboard className={cn(
+                <MoreHorizontal className={cn(
                   "h-4 w-4 z-10 transition-transform duration-300",
                   drawerOpen 
                     ? "drop-shadow-md" 
@@ -658,13 +685,20 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
                     <Link key={item.href} href={href} className="block">
                       <div 
                         className={cn(
-                          "w-full flex items-center px-2.5 py-1.5 rounded-md transition-all duration-200 relative group",
+                          "w-full flex items-center px-2.5 py-1.5 rounded-md transition-all duration-200 relative group h-8", // Fixed height
                           isActive 
-                            ? "bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white border-l-2" 
+                            ? "bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-white" 
                             : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
                         )}
-                        style={isActive ? { borderLeftColor: fromColor } : {}}
                       >
+                        {/* Active indicator - left border */}
+                        {isActive && (
+                          <div 
+                            className="absolute left-0 top-0.5 bottom-0.5 w-0.5 rounded-r-full"
+                            style={{ backgroundColor: fromColor }}
+                          />
+                        )}
+                        
                         {/* Colored background indicator on hover */}
                         <div 
                           className={cn(

@@ -22,6 +22,14 @@ export default function SchoolDashboard() {
   const subdomain = params.subdomain as string
   const schoolName = subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
   
+  // State declarations
+  const [selectedFilter, setSelectedFilter] = useState<string>('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [showStats, setShowStats] = useState(false)
+  
   // Check school configuration
   const { data: config, isLoading, error } = useSchoolConfig()
   
@@ -32,6 +40,40 @@ export default function SchoolDashboard() {
       router.push(`/school/${subdomain}`)
     }
   }, [config, isLoading, error, router, subdomain])
+
+  // Handle responsive sidebar state based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth
+      
+      if (isInitialLoad) {
+        // On initial load, default to collapsed on 11-inch and medium devices (768px - 1200px)
+        // 11-inch devices are typically around 820-834px width
+        if (width >= 768 && width < 1200) {
+          setIsSidebarCollapsed(true)
+        }
+        setIsInitialLoad(false)
+      } else {
+        // On subsequent resizes, auto-adjust based on screen size
+        // Keep sidebar minimized for 11-inch devices and smaller tablets/laptops
+        if (width >= 768 && width < 1200) {
+          setIsSidebarCollapsed(true)
+        } else if (width >= 1200) {
+          setIsSidebarCollapsed(false)
+        }
+        // Keep current state on small devices (< 768px) as sidebar is hidden via CSS
+      }
+    }
+
+    // Add event listener
+    window.addEventListener('resize', handleResize)
+    
+    // Call once on mount to handle initial state
+    handleResize()
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isInitialLoad])
   
   // Show loading state while checking configuration
   if (isLoading) {
@@ -69,12 +111,6 @@ export default function SchoolDashboard() {
   if (!config || !config.selectedLevels || config.selectedLevels.length === 0) {
     return null
   }
-
-  const [selectedFilter, setSelectedFilter] = useState<string>('all')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [showStats, setShowStats] = useState(false)
 
   // Get real data from stores
   const { students } = useStudentsStore()
@@ -335,7 +371,7 @@ export default function SchoolDashboard() {
       )}
 
       {/* Main content column */}
-      <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
+      <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out relative">
         {/* Floating toggle button when sidebar is collapsed */}
         {isSidebarCollapsed && (
           <div className="absolute top-6 left-6 z-10">
@@ -353,7 +389,7 @@ export default function SchoolDashboard() {
         
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-xl md:text-2xl font-bold truncate">
               Dashboard
             </h1>
           </div>
@@ -397,7 +433,7 @@ export default function SchoolDashboard() {
                   </button>
                 )}
               </div>
-              <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
+              <h1 className="text-2xl md:text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100 break-words">
                 {selectedGrade && selectedGradeInfo 
                   ? `${selectedGradeInfo.displayName} Dashboard`
                   : `${schoolName} Dashboard`
@@ -446,17 +482,17 @@ export default function SchoolDashboard() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {dashboardStats.map((stat) => (
-                        <div key={stat.title} className="border-2 border-primary/20 bg-primary/5 p-4 rounded-xl">
-                          <div className="flex items-center gap-3">
+                        <div key={stat.title} className="border-2 border-primary/20 bg-primary/5 p-3 md:p-4 rounded-xl">
+                          <div className="flex items-center gap-2 md:gap-3">
                             <div className={stat.color}>
-                              <stat.icon className="h-5 w-5" />
+                              <stat.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
                             </div>
-                            <div>
-                              <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400 truncate">
                                 {stat.title}
                               </p>
-                              <p className="text-2xl font-mono font-bold mt-1">{stat.value}</p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              <p className="text-lg md:text-2xl font-mono font-bold mt-1 truncate">{stat.value}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
                                 {stat.change}
                               </p>
                             </div>
@@ -485,26 +521,26 @@ export default function SchoolDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Student Demographics */}
                 <div className="space-y-4">
                   <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Student Demographics</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Male Students</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Male Students</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {filteredStudents.filter(s => s.gender.toLowerCase() === 'male').length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Female Students</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Female Students</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {filteredStudents.filter(s => s.gender.toLowerCase() === 'female').length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Active Students</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Active Students</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {filteredStudents.filter(s => s.isActive).length}
                       </span>
                     </div>
@@ -516,20 +552,20 @@ export default function SchoolDashboard() {
                   <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Financial Overview</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Total Fees Paid</span>
-                      <span className="font-mono font-bold text-emerald-600">
+                      <span className="text-sm text-slate-600 truncate mr-2">Total Fees Paid</span>
+                      <span className="font-mono font-bold text-emerald-600 text-right shrink-0">
                         KES {filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Outstanding Fees</span>
-                      <span className="font-mono font-bold text-orange-600">
+                      <span className="text-sm text-slate-600 truncate mr-2">Outstanding Fees</span>
+                      <span className="font-mono font-bold text-orange-600 text-right shrink-0">
                         KES {filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Collection Rate</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Collection Rate</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {(() => {
                           const totalPaid = filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0)
                           const totalOwed = filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0)
@@ -546,14 +582,14 @@ export default function SchoolDashboard() {
                   <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Academic Structure</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Subjects Offered</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Subjects Offered</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {selectedGradeInfo.level.subjects.length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Active Classes</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Active Classes</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {mockClasses.filter(c => 
                           c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
                           c.status === 'active'
@@ -561,8 +597,8 @@ export default function SchoolDashboard() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600">Streams</span>
-                      <span className="font-mono font-bold text-primary">
+                      <span className="text-sm text-slate-600 truncate mr-2">Streams</span>
+                      <span className="font-mono font-bold text-primary shrink-0">
                         {selectedGradeInfo.grade.streams?.length || 0}
                       </span>
                     </div>
@@ -574,12 +610,12 @@ export default function SchoolDashboard() {
               {selectedGradeInfo.grade.streams && selectedGradeInfo.grade.streams.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-primary/20">
                   <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600 mb-4">Streams</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {selectedGradeInfo.grade.streams.map((stream) => (
-                      <div key={stream.id} className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div key={stream.id} className="p-3 md:p-4 bg-primary/5 border border-primary/20 rounded-lg">
                         <div className="flex items-center justify-between">
-                          <span className="font-mono font-medium">{stream.name}</span>
-                          <span className="text-sm text-slate-500">
+                          <span className="font-mono font-medium truncate mr-2">{stream.name}</span>
+                          <span className="text-sm text-slate-500 shrink-0">
                             {Math.floor(filteredStudents.length / selectedGradeInfo.grade.streams.length)} students
                           </span>
                         </div>
@@ -591,8 +627,8 @@ export default function SchoolDashboard() {
             </div>
           )}
 
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Content Grid - Each Section in Its Own Column */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
             {/* Recent Activities */}
             <div className="border-2 border-primary/20 rounded-xl">
               <div className="p-4 border-b-2 border-primary/20">
@@ -602,14 +638,14 @@ export default function SchoolDashboard() {
                 <div className="space-y-4">
                   {recentActivities.map(activity => (
                     <div key={activity.id} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Users className="h-5 w-5 text-primary" />
-                        <div>
-                          <div className="font-mono font-medium">{activity.target}</div>
-                          <div className="text-xs text-slate-500">{activity.action}</div>
+                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                        <Users className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-mono font-medium truncate">{activity.target}</div>
+                          <div className="text-xs text-slate-500 truncate">{activity.action}</div>
                         </div>
                       </div>
-                      <div className="text-xs font-mono">
+                      <div className="text-xs font-mono shrink-0 ml-2">
                         {new Date(activity.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
@@ -627,11 +663,11 @@ export default function SchoolDashboard() {
                 <div className="space-y-4">
                   {upcomingEvents.map(event => (
                     <div key={event.name} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <CalendarDays className="h-5 w-5 text-primary" />
-                        <div>
-                          <div className="font-mono font-medium">{event.name}</div>
-                          <div className="text-xs text-slate-500">{event.date} • {event.attendees} attendees</div>
+                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                        <CalendarDays className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-mono font-medium truncate">{event.name}</div>
+                          <div className="text-xs text-slate-500 truncate">{event.date} • {event.attendees} attendees</div>
                         </div>
                       </div>
                     </div>
@@ -650,8 +686,8 @@ export default function SchoolDashboard() {
                   {classPerformance.map(classData => (
                     <div key={classData.name} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono">{classData.name}</span>
-                        <span className="text-xs font-mono">{classData.average}% avg</span>
+                        <span className="text-xs font-mono truncate mr-2">{classData.name}</span>
+                        <span className="text-xs font-mono shrink-0">{classData.average}% avg</span>
                       </div>
                       <div className="h-2 bg-primary/10 rounded-full overflow-hidden">
                         <div 
@@ -659,7 +695,7 @@ export default function SchoolDashboard() {
                           style={{ width: `${classData.average}%` }} 
                         />
                       </div>
-                      <div className="text-xs text-slate-500">{classData.students} students</div>
+                      <div className="text-xs text-slate-500 truncate">{classData.students} students</div>
                     </div>
                   ))}
                 </div>
@@ -672,22 +708,22 @@ export default function SchoolDashboard() {
                 <h2 className="font-mono font-bold">Quick Actions</h2>
               </div>
               <div className="p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                    <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <span className="text-sm font-mono">Take Attendance</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
+                    <Users className="h-4 w-4 text-primary mb-2 shrink-0" />
+                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Take Attendance</span>
                   </button>
-                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                    <GraduationCap className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <span className="text-sm font-mono">Enter Grades</span>
+                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
+                    <GraduationCap className="h-4 w-4 text-primary mb-2 shrink-0" />
+                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Enter Grades</span>
                   </button>
-                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                    <CalendarDays className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <span className="text-sm font-mono">Schedule Event</span>
+                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
+                    <CalendarDays className="h-4 w-4 text-primary mb-2 shrink-0" />
+                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Schedule Event</span>
                   </button>
-                  <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                    <ClipboardList className="h-6 w-6 text-primary mx-auto mb-2" />
-                    <span className="text-sm font-mono">Create Report</span>
+                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
+                    <ClipboardList className="h-4 w-4 text-primary mb-2 shrink-0" />
+                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Create Report</span>
                   </button>
                 </div>
               </div>
