@@ -113,7 +113,7 @@ function TeacherSignupForm() {
     } else {
       setError("Invalid invitation link. Please check your email for the correct signup link.")
     }
-  }, []) // Remove searchParams dependency to prevent re-renders
+  }, [searchParams.get('token')])
 
   const getPasswordStrength = (password: string) => {
     let strength = 0
