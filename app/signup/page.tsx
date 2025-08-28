@@ -113,7 +113,7 @@ function TeacherSignupForm() {
     } else {
       setError("Invalid invitation link. Please check your email for the correct signup link.")
     }
-  }, [searchParams])
+  }, []) // Remove searchParams dependency to prevent re-renders
 
   const getPasswordStrength = (password: string) => {
     let strength = 0
@@ -149,59 +149,35 @@ function TeacherSignupForm() {
     setError(null)
     setSuccess(null)
 
-    const mutation = `
-      mutation {
-        acceptTeacherInvitation(
-          acceptInvitationInput: {
-            token: "${token}"
-            password: "${data.password}"
-          }
-        ) {
-          message
-          user {
-            id
-            name
-            email
-          }
-          tokens {
-            accessToken
-            refreshToken
-          }
-          teacher {
-            id
-            name
-          }
-        }
-      }
-    `
+    // Removed GraphQL mutation - now using REST API endpoint
 
     try {
-      const response = await fetch('/api/graphql', {
+      const response = await fetch('/api/auth/accept-teacher-invitation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: mutation,
+          token: token,
+          password: data.password,
         }),
       })
 
       const result = await response.json()
 
-      if (result.errors) {
-        throw new Error(result.errors[0]?.message || 'Teacher invitation acceptance failed')
+      if (!response.ok) {
+        throw new Error(result.error || 'Teacher invitation acceptance failed')
       }
 
-      if (result.data?.acceptTeacherInvitation) {
-        const acceptData = result.data.acceptTeacherInvitation
-        setSuccess(acceptData)
+      if (result.success) {
+        setSuccess(result)
         
         // Store tokens in localStorage
-        localStorage.setItem('accessToken', acceptData.tokens.accessToken)
-        localStorage.setItem('refreshToken', acceptData.tokens.refreshToken)
+        localStorage.setItem('accessToken', result.tokens.accessToken)
+        localStorage.setItem('refreshToken', result.tokens.refreshToken)
         
         toast.success("Welcome aboard!", {
-          description: `Account activated successfully for ${acceptData.user.name}`
+          description: `Account activated successfully for ${result.user.name}`
         })
         
         // Redirect to teacher dashboard after 3 seconds
