@@ -26,9 +26,14 @@ import {
   ChevronRight,
   Download,
   Printer,
-  FileText
+  FileText,
+  Key,
+  Mail,
+  Copy,
+  RefreshCw
 } from 'lucide-react';
 import SchoolReportCard from './ReportCard';
+import { useStudentLoginInfo } from '@/lib/hooks/useStudentLoginInfo';
 
 interface Student {
   id: string;
@@ -60,12 +65,15 @@ interface Student {
 
 interface StudentDetailsViewProps {
   student: Student;
-  onBack: () => void;
+  onClose: () => void;
   schoolConfig?: any;
 }
 
-export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDetailsViewProps) {
-  const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(new Set());
+export function StudentDetailsView({ student, onClose, schoolConfig }: StudentDetailsViewProps) {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [loginExpanded, setLoginExpanded] = useState(false);
+  const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
+  const { loginInfo, loading: loginLoading, error: loginError, refetch } = useStudentLoginInfo(student.id);
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
 
   return (
@@ -74,7 +82,7 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
-          onClick={onBack}
+          onClick={onClose}
           className="flex items-center gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
         >
           ← Back to Students
@@ -240,6 +248,101 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                   </div>
                 </div>
               </div>
+              
+              {/* Login Information Expandable Section */}
+              <div className="mt-8">
+                <div 
+                  className="border-2 border-primary/20 bg-primary/5 rounded-xl p-4 cursor-pointer hover:bg-primary/10 transition-colors"
+                  onClick={() => setLoginExpanded(!loginExpanded)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Key className="h-5 w-5 text-primary" />
+                      <h3 className="text-sm font-mono font-bold text-primary uppercase tracking-wide">Login Information</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {loginLoading && <RefreshCw className="h-4 w-4 text-primary animate-spin" />}
+                      {loginExpanded ? 
+                        <ChevronDown className="h-5 w-5 text-primary" /> : 
+                        <ChevronRight className="h-5 w-5 text-primary" />
+                      }
+                    </div>
+                  </div>
+                </div>
+                
+                {loginExpanded && (
+                  <div className="mt-4 border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl p-6 animate-in slide-in-from-top-2 duration-200">
+                    {loginError ? (
+                      <div className="text-center py-8">
+                        <div className="text-red-500 font-mono text-sm mb-4">{loginError}</div>
+                        <Button 
+                          onClick={refetch} 
+                          variant="outline" 
+                          size="sm"
+                          className="font-mono"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Retry
+                        </Button>
+                      </div>
+                    ) : loginInfo ? (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center py-3 border-b border-primary/10">
+                          <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            Email Address
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{loginInfo.email}</div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => navigator.clipboard.writeText(loginInfo.email)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-primary/10">
+                          <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Admission Number</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{loginInfo.admission_number}</div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 w-6 p-0"
+                              onClick={() => navigator.clipboard.writeText(loginInfo.admission_number)}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center py-3">
+                          <div className="font-mono font-medium text-sm text-slate-700 dark:text-slate-300">Grade Level</div>
+                          <div className="font-mono text-sm text-slate-900 dark:text-slate-100">{loginInfo.grade}</div>
+                        </div>
+                        
+                        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <div className="font-mono font-medium text-sm text-blue-900 dark:text-blue-100 mb-1">Student Portal Access</div>
+                              <div className="font-mono text-xs text-blue-700 dark:text-blue-300">
+                                Students can use their email address and admission number to access the student portal.
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="font-mono text-sm text-slate-500">No login information available</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -327,13 +430,10 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                 <div className="border border-[#246a59]/20 rounded-lg overflow-hidden">
                   <button
                     onClick={() => {
-                      const newExpanded = new Set(expandedDocuments);
-                      if (newExpanded.has('report-card')) {
-                        newExpanded.delete('report-card');
-                      } else {
-                        newExpanded.add('report-card');
-                      }
-                      setExpandedDocuments(newExpanded);
+                      setExpandedDocuments(prev => ({
+                        ...prev,
+                        'report-card': !prev['report-card']
+                      }));
                     }}
                     className="w-full p-4 bg-[#246a59]/5 hover:bg-[#246a59]/10 transition-colors flex items-center justify-between"
                   >
@@ -347,7 +447,7 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {expandedDocuments.has('report-card') ? (
+                      {expandedDocuments['report-card'] ? (
                         <ChevronDown className="w-5 h-5 text-[#246a59]" />
                       ) : (
                         <ChevronRight className="w-5 h-5 text-[#246a59]" />
@@ -355,7 +455,7 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                     </div>
                   </button>
                   
-                  {expandedDocuments.has('report-card') && (
+                  {expandedDocuments['report-card'] && (
                     <div className="p-4 border-t border-[#246a59]/20 bg-white">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-4">
@@ -422,13 +522,10 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                 <div className="border border-[#246a59]/20 rounded-lg overflow-hidden">
                   <button
                     onClick={() => {
-                      const newExpanded = new Set(expandedDocuments);
-                      if (newExpanded.has('other-docs')) {
-                        newExpanded.delete('other-docs');
-                      } else {
-                        newExpanded.add('other-docs');
-                      }
-                      setExpandedDocuments(newExpanded);
+                      setExpandedDocuments(prev => ({
+                        ...prev,
+                        'other-docs': !prev['other-docs']
+                      }));
                     }}
                     className="w-full p-4 bg-[#246a59]/5 hover:bg-[#246a59]/10 transition-colors flex items-center justify-between"
                   >
@@ -442,7 +539,7 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {expandedDocuments.has('other-docs') ? (
+                      {expandedDocuments['other-docs'] ? (
                         <ChevronDown className="w-5 h-5 text-[#246a59]" />
                       ) : (
                         <ChevronRight className="w-5 h-5 text-[#246a59]" />
@@ -450,7 +547,7 @@ export function StudentDetailsView({ student, onBack, schoolConfig }: StudentDet
                     </div>
                   </button>
                   
-                  {expandedDocuments.has('other-docs') && (
+                  {expandedDocuments['other-docs'] && (
                     <div className="p-4 border-t border-[#246a59]/20 bg-white">
                       <div className="text-center p-8 text-muted-foreground">
                         Additional student documents will appear here

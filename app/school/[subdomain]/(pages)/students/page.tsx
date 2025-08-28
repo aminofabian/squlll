@@ -715,7 +715,7 @@ export default function StudentsPage() {
         {selectedStudent ? (
           <StudentDetailsView
             student={selectedStudent}
-            onBack={() => setSelectedStudentId(null)}
+            onClose={() => setSelectedStudentId(null)}
             schoolConfig={config}
           />
         ) : (
