@@ -6,7 +6,7 @@ export interface FeeInvoice {
   admissionNumber: string
   class: string
   section: string
-  feeType: 'tuition' | 'transport' | 'hostel' | 'exam' | 'library' | 'sports' | 'lab'
+  feeType: 'tuition' | 'transport' | 'hostel' | 'exam' | 'library' | 'sports' | 'lab' | 'boarding' | 'meals'
   totalAmount: number
   amountPaid: number
   amountDue: number
@@ -201,10 +201,29 @@ export interface FeeStructureForm {
   boardingType: 'day' | 'boarding' | 'both'
   academicYear: string
   termStructures: TermFeeStructureForm[]
+  schoolDetails?: {
+    name: string
+    address: string
+    contact: string
+    email: string
+    principalName: string
+    principalTitle: string
+  }
+  paymentModes?: {
+    bankAccounts: BankAccount[]
+    postalAddress: string
+    notes: string[]
+  }
+}
+
+export interface BankAccount {
+  bankName: string
+  branch: string
+  accountNumber: string
 }
 
 export interface TermFeeStructureForm {
-  term: 'Term 1' | 'Term 2' | 'Term 3'
+  term: string
   dueDate: string
   latePaymentFee: string
   earlyPaymentDiscount: string

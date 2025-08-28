@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Download } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Download, Settings } from 'lucide-react'
 
 // Import modular components and hooks
 import { StudentSearchSidebar } from './components/StudentSearchSidebar'
@@ -12,9 +13,13 @@ import { PageHeader } from './components/PageHeader'
 import { OverviewStatsCards } from './components/OverviewStatsCards'
 import { FiltersSection } from './components/FiltersSection'
 import { FeesDataTable } from './components/FeesDataTable'
+import { FeeStructureManager } from './components/FeeStructureManager'
+import { FeeStructureDrawer } from './components/FeeStructureDrawer'
+import { BulkInvoiceGenerator } from './components/BulkInvoiceGenerator'
 import { useFeesData } from './hooks/useFeesData'
 import { useFormHandlers } from './hooks/useFormHandlers'
-import { FeeInvoice } from './types'
+import { useFeeStructures } from './hooks/useFeeStructures'
+import { FeeInvoice, FeeStructure, FeeStructureForm, BulkInvoiceGeneration } from './types'
 
 // Helper function for status colors
 const getStatusColor = (status: string) => {
@@ -33,10 +38,19 @@ const getStatusColor = (status: string) => {
 }
 
 export default function FeesPage() {
+  const [activeTab, setActiveTab] = useState('invoices')
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<FeeInvoice | null>(null)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  
+  // Fee Structure states
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [showInvoiceGenerator, setShowInvoiceGenerator] = useState(false)
+  const [selectedStructure, setSelectedStructure] = useState<FeeStructure | null>(null)
+  const [preselectedStructureId, setPreselectedStructureId] = useState<string>('')
+  const [preselectedTerm, setPreselectedTerm] = useState<string>('')
 
   const {
     selectedStudent,
@@ -62,6 +76,17 @@ export default function FeesPage() {
     handleRecordPayment,
     handleCreatePaymentPlan
   } = useFormHandlers(selectedStudent, filteredInvoices)
+
+  // Fee Structure hooks
+  const {
+    feeStructures,
+    grades,
+    createFeeStructure,
+    updateFeeStructure,
+    deleteFeeStructure,
+    assignFeeStructureToGrade,
+    generateBulkInvoices
+  } = useFeeStructures()
 
   // Get selected student invoices for overview
   const selectedStudentInvoices = selectedStudent 
@@ -105,121 +130,264 @@ export default function FeesPage() {
     handleSendReminder(selectedInvoices)
   }
 
+  // Fee Structure handlers
+  const handleCreateNew = () => {
+    setSelectedStructure(null)
+    setShowCreateForm(true)
+  }
+
+  const handleEdit = (feeStructure: FeeStructure) => {
+    setSelectedStructure(feeStructure)
+    setShowEditForm(true)
+  }
+
+  const handleSaveStructure = (formData: FeeStructureForm) => {
+    if (selectedStructure) {
+      updateFeeStructure(selectedStructure.id, formData)
+    } else {
+      createFeeStructure(formData)
+    }
+    setShowCreateForm(false)
+    setShowEditForm(false)
+    setSelectedStructure(null)
+  }
+
+  const handleGenerateInvoices = (feeStructureId: string, term: string) => {
+    setPreselectedStructureId(feeStructureId)
+    setPreselectedTerm(term)
+    setShowInvoiceGenerator(true)
+  }
+
+  const handleBulkGeneration = (generation: BulkInvoiceGeneration) => {
+    try {
+      const newInvoices = generateBulkInvoices(generation)
+      console.log(`Generated ${newInvoices.length} invoices successfully`)
+      // Switch to invoices tab to show the new invoices
+      setActiveTab('invoices')
+    } catch (error) {
+      console.error('Failed to generate invoices:', error)
+    }
+  }
+
+  const handleAssignToGrade = (feeStructureId: string) => {
+    console.log('Assign to grade:', feeStructureId)
+  }
+
+  const convertStructureToForm = (structure: FeeStructure): FeeStructureForm => {
+    return {
+      name: structure.name,
+      grade: structure.grade,
+      boardingType: structure.boardingType,
+      academicYear: structure.academicYear,
+      termStructures: structure.termStructures.map(term => ({
+        term: term.term,
+        dueDate: term.dueDate,
+        latePaymentFee: term.latePaymentFee.toString(),
+        earlyPaymentDiscount: (term.earlyPaymentDiscount || 0).toString(),
+        earlyPaymentDeadline: term.earlyPaymentDeadline || '',
+        buckets: term.buckets.map(bucket => ({
+          type: bucket.type,
+          name: bucket.name,
+          description: bucket.description,
+          isOptional: bucket.isOptional,
+          components: bucket.components.map(component => ({
+            name: component.name,
+            description: component.description,
+            amount: component.amount.toString(),
+            category: component.category
+          }))
+        }))
+      }))
+    }
+  }
+
   return (
     <div className="flex min-h-screen">
-      {/* Student Search Sidebar */}
-      <StudentSearchSidebar
-        isSidebarMinimized={isSidebarMinimized}
-        setIsSidebarMinimized={setIsSidebarMinimized}
-        selectedStudent={selectedStudent}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filteredStudents={filteredStudents}
-        onStudentSelect={handleStudentSelect}
-        onBackToAll={handleBackToAll}
-      />
-
-      {/* Main Content */}
-      <div className="flex-1 p-8 space-y-8">
-        {/* Page Header */}
-        <PageHeader
-          selectedStudent={selectedStudent}
-          allStudents={filteredStudents}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          dueDateFilter={dueDateFilter}
-          setDueDateFilter={setDueDateFilter}
+      {/* Student Search Sidebar - only show for invoices tab */}
+      {activeTab === 'invoices' && (
+        <StudentSearchSidebar
           isSidebarMinimized={isSidebarMinimized}
           setIsSidebarMinimized={setIsSidebarMinimized}
-          onNewInvoice={handleNewInvoice}
-          onSendReminder={handleSendReminderWrapper}
-          onRecordPayment={handleRecordPayment}
-          onCreatePaymentPlan={handleCreatePaymentPlan}
-          onBackToAll={handleBackToAll}
-        />
-
-        {/* Overview Stats Cards */}
-        <OverviewStatsCards
           selectedStudent={selectedStudent}
-          selectedStudentInvoices={selectedStudentInvoices}
-          summaryStats={summaryStats}
-          allStudents={filteredStudents}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filteredStudents={filteredStudents}
+          onStudentSelect={setSelectedStudent}
+          onBackToAll={() => setSelectedStudent(null)}
         />
+      )}
 
-        {/* Filters Section */}
-        <FiltersSection
-          selectedFeeType={selectedFeeType}
-          setSelectedFeeType={setSelectedFeeType}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          selectedClass={selectedClass}
-          setSelectedClass={setSelectedClass}
-          dueDateFilter={dueDateFilter}
-          setDueDateFilter={setDueDateFilter}
-        />
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Page Header with Tabs */}
+        <div className="border-b border-gray-200 bg-white">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold text-gray-900">Fees Management</h1>
+              <div className="flex items-center space-x-2">
+                <Settings className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="invoices">Invoice Management</TabsTrigger>
+                <TabsTrigger value="structures">Fee Structures</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
 
-        {/* Fees Data Table */}
-        <FeesDataTable
-          selectedStudent={selectedStudent}
-          selectedStudentInvoices={selectedStudentInvoices}
-          filteredInvoices={filteredInvoices}
-          allStudents={filteredStudents}
-          selectedInvoices={selectedInvoices}
-          onViewInvoice={handleViewInvoice}
-          onSelectInvoice={handleSelectInvoice}
-          onSelectAll={handleSelectAll}
-        />
+        {/* Tab Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+          <TabsContent value="invoices" className="flex-1 m-0">
+            <div className="flex-1 flex flex-col">
+              {/* Invoice Management Header */}
+              <PageHeader
+                selectedStudent={selectedStudent}
+                allStudents={filteredStudents}
+                selectedStatus={selectedStatus}
+                setSelectedStatus={setSelectedStatus}
+                dueDateFilter=""
+                setDueDateFilter={() => {}}
+                onNewInvoice={handleNewInvoice}
+                onSendReminder={handleSendReminderWrapper}
+                onRecordPayment={handleRecordPayment}
+                onCreatePaymentPlan={handleCreatePaymentPlan}
+                onBackToAll={() => setSelectedStudent(null)}
+                isSidebarMinimized={isSidebarMinimized}
+                setIsSidebarMinimized={setIsSidebarMinimized}
+              />
 
-        {/* Invoice Detail Modal */}
-        {showInvoiceModal && selectedInvoice && (
-          <Dialog open={showInvoiceModal} onOpenChange={setShowInvoiceModal}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="font-mono">Invoice Details</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-mono text-xs">Invoice ID</Label>
-                    <p className="font-mono">{selectedInvoice.id}</p>
-                  </div>
-                  <div>
-                    <Label className="font-mono text-xs">Student</Label>
-                    <p className="font-mono">{selectedInvoice.studentName}</p>
-                  </div>
-                  <div>
-                    <Label className="font-mono text-xs">Fee Type</Label>
-                    <p className="font-mono">{selectedInvoice.feeType}</p>
-                  </div>
-                  <div>
-                    <Label className="font-mono text-xs">Amount</Label>
-                    <p className="font-mono">KES {selectedInvoice.totalAmount.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <Label className="font-mono text-xs">Due Date</Label>
-                    <p className="font-mono">{selectedInvoice.dueDate}</p>
-                  </div>
-                  <div>
-                    <Label className="font-mono text-xs">Status</Label>
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-mono ${getStatusColor(selectedInvoice.paymentStatus)}`}>
-                      {selectedInvoice.paymentStatus}
-                    </span>
-                  </div>
+              {/* Main Content Area */}
+              <div className="flex-1 p-6 space-y-6">
+                {/* Overview Stats */}
+                <OverviewStatsCards
+                  selectedStudent={selectedStudent}
+                  selectedStudentInvoices={selectedStudentInvoices}
+                  summaryStats={summaryStats}
+                  allStudents={filteredStudents}
+                />
+
+                {/* Filters */}
+                <FiltersSection
+                  selectedFeeType={selectedFeeType}
+                  setSelectedFeeType={setSelectedFeeType}
+                  selectedStatus={selectedStatus}
+                  setSelectedStatus={setSelectedStatus}
+                  selectedClass=""
+                  setSelectedClass={() => {}}
+                  dueDateFilter=""
+                  setDueDateFilter={() => {}}
+                />
+
+                {/* Data Table */}
+                <FeesDataTable
+                  selectedStudent={selectedStudent}
+                  selectedStudentInvoices={selectedStudentInvoices}
+                  filteredInvoices={filteredInvoices}
+                  allStudents={filteredStudents}
+                  selectedInvoices={selectedInvoices}
+                  onSelectInvoice={handleSelectInvoice}
+                  onViewInvoice={handleViewInvoice}
+                  onSelectAll={handleSelectAll}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="structures" className="flex-1 m-0">
+            <div className="flex-1 p-6">
+              <FeeStructureManager
+                onCreateNew={handleCreateNew}
+                onEdit={handleEdit}
+                onGenerateInvoices={handleGenerateInvoices}
+                onAssignToGrade={handleAssignToGrade}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Invoice Details Modal */}
+      <Dialog open={showInvoiceModal} onOpenChange={setShowInvoiceModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Invoice Details</DialogTitle>
+          </DialogHeader>
+          {selectedInvoice && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Student</Label>
+                  <p className="text-sm text-gray-600">{selectedInvoice.studentName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Admission Number</Label>
+                  <p className="text-sm text-gray-600">{selectedInvoice.admissionNumber}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Class</Label>
+                  <p className="text-sm text-gray-600">{selectedInvoice.class} - {selectedInvoice.section}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Fee Type</Label>
+                  <p className="text-sm text-gray-600 capitalize">{selectedInvoice.feeType}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Total Amount</Label>
+                  <p className="text-sm text-gray-600">KES {selectedInvoice.totalAmount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Amount Due</Label>
+                  <p className="text-sm text-gray-600">KES {selectedInvoice.amountDue.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Due Date</Label>
+                  <p className="text-sm text-gray-600">{new Date(selectedInvoice.dueDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Status</Label>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedInvoice.paymentStatus)}`}>
+                    {selectedInvoice.paymentStatus}
+                  </span>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowInvoiceModal(false)}>
-                  Close
-                </Button>
-                <Button>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Invoice
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInvoiceModal(false)}>
+              Close
+            </Button>
+            <Button>
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fee Structure Drawer */}
+      <FeeStructureDrawer
+        isOpen={showCreateForm || showEditForm}
+        onClose={() => {
+          setShowCreateForm(false)
+          setShowEditForm(false)
+          setSelectedStructure(null)
+        }}
+        onSave={handleSaveStructure}
+        initialData={selectedStructure ? convertStructureToForm(selectedStructure) : undefined}
+        mode={showCreateForm ? 'create' : 'edit'}
+        availableGrades={grades}
+      />
+
+      <BulkInvoiceGenerator
+        isOpen={showInvoiceGenerator}
+        onClose={() => setShowInvoiceGenerator(false)}
+        onGenerate={handleBulkGeneration}
+        preselectedStructureId={preselectedStructureId}
+        preselectedTerm={preselectedTerm}
+      />
     </div>
   )
 }
