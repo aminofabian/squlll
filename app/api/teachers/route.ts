@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     console.log('Teachers API - Tenant ID:', tenantId);
     console.log('Teachers API - Role being queried: TEACHER');
 
-    // GraphQL query for fetching teachers by tenant with role TEACHER
+    // Use the working usersByTenant query pattern from existing codebase
     const query = `
       query GetTeachersByTenant($tenantId: String!, $role: String!) {
         usersByTenant(tenantId: $tenantId, role: $role) {
