@@ -30,7 +30,13 @@ export interface GraphQLStudent {
   updatedAt: string;
   streamId: string | null;
   phone: string;
-  grade: string;
+  grade: {
+    id: string;
+    gradeLevel: {
+      id: string;
+      name: string;
+    };
+  };
   user: {
     id: string;
     email: string;

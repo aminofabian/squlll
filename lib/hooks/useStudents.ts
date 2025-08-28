@@ -24,6 +24,10 @@ const GET_STUDENTS = gql`
       phone
       grade {
         id
+        gradeLevel {
+          id
+          name
+        }
       }
       user {
         id

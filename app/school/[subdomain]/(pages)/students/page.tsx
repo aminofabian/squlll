@@ -390,9 +390,8 @@ export default function StudentsPage() {
       
       const guardianName = studentName.split(' ')[0] || 'Guardian';
       
-      // Get grade information from school config
-      const gradeInfo = graphqlStudent.grade ? getGradeById(graphqlStudent.grade) : null;
-      const gradeName = gradeInfo?.grade.name || 'Unknown Grade';
+      // Get grade name from nested gradeLevel object
+      const gradeName = graphqlStudent.grade?.gradeLevel?.name || 'Unknown Grade';
       
 
       
