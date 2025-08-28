@@ -96,7 +96,7 @@ export const StudentsList: React.FC = () => {
                   <div><strong>User ID:</strong> {student.user_id}</div>
                   <div><strong>Phone:</strong> {student.phone}</div>
                   <div><strong>Gender:</strong> {student.gender}</div>
-                  <div><strong>Grade:</strong> {student.grade}</div>
+                  <div><strong>Grade:</strong> {student.grade.gradeLevel.name}</div>
                 </div>
               </CardContent>
             </Card>
