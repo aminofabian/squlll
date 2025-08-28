@@ -35,7 +35,7 @@ export const useFeeStructures = () => {
       lastModified: new Date().toISOString(),
       termStructures: formData.termStructures.map((term, index) => ({
         id: `TS-${Date.now()}-${index}`,
-        term: term.term,
+        term: term.term as 'Term 1' | 'Term 2' | 'Term 3',
         totalAmount: term.buckets.reduce((sum, bucket) => 
           sum + bucket.components.reduce((bucketSum, component) => 
             bucketSum + (parseFloat(component.amount) || 0), 0), 0),
@@ -79,7 +79,7 @@ export const useFeeStructures = () => {
             lastModified: new Date().toISOString(),
             termStructures: formData.termStructures.map((term, index) => ({
               id: structure.termStructures[index]?.id || `TS-${Date.now()}-${index}`,
-              term: term.term,
+              term: term.term as 'Term 1' | 'Term 2' | 'Term 3',
               totalAmount: term.buckets.reduce((sum, bucket) => 
                 sum + bucket.components.reduce((bucketSum, component) => 
                   bucketSum + (parseFloat(component.amount) || 0), 0), 0),
