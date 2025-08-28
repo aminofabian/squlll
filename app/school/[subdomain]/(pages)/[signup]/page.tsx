@@ -77,52 +77,18 @@ function SignupContent() {
   const isSignupTokenValid = signupToken && signupToken !== 'signup' && /^[A-Za-z0-9+/]+=*$/.test(signupToken) && signupToken.length > 20
   const hasValidToken = tokenParam || isSignupTokenValid
   
-  // Determine signup type based on token or URL pattern
-  const determineSignupType = async (): Promise<SignupType> => {
-    const token = tokenParam || (isSignupTokenValid ? signupToken : null)
-    if (!token) return 'teacher' // fallback
-    
-    try {
-      // Test both endpoints to see which one accepts the token
-      // We'll use a simple password to test the token validity
-      const testPassword = "TestPassword123!"
-      
-      // Test teacher invitation first
-      const teacherResponse = await fetch('/api/auth/accept-teacher-invitation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password: testPassword })
-      })
-      
-      if (teacherResponse.ok) {
-        const teacherData = await teacherResponse.json()
-        if (teacherData.error && !teacherData.error.includes('Password')) {
-          // Token is valid for teacher but password is wrong (which is expected)
-          return 'teacher'
-        }
-      }
-      
-      // Test staff invitation
-      const staffResponse = await fetch('/api/auth/accept-staff-invitation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password: testPassword })
-      })
-      
-      if (staffResponse.ok) {
-        const staffData = await staffResponse.json()
-        if (staffData.error && !staffData.error.includes('Password')) {
-          // Token is valid for staff but password is wrong (which is expected)
-          return 'staff'
-        }
-      }
-      
-      // If we can't determine, default to teacher
-      return 'teacher'
-    } catch (error) {
-      console.error('Error determining signup type:', error)
-      return 'teacher' // fallback to teacher
+  // Determine signup type based on URL pattern or token characteristics
+  const determineSignupType = (): SignupType => {
+    // Check URL path for hints about invitation type
+    const currentPath = window.location.pathname
+    if (currentPath.includes('staff') || currentPath.includes('admin')) {
+      return 'staff'
     }
+    
+    // For now, default to teacher since most invitations are for teachers
+    // In the future, you could decode the token to determine the type
+    // or add a query parameter to the invitation URL
+    return 'teacher'
   }
 
   const [signupType, setSignupType] = useState<SignupType>('teacher')
@@ -130,21 +96,11 @@ function SignupContent() {
   
   // Determine signup type on component mount
   useEffect(() => {
-    const detectType = async () => {
-      setIsDetectingType(true)
-      try {
-        const detectedType = await determineSignupType()
-        setSignupType(detectedType)
-      } catch (error) {
-        console.error('Error detecting signup type:', error)
-        setSignupType('teacher') // fallback
-      } finally {
-        setIsDetectingType(false)
-      }
-    }
-    
     if (hasValidToken) {
-      detectType()
+      setIsDetectingType(true)
+      const detectedType = determineSignupType()
+      setSignupType(detectedType)
+      setIsDetectingType(false)
     } else {
       setIsDetectingType(false)
     }
