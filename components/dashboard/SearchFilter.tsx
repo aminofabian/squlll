@@ -303,7 +303,7 @@ const useGradesFromStore = () => {
     level.grades.map(grade => {
       // Count students in this grade
       const studentCount = students.filter(student => 
-        student.grade.toLowerCase() === grade.name.toLowerCase()
+        student.grade.gradeLevel.name.toLowerCase() === grade.name.toLowerCase()
       ).length;
       
       // Get subject count for this level

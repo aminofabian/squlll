@@ -168,7 +168,7 @@ export default function SchoolDashboard() {
     if (!selectedGrade || !selectedGradeInfo) return students
     
     return students.filter(student => 
-      student.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
+      student.grade.gradeLevel.name.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
     )
   }, [students, selectedGrade, selectedGradeInfo])
 

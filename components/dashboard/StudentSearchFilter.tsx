@@ -12,7 +12,11 @@ interface StudentSummary {
   name: string
   photo?: string
   age: number
-  grade: string
+  grade: {
+    gradeLevel: {
+      name: string
+    }
+  }
   class: string
   admissionNumber: string
   feesBalance?: number
@@ -47,7 +51,7 @@ export function StudentSearchFilter({
       student.name.toLowerCase().includes(lowercasedSearch) ||
       student.admissionNumber.toLowerCase().includes(lowercasedSearch) ||
       student.class.toLowerCase().includes(lowercasedSearch) ||
-      student.grade.toLowerCase().includes(lowercasedSearch)
+      student.grade.gradeLevel.name.toLowerCase().includes(lowercasedSearch)
     )
     
     setFilteredStudents(filtered)
