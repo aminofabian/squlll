@@ -7,7 +7,7 @@ import { gql } from 'graphql-request';
 
 const GET_STUDENTS = gql`
   query GetStudents {
-    students {
+    allStudents {
       id
       admission_number
       user_id
@@ -17,9 +17,14 @@ const GET_STUDENTS = gql`
       createdAt
       isActive
       updatedAt
-      streamId
+      stream {
+        id
+        name
+      }
       phone
-      grade
+      grade {
+        id
+      }
       user {
         id
         email
@@ -30,12 +35,12 @@ const GET_STUDENTS = gql`
 `;
 
 interface GetStudentsResponse {
-  students: any[];
+  allStudents: any[];
 }
 
 const fetchStudents = async (): Promise<StudentsResponse> => {
   const response = await graphqlClient.request<GetStudentsResponse>(GET_STUDENTS);
-  return { students: response.students };
+  return { students: response.allStudents };
 };
 
 export const useStudents = () => {

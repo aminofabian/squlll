@@ -20,6 +20,10 @@ const config: Config = {
         ring: 'var(--ring)',
         destructive: 'var(--destructive)',
       },
+      fontFamily: {
+        'outfit': ['var(--font-outfit)', 'sans-serif'],
+        'sans': ['var(--font-outfit)', 'var(--font-geist-sans)', 'sans-serif'],
+      },
     },
   },
   plugins: [],

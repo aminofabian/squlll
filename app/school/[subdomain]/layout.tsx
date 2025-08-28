@@ -1,6 +1,12 @@
 'use client'
 
 import { Suspense } from 'react'
+import { Outfit } from "next/font/google"
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: '--font-outfit',
+})
 
 // Loading component for Suspense fallback
 function SubdomainLayoutLoading() {
@@ -17,7 +23,11 @@ function SubdomainLayoutContent({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <div className={`${outfit.variable} font-sans`}>
+      {children}
+    </div>
+  )
 }
 
 // Root layout component

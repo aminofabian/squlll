@@ -24,9 +24,15 @@ export async function POST(request: Request) {
       email: studentData.student_email, // Email is now auto-generated on frontend if not provided
       admission_number: studentData.admission_number,
       phone: studentData.guardian_phone, // Using guardian phone as primary contact
-      grade: studentData.grade,
+      tenantGradeLevelId: studentData.grade,
       gender: studentData.gender.toUpperCase()
     };
+
+    console.log('Create Student Debug:', {
+      submittedGradeId: studentData.grade,
+      createStudentInput,
+      studentData
+    });
 
     // Prepare GraphQL mutation with variables (like the streams implementation)
     const mutation = `
@@ -40,7 +46,9 @@ export async function POST(request: Request) {
           student {
             id
             admission_number
-            grade
+            grade {
+              id
+            }
             gender
             phone
           }

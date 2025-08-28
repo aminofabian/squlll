@@ -29,7 +29,7 @@ interface StudentSuccessModalProps {
   onClose: () => void;
   studentData: {
     user: { id: string; email: string; name: string };
-    student: { id: string; admission_number: string; grade: string; gender: string; phone: string };
+    student: { id: string; admission_number: string; grade: { id: string }; gender: string; phone: string; gradeName: string };
     generatedPassword: string;
   };
   schoolSubdomain?: string;
@@ -99,7 +99,7 @@ export function StudentSuccessModal({
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Grade:</span>
                 </div>
                 <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
-                  {studentData.student.grade}
+                  {studentData.student.gradeName}
                 </span>
               </div>
 
