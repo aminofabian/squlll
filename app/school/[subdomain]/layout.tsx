@@ -11,10 +11,8 @@ export default function SubdomainLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${outfit.variable} font-sans`}>
-        {children}
-      </body>
-    </html>
+    <div className={`${outfit.variable} font-sans min-h-screen`}>
+      {children}
+    </div>
   )
 } 
