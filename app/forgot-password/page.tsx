@@ -15,7 +15,7 @@ function AdminLogo() {
         <div className="w-16 h-16 bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-slate-600 flex items-center justify-center shadow-2xl">
           <div className="text-white font-mono font-bold text-xl tracking-wider">GA</div>
         </div>
-        <div className="absolute -top-2 -right-1 w-4 h-4 bg-amber-500 border-2 border-background"></div>
+        <div className="cabsolute -top-2 -right-1 w-4 h-4 bg-amber-500 border-2 border-background"></div>
       </div>
     </div>
   )

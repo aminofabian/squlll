@@ -1,33 +1,86 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Mail,
   Info,
-  Loader2
+  Loader2,
+  RefreshCw
 } from "lucide-react";
+import toast from "react-hot-toast";
 
-// Pending invitation type
-type PendingInvitation = {
-  id: string;
+import { PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
+
+// Resend invitation response type
+type ResendInvitationResponse = {
   email: string;
-  role: string;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  fullName: string;
+  status: string;
   createdAt: string;
-  invitedBy?: {
-    name: string;
-    email: string;
-  };
 };
 
 interface PendingInvitationsProps {
   invitations: PendingInvitation[];
   isLoading: boolean;
   error: string | null;
+  onInvitationResent?: (invitationId: string) => void;
 }
 
-export function PendingInvitations({ invitations, isLoading, error }: PendingInvitationsProps) {
+export function PendingInvitations({ invitations, isLoading, error, onInvitationResent }: PendingInvitationsProps) {
+  const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
+
+  const resendInvitation = async (invitationId: string) => {
+    setResendingIds(prev => new Set(prev).add(invitationId));
+    
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation ResendInvitation($invitationId: String!) {
+              resendTeacherInvitation(invitationId: $invitationId) {
+                email
+                fullName
+                status
+                createdAt
+              }
+            }
+          `,
+          variables: {
+            invitationId
+          }
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to resend invitation');
+      }
+
+      const resendData: ResendInvitationResponse = result.data.resendTeacherInvitation;
+      
+      toast.success(`Invitation has been resent to ${resendData.email}`);
+      
+      // Call the callback if provided
+      onInvitationResent?.(invitationId);
+      
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to resend invitation');
+    } finally {
+      setResendingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(invitationId);
+        return newSet;
+      });
+    }
+  };
   return (
     <div className="mb-8">
       <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
@@ -93,6 +146,9 @@ export function PendingInvitations({ invitations, isLoading, error }: PendingInv
                     <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                       Created At
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-primary/10">
@@ -148,6 +204,24 @@ export function PendingInvitations({ invitations, isLoading, error }: PendingInv
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
                         {new Date(invitation.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {invitation.status === 'PENDING' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInvitation(invitation.id)}
+                            disabled={resendingIds.has(invitation.id)}
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            {resendingIds.has(invitation.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3" />
+                            )}
+                            {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
