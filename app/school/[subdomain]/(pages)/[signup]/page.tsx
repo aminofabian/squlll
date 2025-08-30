@@ -263,7 +263,7 @@ function SignupContent() {
       
       // Redirect to appropriate dashboard after 3 seconds
       setTimeout(() => {
-        const redirectPath = signupType === 'staff' ? '/staff' : '/teacher'
+        const redirectPath = signupType === 'staff' ? `/school/${subdomain}/staff` : `/school/${subdomain}/teacher`
         router.push(redirectPath)
       }, 3000)
     } catch (error) {
@@ -360,12 +360,40 @@ function SignupContent() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Welcome, <span className="font-semibold">{success.user.name}</span>!
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+            </div>
+            
+            {/* Login Credentials */}
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                <KeyRound className="h-4 w-4" />
+                <span className="font-semibold text-sm">Your Login Credentials</span>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Email:</span>
+                  <div className="font-mono bg-white dark:bg-gray-800 border rounded px-2 py-1 mt-1">
+                    {success.user.email}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Password:</span>
+                  <div className="font-mono bg-white dark:bg-gray-800 border rounded px-2 py-1 mt-1">
+                    {form.getValues('password')}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 rounded p-2">
+                <strong>Important:</strong> Please save these credentials securely. You'll need them to log in to your account.
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-500">
                 Redirecting you to your dashboard...
               </p>
-            </div>
-            <div className="flex justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+              <div className="flex justify-center mt-2">
+                <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
