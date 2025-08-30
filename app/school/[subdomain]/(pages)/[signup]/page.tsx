@@ -263,8 +263,11 @@ function SignupContent() {
       
       // Redirect to appropriate dashboard after 3 seconds
       setTimeout(() => {
-        const redirectPath = signupType === 'staff' ? `/school/${subdomain}/staff` : `/school/${subdomain}/teacher`
-        router.push(redirectPath)
+        const baseUrl = window.location.origin.includes('localhost') 
+          ? `http://${subdomain}.localhost:3000` 
+          : `https://${subdomain}.squl.co.ke`
+        const redirectPath = signupType === 'staff' ? `${baseUrl}/staff` : `${baseUrl}/teacher`
+        window.location.href = redirectPath
       }, 3000)
     } catch (error) {
       console.error(`${signupType} signup error:`, error)
