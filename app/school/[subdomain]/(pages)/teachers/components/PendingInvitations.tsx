@@ -126,8 +126,155 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
             </p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-primary/20 overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-primary/20">
+            {/* Mobile Card Layout - Small screens only */}
+            <div className="grid gap-4 sm:hidden">
+              {invitations.map((invitation) => (
+                <div key={invitation.id} className="p-4 border border-primary/10 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                        {invitation.email}
+                      </span>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
+                      {invitation.role}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        invitation.status === 'PENDING' ? 'bg-yellow-500' : 
+                        invitation.status === 'ACCEPTED' ? 'bg-green-500' : 
+                        invitation.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'
+                      }`} />
+                      <Badge variant="outline" className={`
+                        text-xs ${
+                          invitation.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
+                          invitation.status === 'ACCEPTED' ? 'bg-green-50 text-green-700 border-green-200' : 
+                          invitation.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 
+                          'bg-gray-50 text-gray-700 border-gray-200'
+                        }
+                      `}>
+                        {invitation.status}
+                      </Badge>
+                    </div>
+                    
+                    {invitation.status === 'PENDING' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => resendInvitation(invitation.id)}
+                        disabled={resendingIds.has(invitation.id)}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        {resendingIds.has(invitation.id) ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-3 w-3" />
+                        )}
+                        {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="text-xs text-slate-500 space-y-1">
+                    <div>
+                      <span className="font-medium">Invited by:</span>{' '}
+                      {invitation.invitedBy ? (
+                        <span>{invitation.invitedBy.name} ({invitation.invitedBy.email})</span>
+                      ) : (
+                        <span>System</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium">Created:</span>{' '}
+                      {new Date(invitation.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Medium Device 2-Row Layout - Up to 17 inch screens */}
+            <div className="hidden sm:block 2xl:hidden">
+              <div className="space-y-4">
+                {invitations.map((invitation) => (
+                  <div key={invitation.id} className="p-4 border border-primary/10 rounded-lg">
+                    {/* First Row */}
+                    <div className="grid grid-cols-4 gap-4 items-center mb-3">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                          {invitation.email}
+                        </span>
+                      </div>
+                      <div>
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
+                          {invitation.role}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          invitation.status === 'PENDING' ? 'bg-yellow-500' : 
+                          invitation.status === 'ACCEPTED' ? 'bg-green-500' : 
+                          invitation.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'
+                        }`} />
+                        <Badge variant="outline" className={`
+                          text-xs ${
+                            invitation.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
+                            invitation.status === 'ACCEPTED' ? 'bg-green-50 text-green-700 border-green-200' : 
+                            invitation.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 
+                            'bg-gray-50 text-gray-700 border-gray-200'
+                          }
+                        `}>
+                          {invitation.status}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-end">
+                        {invitation.status === 'PENDING' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInvitation(invitation.id)}
+                            disabled={resendingIds.has(invitation.id)}
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            {resendingIds.has(invitation.id) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="h-3 w-3" />
+                            )}
+                            {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Second Row */}
+                    <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                      <div>
+                        <span className="font-medium">Invited by:</span>{' '}
+                        {invitation.invitedBy ? (
+                          <span>{invitation.invitedBy.name} ({invitation.invitedBy.email})</span>
+                        ) : (
+                          <span>System</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-medium">Created:</span>{' '}
+                        {new Date(invitation.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Desktop Table Layout - 17+ inch screens */}
+            <div className="hidden 2xl:block">
               <table className="w-full">
                 <thead className="bg-primary/5 border-b border-primary/20">
                   <tr>
@@ -154,27 +301,27 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                 <tbody className="divide-y divide-primary/10">
                   {invitations.map((invitation) => (
                     <tr key={invitation.id} className="hover:bg-primary/5 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                               <Mail className="h-4 w-4 text-primary" />
                             </div>
                           </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100">
+                          <div className="ml-3 min-w-0 flex-1">
+                            <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
                               {invitation.email}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
                           {invitation.role}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <div className={`w-2 h-2 rounded-full ${
                             invitation.status === 'PENDING' ? 'bg-yellow-500' : 
                             invitation.status === 'ACCEPTED' ? 'bg-green-500' : 
@@ -192,20 +339,20 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                           </Badge>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         {invitation.invitedBy ? (
-                          <div>
-                            <div className="font-medium">{invitation.invitedBy.name}</div>
-                            <div className="text-slate-500">{invitation.invitedBy.email}</div>
+                          <div className="min-w-0">
+                            <div className="font-medium break-words">{invitation.invitedBy.name}</div>
+                            <div className="text-slate-500 break-all text-xs">{invitation.invitedBy.email}</div>
                           </div>
                         ) : (
                           <span className="text-slate-400">System</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-100">
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                         {new Date(invitation.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 text-sm">
                         {invitation.status === 'PENDING' && (
                           <Button
                             variant="outline"
