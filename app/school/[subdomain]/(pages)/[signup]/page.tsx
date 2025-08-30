@@ -79,10 +79,12 @@ function SignupContent() {
   
   // Determine signup type based on URL pattern or token characteristics
   const determineSignupType = (): SignupType => {
-    // Check URL path for hints about invitation type
-    const currentPath = window.location.pathname
-    if (currentPath.includes('staff') || currentPath.includes('admin')) {
-      return 'staff'
+    // Check URL path for hints about invitation type (only on client side)
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname
+      if (currentPath.includes('staff') || currentPath.includes('admin')) {
+        return 'staff'
+      }
     }
     
     // For now, default to teacher since most invitations are for teachers
