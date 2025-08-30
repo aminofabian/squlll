@@ -98,15 +98,16 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         selectedLevelIds.add(grade.levelId);
       }
     });
-    // Get subjects from those levels
+    
+    // Get subjects from those levels using the store method
     const subjectsFromSelectedLevels = new Set<string>();
-    finalGradeLevels.forEach(level => {
-      if (selectedLevelIds.has(level.levelId)) {
-        (level as any).subjects?.forEach((subject: { name: string }) => {
-          subjectsFromSelectedLevels.add(subject.name);
-        });
-      }
+    selectedLevelIds.forEach(levelId => {
+      const levelSubjects = useSchoolConfigStore.getState().getSubjectsByLevelId(levelId);
+      levelSubjects.forEach(subject => {
+        subjectsFromSelectedLevels.add(subject.name);
+      });
     });
+    
     return Array.from(subjectsFromSelectedLevels).sort();
   }, [selectedGrades, flatGrades, finalGradeLevels]);
 
