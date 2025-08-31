@@ -15,6 +15,12 @@ const GET_TEACHERS_BY_TENANT = gql`
   }
 `;
 
+const DELETE_STAFF = gql`
+  mutation DeleteStaff($id: String!, $tenantId: String!) {
+    deleteStaff(id: $id, tenantId: $tenantId)
+  }
+`;
+
 interface TeacherStaffUser {
   id: string;
   name: string;
@@ -49,6 +55,7 @@ interface TeachersState {
   addTeacher: (teacher: GraphQLTeacher) => void;
   updateTeacher: (teacherId: string, updates: Partial<GraphQLTeacher>) => void;
   removeTeacher: (teacherId: string) => void;
+  deleteTeacher: (teacherId: string, tenantId: string) => Promise<void>;
   
   // Reset
   reset: () => void;
@@ -131,6 +138,53 @@ export const useTeachersStore = create<TeachersState>()(
         set({
           teachers: state.teachers.filter(teacher => teacher.id !== teacherId)
         });
+      },
+
+      deleteTeacher: async (teacherId, tenantId) => {
+        const state = get();
+        set({ isLoading: true, error: null });
+        
+        try {
+          // Try to delete using the staff mutation
+          const result = await graphqlClient.request(DELETE_STAFF, {
+            id: teacherId,
+            tenantId: tenantId
+          });
+          
+          // Remove teacher from store after successful deletion
+          set({
+            teachers: state.teachers.filter(teacher => teacher.id !== teacherId),
+            teacherStaffUsers: state.teacherStaffUsers.filter(user => user.id !== teacherId),
+            isLoading: false
+          });
+          
+          console.log('Teacher deleted successfully:', result);
+        } catch (error) {
+          console.error('Error deleting teacher:', error);
+          
+          // Check if it's a "not found" error - this means the user exists but not as a staff record
+          const isNotFoundError = error instanceof Error && 
+            (error.message.includes('not found') || error.message.includes('NOTFOUNDEXCEPTION'));
+          
+          if (isNotFoundError) {
+            // Remove from local state since the user doesn't have a corresponding staff record
+            // This is likely a user with TEACHER role but no staff record
+            set({
+              teachers: state.teachers.filter(teacher => teacher.id !== teacherId),
+              teacherStaffUsers: state.teacherStaffUsers.filter(user => user.id !== teacherId),
+              isLoading: false,
+              error: null
+            });
+            
+            console.log('Teacher removed from local state (no corresponding staff record found)');
+            return; // Don't throw error, treat as successful removal
+          }
+          
+          // For other errors, set error state and throw
+          const errorMessage = error instanceof Error ? error.message : 'Failed to delete teacher';
+          set({ error: errorMessage, isLoading: false });
+          throw error;
+        }
       },
 
       // Reset

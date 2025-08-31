@@ -50,24 +50,28 @@ import {
 } from "lucide-react";
 import { toast } from 'sonner';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import { Checkbox } from '@/components/ui/checkbox';
 import { InvitationSuccessModal } from './InvitationSuccessModal';
 
 // Teacher form data schema
 const teacherFormSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  employee_id: z.string().min(2, { message: 'Employee ID is required' }),
-  gender: z.string({ required_error: "Please select a gender" }),
-  date_of_birth: z.string().min(1, { message: 'Date of birth is required' }),
-  join_date: z.string().min(1, { message: 'Join date is required' }),
-  designation: z.string().min(1, { message: 'Designation is required' }),
-  department: z.string().min(1, { message: 'Department is required' }),
-  phone: z.string().min(10, { message: 'Valid phone number is required' }),
   email: z.string().email({ message: 'Valid email is required' }),
+  fullName: z.string().min(2, { message: 'Full name must be at least 2 characters' }),
+  firstName: z.string().min(1, { message: 'First name is required' }),
+  lastName: z.string().min(1, { message: 'Last name is required' }),
+  gender: z.enum(['MALE', 'FEMALE'], { required_error: "Please select a gender" }),
+  department: z.string().min(1, { message: 'Department is required' }),
+  phoneNumber: z.string().min(10, { message: 'Valid phone number is required' }),
   address: z.string().optional().or(z.literal('')),
-  qualification: z.string().min(1, { message: 'Qualification is required' }),
-  specialization: z.string().min(1, { message: 'Specialization is required' }),
-  experience: z.coerce.number().min(0, { message: 'Experience is required' }),
-  subject_list: z.string().optional().or(z.literal('')),
+  employeeId: z.string().min(2, { message: 'Employee ID is required' }),
+  dateOfBirth: z.string().min(1, { message: 'Date of birth is required' }),
+  qualifications: z.string().min(1, { message: 'Qualifications are required' }),
+  tenantSubjectIds: z.array(z.string()).min(1, { message: 'Please select at least one subject' }),
+  tenantGradeLevelIds: z.array(z.string()).min(1, { message: 'Please select at least one grade level' }),
+  tenantStreamIds: z.array(z.string()).optional().default([]),
+  isClassTeacher: z.boolean().default(false),
+  classTeacherTenantStreamId: z.string().optional(),
 });
 
 type TeacherFormData = z.infer<typeof teacherFormSchema>;
@@ -103,6 +107,30 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
   } | null>(null);
   const { data: schoolConfig } = useSchoolConfig();
   
+  // Get school config data
+  const getAllGradeLevels = useSchoolConfigStore(state => state.getAllGradeLevels);
+  const getAllSubjects = useSchoolConfigStore(state => state.getAllSubjects);
+  const gradeLevels = getAllGradeLevels();
+  const allSubjects = getAllSubjects();
+  
+  // Flatten grades and streams for easier access
+  const flatGrades = gradeLevels.flatMap(level =>
+    (level.grades || []).map(grade => ({
+      ...grade,
+      levelName: level.levelName,
+      levelId: level.levelId,
+      streams: grade.streams || []
+    }))
+  );
+  
+  const allStreams = flatGrades.flatMap(grade => 
+    grade.streams.map(stream => ({
+      ...stream,
+      gradeName: grade.name,
+      gradeId: grade.id
+    }))
+  );
+  
   // Clear error when drawer opens
   const handleDrawerOpenChange = (open: boolean) => {
     setIsDrawerOpen(open);
@@ -112,22 +140,24 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
   };
   
   const form = useForm<TeacherFormData>({
-    resolver: zodResolver(teacherFormSchema),
+    resolver: zodResolver(teacherFormSchema) as any,
     defaultValues: {
-      name: '',
-      employee_id: '',
-      gender: '',
-      date_of_birth: '',
-      join_date: '',
-      designation: '',
-      department: '',
-      phone: '',
       email: '',
+      fullName: '',
+      firstName: '',
+      lastName: '',
+      gender: 'MALE',
+      department: '',
+      phoneNumber: '',
       address: '',
-      qualification: '',
-      specialization: '',
-      experience: 0,
-      subject_list: '',
+      employeeId: '',
+      dateOfBirth: '',
+      qualifications: '',
+      tenantSubjectIds: [],
+      tenantGradeLevelIds: [],
+      tenantStreamIds: [],
+      isClassTeacher: false,
+      classTeacherTenantStreamId: '',
     },
   });
 
@@ -144,13 +174,35 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     setError(null); // Clear any previous errors
 
     try {
-      const response = await fetch('/api/school/create-teacher', {
+      const createTeacherDto = {
+        email: data.email,
+        fullName: data.fullName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: "TEACHER",
+        gender: data.gender,
+        department: data.department,
+        phoneNumber: data.phoneNumber,
+        address: data.address || "",
+        employeeId: data.employeeId,
+        dateOfBirth: data.dateOfBirth,
+        qualifications: data.qualifications,
+        tenantSubjectIds: data.tenantSubjectIds,
+        tenantGradeLevelIds: data.tenantGradeLevelIds,
+        tenantStreamIds: data.tenantStreamIds,
+        isClassTeacher: data.isClassTeacher,
+        ...(data.isClassTeacher && data.classTeacherTenantStreamId && {
+          classTeacherTenantStreamId: data.classTeacherTenantStreamId
+        })
+      };
+
+      const response = await fetch('/api/school/invite-teacher', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...data,
+          createTeacherDto,
           tenantId: schoolConfig.tenant.id
         }),
       });
@@ -273,7 +325,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
         </DrawerHeader>
         <div className="flex-1 overflow-y-auto bg-background">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="p-6 space-y-8">
               
               {/* Error Display */}
               {error && (
@@ -364,8 +416,8 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
-                    control={form.control}
-                    name="name"
+                    control={form.control as any}
+                    name="fullName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -384,8 +436,48 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                   />
 
                   <FormField
-                    control={form.control}
-                    name="employee_id"
+                    control={form.control as any}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          First Name *
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter first name" 
+                            {...field} 
+                            className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control as any}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Last Name *
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter last name" 
+                            {...field} 
+                            className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control as any}
+                    name="employeeId"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
@@ -405,7 +497,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as any}
                     name="gender"
                     render={({ field }) => (
                       <FormItem>
@@ -419,8 +511,8 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="MALE">Male</SelectItem>
+                            <SelectItem value="FEMALE">Female</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -428,37 +520,9 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="designation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Designation *
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                              <SelectValue placeholder="Select designation" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="principal">Principal</SelectItem>
-                            <SelectItem value="vice_principal">Vice Principal</SelectItem>
-                            <SelectItem value="head_teacher">Head Teacher</SelectItem>
-                            <SelectItem value="senior_teacher">Senior Teacher</SelectItem>
-                            <SelectItem value="teacher">Teacher</SelectItem>
-                            <SelectItem value="assistant_teacher">Assistant Teacher</SelectItem>
-                            <SelectItem value="intern">Intern</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as any}
                     name="department"
                     render={({ field }) => (
                       <FormItem>
@@ -485,34 +549,13 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                   />
 
                   <FormField
-                    control={form.control}
-                    name="date_of_birth"
+                    control={form.control as any}
+                    name="dateOfBirth"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
                           <CalendarDays className="h-3.5 w-3.5 text-primary" />
                           Date of Birth *
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="join_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          Join Date *
                         </FormLabel>
                         <FormControl>
                           <Input 
@@ -535,87 +578,18 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                     Qualifications & Experience
                   </h3>
                 </div>
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-6 space-y-6">
                   <FormField
-                    control={form.control}
-                    name="qualification"
+                    control={form.control as any}
+                    name="qualifications"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Highest Qualification *
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                              <SelectValue placeholder="Select qualification" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="diploma">Diploma in Education</SelectItem>
-                            <SelectItem value="bachelors">Bachelor's Degree</SelectItem>
-                            <SelectItem value="masters">Master's Degree</SelectItem>
-                            <SelectItem value="phd">PhD</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="specialization"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Specialization *
+                          Qualifications *
                         </FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="e.g., Mathematics Education" 
-                            {...field} 
-                            className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="experience"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Years of Experience *
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min="0" 
-                            placeholder="0" 
-                            {...field} 
-                            className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="subject_list"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Subjects Taught
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g., Math, Physics, Chemistry" 
+                            placeholder="e.g., BSc Mathematics, MSc Education" 
                             {...field} 
                             className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20"
                           />
@@ -627,6 +601,270 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                 </div>
               </div>
               
+              {/* Teaching Assignment Section */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <div className="border-b border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800">
+                  <h3 className="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-primary" />
+                    Teaching Assignment
+                  </h3>
+                </div>
+                <div className="p-6 space-y-6">
+                  
+                  {/* Grade Levels */}
+                  <FormField
+                    control={form.control as any}
+                    name="tenantGradeLevelIds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Grade Levels *
+                        </FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                          {flatGrades.map((grade) => (
+                            <div key={grade.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`grade-${grade.id}`}
+                                checked={field.value?.includes(grade.id) || false}
+                                onCheckedChange={(checked) => {
+                                  const currentValues = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...currentValues, grade.id]);
+                                  } else {
+                                    field.onChange(currentValues.filter((id: string) => id !== grade.id));
+                                    // Clear subjects when grade is deselected
+                                    const currentSubjects = form.getValues('tenantSubjectIds') || [];
+                                    const remainingGrades = form.getValues('tenantGradeLevelIds')?.filter(id => id !== grade.id) || [];
+                                    const filteredSubjects = currentSubjects.filter(subjectId => {
+                                      // Keep subjects that are still valid for remaining selected grades
+                                      return allSubjects.some(subject => 
+                                        subject.id === subjectId && 
+                                        flatGrades.some(g => remainingGrades.includes(g.id))
+                                      );
+                                    });
+                                    form.setValue('tenantSubjectIds', filteredSubjects);
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`grade-${grade.id}`}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {grade.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Subjects - Only show after grade levels are selected */}
+                  {form.watch('tenantGradeLevelIds')?.length > 0 && (
+                    <FormField
+                      control={form.control as any}
+                      name="tenantSubjectIds"
+                      render={({ field }) => {
+                        const selectedGradeLevels = form.watch('tenantGradeLevelIds') || [];
+                        const selectedGrades = flatGrades.filter(grade => selectedGradeLevels.includes(grade.id));
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              Subjects * (organized by grade level)
+                            </FormLabel>
+                            <div className="space-y-6 mt-4">
+                              {selectedGrades.map((grade) => (
+                                <div key={grade.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+                                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                    {grade.name} - {grade.levelName}
+                                  </h4>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {(() => {
+                                      // Find the level that contains this grade
+                                      const level = gradeLevels.find(level => 
+                                        level.grades?.some(g => g.id === grade.id)
+                                      );
+                                      
+                                      // Get subjects for this level from the school config
+                                      // Each level in the school config has its own subjects array
+                                      const levelSubjects = level ? 
+                                        schoolConfig?.selectedLevels?.find((l: any) => l.id === level.levelId)?.subjects || [] 
+                                        : [];
+                                      
+                                      // If no level-specific subjects, show all subjects as fallback
+                                      const gradeSubjects = levelSubjects.length > 0 ? levelSubjects : allSubjects;
+                                      
+                                      return gradeSubjects.map((subject: any) => (
+                                        <div key={`${grade.id}-${subject.id}`} className="flex items-center space-x-2">
+                                          <Checkbox
+                                            id={`subject-${grade.id}-${subject.id}`}
+                                            checked={field.value?.includes(subject.id) || false}
+                                            onCheckedChange={(checked) => {
+                                              const currentValues = field.value || [];
+                                              if (checked) {
+                                                field.onChange([...currentValues, subject.id]);
+                                              } else {
+                                                field.onChange(currentValues.filter((id: string) => id !== subject.id));
+                                              }
+                                            }}
+                                          />
+                                          <label
+                                            htmlFor={`subject-${grade.id}-${subject.id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                          >
+                                            {subject.name}
+                                          </label>
+                                        </div>
+                                      ));
+                                    })()}
+                                  </div>
+                                  {(() => {
+                                    const level = gradeLevels.find(level => 
+                                      level.grades?.some(g => g.id === grade.id)
+                                    );
+                                    const levelSubjects = level ? 
+                                      schoolConfig?.selectedLevels?.find((l: any) => l.id === level.levelId)?.subjects || [] 
+                                      : [];
+                                    const gradeSubjects = levelSubjects.length > 0 ? levelSubjects : allSubjects;
+                                    
+                                    return gradeSubjects.length === 0 && (
+                                      <div className="text-sm text-slate-500 dark:text-slate-400 p-3 bg-slate-50 dark:bg-slate-800 rounded border">
+                                        No subjects configured for {grade.name}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              ))}
+                              {selectedGrades.length === 0 && (
+                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                                  Please select grade levels first to see available subjects.
+                                </div>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  )}
+
+                  {/* Streams - Only show after grade levels are selected */}
+                  {form.watch('tenantGradeLevelIds')?.length > 0 && (
+                    <FormField
+                      control={form.control as any}
+                      name="tenantStreamIds"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Streams (optional)
+                          </FormLabel>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                            {(() => {
+                              const selectedGradeLevels = form.watch('tenantGradeLevelIds') || [];
+                              const availableStreams = allStreams.filter(stream => 
+                                selectedGradeLevels.includes(stream.gradeId)
+                              );
+                              
+                              if (availableStreams.length === 0) {
+                                return (
+                                  <div className="col-span-full text-sm text-slate-500 dark:text-slate-400 p-3 bg-slate-50 dark:bg-slate-800 rounded border">
+                                    No streams configured for selected grade levels
+                                  </div>
+                                );
+                              }
+                              
+                              return availableStreams.map((stream) => (
+                                <div key={stream.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`stream-${stream.id}`}
+                                    checked={field.value?.includes(stream.id) || false}
+                                    onCheckedChange={(checked) => {
+                                      const currentValues = field.value || [];
+                                      if (checked) {
+                                        field.onChange([...currentValues, stream.id]);
+                                      } else {
+                                        field.onChange(currentValues.filter((id: string) => id !== stream.id));
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={`stream-${stream.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    {stream.name} ({stream.gradeName})
+                                  </label>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Class Teacher Assignment */}
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                    <FormField
+                      control={form.control as any}
+                      name="isClassTeacher"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              Assign as Class Teacher
+                            </FormLabel>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              This teacher will be responsible for a specific class/stream
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch('isClassTeacher') && (
+                      <FormField
+                        control={form.control as any}
+                        name="classTeacherTenantStreamId"
+                        render={({ field }) => (
+                          <FormItem className="mt-4">
+                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              Class Teacher Stream *
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                                  <SelectValue placeholder="Select stream for class teacher assignment" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {allStreams
+                                  .filter(stream => form.watch('tenantStreamIds')?.includes(stream.id))
+                                  .map((stream) => (
+                                    <SelectItem key={stream.id} value={stream.id}>
+                                      {stream.name} ({stream.gradeName})
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                 <div className="border-b border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800">
                   <h3 className="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide flex items-center gap-2">
@@ -636,8 +874,8 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
-                    control={form.control}
-                    name="phone"
+                    control={form.control as any}
+                    name="phoneNumber"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
@@ -657,7 +895,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as any}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
@@ -679,7 +917,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as any}
                     name="address"
                     render={({ field }) => (
                       <FormItem className="col-span-2">
@@ -745,7 +983,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
           <div className="flex gap-3">
             <Button 
               type="submit" 
-              onClick={form.handleSubmit(onSubmit)}
+              onClick={form.handleSubmit(onSubmit as any)}
               disabled={isLoading}
               className="flex-1 bg-primary hover:bg-primary-dark text-white font-medium transition-colors gap-2 disabled:opacity-50"
             >

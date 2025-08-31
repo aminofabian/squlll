@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     console.log('Teachers API - Tenant ID:', tenantId);
     console.log('Teachers API - Role being queried: TEACHER');
 
-    // Use the working usersByTenant query pattern from existing codebase
+    // Revert to working usersByTenant query
     const query = `
       query GetTeachersByTenant($tenantId: String!, $role: String!) {
         usersByTenant(tenantId: $tenantId, role: $role) {

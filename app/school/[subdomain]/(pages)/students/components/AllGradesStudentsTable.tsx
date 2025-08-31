@@ -48,8 +48,8 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
         </p>
       </div>
 
-      {/* Table Container */}
-      <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
+      {/* Table Container - Desktop */}
+      <div className="hidden min-[1600px]:block border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -181,6 +181,153 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      {/* Responsive Cards - Mobile/Tablet */}
+      <div className="min-[1600px]:hidden space-y-4">
+        {paginated.map((student, idx) => (
+          <div 
+            key={student.id}
+            className={`border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl p-4 transition-all duration-200 ${
+              onStudentClick 
+                ? "cursor-pointer hover:bg-primary/5 hover:border-primary/40" 
+                : "hover:bg-slate-50 dark:hover:bg-slate-700"
+            }`}
+            onClick={() => onStudentClick?.(student.id)}
+          >
+            {/* Header Section - Student Identity */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 pb-4 border-b border-primary/10">
+              <div className="flex items-center gap-4 mb-3 sm:mb-0">
+                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-full border-2 border-primary/20">
+                  <span className="font-mono text-sm font-bold text-primary">
+                    {(page - 1) * PAGE_SIZE + idx + 1}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-mono font-bold text-lg text-slate-900 dark:text-slate-100">
+                    {student.name}
+                  </h3>
+                  <p className="font-mono text-sm text-primary font-medium">
+                    Class {student.class} {student.section && `• Section ${student.section}`}
+                  </p>
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className={`font-mono text-xs capitalize border-2 w-fit ${
+                  student.status === "active" 
+                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                }`}
+              >
+                {student.status}
+              </Badge>
+            </div>
+
+            {/* Student Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b border-primary/20 pb-2">
+                  Personal Information
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                      Gender
+                    </span>
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 capitalize font-medium">
+                      {student.gender}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                      Date of Birth
+                    </span>
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {student.dob}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                      Session
+                    </span>
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {student.session || "2023-2024"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Guardian Information */}
+              <div className="space-y-4">
+                <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b border-primary/20 pb-2">
+                  Guardian Information
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1">
+                      Name
+                    </span>
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {student.guardianName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1">
+                      Email
+                    </span>
+                    <span className="font-mono text-sm text-slate-600 dark:text-slate-400 break-all">
+                      {student.guardianEmail}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1">
+                      Mobile
+                    </span>
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      {student.guardianMobile}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Row */}
+            <div className="flex justify-end gap-2 pt-2 border-t border-primary/10">
+              <Button 
+                size="sm" 
+                variant="ghost"
+                className="h-8 px-3 text-primary hover:bg-primary/10 hover:text-primary border border-primary/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStudentClick?.(student.id);
+                }}
+              >
+                <Eye className="w-3.5 h-3.5 mr-1" />
+                View
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                className="h-8 px-3 text-slate-600 hover:bg-slate-100 hover:text-slate-800 border border-slate-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Edit className="w-3.5 h-3.5 mr-1" />
+                Edit
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                className="h-8 px-3 text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                Delete
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Pagination Controls */}

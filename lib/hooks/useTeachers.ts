@@ -1,7 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTeachersStore, useTeachersByTenantQuery } from '../stores/useTeachersStore';
-import { TeachersResponse } from '../../types/teacher';
+
+interface TeachersResponse {
+  usersByTenant: any[];
+}
 
 const fetchTeachers = async (): Promise<TeachersResponse> => {
   const response = await fetch('/api/teachers');
@@ -27,7 +30,7 @@ export const useTeachers = () => {
   // Update store when query state changes
   React.useEffect(() => {
     if (query.isSuccess && query.data) {
-      setTeachers(query.data.getTeachersByTenant);
+      setTeachers(query.data.usersByTenant || []);
       setError(null);
     }
   }, [query.isSuccess, query.data, setTeachers, setError]);
@@ -101,4 +104,13 @@ export const useTeachersByTenant = (tenantId: string, role: string = "TEACHER") 
   });
 
   return query;
+};
+
+// Hook to delete a teacher
+export const useDeleteTeacher = () => {
+  const { deleteTeacher } = useTeachersStore();
+  
+  return {
+    deleteTeacher,
+  };
 }; 
