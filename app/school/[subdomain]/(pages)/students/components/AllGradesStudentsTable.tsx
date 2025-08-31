@@ -188,7 +188,7 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
         {paginated.map((student, idx) => (
           <div 
             key={student.id}
-            className={`border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl p-4 transition-all duration-200 ${
+            className={`border-2 border-primary/20 bg-white dark:bg-slate-800 rounded-xl p-6 transition-all duration-200 ${
               onStudentClick 
                 ? "cursor-pointer hover:bg-primary/5 hover:border-primary/40" 
                 : "hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -196,15 +196,15 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
             onClick={() => onStudentClick?.(student.id)}
           >
             {/* Header Section - Student Identity */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 pb-4 border-b border-primary/10">
-              <div className="flex items-center gap-4 mb-3 sm:mb-0">
-                <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-full border-2 border-primary/20">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-8 pb-5 border-b-2 border-primary/10">
+              <div className="flex items-start gap-5 mb-4 sm:mb-0">
+                <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full border-2 border-primary/20 flex-shrink-0">
                   <span className="font-mono text-sm font-bold text-primary">
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </span>
                 </div>
-                <div>
-                  <h3 className="font-mono font-bold text-lg text-slate-900 dark:text-slate-100">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-mono font-bold text-xl text-slate-900 dark:text-slate-100 mb-2">
                     {student.name}
                   </h3>
                   <p className="font-mono text-sm text-primary font-medium">
@@ -212,47 +212,52 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
                   </p>
                 </div>
               </div>
-              <Badge
-                variant="outline"
-                className={`font-mono text-xs capitalize border-2 w-fit ${
-                  student.status === "active" 
-                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
-                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                }`}
-              >
-                {student.status}
-              </Badge>
+              <div className="flex-shrink-0">
+                <Badge
+                  variant="outline"
+                  className={`font-mono text-xs capitalize border-2 px-3 py-1 ${
+                    student.status === "active" 
+                      ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                      : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                  }`}
+                >
+                  {student.status}
+                </Badge>
+              </div>
             </div>
 
             {/* Student Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b border-primary/20 pb-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Two-column layout with row alignment */}
+              <div className="grid-rows-auto">
+                <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-6">
                   Personal Information
                 </h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <div className="space-y-4">
+                  {/* Row 1 */}
+                  <div className="flex justify-between items-center py-2 h-[42px]">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                       Gender
                     </span>
-                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 capitalize font-medium">
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 capitalize font-semibold">
                       {student.gender}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  {/* Row 2 */}
+                  <div className="flex justify-between items-center py-2 h-[42px]">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                       Date of Birth
                     </span>
-                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
                       {student.dob}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  {/* Row 3 */}
+                  <div className="flex justify-between items-center py-2 h-[42px]">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                       Session
                     </span>
-                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
                       {student.session || "2023-2024"}
                     </span>
                   </div>
@@ -260,32 +265,35 @@ export default function AllGradesStudentsTable({ students, onStudentClick }: All
               </div>
 
               {/* Guardian Information */}
-              <div className="space-y-4">
-                <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b border-primary/20 pb-2">
+              <div className="grid-rows-auto">
+                <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-6">
                   Guardian Information
                 </h4>
-                <div className="space-y-3">
-                  <div>
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1">
+                <div className="space-y-4">
+                  {/* Row 1 */}
+                  <div className="flex justify-between items-center py-2 h-[42px]">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                       Name
                     </span>
-                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
                       {student.guardianName}
                     </span>
                   </div>
-                  <div>
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1">
+                  {/* Row 2 */}
+                  <div className="flex justify-between items-center py-2 h-[42px]">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                       Email
                     </span>
-                    <span className="font-mono text-sm text-slate-600 dark:text-slate-400 break-all">
+                    <span className="font-mono text-sm text-slate-600 dark:text-slate-400 text-right break-all max-w-[60%]">
                       {student.guardianEmail}
                     </span>
                   </div>
-                  <div>
-                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide block mb-1">
+                  {/* Row 3 */}
+                  <div className="flex justify-between items-center py-2 h-[42px]">
+                    <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                       Mobile
                     </span>
-                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-medium">
+                    <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
                       {student.guardianMobile}
                     </span>
                   </div>
