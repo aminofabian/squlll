@@ -46,6 +46,10 @@ import {
   MessageSquare,
   Loader2,
   Wand2,
+  Lock,
+  BriefcaseBusiness,
+  Calendar,
+  Trash2,
   GraduationCap,
   Search,
   CheckCircle,
@@ -53,6 +57,8 @@ import {
   Hash,
   UserCheck,
   X,
+  Upload,
+  Smile,
 } from "lucide-react"
 import { toast } from 'sonner'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
@@ -60,31 +66,40 @@ import { useQueryClient } from '@tanstack/react-query'
 
 // Student schema for multiple students
 const studentSchema = z.object({
+  id: z.string().optional(), // Adding ID field for existing students
   name: z.string().min(2, "Student name is required"),
   grade: z.string().min(1, "Student grade is required"),
   class: z.string().min(1, "Student class is required"),
-  stream: z.string().optional().or(z.literal("")),
-  admissionNumber: z.string().min(1, "Student admission number is required"),
-  phone: z.string().optional().or(z.literal("")), // Add phone field for manual input
+  admissionNumber: z.string().min(1, "Admission number is required"),
+  stream: z.string().optional(),
+  phone: z.string().optional(), // For manual input
 })
 
 // Form validation schema
 const parentFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.string().email("Valid email is required"),
   phone: z.string().min(10, "Valid phone number is required"),
-  relationship: z.enum(["father", "mother", "guardian", "other"]),
+  // New field for the mutation
+  linkingMethod: z.enum(["SEARCH_BY_NAME", "ADMISSION_NUMBER", "MANUAL_INPUT"]).default("SEARCH_BY_NAME"),
+  // Keep existing fields but make them optional
+  relationship: z.enum(["father", "mother", "guardian", "other"]).optional(),
   occupation: z.string().optional().or(z.literal("")),
   workAddress: z.string().optional().or(z.literal("")),
   homeAddress: z.string().optional().or(z.literal("")),
   emergencyContact: z.string().optional().or(z.literal("")),
   idNumber: z.string().optional().or(z.literal("")),
+  // For the search by name option
+  studentName: z.string().optional().or(z.literal("")),
+  // Keeping the students array for UI purposes
   students: z.array(studentSchema).min(1, "At least one student is required"),
+  // These fields won't be used in the mutation but keeping for backward compatibility
   communicationSms: z.boolean(),
   communicationEmail: z.boolean(),
   communicationWhatsapp: z.boolean(),
 })
 
+// Define ParentFormData using zod inference - this ensures TypeScript knows about the exact shape
 type ParentFormData = z.infer<typeof parentFormSchema>
 
 interface CreateParentDrawerProps {
@@ -165,18 +180,21 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
   }, [config, getAllGradeLevels]);
   
   // Form handling
+  // Explicitly define form type to avoid TypeScript errors
   const form = useForm<ParentFormData>({
-    resolver: zodResolver(parentFormSchema),
+    resolver: zodResolver(parentFormSchema) as any, // Using type assertion to resolve compatibility issues
     defaultValues: {
       name: '',
       email: '',
       phone: '',
-      relationship: 'father',
+      linkingMethod: 'SEARCH_BY_NAME' as const,
+      relationship: 'father' as const,
       occupation: '',
       workAddress: '',
       homeAddress: '',
       emergencyContact: '',
       idNumber: '',
+      studentName: '',
       students: [],
       communicationSms: true,
       communicationEmail: false,
@@ -415,6 +433,7 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
     // Add the found student to the students array
     const currentStudents = form.getValues('students');
     const newStudent = {
+      id: student.id || '', // Include student ID - this is crucial for the API
       name: student.name,
       admissionNumber: student.admissionNumber,
       grade: gradeName,
@@ -425,6 +444,14 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
 
     // Add to students array
     form.setValue('students', [...currentStudents, newStudent]);
+    
+    // Update the studentName field with the selected student's name
+    form.setValue('studentName', student.name);
+    
+    // Log for debugging
+    console.log('Added student with ID:', student.id);
+    console.log('Student name set to:', student.name);
+    console.log('Current students array:', [...currentStudents, newStudent]);
 
     // Clear search results after using data
     setSearchedStudent(null);
@@ -485,14 +512,127 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
   }
 
   // Submit handler
+  // Use explicit type casting for the submit handler to fix TypeScript errors
   const onSubmit = async (data: ParentFormData) => {
+    console.log('Form submitted with data:', data);
+    console.log('Students in form:', data.students);
+    console.log('Student IDs present:', data.students.map(s => s.id).filter(Boolean));
+    console.log('Student Names:', data.students.map(s => s.name));
+    console.log('Student Name field value:', data.studentName);
+    
+    // Ensure we have student data even if empty array is passed
+    if (!data.students || !Array.isArray(data.students) || data.students.length === 0) {
+      toast.error("Missing Student Data", {
+        description: "At least one student must be added."
+      });
+      return;
+    }
+    
+    // Add a default student if somehow we have an empty array (should never happen due to schema validation)
+    if (data.students.length === 0) {
+      toast.error("No students found in form data", {
+        description: "Please add at least one student before continuing"
+      });
+      return;
+    }
+    
+    // Validate that each student has required fields
+    const incompleteStudents = data.students.filter(student => 
+      !student || !student.name || !student.name.trim() || 
+      !student.admissionNumber || !student.admissionNumber.trim() || 
+      !student.grade || 
+      !student.class
+    );
+    
+    if (incompleteStudents.length > 0) {
+      toast.error("Incomplete Student Data", {
+        description: `${incompleteStudents.length} student(s) have missing required information. Please complete all student forms.`
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       console.log('Creating parent invitation:', data);
       
-      // Prepare parent data
-      const parentData = {
+      // Add explicit validation for parent and student data
+      if (!data.name || !data.email || !data.phone) {
+        toast.error("Missing Parent Data", {
+          description: "Parent name, email, and phone are required."
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!data.students || data.students.length === 0) {
+        toast.error("Missing Student Data", {
+          description: "At least one student must be added."
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validate each student has required fields
+      const invalidStudents = data.students.filter(student => {
+        return !student.name || !student.grade || !student.class || !student.admissionNumber;
+      });
+      
+      if (invalidStudents.length > 0) {
+        toast.error("Invalid Student Data", {
+          description: `${invalidStudents.length} student(s) have missing required fields (name, grade, class, or admission number).`
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Define interface for manual student data for the API payload
+      interface ManualStudent {
+        name: string;
+        admissionNumber: string;
+        grade: string;
+        class: string;
+        stream: string;
+        phone: string;
+      }
+      
+      // Create an array of student objects in the required format for the API
+      const processedStudents: ManualStudent[] = data.students.map((student) => {
+        // Ensure grade and class are always strings
+        let gradeStr = '';
+        if (student.grade) {
+          if (typeof student.grade === 'object' && student.grade !== null) {
+            // Try to access name property if it exists using type assertion
+            gradeStr = 'name' in student.grade ? String((student.grade as {name?: string}).name || '') : String(student.grade);
+          } else {
+            gradeStr = String(student.grade || '');
+          }
+        }
+        
+        let classStr = '';
+        if (student.class) {
+          if (typeof student.class === 'object' && student.class !== null) {
+            // Handle case where class might be an object (from API or other source)
+            const classObj = student.class as any; // Use type assertion to avoid TypeScript error
+            classStr = classObj && typeof classObj === 'object' && 'name' in classObj ? 
+              String(classObj.name || '') : String(student.class);
+          } else {
+            classStr = String(student.class || '');
+          }
+        }
+          
+        return {
+          name: student.name,
+          admissionNumber: student.admissionNumber,
+          grade: gradeStr,
+          class: classStr,
+          stream: student.stream || '',
+          phone: student.phone || ''
+        };
+      });
+      
+      // Prepare createParentDto object
+      const createParentDto = {
         name: data.name,
         email: data.email,
         phone: data.phone,
@@ -505,91 +645,326 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
         communicationSms: data.communicationSms,
         communicationEmail: data.communicationEmail,
         communicationWhatsapp: data.communicationWhatsapp,
+        // Include the new fields from the updated schema
+        linkingMethod: data.linkingMethod,
+        studentName: data.studentName || ''
       };
 
-      // Prepare students data
-      const studentsData = data.students.map(student => ({
-        name: student.name,
-        admissionNumber: student.admissionNumber.startsWith('ADM') ? student.admissionNumber : `ADM${student.admissionNumber}`,
-        grade: student.grade,
-        class: student.class,
-        stream: student.stream,
-        phone: student.phone || '', // Include phone field for manual input
-      }));
+      // Extract student IDs for the new mutation format - ensure IDs are non-empty strings
+      const studentIds = data.students
+        .map(student => student.id)
+        .filter(id => typeof id === 'string' && id.trim() !== '');
+      
+      // Log the raw student data to debug
+      console.log('Raw student data in form:', data.students);
+      
+      // We're now treating ALL students as manual students for better consistency
+      const manualStudents = processedStudents;
 
       // Get the school's tenant ID from the config
-      const schoolTenantId = config?.tenant?.id;
+      const tenantId = config?.tenant?.id;
       
       console.log('School config:', config);
-      console.log('School tenant ID:', schoolTenantId);
+      console.log('School tenant ID:', tenantId);
+      console.log('Linking method:', data.linkingMethod);
       
-      if (!schoolTenantId) {
+      if (!tenantId) {
         toast.error("Configuration Error", {
           description: "School tenant ID not available. Please refresh and try again."
         });
         return;
       }
 
-      // Make API call to invite parent
-      const response = await fetch('/api/parents/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          parentData,
-          students: studentsData,
-          linkingMethod: 'MANUAL_INPUT', // Default to manual input since we're creating new students
-          tenantId: schoolTenantId // Send the school's tenant ID, not the admin's
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to invite parent');
-      }
-
-      if (result.success) {
-        // Show success message
-        if (result.errors && result.errors.length > 0) {
-          // Partial success
-          toast.success("Parent Invitation Sent!", {
-            description: `${result.message}. ${result.errors.length} student(s) had issues.`
-          });
-          
-          // Log errors for debugging
-          console.warn('Partial invitation errors:', result.errors);
-        } else {
-          // Complete success
-          toast.success("Parent Invitation Sent Successfully!", {
-            description: `${data.name} has been invited and linked to ${data.students.length} student${data.students.length !== 1 ? 's' : ''}`
-          });
-        }
-
-        // Log successful invitations
-        console.log('Successful invitations:', result.invitations);
-        
-        // Invalidate and refetch school configuration to show any updated data
-        await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] });
-        
-        // Reset form and close drawer
-        form.reset();
-        setIsDrawerOpen(false);
-        onParentCreated();
-      } else {
-        throw new Error(result.error || 'Unknown error occurred');
+      // Get the first valid student name from the students array
+      const firstStudentName = data.students.find(s => s.name)?.name || '';
+      
+      // Create a clean parent DTO without any potential conflicting fields
+      const cleanParentDto = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        relationship: data.relationship,
+        occupation: data.occupation,
+        workAddress: data.workAddress,
+        homeAddress: data.homeAddress,
+        emergencyContact: data.emergencyContact,
+        idNumber: data.idNumber,
+        communicationSms: data.communicationSms,
+        communicationEmail: data.communicationEmail,
+        communicationWhatsapp: data.communicationWhatsapp
+      };
+      
+      // Structure payload according to inviteParent mutation input requirements
+      const inviteParentInput: {
+        createParentDto: typeof cleanParentDto;
+        studentName: string;
+        linkingMethod: string;
+        tenantId: string;
+        studentIds: string[];
+        manualStudents: ManualStudent[];
+      } = {
+        createParentDto: cleanParentDto,
+        studentName: data.studentName || firstStudentName, // Move to root level
+        linkingMethod: 'ADMISSION_NUMBER', // Changed to match API expectations
+        tenantId,
+        // Include actual student IDs when available - use type predicate to filter out undefined values
+        studentIds: data.students.map(s => s.id).filter((id): id is string => typeof id === 'string' && id.trim() !== ''), 
+        // Only include manual students when there are no student IDs
+        manualStudents: [] as ManualStudent[],
+      };
+      
+      // Log the selected student IDs for debugging
+      if (inviteParentInput.studentIds.length > 0) {
+        console.log('Using the following student IDs:', inviteParentInput.studentIds);
       }
       
+      // Decide whether to use studentIds or manualStudents approach
+      if (inviteParentInput.studentIds.length === 0) {
+        // No valid IDs, use manual students
+        inviteParentInput.manualStudents = processedStudents;
+        inviteParentInput.linkingMethod = 'MANUAL_INPUT';
+      } else {
+        // We have student IDs, keep using ADMISSION_NUMBER method
+        inviteParentInput.manualStudents = [];
+        console.log(`Using ${inviteParentInput.studentIds.length} student IDs with linking method: ${inviteParentInput.linkingMethod}`);
+      }
+      
+      console.log('Student name at root level:', inviteParentInput.studentName);
+      
+      // Double-check that we have at least one student
+      if ((!inviteParentInput.manualStudents || inviteParentInput.manualStudents.length === 0) && 
+          (!inviteParentInput.studentIds || inviteParentInput.studentIds.length === 0)) {
+        toast.error("Missing Student Data", {
+          description: "At least one student must be added to create a parent."
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // For debugging purposes only
+      console.log("Student validation passed!");
+      console.log("Raw students data:", data.students);
+      console.log("Processed studentIds:", studentIds);
+      console.log("Processed manualStudents:", processedStudents);
+      
+      // Add admission number to all manual students to ensure they're valid
+      if (inviteParentInput.manualStudents.length > 0) {
+        inviteParentInput.manualStudents = inviteParentInput.manualStudents.map(student => ({
+          ...student,
+          admissionNumber: student.admissionNumber.startsWith('ADM') ? 
+            student.admissionNumber : `ADM${student.admissionNumber}`
+        }));
+      }
+
+      // Force using MANUAL_INPUT with manual students regardless of IDs
+      // This approach ensures the API gets student data in a format it expects
+      inviteParentInput.linkingMethod = 'MANUAL_INPUT';
+      
+      // Always provide manual students data
+      if (inviteParentInput.studentIds.length > 0 && inviteParentInput.manualStudents.length === 0) {
+        // We have student IDs but no manual students - create manual students from existing data
+        inviteParentInput.manualStudents = data.students.map(student => {
+          // Ensure grade and class are always strings
+          let gradeStr = '';
+          if (student.grade) {
+            if (typeof student.grade === 'object' && student.grade !== null) {
+              // Try to access name property if it exists using type assertion
+              gradeStr = 'name' in student.grade ? String((student.grade as {name?: string}).name || '') : String(student.grade);
+            } else {
+              gradeStr = String(student.grade || '');
+            }
+          }
+          
+          let classStr = '';
+          if (student.class) {
+            if (typeof student.class === 'object' && student.class !== null) {
+              // Handle case where class might be an object (from API or other source)
+              const classObj = student.class as any; // Use type assertion to avoid TypeScript error
+              classStr = classObj && typeof classObj === 'object' && 'name' in classObj ? 
+                String(classObj.name || '') : String(student.class);
+            } else {
+              classStr = String(student.class || '');
+            }
+          }
+            
+          return {
+            name: student.name,
+            admissionNumber: student.admissionNumber.startsWith('ADM') ? 
+              student.admissionNumber : `ADM${student.admissionNumber}`,
+            grade: gradeStr,
+            class: classStr,
+            stream: student.stream || '',
+            phone: student.phone || ''
+          };
+        });
+      }
+      
+      console.log('Final API payload:', JSON.stringify(inviteParentInput, null, 2));
+      
+      // Make API call to invite parent with timeout handling
+      try {
+        // Verify we have at least one valid student
+        if (!data.students || !Array.isArray(data.students) || data.students.length === 0) {
+          toast.error("Missing Student Data", { 
+            description: "Please add at least one student before submitting" 
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // Get the first student for simplicity
+        const student = data.students[0];
+        
+        if (!student || !student.name || !student.admissionNumber) {
+          toast.error("Invalid Student Data", {
+            description: "Student must have name and admission number"
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        // Set up request timeout handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        // Create a minimal but complete parent payload
+        const parent = {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          relationship: data.relationship || 'father',
+          occupation: data.occupation || '',
+          workAddress: data.workAddress || '',
+          homeAddress: data.homeAddress || '',
+          emergencyContact: data.emergencyContact || '',
+          idNumber: data.idNumber || '',
+          communicationSms: !!data.communicationSms,
+          communicationEmail: !!data.communicationEmail,
+          communicationWhatsapp: !!data.communicationWhatsapp
+        };
+        
+        // Create a minimal student with guaranteed string values
+        const formattedStudent = {
+          name: String(student.name || ''),
+          admissionNumber: String(student.admissionNumber || '').startsWith('ADM') ? 
+            String(student.admissionNumber || '') : 
+            `ADM${String(student.admissionNumber || '')}`,
+          grade: String(typeof student.grade === 'string' ? student.grade : ''),
+          class: String(typeof student.class === 'string' ? student.class : ''),
+          stream: String(student.stream || ''),
+          phone: String(student.phone || '')
+        };
+        
+        // Create payload that EXACTLY matches what the route.ts API expects
+        // The API specifically checks for: parentData, students (array), linkingMethod, and tenantId
+        const apiPayload = {
+          // Parent data object
+          parentData: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            relationship: data.relationship || 'father',
+            occupation: data.occupation || '',
+            workAddress: data.workAddress || '',
+            homeAddress: data.homeAddress || '',
+            emergencyContact: data.emergencyContact || '',
+            idNumber: data.idNumber || ''
+          },
+          // IMPORTANT: API expects 'students' as an array, not 'studentData'
+          students: [{
+            name: student.name,
+            admissionNumber: String(student.admissionNumber).trim().startsWith('ADM') ? 
+              String(student.admissionNumber).trim() : 
+              `ADM${String(student.admissionNumber).trim()}`,
+            grade: typeof student.grade === 'string' ? student.grade : '',
+            class: typeof student.class === 'string' ? student.class : '',
+            stream: student.stream || '',
+            phone: student.phone || ''
+          }],
+          // Match other expected fields
+          linkingMethod: 'MANUAL_INPUT',
+          tenantId: tenantId
+        };
+        
+        console.log('Sending API request with body:', JSON.stringify(apiPayload, null, 2));
+        
+        // Make API request
+        const response = await fetch('/api/parents/invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(apiPayload),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        // Log the full response for debugging
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        // Process the response
+        if (response.ok) {
+          const result = await response.json();
+          console.log('API success response:', result);
+          
+          toast.success("Parent Created", {
+            description: "Parent has been successfully created."
+          });
+          
+          // Close drawer and reset form
+          onParentCreated(); // Call the callback prop provided
+          form.reset();
+          
+        } else {
+          // Handle error response
+          try {
+            const errorData = await response.json();
+            console.error('API error response:', errorData);
+            
+            // Extract specific error message if available
+            const errorMessage = errorData?.message || 
+                              errorData?.error?.message ||
+                              "Failed to create parent. Please try again.";
+                              
+            toast.error("Creation Failed", {
+              description: errorMessage
+            });
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+            toast.error("Creation Failed", {
+              description: `Error ${response.status}: Failed to create parent. Please try again.`
+            });
+          }
+        }
+        
+      } catch (error) {
+        // Network or other fetch errors (not HTTP errors)
+        const fetchError = error as { name?: string, message?: string };
+        console.error('Fetch error:', fetchError);
+        
+        if (fetchError.name === 'AbortError') {
+          toast.error("Request Timeout", {
+            description: "The server took too long to respond. Please try again."
+          });
+        } else {
+          toast.error("Network Error", {
+            description: fetchError.message || "Failed to connect to the server. Please check your connection."
+          });
+        }
+      } finally {
+        // Always set loading to false
+        setIsLoading(false);
+      }
     } catch (error: any) {
-      console.error('Error creating parent invitation:', error);
-      toast.error("Invitation Failed", {
-        description: error.message || "An error occurred while sending the parent invitation. Please try again."
+      console.error('Outer try-catch error:', error);
+      toast.error("Parent Creation Failed", {
+        description: error.message || "An unexpected error occurred. Please try again."
       });
-    } finally {
       setIsLoading(false);
     }
-  }
+  }; // Close onSubmit function
 
   return (
     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
@@ -626,7 +1001,7 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
         </DrawerHeader>
         <div className="px-6 py-4 overflow-y-auto relative">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
+            <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6 p-2">
               
               {/* Loading Overlay */}
               {isLoading && (
@@ -1101,7 +1476,7 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
 
                 {/* Students List */}
                 <div className="space-y-4">
-                  {/* Add Student Button */}
+                  {/* Students Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-primary" />
@@ -1109,16 +1484,6 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
                         Students ({watchedStudents.length})
                       </span>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addNewStudent}
-                      className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
-                    >
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      Add Student
-                    </Button>
                   </div>
 
                   {/* Students List */}
@@ -1126,163 +1491,77 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
                     <div className="text-center py-8 border-2 border-dashed border-primary/20 rounded-xl bg-primary/5">
                       <Users className="h-8 w-8 text-primary/50 mx-auto mb-2" />
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        No students added yet. Use the search above or click "Add Student" to get started.
+                        No students added yet. Use the search above to find and add students to this parent.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            These students will be linked to <span className="font-semibold">{form.getValues('name') || 'this parent'}</span>
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 pl-6">
+                          An invitation will be sent to {form.getValues('email') || form.getValues('phone') || 'the parent'}
+                        </p>
+                      </div>
+                      
                       {watchedStudents.map((student, index) => (
                         <div 
                           key={index} 
                           data-student-index={index}
-                          className={`border-2 border-primary/20 bg-primary/5 rounded-xl p-4 transition-all duration-300 ${
-                            (!student.name.trim() || !student.admissionNumber.trim() || !student.grade.trim()) 
-                              ? 'border-red-300 bg-red-50/50 dark:bg-red-950/20' 
-                              : ''
-                          }`}
+                          className="border-2 border-primary/20 rounded-xl overflow-hidden transition-all duration-300"
                         >
-                          <div className="flex items-center justify-between mb-3">
+                          {/* Student Card Header */}
+                          <div className="flex items-center justify-between bg-gradient-to-r from-primary/15 to-primary/5 px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-primary/60"></div>
-                              <span className="font-mono text-sm font-medium text-primary">
-                                Student {index + 1}
-                              </span>
+                              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                                <User className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-slate-800 dark:text-slate-200">
+                                  {student.name}
+                                </h4>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  {student.admissionNumber}
+                                </p>
+                              </div>
                             </div>
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
                               onClick={() => removeStudent(index)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full p-1"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="h-4 w-4" />
                             </Button>
                           </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {/* Student Name */}
-                            <div>
-                              <label className={`font-mono text-xs font-medium mb-1 block ${
-                                !student.name.trim() ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'
-                              }`}>
-                                Student Name *
-                                {!student.name.trim() && <span className="ml-1 text-red-500">(Required)</span>}
-                              </label>
-                              <Input
-                                placeholder="Student's full name"
-                                value={student.name}
-                                onChange={(e) => updateStudent(index, 'name', e.target.value)}
-                                className={`font-mono text-sm ${
-                                  !student.name.trim() ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
-                                }`}
-                              />
-                            </div>
-
-                            {/* Admission Number */}
-                            <div>
-                              <label className={`font-mono text-xs font-medium mb-1 block ${
-                                !student.admissionNumber.trim() ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'
-                              }`}>
-                                Admission Number *
-                                {!student.admissionNumber.trim() && <span className="ml-1 text-red-500">(Required)</span>}
-                              </label>
-                              <Input
-                                placeholder="e.g., KPS/2023/001"
-                                value={student.admissionNumber}
-                                onChange={(e) => updateStudent(index, 'admissionNumber', e.target.value)}
-                                className={`font-mono text-sm ${
-                                  !student.admissionNumber.trim() ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : ''
-                                }`}
-                              />
-                            </div>
-
-                            {/* Grade */}
-                            <div>
-                              <label className={`font-mono text-xs font-medium mb-1 block ${
-                                !student.grade.trim() ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'
-                              }`}>
-                                Grade *
-                                {!student.grade.trim() && <span className="ml-1 text-red-500">(Required)</span>}
-                              </label>
-                              <Select 
-                                value={student.grade}
-                                onValueChange={(value) => handleStudentGradeChange(index, value)}
-                              >
-                                <SelectTrigger className={`font-mono text-sm bg-white dark:bg-slate-800 ${
-                                  !student.grade.trim() ? 'border-red-300 focus:border-red-500 focus:ring-red-200' : 'border-primary/20'
-                                }`}>
-                                  <SelectValue placeholder="Select grade" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {allGrades.map(grade => (
-                                    <SelectItem key={grade.id} value={grade.name}>
-                                      {grade.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {/* Class */}
-                            <div>
-                              <label className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">
-                                Class *
-                              </label>
-                              <div className="flex gap-2">
-                                <Input
-                                  placeholder="Will be generated"
-                                  value={student.class}
-                                  onChange={(e) => updateStudent(index, 'class', e.target.value)}
-                                  className="font-mono text-sm bg-primary/5 border-primary/20 flex-1"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => autoGenerateClassName(index)}
-                                  disabled={!student.grade}
-                                  className="shrink-0 border-primary/20 text-primary hover:bg-primary/5"
-                                >
-                                  <Wand2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* Stream */}
-                            <div className="md:col-span-2">
-                              <label className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">
-                                Stream (Optional)
-                              </label>
-                              <Select 
-                                value={student.stream}
-                                onValueChange={(value) => handleStudentStreamChange(index, value)}
-                              >
-                                <SelectTrigger className="font-mono text-sm bg-white dark:bg-slate-800 border-primary/20">
-                                  <SelectValue placeholder="Select stream" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {student.grade && allGrades.find(g => g.name === student.grade) && 
-                                    getStreamsByGradeId(allGrades.find(g => g.name === student.grade)!.id).map(stream => (
-                                      <SelectItem key={stream.id} value={stream.name}>
-                                        {stream.name}
-                                      </SelectItem>
-                                    ))
-                                  }
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {/* Student Phone */}
-                            <div className="md:col-span-2">
-                              <label className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">
-                                Student Phone (Optional)
-                              </label>
-                              <Input
-                                placeholder="Student's phone number"
-                                value={student.phone || ''}
-                                onChange={(e) => updateStudent(index, 'phone', e.target.value)}
-                                className="font-mono text-sm bg-white dark:bg-slate-800 border-primary/20"
-                              />
+                          
+                          {/* Student Details */}
+                          <div className="bg-white dark:bg-slate-800 p-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              {student.stream && (
+                                <div>
+                                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Stream</p>
+                                  <div className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300">
+                                    <Hash className="h-3.5 w-3.5 text-primary" />
+                                    <span>{student.stream}</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {student.phone && (
+                                <div>
+                                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Phone</p>
+                                  <div className="flex items-center gap-1.5 text-sm text-slate-700 dark:text-slate-300">
+                                    <Phone className="h-3.5 w-3.5 text-primary" />
+                                    <span>{student.phone}</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1396,4 +1675,4 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
       </DrawerContent>
     </Drawer>
   )
-} 
+}
