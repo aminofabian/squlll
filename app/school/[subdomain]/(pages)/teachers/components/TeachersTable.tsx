@@ -1,21 +1,32 @@
 "use client";
 
 import React, { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { User, Users, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { toast } from "sonner";
+import { User, MoreVertical, X, Check, Trash } from "lucide-react"
+import Image from "next/image";
 
-// Teacher type definition (simplified for table use)
+// Teacher type definition based on GraphQL query
 type Teacher = {
   id: string;
-  name: string;
-  designation: string;
+  name: string; // maps to fullName in GraphQL
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  gender?: string;
+  image?: string; // Profile image URL
+  designation: string; // role title
   department: string;
-  subjects: string[];
+  subjects: string[]; // derived from subject in GraphQL
+  address?: string;
   employeeId: string;
+  dateOfBirth?: string;
   photo?: string;
-  status: "active" | "on leave" | "former" | "substitute" | "retired";
+  status: "active" | "on leave" | "former" | "substitute" | "retired"; // derived from isActive
+  hasCompletedProfile?: boolean;
+  userId?: string;
   performance?: {
     rating: number;
   };
@@ -60,7 +71,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
         </div>
         
         <div className="text-center py-12">
-          <Users className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <User className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-mono font-semibold text-slate-700 dark:text-slate-300 mb-2">
             No teachers found
           </h3>
@@ -139,7 +150,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     disabled={deletingTeacherId === teacher.id}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash className="h-4 w-4" />
                   </Button>
                 )}
               </div>
@@ -152,7 +163,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     Basic Info
                   </h4>
                   <div className="space-y-4">
-                    {/* Row 1 */}
+                    {/* Row 1 - ID */}
                     <div className="flex justify-between items-center py-2 h-[42px]">
                       <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                         ID
@@ -161,7 +172,44 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                         {teacher.employeeId}
                       </span>
                     </div>
-                    {/* Row 2 */}
+                    
+                    {/* Row 2 - Email */}
+                    {teacher.email && (
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Email
+                        </span>
+                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                          {teacher.email}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Row 3 - Phone */}
+                    {teacher.phoneNumber && (
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Phone
+                        </span>
+                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          {teacher.phoneNumber}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Row 4 - Gender */}
+                    {teacher.gender && (
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Gender
+                        </span>
+                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          {typeof teacher.gender === 'string' ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1).toLowerCase() : ''}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Row 5 - Status */}
                     <div className="flex justify-between items-center py-2 h-[42px]">
                       <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                         Status
@@ -193,10 +241,55 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                 {/* Right Column */}
                 <div className="grid-rows-auto">
                   <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
-                    Performance
+                    Additional Info
                   </h4>
                   <div className="space-y-4">
-                    {/* Row 1 */}
+                    {/* Date of Birth */}
+                    {teacher.dateOfBirth && (
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Birth Date
+                        </span>
+                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          {new Date(teacher.dateOfBirth).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short', 
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Address - Truncated */}
+                    {teacher.address && (
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Address
+                        </span>
+                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                          {teacher.address}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Profile Status */}
+                    {teacher.hasCompletedProfile !== undefined && (
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Profile
+                        </span>
+                        <Badge variant="outline" className={`
+                          text-xs ${
+                            teacher.hasCompletedProfile ? 'bg-green-50 text-green-700 border-green-200' : 
+                            'bg-orange-50 text-orange-700 border-orange-200'
+                          }`
+                        }>
+                          {teacher.hasCompletedProfile ? 'Complete' : 'Incomplete'}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* Rating */}
                     <div className="flex justify-between items-center py-2 h-[42px]">
                       <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                         Rating
@@ -297,7 +390,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       disabled={deletingTeacherId === teacher.id}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
@@ -310,7 +403,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       Basic Info
                     </h4>
                     <div className="space-y-4">
-                      {/* Row 1 */}
+                      {/* Row 1 - ID */}
                       <div className="flex justify-between items-center py-2 h-[42px]">
                         <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           ID
@@ -319,7 +412,44 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                           {teacher.employeeId}
                         </span>
                       </div>
-                      {/* Row 2 */}
+                      
+                      {/* Row 2 - Email */}
+                      {teacher.email && (
+                        <div className="flex justify-between items-center py-2 h-[42px]">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                            Email
+                          </span>
+                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                            {teacher.email}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Row 3 - Phone */}
+                      {teacher.phoneNumber && (
+                        <div className="flex justify-between items-center py-2 h-[42px]">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                            Phone
+                          </span>
+                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                            {teacher.phoneNumber}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Row 4 - Gender */}
+                      {teacher.gender && (
+                        <div className="flex justify-between items-center py-2 h-[42px]">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                            Gender
+                          </span>
+                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                            {typeof teacher.gender === 'string' ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1).toLowerCase() : ''}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Row 5 - Status */}
                       <div className="flex justify-between items-center py-2 h-[42px]">
                         <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Status
@@ -351,10 +481,55 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                   {/* Right Column */}
                   <div className="grid-rows-auto">
                     <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
-                      Performance
+                      Additional Info
                     </h4>
                     <div className="space-y-4">
-                      {/* Row 1 */}
+                      {/* Date of Birth */}
+                      {teacher.dateOfBirth && (
+                        <div className="flex justify-between items-center py-2 h-[42px]">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                            Birth Date
+                          </span>
+                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                            {new Date(teacher.dateOfBirth).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short', 
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Address - Truncated */}
+                      {teacher.address && (
+                        <div className="flex justify-between items-center py-2 h-[42px]">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                            Address
+                          </span>
+                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                            {teacher.address}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Profile Status */}
+                      {teacher.hasCompletedProfile !== undefined && (
+                        <div className="flex justify-between items-center py-2 h-[42px]">
+                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                            Profile
+                          </span>
+                          <Badge variant="outline" className={`
+                            text-xs ${
+                              teacher.hasCompletedProfile ? 'bg-green-50 text-green-700 border-green-200' : 
+                              'bg-orange-50 text-orange-700 border-orange-200'
+                            }`
+                          }>
+                            {teacher.hasCompletedProfile ? 'Complete' : 'Incomplete'}
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {/* Rating */}
                       <div className="flex justify-between items-center py-2 h-[42px]">
                         <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Rating
@@ -415,16 +590,25 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                   Teacher
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Department
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Employee ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Birth Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Subjects
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Rating
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Profile
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Status
@@ -445,38 +629,59 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       {index + 1}
                     </div>
                   </td>
-                  <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        {teacher.photo ? (
-                          <img 
-                            className="h-10 w-10 rounded-full object-cover" 
-                            src={teacher.photo} 
-                            alt={teacher.name} 
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-5 w-5 text-primary" />
-                          </div>
-                        )}
+                      <div className="h-10 w-10 flex-shrink-0 mr-3">
+                        <div className="relative h-10 w-10">
+                          {teacher.image ? (
+                            <Image 
+                              src={teacher.image} 
+                              alt={teacher.name} 
+                              className="h-10 w-10 rounded-full object-cover border-2 border-primary/20" 
+                              width={40} 
+                              height={40} 
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-primary/10 border-2 border-primary/20 text-primary">
+                              <User size={20} />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="ml-4 min-w-0 flex-1">
-                        <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-words">
+                      <div>
+                        <div className="font-semibold">
                           {teacher.name}
                         </div>
-                        <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
-                          {teacher.designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {teacher.gender && typeof teacher.gender === 'string' ? 
+                            teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1).toLowerCase() : ''}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                      {teacher.department}
-                    </Badge>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                    <div className="flex flex-col">
+                      <div className="text-slate-700 dark:text-slate-300 truncate max-w-[150px]" title={teacher.email}>
+                        {teacher.email || '-'}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {teacher.phoneNumber || '-'}
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-mono text-slate-900 dark:text-slate-100 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
-                    {teacher.employeeId}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                    {teacher.department || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                    {teacher.employeeId || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                    {teacher.dateOfBirth ? 
+                      new Date(teacher.dateOfBirth).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      }) : '-'}
                   </td>
                   <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
                     <div className="flex flex-wrap gap-1">
@@ -487,9 +692,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       ))}
                     </div>
                   </td>
-                  <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
+                  {/* Rating Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
                     {teacher.performance?.rating ? (
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, index) => (
                             <div 
@@ -500,17 +706,28 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                             />
                           ))}
                         </div>
-                        <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
-                          {teacher.performance.rating}/5
-                        </span>
+                        <span className="text-sm font-semibold">{teacher.performance.rating}/5</span>
                       </div>
                     ) : (
-                      <span className="text-sm text-slate-400">No rating</span>
+                      <span className="text-slate-500">Not rated</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className={`w-2 h-2 rounded-full ${
+                  {/* Profile Status Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                    {teacher.hasCompletedProfile !== undefined && (
+                      <Badge variant="outline" className={`
+                        text-xs ${
+                          teacher.hasCompletedProfile ? 'bg-green-50 text-green-700 border-green-200' : 
+                          'bg-orange-50 text-orange-700 border-orange-200'
+                        }`
+                      }>
+                        {teacher.hasCompletedProfile ? 'Complete' : 'Incomplete'}
+                      </Badge>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         teacher.status === 'active' ? 'bg-green-500' : 
                         teacher.status === 'on leave' ? 'bg-yellow-500' : 
                         teacher.status === 'former' ? 'bg-gray-400' :
@@ -542,7 +759,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                         disabled={deletingTeacherId === teacher.id}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     )}
                   </td>
