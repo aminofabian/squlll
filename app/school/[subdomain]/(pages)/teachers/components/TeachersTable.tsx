@@ -85,175 +85,89 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
       
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-primary/20">
         {/* Mobile Card Layout - Small screens only */}
-        <div className="grid gap-4 sm:hidden">
-          {teachers.map((teacher) => (
+        <div className="grid gap-6 p-4 sm:hidden">
+          {teachers.map((teacher, index) => (
             <div 
               key={teacher.id} 
-              className="p-4 border border-primary/10 rounded-lg space-y-3 hover:bg-primary/5 transition-colors"
+              className="p-5 border-2 border-primary/10 rounded-xl hover:bg-primary/5 transition-colors relative shadow-sm"
             >
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex-1 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0">
-                        {teacher.photo ? (
-                          <img 
-                            className="h-10 w-10 rounded-full object-cover" 
-                            src={teacher.photo} 
-                            alt={teacher.name} 
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-5 w-5 text-primary" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
-                          {teacher.name}
-                        </div>
-                        <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
-                          {teacher.designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                        </div>
-                        <div className="mt-2">
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                            {teacher.department}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {onTeacherDelete && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTeacher(teacher.id, teacher.name);
-                      }}
-                      disabled={deletingTeacherId === teacher.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+              {/* Teacher Number Badge */}
+              <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
+                <span className="font-mono text-xs font-bold">{index + 1}</span>
               </div>
               
-              <div className="space-y-2">
-                <div className="text-sm font-mono text-slate-900 dark:text-slate-100 break-all">
-                  <span className="text-slate-500">ID:</span> {teacher.employeeId}
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Status:</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      teacher.status === 'active' ? 'bg-green-500' : 
-                      teacher.status === 'on leave' ? 'bg-yellow-500' : 
-                      teacher.status === 'former' ? 'bg-gray-400' :
-                      teacher.status === 'substitute' ? 'bg-blue-500' :
-                      'bg-purple-500'
-                    }`} />
-                    <Badge variant="outline" className={`
-                      text-xs ${
-                        teacher.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 
-                        teacher.status === 'on leave' ? 'bg-orange-50 text-orange-700 border-orange-200' : 
-                        teacher.status === 'former' ? 'bg-gray-50 text-gray-700 border-gray-200' :
-                        teacher.status === 'substitute' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                        'bg-purple-50 text-purple-700 border-purple-200'
-                      }
-                    `}>
-                      {teacher.status.charAt(0).toUpperCase() + teacher.status.slice(1)}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div>
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Subjects:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {teacher.subjects.map((subject, index) => (
-                      <Badge key={index} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs break-all">
-                        {subject}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                {teacher.performance?.rating && (
-                  <div>
-                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Rating:</span>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, index) => (
-                          <div 
-                            key={index} 
-                            className={`h-2 w-2 rounded-full ${
-                              index < teacher.performance!.rating ? 'bg-yellow-400' : 'bg-gray-200'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
-                        {teacher.performance.rating}/5
-                      </span>
+              {/* Teacher Header Section */}
+              <div className="flex items-start gap-3 pb-4 border-b-2 border-primary/10 mb-6">
+                <div className="flex-1 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      {teacher.photo ? (
+                        <img 
+                          className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" 
+                          src={teacher.photo} 
+                          alt={teacher.name} 
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Medium Device 2-Row Layout - Up to 17 inch screens */}
-        <div className="hidden sm:block 2xl:hidden">
-          <div className="space-y-4">
-            {teachers.map((teacher) => (
-              <div 
-                key={teacher.id} 
-                className="p-4 border border-primary/10 rounded-lg hover:bg-primary/5 transition-colors"
-              >
-                {/* First Row */}
-                <div className="grid grid-cols-6 gap-4 items-center mb-3">
-                  <div className="col-span-5 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
-                    <div className="grid grid-cols-5 gap-4 items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
-                          {teacher.photo ? (
-                            <img 
-                              className="h-10 w-10 rounded-full object-cover" 
-                              src={teacher.photo} 
-                              alt={teacher.name} 
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <User className="h-5 w-5 text-primary" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-words">
-                            {teacher.name}
-                          </div>
-                          <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
-                            {teacher.designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                          </div>
-                        </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                        {teacher.name}
                       </div>
-                      
-                      <div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
+                        {teacher.designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </div>
+                      <div className="mt-2">
                         <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
                           {teacher.department}
                         </Badge>
                       </div>
-                      
-                      <div className="text-sm font-mono text-slate-900 dark:text-slate-100">
+                    </div>
+                  </div>
+                </div>
+                {onTeacherDelete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTeacher(teacher.id, teacher.name);
+                    }}
+                    disabled={deletingTeacherId === teacher.id}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* Teacher Details Grid - Two-column layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {/* Left Column */}
+                <div className="grid-rows-auto">
+                  <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                    Basic Info
+                  </h4>
+                  <div className="space-y-4">
+                    {/* Row 1 */}
+                    <div className="flex justify-between items-center py-2 h-[42px]">
+                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        ID
+                      </span>
+                      <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
                         {teacher.employeeId}
-                      </div>
-                      
+                      </span>
+                    </div>
+                    {/* Row 2 */}
+                    <div className="flex justify-between items-center py-2 h-[42px]">
+                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        Status
+                      </span>
                       <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           teacher.status === 'active' ? 'bg-green-500' : 
                           teacher.status === 'on leave' ? 'bg-yellow-500' : 
                           teacher.status === 'former' ? 'bg-gray-400' :
@@ -272,8 +186,179 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                           {teacher.status.charAt(0).toUpperCase() + teacher.status.slice(1)}
                         </Badge>
                       </div>
-                      
-                      <div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right Column */}
+                <div className="grid-rows-auto">
+                  <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                    Performance
+                  </h4>
+                  <div className="space-y-4">
+                    {/* Row 1 */}
+                    <div className="flex justify-between items-center py-2 h-[42px]">
+                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        Rating
+                      </span>
+                      {teacher.performance?.rating ? (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, index) => (
+                              <div 
+                                key={index} 
+                                className={`h-2 w-2 rounded-full ${
+                                  index < teacher.performance!.rating ? 'bg-yellow-400' : 'bg-gray-200'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                            {teacher.performance.rating}/5
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                          Not rated
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Subjects Section */}
+              <div className="border-t border-primary/10 pt-4">
+                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium block mb-2">
+                  Subjects:
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {teacher.subjects.map((subject, index) => (
+                    <Badge key={index} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs break-all">
+                      {subject}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Medium Device 2-Row Layout - Up to 17 inch screens */}
+        <div className="hidden sm:block 2xl:hidden">
+          <div className="space-y-6 p-4">
+            {teachers.map((teacher, index) => (
+              <div 
+                key={teacher.id} 
+                className="p-5 border-2 border-primary/10 rounded-xl hover:bg-primary/5 transition-colors relative shadow-sm"
+              >
+                {/* Teacher Number Badge */}
+                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
+                  <span className="font-mono text-xs font-bold">{index + 1}</span>
+                </div>
+                {/* Teacher Header Section */}
+                <div className="flex items-start justify-between pb-4 border-b-2 border-primary/10 mb-6">
+                  <div className="flex items-start gap-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
+                    <div className="flex-shrink-0">
+                      {teacher.photo ? (
+                        <img 
+                          className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" 
+                          src={teacher.photo} 
+                          alt={teacher.name} 
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-words">
+                        {teacher.name}
+                      </div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
+                        {teacher.designation.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </div>
+                      <div className="mt-2">
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
+                          {teacher.department}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  {onTeacherDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTeacher(teacher.id, teacher.name);
+                      }}
+                      disabled={deletingTeacherId === teacher.id}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Teacher Details Grid - Two-column layout */}
+                <div className="grid grid-cols-2 gap-6 mb-4">
+                  {/* Left Column */}
+                  <div className="grid-rows-auto">
+                    <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                      Basic Info
+                    </h4>
+                    <div className="space-y-4">
+                      {/* Row 1 */}
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          ID
+                        </span>
+                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          {teacher.employeeId}
+                        </span>
+                      </div>
+                      {/* Row 2 */}
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Status
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            teacher.status === 'active' ? 'bg-green-500' : 
+                            teacher.status === 'on leave' ? 'bg-yellow-500' : 
+                            teacher.status === 'former' ? 'bg-gray-400' :
+                            teacher.status === 'substitute' ? 'bg-blue-500' :
+                            'bg-purple-500'
+                          }`} />
+                          <Badge variant="outline" className={`
+                            text-xs ${
+                              teacher.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 
+                              teacher.status === 'on leave' ? 'bg-orange-50 text-orange-700 border-orange-200' : 
+                              teacher.status === 'former' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                              teacher.status === 'substitute' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              'bg-purple-50 text-purple-700 border-purple-200'
+                            }
+                          `}>
+                            {teacher.status.charAt(0).toUpperCase() + teacher.status.slice(1)}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Right Column */}
+                  <div className="grid-rows-auto">
+                    <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                      Performance
+                    </h4>
+                    <div className="space-y-4">
+                      {/* Row 1 */}
+                      <div className="flex justify-between items-center py-2 h-[42px]">
+                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          Rating
+                        </span>
                         {teacher.performance?.rating ? (
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1">
@@ -286,37 +371,25 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                                 />
                               ))}
                             </div>
-                            <span className="text-sm font-mono text-slate-900 dark:text-slate-100">
+                            <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
                               {teacher.performance.rating}/5
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-slate-400">No rating</span>
+                          <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                            Not rated
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  {onTeacherDelete && (
-                    <div className="flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTeacher(teacher.id, teacher.name);
-                        }}
-                        disabled={deletingTeacherId === teacher.id}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
                 
-                {/* Second Row */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Subjects:</span>
+                {/* Subjects Section */}
+                <div className="border-t border-primary/10 pt-4">
+                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium block mb-2">
+                    Subjects:
+                  </span>
                   <div className="flex flex-wrap gap-1">
                     {teacher.subjects.map((subject, index) => (
                       <Badge key={index} variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
@@ -333,8 +406,11 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
         {/* Desktop Table Layout - 17+ inch screens */}
         <div className="hidden 2xl:block">
           <table className="w-full">
-            <thead className="bg-primary/5 border-b border-primary/20">
+            <thead className="bg-primary/5 border-b-2 border-primary/20">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-10">
+                  #
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Teacher
                 </th>
@@ -359,11 +435,16 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/10">
-              {teachers.map((teacher) => (
+              {teachers.map((teacher, index) => (
                 <tr 
                   key={teacher.id}
                   className="hover:bg-primary/5 transition-colors"
                 >
+                  <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
+                    <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-mono text-sm font-bold">
+                      {index + 1}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
