@@ -10,6 +10,7 @@ const GET_PENDING_INVITATIONS_QUERY = `
       role
       status
       createdAt
+      expiresAt
       invitedBy {
         id
         name
@@ -25,6 +26,7 @@ export interface PendingInvitation {
   role: string;
   status: string;
   createdAt: string;
+  expiresAt?: string; // Optional since some invitations might not have expiration
   invitedBy: {
     id: string;
     name: string;
