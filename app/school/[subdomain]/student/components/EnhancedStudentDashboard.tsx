@@ -43,7 +43,8 @@ import {
   ArrowLeft,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  UserCircle
 } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 import { Button } from "@/components/ui/button";
@@ -160,7 +161,36 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
   const [loading, setLoading] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [studentName, setStudentName] = useState<string>('');
   const router = useRouter();
+  
+  // Fetch username from cookies when component mounts
+  useEffect(() => {
+    // Check if window is defined (we're in the browser)
+    if (typeof window !== 'undefined') {
+      try {
+        // Function to get cookie value by name
+        const getCookie = (name: string): string | null => {
+          const cookieArr = document.cookie.split(';');
+          for (let i = 0; i < cookieArr.length; i++) {
+            const cookiePair = cookieArr[i].split('=');
+            const cookieName = cookiePair[0].trim();
+            if (cookieName === name) {
+              return decodeURIComponent(cookiePair[1]);
+            }
+          }
+          return null;
+        };
+        
+        const storedName = getCookie('userName');
+        if (storedName) {
+          setStudentName(storedName);
+        }
+      } catch (error) {
+        console.error('Error fetching userName from cookies:', error);
+      }
+    }
+  }, []);
 
   const handleActionClick = (actionId: string) => {
     console.log(`Action ${actionId} clicked`);
@@ -323,7 +353,58 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
   };
 
   const renderStudentStats = () => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 w-full max-w-5xl mx-auto">
+    <>
+      {studentName && (
+        <div className="flex justify-center mb-6">
+          <div className="w-full max-w-3xl bg-gradient-to-r from-primary/20 via-background to-primary/20 shadow-md border border-primary/20 rounded-lg py-4 px-6 relative">
+            {/* Student profile content */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Left side - Student info */}
+              <div className="flex items-center gap-4">
+                {/* Profile avatar */}
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <UserCircle className="w-7 h-7 text-primary" />
+                </div>
+                
+                {/* Student name */}
+                <div>
+                  <div className="flex items-baseline">
+                    <span className="text-md font-medium text-muted-foreground">Welcome,</span>
+                    <span className="text-xl font-bold ml-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      {studentName}
+                    </span>
+                  </div>
+                  {studentStats.currentGrade && (
+                    <div className="flex items-center mt-1">
+                      <GraduationCap className="w-4 h-4 text-primary mr-1" />
+                      <span className="text-sm font-medium">Class: <span className="font-semibold text-foreground">{studentStats.currentGrade}</span></span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Right side - Stats */}
+              <div className="flex items-center gap-5">
+                <div className="flex flex-col items-center border-r border-primary/20 pr-5">
+                  <span className="text-xs text-muted-foreground">Attendance</span>
+                  <div className="flex items-center">
+                    <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{studentStats.attendanceRate}</span>
+                    <UserCheck className="w-4 h-4 text-primary ml-1" />
+                  </div>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-muted-foreground">Average Score</span>
+                  <div className="flex items-center">
+                    <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{studentStats.averageScore}</span>
+                    <BarChart3 className="w-4 h-4 text-primary ml-1" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 w-full max-w-5xl mx-auto">
       {/* Next Class */}
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
@@ -364,6 +445,7 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         <span className="text-xl font-bold text-foreground">{studentStats.averageScore}</span>
       </div>
     </div>
+    </>
   );
 
   return (
@@ -377,8 +459,24 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                 <GraduationCap className="w-6 h-6 text-primary-foreground text-white" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Student Dashboard</h1>
-                <p className="text-sm text-muted-foreground/90 font-medium">Welcome back! Stay organized with your studies.</p>
+                {studentName ? (
+                  <>
+                    <h1 className="text-2xl lg:text-3xl font-bold">
+                      <span className="flex items-center gap-2">
+                        <span className="text-foreground">Welcome,</span>
+                        <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent font-bold">{studentName}</span>
+                      </span>
+                    </h1>
+                    <p className="text-sm text-muted-foreground/90 font-medium">
+                      Stay organized with your studies today
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Student Dashboard</h1>
+                    <p className="text-sm text-muted-foreground/90 font-medium">Welcome back! Stay organized with your studies.</p>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">

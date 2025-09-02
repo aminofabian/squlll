@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   Search, 
   Filter, 
@@ -24,6 +24,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Loader2,
   Sparkles,
   Zap,
   Heart,
@@ -36,24 +37,33 @@ import {
   Home
 } from "lucide-react";
 
+// Import GraphQL queries and utilities
+import { SEARCH_STUDENTS_BY_NAME, SearchStudentsByNameResponse } from "../graphql/studentQueries";
+import { SEARCH_TEACHERS_BY_NAME, SearchTeachersByNameResponse } from "../graphql/teacherQueries";
+import { GET_BOTH_STUDENTS_AND_TEACHERS_BY_TENANT, GetBothStudentsAndTeachersByTenantResponse, transformCombinedResponse } from "../graphql/combinedQueries";
+import { graphqlFetch } from "../utils/graphqlFetch";
+import { Student, transformGraphQLStudentToStudent } from "../types/studentTypes";
+import { Teacher, transformGraphQLTeacherToTeacher } from "../types/teacherTypes";
+
 interface Individual {
   id: string;
   name: string;
   type: 'teacher' | 'student';
   email: string;
   phone?: string;
-  avatar?: string;
   department?: string;
+  role?: string;
   class?: string;
   grade?: string;
-  subjects?: string[];
-  achievements?: string[];
-  status: 'active' | 'inactive' | 'on_leave';
-  lastActive?: string;
+  admissionNumber?: string;
+  status: 'active' | 'inactive' | 'pending' | 'on_leave';
   rating?: number;
   bio?: string;
   location?: string;
+  lastActive?: string;
   joinDate?: string;
+  subjects?: string[];
+  achievements?: string[];
   isSelected?: boolean;
 }
 
@@ -216,7 +226,7 @@ const mockIndividuals: Individual[] = [
 
 export default function IndividualSearchSection({ subdomain, onBack, onSelect }: IndividualSearchSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'teacher' | 'student'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'teacher' | 'student'>('student'); // Default to student search
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'on_leave'>('all');
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterGrade, setFilterGrade] = useState<string>('all');
@@ -225,11 +235,201 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
   const [selectedIndividuals, setSelectedIndividuals] = useState<Individual[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [studentCount, setStudentCount] = useState(0);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teacherCount, setTeacherCount] = useState(0);
 
-  const departments = Array.from(new Set(mockIndividuals.filter(i => i.type === 'teacher').map(i => i.department)));
-  const grades = Array.from(new Set(mockIndividuals.filter(i => i.type === 'student').map(i => i.grade)));
+  // Use mock data for departments and teachers
+  const mockTeachers = mockIndividuals.filter(i => i.type === 'teacher');
+  const departments = Array.from(new Set(mockTeachers.map(i => i.department)));
+  
+  // Get grades from the fetched students, fall back to mock data if no students yet
+  const grades = Array.from(new Set(
+    students.length > 0 
+      ? students.filter(s => s.grade).map(s => s.grade)
+      : mockIndividuals.filter(i => i.type === 'student' && i.grade).map(i => i.grade)
+  ));
 
-  const filteredIndividuals = mockIndividuals.filter(individual => {
+  // Fetch both students and teachers using the combined query
+  const fetchBothStudentsAndTeachers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await graphqlFetch<GetBothStudentsAndTeachersByTenantResponse>(
+        GET_BOTH_STUDENTS_AND_TEACHERS_BY_TENANT,
+        {},
+        subdomain
+      );
+      
+      const { students, teachers, totalCount } = transformCombinedResponse(data);
+      
+      setStudents(students);
+      setTeachers(teachers);
+      setStudentCount(students.length);
+      setTeacherCount(teachers.length);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch students and teachers');
+      setStudents([]);
+      setTeachers([]);
+      setStudentCount(0);
+      setTeacherCount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [subdomain]);
+
+  // Function to search students by name using GraphQL
+  const searchStudentsByName = useCallback(async (name: string) => {
+    if (!name || name.trim().length < 2) {
+      setStudents([]);
+      setStudentCount(0);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await graphqlFetch<SearchStudentsByNameResponse>(
+        SEARCH_STUDENTS_BY_NAME,
+        { 
+          name, 
+          tenantId: subdomain // This parameter is required by the API
+        },
+        subdomain
+      );
+      
+      // Direct array response based on our updated interface
+      const studentResults = data.searchStudentsByName;
+      
+      // Convert GraphQL response to our UI component format
+      const transformedStudents = studentResults.map(transformGraphQLStudentToStudent);
+      
+      setStudents(transformedStudents);
+      setStudentCount(transformedStudents.length);
+      
+      console.log('Students found:', transformedStudents.length);
+    } catch (err) {
+      console.error('Student search error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to search students');
+      setStudents([]);
+      setStudentCount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [subdomain]);
+  
+  // Function to search teachers by name using GraphQL
+  const searchTeachersByName = useCallback(async (name: string) => {
+    if (!name || name.trim().length < 2) {
+      setTeachers([]);
+      setTeacherCount(0);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await graphqlFetch<SearchTeachersByNameResponse>(
+        SEARCH_TEACHERS_BY_NAME,
+        { name },
+        subdomain
+      );
+      
+      // Get teachers from nested response
+      const teacherResults = data.searchTeachersByName.teachers;
+      const teacherCountResult = data.searchTeachersByName.count;
+      
+      // Convert GraphQL response to our UI component format
+      const transformedTeachers = teacherResults.map(transformGraphQLTeacherToTeacher);
+      
+      setTeachers(transformedTeachers);
+      setTeacherCount(teacherCountResult);
+      
+      console.log('Teachers found:', teacherCountResult);
+    } catch (err) {
+      console.error('Teacher search error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to search teachers');
+      setTeachers([]);
+      setTeacherCount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [subdomain]);
+
+  // Initial data load with combined query on component mount
+  useEffect(() => {
+    fetchBothStudentsAndTeachers();
+  }, [fetchBothStudentsAndTeachers]);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm.trim().length >= 2) {
+        if (filterType === 'student' || filterType === 'all') {
+          searchStudentsByName(searchTerm);
+        }
+        
+        if (filterType === 'teacher' || filterType === 'all') {
+          searchTeachersByName(searchTerm);
+        }
+      } else if (searchTerm.trim().length === 0) {
+        // When search is cleared, load all data again
+        fetchBothStudentsAndTeachers();
+      } else {
+        // Clear results when search term is too short but not empty
+        if (filterType === 'student' || filterType === 'all') {
+          setStudents([]);
+          setStudentCount(0);
+        }
+        if (filterType === 'teacher' || filterType === 'all') {
+          setTeachers([]);
+          setTeacherCount(0);
+        }
+      }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm, searchStudentsByName, searchTeachersByName, fetchBothStudentsAndTeachers, filterType]);
+  
+  // Convert teachers and students from API to the Individual interface
+  const availableIndividuals: Individual[] = [
+    // Map teachers from API
+    ...teachers.map(teacher => ({
+      id: teacher.id,
+      name: teacher.name || '', // Name is already properly mapped in transformGraphQLTeacherToTeacher
+      type: 'teacher' as const,
+      email: teacher.email || '',
+      phone: teacher.phone || '',
+      department: teacher.department || '',
+      role: teacher.role || '',
+      status: teacher.isActive ? 'active' as const : 'inactive' as const,
+      subjects: teacher.subjects?.map(sub => typeof sub === 'string' ? sub : (sub.name || '')) || [],
+      achievements: [],
+      isSelected: selectedIndividuals.some(i => i.id === teacher.id)
+    })),
+    // Map students from API
+    ...students.map(student => ({
+      id: student.id,
+      name: student.name || '', 
+      type: 'student' as const,
+      email: student.email || '',
+      phone: student.phone || '',
+      class: student.class || '',
+      grade: student.grade || '',
+      admissionNumber: student.admissionNumber || '',
+      status: student.status || 'active' as const, 
+      achievements: [],
+      subjects: [],
+      isSelected: selectedIndividuals.some(i => i.id === student.id)
+    }))
+  ];
+
+  const filteredIndividuals = availableIndividuals.filter(individual => {
     const matchesSearch = individual.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         individual.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         individual.subjects?.some(subject => subject.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -347,12 +547,22 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
             {individual.type === 'teacher' ? (
               <>
                 <GraduationCap className="w-4 h-4" />
-                <span>{individual.department}</span>
+                <span>
+                  {individual.department}
+                  {individual.role && individual.department && ' • '}
+                  {individual.role}
+                </span>
               </>
             ) : (
               <>
                 <User className="w-4 h-4" />
-                <span>{individual.grade} • {individual.class}</span>
+                <span>
+                  {individual.grade && `Grade ${individual.grade}`}
+                  {individual.grade && individual.class && ' • '}
+                  {individual.class && `Class ${individual.class}`}
+                  {individual.admissionNumber && ' • '}
+                  {individual.admissionNumber && `#${individual.admissionNumber}`}
+                </span>
               </>
             )}
           </div>
@@ -617,7 +827,12 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Found {sortedIndividuals.length} individual{sortedIndividuals.length !== 1 ? 's' : ''}
+            {filterType === 'student' && studentCount > 0 && (
+              <span>Found {studentCount} student{studentCount !== 1 ? 's' : ''}</span>
+            )}
+            {filterType !== 'student' && (
+              <span>Found {sortedIndividuals.length} individual{sortedIndividuals.length !== 1 ? 's' : ''}</span>
+            )}
           </div>
           <button
             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -628,74 +843,63 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
           </button>
         </div>
 
-        {/* Results Grid/List */}
-        {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedIndividuals.map(renderIndividualCard)}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {sortedIndividuals.map(renderIndividualCard)}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+            <h3 className="text-lg font-semibold text-foreground">Searching...</h3>
           </div>
         )}
 
-        {sortedIndividuals.length === 0 && (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No results found</h3>
-            <p className="text-muted-foreground">Try adjusting your search terms or filters</p>
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-12 bg-red-50 border border-red-200 rounded-xl">
+            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Error</h3>
+            <p className="text-muted-foreground text-center">{error}</p>
           </div>
+        )}
+
+        {/* Results Grid/List */}
+        {!isLoading && !error && (
+          <>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sortedIndividuals.map(renderIndividualCard)}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sortedIndividuals.map(renderIndividualCard)}
+              </div>
+            )}
+
+            {sortedIndividuals.length === 0 && searchTerm.trim().length >= 2 && (
+              <div className="text-center py-12">
+                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No results found</h3>
+                <p className="text-muted-foreground">Try adjusting your search terms or filters</p>
+              </div>
+            )}
+
+            {searchTerm.trim().length < 2 && filterType === 'student' && (
+              <div className="text-center py-12">
+                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Start typing to search</h3>
+                <p className="text-muted-foreground">Enter at least 2 characters to search for students</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* Selected Individuals Summary */}
       {selectedIndividuals.length > 0 && (
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-semibold text-foreground">Selected ({selectedIndividuals.length})</span>
-            <button
-              onClick={() => setSelectedIndividuals([])}
-              className="text-sm text-primary hover:text-primary/80"
-            >
-              Clear All
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {selectedIndividuals.map(individual => (
-              <div
-                key={individual.id}
-                className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-primary/20 text-sm"
-              >
-                <span>{individual.name}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedIndividuals(prev => prev.filter(i => i.id !== individual.id));
-                  }}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <button
-          onClick={onBack}
-          className="px-6 py-3 border border-primary/20 rounded-lg text-foreground hover:bg-primary/5 transition-colors"
-        >
-          Back
-        </button>
-        {selectedIndividuals.length > 0 && (
+        <div className="fixed bottom-8 left-0 right-0 flex justify-center">
           <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
             Continue with {selectedIndividuals.length} selected
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 } 

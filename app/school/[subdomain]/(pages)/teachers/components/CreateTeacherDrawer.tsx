@@ -174,6 +174,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     setError(null); // Clear any previous errors
 
     try {
+      // Extract only the fields that are accepted by the API schema
       const createTeacherDto = {
         email: data.email,
         fullName: data.fullName,
@@ -190,7 +191,6 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
         tenantSubjectIds: data.tenantSubjectIds,
         tenantGradeLevelIds: data.tenantGradeLevelIds,
         tenantStreamIds: data.tenantStreamIds,
-        isClassTeacher: data.isClassTeacher,
         ...(data.isClassTeacher && data.classTeacherTenantStreamId && {
           classTeacherTenantStreamId: data.classTeacherTenantStreamId
         })

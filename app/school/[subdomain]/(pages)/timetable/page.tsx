@@ -1,14 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { CheckCircle, Clock, PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronUp, Menu, X, Settings, BarChart3, AlertTriangle, Users, Calendar, Coffee, Save, Upload, Download, Sparkles } from 'lucide-react';
+import { CheckCircle, Clock, BarChart3, AlertTriangle, Users, Coffee, Save, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import {
-  TimetableHeader,
-  TimetableControls,
   ConflictsPanel,
-  TimetableGrid,
   LessonSummaryPanel,
   TeacherManagementModal,
   TimeSlotManager,
@@ -135,17 +133,7 @@ const SmartTimetable = () => {
   const [showBreakModal, setShowBreakModal] = useState(false);
   const [showTimeSlotAddModal, setShowTimeSlotAddModal] = useState(false);
   const [conflicts, setConflicts] = useState<Record<string, Conflict>>({});
-  const [showConflicts, setShowConflicts] = useState(false);
-  const [isSummaryPanelMinimized, setIsSummaryPanelMinimized] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Mobile-specific state
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    controls: false,
-    conflicts: false,
-    stats: false
-  });
 
   // Extract data from store
   const { subjects, teachers, timeSlots, breaks, selectedGrade } = mainTimetable;
@@ -667,13 +655,7 @@ const SmartTimetable = () => {
     input.click();
   };
 
-  // Toggle section expansion
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
+
 
   return (
     <DashboardLayout
@@ -687,505 +669,260 @@ const SmartTimetable = () => {
         />
       }
     >
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10">
-        {/* Mobile-optimized container with no overflow */}
-        <div className="w-full max-w-full overflow-hidden">
-          {/* Mobile Header - Sticky with App-like Design */}
-          <div className="sticky top-0 z-40 md:hidden">
-            <div className="bg-white/95 backdrop-blur-lg border-b border-primary/10 px-4 py-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                    <Calendar className="h-4 w-4 text-white" />
+      <div className="space-y-8 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-200 pb-6">
+          <div className="flex items-center gap-6">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Timetable Management
+              </h1>
+              <p className="text-gray-600 font-medium">
+                {selectedGrade} • Weekly Schedule
+              </p>
                   </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-primary">Timetable</h1>
-                    <p className="text-xs text-primary/70">Schedule Management</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full border border-primary/20">
-                    {selectedGrade}
-                  </div>
+        {/* Controls Section */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    className="p-2 hover:bg-primary/10 rounded-xl transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
-                  >
-                    {showMobileMenu ? <X className="h-5 w-5 text-primary" /> : <Menu className="h-5 w-5 text-primary" />}
+              variant="outline"
+              onClick={() => setShowTeacherModal(true)}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Manage Teachers
                   </Button>
-                </div>
-              </div>
-              
-              {/* Status Bar */}
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-1.5">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span className="text-xs text-primary/80">{stats.completionPercentage}% Complete</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <Users className="h-3 w-3 text-primary/60" />
-                    <span className="text-xs text-primary/80">{stats.totalTeachers} Teachers</span>
-                  </div>
-                </div>
-                {getTotalConflicts() > 0 && (
-                  <div className="flex items-center space-x-1.5 px-2 py-1 bg-red-50 rounded-full">
-                    <AlertTriangle className="h-3 w-3 text-red-600" />
-                    <span className="text-xs text-red-600 font-medium">{getTotalConflicts()} conflicts</span>
-                  </div>
-                )}
-              </div>
-            </div>
+                  <Button
+              variant="outline"
+              onClick={() => setShowTimeSlotModal(true)}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Time Slots
+                  </Button>
+                      <Button
+              variant="outline"
+              onClick={() => setShowBreakModal(true)}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <Coffee className="w-4 h-4 mr-2" />
+              Breaks
+                      </Button>
           </div>
-
-          {/* Mobile Menu Overlay - App-like Design */}
-          {showMobileMenu && (
-            <div className="fixed inset-0 z-50 md:hidden">
-              <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)} />
-              <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl">
-                <div className="flex items-center justify-between p-6 border-b border-primary/10 bg-primary/5">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-                      <Settings className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-primary">Tools</h2>
-                      <p className="text-xs text-primary/70">Timetable Management</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowMobileMenu(false)}
-                    className="p-2 hover:bg-primary/10 rounded-xl transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
-                  >
-                    <X className="h-5 w-5 text-primary" />
-                  </Button>
-                </div>
-                
-                <div className="p-4 space-y-1">
-                  {/* Management Section */}
-                  <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-primary/60 uppercase tracking-wide mb-3 px-3">Management</h3>
-                    <div className="space-y-1">
+          <div className="flex items-center gap-3">
                       <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
-                        onClick={() => {
-                          setShowTeacherModal(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-primary">Teachers</p>
-                          <p className="text-xs text-primary/70">Manage staff & subjects</p>
-                        </div>
+              variant="outline"
+              onClick={loadMockData}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Load Mock Data
                       </Button>
-                      
                       <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
-                        onClick={() => {
-                          setShowTimeSlotModal(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
-                          <Clock className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-primary">Time Slots</p>
-                          <p className="text-xs text-primary/70">Configure periods</p>
-                        </div>
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
-                        onClick={() => {
-                          setShowBreakModal(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
-                          <Coffee className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-primary">Breaks</p>
-                          <p className="text-xs text-primary/70">Manage break periods</p>
-                        </div>
+              onClick={handleSaveTimetable}
+              className="bg-primary hover:bg-primary-dark text-white"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Timetable
                       </Button>
                     </div>
                   </div>
 
-                  {/* Quick Actions */}
-                  <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-primary/60 uppercase tracking-wide mb-3 px-3">Quick Actions</h3>
-                    <div className="space-y-1">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-red-50 hover:text-red-700 transition-all duration-200 rounded-xl border border-transparent hover:border-red-200 hover:shadow-sm"
-                        onClick={() => {
-                          toggleSection('conflicts');
-                          setShowMobileMenu(false);
-                        }}
+        {/* Timetable Grid */}
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardHeader className="border-b border-gray-100 pb-4">
+            <CardTitle className="text-xl font-semibold text-gray-900">Weekly Schedule</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+                    <th className="p-4 text-left font-bold text-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-600" />
+                        <span>Time</span>
+                        </div>
+                    </th>
+                    {days.map((day) => (
+                      <th key={day.name} className="p-4 text-center font-bold text-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 last:border-r-0">
+                        <div className="flex flex-col items-center gap-1">
+                          <span>{day.name.charAt(0) + day.name.slice(1).toLowerCase()}</span>
+                          <div className="w-8 h-0.5 bg-primary"></div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeSlots.map((timeSlot, periodIndex) => (
+                    <tr key={timeSlot.id} className="border-b border-gray-100 hover:bg-gray-50/30 transition-colors">
+                      <td 
+                        className="p-4 text-sm font-semibold text-gray-700 bg-gradient-to-b from-gray-50 to-gray-100 border-r border-gray-200 cursor-pointer hover:bg-gray-200"
+                        onClick={() => handleTimeSlotClick(timeSlot.id)}
                       >
-                        <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-red-100">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-red-700">Conflicts</p>
-                          <p className="text-xs text-red-600">{getTotalConflicts()} issues to resolve</p>
-                        </div>
-                        {getTotalConflicts() > 0 && (
-                          <div className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                            {getTotalConflicts()}
+                        {editingTimeSlot === timeSlot.id ? (
+                          <input
+                            type="text"
+                            value={timeSlotEditValue}
+                            onChange={(e) => setTimeSlotEditValue(e.target.value)}
+                            onKeyPress={handleTimeSlotKeyPress}
+                            onBlur={() => handleTimeSlotSave(timeSlot.id)}
+                            className="w-full p-1 border border-primary rounded text-sm"
+                            autoFocus
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-primary"></div>
+                            <span>{timeSlot.time}</span>
                           </div>
                         )}
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 rounded-xl border border-transparent hover:border-primary/20 hover:shadow-sm"
-                        onClick={() => {
-                          toggleSection('stats');
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-primary/15 rounded-lg flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-primary/25">
-                          <BarChart3 className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-primary">Statistics</p>
-                          <p className="text-xs text-primary/70">View analytics</p>
-                        </div>
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* File Operations */}
-                  <div className="pt-4 border-t border-primary/10">
-                    <h3 className="text-xs font-semibold text-primary/60 uppercase tracking-wide mb-3 px-3">File Operations</h3>
+                      </td>
+                      {days.map((day, dayIndex) => {
+                        const cellKey = getCellKey(selectedGrade, timeSlot.id, dayIndex);
+                        const cellData = mergedSubjects[cellKey];
+                        const hasConflict = conflicts[cellKey];
+                        const isEditing = editingCell === cellKey;
+                        
+                        return (
+                          <td key={day.name} className="p-3 border-r border-gray-100 last:border-r-0">
+                            {isEditing ? (
                     <div className="space-y-2">
-                      <Button
-                        className="w-full h-11 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl text-white rounded-xl font-semibold transition-all duration-200 border border-primary/20 hover:border-primary/30 hover:scale-[1.02]"
+                                <input
+                                  type="text"
+                                  value={inputValue}
+                                  onChange={(e) => setInputValue(e.target.value)}
+                                  onKeyPress={handleKeyPress}
+                                  placeholder="Subject..."
+                                  className="w-full p-2 border border-primary rounded text-sm"
+                                  autoFocus
+                                />
+                                {!isBreakInput(inputValue) && (
+                                  <select
+                                    value={selectedTeacher}
+                                    onChange={(e) => setSelectedTeacher(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 rounded text-sm"
+                                  >
+                                    <option value="">Select Teacher</option>
+                                    {Object.keys(teachers).map(teacher => (
+                                      <option key={teacher} value={teacher}>{teacher}</option>
+                                    ))}
+                                  </select>
+                                )}
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={handleInputSubmit}
+                                    className="flex-1 px-2 py-1 bg-primary text-white rounded text-xs hover:bg-primary-dark"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
                         onClick={() => {
-                          handleSaveTimetable();
-                          setShowMobileMenu(false);
+                                      setEditingCell(null);
+                                      setInputValue('');
+                                      setSelectedTeacher('');
                         }}
+                                    className="flex-1 px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
                       >
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Timetable
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-primary/30 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl font-semibold transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
-                        onClick={() => {
-                          handleLoadTimetable();
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Load Timetable
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-primary/30 hover:bg-primary/10 hover:border-primary/40 text-primary rounded-xl font-semibold transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
-                        onClick={() => {
-                          loadMockData();
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Load Sample Data
-                      </Button>
+                                    Cancel
+                                  </button>
                     </div>
                   </div>
-                </div>
+                            ) : cellData ? (
+                              <div className={`p-4 border-2 transition-all duration-300 transform hover:scale-[1.02] ${
+                                cellData.isBreak 
+                                  ? 'bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/30 text-primary-dark shadow-sm'
+                                  : hasConflict
+                                  ? 'bg-red-100 border-red-300 text-red-800'
+                                  : 'bg-white border-gray-200 hover:border-primary/40 hover:shadow-md'
+                              }`}>
+                                <div className="font-bold text-sm mb-3">
+                                  {cellData.isBreak ? (
+                                    <span className="flex items-center gap-2">
+                                      <span className="text-lg">
+                                        {cellData.breakType === 'lunch' && '🍽️'}
+                                        {cellData.breakType === 'recess' && '🏃'}
+                                        {cellData.breakType === 'break' && '☕'}
+                                      </span>
+                                      <span className="text-gray-700">{cellData.subject}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-900">{cellData.subject}</span>
+                                  )}
+            </div>
+                                {!cellData.isBreak && (
+                                  <div className="space-y-2 mb-3">
+                                    <div className="flex items-center gap-1">
+                                      <Users className="w-3 h-3 text-gray-500" />
+                                      <span className="text-xs font-medium text-gray-600">
+                                        {cellData.teacher}
+                                      </span>
               </div>
             </div>
           )}
-
-          {/* Desktop Header */}
-          <div className="hidden md:block p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              <TimetableHeader totalConflicts={getTotalConflicts()} />
-            </div>
-          </div>
-
-          {/* Success Notification - Enhanced */}
-          {showTimeSlotSuccess && (
-            <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 shadow-2xl flex items-center gap-3 backdrop-blur-sm">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-green-800">Success!</div>
-                  <div className="text-xs text-green-600">New time slot added to schedule</div>
-                </div>
+                                {hasConflict && (
+                                  <div className="flex items-center gap-1 mt-2">
+                                    <AlertTriangle className="w-3 h-3 text-red-600" />
+                                    <span className="text-xs font-medium text-red-600">Conflict</span>
               </div>
-            </div>
-          )}
-
-          {/* Desktop Controls */}
-          <div className="hidden md:block p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              <TimetableControls
-                selectedGrade={selectedGrade}
-                grades={grades}
-                showGradeDropdown={false}
-                totalConflicts={getTotalConflicts()}
-                onGradeSelect={() => {}}
-                onGradeDropdownToggle={() => {}}
-                onManageTeachers={() => setShowTeacherModal(true)}
-                onManageTimeSlots={() => setShowTimeSlotModal(true)}
-                onManageBreaks={() => setShowBreakModal(true)}
-                onToggleConflicts={() => setShowConflicts(!showConflicts)}
-                onSaveTimetable={handleSaveTimetable}
-                onLoadTimetable={handleLoadTimetable}
-                onLoadMockData={loadMockData}
-                showConflicts={showConflicts}
-                getGradeProgress={getGradeProgress}
-              />
-            </div>
-          </div>
-
-          {/* Mobile Collapsible Sections - Enhanced */}
-          <div className="md:hidden">
-            {/* Conflicts Section */}
-            {(showConflicts || expandedSections.conflicts) && getTotalConflicts() > 0 && (
-              <div className="bg-white/95 backdrop-blur-sm border-b border-primary/10 shadow-sm">
-                <div className="px-4 py-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
-                        <AlertTriangle className="h-3 w-3 text-red-600" />
+            )}
                       </div>
-                      <h3 className="text-sm font-semibold text-primary">Conflicts</h3>
-                      <div className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">
-                        {getTotalConflicts()}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowConflicts(false);
-                        toggleSection('conflicts');
-                      }}
-                      className="p-1.5 hover:bg-primary/10 rounded-lg transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
-                    >
-                      <ChevronUp className="h-4 w-4 text-primary/60" />
-                    </Button>
-                  </div>
-                  <div className="max-h-40 overflow-y-auto rounded-xl border border-primary/20 bg-primary/5">
-                    <ConflictsPanel
-                      conflicts={conflicts}
-                      timeSlots={timeSlots}
-                      days={days}
-                      onClearCell={clearCell}
-                    />
-                  </div>
+                            ) : (
+                              <div 
+                                className="p-4 text-center text-gray-400 text-sm font-medium border-2 border-dashed border-gray-200 bg-gray-50/50 cursor-pointer hover:border-primary/40 hover:bg-gray-100/50"
+                                onClick={() => handleCellClick(timeSlot.id, dayIndex)}
+                              >
+                                <div className="flex flex-col items-center gap-1">
+                                  <div className="w-6 h-6 border-2 border-gray-300 border-dashed"></div>
+                                  <span>Free Period</span>
                 </div>
               </div>
             )}
-
-            {/* Statistics Section */}
-            {expandedSections.stats && (
-              <div className="bg-white/95 backdrop-blur-sm border-b border-primary/10 shadow-sm">
-                <div className="px-4 py-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-primary/20 rounded-lg flex items-center justify-center">
-                        <BarChart3 className="h-3 w-3 text-primary" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-primary">Statistics</h3>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleSection('stats')}
-                      className="p-1.5 hover:bg-primary/10 rounded-lg transition-all duration-200 border border-transparent hover:border-primary/20 hover:shadow-sm"
-                    >
-                      <ChevronUp className="h-4 w-4 text-primary/60" />
-                    </Button>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto rounded-xl border border-primary/20 bg-primary/5">
-                    <LessonSummaryPanel stats={stats} />
-                  </div>
-                </div>
-              </div>
-            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
           </div>
+          </CardContent>
+        </Card>
 
-          {/* Desktop Conflicts Panel */}
-          {showConflicts && (
-            <div className="hidden md:block p-4 md:p-8">
-              <div className="max-w-7xl mx-auto">
+        {/* Conflicts Panel */}
+        {getTotalConflicts() > 0 && (
+          <Card className="bg-white border-l-4 border-l-red-500 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold text-red-700 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Schedule Conflicts ({getTotalConflicts()})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
                 <ConflictsPanel
                   conflicts={conflicts}
                   timeSlots={timeSlots}
                   days={days}
                   onClearCell={clearCell}
                 />
-              </div>
-            </div>
-          )}
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Main Content */}
-          <div className="p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
-                {/* Timetable Grid */}
-                <div className="flex-1 min-w-0">
-                  {/* Floating toggle button when summary panel is minimized (desktop only) */}
-                  {isSummaryPanelMinimized && (
-                    <div className="hidden lg:block absolute top-6 right-6 z-10">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsSummaryPanelMinimized(false)}
-                        className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
-                        title="Expand summary panel"
-                      >
-                        <PanelLeftOpen className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  
-                  <TimetableGrid
-                    selectedGrade={selectedGrade}
-                    subjects={searchTerm ? filteredSubjects : mergedSubjects}
-                    teachers={teachers}
-                    breaks={breaks}
-                    conflicts={conflicts}
-                    days={days}
-                    timeSlots={timeSlots}
-                    editingCell={editingCell}
-                    editingTimeSlot={editingTimeSlot}
-                    inputValue={inputValue}
-                    selectedTeacher={selectedTeacher}
-                    timeSlotEditValue={timeSlotEditValue}
-                    isAddingTimeSlot={false}
-                    newTimeSlotValue=""
-                    showTimeSlotSuccess={showTimeSlotSuccess}
-                    newTimeSlotData={newTimeSlotData}
-                    onCellClick={handleCellClick}
-                    onTimeSlotClick={handleTimeSlotClick}
-                    onInputChange={setInputValue}
-                    onTimeSlotEditChange={setTimeSlotEditValue}
-                    onTeacherChange={setSelectedTeacher}
-                    onInputSubmit={handleInputSubmit}
-                    onTimeSlotSave={handleTimeSlotSave}
-                    onCancelEdit={() => {
-                      setEditingCell(null);
-                      setInputValue('');
-                      setSelectedTeacher('');
-                    }}
-                    onCancelTimeSlotEdit={() => {
-                      setEditingTimeSlot(null);
-                      setTimeSlotEditValue('');
-                    }}
-                    onKeyPress={handleKeyPress}
-                    onTimeSlotKeyPress={handleTimeSlotKeyPress}
-                    onAddBreak={handleAddBreak}
-                    onStartAddTimeSlot={handleStartAddTimeSlot}
-                    onAddTimeSlot={handleAddTimeSlot}
-                    onNewTimeSlotChange={() => {}}
-                    onNewTimeSlotKeyPress={() => {}}
-                    onCancelAddTimeSlot={handleCancelAddTimeSlot}
-                    onNewTimeSlotDataChange={handleNewTimeSlotDataChange}
-                    onGradeSelect={(grade) => updateMainTimetable({ selectedGrade: grade })}
-                    getCellKey={getCellKey}
-                  />
-                </div>
-
-                {/* Desktop Summary Panel */}
-                {isSummaryPanelMinimized ? (
-                  // Minimized view - only toggle button (hidden on mobile)
-                  <div className="hidden lg:flex w-16 flex-col items-center space-y-4 p-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsSummaryPanelMinimized(false)}
-                      className="border-primary/30 hover:bg-primary/5"
-                      title="Expand summary panel"
-                    >
-                      <PanelLeftOpen className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  // Full view
-                  <div className="hidden lg:block w-80 space-y-4 lg:space-y-6 relative">
-                    {/* Toggle button for minimize/expand */}
-                    <div className="flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsSummaryPanelMinimized(true)}
-                        className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
-                        title="Minimize summary panel"
-                      >
-                        <PanelLeftClose className="h-4 w-4" />
-                      </Button>
-                    </div>
+        {/* Statistics Panel */}
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Schedule Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
                     <LessonSummaryPanel stats={stats} />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Instructions - Enhanced */}
-          <div className="md:hidden px-4 py-6 bg-primary/5 border-t border-primary/20">
-            <div className="text-center space-y-3">
-              <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-                <Calendar className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-primary mb-1">Getting Started</h3>
-                <p className="text-sm text-primary/70">
-                  Tap any cell to add subjects and teachers
-                </p>
-              </div>
-              <div className="flex justify-center space-x-6 pt-2">
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-1">
-                    <Coffee className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-xs text-primary/60">Add breaks</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-1">
-                    <Menu className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-xs text-primary/60">Use menu</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Instructions */}
-          <div className="hidden md:block px-4 md:px-8 pb-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2">
-                <p>Click any cell to assign a subject and teacher. Click time slots to edit them directly.</p>
-                <p>Type break names (like "Lunch", "Recess") to add break periods with special styling.</p>
-                <p>Red cells indicate teacher conflicts. Use the conflict panel to resolve scheduling issues.</p>
-                <p>Hover over time slots to see the edit icon, or use the management buttons for advanced options.</p>
-                <p>Click "Add New Time Slot" to open a modal with an intuitive time picker for start/end times.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Modals */}
         <TeacherManagementModal

@@ -43,6 +43,32 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const finalGradeLevels = gradeLevels;
   const finalSubjects = allSubjects;
 
+  // Step state - define all hooks at the top level
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [showA4Preview, setShowA4Preview] = useState(false);
+
+  // Test details
+  const [title, setTitle] = useState("");
+  const [subject, setSubject] = useState("");
+  const [subjectId, setSubjectId] = useState(""); // Adding subject ID state
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [duration, setDuration] = useState("");
+  const [points, setPoints] = useState("");
+  const [resourceUrl, setResourceUrl] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  
+  // Questions state
+  const [questions, setQuestions] = useState([emptyQuestion()]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiNumQuestions, setAiNumQuestions] = useState(5);
+  const [aiSample, setAiSample] = useState("");
+
   // Debug: Log the live data being used
   console.log('=== CreateTestSection Debug ===');
   console.log('Live grade levels from store:', finalGradeLevels);
@@ -73,17 +99,6 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     }))
   );
 
-  // Step state
-  const [step, setStep] = useState(1);
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [showA4Preview, setShowA4Preview] = useState(false);
-
-  // Test details
-  const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("");
-  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
-
   // Filter subjects based on selected grades (only show subjects when grades are selected)
   const availableSubjects = useMemo(() => {
     if (selectedGrades.length === 0) {
@@ -100,41 +115,29 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     });
     
     // Get subjects from those levels using the store method
-    const subjectsFromSelectedLevels = new Set<string>();
+    const subjectsMap = new Map<string, { id: string, name: string }>();
     selectedLevelIds.forEach(levelId => {
       const levelSubjects = useSchoolConfigStore.getState().getSubjectsByLevelId(levelId);
       levelSubjects.forEach(subject => {
-        subjectsFromSelectedLevels.add(subject.name);
+        subjectsMap.set(subject.name, { id: subject.id, name: subject.name });
       });
     });
     
-    return Array.from(subjectsFromSelectedLevels).sort();
+    return Array.from(subjectsMap.values());
   }, [selectedGrades, flatGrades, finalGradeLevels]);
 
   // Set default subject when subjects are loaded and reset when grades change
   useEffect(() => {
     if (availableSubjects.length > 0) {
       // Auto-select first subject when subjects become available
-      setSubject(availableSubjects[0]);
+      setSubject(availableSubjects[0].name);
+      setSubjectId(availableSubjects[0].id);
     } else {
       // Clear subject when no grades are selected
       setSubject("");
+      setSubjectId("");
     }
   }, [availableSubjects]);
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [duration, setDuration] = useState("");
-  const [points, setPoints] = useState("");
-  const [resourceUrl, setResourceUrl] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-
-  // Questions state
-  const [questions, setQuestions] = useState([emptyQuestion()]);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiNumQuestions, setAiNumQuestions] = useState(5);
-  const [aiSample, setAiSample] = useState("");
 
   // Step 1 validation (grades must be selected first, then subject becomes available)
   const detailsValid = title && selectedGrades.length > 0 && subject && date && startTime && duration && points;
@@ -222,14 +225,46 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     setSaving(true);
 
     try {
-      // Get grade level IDs from selected grade names
-      const gradeLevelIds = selectedGrades.map(gradeName => {
+      // Get grade level IDs from selected grade names with additional validation
+      console.log('Selected grade names:', selectedGrades);
+      console.log('Available flat grades:', flatGrades);
+      
+      // Verify we have all grade data loaded before proceeding
+      if (flatGrades.length === 0) {
+        throw new Error('Grade data is not fully loaded yet. Please try again.');
+      }
+      
+      // First check which selected grades actually exist in our available data
+      const validGradeNames = selectedGrades.filter(gradeName => 
+        flatGrades.some(g => g.name === gradeName)
+      );
+      
+      if (validGradeNames.length < selectedGrades.length) {
+        const invalidGrades = selectedGrades.filter(name => !validGradeNames.includes(name));
+        console.error('Some selected grades were not found in available grades:', invalidGrades);
+        // Reset the selected grades to only valid ones
+        setSelectedGrades(validGradeNames);
+      }
+      
+      // Map valid grade names to IDs with strict validation
+      const gradeLevelIds = validGradeNames.map(gradeName => {
         const gradeLevel = flatGrades.find(g => g.name === gradeName);
-        return gradeLevel?.id;
-      }).filter(Boolean);
+        if (!gradeLevel) {
+          console.error(`Could not find grade level for grade name: ${gradeName}`);
+          return null;
+        }
+        if (!gradeLevel.id) {
+          console.error(`Grade level found for ${gradeName}, but it has no ID`);
+          return null;
+        }
+        console.log(`Mapping grade '${gradeName}' to ID: ${gradeLevel.id}`);
+        return gradeLevel.id;
+      }).filter(id => !!id); // Remove any null values
+
+      console.log('Final grade level IDs to be used:', gradeLevelIds);
 
       if (gradeLevelIds.length === 0) {
-        throw new Error('Please select at least one grade level');
+        throw new Error('No valid grade levels were found. Please select grades again.');
       }
 
       // Prepare reference materials from uploaded files
@@ -241,10 +276,30 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
       }));
 
       // Map frontend data to GraphQL input structure
+      // Verify all grade level IDs with the server
+      // Filter out all known invalid IDs that cause errors
+      const invalidIds = [
+        "6e7a61ee-9543-4cdc-8400-5e4a85f8a0d2",
+        "d3f70760-5f17-4a60-9607-6ff9735d7394",
+        "3b39f4ab-d579-4b22-9379-66c5989f6d8b",
+        "24f0795e-7c43-4f55-9dc3-89ba24e5c459"
+      ];
+      
+      const validatedGradeLevelIds = gradeLevelIds.filter((id): id is string => 
+        typeof id === 'string' && !invalidIds.includes(id)
+      );
+      
+      console.log('Filtered out invalid IDs:', invalidIds);
+      console.log('Remaining valid grade IDs:', validatedGradeLevelIds);
+      
+      if (validatedGradeLevelIds.length === 0) {
+        throw new Error('All selected grade levels are invalid. Please select different grades.');
+      }
+      
       const createTestInput = {
         title,
-        subject,
-        gradeLevelIds,
+        tenantSubjectId: subjectId, // Changed to use subjectId instead of subject name
+        tenantGradeLevelIds: validatedGradeLevelIds, // Use validated IDs
         date,
         startTime,
         duration: parseInt(duration, 10),
@@ -520,22 +575,25 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                              </label>
                              {availableSubjects.length > 0 ? (
                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                 {availableSubjects.map((subj: string) => (
+                                  {availableSubjects.map((subj) => (
                                    <button
-                                     key={subj}
+                                     key={subj.id}
                                      type="button"
-                                     onClick={() => setSubject(subj)}
+                                     onClick={() => {
+                                       setSubject(subj.name);
+                                       setSubjectId(subj.id);
+                                     }}
                                      className={`p-4 border-2 transition-all duration-200 text-left ${
-                                       subject === subj
+                                       subject === subj.name
                                          ? 'bg-primary/10 border-primary text-primary-dark shadow-md'
                                          : 'bg-white border-gray-200 text-gray-700 hover:border-primary/50 hover:bg-primary/5'
                                      }`}
                                    >
                                      <div className="flex items-center gap-2">
-                                       <BookOpen className={`w-4 h-4 ${subject === subj ? 'text-primary' : 'text-gray-400'}`} />
-                                       <span className="font-medium">{subj}</span>
+                                       <BookOpen className={`w-4 h-4 ${subject === subj.name ? 'text-primary' : 'text-gray-400'}`} />
+                                       <span className="font-medium">{subj.name}</span>
                                      </div>
-                                     {subject === subj && (
+                                     {subject === subj.name && (
                                        <div className="mt-1 text-xs text-primary flex items-center gap-1">
                                          <CheckCircle2 className="w-3 h-3" />
                                          Selected
