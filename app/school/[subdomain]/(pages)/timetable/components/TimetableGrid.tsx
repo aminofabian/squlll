@@ -244,7 +244,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                   e.stopPropagation();
                   setShowGradeDropdown(!showGradeDropdown);
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 text-sm"
               >
                 <div className="flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-gray-600" />
@@ -260,7 +260,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
               </button>
               
               {showGradeDropdown && (
-                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 shadow-lg max-h-40 overflow-y-auto">
                   {grades.map((grade) => (
                     <button
                       key={grade}
@@ -268,7 +268,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         e.stopPropagation();
                         handleGradeSelect(grade);
                       }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
                         grade === selectedGrade ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-700'
                       }`}
                     >
@@ -291,7 +291,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                   <button
                     key={index}
                     onClick={() => setMobileViewDay(index)}
-                    className={`relative flex-1 px-2 py-2 rounded-md text-xs font-medium transition-all ${
+                    className={`relative flex-1 px-2 py-2 text-xs font-medium transition-all ${
                       isSelected
                         ? 'bg-gray-900 text-white shadow-sm'
                         : 'bg-white text-gray-600 hover:bg-gray-100'
@@ -304,7 +304,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                       </div>
                     </div>
                     {stats.hasConflicts && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500"></div>
                     )}
                   </button>
                 );
@@ -511,7 +511,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
   // Desktop Layout - Keep existing design
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+    <div className="bg-white shadow-xl overflow-hidden border border-gray-200">
       {/* Desktop: Horizontal scroll container for smaller screens */}
       <div className="overflow-x-auto">
         <div className="min-w-[800px]">
@@ -557,7 +557,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                       value={timeSlotEditValue}
                       onChange={(e) => onTimeSlotEditChange(e.target.value)}
                       onKeyDown={onTimeSlotKeyPress}
-                      className="flex-1 border-2 border-primary rounded-lg px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
+                      className="flex-1 border-2 border-primary px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
                       placeholder="Enter time..."
                       autoFocus
                     />
@@ -615,14 +615,14 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                           value={inputValue}
                           onChange={(e) => onInputChange(e.target.value)}
                           onKeyDown={onKeyPress}
-                          className="w-full border-2 border-primary rounded-lg px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 mb-2 bg-white text-gray-800"
+                          className="w-full border-2 border-primary px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 mb-2 bg-white text-gray-800"
                           placeholder="Subject name or break..."
                           autoFocus
                         />
                         <select
                           value={selectedTeacher}
                           onChange={(e) => onTeacherChange(e.target.value)}
-                          className="w-full border-2 border-primary rounded-lg px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
+                          className="w-full border-2 border-primary px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
                         >
                           <option value="">Select Teacher</option>
                           {Object.entries(teachers).map(([name, teacher]) => (
@@ -634,13 +634,13 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         <div className="flex gap-2 mt-2">
                           <button
                             onClick={onInputSubmit}
-                            className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-primary-dark"
+                            className="text-xs bg-primary text-white px-2 py-1 hover:bg-primary-dark"
                           >
                             Save
                           </button>
                           <button
                             onClick={onCancelEdit}
-                            className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+                            className="text-xs bg-gray-500 text-white px-2 py-1 hover:bg-gray-600"
                           >
                             Cancel
                           </button>
@@ -661,7 +661,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                 <div className="text-xs md:text-sm font-medium text-gray-700 mb-1">
                                   {cellData.subject}
                                 </div>
-                                <div className={`text-xs px-2 py-1 rounded-full ${breakInfo?.color} text-white`}>
+                                <div className={`text-xs px-2 py-1 ${breakInfo?.color} text-white border`}>
                                   {breakInfo?.type || 'Break'}
                                 </div>
                               </div>
@@ -671,7 +671,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                   {cellData.subject}
                                 </div>
                                 {teacher && (
-                                  <div className={`text-xs px-2 py-1 rounded-full ${teacher.color}`}>
+                                  <div className={`text-xs px-2 py-1 ${teacher.color} border`}>
                                     {cellData.teacher}
                                   </div>
                                 )}
@@ -701,7 +701,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                     e.stopPropagation();
                                     onAddBreak(cellKey, breakItem.name);
                                   }}
-                                  className={`p-1 rounded text-xs ${breakItem.color} text-white hover:opacity-80 transition-opacity`}
+                                  className={`p-1 text-xs ${breakItem.color} text-white hover:opacity-80 transition-opacity border`}
                                   title={`Add ${breakItem.name}`}
                                 >
                                   {breakItem.icon}
@@ -713,7 +713,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                     e.stopPropagation();
                                     onCellClick(slot.id, dayIndex);
                                   }}
-                                  className="p-1 rounded text-xs bg-gray-500 text-white hover:bg-gray-600 transition-colors"
+                                  className="p-1 text-xs bg-gray-500 text-white hover:bg-gray-600 transition-colors border"
                                   title="More options"
                                 >
                                   <Plus className="w-3 h-3" />
@@ -738,11 +738,11 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
           <div className="grid grid-cols-6 gap-0 border-t-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
             <div className="p-2 md:p-4 border-l-4 border-l-primary/50 flex items-center relative group">
               <div 
-                className="flex items-center justify-center w-full cursor-pointer hover:bg-primary/10 transition-all duration-200 p-2 md:p-4 rounded-lg border-2 border-dashed border-primary/30 hover:border-primary/50 group"
+                className="flex items-center justify-center w-full cursor-pointer hover:bg-primary/10 transition-all duration-200 p-2 md:p-4 border-2 border-dashed border-primary/30 hover:border-primary/50 group"
                 onClick={onStartAddTimeSlot}
               >
                 <div className="flex flex-col items-center gap-1 md:gap-2">
-                  <div className="p-2 md:p-3 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
+                  <div className="p-2 md:p-3 bg-primary/10 group-hover:bg-primary/20 transition-colors border border-primary/20">
                     <Plus className="w-4 h-4 md:w-6 md:h-6 text-primary" />
                   </div>
                   <div className="text-center">
