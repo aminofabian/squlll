@@ -139,6 +139,7 @@ const SmartTimetable = () => {
   const [showConflicts, setShowConflicts] = useState(false);
   const [isSummaryPanelMinimized, setIsSummaryPanelMinimized] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   
   // Mobile-specific state
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -676,6 +677,17 @@ const SmartTimetable = () => {
     }));
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowGradeDropdown(false);
+    };
+
+    if (showGradeDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showGradeDropdown]);
 
   return (
     <DashboardLayout
@@ -941,12 +953,16 @@ const SmartTimetable = () => {
           <div className="hidden md:block p-4 md:p-8">
             <div className="max-w-7xl mx-auto">
               <TimetableControls
-                selectedGrade={selectedGrade}
-                grades={grades}
-                showGradeDropdown={false}
+                selectedGrade={getDisplayGradeName(selectedGrade)}
+                grades={displayGrades.map(g => g.display)}
+                showGradeDropdown={showGradeDropdown}
                 totalConflicts={getTotalConflicts()}
-                onGradeSelect={() => {}}
-                onGradeDropdownToggle={() => {}}
+                onGradeSelect={(displayGrade) => {
+                  const internalGrade = displayGrades.find(g => g.display === displayGrade)?.internal || displayGrade;
+                  updateMainTimetable({ selectedGrade: internalGrade });
+                  setShowGradeDropdown(false);
+                }}
+                onGradeDropdownToggle={() => setShowGradeDropdown(!showGradeDropdown)}
                 onManageTeachers={() => setShowTeacherModal(true)}
                 onManageTimeSlots={() => setShowTimeSlotModal(true)}
                 onManageBreaks={() => setShowBreakModal(true)}
@@ -955,7 +971,10 @@ const SmartTimetable = () => {
                 onLoadTimetable={handleLoadTimetable}
                 onLoadMockData={loadMockData}
                 showConflicts={showConflicts}
-                getGradeProgress={getGradeProgress}
+                getGradeProgress={(displayGrade) => {
+                  const internalGrade = displayGrades.find(g => g.display === displayGrade)?.internal || displayGrade;
+                  return getGradeProgress(internalGrade);
+                }}
               />
             </div>
           </div>
