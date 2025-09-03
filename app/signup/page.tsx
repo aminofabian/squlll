@@ -182,6 +182,8 @@ function TeacherSignupForm() {
         
         // Redirect to teacher dashboard after 3 seconds
         setTimeout(() => {
+          // In production, determine the school subdomain from the token response if available
+          // For now, redirect to the main teacher dashboard
           router.push('/teacher/dashboard')
         }, 3000)
       } else {

@@ -42,7 +42,22 @@ export function middleware(request: NextRequest) {
   })
 
   if (isSubdomain) {
-    // For subdomains, rewrite the path to include /school/[subdomain]
+    // Special handling for signup routes with tokens - redirect to main domain
+    if ((url.pathname === '/signup' || url.pathname === '/teacher-signup') && url.searchParams.has('token')) {
+      const mainDomain = isProd ? 'https://squl.co.ke' : 'http://localhost:3001'
+      const redirectUrl = new URL(`${mainDomain}/signup${url.search}`)
+      
+      console.log('Middleware - Redirecting signup with token to main domain:', {
+        from: request.url,
+        to: redirectUrl.toString(),
+        path: url.pathname,
+        token: url.searchParams.get('token')?.substring(0, 20) + '...'
+      })
+      
+      return NextResponse.redirect(redirectUrl)
+    }
+    
+    // For other subdomain requests, rewrite the path to include /school/[subdomain]
     const rewritePath = `/school/${currentHost}${url.pathname}`
     
     console.log('Middleware - Subdomain request, rewriting:', {
