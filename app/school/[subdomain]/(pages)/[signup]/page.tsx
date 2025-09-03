@@ -59,6 +59,11 @@ interface AcceptInvitationResponse {
   teacher?: {
     id: string
     name: string
+    tenant?: {
+      id: string
+      subdomain: string
+      schoolName: string
+    }
   }
 }
 
@@ -263,11 +268,19 @@ function SignupContent() {
       
       // Redirect to appropriate dashboard after 3 seconds
       setTimeout(() => {
-        const baseUrl = window.location.origin.includes('localhost') 
-          ? `http://${subdomain}.localhost:3000` 
-          : `https://${subdomain}.squl.co.ke`
-        const redirectPath = signupType === 'staff' ? `${baseUrl}/staff` : `${baseUrl}/teacher`
-        window.location.href = redirectPath
+        if (signupType === 'staff') {
+          const baseUrl = window.location.origin.includes('localhost') 
+            ? `http://${subdomain}.localhost:3001` 
+            : `https://${subdomain}.squl.co.ke`
+          window.location.href = `${baseUrl}/staff`
+        } else {
+          // For teachers, use tenant subdomain from API response if available
+          const teacherSubdomain = acceptData.teacher?.tenant?.subdomain || subdomain
+          const baseUrl = window.location.origin.includes('localhost') 
+            ? `http://${teacherSubdomain}.localhost:3001` 
+            : `https://${teacherSubdomain}.squl.co.ke`
+          window.location.href = `${baseUrl}/teacher`
+        }
       }, 3000)
     } catch (error) {
       console.error(`${signupType} signup error:`, error)

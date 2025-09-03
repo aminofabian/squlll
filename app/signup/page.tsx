@@ -51,6 +51,11 @@ interface AcceptInvitationResponse {
   teacher: {
     id: string
     name: string
+    tenant?: {
+      id: string
+      subdomain: string
+      schoolName: string
+    }
   }
 }
 
@@ -180,11 +185,20 @@ function TeacherSignupForm() {
           description: `Account activated successfully for ${result.user.name}`
         })
         
-        // Redirect to teacher dashboard after 3 seconds
+        // Redirect to school's teacher portal after 3 seconds
         setTimeout(() => {
-          // In production, determine the school subdomain from the token response if available
-          // For now, redirect to the main teacher dashboard
-          router.push('/teacher/dashboard')
+          const subdomain = result.teacher?.tenant?.subdomain
+          if (subdomain) {
+            // Redirect to the school's teacher portal
+            const isProd = window.location.hostname !== 'localhost'
+            const baseUrl = isProd 
+              ? `https://${subdomain}.squl.co.ke` 
+              : `http://${subdomain}.localhost:3001`
+            window.location.href = `${baseUrl}/teacher`
+          } else {
+            // Fallback to generic teacher route if no subdomain available
+            router.push('/teacher')
+          }
         }, 3000)
       } else {
         throw new Error('No response data received')
@@ -279,7 +293,20 @@ function TeacherSignupForm() {
               Redirecting to your dashboard in a few seconds...
             </p>
             <Button
-              onClick={() => router.push('/teacher/dashboard')}
+              onClick={() => {
+                const subdomain = success.teacher?.tenant?.subdomain
+                if (subdomain) {
+                  // Redirect to the school's teacher portal
+                  const isProd = window.location.hostname !== 'localhost'
+                  const baseUrl = isProd 
+                    ? `https://${subdomain}.squl.co.ke` 
+                    : `http://${subdomain}.localhost:3001`
+                  window.location.href = `${baseUrl}/teacher`
+                } else {
+                  // Fallback to generic teacher route if no subdomain available
+                  router.push('/teacher')
+                }
+              }}
               className="w-full bg-primary hover:bg-primary-dark text-white"
             >
               Continue to Dashboard
