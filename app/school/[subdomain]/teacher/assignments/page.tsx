@@ -478,7 +478,7 @@ export default function AssignmentsPage() {
                           <TableCell className="font-medium">
                             <div className="space-y-1">
                               <button
-                                onClick={() => router.push(`/school/${subdomain}/teacher/assignments/${assignment.id}`)}
+                                onClick={() => router.push(`assignments/${assignment.id}`)}
                                 className="font-semibold text-foreground hover:text-primary transition-colors text-left"
                               >
                                 {assignment.title}
@@ -546,7 +546,7 @@ export default function AssignmentsPage() {
                                 size="sm" 
                                 className="hover:bg-primary/10"
                                 onClick={() => {
-                                  router.push(`/school/${subdomain}/teacher/assignments/${assignment.id}`);
+                                  router.push(`assignments/${assignment.id}`);
                                 }}
                                 title="View Assignment"
                               >

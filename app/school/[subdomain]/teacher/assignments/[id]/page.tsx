@@ -30,16 +30,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-// TypeScript interfaces for the assignment detail data based on testById API response
+// TypeScript interfaces for the assignment detail data - matching the actual API schema
 interface AssignmentDetail {
   id: string;
   title: string;
-  subject: string;
+  subject: {
+    id: string;
+    subject: {
+      name: string;
+    };
+  };
   gradeLevels: Array<{
     id: string;
-    name: string;
+    gradeLevel: {
+      name: string;
+    };
   }>;
   date: string;
   startTime: string | null;
@@ -86,16 +95,27 @@ interface AssignmentDetailResponse {
   testById: AssignmentDetail;
 }
 
-// GraphQL query to get assignment details by ID - matches the testById query structure provided
+interface DeleteAssignmentResponse {
+  deleteExam: boolean;
+}
+
+// GraphQL query to get assignment details by ID - matching the actual API schema
 const GET_ASSIGNMENT_BY_ID_QUERY = `
   query TestById($id: String!) {
     testById(id: $id) {
       id
       title
-      subject
+      subject {
+        id
+        subject {
+          name
+        }
+      }
       gradeLevels {
         id
-        name
+        gradeLevel {
+          name
+        }
       }
       date
       startTime
@@ -140,6 +160,13 @@ const GET_ASSIGNMENT_BY_ID_QUERY = `
   }
 `;
 
+// GraphQL mutation to delete assignment
+const DELETE_ASSIGNMENT_MUTATION = `
+  mutation DeleteAssignment($id: String!) {
+    deleteExam(id: $id)
+  }
+`;
+
 export default function AssignmentDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -150,6 +177,9 @@ export default function AssignmentDetailPage() {
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showA4Preview, setShowA4Preview] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Fetch assignment details on component mount
   useEffect(() => {
@@ -177,6 +207,33 @@ export default function AssignmentDetailPage() {
 
     fetchAssignment();
   }, [assignmentId]);
+
+  // Delete assignment function
+  const handleDeleteAssignment = async () => {
+    if (!assignmentId || !assignment) return;
+
+    try {
+      setDeleting(true);
+      const response = await graphqlClient.request<DeleteAssignmentResponse>(
+        DELETE_ASSIGNMENT_MUTATION,
+        { id: assignmentId }
+      );
+
+      if (response.deleteExam) {
+        // Successfully deleted, show success message and navigate back
+        toast.success('Assignment deleted successfully');
+        router.back();
+      } else {
+        throw new Error('Failed to delete assignment');
+      }
+    } catch (err) {
+      console.error('Error deleting assignment:', err);
+      toast.error('Failed to delete assignment. Please try again.');
+    } finally {
+      setDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -279,7 +336,7 @@ export default function AssignmentDetailPage() {
               <Button onClick={() => window.location.reload()} variant="outline">
                 Try Again
               </Button>
-              <Button onClick={() => router.push(`/school/${subdomain}/teacher/assignments`)} variant="default">
+              <Button onClick={() => router.back()} variant="default">
                 Back to Assignments
               </Button>
             </div>
@@ -299,7 +356,7 @@ export default function AssignmentDetailPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(`/school/${subdomain}/teacher/assignments`)}
+                onClick={() => router.back()}
                 className="hover:bg-primary/10"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -319,11 +376,24 @@ export default function AssignmentDetailPage() {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="border-gray-300 hover:bg-gray-50"
+                onClick={() => setShowA4Preview(true)}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Preview as A4
+              </Button>
               <Button variant="outline" className="border-primary/20 hover:bg-primary/5">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
-              <Button variant="outline" className="border-red-200 hover:bg-red-50 hover:text-red-600">
+              <Button 
+                variant="outline" 
+                className="border-red-200 hover:bg-red-50 hover:text-red-600"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={deleting}
+              >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </Button>
@@ -358,7 +428,7 @@ export default function AssignmentDetailPage() {
                       <BookOpen className="w-5 h-5 text-primary" />
                       <div>
                         <p className="text-sm text-muted-foreground">Subject</p>
-                        <p className="font-semibold text-foreground">{assignment.subject}</p>
+                        <p className="font-semibold text-foreground">{assignment.subject.subject.name}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -366,9 +436,9 @@ export default function AssignmentDetailPage() {
                       <div>
                         <p className="text-sm text-muted-foreground">Grade Levels</p>
                         <div className="flex flex-wrap gap-1">
-                          {assignment.gradeLevels.map((grade) => (
-                            <Badge key={grade.id} variant="outline" className="text-xs border-primary/30 text-primary">
-                              {grade.name}
+                          {assignment.gradeLevels.map((gradeLevel) => (
+                            <Badge key={gradeLevel.id} variant="outline" className="text-xs border-primary/30 text-primary">
+                              {gradeLevel.gradeLevel.name}
                             </Badge>
                           ))}
                         </div>
@@ -610,6 +680,197 @@ export default function AssignmentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Assignment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{assignment?.title}"? This action cannot be undone.
+              This will permanently delete the assignment and all associated questions and materials.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAssignment}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Assignment
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* A4 Preview Modal */}
+      {showA4Preview && assignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 print:bg-transparent">
+          <div className="relative bg-white font-serif shadow-2xl border-0 w-[210mm] h-[297mm] max-w-full max-h-full overflow-auto p-12 print:w-full print:h-full print:shadow-none print:border-none">
+            <div className="absolute top-4 right-4 flex gap-2 print:hidden">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 font-bold shadow-lg hover:bg-blue-700"
+                onClick={() => window.print()}
+              >
+                Print
+              </button>
+              <button
+                className="bg-[#246a59] text-white px-4 py-2 font-bold shadow-lg hover:bg-[#1a4c40]"
+                onClick={() => setShowA4Preview(false)}
+              >
+                Close
+              </button>
+            </div>
+            
+            <div className="flex flex-col items-center mb-6">
+              <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
+            </div>
+
+            {/* Header */}
+            <div className="w-full flex flex-row items-start justify-between mb-2">
+              <div>
+                <div className="text-2xl font-extrabold text-black mb-1">{assignment.title}</div>
+                <div className="text-lg italic text-gray-700">
+                  {assignment.subject.subject.name} – {assignment.gradeLevels.map(g => g.gradeLevel.name).join(', ')}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-base font-semibold text-black">Assignment</div>
+                <div className="text-sm text-gray-700">Date: {formatDate(assignment.date)}</div>
+                {assignment.startTime && (
+                  <div className="text-sm text-gray-700">Start: {formatTime(assignment.startTime)}</div>
+                )}
+                <div className="text-sm text-gray-700">Duration: {assignment.duration} min</div>
+                <div className="text-sm text-gray-700">Total Marks: {assignment.totalMarks}</div>
+                {assignment.resourceUrl && (
+                  <div className="text-sm text-gray-700">
+                    Resource: <a href={assignment.resourceUrl} target="_blank" rel="noopener noreferrer" className="text-[#059669] underline">{assignment.resourceUrl}</a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <hr className="w-full border-t border-gray-300 my-4" />
+
+            {/* Instructions */}
+            <div className="w-full text-center text-sm italic text-gray-600 mb-6">
+              Read all questions carefully before answering.
+              {assignment.instructions && (
+                <div className="mt-4 text-left">
+                  <div className="font-semibold text-gray-800">Instructions:</div>
+                  <div className="whitespace-pre-wrap text-gray-700 mt-2">{assignment.instructions}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Reference Materials */}
+            {assignment.referenceMaterials.length > 0 && (
+              <div className="w-full mb-6 p-4 bg-gray-50 border border-gray-200">
+                <div className="font-semibold text-gray-800 mb-2">Reference Materials:</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {assignment.referenceMaterials.map((material) => (
+                    <div key={material.id} className="flex items-center gap-2 text-sm text-gray-700">
+                      <File className="w-4 h-4 text-[#0d9488]" />
+                      <span>{material.fileType.toUpperCase()} File ({formatFileSize(material.fileSize)})</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  These files are available as reference materials for this assignment
+                </div>
+              </div>
+            )}
+
+            {/* Questions */}
+            <ol className="list-decimal pl-6 w-full space-y-6">
+              {assignment.questions
+                .sort((a, b) => a.order - b.order)
+                .map((question, idx) => (
+                <li key={question.id} className="text-black text-base mb-2">
+                  <div className="mb-2 font-medium">{question.text}</div>
+                  <div className="text-xs text-gray-500 mb-2">({question.marks} marks)</div>
+                  
+                  {question.imageUrls && question.imageUrls.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {question.imageUrls.map((imageUrl, imgIndex) => (
+                        <img
+                          key={imgIndex}
+                          src={imageUrl}
+                          alt={`Question ${idx + 1} image ${imgIndex + 1}`}
+                          className="w-full h-32 object-cover border border-gray-300"
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {question.options.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
+                      {question.options
+                        .sort((a, b) => a.order - b.order)
+                        .map((option, oIdx) => (
+                        <div key={option.id} className="flex items-start gap-2">
+                          <span className="font-bold text-black w-6">
+                            {question.type === 'true_false' 
+                              ? (oIdx === 0 ? "T)" : "F)") 
+                              : `${String.fromCharCode(65 + oIdx)})`
+                            }
+                          </span>
+                          <span className="text-black">{option.text}</span>
+                          {option.imageUrl && (
+                            <img
+                              src={option.imageUrl}
+                              alt="Option image"
+                              className="w-8 h-8 object-cover border border-gray-300 ml-2"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {question.type === 'short_answer' && (
+                    <div className="mt-4">
+                      <div className="border-b border-gray-300 pb-8"></div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+
+            {/* Footer */}
+            <div className="mt-12 pt-6 border-t border-gray-300 text-center text-xs text-gray-500">
+              <div>Teacher: {assignment.teacher.name}</div>
+              <div>Created: {formatDate(assignment.createdAt)}</div>
+            </div>
+          </div>
+          
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              .print\\:bg-transparent { background: transparent !important; }
+              .print\\:w-full { width: 100% !important; }
+              .print\\:h-full { height: 100% !important; }
+              .print\\:shadow-none { box-shadow: none !important; }
+              .print\\:border-none { border: none !important; }
+              .print\\:hidden { display: none !important; }
+              .print\\:block { display: block !important; }
+              .print-area, .print-area * { visibility: visible !important; }
+              .print-area { position: absolute !important; left: 0; top: 0; width: 100vw !important; height: 100vh !important; background: white !important; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
