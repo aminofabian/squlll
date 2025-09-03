@@ -263,17 +263,32 @@ function SignupContent() {
       
       // Redirect to appropriate dashboard after 3 seconds
       setTimeout(() => {
-        if (signupType === 'staff') {
-          const baseUrl = window.location.origin.includes('localhost') 
-            ? `http://${subdomain}.localhost:3001` 
-            : `https://${subdomain}.squl.co.ke`
-          window.location.href = `${baseUrl}/staff`
+        // Get the current domain and replace the subdomain part
+        const currentOrigin = window.location.origin
+        const currentHost = window.location.host
+        
+        let targetUrl: string
+        
+        if (currentOrigin.includes('localhost')) {
+          // Development environment
+          targetUrl = `http://${subdomain}.localhost:3001`
         } else {
-          // For teachers, use the current subdomain since tenant info is not available in the response
-          const baseUrl = window.location.origin.includes('localhost') 
-            ? `http://${subdomain}.localhost:3001` 
-            : `https://${subdomain}.squl.co.ke`
-          window.location.href = `${baseUrl}/teacher`
+          // Production environment - construct URL based on current domain
+          const domainParts = currentHost.split('.')
+          if (domainParts.length >= 2) {
+            // Replace the subdomain while keeping the main domain
+            const mainDomain = domainParts.slice(1).join('.')
+            targetUrl = `https://${subdomain}.${mainDomain}`
+          } else {
+            // Fallback if domain parsing fails
+            targetUrl = `https://${subdomain}.squal.co.ke`
+          }
+        }
+        
+        if (signupType === 'staff') {
+          window.location.href = `${targetUrl}/staff`
+        } else {
+          window.location.href = `${targetUrl}/teacher`
         }
       }, 3000)
     } catch (error) {
