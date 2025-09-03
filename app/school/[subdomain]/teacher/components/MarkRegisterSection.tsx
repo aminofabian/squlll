@@ -1,59 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, ChevronLeft, Loader2, CalendarDays, BookOpen, Users, ClipboardList, Home } from "lucide-react";
+import { graphqlClient } from "@/lib/graphql-client";
 
-// Mock students data
-const mockStudents = [
-  { id: 1, name: "Achieng Mary", adm: "ADM001" },
-  { id: 2, name: "Kamau John", adm: "ADM002" },
-  { id: 3, name: "Otieno Brian", adm: "ADM003" },
-  { id: 4, name: "Wanjiku Faith", adm: "ADM004" },
-  { id: 5, name: "Mutiso Peter", adm: "ADM005" },
-  { id: 6, name: "Njeri Grace", adm: "ADM006" },
-  { id: 7, name: "Mwangi Samuel", adm: "ADM007" },
-  { id: 8, name: "Chebet Sharon", adm: "ADM008" },
-  { id: 9, name: "Kiptoo Kevin", adm: "ADM009" },
-  { id: 10, name: "Muthoni Esther", adm: "ADM010" },
-  { id: 11, name: "Omondi Felix", adm: "ADM011" },
-  { id: 12, name: "Karanja Dennis", adm: "ADM012" },
-  { id: 13, name: "Amina Halima", adm: "ADM013" },
-  { id: 14, name: "Koech Mercy", adm: "ADM014" },
-  { id: 15, name: "Wekesa Collins", adm: "ADM015" },
-  { id: 16, name: "Mbugua Alice", adm: "ADM016" },
-  { id: 17, name: "Mutua Victor", adm: "ADM017" },
-  { id: 18, name: "Cheruiyot Janet", adm: "ADM018" },
-  { id: 19, name: "Kilonzo Brian", adm: "ADM019" },
-  { id: 20, name: "Wambui Carol", adm: "ADM020" },
-  { id: 21, name: "Ochieng George", adm: "ADM021" },
-  { id: 22, name: "Nduta Rose", adm: "ADM022" },
-  { id: 23, name: "Barasa Paul", adm: "ADM023" },
-  { id: 24, name: "Kiplangat Edwin", adm: "ADM024" },
-  { id: 25, name: "Moraa Cynthia", adm: "ADM025" },
-  { id: 26, name: "Kariuki James", adm: "ADM026" },
-  { id: 27, name: "Wanjala Lillian", adm: "ADM027" },
-  { id: 28, name: "Kibet Brian", adm: "ADM028" },
-  { id: 29, name: "Muli Agnes", adm: "ADM029" },
-  { id: 30, name: "Omondi Sharon", adm: "ADM030" },
-  { id: 31, name: "Kiprono Dennis", adm: "ADM031" },
-  { id: 32, name: "Wairimu Ruth", adm: "ADM032" },
-  { id: 33, name: "Mutuku John", adm: "ADM033" },
-  { id: 34, name: "Cherop Daisy", adm: "ADM034" },
-  { id: 35, name: "Karanja Peter", adm: "ADM035" },
-  { id: 36, name: "Akinyi Beatrice", adm: "ADM036" },
-  { id: 37, name: "Koech Edwin", adm: "ADM037" },
-  { id: 38, name: "Wambua Faith", adm: "ADM038" },
-  { id: 39, name: "Omondi Victor", adm: "ADM039" },
-  { id: 40, name: "Kiprotich Kelvin", adm: "ADM040" },
-  { id: 41, name: "Muthoni Carol", adm: "ADM041" },
-  { id: 42, name: "Barasa Brian", adm: "ADM042" },
-  { id: 43, name: "Kipchumba Sharon", adm: "ADM043" },
-  { id: 44, name: "Ndungu Alice", adm: "ADM044" },
-  { id: 45, name: "Ochieng Dennis", adm: "ADM045" },
-  { id: 46, name: "Kiptoo Janet", adm: "ADM046" },
-  { id: 47, name: "Wekesa Peter", adm: "ADM047" },
-  { id: 48, name: "Muthama Rose", adm: "ADM048" },
-  { id: 49, name: "Kipkemboi Samuel", adm: "ADM049" },
-  { id: 50, name: "Auma Grace", adm: "ADM050" },
-];
+// TypeScript interfaces for student data
+interface Student {
+  id: string;
+  admission_number: string;
+  phone: string;
+  gender: string;
+}
+
+interface StudentsResponse {
+  teacherGetStudentsByGradeLevel: Student[];
+}
+
+// GraphQL query to get students by grade level
+const GET_STUDENTS_BY_GRADE_QUERY = `
+  query GetStudentsByGradeLevel($gradeLevelId: String!) {
+    teacherGetStudentsByGradeLevel(gradeLevelId: $gradeLevelId) {
+      id
+      admission_number
+      phone
+      gender
+    }
+  }
+`;
 
 // Mock class/grade and subject
 const mockClass = "Grade 7";
@@ -63,19 +34,60 @@ function formatDate(date: Date) {
   return date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export default function MarkRegisterSection({ subdomain, onBack }: { subdomain?: string; onBack?: () => void }) {
-  // Attendance state: { [studentId]: true (present) | false (absent) }
-  const [attendance, setAttendance] = useState(() => Object.fromEntries(mockStudents.map(s => [s.id, true])));
+export default function MarkRegisterSection({ 
+  subdomain, 
+  onBack, 
+  gradeLevelId = "85fa5c32-57dd-4d72-be99-abaa9fa5a7c8" 
+}: { 
+  subdomain?: string; 
+  onBack?: () => void;
+  gradeLevelId?: string;
+}) {
+  // State management
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [attendance, setAttendance] = useState<{[key: string]: boolean}>({});
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  // Add state for expand/collapse
   const [showAll, setShowAll] = useState(false);
-  const studentsToShow = showAll ? mockStudents : mockStudents.slice(0, 25);
-
+  
+  const studentsToShow = showAll ? students : students.slice(0, 25);
   const presentCount = Object.values(attendance).filter(Boolean).length;
-  const absentCount = mockStudents.length - presentCount;
+  const absentCount = students.length - presentCount;
 
-  const handleToggle = (id: number) => {
+  // Fetch students data on component mount
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await graphqlClient.request<StudentsResponse>(
+          GET_STUDENTS_BY_GRADE_QUERY,
+          { gradeLevelId }
+        );
+        const fetchedStudents = response.teacherGetStudentsByGradeLevel || [];
+        setStudents(fetchedStudents);
+        
+        // Initialize attendance state - all students present by default
+        const initialAttendance = Object.fromEntries(
+          fetchedStudents.map(student => [student.id, true])
+        );
+        setAttendance(initialAttendance);
+      } catch (err) {
+        console.error('Error fetching students:', err);
+        setError('Failed to load students. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (gradeLevelId) {
+      fetchStudents();
+    }
+  }, [gradeLevelId]);
+
+  const handleToggle = (id: string) => {
     setAttendance(a => ({ ...a, [id]: !a[id] }));
   };
 
@@ -87,6 +99,40 @@ export default function MarkRegisterSection({ subdomain, onBack }: { subdomain?:
       setSuccess(true);
     }, 1200);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 animate-fadeIn min-h-screen">
+        <div className="w-16 h-16 flex items-center justify-center bg-primary text-white mb-4 shadow-lg">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+        <div className="text-lg font-semibold text-primary mb-2">Loading Students...</div>
+        <div className="text-muted-foreground text-sm">Please wait while we fetch the student list.</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 animate-fadeIn min-h-screen">
+        <div className="w-16 h-16 flex items-center justify-center bg-destructive text-white mb-4 shadow-lg">
+          <XCircle className="w-8 h-8" />
+        </div>
+        <div className="text-lg font-semibold text-destructive mb-2">Error Loading Students</div>
+        <div className="text-muted-foreground text-sm mb-6">{error}</div>
+        <div className="flex gap-4">
+          <button
+            className="px-4 py-2 bg-primary text-white font-semibold hover:bg-primary/90 transition shadow"
+            onClick={() => window.location.reload()}
+          >Try Again</button>
+          <button
+            className="px-4 py-2 bg-muted text-foreground font-semibold hover:bg-muted/90 transition shadow"
+            onClick={onBack}
+          >Back to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -169,7 +215,7 @@ export default function MarkRegisterSection({ subdomain, onBack }: { subdomain?:
             <thead>
               <tr className="bg-primary/10 text-primary text-left">
                 <th className="px-2 sm:px-4 py-2 sm:py-3 font-semibold">#</th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 font-semibold">Name</th>
+                <th className="px-2 sm:px-4 py-2 sm:py-3 font-semibold">Student Info</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 font-semibold">Adm No.</th>
                 <th className="px-2 sm:px-4 py-2 sm:py-3 font-semibold text-center">Status</th>
               </tr>
@@ -181,8 +227,8 @@ export default function MarkRegisterSection({ subdomain, onBack }: { subdomain?:
                   ' border-b last:border-b-0'
                 }>
                   <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground font-mono">{idx + 1}</td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-foreground">{student.name}</td>
-                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground">{student.adm}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-foreground">{student.gender}</td>
+                  <td className="px-2 sm:px-4 py-2 sm:py-3 text-muted-foreground">{student.admission_number}</td>
                   <td className="px-2 sm:px-4 py-2 sm:py-3 text-center">
                     <button
                       type="button"
@@ -199,16 +245,18 @@ export default function MarkRegisterSection({ subdomain, onBack }: { subdomain?:
             </tbody>
           </table>
         </div>
-        {/* Save Button */}
-        <div className="flex justify-center mt-2">
-          <button
-            type="button"
-            className="px-4 py-1 bg-primary text-white font-semibold shadow hover:bg-primary/90 transition text-sm"
-            onClick={() => setShowAll(v => !v)}
-          >
-            {showAll ? 'Show Less' : 'Show More'}
-          </button>
-        </div>
+        {/* Show More/Less Button - only show if there are more than 25 students */}
+        {students.length > 25 && (
+          <div className="flex justify-center mt-2">
+            <button
+              type="button"
+              className="px-4 py-1 bg-primary text-white font-semibold shadow hover:bg-primary/90 transition text-sm"
+              onClick={() => setShowAll(v => !v)}
+            >
+              {showAll ? 'Show Less' : `Show All (${students.length} students)`}
+            </button>
+          </div>
+        )}
         <div className="flex justify-end px-3 sm:px-8 pb-4 sm:pb-8 mt-2">
           <button
             type="submit"
