@@ -59,11 +59,6 @@ interface AcceptInvitationResponse {
   teacher?: {
     id: string
     name: string
-    tenant?: {
-      id: string
-      subdomain: string
-      schoolName: string
-    }
   }
 }
 
@@ -274,11 +269,10 @@ function SignupContent() {
             : `https://${subdomain}.squl.co.ke`
           window.location.href = `${baseUrl}/staff`
         } else {
-          // For teachers, use tenant subdomain from API response if available
-          const teacherSubdomain = acceptData.teacher?.tenant?.subdomain || subdomain
+          // For teachers, use the current subdomain since tenant info is not available in the response
           const baseUrl = window.location.origin.includes('localhost') 
-            ? `http://${teacherSubdomain}.localhost:3001` 
-            : `https://${teacherSubdomain}.squl.co.ke`
+            ? `http://${subdomain}.localhost:3001` 
+            : `https://${subdomain}.squl.co.ke`
           window.location.href = `${baseUrl}/teacher`
         }
       }, 3000)

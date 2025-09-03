@@ -45,11 +45,6 @@ export async function POST(request: Request) {
           teacher {
             id
             name
-            tenant {
-              id
-              subdomain
-              schoolName
-            }
           }
           role
         }
