@@ -37,6 +37,189 @@ export default function SchoolDashboard() {
   // Get tenant statistics
   const { data: tenantStats, isLoading: statsLoading, error: statsError } = useTenantStatistics()
   
+  // Get real data from stores (must be called before any conditional returns)
+  const { students } = useStudentsStore()
+  const { config: schoolConfig } = useSchoolConfigStore()
+  
+  // Helper function to get grade display name (moved before useMemo hooks)
+  function getGradeDisplayName(gradeName: string): string {
+    const lowerName = gradeName.toLowerCase();
+    
+    // Handle special cases first
+    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
+    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
+    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
+    
+    // Handle Form grades (Grade 7+ becomes Form 1+)
+    if (lowerName.includes('grade 7') || lowerName.includes('g7')) return 'Form 1';
+    if (lowerName.includes('grade 8') || lowerName.includes('g8')) return 'Form 2';
+    if (lowerName.includes('grade 9') || lowerName.includes('g9')) return 'Form 3';
+    if (lowerName.includes('grade 10') || lowerName.includes('g10')) return 'Form 4';
+    if (lowerName.includes('grade 11') || lowerName.includes('g11')) return 'Form 5';
+    if (lowerName.includes('grade 12') || lowerName.includes('g12')) return 'Form 6';
+    
+    // Handle regular grade numbers
+    const match = gradeName.match(/\d+/);
+    if (match) {
+      const num = parseInt(match[0], 10);
+      if (num >= 1 && num <= 6) {
+        return `Grade ${num}`;
+      }
+    }
+    
+    // If no pattern matches, return the original name
+    return gradeName;
+  }
+
+  // Get selected grade information (moved before conditional returns)
+  const selectedGradeInfo = useMemo(() => {
+    if (!selectedGrade || !schoolConfig) return null
+    
+    for (const level of schoolConfig.selectedLevels) {
+      const grade = level.gradeLevels?.find(g => g.id === selectedGrade)
+      if (grade) {
+        return {
+          grade,
+          level,
+          displayName: getGradeDisplayName(grade.name)
+        }
+      }
+    }
+    return null
+  }, [selectedGrade, schoolConfig])
+
+  // Filter students based on selected grade (moved before conditional returns)
+  const filteredStudents = useMemo(() => {
+    if (!selectedGrade || !selectedGradeInfo) return students
+    
+    return students.filter(student => 
+      student.grade.gradeLevel.name.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
+    )
+  }, [students, selectedGrade, selectedGradeInfo])
+
+  // Calculate real statistics (moved before conditional returns)
+  const realStats = useMemo(() => {
+    const studentsToUse = selectedGrade ? filteredStudents : students
+    
+    // Use tenant statistics for overall school stats, fallback to local data
+    const totalStudents = !selectedGrade && tenantStats 
+      ? tenantStats.studentCount 
+      : studentsToUse.length
+    const activeStudents = studentsToUse.filter(s => s.isActive).length
+    const totalFeesOwed = studentsToUse.reduce((sum, s) => sum + s.feesOwed, 0)
+    const totalFeesPaid = studentsToUse.reduce((sum, s) => sum + s.totalFeesPaid, 0)
+    
+    // Filter classes based on selected grade
+    const classesToUse = selectedGrade && selectedGradeInfo 
+      ? mockClasses.filter(c => 
+          c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
+          c.status === 'active'
+        )
+      : mockClasses.filter(c => c.status === 'active')
+    const totalClasses = classesToUse.length
+    
+    // Filter subjects based on selected grade
+    const totalSubjects = selectedGrade && selectedGradeInfo 
+      ? selectedGradeInfo.level.subjects.length
+      : (schoolConfig?.selectedLevels.reduce((sum, level) => sum + level.subjects.length, 0) || 0)
+    
+    // Calculate attendance rate (mock data for now)
+    const attendanceRate = selectedGrade ? 92.5 : 95.8
+    
+    // Calculate academic progress (mock data for now)
+    const academicProgress = selectedGrade ? 89.2 : 87.5
+    
+    // Calculate monthly change (mock data for now)
+    const monthlyChange = selectedGrade ? Math.floor(Math.random() * 10) + 2 : Math.floor(Math.random() * 20) + 5
+    
+    return {
+      totalStudents,
+      activeStudents,
+      totalClasses,
+      totalSubjects,
+      attendanceRate,
+      academicProgress,
+      monthlyChange,
+      totalFeesOwed,
+      totalFeesPaid
+    }
+  }, [students, filteredStudents, selectedGrade, selectedGradeInfo, schoolConfig, tenantStats])
+
+  // Generate grade-specific activities (moved before conditional returns)
+  const recentActivities = useMemo(() => {
+    const baseActivities = [
+      {
+        id: 1,
+        type: 'attendance',
+        action: 'marked attendance',
+        target: selectedGrade && selectedGradeInfo ? `${selectedGradeInfo.displayName}A` : 'Grade 10A',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 2,
+        type: 'grade',
+        action: 'updated grades',
+        target: selectedGrade ? 'Mathematics Class' : 'Mathematics Class',
+        timestamp: new Date(Date.now() - 30 * 60000).toISOString()
+      },
+      {
+        id: 3,
+        type: 'event',
+        action: 'scheduled',
+        target: selectedGrade ? 'Parent-Teacher Meeting' : 'Parent-Teacher Meeting',
+        timestamp: new Date(Date.now() - 60 * 60000).toISOString()
+      }
+    ]
+
+    if (selectedGrade && selectedGradeInfo) {
+      return baseActivities.map(activity => ({
+        ...activity,
+        target: activity.target.replace('Grade 10A', `${selectedGradeInfo.displayName}A`)
+      }))
+    }
+
+    return baseActivities
+  }, [selectedGrade, selectedGradeInfo])
+
+  // Generate grade-specific events (moved before conditional returns)
+  const upcomingEvents = useMemo(() => {
+    const baseEvents = [
+      { name: "Parent-Teacher Conference", date: "Mar 15", attendees: selectedGrade ? 25 : 45 },
+      { name: "Science Fair", date: "Mar 20", attendees: selectedGrade ? 60 : 120 },
+      { name: "Sports Day", date: "Mar 25", attendees: selectedGrade ? 100 : 200 }
+    ]
+
+    if (selectedGrade && selectedGradeInfo) {
+      return baseEvents.map(event => ({
+        ...event,
+        name: `${selectedGradeInfo.displayName} ${event.name}`,
+        attendees: Math.floor(event.attendees * (filteredStudents.length / students.length))
+      }))
+    }
+
+    return baseEvents
+  }, [selectedGrade, selectedGradeInfo, filteredStudents, students])
+
+  // Generate grade-specific class performance (moved before conditional returns)
+  const classPerformance = useMemo(() => {
+    if (selectedGrade && selectedGradeInfo) {
+      // Show streams for the selected grade
+      const streams = selectedGradeInfo.grade.streams || []
+      return streams.map((stream, index) => ({
+        name: `${selectedGradeInfo.displayName}${stream.name}`,
+        average: 85 + Math.random() * 10, // Random average between 85-95
+        students: Math.floor(filteredStudents.length / Math.max(streams.length, 1))
+      }))
+    }
+
+    // Show overall class performance
+    return [
+      { name: "Grade 10A", average: 85.6, students: 32 },
+      { name: "Grade 11B", average: 82.3, students: 28 },
+      { name: "Grade 12C", average: 88.9, students: 30 }
+    ]
+  }, [selectedGrade, selectedGradeInfo, filteredStudents])
+  
   // Redirect to main page if school is not configured
   useEffect(() => {
     if (!isLoading && !error && (!config || !config.selectedLevels || config.selectedLevels.length === 0)) {
@@ -116,113 +299,7 @@ export default function SchoolDashboard() {
     return null
   }
 
-  // Get real data from stores
-  const { students } = useStudentsStore()
-  const { config: schoolConfig } = useSchoolConfigStore()
-  
-  // Get selected grade information
-  const selectedGradeInfo = useMemo(() => {
-    if (!selectedGrade || !schoolConfig) return null
-    
-    for (const level of schoolConfig.selectedLevels) {
-      const grade = level.gradeLevels?.find(g => g.id === selectedGrade)
-      if (grade) {
-        return {
-          grade,
-          level,
-          displayName: getGradeDisplayName(grade.name)
-        }
-      }
-    }
-    return null
-  }, [selectedGrade, schoolConfig])
 
-  // Helper function to get grade display name
-  function getGradeDisplayName(gradeName: string): string {
-    const lowerName = gradeName.toLowerCase();
-    
-    // Handle special cases first
-    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
-    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
-    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
-    
-    // Handle Form grades (Grade 7+ becomes Form 1+)
-    if (lowerName.includes('grade 7') || lowerName.includes('g7')) return 'Form 1';
-    if (lowerName.includes('grade 8') || lowerName.includes('g8')) return 'Form 2';
-    if (lowerName.includes('grade 9') || lowerName.includes('g9')) return 'Form 3';
-    if (lowerName.includes('grade 10') || lowerName.includes('g10')) return 'Form 4';
-    if (lowerName.includes('grade 11') || lowerName.includes('g11')) return 'Form 5';
-    if (lowerName.includes('grade 12') || lowerName.includes('g12')) return 'Form 6';
-    
-    // Handle regular grade numbers
-    const match = gradeName.match(/\d+/);
-    if (match) {
-      const num = parseInt(match[0], 10);
-      if (num >= 1 && num <= 6) {
-        return `Grade ${num}`;
-      }
-    }
-    
-    // If no pattern matches, return the original name
-    return gradeName;
-  }
-
-  // Filter students based on selected grade
-  const filteredStudents = useMemo(() => {
-    if (!selectedGrade || !selectedGradeInfo) return students
-    
-    return students.filter(student => 
-      student.grade.gradeLevel.name.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
-    )
-  }, [students, selectedGrade, selectedGradeInfo])
-
-  // Calculate real statistics
-  const realStats = useMemo(() => {
-    const studentsToUse = selectedGrade ? filteredStudents : students
-    
-    // Use tenant statistics for overall school stats, fallback to local data
-    const totalStudents = !selectedGrade && tenantStats 
-      ? tenantStats.studentCount 
-      : studentsToUse.length
-    const activeStudents = studentsToUse.filter(s => s.isActive).length
-    const totalFeesOwed = studentsToUse.reduce((sum, s) => sum + s.feesOwed, 0)
-    const totalFeesPaid = studentsToUse.reduce((sum, s) => sum + s.totalFeesPaid, 0)
-    
-    // Filter classes based on selected grade
-    const classesToUse = selectedGrade && selectedGradeInfo 
-      ? mockClasses.filter(c => 
-          c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
-          c.status === 'active'
-        )
-      : mockClasses.filter(c => c.status === 'active')
-    const totalClasses = classesToUse.length
-    
-    // Filter subjects based on selected grade
-    const totalSubjects = selectedGrade && selectedGradeInfo 
-      ? selectedGradeInfo.level.subjects.length
-      : (schoolConfig?.selectedLevels.reduce((sum, level) => sum + level.subjects.length, 0) || 0)
-    
-    // Calculate attendance rate (mock data for now)
-    const attendanceRate = selectedGrade ? 92.5 : 95.8
-    
-    // Calculate academic progress (mock data for now)
-    const academicProgress = selectedGrade ? 89.2 : 87.5
-    
-    // Calculate monthly change (mock data for now)
-    const monthlyChange = selectedGrade ? Math.floor(Math.random() * 10) + 2 : Math.floor(Math.random() * 20) + 5
-    
-    return {
-      totalStudents,
-      activeStudents,
-      totalClasses,
-      totalSubjects,
-      attendanceRate,
-      academicProgress,
-      monthlyChange,
-      totalFeesOwed,
-      totalFeesPaid
-    }
-  }, [students, filteredStudents, selectedGrade, selectedGradeInfo, schoolConfig, tenantStats])
 
   const dashboardStats = [
     {
@@ -255,80 +332,7 @@ export default function SchoolDashboard() {
     }
   ]
 
-  // Generate grade-specific activities
-  const recentActivities = useMemo(() => {
-    const baseActivities = [
-      {
-        id: 1,
-        type: 'attendance',
-        action: 'marked attendance',
-        target: selectedGrade && selectedGradeInfo ? `${selectedGradeInfo.displayName}A` : 'Grade 10A',
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: 2,
-        type: 'grade',
-        action: 'updated grades',
-        target: selectedGrade ? 'Mathematics Class' : 'Mathematics Class',
-        timestamp: new Date(Date.now() - 30 * 60000).toISOString()
-      },
-      {
-        id: 3,
-        type: 'event',
-        action: 'scheduled',
-        target: selectedGrade ? 'Parent-Teacher Meeting' : 'Parent-Teacher Meeting',
-        timestamp: new Date(Date.now() - 60 * 60000).toISOString()
-      }
-    ]
 
-    if (selectedGrade && selectedGradeInfo) {
-      return baseActivities.map(activity => ({
-        ...activity,
-        target: activity.target.replace('Grade 10A', `${selectedGradeInfo.displayName}A`)
-      }))
-    }
-
-    return baseActivities
-  }, [selectedGrade, selectedGradeInfo])
-
-  // Generate grade-specific events
-  const upcomingEvents = useMemo(() => {
-    const baseEvents = [
-      { name: "Parent-Teacher Conference", date: "Mar 15", attendees: selectedGrade ? 25 : 45 },
-      { name: "Science Fair", date: "Mar 20", attendees: selectedGrade ? 60 : 120 },
-      { name: "Sports Day", date: "Mar 25", attendees: selectedGrade ? 100 : 200 }
-    ]
-
-    if (selectedGrade && selectedGradeInfo) {
-      return baseEvents.map(event => ({
-        ...event,
-        name: `${selectedGradeInfo.displayName} ${event.name}`,
-        attendees: Math.floor(event.attendees * (filteredStudents.length / students.length))
-      }))
-    }
-
-    return baseEvents
-  }, [selectedGrade, selectedGradeInfo, filteredStudents, students])
-
-  // Generate grade-specific class performance
-  const classPerformance = useMemo(() => {
-    if (selectedGrade && selectedGradeInfo) {
-      // Show streams for the selected grade
-      const streams = selectedGradeInfo.grade.streams || []
-      return streams.map((stream, index) => ({
-        name: `${selectedGradeInfo.displayName}${stream.name}`,
-        average: 85 + Math.random() * 10, // Random average between 85-95
-        students: Math.floor(filteredStudents.length / Math.max(streams.length, 1))
-      }))
-    }
-
-    // Show overall class performance
-    return [
-      { name: "Grade 10A", average: 85.6, students: 32 },
-      { name: "Grade 11B", average: 82.3, students: 28 },
-      { name: "Grade 12C", average: 88.9, students: 30 }
-    ]
-  }, [selectedGrade, selectedGradeInfo, filteredStudents])
 
   const handleFilterSelect = (filterId: string) => {
     setSelectedFilter(filterId)
