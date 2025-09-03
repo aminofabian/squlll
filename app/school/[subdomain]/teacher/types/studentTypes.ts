@@ -25,16 +25,16 @@ export interface Student {
 export function transformGraphQLStudentToStudent(graphqlStudent: GraphQLStudent): Student {
   return {
     id: graphqlStudent.id,
-    name: graphqlStudent.user.name,
+    name: graphqlStudent.name,
     type: 'student',
-    email: graphqlStudent.user.email,
+    email: '', // Not available in this simplified API response
     phone: graphqlStudent.phone || undefined,
-    grade: graphqlStudent.grade?.gradeLevel?.name || undefined,
-    class: graphqlStudent.stream?.name || undefined,
-    status: graphqlStudent.isActive ? 'active' : 'inactive',
-    admissionNumber: graphqlStudent.admission_number,
-    gender: graphqlStudent.gender,
-    feesOwed: graphqlStudent.feesOwed,
-    totalFeesPaid: graphqlStudent.totalFeesPaid
+    grade: graphqlStudent.grade || undefined,
+    class: graphqlStudent.streamId || undefined, // streamId is just an ID string
+    status: 'active', // Default to active since isActive is not available
+    admissionNumber: graphqlStudent.admissionNumber,
+    gender: '', // Not available in this simplified API response
+    feesOwed: 0, // Not available in this simplified API response
+    totalFeesPaid: 0 // Not available in this simplified API response
   };
 }

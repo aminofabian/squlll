@@ -15,7 +15,6 @@ export const SEARCH_TEACHERS_BY_NAME = `
         department
         phoneNumber
         role
-        isClassTeacher
         isActive
         user {
           id
@@ -65,7 +64,6 @@ export interface GraphQLTeacher {
   department: string | null;
   phoneNumber: string | null;
   role: string;
-  isClassTeacher: boolean;
   isActive: boolean;
   user: {
     id: string;

@@ -44,6 +44,7 @@ import { GET_BOTH_STUDENTS_AND_TEACHERS_BY_TENANT, GetBothStudentsAndTeachersByT
 import { graphqlFetch } from "../utils/graphqlFetch";
 import { Student, transformGraphQLStudentToStudent } from "../types/studentTypes";
 import { Teacher, transformGraphQLTeacherToTeacher } from "../types/teacherTypes";
+import { getTenantInfo } from "../../../../../lib/utils";
 
 interface Individual {
   id: string;
@@ -253,32 +254,16 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       : mockIndividuals.filter(i => i.type === 'student' && i.grade).map(i => i.grade)
   ));
 
-  // Fetch both students and teachers using the combined query
+  // Disable initial combined query due to API issues - use search-only mode
   const fetchBothStudentsAndTeachers = useCallback(async () => {
-    setIsLoading(true);
+    // Initialize empty state - users will search to see results
+    setStudents([]);
+    setTeachers([]);
+    setStudentCount(0);
+    setTeacherCount(0);
+    setIsLoading(false);
     setError(null);
-    try {
-      const data = await graphqlFetch<GetBothStudentsAndTeachersByTenantResponse>(
-        GET_BOTH_STUDENTS_AND_TEACHERS_BY_TENANT,
-        {},
-        subdomain
-      );
-      
-      const { students, teachers, totalCount } = transformCombinedResponse(data);
-      
-      setStudents(students);
-      setTeachers(teachers);
-      setStudentCount(students.length);
-      setTeacherCount(teachers.length);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch students and teachers');
-      setStudents([]);
-      setTeachers([]);
-      setStudentCount(0);
-      setTeacherCount(0);
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Initial data loading disabled - use search to find students and teachers');
   }, [subdomain]);
 
   // Function to search students by name using GraphQL
@@ -289,6 +274,13 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       return;
     }
 
+    // Get tenantId from cookies
+    const tenantInfo = getTenantInfo();
+    if (!tenantInfo?.tenantId) {
+      setError('Tenant information not found. Please log in again.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     
@@ -296,13 +288,13 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       const data = await graphqlFetch<SearchStudentsByNameResponse>(
         SEARCH_STUDENTS_BY_NAME,
         { 
-          name, 
-          tenantId: subdomain // This parameter is required by the API
+          name,
+          tenantId: tenantInfo.tenantId // Get tenantId from cookies
         },
         subdomain
       );
       
-      // Direct array response based on our updated interface
+      // Direct array response based on the actual API structure
       const studentResults = data.searchStudentsByName;
       
       // Convert GraphQL response to our UI component format
@@ -330,13 +322,20 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       return;
     }
 
+    // Get tenantId from cookies for authentication context
+    const tenantInfo = getTenantInfo();
+    if (!tenantInfo?.tenantId) {
+      setError('Tenant information not found. Please log in again.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     
     try {
       const data = await graphqlFetch<SearchTeachersByNameResponse>(
         SEARCH_TEACHERS_BY_NAME,
-        { name },
+        { name }, // Teacher search doesn't require tenantId in the input, but API needs tenant context
         subdomain
       );
       
@@ -683,7 +682,7 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       {/* Search Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground mb-2">Search Individuals</h2>
-        <p className="text-muted-foreground">Find teachers, students, and other members of the school community</p>
+        <p className="text-muted-foreground">Search for teachers and students by name</p>
       </div>
 
       {/* Search Bar */}
@@ -827,11 +826,21 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {filterType === 'student' && studentCount > 0 && (
-              <span>Found {studentCount} student{studentCount !== 1 ? 's' : ''}</span>
-            )}
-            {filterType !== 'student' && (
-              <span>Found {sortedIndividuals.length} individual{sortedIndividuals.length !== 1 ? 's' : ''}</span>
+            {searchTerm.trim().length >= 2 && (
+              <>
+                {filterType === 'student' && studentCount > 0 && (
+                  <span>Found {studentCount} student{studentCount !== 1 ? 's' : ''}</span>
+                )}
+                {filterType === 'teacher' && teacherCount > 0 && (
+                  <span>Found {teacherCount} teacher{teacherCount !== 1 ? 's' : ''}</span>
+                )}
+                {filterType === 'all' && (studentCount > 0 || teacherCount > 0) && (
+                  <span>Found {studentCount + teacherCount} individual{(studentCount + teacherCount) !== 1 ? 's' : ''}</span>
+                )}
+                {filterType !== 'student' && filterType !== 'teacher' && filterType !== 'all' && (
+                  <span>Found {sortedIndividuals.length} individual{sortedIndividuals.length !== 1 ? 's' : ''}</span>
+                )}
+              </>
             )}
           </div>
           <button
@@ -881,11 +890,13 @@ export default function IndividualSearchSection({ subdomain, onBack, onSelect }:
               </div>
             )}
 
-            {searchTerm.trim().length < 2 && filterType === 'student' && (
+            {searchTerm.trim().length < 2 && (
               <div className="text-center py-12">
                 <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">Start typing to search</h3>
-                <p className="text-muted-foreground">Enter at least 2 characters to search for students</p>
+                <p className="text-muted-foreground">
+                  Enter at least 2 characters to search for {filterType === 'all' ? 'students and teachers' : filterType === 'student' ? 'students' : 'teachers'}
+                </p>
               </div>
             )}
           </>

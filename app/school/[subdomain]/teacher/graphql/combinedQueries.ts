@@ -1,9 +1,8 @@
-import { gql } from "graphql-request";
 import { Student, transformGraphQLStudentToStudent } from "../types/studentTypes";
 import { Teacher, transformGraphQLTeacherToTeacher } from "../types/teacherTypes";
 
 // GraphQL query to fetch both students and teachers by tenant
-export const GET_BOTH_STUDENTS_AND_TEACHERS_BY_TENANT = gql`
+export const GET_BOTH_STUDENTS_AND_TEACHERS_BY_TENANT = `
   query GetBothStudentsAndTeachersByTenant {
     getBothStudentsAndTeachersByTenant {
       students {
@@ -51,12 +50,10 @@ export interface GraphQLTeacher {
 }
 
 export interface GetBothStudentsAndTeachersByTenantResponse {
-  data: {
-    getBothStudentsAndTeachersByTenant: {
-      students: GraphQLStudent[];
-      teachers: GraphQLTeacher[];
-      totalCount: number;
-    };
+  getBothStudentsAndTeachersByTenant: {
+    students: GraphQLStudent[];
+    teachers: GraphQLTeacher[];
+    totalCount: number;
   };
 }
 
@@ -66,7 +63,7 @@ export function transformCombinedResponse(data: GetBothStudentsAndTeachersByTena
   teachers: Teacher[];
   totalCount: number;
 } {
-  const { students: graphqlStudents, teachers: graphqlTeachers, totalCount } = data.data.getBothStudentsAndTeachersByTenant;
+  const { students: graphqlStudents, teachers: graphqlTeachers, totalCount } = data.getBothStudentsAndTeachersByTenant;
   
   // Transform students
   const students = graphqlStudents.map((student: GraphQLStudent) => {

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSchoolConfig } from '../../../../../lib/hooks/useSchoolConfig'
+import { useTenantStatistics } from '../../../../../lib/hooks/useTenantStatistics'
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { SchoolSidebar } from "@/components/dashboard/SchoolSidebar"
 import { SearchFilter } from "@/components/dashboard/SearchFilter"
@@ -32,6 +33,9 @@ export default function SchoolDashboard() {
   
   // Check school configuration
   const { data: config, isLoading, error } = useSchoolConfig()
+  
+  // Get tenant statistics
+  const { data: tenantStats, isLoading: statsLoading, error: statsError } = useTenantStatistics()
   
   // Redirect to main page if school is not configured
   useEffect(() => {
@@ -75,8 +79,8 @@ export default function SchoolDashboard() {
     return () => window.removeEventListener('resize', handleResize)
   }, [isInitialLoad])
   
-  // Show loading state while checking configuration
-  if (isLoading) {
+  // Show loading state while checking configuration or loading statistics
+  if (isLoading || (statsLoading && !selectedGrade)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -175,7 +179,11 @@ export default function SchoolDashboard() {
   // Calculate real statistics
   const realStats = useMemo(() => {
     const studentsToUse = selectedGrade ? filteredStudents : students
-    const totalStudents = studentsToUse.length
+    
+    // Use tenant statistics for overall school stats, fallback to local data
+    const totalStudents = !selectedGrade && tenantStats 
+      ? tenantStats.studentCount 
+      : studentsToUse.length
     const activeStudents = studentsToUse.filter(s => s.isActive).length
     const totalFeesOwed = studentsToUse.reduce((sum, s) => sum + s.feesOwed, 0)
     const totalFeesPaid = studentsToUse.reduce((sum, s) => sum + s.totalFeesPaid, 0)
@@ -214,7 +222,7 @@ export default function SchoolDashboard() {
       totalFeesOwed,
       totalFeesPaid
     }
-  }, [students, filteredStudents, selectedGrade, selectedGradeInfo, schoolConfig])
+  }, [students, filteredStudents, selectedGrade, selectedGradeInfo, schoolConfig, tenantStats])
 
   const dashboardStats = [
     {
@@ -467,7 +475,7 @@ export default function SchoolDashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs">
-                      {students.length} Students
+                      {tenantStats ? tenantStats.studentCount : students.length} Students
                     </Badge>
                     {showStats ? (
                       <ChevronDown className="w-5 h-5 text-primary" />
@@ -479,27 +487,46 @@ export default function SchoolDashboard() {
                 
                 {showStats && (
                   <div className="border-t-2 border-primary/20 bg-white dark:bg-slate-800 p-6">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {dashboardStats.map((stat) => (
-                        <div key={stat.title} className="border-2 border-primary/20 bg-primary/5 p-3 md:p-4 rounded-xl">
-                          <div className="flex items-center gap-2 md:gap-3">
-                            <div className={stat.color}>
-                              <stat.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400 truncate">
-                                {stat.title}
-                              </p>
-                              <p className="text-lg md:text-2xl font-mono font-bold mt-1 truncate">{stat.value}</p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                                {stat.change}
-                              </p>
-                            </div>
+                    {/* Tenant Statistics Section */}
+                    {tenantStats && (
+                      <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                        <h4 className="font-mono font-semibold text-sm uppercase tracking-wide text-primary mb-3">
+                          Live School Statistics
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div className="text-center">
+                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.studentCount}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400">Students</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.teacherCount}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400">Teachers</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.streamCount}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400">Streams</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.totalCount}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400">Total Users</div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
+                    
+                    {/* Error state for statistics */}
+                    {statsError && (
+                      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 className="font-mono font-semibold text-sm text-red-800 mb-2">
+                          Statistics Error
+                        </h4>
+                        <p className="text-sm text-red-600">
+                          {statsError instanceof Error ? statsError.message : 'Failed to load statistics'}
+                        </p>
+                      </div>
+                    )}
+                    
+
                   </div>
                 )}
               </div>

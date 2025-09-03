@@ -18,12 +18,19 @@ export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
+    const tenantId = cookieStore.get('tenantId')?.value;
 
     const body = await request.json();
     console.log('GraphQL API Route - Request body:', {
       query: body.query?.substring(0, 100) + '...',
-      operationName: body.operationName
+      operationName: body.operationName,
+      hasTenantId: !!tenantId
     });
+
+    // Add tenantId to variables if it exists and isn't already provided
+    if (tenantId && body.variables && !body.variables.tenantId) {
+      body.variables.tenantId = tenantId;
+    }
 
     // DEV MOCK: Allow teachers to access admin-limited school config
     // Temporarily disabled to test with real API
