@@ -262,9 +262,9 @@ export async function POST(request: Request) {
           }
         }
 
-        // Create the parent invitation (all methods require studentId)
+        // Create the parent invitation (all methods require studentIds)
         inviteMutation = `
-          mutation InviteParent($tenantId: String!, $studentId: String!) {
+          mutation InviteParent($tenantId: String!, $studentIds: [String!]!) {
             inviteParent(
               createParentDto: {
                 email: "${parentData.email || ''}"
@@ -278,21 +278,24 @@ export async function POST(request: Request) {
                 ${linkingMethod === 'MANUAL_INPUT' ? `studentPhone: "${student.phone || ''}"` : ''}
               }
               tenantId: $tenantId
-              studentId: $studentId
+              studentIds: $studentIds
             ) {
               email
               name
               status
               createdAt
-              studentName
-              studentAdmissionNumber
+              students {
+                id
+                name
+                admissionNumber
+              }
             }
           }
         `;
         
         variables = {
           tenantId,
-          studentId
+          studentIds: [studentId]
         };
 
         const inviteResponse = await fetch(GRAPHQL_ENDPOINT, {
