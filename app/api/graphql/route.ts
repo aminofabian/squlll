@@ -67,10 +67,41 @@ export async function POST(request: Request) {
 
     const data = await response.json();
     console.log('GraphQL API Route - External API response status:', response.status);
+    console.log('GraphQL API Route - Response data:', data);
 
+    // Handle both standard GraphQL errors format and top-level error format
     if (data.errors) {
       console.error('GraphQL API Route - GraphQL errors:', data.errors);
       return NextResponse.json(data, { status: 500 });
+    }
+    
+    // Handle top-level error format (e.g., {error: "message"})
+    if (data.error) {
+      console.error('GraphQL API Route - Top-level error:', data.error);
+      
+      // Check if it's a grade levels not found error
+      if (typeof data.error === 'string' && data.error.includes('Grade levels not found')) {
+        // Transform to standard GraphQL error format
+        return NextResponse.json({
+          data: null,
+          errors: [{
+            message: data.error,
+            extensions: { 
+              code: 'GRADE_LEVELS_NOT_FOUND',
+              originalError: data.error 
+            }
+          }]
+        }, { status: 200 }); // Return 200 but with errors so client can handle gracefully
+      }
+      
+      // For other top-level errors, convert to standard format
+      return NextResponse.json({
+        data: null,
+        errors: [{
+          message: data.error,
+          extensions: { code: 'EXTERNAL_API_ERROR' }
+        }]
+      }, { status: 500 });
     }
 
     console.log('GraphQL API Route - Success response');

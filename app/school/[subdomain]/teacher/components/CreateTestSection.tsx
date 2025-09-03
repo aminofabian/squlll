@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Sparkles, PlusCircle, Loader2, Trash2, ChevronRight, ChevronLeft, CheckCircle2, FileText, Clock, Users, Calendar, Home, Upload, File, X, BookOpen } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import { useTeacherData } from '@/lib/hooks/useTeacherData';
 import { toast } from 'sonner';
 
 const QUESTION_TYPES = [
@@ -33,15 +34,18 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     resourceUrl: string;
   }) => void;
 }) {
-  // School config store (grades/subjects) - using live data only
+  // Teacher data - using teacher-specific grades and subjects
+  const { teacher, loading: teacherLoading, error: teacherError, getFormattedSubjects, getFormattedGradeLevels, refetch } = useTeacherData();
+  
+  // Fallback to school config if teacher data is not available
   const getAllGradeLevels = useSchoolConfigStore(state => state.getAllGradeLevels);
   const getAllSubjects = useSchoolConfigStore(state => state.getAllSubjects);
-  const gradeLevels = getAllGradeLevels();
-  const allSubjects = getAllSubjects();
+  const schoolGradeLevels = getAllGradeLevels();
+  const schoolSubjects = getAllSubjects();
 
-  // Use only live data from the store - no mock fallback
-  const finalGradeLevels = gradeLevels;
-  const finalSubjects = allSubjects;
+  // Use teacher data if available, otherwise fallback to school config
+  const finalGradeLevels = teacher ? getFormattedGradeLevels() : schoolGradeLevels;
+  const finalSubjects = teacher ? getFormattedSubjects() : schoolSubjects;
 
   // Step state - define all hooks at the top level
   const [step, setStep] = useState(1);
@@ -69,38 +73,30 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const [aiNumQuestions, setAiNumQuestions] = useState(5);
   const [aiSample, setAiSample] = useState("");
 
-  // Debug: Log the live data being used
-  console.log('=== CreateTestSection Debug ===');
-  console.log('Live grade levels from store:', finalGradeLevels);
-  console.log('Live subjects from store:', finalSubjects);
-  console.log('Number of levels:', finalGradeLevels.length);
-  console.log('Number of subjects:', finalSubjects.length);
-  console.log('=== End CreateTestSection Debug ===');
+  // Flatten grades for easier access - moved before early returns to fix hooks order
+  const flatGrades = teacher 
+    ? (finalGradeLevels as Array<{id: string, name: string}>).map(gradeLevel => ({
+        id: gradeLevel.id,
+        name: gradeLevel.name,
+        levelName: gradeLevel.name,
+        levelId: gradeLevel.id
+      }))
+    : (finalGradeLevels as Array<{levelId: string, levelName: string, grades: any[]}>).flatMap(level =>
+        (level.grades || []).map(grade => ({
+          ...grade,
+          levelName: level.levelName,
+          levelId: level.levelId
+        }))
+      );
 
-  // Show loading state if no data is available yet
-  if (finalGradeLevels.length === 0) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
-        <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">Loading School Configuration</h3>
-          <p className="text-gray-600">Please wait while we load your school's grades and subjects...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Flatten grades for easier access
-  const flatGrades = finalGradeLevels.flatMap(level =>
-    (level.grades || []).map(grade => ({
-      ...grade,
-      levelName: level.levelName,
-      levelId: level.levelId
-    }))
-  );
-
-  // Filter subjects based on selected grades (only show subjects when grades are selected)
+  // Filter subjects based on selected grades - moved before early returns to fix hooks order
   const availableSubjects = useMemo(() => {
+    if (teacher) {
+      // For teacher data, just return all subjects assigned to the teacher
+      // since they are already filtered by what the teacher teaches
+      return finalSubjects;
+    }
+    
     if (selectedGrades.length === 0) {
       // No grades selected = no subjects to show
       return [];
@@ -124,20 +120,80 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     });
     
     return Array.from(subjectsMap.values());
-  }, [selectedGrades, flatGrades, finalGradeLevels]);
+  }, [selectedGrades, flatGrades, finalGradeLevels, teacher, finalSubjects]);
 
-  // Set default subject when subjects are loaded and reset when grades change
+  // Set default subject when subjects are loaded - moved before early returns to fix hooks order
   useEffect(() => {
     if (availableSubjects.length > 0) {
       // Auto-select first subject when subjects become available
       setSubject(availableSubjects[0].name);
       setSubjectId(availableSubjects[0].id);
     } else {
-      // Clear subject when no grades are selected
+      // Reset subject when no subjects are available
       setSubject("");
       setSubjectId("");
     }
   }, [availableSubjects]);
+
+  // Debug: Log the live data being used
+  console.log('=== CreateTestSection Debug ===');
+  console.log('Teacher data:', teacher);
+  console.log('Teacher loading:', teacherLoading);
+  console.log('Teacher error:', teacherError);
+  console.log('Using teacher data:', !!teacher);
+  console.log('Final grade levels:', finalGradeLevels);
+  console.log('Final subjects:', finalSubjects);
+  console.log('Number of levels:', finalGradeLevels.length);
+  console.log('Number of subjects:', finalSubjects.length);
+  console.log('=== End CreateTestSection Debug ===');
+
+  // Show loading state if teacher data is loading
+  if (teacherLoading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
+        <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-8 text-center">
+          <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Loading Teacher Data</h3>
+          <p className="text-gray-600">Fetching your assigned grades and subjects...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state if no data is available yet
+  if (finalGradeLevels.length === 0) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
+        <div className="w-full max-w-4xl bg-white shadow-2xl border-0 p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
+            {teacher ? 'No Assigned Grades' : 'Loading School Configuration'}
+          </h3>
+          <p className="text-gray-600">
+            {teacher 
+              ? 'You have not been assigned any grades yet. Please contact your administrator.' 
+              : 'Please wait while we load your school\'s grades and subjects...'
+            }
+          </p>
+          {teacherError && (
+            <div className="mt-4">
+              <p className="text-red-600 text-sm mb-3">Error: {teacherError}</p>
+              <button 
+                onClick={() => refetch()} 
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+
+
+
 
   // Step 1 validation (grades must be selected first, then subject becomes available)
   const detailsValid = title && selectedGrades.length > 0 && subject && date && startTime && duration && points;
@@ -247,6 +303,10 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
       }
       
       // Map valid grade names to IDs with strict validation
+      console.log('=== Grade Level ID Mapping Debug ===');
+      console.log('Valid grade names to map:', validGradeNames);
+      console.log('Available flatGrades:', flatGrades.map(g => ({ name: g.name, id: g.id })));
+      
       const gradeLevelIds = validGradeNames.map(gradeName => {
         const gradeLevel = flatGrades.find(g => g.name === gradeName);
         if (!gradeLevel) {
@@ -257,11 +317,18 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
           console.error(`Grade level found for ${gradeName}, but it has no ID`);
           return null;
         }
-        console.log(`Mapping grade '${gradeName}' to ID: ${gradeLevel.id}`);
+        console.log(`Mapping grade '${gradeName}' to tenant grade level ID: ${gradeLevel.id}`);
+        
+        // Check if this ID is known to be problematic
+        if (gradeLevel.id === '022011a6-58c3-4e07-9f97-9ab2e0e655c7') {
+          console.warn(`⚠️  FOUND PROBLEMATIC ID: ${gradeLevel.id} for grade: ${gradeName}`);
+        }
+        
         return gradeLevel.id;
       }).filter(id => !!id); // Remove any null values
 
-      console.log('Final grade level IDs to be used:', gradeLevelIds);
+      console.log('Final tenant grade level IDs to be used:', gradeLevelIds);
+      console.log('=== End Grade Level ID Mapping Debug ===');
 
       if (gradeLevelIds.length === 0) {
         throw new Error('No valid grade levels were found. Please select grades again.');
@@ -282,7 +349,8 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         "6e7a61ee-9543-4cdc-8400-5e4a85f8a0d2",
         "d3f70760-5f17-4a60-9607-6ff9735d7394",
         "3b39f4ab-d579-4b22-9379-66c5989f6d8b",
-        "24f0795e-7c43-4f55-9dc3-89ba24e5c459"
+        "24f0795e-7c43-4f55-9dc3-89ba24e5c459",
+        "022011a6-58c3-4e07-9f97-9ab2e0e655c7" // Added the problematic ID from the error
       ];
       
       const validatedGradeLevelIds = gradeLevelIds.filter((id): id is string => 
@@ -296,9 +364,21 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         throw new Error('All selected grade levels are invalid. Please select different grades.');
       }
       
+      // Validate subject ID - filter out known problematic subject IDs
+      const invalidSubjectIds = [
+        "dfba0945-3561-4ec7-8c5c-e99379bc0f11" // Subject ID from the error
+      ];
+      
+      if (invalidSubjectIds.includes(subjectId)) {
+        console.error(`Invalid subject ID detected: ${subjectId}`);
+        throw new Error('The selected subject is no longer available. Please select a different subject.');
+      }
+      
+      console.log('Using tenant subject ID:', subjectId);
+      
       const createTestInput = {
         title,
-        tenantSubjectId: subjectId, // Changed to use subjectId instead of subject name
+        tenantSubjectId: subjectId, // Using tenant subject ID
         tenantGradeLevelIds: validatedGradeLevelIds, // Use validated IDs
         date,
         startTime,
@@ -475,32 +555,58 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
                                                         <div className="bg-white border-2 border-gray-200 p-4 max-h-[200px] overflow-y-auto">
                               {finalGradeLevels.length > 0 ? (
                                 <div className="space-y-2">
-                                  {finalGradeLevels.map(level => (
-                                    <div key={level.levelId} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                      <div className="col-span-1 text-sm font-semibold text-gray-700">{level.levelName}</div>
-                                      <div className="col-span-1">
-                                        {level.grades?.map(gr => (
-                                          <label key={gr.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 cursor-pointer transition-colors border border-transparent hover:border-primary/20">
-                                            <input
-                                              type="checkbox"
-                                              className="w-4 h-4 text-primary border-2 border-gray-300 focus:ring-primary"
-                                              checked={selectedGrades.includes(gr.name)}
-                                              onChange={e => {
-                                                if (e.target.checked) {
-                                                  setSelectedGrades(prev => [...prev, gr.name]);
-                                                } else {
-                                                  setSelectedGrades(prev => prev.filter(g => g !== gr.name));
-                                                }
-                                              }}
-                                            />
-                                            <div className="flex-1">
-                                              <div className="font-medium text-gray-800">{gr.name}</div>
-                                            </div>
-                                          </label>
-                                        ))}
-                                      </div>
+                                  {teacher ? (
+                                    // Teacher data structure - direct grade list
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {(finalGradeLevels as Array<{id: string, name: string}>).map(gradeLevel => (
+                                        <label key={gradeLevel.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 cursor-pointer transition-colors border border-transparent hover:border-primary/20">
+                                          <input
+                                            type="checkbox"
+                                            className="w-4 h-4 text-primary border-2 border-gray-300 focus:ring-primary"
+                                            checked={selectedGrades.includes(gradeLevel.name)}
+                                            onChange={e => {
+                                              if (e.target.checked) {
+                                                setSelectedGrades(prev => [...prev, gradeLevel.name]);
+                                              } else {
+                                                setSelectedGrades(prev => prev.filter(g => g !== gradeLevel.name));
+                                              }
+                                            }}
+                                          />
+                                          <div className="flex-1">
+                                            <div className="font-medium text-gray-800">{gradeLevel.name}</div>
+                                          </div>
+                                        </label>
+                                      ))}
                                     </div>
-                                  ))}
+                                  ) : (
+                                    // School config structure - nested levels and grades
+                                    (finalGradeLevels as Array<{levelId: string, levelName: string, grades: any[]}>).map(level => (
+                                      <div key={level.levelId} className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div className="col-span-1 text-sm font-semibold text-gray-700">{level.levelName}</div>
+                                        <div className="col-span-1">
+                                          {level.grades?.map((gr: any) => (
+                                            <label key={gr.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 cursor-pointer transition-colors border border-transparent hover:border-primary/20">
+                                              <input
+                                                type="checkbox"
+                                                className="w-4 h-4 text-primary border-2 border-gray-300 focus:ring-primary"
+                                                checked={selectedGrades.includes(gr.name)}
+                                                onChange={e => {
+                                                  if (e.target.checked) {
+                                                    setSelectedGrades(prev => [...prev, gr.name]);
+                                                  } else {
+                                                    setSelectedGrades(prev => prev.filter(g => g !== gr.name));
+                                                  }
+                                                }}
+                                              />
+                                              <div className="flex-1">
+                                                <div className="font-medium text-gray-800">{gr.name}</div>
+                                              </div>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
                                 </div>
                              ) : (
                                <div className="text-center py-8 text-gray-500">

@@ -102,6 +102,11 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
     duration: string;
   } | undefined>(undefined);
   const [currentDate, setCurrentDate] = useState<string>('');
+  
+  // Teacher information from cookies
+  const [teacherName, setTeacherName] = useState<string>('');
+  const [teacherEmail, setTeacherEmail] = useState<string>('');
+  const [teacherRole, setTeacherRole] = useState<string>('');
 
   // Set current date only on client side to avoid hydration issues
   useEffect(() => {
@@ -112,10 +117,55 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
     }));
   }, []);
 
+  // Fetch teacher information from cookies when component mounts
+  useEffect(() => {
+    // Check if window is defined (we're in the browser)
+    if (typeof window !== 'undefined') {
+      try {
+        // Function to get cookie value by name
+        const getCookie = (name: string): string | null => {
+          const cookieValue = `; ${document.cookie}`;
+          const parts = cookieValue.split(`; ${name}=`);
+          if (parts.length === 2) {
+            return parts.pop()?.split(';').shift() || null;
+          }
+          return null;
+        };
+        
+        const userNameFromCookie = getCookie('userName');
+        const userEmailFromCookie = getCookie('email');
+        const userRoleFromCookie = getCookie('userRole');
+        
+        if (userNameFromCookie) {
+          setTeacherName(decodeURIComponent(userNameFromCookie));
+        }
+        if (userEmailFromCookie) {
+          setTeacherEmail(decodeURIComponent(userEmailFromCookie));
+        }
+        if (userRoleFromCookie) {
+          setTeacherRole(decodeURIComponent(userRoleFromCookie));
+        }
+      } catch (error) {
+        console.error('Error fetching teacher information from cookies:', error);
+      }
+    }
+  }, []);
+
   const handleActionClick = (actionId: string, menuId: string) => {
     console.log(`Action ${actionId} clicked for menu ${menuId}`);
     // Here you would implement the actual functionality
     // For now, we'll just log the action
+  };
+
+  // Helper function to get initials from teacher name
+  const getInitials = (name: string) => {
+    if (!name) return 'T';
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   // Uniform quick actions with fixed size, centered content, and consistent icon backgrounds
@@ -200,9 +250,11 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   ];
 
   const renderQuickActions = () => (
-    <div className="mb-2">
+          <div className="mb-2">
       <div className="flex items-center gap-3 mb-8 justify-center">
-        <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
+        <h2 className="text-2xl font-bold text-foreground">
+          {teacherName ? `${teacherName}'s Quick Actions` : 'Quick Actions'}
+        </h2>
       </div>
       <div className="flex justify-center">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-3xl w-full">
@@ -300,15 +352,42 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
                 <BookOpen className="w-6 h-6 text-primary-foreground text-white" />
               </div>
               <div className="space-y-1">
-                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">Teacher Dashboard</h1>
-                <p className="text-sm text-muted-foreground/90 font-medium">Welcome back! Manage your classes efficiently.</p>
+                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                  {teacherName ? `Teacher ${teacherName}` : 'Teacher Dashboard'}
+                </h1>
+                <p className="text-sm text-muted-foreground/90 font-medium">
+                  {teacherName ? `Welcome back, ${teacherName}!` : 'Welcome back!'} Manage your classes efficiently.
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
-              <Calendar className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-foreground/80">
-                {currentDate}
-              </span>
+            
+            <div className="flex items-center gap-4">
+              {/* Teacher Info Card */}
+              {teacherName && (
+                <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center rounded-full text-white font-bold text-sm">
+                    {getInitials(teacherName)}
+                  </div>
+                  <div className="hidden sm:flex flex-col">
+                    <span className="text-sm font-semibold text-foreground">
+                      {teacherName}
+                    </span>
+                    {teacherEmail && (
+                      <span className="text-xs text-muted-foreground">
+                        {teacherEmail}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Date */}
+              <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
+                <Calendar className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground/80">
+                  {currentDate}
+                </span>
+              </div>
             </div>
           </div>
         </div>
