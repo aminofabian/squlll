@@ -51,7 +51,10 @@ import {
 import { toast } from 'sonner';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import { useTenantSubjects } from '@/lib/hooks/useTenantSubjects';
+import { useGradeLevelsForSchoolType } from '@/lib/hooks/useGradeLevelsForSchoolType';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { InvitationSuccessModal } from './InvitationSuccessModal';
 
 // Teacher form data schema
@@ -71,7 +74,9 @@ const teacherFormSchema = z.object({
   tenantGradeLevelIds: z.array(z.string()).min(1, { message: 'Please select at least one grade level' }),
   tenantStreamIds: z.array(z.string()).optional().default([]),
   isClassTeacher: z.boolean().default(false),
+  classTeacherType: z.enum(['stream', 'grade']).optional(),
   classTeacherTenantStreamId: z.string().optional(),
+  classTeacherTenantGradeLevelId: z.string().optional(),
 });
 
 type TeacherFormData = z.infer<typeof teacherFormSchema>;
@@ -107,21 +112,96 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
   } | null>(null);
   const { data: schoolConfig } = useSchoolConfig();
   
-  // Get school config data
-  const getAllGradeLevels = useSchoolConfigStore(state => state.getAllGradeLevels);
-  const getAllSubjects = useSchoolConfigStore(state => state.getAllSubjects);
-  const gradeLevels = getAllGradeLevels();
-  const allSubjects = getAllSubjects();
+  // Get tenant subjects and grade levels using new GraphQL queries
+  const { data: tenantSubjects = [], isLoading: subjectsLoading, error: subjectsError } = useTenantSubjects();
+  const { data: gradeLevelsData = [], isLoading: gradeLevelsLoading, error: gradeLevelsError } = useGradeLevelsForSchoolType();
   
-  // Flatten grades and streams for easier access
+  // Transform the new data to match existing component expectations
+  const allSubjects = tenantSubjects.map(ts => ({
+    id: ts.id,
+    name: ts.subject?.name || ts.customSubject?.name || 'Unknown Subject',
+    code: ts.subject?.code || ts.customSubject?.code || '',
+    subjectType: ts.subjectType,
+    category: ts.subject?.category || ts.customSubject?.category,
+    department: ts.subject?.department || ts.customSubject?.department,
+    shortName: ts.subject?.shortName || ts.customSubject?.shortName,
+    isCompulsory: ts.isCompulsory,
+    totalMarks: ts.totalMarks,
+    passingMarks: ts.passingMarks,
+    creditHours: ts.creditHours,
+    curriculum: ts.curriculum.name,
+    isActive: ts.isActive
+  }));
+  
+  // Transform grade levels data to match existing structure
+  const gradeLevels = gradeLevelsData.reduce((acc, gl) => {
+    const curriculumName = gl.curriculum.name;
+    let level = acc.find(l => l.levelName === curriculumName);
+    
+    if (!level) {
+      level = {
+        levelId: gl.curriculum.id,
+        levelName: curriculumName,
+        grades: []
+      };
+      acc.push(level);
+    }
+    
+    level.grades.push({
+      id: gl.id,
+      name: gl.gradeLevel.name,
+      streams: gl.streams
+    });
+    
+    return acc;
+  }, [] as Array<{
+    levelId: string;
+    levelName: string;
+    grades: Array<{
+      id: string;
+      name: string;
+      streams: Array<{ id: string; name: string }>;
+    }>;
+  }>);
+  
+  // Flatten grades and streams for easier access with the new data structure
   const flatGrades = gradeLevels.flatMap(level =>
-    (level.grades || []).map(grade => ({
-      ...grade,
-      levelName: level.levelName,
-      levelId: level.levelId,
-      streams: grade.streams || []
-    }))
+    (level.grades || [])
+      .filter(grade => grade.id) // Only include grades with valid IDs
+      .map(grade => ({
+        ...grade,
+        levelName: level.levelName,
+        levelId: level.levelId,
+        streams: grade.streams || []
+      }))
   );
+  
+  // Debug logging to help troubleshoot data loading
+  console.log('CreateTeacherDrawer - Debug Info:', {
+    schoolConfigLoaded: !!schoolConfig,
+    tenantId: schoolConfig?.tenant?.id,
+    subjectsLoading,
+    gradeLevelsLoading,
+    subjectsError: subjectsError?.message,
+    gradeLevelsError: gradeLevelsError?.message,
+    tenantSubjectsCount: tenantSubjects.length,
+    gradeLevelsDataCount: gradeLevelsData.length,
+    transformedGradeLevelsCount: gradeLevels.length,
+    flatGradesCount: flatGrades.length,
+    flatGradesPreview: flatGrades.slice(0, 3).map(g => ({
+      id: g.id,
+      name: g.name,
+      levelName: g.levelName,
+      levelId: g.levelId
+    }))
+  });
+  
+  // Get unique levels for grade level selection
+  const uniqueLevels = gradeLevels.map(level => ({
+    id: level.levelId,
+    name: level.levelName,
+    grades: level.grades || []
+  }));
   
   const allStreams = flatGrades.flatMap(grade => 
     grade.streams.map(stream => ({
@@ -157,7 +237,9 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       tenantGradeLevelIds: [],
       tenantStreamIds: [],
       isClassTeacher: false,
+      classTeacherType: 'stream',
       classTeacherTenantStreamId: '',
+      classTeacherTenantGradeLevelId: '',
     },
   });
 
@@ -169,11 +251,100 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       });
       return;
     }
+    
+    // Check if data is still loading
+    if (subjectsLoading || gradeLevelsLoading) {
+      toast.error("Data Loading", {
+        description: "Subject and grade level data is still loading. Please wait a moment and try again."
+      });
+      return;
+    }
+    
+    // Check for data loading errors
+    if (subjectsError || gradeLevelsError) {
+      toast.error("Data Loading Error", {
+        description: `Failed to load required data: ${subjectsError?.message || gradeLevelsError?.message}`
+      });
+      return;
+    }
+    
+    // Additional safety check: ensure grade levels and subjects are loaded
+    if (flatGrades.length === 0) {
+      toast.error("Data Loading Error", {
+        description: "Grade level data is not available. Please refresh and try again."
+      });
+      return;
+    }
+    
+    if (allSubjects.length === 0) {
+      toast.error("Data Loading Error", {
+        description: "Subject data is not available. Please refresh and try again."
+      });
+      return;
+    }
+    
+    // Validate that all selected grade IDs exist in the available grades
+    const availableGradeIds = flatGrades.map(g => g.id);
+    const invalidGradeIds = data.tenantGradeLevelIds.filter(id => !availableGradeIds.includes(id));
+    
+    if (invalidGradeIds.length > 0) {
+      console.error('Invalid grade IDs detected before submission:', {
+        invalidIds: invalidGradeIds,
+        availableIds: availableGradeIds.slice(0, 5), // Show first 5 for debugging
+        totalAvailable: availableGradeIds.length
+      });
+      
+      toast.error("Invalid Selection", {
+        description: "Some selected grade levels are invalid. Please refresh the page and try again."
+      });
+      return;
+    }
 
     setIsLoading(true);
     setError(null); // Clear any previous errors
 
     try {
+      // Debug: Log form data before processing
+      console.log('CreateTeacherDrawer - Form submission data:', {
+        selectedGradeIds: data.tenantGradeLevelIds,
+        selectedSubjectIds: data.tenantSubjectIds,
+        selectedStreamIds: data.tenantStreamIds,
+        isClassTeacher: data.isClassTeacher,
+        classTeacherType: data.classTeacherType,
+        classTeacherStreamId: data.classTeacherTenantStreamId,
+        classTeacherGradeLevelId: data.classTeacherTenantGradeLevelId
+      });
+      
+      // Debug: Validate that selected grade IDs exist in available grades
+      const availableGradeIds = flatGrades.map(g => g.id);
+      const invalidGradeIds = data.tenantGradeLevelIds.filter(id => !availableGradeIds.includes(id));
+      if (invalidGradeIds.length > 0) {
+        console.error('CreateTeacherDrawer - Invalid grade IDs selected:', {
+          invalidIds: invalidGradeIds,
+          availableIds: availableGradeIds,
+          flatGrades: flatGrades.map(g => ({ id: g.id, name: g.name }))
+        });
+      }
+      
+      // Filter out any invalid grade IDs before sending (additional safety check)
+      const validatedGradeLevelIds = data.tenantGradeLevelIds.filter(id => 
+        !invalidGradeIds.includes(id)
+      );
+      
+      console.log('Grade ID validation:', {
+        original: data.tenantGradeLevelIds,
+        filtered: validatedGradeLevelIds,
+        removedIds: data.tenantGradeLevelIds.filter(id => invalidGradeIds.includes(id))
+      });
+      
+      // Ensure we still have valid grade IDs after filtering
+      if (validatedGradeLevelIds.length === 0) {
+        toast.error("Invalid Grade Selection", {
+          description: "All selected grade levels are invalid. Please refresh the page and try selecting different grades."
+        });
+        return;
+      }
+
       // Extract only the fields that are accepted by the API schema
       const createTeacherDto = {
         email: data.email,
@@ -189,10 +360,13 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
         dateOfBirth: data.dateOfBirth,
         qualifications: data.qualifications,
         tenantSubjectIds: data.tenantSubjectIds,
-        tenantGradeLevelIds: data.tenantGradeLevelIds,
+        tenantGradeLevelIds: validatedGradeLevelIds, // Use filtered IDs
         tenantStreamIds: data.tenantStreamIds,
-        ...(data.isClassTeacher && data.classTeacherTenantStreamId && {
+        ...(data.isClassTeacher && data.classTeacherType === 'stream' && data.classTeacherTenantStreamId && {
           classTeacherTenantStreamId: data.classTeacherTenantStreamId
+        }),
+        ...(data.isClassTeacher && data.classTeacherType === 'grade' && data.classTeacherTenantGradeLevelId && {
+          classTeacherTenantGradeLevelId: data.classTeacherTenantGradeLevelId
         })
       };
 
@@ -650,7 +824,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                                 htmlFor={`grade-${grade.id}`}
                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                               >
-                                {grade.name}
+                                {grade.name} - {grade.levelName}
                               </label>
                             </div>
                           ))}
@@ -688,14 +862,14 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                                         level.grades?.some(g => g.id === grade.id)
                                       );
                                       
-                                      // Get subjects for this level from the school config
-                                      // Each level in the school config has its own subjects array
-                                      const levelSubjects = level ? 
-                                        schoolConfig?.selectedLevels?.find((l: any) => l.id === level.levelId)?.subjects || [] 
-                                        : [];
-                                      
-                                      // If no level-specific subjects, show all subjects as fallback
-                                      const gradeSubjects = levelSubjects.length > 0 ? levelSubjects : allSubjects;
+                                      // For the new tenant subjects structure, we filter subjects by curriculum
+                                      // that matches the current grade's curriculum
+                                      const gradeSubjects = level ? 
+                                        allSubjects.filter(subject => 
+                                          subject.curriculum === level.levelName || 
+                                          !subject.curriculum // Include subjects without specific curriculum as fallback
+                                        ) 
+                                        : allSubjects;
                                       
                                       return gradeSubjects.map((subject: any) => (
                                         <div key={`${grade.id}-${subject.id}`} className="flex items-center space-x-2">
@@ -725,10 +899,12 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                                     const level = gradeLevels.find(level => 
                                       level.grades?.some(g => g.id === grade.id)
                                     );
-                                    const levelSubjects = level ? 
-                                      schoolConfig?.selectedLevels?.find((l: any) => l.id === level.levelId)?.subjects || [] 
-                                      : [];
-                                    const gradeSubjects = levelSubjects.length > 0 ? levelSubjects : allSubjects;
+                                    const gradeSubjects = level ? 
+                                      allSubjects.filter(subject => 
+                                        subject.curriculum === level.levelName || 
+                                        !subject.curriculum
+                                      ) 
+                                      : allSubjects;
                                     
                                     return gradeSubjects.length === 0 && (
                                       <div className="text-sm text-slate-500 dark:text-slate-400 p-3 bg-slate-50 dark:bg-slate-800 rounded border">
@@ -824,7 +1000,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                               Assign as Class Teacher
                             </FormLabel>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              This teacher will be responsible for a specific class/stream
+                              This teacher will be responsible for a specific class or grade level
                             </p>
                           </div>
                         </FormItem>
@@ -832,34 +1008,105 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
                     />
 
                     {form.watch('isClassTeacher') && (
-                      <FormField
-                        control={form.control as any}
-                        name="classTeacherTenantStreamId"
-                        render={({ field }) => (
-                          <FormItem className="mt-4">
-                            <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Class Teacher Stream *
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <div className="mt-4 space-y-4">
+                        {/* Class Teacher Type Selection */}
+                        <FormField
+                          control={form.control as any}
+                          name="classTeacherType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Class Teacher Type *
+                              </FormLabel>
                               <FormControl>
-                                <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                  <SelectValue placeholder="Select stream for class teacher assignment" />
-                                </SelectTrigger>
+                                <RadioGroup
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  className="flex flex-col space-y-2"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="stream" id="stream" />
+                                    <label htmlFor="stream" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                      Stream Class Teacher
+                                    </label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="grade" id="grade" />
+                                    <label htmlFor="grade" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                      Grade Level Class Teacher
+                                    </label>
+                                  </div>
+                                </RadioGroup>
                               </FormControl>
-                              <SelectContent>
-                                {allStreams
-                                  .filter(stream => form.watch('tenantStreamIds')?.includes(stream.id))
-                                  .map((stream) => (
-                                    <SelectItem key={stream.id} value={stream.id}>
-                                      {stream.name} ({stream.gradeName})
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Stream Class Teacher Selection */}
+                        {form.watch('classTeacherType') === 'stream' && (
+                          <FormField
+                            control={form.control as any}
+                            name="classTeacherTenantStreamId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                  Class Teacher Stream *
+                                </FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                                      <SelectValue placeholder="Select stream for class teacher assignment" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {allStreams
+                                      .filter(stream => form.watch('tenantStreamIds')?.includes(stream.id))
+                                      .map((stream) => (
+                                        <SelectItem key={stream.id} value={stream.id}>
+                                          {stream.name} ({stream.gradeName})
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         )}
-                      />
+
+                        {/* Grade Level Class Teacher Selection */}
+                        {form.watch('classTeacherType') === 'grade' && (
+                          <FormField
+                            control={form.control as any}
+                            name="classTeacherTenantGradeLevelId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                  Class Teacher Grade Level *
+                                </FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                                      <SelectValue placeholder="Select grade level for class teacher assignment" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {flatGrades
+                                      .filter(grade => form.watch('tenantGradeLevelIds')?.includes(grade.id))
+                                      .map((grade) => (
+                                        <SelectItem key={grade.id} value={grade.id}>
+                                          {grade.name} - {grade.levelName}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -984,13 +1231,23 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
             <Button 
               type="submit" 
               onClick={form.handleSubmit(onSubmit as any)}
-              disabled={isLoading}
+              disabled={isLoading || subjectsLoading || gradeLevelsLoading || flatGrades.length === 0 || allSubjects.length === 0}
               className="flex-1 bg-primary hover:bg-primary-dark text-white font-medium transition-colors gap-2 disabled:opacity-50"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Sending Invitation...
+                </>
+              ) : (subjectsLoading || gradeLevelsLoading) ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading Data...
+                </>
+              ) : flatGrades.length === 0 || allSubjects.length === 0 ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading Required Data...
                 </>
               ) : (
                 <>

@@ -9,6 +9,15 @@ export async function POST(request: Request) {
     const { createTeacherDto, tenantId } = await request.json();
     console.log('Received teacher invitation data:', { createTeacherDto, tenantId });
     
+    // Debug: Log specific grade level IDs being sent
+    console.log('API Debug - Grade level IDs being sent:', {
+      tenantGradeLevelIds: createTeacherDto.tenantGradeLevelIds,
+      tenantSubjectIds: createTeacherDto.tenantSubjectIds,
+      tenantStreamIds: createTeacherDto.tenantStreamIds,
+      classTeacherStreamId: createTeacherDto.classTeacherTenantStreamId,
+      classTeacherGradeLevelId: createTeacherDto.classTeacherTenantGradeLevelId
+    });
+    
     // Remove tenantId from createTeacherDto if it somehow got included there
     // Create a clean DTO object that doesn't include tenantId
     const cleanedTeacherDto = { ...createTeacherDto };
@@ -26,12 +35,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use proper GraphQL variables - matching the pattern from create-teacher/route.ts
+    // Use the new inviteTeacher mutation format
     const inviteTeacherMutation = `
-      mutation InviteTeacher($tenantId: String!, $createTeacherDto: CreateTeacherInvitationDto!) {
+      mutation InviteTeacher($createTeacherDto: CreateTeacherInvitationDto!) {
         inviteTeacher(
           createTeacherDto: $createTeacherDto
-          tenantId: $tenantId
         ) {
           email
           fullName
@@ -41,11 +49,10 @@ export async function POST(request: Request) {
       }
     `;
 
-    // Prepare the request body - separating tenantId from createTeacherDto
+    // Prepare the request body with the complete createTeacherDto
     const requestBody = {
       query: inviteTeacherMutation,
       variables: {
-        tenantId: tenantId,
         createTeacherDto: cleanedTeacherDto
       }
     };
@@ -90,7 +97,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      teacher: teacherRecord
+      inviteTeacher: teacherRecord
     });
   } catch (error) {
     console.error('Error inviting teacher:', error);
