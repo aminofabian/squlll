@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react";
+import { uploadMultipleFiles, generateEntityId, validateFile, getFileIcon, formatFileSize, UploadedFile, UploadProgress } from "../../../../../lib/services/upload";
+import { useAccessToken } from "../../../../../lib/hooks/useAuth";
 import { 
   BookOpen, 
   Upload, 
@@ -73,9 +75,16 @@ interface Assignment {
 interface AssignmentAttachment {
   id: string;
   name: string;
+  originalName: string;
   type: 'document' | 'image' | 'video' | 'link';
+  mimeType?: string;
   size?: string;
+  sizeBytes?: number;
   url?: string;
+  path?: string;
+  entityType?: 'assignment' | 'question' | 'submission';
+  entityId?: string;
+  uploadedAt?: string;
 }
 
 interface Recipient {
@@ -116,8 +125,8 @@ const mockAssignments: Assignment[] = [
     dueDate: '2024-01-25',
     description: 'Complete problems 1-20 in Chapter 5. Show all work and submit your solutions.',
     attachments: [
-      { id: 'att1', name: 'Chapter5_Problems.pdf', type: 'document', size: '2.1 MB' },
-      { id: 'att2', name: 'Algebra_Formulas.pdf', type: 'document', size: '856 KB' }
+      { id: 'att1', name: 'Chapter5_Problems.pdf', originalName: 'Chapter5_Problems.pdf', type: 'document', size: '2.1 MB' },
+      { id: 'att2', name: 'Algebra_Formulas.pdf', originalName: 'Algebra_Formulas.pdf', type: 'document', size: '856 KB' }
     ],
     points: 25,
     status: 'published',
@@ -133,8 +142,8 @@ const mockAssignments: Assignment[] = [
     dueDate: '2024-01-30',
     description: 'Write a comprehensive lab report on the chemical reactions experiment conducted in class.',
     attachments: [
-      { id: 'att3', name: 'Lab_Report_Template.docx', type: 'document', size: '1.2 MB' },
-      { id: 'att4', name: 'Experiment_Photos.zip', type: 'document', size: '8.5 MB' }
+      { id: 'att3', name: 'Lab_Report_Template.docx', originalName: 'Lab_Report_Template.docx', type: 'document', size: '1.2 MB' },
+      { id: 'att4', name: 'Experiment_Photos.zip', originalName: 'Experiment_Photos.zip', type: 'document', size: '8.5 MB' }
     ],
     points: 50,
     status: 'draft',
@@ -150,8 +159,8 @@ const mockAssignments: Assignment[] = [
     dueDate: '2024-01-28',
     description: 'Write a 1000-word essay analyzing the themes in Shakespeare\'s "Romeo and Juliet".',
     attachments: [
-      { id: 'att5', name: 'Essay_Guidelines.pdf', type: 'document', size: '1.8 MB' },
-      { id: 'att6', name: 'Romeo_Juliet_Text.pdf', type: 'document', size: '3.2 MB' }
+      { id: 'att5', name: 'Essay_Guidelines.pdf', originalName: 'Essay_Guidelines.pdf', type: 'document', size: '1.8 MB' },
+      { id: 'att6', name: 'Romeo_Juliet_Text.pdf', originalName: 'Romeo_Juliet_Text.pdf', type: 'document', size: '3.2 MB' }
     ],
     points: 40,
     status: 'published',
@@ -167,8 +176,8 @@ const mockAssignments: Assignment[] = [
     dueDate: '2024-02-05',
     description: 'Create a visual timeline of major events during the Industrial Revolution.',
     attachments: [
-      { id: 'att7', name: 'Timeline_Requirements.pdf', type: 'document', size: '1.5 MB' },
-      { id: 'att8', name: 'Historical_Resources.zip', type: 'document', size: '12.3 MB' }
+      { id: 'att7', name: 'Timeline_Requirements.pdf', originalName: 'Timeline_Requirements.pdf', type: 'document', size: '1.5 MB' },
+      { id: 'att8', name: 'Historical_Resources.zip', originalName: 'Historical_Resources.zip', type: 'document', size: '12.3 MB' }
     ],
     points: 35,
     status: 'draft',
@@ -203,6 +212,7 @@ const mockRecipients: Recipient[] = [
 ];
 
 export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest, newlyCreatedTest }: AssignHomeworkSectionProps) {
+  const accessToken = useAccessToken();
   const [step, setStep] = useState<'assignments' | 'recipients' | 'preview'>('assignments');
   const [selectedAssignments, setSelectedAssignments] = useState<Assignment[]>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<Recipient[]>([]);
@@ -216,6 +226,19 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
   const [homeworkAssigned, setHomeworkAssigned] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, UploadProgress>>({});
+  const [completedUploads, setCompletedUploads] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
+  const [newAssignment, setNewAssignment] = useState({
+    title: '',
+    subject: '',
+    description: '',
+    dueDate: '',
+    points: 25,
+    grade: '',
+    class: ''
+  });
 
   const filteredAssignments = mockAssignments.filter(assignment => {
     const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -310,7 +333,178 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setUploadedFiles(prev => [...prev, ...files]);
+    
+    // Validate files before adding
+    const validFiles: File[] = [];
+    const errors: Record<string, string> = {};
+    
+    files.forEach(file => {
+      const validation = validateFile(file);
+      if (validation.valid) {
+        validFiles.push(file);
+      } else {
+        errors[file.name] = validation.error || 'Invalid file';
+      }
+    });
+    
+    setUploadErrors(prev => ({ ...prev, ...errors }));
+    setUploadedFiles(prev => [...prev, ...validFiles]);
+    
+    // Initialize progress tracking for valid files
+    const progressEntries: Record<string, UploadProgress> = {};
+    validFiles.forEach(file => {
+      progressEntries[file.name] = {
+        fileName: file.name,
+        progress: 0,
+        status: 'pending'
+      };
+    });
+    setUploadProgress(prev => ({ ...prev, ...progressEntries }));
+  };
+
+  const handleUploadFiles = async () => {
+    if (uploadedFiles.length === 0) return;
+    
+    console.log('Starting upload with access token:', accessToken);
+    
+    if (!accessToken) {
+      setUploadErrors({ general: 'Authentication token not available. Please refresh the page.' });
+      return;
+    }
+    
+    setIsUploading(true);
+    setUploadErrors({});
+    
+    try {
+      // Generate entity ID for this assignment
+      const entityId = generateEntityId();
+      
+      console.log('Generated entity ID:', entityId);
+      
+      // Get access token from auth hook
+      const token = accessToken;
+      
+      const results = await uploadMultipleFiles(
+        uploadedFiles,
+        'assignment',
+        entityId,
+        newAssignment.description || 'Homework assignment files',
+        token,
+        // Progress callback
+        (fileName, progress) => {
+          setUploadProgress(prev => ({
+            ...prev,
+            [fileName]: {
+              ...prev[fileName],
+              progress,
+              status: 'uploading'
+            }
+          }));
+        },
+        // Success callback
+        (fileName, result) => {
+          setUploadProgress(prev => ({
+            ...prev,
+            [fileName]: {
+              ...prev[fileName],
+              progress: 100,
+              status: 'completed'
+            }
+          }));
+          setCompletedUploads(prev => [...prev, result]);
+        },
+        // Error callback
+        (fileName, error) => {
+          setUploadProgress(prev => ({
+            ...prev,
+            [fileName]: {
+              ...prev[fileName],
+              status: 'error',
+              error
+            }
+          }));
+          setUploadErrors(prev => ({ ...prev, [fileName]: error }));
+        }
+      );
+      
+      // Create new assignment with uploaded files
+      if (results.length > 0) {
+        const attachments: AssignmentAttachment[] = results.map(file => ({
+          id: file.id,
+          name: file.fileName,
+          originalName: file.originalName,
+          type: file.mimeType.startsWith('image/') ? 'image' : 
+                file.mimeType.startsWith('video/') ? 'video' : 'document',
+          mimeType: file.mimeType,
+          size: formatFileSize(file.size),
+          sizeBytes: file.size,
+          url: file.url,
+          path: file.path,
+          entityType: file.entityType,
+          entityId: file.entityId,
+          uploadedAt: file.uploadedAt
+        }));
+        
+        const newAssignmentData: Assignment = {
+          id: entityId,
+          title: newAssignment.title || 'New Assignment',
+          subject: newAssignment.subject || 'General',
+          class: newAssignment.class || 'All Classes',
+          grade: newAssignment.grade || 'All Grades',
+          type: 'homework',
+          dueDate: newAssignment.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          description: newAssignment.description || 'Assignment with uploaded files',
+          attachments,
+          points: newAssignment.points,
+          status: 'draft',
+          createdDate: new Date().toISOString().split('T')[0],
+          isSelected: true
+        };
+        
+        // Add to selected assignments
+        setSelectedAssignments([newAssignmentData]);
+        
+        // Reset form
+        setNewAssignment({
+          title: '',
+          subject: '',
+          description: '',
+          dueDate: '',
+          points: 25,
+          grade: '',
+          class: ''
+        });
+        setUploadedFiles([]);
+        setShowUploadModal(false);
+        
+        // Move to recipients step
+        setStep('recipients');
+      }
+      
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setUploadErrors(prev => ({ 
+        ...prev, 
+        general: error instanceof Error ? error.message : 'Upload failed' 
+      }));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeUploadedFile = (index: number) => {
+    const fileToRemove = uploadedFiles[index];
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setUploadProgress(prev => {
+      const updated = { ...prev };
+      delete updated[fileToRemove.name];
+      return updated;
+    });
+    setUploadErrors(prev => {
+      const updated = { ...prev };
+      delete updated[fileToRemove.name];
+      return updated;
+    });
   };
 
   const handleAssignHomework = async () => {
@@ -400,59 +594,244 @@ export default function AssignHomeworkSection({ subdomain, onBack, onCreateTest,
         </button>
       </div>
 
-      {/* Upload Modal */}
+      {/* Enhanced Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Upload Assignment</h3>
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center">
-                <Upload className="w-8 h-8 text-primary mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">Drag and drop files here or click to browse</p>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors"
-                >
-                  Choose Files
-                </label>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-foreground">Create New Assignment</h3>
+              <button
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setUploadedFiles([]);
+                  setUploadProgress({});
+                  setUploadErrors({});
+                  setNewAssignment({
+                    title: '',
+                    subject: '',
+                    description: '',
+                    dueDate: '',
+                    points: 25,
+                    grade: '',
+                    class: ''
+                  });
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Assignment Details Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Assignment Title *</label>
+                  <input
+                    type="text"
+                    value={newAssignment.title}
+                    onChange={(e) => setNewAssignment(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter assignment title"
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Subject *</label>
+                  <input
+                    type="text"
+                    value={newAssignment.subject}
+                    onChange={(e) => setNewAssignment(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="e.g., Mathematics, Science"
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Grade/Class</label>
+                  <input
+                    type="text"
+                    value={newAssignment.grade}
+                    onChange={(e) => setNewAssignment(prev => ({ ...prev, grade: e.target.value }))}
+                    placeholder="e.g., Grade 7, 7A"
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Points</label>
+                  <input
+                    type="number"
+                    value={newAssignment.points}
+                    onChange={(e) => setNewAssignment(prev => ({ ...prev, points: parseInt(e.target.value) || 25 }))}
+                    min="1"
+                    max="1000"
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">Due Date</label>
+                  <input
+                    type="date"
+                    value={newAssignment.dueDate}
+                    onChange={(e) => setNewAssignment(prev => ({ ...prev, dueDate: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">Description</label>
+                  <textarea
+                    value={newAssignment.description}
+                    onChange={(e) => setNewAssignment(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe the assignment, instructions, and requirements..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* File Upload Section */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Assignment Files</label>
+                <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 text-center">
+                  <Upload className="w-8 h-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Upload assignment files, worksheets, or resources
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Supported: Images, PDFs, Documents, Videos (Max 50MB each)
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,video/*,audio/*"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90 transition-colors inline-block"
+                  >
+                    Choose Files
+                  </label>
+                </div>
               </div>
               
-              {uploadedFiles.length > 0 && (
+              {/* Upload Errors */}
+              {Object.keys(uploadErrors).length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-medium text-foreground">Uploaded Files:</h4>
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                      <span className="text-sm text-foreground">{file.name}</span>
-                      <button
-                        onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                  <h4 className="font-medium text-red-600">Upload Errors:</h4>
+                  {Object.entries(uploadErrors).map(([fileName, error]) => (
+                    <div key={fileName} className="flex items-start gap-2 p-2 bg-red-50 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <span className="font-medium text-red-700">{fileName}:</span>
+                        <span className="text-red-600 ml-1">{error}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
               
-              <div className="flex gap-3">
+              {/* Uploaded Files with Progress */}
+              {uploadedFiles.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-foreground">Files to Upload ({uploadedFiles.length}):</h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {uploadedFiles.map((file, index) => {
+                      const progress = uploadProgress[file.name];
+                      const hasError = uploadErrors[file.name];
+                      
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="text-lg">{getFileIcon(file.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-foreground truncate">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
+                            </div>
+                            
+                            {progress && (
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className={`capitalize ${
+                                    progress.status === 'completed' ? 'text-green-600' :
+                                    progress.status === 'error' ? 'text-red-600' :
+                                    progress.status === 'uploading' ? 'text-blue-600' :
+                                    'text-muted-foreground'
+                                  }`}>
+                                    {progress.status}
+                                  </span>
+                                  {progress.status === 'uploading' && (
+                                    <span className="text-muted-foreground">{progress.progress}%</span>
+                                  )}
+                                </div>
+                                {(progress.status === 'uploading' || progress.status === 'completed') && (
+                                  <div className="w-full bg-gray-200 rounded-full h-1">
+                                    <div 
+                                      className={`h-1 rounded-full transition-all duration-300 ${
+                                        progress.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'
+                                      }`}
+                                      style={{ width: `${progress.progress}%` }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {!isUploading && (
+                            <button
+                              onClick={() => removeUploadedFile(index)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Debug Info */}
+              <div className="text-xs text-muted-foreground p-2 bg-gray-50 rounded">
+                Auth Status: {accessToken ? '✅ Token Available' : '❌ No Token'} | 
+                Files: {uploadedFiles.length} | 
+                Title: {newAssignment.title ? '✅' : '❌'} | 
+                Subject: {newAssignment.subject ? '✅' : '❌'}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
                 <button
-                  onClick={() => setShowUploadModal(false)}
-                  className="flex-1 px-4 py-2 border border-primary/20 rounded-lg text-foreground hover:bg-primary/5 transition-colors"
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setUploadedFiles([]);
+                    setUploadProgress({});
+                    setUploadErrors({});
+                  }}
+                  disabled={isUploading}
+                  className="flex-1 px-4 py-2 border border-primary/20 rounded-lg text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => setShowUploadModal(false)}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  onClick={handleUploadFiles}
+                  disabled={isUploading || uploadedFiles.length === 0 || !newAssignment.title.trim() || !newAssignment.subject.trim() || !accessToken}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
-                  Upload
+                  {isUploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Create & Upload Assignment
+                    </>
+                  )}
                 </button>
               </div>
             </div>
