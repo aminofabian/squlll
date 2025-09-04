@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,6 +29,7 @@ import {
   Briefcase, 
   GraduationCap,
   Calendar,
+  CalendarDays,
   Building,
   UserPlus,
   Clock,
@@ -337,16 +338,47 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth" className="text-sm font-mono">Date of Birth</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                      className="pl-10 border-primary/20 font-mono"
-                    />
+                  <Label className="flex items-center gap-2 text-sm font-mono">
+                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                    Date of Birth *
+                  </Label>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                    💡 Staff must be at least 18 years old
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">Day</div>
+                    </div>
+                    <div>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">January</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">Month</div>
+                    </div>
+                    <div>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2000">2000</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">Year</div>
+                    </div>
                   </div>
                 </div>
 
