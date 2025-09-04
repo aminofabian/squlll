@@ -758,25 +758,191 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                   <FormField
                     control={form.control}
                     name="admission_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1 font-mono text-sm">
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          Admission Date *
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input 
-                              type="date" 
-                              {...field} 
-                              className="pl-3 pr-10 cursor-pointer bg-primary/5 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-mono" 
-                            />
-                            <Calendar className="absolute right-3 top-2.5 h-4 w-4 text-primary pointer-events-none" />
+                    render={({ field }) => {
+                      // Calculate reasonable year range for admission dates
+                      const today = new Date();
+                      const minYear = today.getFullYear() - 10; // Allow 10 years back
+                      const maxYear = today.getFullYear() + 5; // Allow 5 years forward
+                      
+                      // Parse current value
+                      const currentValue = field.value || '';
+                      const dateParts = currentValue.split('-');
+                      const currentYear = dateParts[0] || '';
+                      const currentMonth = dateParts[1] ? parseInt(dateParts[1]).toString() : '';
+                      const currentDay = dateParts[2] ? parseInt(dateParts[2]).toString() : '';
+                      
+                      // Use state to track individual selections
+                      const [selectedDay, setSelectedDay] = React.useState(currentDay);
+                      const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
+                      const [selectedYear, setSelectedYear] = React.useState(currentYear);
+                      
+                      // Update form field whenever all three are selected
+                      React.useEffect(() => {
+                        if (selectedDay && selectedMonth && selectedYear) {
+                          const paddedDay = selectedDay.padStart(2, '0');
+                          const paddedMonth = selectedMonth.padStart(2, '0');
+                          const dateString = `${selectedYear}-${paddedMonth}-${paddedDay}`;
+                          field.onChange(dateString);
+                        }
+                      }, [selectedDay, selectedMonth, selectedYear, field]);
+                      
+                      // Ensure empty strings are treated as undefined for Select components
+                      const dayValue = selectedDay || undefined;
+                      const monthValue = selectedMonth || undefined;
+                      const yearValue = selectedYear || undefined;
+                      
+                      // Get days in month
+                      const getDaysInMonth = (month: string, year: string) => {
+                        if (!month || !year) return 31;
+                        return new Date(parseInt(year), parseInt(month), 0).getDate();
+                      };
+                      
+                      const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 font-mono text-sm">
+                            <Clock className="h-3.5 w-3.5 text-primary" />
+                            Admission Date *
+                            {(selectedDay && selectedMonth && selectedYear) && (
+                              <div className="flex items-center gap-2 ml-auto">
+                                <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full text-xs font-mono text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                                  {`${selectedDay}/${selectedMonth.padStart(2, '0')}/${selectedYear}`}
+                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                                  {(() => {
+                                    const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                    return `${monthNames[parseInt(selectedMonth)]} ${selectedYear}`;
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+                          </FormLabel>
+                          <FormControl>
+                            <div className="grid grid-cols-3 gap-2">
+                              {/* Day */}
+                              <div>
+                                <Select 
+                                  value={dayValue} 
+                                  onValueChange={setSelectedDay}
+                                >
+                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                                    <SelectValue placeholder="Day" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-60">
+                                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                                      <SelectItem key={day} value={day.toString()}>
+                                        {day}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                                  Day
+                                </div>
+                              </div>
+                              
+                              {/* Month */}
+                              <div>
+                                <Select 
+                                  value={monthValue} 
+                                  onValueChange={setSelectedMonth}
+                                >
+                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                                    <SelectValue placeholder="Month" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="1">January</SelectItem>
+                                    <SelectItem value="2">February</SelectItem>
+                                    <SelectItem value="3">March</SelectItem>
+                                    <SelectItem value="4">April</SelectItem>
+                                    <SelectItem value="5">May</SelectItem>
+                                    <SelectItem value="6">June</SelectItem>
+                                    <SelectItem value="7">July</SelectItem>
+                                    <SelectItem value="8">August</SelectItem>
+                                    <SelectItem value="9">September</SelectItem>
+                                    <SelectItem value="10">October</SelectItem>
+                                    <SelectItem value="11">November</SelectItem>
+                                    <SelectItem value="12">December</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                                  Month
+                                </div>
+                              </div>
+                              
+                              {/* Year */}
+                              <div>
+                                <Select 
+                                  value={yearValue} 
+                                  onValueChange={setSelectedYear}
+                                >
+                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                                    <SelectValue placeholder="Year" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-60">
+                                    {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
+                                      <SelectItem key={year} value={year.toString()}>
+                                        {year}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                                  Year
+                                </div>
+                              </div>
+                            </div>
+                          </FormControl>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              📅 Select the date when the student was admitted to the school
+                            </div>
+                            {(selectedDay && selectedMonth && selectedYear) && (
+                              <div className="flex items-center gap-2">
+                                <div className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-xs font-medium text-blue-700 dark:text-blue-300">
+                                  {(() => {
+                                    const admissionDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                    const today = new Date();
+                                    
+                                    if (admissionDate > today) {
+                                      return "Future admission";
+                                    } else {
+                                      const diffTime = Math.abs(today.getTime() - admissionDate.getTime());
+                                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                      
+                                      if (diffDays < 30) {
+                                        return `${diffDays} days ago`;
+                                      } else if (diffDays < 365) {
+                                        const months = Math.floor(diffDays / 30);
+                                        return `${months} month${months > 1 ? 's' : ''} ago`;
+                                      } else {
+                                        const years = Math.floor(diffDays / 365);
+                                        return `${years} year${years > 1 ? 's' : ''} ago`;
+                                      }
+                                    }
+                                  })()}
+                                </div>
+                                <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                                  {(() => {
+                                    const admissionDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                    const today = new Date();
+                                    
+                                    if (admissionDate > today) {
+                                      return '📋 Planned';
+                                    } else {
+                                      return '✅ Admitted';
+                                    }
+                                  })()}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
               </div>

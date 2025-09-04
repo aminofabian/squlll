@@ -337,50 +337,207 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-mono">
-                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                    Date of Birth *
-                  </Label>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                    💡 Staff must be at least 18 years old
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Day" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">Day</div>
+                {(() => {
+                  // Calculate the maximum year (18+ years old for staff)
+                  const today = new Date();
+                  const maxYear = today.getFullYear() - 18; // Min 18 years old
+                  const minYear = today.getFullYear() - 80; // Max 80 years old
+                  
+                  // Parse current value
+                  const currentValue = formData.dateOfBirth || '';
+                  const dateParts = currentValue.split('-');
+                  const currentYear = dateParts[0] || '';
+                  const currentMonth = dateParts[1] ? parseInt(dateParts[1]).toString() : '';
+                  const currentDay = dateParts[2] ? parseInt(dateParts[2]).toString() : '';
+                  
+                  // Use state to track individual selections
+                  const [selectedDay, setSelectedDay] = React.useState(currentDay);
+                  const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
+                  const [selectedYear, setSelectedYear] = React.useState(currentYear);
+                  
+                  // Update form field whenever all three are selected
+                  React.useEffect(() => {
+                    if (selectedDay && selectedMonth && selectedYear) {
+                      const paddedDay = selectedDay.padStart(2, '0');
+                      const paddedMonth = selectedMonth.padStart(2, '0');
+                      const dateString = `${selectedYear}-${paddedMonth}-${paddedDay}`;
+                      handleInputChange('dateOfBirth', dateString);
+                    }
+                  }, [selectedDay, selectedMonth, selectedYear]);
+                  
+                  // Ensure empty strings are treated as undefined for Select components
+                  const dayValue = selectedDay || undefined;
+                  const monthValue = selectedMonth || undefined;
+                  const yearValue = selectedYear || undefined;
+                  
+                  // Get days in month
+                  const getDaysInMonth = (month: string, year: string) => {
+                    if (!month || !year) return 31;
+                    return new Date(parseInt(year), parseInt(month), 0).getDate();
+                  };
+                  
+                  const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+                  
+                  return (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-sm font-mono">
+                        <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                        Date of Birth *
+                        {(selectedDay && selectedMonth && selectedYear) && (
+                          <div className="flex items-center gap-2 ml-auto">
+                            <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-mono text-primary flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+                              {`${selectedDay}/${selectedMonth.padStart(2, '0')}/${selectedYear}`}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                              {(() => {
+                                const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                return `${monthNames[parseInt(selectedMonth)]} ${selectedYear}`;
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* Day */}
+                        <div>
+                          <Select 
+                            value={dayValue} 
+                            onValueChange={setSelectedDay}
+                          >
+                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                              <SelectValue placeholder="Day" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                                <SelectItem key={day} value={day.toString()}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                            Day
+                          </div>
+                        </div>
+                        
+                        {/* Month */}
+                        <div>
+                          <Select 
+                            value={monthValue} 
+                            onValueChange={setSelectedMonth}
+                          >
+                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                              <SelectValue placeholder="Month" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">January</SelectItem>
+                              <SelectItem value="2">February</SelectItem>
+                              <SelectItem value="3">March</SelectItem>
+                              <SelectItem value="4">April</SelectItem>
+                              <SelectItem value="5">May</SelectItem>
+                              <SelectItem value="6">June</SelectItem>
+                              <SelectItem value="7">July</SelectItem>
+                              <SelectItem value="8">August</SelectItem>
+                              <SelectItem value="9">September</SelectItem>
+                              <SelectItem value="10">October</SelectItem>
+                              <SelectItem value="11">November</SelectItem>
+                              <SelectItem value="12">December</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                            Month
+                          </div>
+                        </div>
+                        
+                        {/* Year */}
+                        <div>
+                          <Select 
+                            value={yearValue} 
+                            onValueChange={setSelectedYear}
+                          >
+                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                              <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                            Year
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          💡 Staff must be at least 18 years old
+                        </div>
+                        {(selectedDay && selectedMonth && selectedYear) && (
+                          <div className="flex items-center gap-2">
+                            <div className="px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-xs font-medium text-green-700 dark:text-green-300">
+                              {(() => {
+                                const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                const today = new Date();
+                                
+                                // Calculate exact age in years, months, and days
+                                let years = today.getFullYear() - birthDate.getFullYear();
+                                let months = today.getMonth() - birthDate.getMonth();
+                                let days = today.getDate() - birthDate.getDate();
+                                
+                                // Adjust if the birthday hasn't occurred this year
+                                if (months < 0 || (months === 0 && days < 0)) {
+                                  years--;
+                                  months += 12;
+                                }
+                                
+                                // Adjust if the day hasn't occurred this month
+                                if (days < 0) {
+                                  months--;
+                                  const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                                  days += lastMonth.getDate();
+                                }
+                                
+                                // Format the age display
+                                if (years > 0) {
+                                  if (months > 0) {
+                                    return `${years}y ${months}m old`;
+                                  } else {
+                                    return `${years} years old`;
+                                  }
+                                } else if (months > 0) {
+                                  return `${months} months old`;
+                                } else {
+                                  return `${days} days old`;
+                                }
+                              })()}
+                            </div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                              {(() => {
+                                const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                const today = new Date();
+                                
+                                // Calculate exact age for eligibility check
+                                let years = today.getFullYear() - birthDate.getFullYear();
+                                let months = today.getMonth() - birthDate.getMonth();
+                                let days = today.getDate() - birthDate.getDate();
+                                
+                                if (months < 0 || (months === 0 && days < 0)) {
+                                  years--;
+                                }
+                                
+                                return years >= 18 ? '✅ Eligible' : '❌ Too young';
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Month" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">January</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">Month</div>
-                    </div>
-                    <div>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="2000">2000</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">Year</div>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 <div className="space-y-2">
                   <Label htmlFor="gender" className="text-sm font-mono">Gender *</Label>
@@ -465,20 +622,188 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="joinDate" className="text-sm font-mono">Join Date *</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="joinDate"
-                      type="date"
-                      value={formData.joinDate}
-                      onChange={(e) => handleInputChange('joinDate', e.target.value)}
-                      className="pl-10 border-primary/20 font-mono"
-                      required
-                    />
-                  </div>
-                </div>
+{(() => {
+                  // Calculate reasonable year range for join dates
+                  const today = new Date();
+                  const minYear = today.getFullYear() - 30; // Allow 30 years back
+                  const maxYear = today.getFullYear() + 2; // Allow 2 years forward
+                  
+                  // Parse current value
+                  const currentValue = formData.joinDate || '';
+                  const dateParts = currentValue.split('-');
+                  const currentYear = dateParts[0] || '';
+                  const currentMonth = dateParts[1] ? parseInt(dateParts[1]).toString() : '';
+                  const currentDay = dateParts[2] ? parseInt(dateParts[2]).toString() : '';
+                  
+                  // Use state to track individual selections
+                  const [selectedDay, setSelectedDay] = React.useState(currentDay);
+                  const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
+                  const [selectedYear, setSelectedYear] = React.useState(currentYear);
+                  
+                  // Update form field whenever all three are selected
+                  React.useEffect(() => {
+                    if (selectedDay && selectedMonth && selectedYear) {
+                      const paddedDay = selectedDay.padStart(2, '0');
+                      const paddedMonth = selectedMonth.padStart(2, '0');
+                      const dateString = `${selectedYear}-${paddedMonth}-${paddedDay}`;
+                      handleInputChange('joinDate', dateString);
+                    }
+                  }, [selectedDay, selectedMonth, selectedYear]);
+                  
+                  // Ensure empty strings are treated as undefined for Select components
+                  const dayValue = selectedDay || undefined;
+                  const monthValue = selectedMonth || undefined;
+                  const yearValue = selectedYear || undefined;
+                  
+                  // Get days in month
+                  const getDaysInMonth = (month: string, year: string) => {
+                    if (!month || !year) return 31;
+                    return new Date(parseInt(year), parseInt(month), 0).getDate();
+                  };
+                  
+                  const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+                  
+                  return (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-sm font-mono">
+                        <Clock className="h-3.5 w-3.5 text-primary" />
+                        Join Date *
+                        {(selectedDay && selectedMonth && selectedYear) && (
+                          <div className="flex items-center gap-2 ml-auto">
+                            <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full text-xs font-mono text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                              {`${selectedDay}/${selectedMonth.padStart(2, '0')}/${selectedYear}`}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                              {(() => {
+                                const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                return `${monthNames[parseInt(selectedMonth)]} ${selectedYear}`;
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* Day */}
+                        <div>
+                          <Select 
+                            value={dayValue} 
+                            onValueChange={setSelectedDay}
+                          >
+                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                              <SelectValue placeholder="Day" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                                <SelectItem key={day} value={day.toString()}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                            Day
+                          </div>
+                        </div>
+                        
+                        {/* Month */}
+                        <div>
+                          <Select 
+                            value={monthValue} 
+                            onValueChange={setSelectedMonth}
+                          >
+                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                              <SelectValue placeholder="Month" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">January</SelectItem>
+                              <SelectItem value="2">February</SelectItem>
+                              <SelectItem value="3">March</SelectItem>
+                              <SelectItem value="4">April</SelectItem>
+                              <SelectItem value="5">May</SelectItem>
+                              <SelectItem value="6">June</SelectItem>
+                              <SelectItem value="7">July</SelectItem>
+                              <SelectItem value="8">August</SelectItem>
+                              <SelectItem value="9">September</SelectItem>
+                              <SelectItem value="10">October</SelectItem>
+                              <SelectItem value="11">November</SelectItem>
+                              <SelectItem value="12">December</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                            Month
+                          </div>
+                        </div>
+                        
+                        {/* Year */}
+                        <div>
+                          <Select 
+                            value={yearValue} 
+                            onValueChange={setSelectedYear}
+                          >
+                            <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
+                              <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60">
+                              {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
+                            Year
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          📅 Select the date when the staff member joined the organization
+                        </div>
+                        {(selectedDay && selectedMonth && selectedYear) && (
+                          <div className="flex items-center gap-2">
+                            <div className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-xs font-medium text-blue-700 dark:text-blue-300">
+                              {(() => {
+                                const joinDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                const today = new Date();
+                                
+                                if (joinDate > today) {
+                                  return "Future join date";
+                                } else {
+                                  const diffTime = Math.abs(today.getTime() - joinDate.getTime());
+                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                  
+                                  if (diffDays < 30) {
+                                    return `${diffDays} days ago`;
+                                  } else if (diffDays < 365) {
+                                    const months = Math.floor(diffDays / 30);
+                                    return `${months} month${months > 1 ? 's' : ''} ago`;
+                                  } else {
+                                    const years = Math.floor(diffDays / 365);
+                                    return `${years} year${years > 1 ? 's' : ''} ago`;
+                                  }
+                                }
+                              })()}
+                            </div>
+                            <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                              {(() => {
+                                const joinDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                const today = new Date();
+                                
+                                if (joinDate > today) {
+                                  return '📋 Planned';
+                                } else {
+                                  return '✅ Joined';
+                                }
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="space-y-2">
                   <Label htmlFor="experience" className="text-sm font-mono">Years of Experience *</Label>
