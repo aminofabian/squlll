@@ -10,6 +10,7 @@ import { Level, GradeLevel, Stream } from '@/lib/types/school-config'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { motion } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -96,10 +97,25 @@ export function SchoolSearchFilter({
   const [selectedStreamId, setSelectedStreamId] = useState<string>('')
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
   const { config } = useSchoolConfigStore()
+  const queryClient = useQueryClient()
 
   // Get all grades grouped by level and sorted
   const gradesData = useMemo(() => {
     if (!config?.selectedLevels) return [];
+
+    // Debug: Log the current config to see streams
+    console.log('SchoolSearchFilter - Current config:', {
+      levels: config.selectedLevels.map(level => ({
+        id: level.id,
+        name: level.name,
+        grades: level.gradeLevels?.map(grade => ({
+          id: grade.id,
+          name: grade.name,
+          streams: grade.streams || [],
+          streamCount: grade.streams?.length || 0
+        })) || []
+      }))
+    });
 
     return config.selectedLevels
       .map(level => ({
@@ -141,6 +157,11 @@ export function SchoolSearchFilter({
     if (onSearch) {
       onSearch('');
     }
+  };
+
+  const refreshConfig = async () => {
+    console.log('Manually refreshing school config...');
+    await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] });
   };
 
   const handleGradeClick = (gradeId: string, levelId: string) => {
@@ -338,17 +359,27 @@ export function SchoolSearchFilter({
         {/* Search Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Grade Levels</h3>
-          {searchTerm && (
+          <div className="flex items-center gap-2">
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSearch}
+                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+              >
+                Clear
+                <X className="ml-2 h-4 w-4" />
+              </Button>
+            )}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={clearSearch}
+              onClick={refreshConfig}
               className="h-8 px-2 text-muted-foreground hover:text-foreground"
             >
-              Clear
-              <X className="ml-2 h-4 w-4" />
+              Refresh
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Search Input */}

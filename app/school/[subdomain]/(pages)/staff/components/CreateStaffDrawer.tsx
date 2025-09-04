@@ -69,11 +69,48 @@ interface StaffFormData {
 
 export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: CreateStaffDrawerProps) {
   const { data: schoolConfig } = useSchoolConfig()
+  // Phone number formatting utility
+  const formatPhoneNumber = (value: string): string => {
+    // If user is trying to clear the field, allow empty or just +254
+    if (value === '' || value === '+' || value === '+2' || value === '+25') {
+      return '+254';
+    }
+    
+    // Remove all non-digit characters except + at the start
+    let cleaned = value.replace(/[^\d+]/g, '');
+    
+    // If it starts with 0, replace with +254
+    if (cleaned.startsWith('0')) {
+      cleaned = '+254' + cleaned.substring(1);
+    }
+    // If it's just digits without +, prepend +254
+    else if (cleaned && /^\d/.test(cleaned) && !cleaned.startsWith('+')) {
+      cleaned = '+254' + cleaned;
+    }
+    // If it starts with +254, ensure it's properly formatted and remove any 0 after +254
+    else if (cleaned.startsWith('+254')) {
+      // Remove 0 immediately after +254 (e.g., +2540712345678 -> +254712345678)
+      if (cleaned.startsWith('+2540')) {
+        cleaned = '+254' + cleaned.substring(5);
+      }
+    }
+    // If it starts with + but not +254, keep as is (for other country codes)
+    else if (cleaned.startsWith('+') && !cleaned.startsWith('+254')) {
+      // Keep as is for international numbers
+    }
+    // If empty or just +, default to +254
+    else if (!cleaned || cleaned === '+') {
+      cleaned = '+254';
+    }
+    
+    return cleaned;
+  };
+
   const [formData, setFormData] = useState<StaffFormData>({
     name: '',
     employeeId: '',
     email: '',
-    phone: '',
+    phone: '+254',
     dateOfBirth: '',
     address: '',
     position: '',
@@ -89,7 +126,7 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
     responsibilities: '',
     emergencyContactName: '',
     emergencyContactRelationship: '',
-    emergencyContactPhone: '',
+    emergencyContactPhone: '+254',
     gender: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -109,6 +146,10 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
   }
 
   const handleInputChange = (field: keyof StaffFormData, value: string) => {
+    // Apply phone formatting for phone number fields
+    if (field === 'phone' || field === 'emergencyContactPhone') {
+      value = formatPhoneNumber(value);
+    }
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -283,12 +324,15 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <Input
                       id="phone"
-                      placeholder="+254 XXX XXX XXX"
+                      placeholder="+254700000000"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       className="pl-10 border-primary/20 font-mono"
                       required
                     />
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                    Kenya numbers start with +254. If you enter 0, it will be automatically converted.
                   </div>
                 </div>
 
@@ -530,11 +574,14 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                     <Input
                       id="emergencyContactPhone"
-                      placeholder="+254 XXX XXX XXX"
+                      placeholder="+254700000000"
                       value={formData.emergencyContactPhone}
                       onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
                       className="pl-10 border-primary/20 font-mono"
                     />
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 ml-1">
+                    Kenya numbers start with +254. If you enter 0, it will be automatically converted.
                   </div>
                 </div>
               </div>

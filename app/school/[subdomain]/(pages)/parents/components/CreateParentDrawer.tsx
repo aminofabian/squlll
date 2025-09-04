@@ -79,7 +79,13 @@ const studentSchema = z.object({
 const parentFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Valid email is required"),
-  phone: z.string().min(10, "Valid phone number is required"),
+  phone: z.string()
+    .min(10, { message: 'Valid phone number is required' })
+    .refine((value) => {
+      // Allow Kenyan numbers (+254...) and international numbers
+      const phoneRegex = /^\+254[0-9]{9}$|^\+[1-9][0-9]{1,14}$/;
+      return phoneRegex.test(value);
+    }, { message: 'Please enter a valid phone number (e.g., +254700000000)' }),
   // New field for the mutation
   linkingMethod: z.enum(["SEARCH_BY_NAME", "ADMISSION_NUMBER", "MANUAL_INPUT"]).default("SEARCH_BY_NAME"),
   // Keep existing fields but make them optional
@@ -179,6 +185,43 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
     return { allGrades };
   }, [config, getAllGradeLevels]);
   
+  // Phone number formatting utility
+  const formatPhoneNumber = (value: string): string => {
+    // If user is trying to clear the field, allow empty or just +254
+    if (value === '' || value === '+' || value === '+2' || value === '+25') {
+      return '+254';
+    }
+    
+    // Remove all non-digit characters except + at the start
+    let cleaned = value.replace(/[^\d+]/g, '');
+    
+    // If it starts with 0, replace with +254
+    if (cleaned.startsWith('0')) {
+      cleaned = '+254' + cleaned.substring(1);
+    }
+    // If it's just digits without +, prepend +254
+    else if (cleaned && /^\d/.test(cleaned) && !cleaned.startsWith('+')) {
+      cleaned = '+254' + cleaned;
+    }
+    // If it starts with +254, ensure it's properly formatted and remove any 0 after +254
+    else if (cleaned.startsWith('+254')) {
+      // Remove 0 immediately after +254 (e.g., +2540712345678 -> +254712345678)
+      if (cleaned.startsWith('+2540')) {
+        cleaned = '+254' + cleaned.substring(5);
+      }
+    }
+    // If it starts with + but not +254, keep as is (for other country codes)
+    else if (cleaned.startsWith('+') && !cleaned.startsWith('+254')) {
+      // Keep as is for international numbers
+    }
+    // If empty or just +, default to +254
+    else if (!cleaned || cleaned === '+') {
+      cleaned = '+254';
+    }
+    
+    return cleaned;
+  };
+  
   // Form handling
   // Explicitly define form type to avoid TypeScript errors
   const form = useForm<ParentFormData>({
@@ -186,7 +229,7 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
     defaultValues: {
       name: '',
       email: '',
-      phone: '',
+      phone: '+254',
       linkingMethod: 'SEARCH_BY_NAME' as const,
       relationship: 'father' as const,
       occupation: '',
@@ -1073,8 +1116,19 @@ export function CreateParentDrawer({ onParentCreated }: CreateParentDrawerProps)
                           Phone Number *
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="+254700000000" {...field} className="font-mono" />
+                          <Input 
+                            placeholder="+254700000000" 
+                            value={field.value}
+                            onChange={(e) => {
+                              const formatted = formatPhoneNumber(e.target.value);
+                              field.onChange(formatted);
+                            }}
+                            className="font-mono" 
+                          />
                         </FormControl>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Kenya numbers start with +254. If you enter 0, it will be automatically converted.
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
