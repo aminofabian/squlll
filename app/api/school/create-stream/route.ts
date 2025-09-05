@@ -20,20 +20,25 @@ export async function POST(request: Request) {
 
     // Prepare GraphQL mutation
     const mutation = `
-      mutation CreateStream($name: String!, $capacity: Int!, $gradeId: String!) {
-        createStream(input: {
+      mutation CreateTenantStreamFromScratch($name: String!, $capacity: Int!, $gradeId: String!) {
+        createTenantStreamFromScratch(input: {
           name: $name,
           capacity: $capacity,
-          isActive: true,
-          gradeLevelId: $gradeId
+          description: "",
+          tenantGradeLevelId: $gradeId
         }) {
           id
-          name
-          capacity
-          isActive
-          gradeLevel {
+          stream {
             id
             name
+            capacity
+          }
+          tenantGradeLevel {
+            id
+            gradeLevel {
+              id
+              name
+            }
           }
         }
       }
@@ -67,7 +72,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(result.data);
+    return NextResponse.json(result.data.createTenantStreamFromScratch);
   } catch (error) {
     console.error('Error creating stream:', error);
     return NextResponse.json(
