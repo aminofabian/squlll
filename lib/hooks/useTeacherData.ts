@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 
 interface TeacherSubject {
   id: string;
@@ -106,6 +107,7 @@ export function useTeacherData() {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { handleError } = useAuthErrorHandler();
 
   useEffect(() => {
     const fetchTeacher = async () => {
@@ -171,6 +173,13 @@ export function useTeacherData() {
         setTeacher(teacherData.getTeacher);
       } catch (err) {
         console.error('Error fetching teacher data:', err);
+        
+        // Handle authentication errors with redirect
+        const wasHandled = handleError(err);
+        if (wasHandled) {
+          return; // Don't set error state, let the redirect happen
+        }
+        
         const errorMessage = err instanceof Error 
           ? err.message 
           : typeof err === 'object' && err !== null 
@@ -260,6 +269,12 @@ export function useTeacherData() {
             const teacherData = result.data as GetTeacherResponse;
             setTeacher(teacherData.getTeacher);
           } catch (err) {
+            // Handle authentication errors with redirect
+            const wasHandled = handleError(err);
+            if (wasHandled) {
+              return; // Don't set error state, let the redirect happen
+            }
+            
             const errorMessage = err instanceof Error 
               ? err.message 
               : typeof err === 'object' && err !== null 

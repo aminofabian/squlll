@@ -79,6 +79,27 @@ export async function POST(request: Request) {
     // Handle both standard GraphQL errors format and top-level error format
     if (data.errors) {
       console.error('GraphQL API Route - GraphQL errors:', data.errors);
+      
+      // Check if any error is a "Forbidden resource" error
+      const hasForbiddenError = data.errors.some((error: any) => 
+        error.message?.includes('Forbidden resource') ||
+        error.extensions?.code === 'FORBIDDENEXCEPTION' ||
+        error.extensions?.code === 'FORBIDDEN'
+      );
+      
+      if (hasForbiddenError) {
+        return NextResponse.json({
+          data: null,
+          errors: [{
+            message: 'Authentication required. Please log in again.',
+            extensions: { 
+              code: 'AUTHENTICATION_REQUIRED',
+              redirectToLogin: true
+            }
+          }]
+        }, { status: 401 });
+      }
+      
       return NextResponse.json(data, { status: 500 });
     }
     

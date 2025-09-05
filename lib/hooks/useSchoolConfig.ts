@@ -5,6 +5,7 @@ import { SchoolConfiguration } from '../types/school-config';
 import { gql } from 'graphql-request';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuthErrorHandler } from './useAuthErrorHandler';
 
 interface GetSchoolConfigResponse {
   getSchoolConfiguration: SchoolConfiguration;
@@ -56,6 +57,7 @@ export function useSchoolConfig(enabled: boolean = true) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setConfig: setStoreConfig } = useSchoolConfigStore();
+  const { handleError } = useAuthErrorHandler();
 
   const query = useQuery({
     queryKey: ['schoolConfig'],
@@ -165,6 +167,13 @@ export function useSchoolConfig(enabled: boolean = true) {
         return config;
       } catch (error) {
         console.error('useSchoolConfig error:', error);
+        
+        // Handle authentication errors with redirect
+        const wasHandled = handleError(error);
+        if (wasHandled) {
+          return null; // Don't throw, let the redirect happen
+        }
+        
         setError(error instanceof Error ? error.message : 'An error occurred');
         throw error;
       } finally {
