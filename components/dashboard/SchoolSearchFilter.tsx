@@ -82,6 +82,8 @@ interface SchoolSearchFilterProps {
   onGradeSelect?: (gradeId: string, levelId: string) => void
   onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void
   isLoading?: boolean
+  selectedGradeId?: string
+  selectedStreamId?: string
 }
 
 export function SchoolSearchFilter({ 
@@ -90,14 +92,25 @@ export function SchoolSearchFilter({
   onSearch,
   onGradeSelect,
   onStreamSelect,
-  isLoading = false
+  isLoading = false,
+  selectedGradeId: parentSelectedGradeId,
+  selectedStreamId: parentSelectedStreamId
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedGradeId, setSelectedGradeId] = useState<string>('')
-  const [selectedStreamId, setSelectedStreamId] = useState<string>('')
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
+  
+  // Use parent state for selections, fall back to empty string if not provided
+  const selectedGradeId = parentSelectedGradeId || ''
+  const selectedStreamId = parentSelectedStreamId || ''
   const { config } = useSchoolConfigStore()
   const queryClient = useQueryClient()
+
+  // Effect to ensure selected grade is expanded when selection changes from parent
+  useEffect(() => {
+    if (selectedGradeId && !expandedGrades.has(selectedGradeId)) {
+      setExpandedGrades(prev => new Set([...prev, selectedGradeId]))
+    }
+  }, [selectedGradeId, expandedGrades])
 
   // Get all grades grouped by level and sorted
   const gradesData = useMemo(() => {
@@ -165,9 +178,6 @@ export function SchoolSearchFilter({
   };
 
   const handleGradeClick = (gradeId: string, levelId: string) => {
-    setSelectedGradeId(gradeId);
-    setSelectedStreamId(''); // Reset stream selection when grade changes
-    
     // Toggle expanded state for the grade
     setExpandedGrades(prev => {
       const newSet = new Set(prev);
@@ -187,7 +197,6 @@ export function SchoolSearchFilter({
   const handleStreamClick = (streamId: string, gradeId: string, levelId: string) => {
     // Toggle stream selection if clicking the same stream
     const newStreamId = selectedStreamId === streamId ? '' : streamId;
-    setSelectedStreamId(newStreamId);
     
     if (onStreamSelect) {
       onStreamSelect(newStreamId, gradeId, levelId);

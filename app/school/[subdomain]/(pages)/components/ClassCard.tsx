@@ -3,18 +3,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers, UserPlus } from 'lucide-react'
 import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
 import { useState, useMemo } from 'react'
 import { EditSubjectDialog } from './EditSubjectDialog'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import CreateClassDrawer from "@/app/school/components/CreateClassDrawer"
 import { AddStreamModal } from './AddStreamModal'
+import { AssignTeacherModal } from './AssignTeacherModal'
 
 interface ClassCardProps {
   level: Level;
   selectedGradeId?: string;
   selectedStreamId?: string;
+  onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void;
 }
 
 // Helper function to get component level color
@@ -45,12 +47,19 @@ export function ClassHeader() {
   )
 }
 
-export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCardProps) {
+export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSelect }: ClassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'optional'>('all')
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
   const [showStreamModal, setShowStreamModal] = useState(false)
   const [selectedGradeForStream, setSelectedGradeForStream] = useState<GradeLevel | null>(null)
+  const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false)
+  const [assignTeacherData, setAssignTeacherData] = useState<{
+    streamId?: string
+    streamName?: string
+    gradeLevelId?: string
+    gradeName?: string
+  }>({})  
 
   // Filter subjects based on selected grade, stream, and filter type
   const filteredSubjects = useMemo(() => {
@@ -115,6 +124,28 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
     }
   };
 
+  const handleAssignTeacherToStream = (streamId: string, streamName: string) => {
+    setAssignTeacherData({
+      streamId,
+      streamName,
+    });
+    setShowAssignTeacherModal(true);
+  };
+
+  const handleAssignTeacherToGrade = (gradeLevelId: string, gradeName: string) => {
+    setAssignTeacherData({
+      gradeLevelId,
+      gradeName,
+    });
+    setShowAssignTeacherModal(true);
+  };
+
+  const handleStreamClick = (streamId: string) => {
+    if (onStreamSelect && selectedGrade) {
+      onStreamSelect(streamId, selectedGrade.id, level.id);
+    }
+  };
+
   return (
     <Card className="w-full mb-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -131,32 +162,97 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
           </CardTitle>
           <CardDescription>{level.description}</CardDescription>
           {selectedGrade && (
-            <div className="flex items-center gap-1 mt-1">
-              <GraduationCap className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">
-                Selected Grade: <strong>{selectedGrade.name}</strong>
-                {selectedStream && (
-                  <> - Stream: <strong>{selectedStream.name}</strong></>
-                )}
-              </span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 px-2 ml-2"
-                      onClick={() => handleAddStream(selectedGrade.id)}
-                    >
-                      <Layers className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-xs">Add Stream</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add a new stream to this grade</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center gap-1">
+                <GraduationCap className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">
+                  Selected Grade: <strong>{selectedGrade.name}</strong>
+                  {selectedStream && (
+                    <> - Stream: <strong>{selectedStream.name}</strong></>
+                  )}
+                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 px-2 ml-2"
+                        onClick={() => handleAddStream(selectedGrade.id)}
+                      >
+                        <Layers className="h-3.5 w-3.5 mr-1" />
+                        <span className="text-xs">Add Stream</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add a new stream to this grade</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 px-2 ml-1"
+                        onClick={() => handleAssignTeacherToGrade(selectedGrade.id, selectedGrade.name)}
+                      >
+                        <UserPlus className="h-3.5 w-3.5 mr-1" />
+                        <span className="text-xs">Assign Teacher</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Assign a class teacher to this grade</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              
+              {/* Display streams for the selected grade */}
+              {selectedGrade.streams && selectedGrade.streams.length > 0 && (
+                <div className="ml-5 pl-4 border-l-2 border-gray-200">
+                  <div className="text-xs font-medium text-gray-500 mb-2">STREAMS</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {selectedGrade.streams.map((stream) => (
+                      <div
+                        key={stream.id}
+                        className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200 ${
+                          selectedStream?.id === stream.id 
+                            ? 'bg-primary/10 border-primary/30' 
+                            : 'bg-gray-50 border-gray-200 hover:bg-primary/5 hover:border-primary/20'
+                        }`}
+                        onClick={() => handleStreamClick(stream.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Layers className="h-3 w-3 text-gray-400" />
+                          <span className="text-sm font-medium">{stream.name}</span>
+                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 w-6 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAssignTeacherToStream(stream.id, stream.name);
+                                }}
+                              >
+                                <UserPlus className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Assign class teacher to {stream.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -279,6 +375,21 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId }: ClassCar
           gradeName={selectedGradeForStream.name}
         />
       )}
+
+      <AssignTeacherModal
+        isOpen={showAssignTeacherModal}
+        onClose={() => {
+          setShowAssignTeacherModal(false);
+          setAssignTeacherData({});
+        }}
+        onSuccess={() => {
+          console.log('Teacher assigned successfully');
+        }}
+        streamId={assignTeacherData.streamId}
+        streamName={assignTeacherData.streamName}
+        gradeLevelId={assignTeacherData.gradeLevelId}
+        gradeName={assignTeacherData.gradeName}
+      />
     </Card>
   );
 }

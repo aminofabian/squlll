@@ -11,9 +11,12 @@ const GET_GRADE_LEVELS_FOR_SCHOOL_TYPE = gql`
       updatedAt
       shortName
       sortOrder
-      streams {
+      tenantStreams {
         id
-        name
+        stream {
+          id
+          name
+        }
       }
       gradeLevel {
         id
@@ -39,9 +42,12 @@ export interface GradeLevelForSchoolType {
   updatedAt: string;
   shortName: string | null;
   sortOrder: number;
-  streams: Array<{
+  tenantStreams: Array<{
     id: string;
-    name: string;
+    stream: {
+      id: string;
+      name: string;
+    };
   }>;
   gradeLevel: {
     id: string;
@@ -73,6 +79,7 @@ export function useGradeLevelsForSchoolType(enabled: boolean = true) {
       console.log('Fetching grade levels for school type...');
 
       try {
+        console.log('Fetching grade levels with tenantStreams structure...');
         const response = await fetch('/api/graphql', {
           method: 'POST',
           headers: {
@@ -88,9 +95,12 @@ export function useGradeLevelsForSchoolType(enabled: boolean = true) {
                   updatedAt
                   shortName
                   sortOrder
-                  streams {
+                  tenantStreams {
                     id
-                    name
+                    stream {
+                      id
+                      name
+                    }
                   }
                   gradeLevel {
                     id
@@ -131,7 +141,7 @@ export function useGradeLevelsForSchoolType(enabled: boolean = true) {
         }
 
         const gradeLevels = data.data.gradeLevelsForSchoolType;
-        console.log('Fetched grade levels for school type:', gradeLevels.length, 'grade levels');
+        console.log('✅ Fetched', gradeLevels.length, 'grade levels with tenantStreams');
         
         return gradeLevels;
       } catch (error) {

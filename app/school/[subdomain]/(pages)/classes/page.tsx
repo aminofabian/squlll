@@ -213,6 +213,8 @@ function ClassesPage() {
             onGradeSelect={handleGradeSelect}
             onStreamSelect={handleStreamSelect}
             isLoading={isLoading}
+            selectedGradeId={selectedGradeId}
+            selectedStreamId={selectedStreamId}
           />
         )}
       </div>
@@ -332,6 +334,7 @@ function ClassesPage() {
                 level={level} 
                 selectedGradeId={selectedGradeId}
                 selectedStreamId={selectedStreamId}
+                onStreamSelect={handleStreamSelect}
               />
             ))
           ) : config ? (

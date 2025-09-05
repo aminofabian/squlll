@@ -513,7 +513,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                           </FormControl>
                           <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
                             {sortedTenantGrades.map(tenantGrade => {
-                              const gradeStreams = tenantGrade.streams
+                              const gradeStreams = tenantGrade.tenantStreams.map(ts => ts.stream)
                               return (
                                 <SelectItem 
                                   key={tenantGrade.id} 

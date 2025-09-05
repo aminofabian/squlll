@@ -172,7 +172,7 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
     level.grades.push({
       id: gl.id,
       name: gl.gradeLevel.name,
-      streams: gl.streams
+      streams: gl.tenantStreams.map(ts => ts.stream)
     });
     
     return acc;
