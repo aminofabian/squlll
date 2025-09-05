@@ -220,7 +220,9 @@ export function AssignTeacherModal({
   }
 
   const handleUnassignTeacher = async () => {
-    if (!currentTeacherId) {
+    const teacherToUnassign = selectedTeacher || (currentTeacherId ? { id: currentTeacherId, fullName: currentTeacherName } : null)
+    
+    if (!teacherToUnassign) {
       toast.error('Error', {
         description: 'No teacher to unassign',
       })
@@ -230,38 +232,52 @@ export function AssignTeacherModal({
     setIsUnassigning(true)
 
     try {
-      const mutation = `
-        mutation UnassignClassTeacher {
-          unassignClassTeacher(
-            input: {
-              teacherId: "${currentTeacherId}"
-            }
-          )
-        }
-      `
+      console.log('🔍 Unassigning teacher:', {
+        teacherId: teacherToUnassign.id,
+        teacherName: teacherToUnassign.fullName,
+        streamId,
+        gradeLevelId
+      })
 
-      const response = await fetch('/api/graphql', {
+      const requestBody = {
+        teacherId: teacherToUnassign.id
+        // Note: UnassignClassTeacher only accepts teacherId, not streamId/gradeLevelId
+      }
+
+      console.log('🔍 Unassign request body:', JSON.stringify(requestBody, null, 2))
+
+      const response = await fetch('/api/school/unassign-class-teacher', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: mutation }),
+        body: JSON.stringify(requestBody),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to unassign teacher')
-      }
+      console.log('🔍 Unassign response status:', response.status)
 
       const data = await response.json()
-      
-      if (data.errors) {
-        throw new Error(data.errors[0]?.message || 'GraphQL mutation failed')
+      console.log('🔍 Unassign response data:', data)
+
+      if (!response.ok) {
+        console.error('🔍 Unassign response error:', data)
+        // Check if there are API error details
+        if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+          const firstError = data.details[0];
+          throw new Error(firstError.message || data.error || 'Failed to unassign class teacher');
+        }
+        throw new Error(data.error || data.details || 'Failed to unassign class teacher')
+      }
+
+      if (!data.success) {
+        console.warn('🔍 Unassign operation was not successful:', data)
+        throw new Error('Unassign operation failed')
       }
 
       // Show success message
       const assignmentTarget = streamName || gradeName || 'class'
       toast.success(`Teacher Unassigned Successfully`, {
-        description: `${currentTeacherName} has been unassigned from ${assignmentTarget}.`,
+        description: `${teacherToUnassign.fullName || 'Teacher'} has been unassigned from ${assignmentTarget}.`,
         duration: 5000
       })
       
@@ -271,13 +287,25 @@ export function AssignTeacherModal({
       onSuccess()
       onClose()
     } catch (error) {
-      console.error('Error unassigning teacher:', error)
+      console.error('🔍 Error unassigning teacher:', error)
       
-      const errorMessage = error instanceof Error ? error.message : "An error occurred while unassigning the teacher"
+      let errorMessage = "An error occurred while unassigning the teacher"
+      
+      if (error instanceof Error) {
+        if (error.message.includes('INTERNAL_SERVER_ERROR')) {
+          errorMessage = "Server error occurred. This might be due to the teacher not being properly assigned or a database constraint issue."
+        } else if (error.message.includes('HTTP 401')) {
+          errorMessage = "Authentication failed. Please log in again."
+        } else if (error.message.includes('HTTP 403')) {
+          errorMessage = "You don't have permission to unassign teachers."
+        } else {
+          errorMessage = error.message
+        }
+      }
       
       toast.error("Unassign Failed", {
         description: errorMessage,
-        duration: 6000
+        duration: 8000
       })
     } finally {
       setIsUnassigning(false)
@@ -296,12 +324,14 @@ export function AssignTeacherModal({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col rounded-none border-2 border-primary/20 bg-white shadow-lg">
         <DialogHeader>
-          <DialogTitle className="text-slate-800">Assign Class Teacher</DialogTitle>
+          <DialogTitle className="text-slate-800">
+            {currentTeacherId ? 'Manage Class Teacher' : 'Assign Class Teacher'}
+          </DialogTitle>
           <DialogDescription className="text-slate-600">
             {currentTeacherId ? (
               <div className="space-y-2">
                 <div>Current teacher for <strong>{displayName}</strong>: <strong className="text-primary">{currentTeacherName}</strong></div>
-                <div>Select a new teacher to assign or unassign the current teacher.</div>
+                <div>Select a different teacher to reassign, click the current teacher to unassign, or click "Unassign Teacher" to remove the assignment.</div>
               </div>
             ) : (
               <div>Select a teacher to assign as class teacher for <strong>{displayName}</strong></div>
@@ -337,13 +367,22 @@ export function AssignTeacherModal({
             ) : (
               <ScrollArea className="h-full">
                 <div className="grid gap-3 pr-4">
-                  {filteredTeachers.map((teacher) => (
+                  {filteredTeachers.map((teacher) => {
+                    const isCurrentTeacher = teacher.id === currentTeacherId
+                    const isSelected = selectedTeacher?.id === teacher.id
+                    const hasActiveAssignments = teacher.classTeacherAssignments.some(assignment => assignment.active)
+                    
+                    return (
                     <div 
                       key={teacher.id}
-                      className={`cursor-pointer transition-all hover:shadow-md border-2 border-primary/20 bg-white p-4 ${
-                        selectedTeacher?.id === teacher.id 
+                      className={`cursor-pointer transition-all hover:shadow-md border-2 p-4 ${
+                        isSelected 
                           ? 'ring-2 ring-primary bg-primary/5 border-primary/40' 
-                          : 'hover:bg-primary/5 hover:border-primary/40'
+                          : isCurrentTeacher
+                          ? 'bg-amber-50 border-amber-300 hover:bg-amber-100 hover:border-amber-400'
+                          : hasActiveAssignments
+                          ? 'bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300'
+                          : 'border-primary/20 bg-white hover:bg-primary/5 hover:border-primary/40'
                       }`}
                       onClick={() => setSelectedTeacher(teacher)}
                     >
@@ -380,12 +419,21 @@ export function AssignTeacherModal({
                               )}
                             </div>
                           </div>
-                          {selectedTeacher?.id === teacher.id && (
-                            <Badge variant="default" className="ml-2 bg-primary text-white">Selected</Badge>
-                          )}
+                          <div className="flex gap-2">
+                            {isCurrentTeacher && (
+                              <Badge variant="default" className="bg-amber-600 text-white text-xs">Current</Badge>
+                            )}
+                            {hasActiveAssignments && !isCurrentTeacher && (
+                              <Badge variant="default" className="bg-orange-600 text-white text-xs">Assigned</Badge>
+                            )}
+                            {isSelected && (
+                              <Badge variant="default" className="bg-primary text-white text-xs">Selected</Badge>
+                            )}
+                          </div>
                         </div>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </ScrollArea>
             )}
@@ -402,7 +450,9 @@ export function AssignTeacherModal({
           >
             Cancel
           </Button>
-          {currentTeacherId && (
+          
+          {/* Show Unassign button when there's a current teacher and no new teacher is selected */}
+          {currentTeacherId && !selectedTeacher && (
             <Button 
               type="button" 
               variant="destructive"
@@ -418,26 +468,47 @@ export function AssignTeacherModal({
               ) : (
                 <>
                   <X className="mr-2 h-4 w-4" />
-                  Unassign Current Teacher
+                  Unassign Teacher
                 </>
               )}
             </Button>
           )}
-          <Button 
-            type="button" 
-            onClick={handleAssignTeacher} 
-            disabled={isAssigning || isUnassigning || !selectedTeacher}
-            className="bg-primary hover:bg-primary/90 text-white border-2 border-primary hover:border-primary/90 rounded-none"
-          >
-            {isAssigning ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Assigning...
-              </>
-            ) : (
-              'Assign Teacher'
-            )}
-          </Button>
+          
+          {/* Show Assign/Unassign button when a teacher is selected, or when there's no current teacher */}
+          {(selectedTeacher || !currentTeacherId) && (
+            <Button 
+              type="button" 
+              onClick={
+                selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active)
+                  ? handleUnassignTeacher 
+                  : handleAssignTeacher
+              } 
+              disabled={(isAssigning || isUnassigning) || (!selectedTeacher && !currentTeacherId)}
+              className={`border-2 rounded-none ${
+                selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active)
+                  ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700'
+                  : 'bg-primary hover:bg-primary/90 text-white border-primary hover:border-primary/90'
+              }`}
+            >
+              {(isAssigning || isUnassigning) ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active) ? 'Unassigning...' : 'Assigning...'}
+                </>
+              ) : (
+                <>
+                  {selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active) ? (
+                    <>
+                      <X className="mr-2 h-4 w-4" />
+                      Unassign Teacher
+                    </>
+                  ) : (
+                    'Assign Teacher'
+                  )}
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
