@@ -13,21 +13,85 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Subject } from '@/lib/types/school-config'
-import { BookOpen, Clock, Code, FileText, GraduationCap, School, Star, Trophy } from 'lucide-react'
+import { BookOpen, Clock, Code, FileText, GraduationCap, School, Star, Trophy, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface EditSubjectDialogProps {
   subject: Subject
   isOpen: boolean
   onClose: () => void
   onSave: (updatedSubject: Subject) => void
+  tenantSubjectId?: string  // Add this to support the GraphQL mutation
 }
 
-export function EditSubjectDialog({ subject, isOpen, onClose, onSave }: EditSubjectDialogProps) {
+export function EditSubjectDialog({ subject, isOpen, onClose, onSave, tenantSubjectId }: EditSubjectDialogProps) {
   const [editedSubject, setEditedSubject] = useState<Subject>({ ...subject })
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSave = () => {
-    onSave(editedSubject)
-    onClose()
+  const handleSave = async () => {
+    // If we have a tenantSubjectId, use the GraphQL mutation
+    if (tenantSubjectId) {
+      await handleUpdateCustomSubject()
+    } else {
+      // Fallback to the original onSave callback
+      onSave(editedSubject)
+      onClose()
+    }
+  }
+
+  const handleUpdateCustomSubject = async () => {
+    if (!tenantSubjectId) {
+      toast.error('Missing tenant subject ID')
+      return
+    }
+
+    setIsLoading(true)
+    
+    try {
+      const response = await fetch('/api/school/update-custom-subject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantSubjectId,
+          input: {
+            name: editedSubject.name,
+            totalMarks: editedSubject.totalMarks,
+            isCompulsory: editedSubject.isCompulsory
+          }
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update subject')
+      }
+
+      if (result.success) {
+        toast.success('Subject updated successfully!')
+        
+        // Update the subject with the returned data
+        const updatedSubject = {
+          ...editedSubject,
+          id: result.data.id,
+          name: result.data.customSubject.name,
+          totalMarks: result.data.totalMarks,
+          isCompulsory: result.data.isCompulsory
+        }
+        
+        onSave(updatedSubject)
+        onClose()
+      } else {
+        throw new Error('Update failed')
+      }
+    } catch (error) {
+      console.error('Error updating custom subject:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to update subject')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -199,14 +263,22 @@ export function EditSubjectDialog({ subject, isOpen, onClose, onSave }: EditSubj
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 border-t flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button 
             onClick={handleSave}
+            disabled={isLoading}
             className="bg-[#246a59] hover:bg-[#246a59]/90 text-white"
           >
-            Save Changes
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Save Changes'
+            )}
           </Button>
         </div>
       </DialogContent>

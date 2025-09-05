@@ -7,6 +7,7 @@ import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, La
 import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
 import { useState, useMemo } from 'react'
 import { EditSubjectDialog } from './EditSubjectDialog'
+import { useTenantSubjects, TenantSubject } from '@/lib/hooks/useTenantSubjects'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import CreateClassDrawer from "@/app/school/components/CreateClassDrawer"
 import { AddStreamModal } from './AddStreamModal'
@@ -50,7 +51,10 @@ export function ClassHeader() {
 export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSelect }: ClassCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'optional'>('all')
-  const [editingSubject, setEditingSubject] = useState<Subject | null>(null)
+  const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(null)
+  
+  // Load tenant subjects instead of using school config subjects
+  const { data: tenantSubjects = [], isLoading: subjectsLoading } = useTenantSubjects()
   const [showStreamModal, setShowStreamModal] = useState(false)
   const [selectedGradeForStream, setSelectedGradeForStream] = useState<GradeLevel | null>(null)
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false)
@@ -61,9 +65,29 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
     gradeName?: string
   }>({})  
 
+  // Transform tenant subjects to match the Subject interface for compatibility
+  const transformedSubjects = useMemo(() => {
+    return tenantSubjects.map(ts => ({
+      id: ts.id, // Use tenant subject ID
+      name: ts.subject?.name || ts.customSubject?.name || 'Unknown Subject',
+      code: ts.subject?.code || ts.customSubject?.code || '',
+      subjectType: ts.subjectType === 'core' ? 'core' : 'optional',
+      category: ts.subject?.category || ts.customSubject?.category,
+      department: ts.subject?.department || ts.customSubject?.department,
+      shortName: ts.subject?.shortName || ts.customSubject?.shortName,
+      isCompulsory: ts.isCompulsory,
+      totalMarks: ts.totalMarks,
+      passingMarks: ts.passingMarks,
+      creditHours: ts.creditHours,
+      curriculum: ts.curriculum.name,
+      // Store the original tenant subject for editing
+      _tenantSubject: ts
+    }));
+  }, [tenantSubjects]);
+
   // Filter subjects based on selected grade, stream, and filter type
   const filteredSubjects = useMemo(() => {
-    let subjects = level.subjects;
+    let subjects = transformedSubjects;
 
     // First filter based on selected type
     subjects = subjects.filter(subject => {
@@ -84,7 +108,7 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
       // Then sort alphabetically by name within each group
       return a.name.localeCompare(b.name);
     });
-  }, [level.subjects, selectedFilter]);
+  }, [transformedSubjects, selectedFilter]);
 
   // Get the selected grade and stream if any
   const selectedGrade = useMemo(() => {
@@ -107,8 +131,10 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
     console.log('Add new subject to level:', level.id);
   };
 
-  const handleEditSubject = (subject: Subject) => {
-    setEditingSubject(subject);
+  const handleEditSubject = (subject: any) => {
+    // Extract the original tenant subject from our transformed subject
+    const tenantSubject = subject._tenantSubject;
+    setEditingSubject(tenantSubject);
   };
 
   const handleSaveSubject = (updatedSubject: Subject) => {
@@ -353,10 +379,24 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
 
       {editingSubject && (
         <EditSubjectDialog
-          subject={editingSubject}
+          subject={{
+            id: editingSubject.id,
+            name: editingSubject.subject?.name || editingSubject.customSubject?.name || 'Unknown Subject',
+            code: editingSubject.subject?.code || editingSubject.customSubject?.code || '',
+            subjectType: editingSubject.subjectType,
+            category: editingSubject.subject?.category || editingSubject.customSubject?.category || null,
+            department: editingSubject.subject?.department || editingSubject.customSubject?.department || null,
+            shortName: editingSubject.subject?.shortName || editingSubject.customSubject?.shortName || null,
+            isCompulsory: editingSubject.isCompulsory,
+            totalMarks: editingSubject.totalMarks,
+            passingMarks: editingSubject.passingMarks,
+            creditHours: editingSubject.creditHours,
+            curriculum: editingSubject.curriculum.name
+          }}
           onClose={() => setEditingSubject(null)}
           onSave={handleSaveSubject}
           isOpen={!!editingSubject}
+          tenantSubjectId={editingSubject.id}
         />
       )}
 
