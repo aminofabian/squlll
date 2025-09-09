@@ -8,7 +8,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { SchoolSidebar } from "@/components/dashboard/SchoolSidebar"
 import { SearchFilter } from "@/components/dashboard/SearchFilter"
 import { MobileNav } from "@/components/dashboard/MobileNav"
-import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen, PanelLeftClose, PanelLeftOpen, Loader2 } from "lucide-react"
+import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen, PanelLeftClose, PanelLeftOpen, Loader2, Plus } from "lucide-react"
 import { useStudentsStore } from '@/lib/stores/useStudentsStore'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { mockClasses } from '@/lib/data/mockclasses'
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { DashboardSearchSidebar } from './components/DashboardSearchSidebar'
+import { CreateAcademicYearModal } from './components/CreateAcademicYearModal'
 
 export default function SchoolDashboard() {
   const params = useParams()
@@ -406,6 +407,24 @@ export default function SchoolDashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* Create Academic Year button */}
+            <CreateAcademicYearModal 
+              onSuccess={() => {
+                // Optionally refresh data or show success message
+                console.log('Academic year created successfully')
+              }}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Academic Year
+                </Button>
+              }
+            />
+            
             {/* Sidebar toggle button */}
             <Button
               variant="outline"
@@ -748,10 +767,17 @@ export default function SchoolDashboard() {
                     <GraduationCap className="h-4 w-4 text-primary mb-2 shrink-0" />
                     <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Enter Grades</span>
                   </button>
-                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
-                    <CalendarDays className="h-4 w-4 text-primary mb-2 shrink-0" />
-                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Schedule Event</span>
-                  </button>
+                  <CreateAcademicYearModal 
+                    onSuccess={() => {
+                      console.log('Academic year created successfully')
+                    }}
+                    trigger={
+                      <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
+                        <CalendarDays className="h-4 w-4 text-primary mb-2 shrink-0" />
+                        <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Academic Year</span>
+                      </button>
+                    }
+                  />
                   <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
                     <ClipboardList className="h-4 w-4 text-primary mb-2 shrink-0" />
                     <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Create Report</span>
