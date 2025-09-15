@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Plus, Copy, Trash2, Save, Eye, Edit3, GraduationCap, Wand2, Calculator, Clock, ChevronDown, ChevronRight, Sparkles, Zap, BookOpen, Bus, Home, Utensils, FlaskConical, Trophy, Library } from "lucide-react"
+import { useParams } from 'next/navigation'
+import { X, Plus, Copy, Trash2, Save, Eye, Edit3, GraduationCap, Wand2, Calculator, Clock, ChevronDown, ChevronRight, Sparkles, Zap, BookOpen, Bus, Home, Utensils, FlaskConical, Trophy, Library, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,13 +12,17 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
+import { useFeeBuckets } from '@/lib/hooks/useFeeBuckets'
+import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { FeeStructure, FeeStructureForm, Grade, TermFeeStructureForm, FeeBucketForm, FeeComponentForm, BankAccount } from '../types'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
 
 interface FeeStructureDrawerProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (formData: FeeStructureForm) => void
+  onSave: (formData: FeeStructureForm) => Promise<string | null> // Return fee structure ID
   initialData?: FeeStructureForm
   mode: 'create' | 'edit'
   availableGrades: Grade[]
@@ -77,26 +82,43 @@ export const FeeStructureDrawer = ({
   mode,
   availableGrades
 }: FeeStructureDrawerProps) => {
+  const params = useParams()
+  const subdomain = params.subdomain as string
+  const { data: schoolConfig } = useSchoolConfig()
+  const { feeBuckets, loading: bucketsLoading, error: bucketsError, refetch: refetchBuckets } = useFeeBuckets()
+  const { academicYears, loading: academicYearsLoading, error: academicYearsError, getActiveAcademicYear, getTermsForAcademicYear } = useAcademicYears()
+  
+  // Get school name from config or format subdomain as fallback
+  const getSchoolName = () => {
+    if (schoolConfig?.tenant?.schoolName) {
+      return schoolConfig.tenant.schoolName.toUpperCase()
+    }
+    if (subdomain) {
+      return subdomain.charAt(0).toUpperCase() + subdomain.slice(1).replace(/[-_]/g, ' ') + ' SCHOOL'
+    }
+    return 'SCHOOL NAME'
+  }
+
   const [formData, setFormData] = useState<FeeStructureForm>({
     name: '',
     grade: '',
     boardingType: 'both',
-    academicYear: new Date().getFullYear().toString(),
+    academicYear: '',
     termStructures: [defaultTermStructure],
     schoolDetails: {
-      name: 'KANYAWANGA HIGH SCHOOL',
-      address: 'P.O. Box 100 - 40404, RONGO KENYA. Cell: 0710215418',
-      contact: '0710215418',
-      email: 'kanyawangaschool@hotmail.com',
-      principalName: 'JACOB MBOGO',
-      principalTitle: 'PRINCIPAL/SEC BOM.'
+      name: getSchoolName(),
+      address: 'P.O. Box 100 - 40404, KENYA. Cell: 0710000000',
+      contact: '0710000000',
+      email: `info@${subdomain || 'school'}.edu`,
+      principalName: 'PRINCIPAL NAME',
+      principalTitle: 'PRINCIPAL'
     },
     paymentModes: {
       bankAccounts: [
-        { bankName: 'Kenya Commercial Bank', branch: 'Rongo Branch', accountNumber: '1172699240' },
-        { bankName: 'National Bank of Kenya', branch: 'Awendo Branch', accountNumber: '01021045775100' }
+        { bankName: 'Kenya Commercial Bank', branch: 'Main Branch', accountNumber: '1234567890' },
+        { bankName: 'National Bank of Kenya', branch: 'Main Branch', accountNumber: '0987654321' }
       ],
-      postalAddress: 'Repayable at Rongo Post Office',
+      postalAddress: 'Repayable at Main Post Office',
       notes: [
         'Full school fees should be paid at the beginning of the term to any of the school accounts listed.',
         'The school official receipts shall be issued upon presentation of original pay-in slips or Money Orders.',
@@ -114,6 +136,13 @@ export const FeeStructureDrawer = ({
   const [smartSuggestions, setSmartSuggestions] = useState<string[]>([])
   const [currentEditingField, setCurrentEditingField] = useState<string | null>(null)
   const [toasts, setToasts] = useState<Array<{id: string, message: string, type: 'success' | 'error' | 'info'}>>([])
+  const [isCreatingBucket, setIsCreatingBucket] = useState(false)
+  const [showBucketModal, setShowBucketModal] = useState(false)
+  const [bucketModalData, setBucketModalData] = useState({ name: '', description: '' })
+  const [showExistingBuckets, setShowExistingBuckets] = useState(false)
+  const [selectedExistingBuckets, setSelectedExistingBuckets] = useState<string[]>([])
+  const [editingBucket, setEditingBucket] = useState<{id: string, name: string, description: string, isActive: boolean} | null>(null)
+  const [showEditBucketModal, setShowEditBucketModal] = useState(false)
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substr(2, 9)
@@ -123,25 +152,73 @@ export const FeeStructureDrawer = ({
     }, 3000)
   }
 
+  // GraphQL mutation for creating fee bucket
+  const createFeeBucket = async (bucketData: { name: string; description: string }) => {
+    setIsCreatingBucket(true)
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation CreateFeeBucket($input: CreateFeeBucketInput!) {
+              createFeeBucket(input: $input) {
+                id
+                name
+                description
+                isActive
+                createdAt
+              }
+            }
+          `,
+          variables: {
+            input: bucketData
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to create fee bucket')
+      }
+
+      showToast(`✅ Fee bucket "${bucketData.name}" created successfully!`, 'success')
+      return result.data.createFeeBucket
+    } catch (error) {
+      console.error('Error creating fee bucket:', error)
+      showToast(`❌ Failed to create fee bucket: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+      throw error
+    } finally {
+      setIsCreatingBucket(false)
+    }
+  }
+
   // Smart fee templates
   const feeTemplates = {
     academic: [
-      { name: 'Tuition Fee', amount: '15000', icon: BookOpen },
-      { name: 'Examination Fee', amount: '2000', icon: FlaskConical },
-      { name: 'Library Fee', amount: '500', icon: Library },
-      { name: 'Computer Lab Fee', amount: '1000', icon: Calculator }
+      { name: 'Tuition Fee', amount: '15000', icon: BookOpen, description: 'Regular tuition fees for academic instruction' },
+      { name: 'Examination Fee', amount: '2000', icon: FlaskConical, description: 'Costs for tests, exams and assessments' },
+      { name: 'Library Fee', amount: '500', icon: Library, description: 'Library access, maintenance and materials' },
+      { name: 'Computer Lab Fee', amount: '1000', icon: Calculator, description: 'ICT/computer lab access and maintenance' }
     ],
     boarding: [
-      { name: 'Boarding Fee', amount: '8000', icon: Home },
-      { name: 'Meals Fee', amount: '6000', icon: Utensils },
-      { name: 'Laundry Fee', amount: '1000', icon: Sparkles }
+      { name: 'Boarding Fee', amount: '8000', icon: Home, description: 'Boarding accommodation and related services' },
+      { name: 'Meals Fee', amount: '6000', icon: Utensils, description: 'Meal plans and catering services' },
+      { name: 'Laundry Fee', amount: '1000', icon: Sparkles, description: 'Laundry services for boarders' }
     ],
     transport: [
-      { name: 'Transport Fee', amount: '3000', icon: Bus }
+      { name: 'Transport Fee', amount: '3000', icon: Bus, description: 'School transport/bus services' }
     ],
     activities: [
-      { name: 'Sports Fee', amount: '800', icon: Trophy },
-      { name: 'Music Fee', amount: '600', icon: Zap }
+      { name: 'Sports Fee', amount: '800', icon: Trophy, description: 'Sports activities and equipment' },
+      { name: 'Music Fee', amount: '600', icon: Zap, description: 'Music lessons and activities' }
     ]
   }
 
@@ -155,11 +232,65 @@ export const FeeStructureDrawer = ({
         grade: '',
         boardingType: 'both',
         academicYear: new Date().getFullYear().toString(),
-        termStructures: [defaultTermStructure]
+        termStructures: [defaultTermStructure],
+        schoolDetails: {
+          name: getSchoolName(),
+          address: 'P.O. Box 100 - 40404, KENYA. Cell: 0710000000',
+          contact: '0710000000',
+          email: `info@${subdomain || 'school'}.edu`,
+          principalName: 'PRINCIPAL NAME',
+          principalTitle: 'PRINCIPAL'
+        },
+        paymentModes: {
+          bankAccounts: [
+            { bankName: 'Kenya Commercial Bank', branch: 'Main Branch', accountNumber: '1234567890' },
+            { bankName: 'National Bank of Kenya', branch: 'Main Branch', accountNumber: '0987654321' }
+          ],
+          postalAddress: 'Repayable at Main Post Office',
+          notes: [
+            'Full school fees should be paid at the beginning of the term to any of the school accounts listed.',
+            'The school official receipts shall be issued upon presentation of original pay-in slips or Money Orders.',
+            'The fees may be deposited at any Branch of National Bank or Kenya Commercial Bank County wide.',
+            'Fees can be paid by Banker\'s Cheque, but personal cheques will not be accepted.'
+          ]
+        }
       })
       setSelectedGrades([])
     }
-  }, [initialData, isOpen])
+  }, [initialData, isOpen, schoolConfig, subdomain])
+
+  // Update school name when config changes
+  useEffect(() => {
+    if (schoolConfig?.tenant?.schoolName) {
+      setFormData(prev => ({
+        ...prev,
+        schoolDetails: {
+          ...prev.schoolDetails!,
+          name: schoolConfig.tenant.schoolName.toUpperCase()
+        }
+      }))
+    }
+  }, [schoolConfig])
+
+  // Set active academic year when data loads
+  useEffect(() => {
+    console.log('Academic years data:', academicYears)
+    console.log('Academic years loading:', academicYearsLoading)
+    console.log('Academic years error:', academicYearsError)
+    console.log('Current form academic year:', formData.academicYear)
+    
+    if (academicYears.length > 0 && !formData.academicYear) {
+      const activeYear = getActiveAcademicYear()
+      console.log('Active academic year:', activeYear)
+      if (activeYear) {
+        console.log('Setting academic year to:', activeYear.name)
+        setFormData(prev => ({
+          ...prev,
+          academicYear: activeYear.name
+        }))
+      }
+    }
+  }, [academicYears, formData.academicYear, getActiveAcademicYear, academicYearsLoading, academicYearsError])
 
   const handleGradeToggle = (gradeId: string) => {
     setSelectedGrades(prev => 
@@ -208,6 +339,184 @@ export const FeeStructureDrawer = ({
           : term
       )
     }))
+  }
+
+  // Add bucket with GraphQL creation
+  const addBucketWithAPI = async (termIndex: number, bucketName: string, bucketDescription: string) => {
+    try {
+      // Create the bucket via GraphQL
+      const createdBucket = await createFeeBucket({
+        name: bucketName,
+        description: bucketDescription
+      })
+
+      // Add the bucket to the form data
+      const newBucket = {
+        ...defaultBucket,
+        name: createdBucket.name,
+        description: createdBucket.description,
+        id: createdBucket.id // Store the server-generated ID
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        termStructures: prev.termStructures.map((term, i) => 
+          i === termIndex 
+            ? { ...term, buckets: [...term.buckets, newBucket] }
+            : term
+        )
+      }))
+    } catch (error) {
+      // Error already handled in createFeeBucket function
+      console.error('Failed to add bucket with API:', error)
+    }
+  }
+
+  // Add existing bucket to fee structure
+  const addExistingBucket = (termIndex: number, bucketId: string) => {
+    const existingBucket = feeBuckets.find(bucket => bucket.id === bucketId)
+    if (!existingBucket) return
+
+    const newBucket: FeeBucketForm = {
+      id: existingBucket.id,
+      type: 'tuition', // Default type, can be changed later
+      name: existingBucket.name,
+      description: existingBucket.description,
+      isOptional: false,
+      components: [{
+        name: existingBucket.name, // Use the bucket name as the component name
+        description: existingBucket.description,
+        amount: '0',
+        category: 'academic'
+      }]
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      termStructures: prev.termStructures.map((term, i) => 
+        i === termIndex 
+          ? { ...term, buckets: [...term.buckets, newBucket] }
+          : term
+      )
+    }))
+
+    showToast(`✅ Added "${existingBucket.name}" bucket to ${formData.termStructures[termIndex].term}`, 'success')
+  }
+
+  // Add multiple existing buckets to all terms
+  const addSelectedBucketsToAllTerms = () => {
+    if (selectedExistingBuckets.length === 0) return
+
+    selectedExistingBuckets.forEach(bucketId => {
+      formData.termStructures.forEach((_, termIndex) => {
+        addExistingBucket(termIndex, bucketId)
+      })
+    })
+
+    setSelectedExistingBuckets([])
+    setShowExistingBuckets(false)
+    showToast(`✅ Added ${selectedExistingBuckets.length} bucket(s) to all terms`, 'success')
+  }
+
+  // Delete existing bucket via GraphQL
+  const deleteFeeBucket = async (bucketId: string) => {
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation DeleteFeeBucket($id: ID!) {
+              deleteFeeBucket(id: $id)
+            }
+          `,
+          variables: {
+            id: bucketId
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to delete fee bucket')
+      }
+
+      showToast(`✅ Fee bucket deleted successfully!`, 'success')
+      refetchBuckets() // Refresh the buckets list
+    } catch (error) {
+      console.error('Error deleting fee bucket:', error)
+      showToast(`❌ Failed to delete fee bucket: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+    }
+  }
+
+  // Delete bucket from form data (for buckets without server ID)
+  const deleteFormBucket = (termIndex: number, bucketIndex: number) => {
+    const bucket = formData.termStructures[termIndex]?.buckets[bucketIndex]
+    if (!bucket) return
+
+    setFormData(prev => ({
+      ...prev,
+      termStructures: prev.termStructures.map((term, i) => 
+        i === termIndex 
+          ? { ...term, buckets: term.buckets.filter((_, j) => j !== bucketIndex) }
+          : term
+      )
+    }))
+
+    showToast(`🗑️ Bucket "${bucket.name}" removed from fee structure`, 'info')
+  }
+
+  // Update existing bucket via GraphQL
+  const updateFeeBucket = async (bucketId: string, bucketData: { name: string; description: string; isActive?: boolean }) => {
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation UpdateFeeBucket($id: ID!, $input: UpdateFeeBucketInput!) {
+              updateFeeBucket(id: $id, input: $input) {
+                id
+                name
+                description
+                isActive
+              }
+            }
+          `,
+          variables: {
+            id: bucketId,
+            input: bucketData
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to update fee bucket')
+      }
+
+      showToast(`✅ Fee bucket updated successfully!`, 'success')
+      refetchBuckets() // Refresh the buckets list
+      return result.data.updateFeeBucket
+    } catch (error) {
+      console.error('Error updating fee bucket:', error)
+      showToast(`❌ Failed to update fee bucket: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+      throw error
+    }
   }
 
   const removeBucket = (termIndex: number, bucketIndex: number) => {
@@ -320,19 +629,165 @@ export const FeeStructureDrawer = ({
       sum + (parseFloat(component.amount) || 0), 0) || 0
   }
 
-  const handleSave = () => {
-    // Create separate fee structures for each selected grade
-    selectedGrades.forEach(gradeId => {
-      const gradeData = {
-        ...formData,
-        grade: gradeId,
-        name: selectedGrades.length > 1 
-          ? `${formData.name} - ${availableGrades.find(g => g.id === gradeId)?.name || gradeId}`
-          : formData.name
+  // Create fee structure item in database
+  const createFeeStructureItem = async (feeStructureId: string, feeBucketId: string, amount: number, isMandatory: boolean) => {
+    // Validate inputs
+    if (!feeStructureId || !feeBucketId || amount <= 0) {
+      throw new Error(`Invalid input: feeStructureId=${feeStructureId}, feeBucketId=${feeBucketId}, amount=${amount}`)
+    }
+
+    try {
+      console.log('🚀 Creating fee structure item with:', {
+        feeStructureId,
+        feeBucketId,
+        amount,
+        isMandatory
+      })
+
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation CreateFeeStructureItem($input: CreateFeeStructureItemInput!) {
+              createFeeStructureItem(input: $input) {
+                id
+                feeBucket {
+                  id
+                  name
+                  description
+                }
+                feeStructure {
+                  id
+                  name
+                  academicYear {
+                    name
+                  }
+                  term {
+                    name
+                  }
+                  tenantGradeLevel {
+                    gradeLevel {
+                      name
+                    }
+                  }
+                }
+                amount
+                isMandatory
+              }
+            }
+          `,
+          variables: {
+            input: {
+              feeStructureId,
+              feeBucketId,
+              amount,
+              isMandatory
+            }
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-      onSave(gradeData)
-    })
-    onClose()
+
+      const result = await response.json()
+      
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors)
+        throw new Error(result.errors[0]?.message || 'Failed to create fee structure item')
+      }
+
+      console.log('✅ Fee structure item created successfully:', result.data.createFeeStructureItem)
+      return result.data.createFeeStructureItem
+    } catch (error) {
+      console.error('Error creating fee structure item:', error)
+      throw error
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      // Create separate fee structures for each selected grade
+      for (const gradeId of selectedGrades) {
+        const gradeData = {
+          ...formData,
+          grade: gradeId,
+          name: selectedGrades.length > 1 
+            ? `${formData.name} - ${availableGrades.find(g => g.id === gradeId)?.name || gradeId}`
+            : formData.name
+        }
+        
+        // Save the fee structure first and get the ID
+        const feeStructureId = await onSave(gradeData)
+        
+        if (feeStructureId) {
+          // Create fee structure items for each bucket component
+          let itemsCreated = 0
+          let itemsFailed = 0
+          
+          console.log('Creating fee structure items for feeStructureId:', feeStructureId)
+          console.log('Form data termStructures:', formData.termStructures)
+          
+          for (const term of formData.termStructures) {
+            console.log(`Processing term: ${term.term}`)
+            for (const bucket of term.buckets) {
+              console.log(`Processing bucket: ${bucket.name} (ID: ${bucket.id})`)
+              if (bucket.id) { // Only create items for buckets with server IDs
+                for (const component of bucket.components) {
+                  const amount = parseFloat(component.amount) || 0
+                  console.log(`Processing component: ${component.name} (Amount: ${amount})`)
+                  
+                  if (amount > 0) { // Only create items with valid amounts
+                    try {
+                      console.log(`Creating fee structure item:`, {
+                        feeStructureId,
+                        feeBucketId: bucket.id,
+                        amount,
+                        isMandatory: !bucket.isOptional
+                      })
+                      
+                      const result = await createFeeStructureItem(
+                        feeStructureId,
+                        bucket.id,
+                        amount,
+                        !bucket.isOptional // isMandatory = !isOptional
+                      )
+                      
+                      console.log('Fee structure item created successfully:', result)
+                      itemsCreated++
+                    } catch (error) {
+                      console.error(`Failed to create fee structure item for ${component.name}:`, error)
+                      itemsFailed++
+                    }
+                  } else {
+                    console.log(`Skipping component ${component.name} - amount is 0 or invalid`)
+                  }
+                }
+              } else {
+                console.log(`Skipping bucket ${bucket.name} - no server ID`)
+              }
+            }
+          }
+          
+          if (itemsCreated > 0) {
+            showToast(`✅ Fee structure created with ${itemsCreated} fee items for ${availableGrades.find(g => g.id === gradeId)?.name || gradeId}${itemsFailed > 0 ? ` (${itemsFailed} failed)` : ''}`, 'success')
+          } else {
+            showToast(`⚠️ Fee structure created but no fee items were saved for ${availableGrades.find(g => g.id === gradeId)?.name || gradeId}`, 'info')
+          }
+        } else {
+          showToast(`⚠️ Fee structure created but couldn't create fee items for ${availableGrades.find(g => g.id === gradeId)?.name || gradeId}`, 'info')
+        }
+      }
+      
+      onClose()
+    } catch (error) {
+      console.error('Error saving fee structure:', error)
+      showToast(`❌ Failed to save fee structure: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
+    }
   }
 
   if (!isOpen) return null
@@ -461,12 +916,49 @@ export const FeeStructureDrawer = ({
                 <div className="text-center mb-6 px-6">
                   <h2 className="text-lg font-bold underline">
                     FEES STRUCTURE{' '}
-                    <input
-                      className="bg-transparent border-0 focus:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-1 w-16 text-center"
+                    <Select
                       value={formData.academicYear}
-                      onChange={(e) => setFormData(prev => ({ ...prev, academicYear: e.target.value }))}
-                      placeholder="2024"
-                    />
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, academicYear: value }))}
+                    >
+                      <SelectTrigger className="inline-flex w-32 h-8 bg-transparent border-0 focus:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-1 text-center">
+                        <SelectValue placeholder="Select Year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {academicYearsLoading ? (
+                          <SelectItem value="loading" disabled>
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>Loading academic years...</span>
+                            </div>
+                          </SelectItem>
+                        ) : academicYearsError ? (
+                          <SelectItem value="error" disabled>
+                            <div className="flex items-center gap-2 text-red-600">
+                              <span>Error loading academic years</span>
+                            </div>
+                          </SelectItem>
+                        ) : academicYears.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <span>No academic years found</span>
+                            </div>
+                          </SelectItem>
+                        ) : (
+                          academicYears.map((year) => (
+                            <SelectItem key={year.id} value={year.name}>
+                              <div className="flex items-center gap-2">
+                                <span>{year.name}</span>
+                                {year.isActive && (
+                                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                    Active
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </h2>
                 </div>
 
@@ -558,10 +1050,30 @@ export const FeeStructureDrawer = ({
                         variant="outline"
                         size="sm"
                         className="text-xs border-primary text-primary hover:bg-primary/10"
+                        disabled={isCreatingBucket}
+                        onClick={() => setShowBucketModal(true)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        {isCreatingBucket ? 'Creating...' : '🪣 New Bucket'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-primary text-primary hover:bg-primary/10"
                         onClick={() => setShowQuickAdd(!showQuickAdd)}
                       >
                         <Wand2 className="h-3 w-3 mr-1" />
                         Quick Add
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-primary text-primary hover:bg-primary/10"
+                        onClick={() => setShowExistingBuckets(!showExistingBuckets)}
+                        disabled={bucketsLoading || feeBuckets.length === 0}
+                      >
+                        <GraduationCap className="h-3 w-3 mr-1" />
+                        {bucketsLoading ? 'Loading...' : `Existing Buckets (${feeBuckets.length})`}
                       </Button>
                       <Button
                         variant="outline"
@@ -621,45 +1133,249 @@ export const FeeStructureDrawer = ({
                         Quick Add Common Fees
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
-                        {Object.entries(feeTemplates).map(([category, templates]) => (
-                          <div key={category} className="space-y-2">
-                            <h5 className="text-xs font-medium text-slate-600 uppercase tracking-wide">
-                              {category}
-                            </h5>
-                            <div className="space-y-1">
-                              {templates.map((template, index) => {
-                                const IconComponent = template.icon
-                                return (
+                        {Object.entries(feeTemplates).map(([category, templates]) => {
+                          // Filter out templates that already exist in fee buckets
+                          const filteredTemplates = templates.filter(template => {
+                            const bucketExists = feeBuckets.some(bucket => 
+                              bucket.name.toLowerCase().includes(template.name.toLowerCase()) ||
+                              template.name.toLowerCase().includes(bucket.name.toLowerCase())
+
+                            )
+                            return !bucketExists
+                          })
+
+                          // Don't show category if all templates are filtered out
+                          if (filteredTemplates.length === 0) return null
+
+                          return (
+                            <div key={category} className="space-y-2">
+                              <h5 className="text-xs font-medium text-slate-600 uppercase tracking-wide">
+                                {category}
+                              </h5>
+                              <div className="space-y-1">
+                                {filteredTemplates.map((template, index) => {
+                                  const IconComponent = template.icon
+                                  return (
+                                    <Button
+                                      key={index}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start text-xs h-8 hover:bg-primary/5 hover:shadow-sm border-primary/10"
+                                      disabled={isCreatingBucket}
+                                      onClick={async () => {
+                                        if (formData.termStructures[0]?.buckets[0]) {
+                                          // For fee templates, create a new bucket using the actual fee name
+                                          const bucketName = template.name
+                                          const bucketDescription = template.description || `${template.name} related fees`
+                                          
+                                          // Check if bucket already exists
+                                          const existingBucket = formData.termStructures[0].buckets.find(b => 
+                                            b.name.toLowerCase() === bucketName.toLowerCase()
+                                          )
+                                          
+                                          let targetBucketIndex = 0
+                                          
+                                          if (!existingBucket) {
+                                            // Create new bucket via API
+                                            await addBucketWithAPI(0, bucketName, bucketDescription)
+                                            targetBucketIndex = formData.termStructures[0].buckets.length
+                                          } else {
+                                            targetBucketIndex = formData.termStructures[0].buckets.findIndex(b => b === existingBucket)
+                                          }
+                                          
+                                          // Add component to the bucket
+                                          addComponent(0, targetBucketIndex)
+                                          
+                                          // Update the newly added component
+                                          setTimeout(() => {
+                                            const componentIndex = formData.termStructures[0].buckets[targetBucketIndex].components.length - 1
+                                            updateComponent(0, targetBucketIndex, componentIndex, 'name', template.name)
+                                            updateComponent(0, targetBucketIndex, componentIndex, 'amount', template.amount)
+                                            updateComponent(0, targetBucketIndex, componentIndex, 'category', category)
+                                          }, 100)
+                                          
+                                          showToast(`✨ ${template.name} added from template!`, 'success')
+                                        }
+                                      }}
+                                    >
+                                      <IconComponent className="h-3 w-3 mr-2" />
+                                      {template.name}
+                                      <span className="ml-auto text-primary font-mono">
+                                        {template.amount}
+                                      </span>
+                                    </Button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {Object.entries(feeTemplates).every(([_, templates]) => 
+                        templates.every(template => 
+                          feeBuckets.some(bucket => 
+                            bucket.name.toLowerCase().includes(template.name.toLowerCase()) ||
+                            template.name.toLowerCase().includes(bucket.name.toLowerCase())
+                          )
+                        )
+                      ) && (
+                        <div className="text-center py-4 text-sm text-slate-600">
+                          <Sparkles className="h-4 w-4 mx-auto mb-2 text-slate-400" />
+                          All common fees already exist in your buckets! 
+                          <br />
+                          <span className="text-xs">Check the "Existing Buckets" section above.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Existing Fee Buckets */}
+                  {showExistingBuckets && (
+                    <div className="mb-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-primary" />
+                          Existing Fee Buckets
+                        </h4>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs border-primary text-primary hover:bg-primary/10"
+                            onClick={refetchBuckets}
+                            disabled={bucketsLoading}
+                          >
+                            <Clock className="h-3 w-3 mr-1" />
+                            {bucketsLoading ? 'Refreshing...' : 'Refresh'}
+                          </Button>
+                          {selectedExistingBuckets.length > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs bg-primary text-white border-primary hover:bg-primary/80"
+                              onClick={addSelectedBucketsToAllTerms}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add to All Terms ({selectedExistingBuckets.length})
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {bucketsError && (
+                        <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                          ❌ Error loading buckets: {bucketsError}
+                        </div>
+                      )}
+
+                      {bucketsLoading ? (
+                        <div className="text-center py-4 text-sm text-slate-600">
+                          <Clock className="h-4 w-4 mx-auto mb-2 animate-spin" />
+                          Loading existing buckets...
+                        </div>
+                      ) : feeBuckets.length === 0 ? (
+                        <div className="text-center py-4 text-sm text-slate-600">
+                          <GraduationCap className="h-4 w-4 mx-auto mb-2 text-slate-400" />
+                          No existing buckets found. Create your first bucket above!
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="text-xs text-slate-600 mb-2">
+                            Select buckets to add to your fee structure:
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                            {feeBuckets.map((bucket) => (
+                              <div
+                                key={bucket.id}
+                                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+                                  selectedExistingBuckets.includes(bucket.id)
+                                    ? 'bg-primary/10 border-primary/30 shadow-md'
+                                    : 'bg-white border-primary/20 hover:bg-primary/5'
+                                }`}
+                                onClick={() => {
+                                  setSelectedExistingBuckets(prev =>
+                                    prev.includes(bucket.id)
+                                      ? prev.filter(id => id !== bucket.id)
+                                      : [...prev, bucket.id]
+                                  )
+                                }}
+                              >
+                                <Checkbox
+                                  checked={selectedExistingBuckets.includes(bucket.id)}
+                                  className="w-4 h-4"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="text-sm font-medium text-slate-700 truncate">
+                                      {bucket.name}
+                                    </h5>
+                                    {bucket.isActive && (
+                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                        Active
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-slate-500 truncate">
+                                    {bucket.description}
+                                  </p>
+                                  <p className="text-xs text-slate-400">
+                                    Created: {new Date(bucket.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex gap-1">
+                                  {formData.termStructures.map((term, termIndex) => (
+                                    <Button
+                                      key={termIndex}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 text-xs hover:bg-primary/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        addExistingBucket(termIndex, bucket.id)
+                                      }}
+                                      title={`Add to ${term.term}`}
+                                    >
+                                      {term.term.split(' ')[1]}
+                                    </Button>
+                                  ))}
                                   <Button
-                                    key={index}
                                     variant="ghost"
                                     size="sm"
-                                    className="w-full justify-start text-xs h-8 hover:bg-primary/5 hover:shadow-sm border-primary/10"
-                                    onClick={() => {
-                                      if (formData.termStructures[0]?.buckets[0]) {
-                                        addComponent(0, 0)
-                                        // Update the newly added component
-                                        const termIndex = 0
-                                        const bucketIndex = 0
-                                        const componentIndex = formData.termStructures[termIndex].buckets[bucketIndex].components.length - 1
-                                        updateComponent(termIndex, bucketIndex, componentIndex, 'name', template.name)
-                                        updateComponent(termIndex, bucketIndex, componentIndex, 'amount', template.amount)
-                                        showToast(`✨ ${template.name} added from template!`, 'success')
+                                    className="h-6 w-6 p-0 text-xs hover:bg-blue-50 text-blue-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditingBucket({
+                                        id: bucket.id,
+                                        name: bucket.name,
+                                        description: bucket.description,
+                                        isActive: bucket.isActive
+                                      })
+                                      setShowEditBucketModal(true)
+                                    }}
+                                    title="Edit bucket"
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 text-xs hover:bg-red-50 text-red-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      if (confirm(`Are you sure you want to delete "${bucket.name}"? This action cannot be undone.`)) {
+                                        deleteFeeBucket(bucket.id)
                                       }
                                     }}
+                                    title="Delete bucket"
                                   >
-                                    <IconComponent className="h-3 w-3 mr-2" />
-                                    {template.name}
-                                    <span className="ml-auto text-primary font-mono">
-                                      {template.amount}
-                                    </span>
+                                    <Trash2 className="h-3 w-3" />
                                   </Button>
-                                )
-                              })}
-                            </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -707,17 +1423,104 @@ export const FeeStructureDrawer = ({
                               </td>
                               <td className="border border-primary/30 p-3">
                                 <div className="relative">
-                                  <input
-                                    className="w-full bg-transparent border-0 focus:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg px-2 py-1 transition-all duration-200"
-                                    value={component.name}
-                                    onChange={(e) => updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', e.target.value)}
-                                    onFocus={() => setCurrentEditingField(`${termIndex}-${bucketIndex}-${actualComponentIndex}-name`)}
-                                    onBlur={() => setCurrentEditingField(null)}
-                                    placeholder="Enter fee name..."
-                                  />
+                                  <div className="flex items-center gap-2">
+                                    <Select
+                                      value={component.name}
+                                      onValueChange={(value) => {
+                                        if (value === 'custom') {
+                                          // Allow custom input
+                                          updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', '')
+                                        } else {
+                                          // Select from existing bucket
+                                          const selectedBucket = feeBuckets.find(bucket => bucket.name === value)
+                                          if (selectedBucket) {
+                                            // Update the entire bucket to use the selected bucket
+                                            updateBucket(termIndex, bucketIndex, 'id', selectedBucket.id)
+                                            updateBucket(termIndex, bucketIndex, 'name', selectedBucket.name)
+                                            updateBucket(termIndex, bucketIndex, 'description', selectedBucket.description)
+                                            updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', selectedBucket.name)
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      <SelectTrigger className="flex-1 bg-transparent border-0 focus:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg px-2 py-1 transition-all duration-200 h-8">
+                                        <SelectValue placeholder="Choose fee bucket..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="custom" className="text-xs">
+                                          ✏️ Custom Fee Name
+                                        </SelectItem>
+                                        {feeBuckets
+                                          .filter(bucket => {
+                                            // Filter out buckets that are already used in the current fee structure
+                                            // BUT allow the currently selected bucket to remain visible
+                                            const isAlreadyUsed = formData.termStructures.some(term =>
+                                              term.buckets.some(b => 
+                                                b.id === bucket.id
+                                              )
+                                            )
+                                            const isCurrentBucket = formData.termStructures[termIndex].buckets[bucketIndex].id === bucket.id
+                                            return !isAlreadyUsed || isCurrentBucket
+                                          })
+                                          .map((bucket) => {
+                                            const isCurrentBucket = formData.termStructures[termIndex].buckets[bucketIndex].id === bucket.id
+                                            return (
+                                              <SelectItem key={bucket.id} value={bucket.name} className="text-xs">
+                                                <div className="flex items-center gap-2">
+                                                  <span className={isCurrentBucket ? "font-semibold text-primary" : ""}>{bucket.name}</span>
+                                                  {isCurrentBucket && (
+                                                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                                                      ✓ Selected
+                                                    </Badge>
+                                                  )}
+                                                  {!bucket.isActive && !isCurrentBucket && (
+                                                    <Badge variant="outline" className="text-xs bg-gray-50 text-gray-500 border-gray-200">
+                                                      Inactive
+                                                    </Badge>
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            )
+                                          })}
+                                      </SelectContent>
+                                    </Select>
+                                    {formData.termStructures[termIndex].buckets[bucketIndex].id && (
+                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                        💾 Saved
+                                      </Badge>
+                                    )}
+                                    {(() => {
+                                      const currentBucket = formData.termStructures[termIndex].buckets[bucketIndex]
+                                      if (currentBucket.id) {
+                                        const isUsedElsewhere = formData.termStructures.some((term, tIndex) =>
+                                          term.buckets.some((b, bIndex) => 
+                                            b.id === currentBucket.id && !(tIndex === termIndex && bIndex === bucketIndex)
+                                          )
+                                        )
+                                        if (isUsedElsewhere) {
+                                          return (
+                                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                              ⚠️ Duplicate
+                                            </Badge>
+                                          )
+                                        }
+                                      }
+                                      return null
+                                    })()}
+                                  </div>
+                                  {component.name && !feeBuckets.some(bucket => bucket.name === component.name) && (
+                                    <div className="mt-1">
+                                      <input
+                                        className="w-full bg-transparent border-0 focus:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg px-2 py-1 transition-all duration-200 text-xs"
+                                        value={component.name}
+                                        onChange={(e) => updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', e.target.value)}
+                                        placeholder="Enter custom fee name..."
+                                      />
+                                    </div>
+                                  )}
                                   {currentEditingField === `${termIndex}-${bucketIndex}-${actualComponentIndex}-name` && (
                                     <div className="absolute top-full left-0 mt-1 text-xs text-primary bg-primary/5 px-2 py-1 rounded shadow-sm">
-                                      💡 Try: Tuition, Transport, Boarding, etc.
+                                      💡 Choose from existing buckets or create custom
                                     </div>
                                   )}
                                 </div>
@@ -766,6 +1569,55 @@ export const FeeStructureDrawer = ({
                                   >
                                     <Copy className="h-3 w-3 text-primary" />
                                   </Button>
+                                  {/* Show edit and delete bucket buttons only for the first component of each bucket */}
+                                  {actualComponentIndex === 0 && (
+                                    <>
+                                      {formData.termStructures[termIndex].buckets[bucketIndex].id && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-blue-50 hover:scale-110"
+                                          onClick={() => {
+                                            const bucket = formData.termStructures[termIndex].buckets[bucketIndex]
+                                            setEditingBucket({
+                                              id: bucket.id!,
+                                              name: bucket.name,
+                                              description: bucket.description,
+                                              isActive: true // Default to active, could be enhanced to track actual status
+                                            })
+                                            setShowEditBucketModal(true)
+                                          }}
+                                          title="Edit bucket"
+                                        >
+                                          <Edit3 className="h-3 w-3 text-blue-500" />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:scale-110"
+                                        onClick={async () => {
+                                          const bucket = formData.termStructures[termIndex].buckets[bucketIndex]
+                                          if (bucket.id) {
+                                            // Delete from server if it has an ID
+                                            if (confirm(`Are you sure you want to delete the entire "${bucket.name}" bucket? This will remove it from the server and all fee structures.`)) {
+                                              await deleteFeeBucket(bucket.id)
+                                              // Also remove from form
+                                              deleteFormBucket(termIndex, bucketIndex)
+                                            }
+                                          } else {
+                                            // Just remove from form if no server ID
+                                            if (confirm(`Are you sure you want to remove the "${bucket.name}" bucket from this fee structure?`)) {
+                                              deleteFormBucket(termIndex, bucketIndex)
+                                            }
+                                          }
+                                        }}
+                                        title="Delete entire bucket"
+                                      >
+                                        <Trash2 className="h-3 w-3 text-red-500" />
+                                      </Button>
+                                    </>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -774,26 +1626,27 @@ export const FeeStructureDrawer = ({
                       })}
                       <tr className="bg-primary/5 hover:bg-primary/10 transition-all duration-300">
                         <td className="border border-primary/30 p-3 text-center">
-                          <select 
-                            className="text-xs bg-white border-2 border-primary/30 rounded-lg px-3 py-2 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-primary/30"
-                            onChange={(e) => {
-                              const termIndex = parseInt(e.target.value)
+                          <Select
+                            onValueChange={(value) => {
+                              const termIndex = parseInt(value)
                               if (formData.termStructures[termIndex]?.buckets[0]) {
                                 addComponent(termIndex, 0)
                               } else {
                                 addBucket(termIndex)
                               }
-                              e.target.value = "" // Reset selection
                             }}
-                            defaultValue=""
                           >
-                            <option value="" disabled>🎯 Select Term</option>
-                            {formData.termStructures.map((term, index) => (
-                              <option key={index} value={index}>
-                                📅 {term.term}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="text-xs bg-white border-2 border-primary/30 rounded-lg px-3 py-2 shadow-sm hover:shadow-md transition-all duration-200 focus:ring-2 focus:ring-primary/30 h-8">
+                              <SelectValue placeholder="🎯 Select Term" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {formData.termStructures.map((term, index) => (
+                                <SelectItem key={index} value={index.toString()}>
+                                  📅 {term.term}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </td>
                         <td className="border border-primary/30 p-3">
                           <div className="flex gap-2 items-center">
@@ -900,16 +1753,40 @@ export const FeeStructureDrawer = ({
                         {formData.termStructures.map((term, index) => (
                           <tr key={index} className="hover:bg-primary/5 group">
                             <td className="border border-primary/30 p-2">
-                              <select
-                                className="bg-transparent border-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 font-bold"
+                              <Select
                                 value={term.term}
-                                onChange={(e) => updateTermStructure(index, 'term', e.target.value)}
+                                onValueChange={(value) => updateTermStructure(index, 'term', value)}
                               >
-                                <option value="Term 1">TERM 1</option>
-                                <option value="Term 2">TERM 2</option>
-                                <option value="Term 3">TERM 3</option>
-                                <option value="Annual">ANNUAL</option>
-                              </select>
+                                <SelectTrigger className="bg-transparent border-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 font-bold h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(() => {
+                                    const selectedAcademicYear = academicYears.find(year => year.name === formData.academicYear)
+                                    const availableTerms = selectedAcademicYear?.terms || []
+                                    
+                                    console.log('Selected academic year:', selectedAcademicYear)
+                                    console.log('Available terms:', availableTerms)
+                                    console.log('Form academic year:', formData.academicYear)
+                                    
+                                    if (availableTerms.length > 0) {
+                                      return availableTerms.map((term) => (
+                                        <SelectItem key={term.id} value={term.name}>
+                                          {term.name.toUpperCase()}
+                                        </SelectItem>
+                                      ))
+                                    } else {
+                                      // Fallback to default terms if no academic year is selected
+                                      return [
+                                        <SelectItem key="term1" value="Term 1">TERM 1</SelectItem>,
+                                        <SelectItem key="term2" value="Term 2">TERM 2</SelectItem>,
+                                        <SelectItem key="term3" value="Term 3">TERM 3</SelectItem>,
+                                        <SelectItem key="annual" value="Annual">ANNUAL</SelectItem>
+                                      ]
+                                    }
+                                  })()}
+                                </SelectContent>
+                              </Select>
                             </td>
                             <td className="border border-primary/30 p-2 text-right">
                               {calculateTermTotal(index).toLocaleString('en-KE', { 
@@ -1122,6 +1999,146 @@ export const FeeStructureDrawer = ({
           </Tabs>
         </div>
 
+        {/* Bucket Creation Modal */}
+        <Dialog open={showBucketModal} onOpenChange={setShowBucketModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                Create New Fee Bucket
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="bucket-name" className="text-sm font-medium text-slate-700">
+                  Bucket Name
+                </Label>
+                <Input
+                  id="bucket-name"
+                  placeholder="e.g., Tuition Fees, Transport Fees"
+                  value={bucketModalData.name}
+                  onChange={(e) => setBucketModalData(prev => ({ ...prev, name: e.target.value }))}
+                  className="focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bucket-description" className="text-sm font-medium text-slate-700">
+                  Description
+                </Label>
+                <Input
+                  id="bucket-description"
+                  placeholder="e.g., Academic fees for the term"
+                  value={bucketModalData.description}
+                  onChange={(e) => setBucketModalData(prev => ({ ...prev, description: e.target.value }))}
+                  className="focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowBucketModal(false)
+                  setBucketModalData({ name: '', description: '' })
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (bucketModalData.name.trim() && bucketModalData.description.trim()) {
+                    await addBucketWithAPI(0, bucketModalData.name.trim(), bucketModalData.description.trim())
+                    setShowBucketModal(false)
+                    setBucketModalData({ name: '', description: '' })
+                  }
+                }}
+                disabled={!bucketModalData.name.trim() || !bucketModalData.description.trim() || isCreatingBucket}
+                className="bg-primary text-white hover:bg-primary/80"
+              >
+                {isCreatingBucket ? 'Creating...' : 'Create Bucket'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Bucket Modal */}
+        <Dialog open={showEditBucketModal} onOpenChange={setShowEditBucketModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-primary" />
+                Edit Fee Bucket
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-bucket-name" className="text-sm font-medium text-slate-700">
+                  Bucket Name
+                </Label>
+                <Input
+                  id="edit-bucket-name"
+                  placeholder="e.g., Tuition Fees, Transport Fees"
+                  value={editingBucket?.name || ''}
+                  onChange={(e) => setEditingBucket(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  className="focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-bucket-description" className="text-sm font-medium text-slate-700">
+                  Description
+                </Label>
+                <Input
+                  id="edit-bucket-description"
+                  placeholder="e.g., Academic fees for the term"
+                  value={editingBucket?.description || ''}
+                  onChange={(e) => setEditingBucket(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  className="focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="edit-bucket-active"
+                    checked={editingBucket?.isActive || false}
+                    onCheckedChange={(checked) => setEditingBucket(prev => prev ? { ...prev, isActive: checked as boolean } : null)}
+                  />
+                  <Label htmlFor="edit-bucket-active" className="text-sm font-medium text-slate-700">
+                    Active (available for use in fee structures)
+                  </Label>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditBucketModal(false)
+                  setEditingBucket(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (editingBucket?.name.trim() && editingBucket?.description.trim()) {
+                    await updateFeeBucket(editingBucket.id, {
+                      name: editingBucket.name.trim(),
+                      description: editingBucket.description.trim(),
+                      isActive: editingBucket.isActive
+                    })
+                    setShowEditBucketModal(false)
+                    setEditingBucket(null)
+                  }
+                }}
+                disabled={!editingBucket?.name.trim() || !editingBucket?.description.trim()}
+                className="bg-primary text-white hover:bg-primary/80"
+              >
+                Update Bucket
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Toast Notifications */}
         <div className="fixed top-4 right-4 z-50 space-y-2">
           {toasts.map((toast) => (
@@ -1169,3 +2186,4 @@ export const FeeStructureDrawer = ({
     </div>
   )
 }
+

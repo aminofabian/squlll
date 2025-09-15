@@ -232,6 +232,7 @@ export interface TermFeeStructureForm {
 }
 
 export interface FeeBucketForm {
+  id?: string // Server-generated ID for existing buckets
   type: 'tuition' | 'transport' | 'meals' | 'boarding'
   name: string
   description: string

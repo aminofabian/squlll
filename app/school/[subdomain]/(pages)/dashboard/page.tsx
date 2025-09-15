@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { DashboardSearchSidebar } from './components/DashboardSearchSidebar'
 import { CreateAcademicYearModal } from './components/CreateAcademicYearModal'
+import { TermsManager } from './components/TermsManager'
 
 export default function SchoolDashboard() {
   const params = useParams()
@@ -419,7 +420,6 @@ export default function SchoolDashboard() {
                   size="sm"
                   className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
                   Academic Year
                 </Button>
               }
@@ -785,6 +785,11 @@ export default function SchoolDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Terms Management */}
+            <TermsManager 
+              className="md:col-span-2 xl:col-span-1"
+            />
           </div>
         </div>
       </div>

@@ -14,8 +14,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
-import { Loader2, Calendar, Plus } from 'lucide-react'
+import { Loader2, Calendar, Plus, BookOpen, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CreateTermModal } from './CreateTermModal'
 
 interface CreateAcademicYearModalProps {
   onSuccess?: () => void
@@ -31,6 +32,9 @@ interface AcademicYearFormData {
 export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYearModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [showTermModal, setShowTermModal] = useState(false)
+  const [createdAcademicYear, setCreatedAcademicYear] = useState<any>(null)
   const [formData, setFormData] = useState<AcademicYearFormData>({
     name: '',
     startDate: '',
@@ -91,6 +95,9 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
 
       toast.success(`Academic year "${result.name}" created successfully!`)
       
+      // Store the created academic year data
+      setCreatedAcademicYear(result)
+      
       // Reset form
       setFormData({
         name: '',
@@ -98,8 +105,9 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
         endDate: ''
       })
       
-      // Close modal
+      // Close the main modal and show success dialog
       setIsOpen(false)
+      setShowSuccessDialog(true)
       
       // Call success callback
       if (onSuccess) {
@@ -116,6 +124,9 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
   const handleClose = () => {
     if (!isLoading) {
       setIsOpen(false)
+      setShowSuccessDialog(false)
+      setShowTermModal(false)
+      setCreatedAcademicYear(null)
       // Reset form when closing
       setFormData({
         name: '',
@@ -125,19 +136,35 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
     }
   }
 
+  const handleTermCreated = (term: any) => {
+    console.log('Term created:', term)
+    toast.success(`Term "${term.name}" added to ${createdAcademicYear?.name}!`)
+  }
+
+  const handleCreateTerms = () => {
+    setShowSuccessDialog(false)
+    setShowTermModal(true)
+  }
+
+  const handleSkipTermCreation = () => {
+    setShowSuccessDialog(false)
+    setCreatedAcademicYear(null)
+  }
+
   const defaultTrigger = (
     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
       <Plus className="h-4 w-4 mr-2" />
-      Create Academic Year
+      
     </Button>
   )
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+    <>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          {trigger || defaultTrigger}
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
@@ -238,7 +265,79 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
             )}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog with Term Creation Prompt */}
+      {showSuccessDialog && createdAcademicYear && (
+        <Dialog open={showSuccessDialog} onOpenChange={handleSkipTermCreation}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-green-600" />
+                Academic Year Created!
+              </DialogTitle>
+              <DialogDescription>
+                Great! Your academic year "{createdAcademicYear.name}" has been created successfully. 
+                Would you like to create terms for this academic year now?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-green-800 dark:text-green-200">
+                        {createdAcademicYear.name}
+                      </div>
+                      <div className="text-xs text-green-600 dark:text-green-400">
+                        {new Date(createdAcademicYear.startDate).toLocaleDateString()} - {new Date(createdAcademicYear.endDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div className="text-green-600">✓</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="text-sm text-muted-foreground">
+                <p>Terms help organize your academic calendar into manageable periods like semesters, quarters, or trimesters.</p>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={handleSkipTermCreation}
+                className="w-full sm:w-auto"
+              >
+                Skip for Now
+              </Button>
+              <Button
+                onClick={handleCreateTerms}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Create Terms
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Term Creation Modal */}
+      {createdAcademicYear && (
+        <CreateTermModal
+          isOpen={showTermModal}
+          onClose={() => {
+            setShowTermModal(false)
+            setCreatedAcademicYear(null)
+          }}
+          onSuccess={handleTermCreated}
+          academicYear={createdAcademicYear}
+        />
+      )}
+    </>
   )
 }
