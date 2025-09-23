@@ -70,48 +70,51 @@ export const useFeeStructures = () => {
   const updateFeeStructure = (id: string, formData: FeeStructureForm) => {
     let updatedStructure: FeeStructure | null = null
     
-    setFeeStructures(prev => prev.map(structure => {
-      if (structure.id === id) {
-        updatedStructure = {
-          ...structure,
-          name: formData.name,
-          grade: formData.grade,
-          boardingType: formData.boardingType,
-          academicYear: formData.academicYear,
-          lastModified: new Date().toISOString(),
-          termStructures: formData.termStructures.map((term, index) => ({
-            id: structure.termStructures[index]?.id || `TS-${Date.now()}-${index}`,
-            term: term.term as 'Term 1' | 'Term 2' | 'Term 3',
-            totalAmount: term.buckets.reduce((sum, bucket) => 
-              sum + bucket.components.reduce((bucketSum, component) => 
-                bucketSum + (parseFloat(component.amount) || 0), 0), 0),
-            dueDate: term.dueDate,
-            latePaymentFee: parseFloat(term.latePaymentFee) || 0,
-            earlyPaymentDiscount: parseFloat(term.earlyPaymentDiscount) || 0,
-            earlyPaymentDeadline: term.earlyPaymentDeadline,
-            buckets: term.buckets.map((bucket, bucketIndex) => ({
-              id: structure.termStructures[index]?.buckets[bucketIndex]?.id || `B-${Date.now()}-${index}-${bucketIndex}`,
-              type: bucket.type,
-              name: bucket.name,
-              description: bucket.description,
-              amount: bucket.components.reduce((sum, component) => 
-                sum + (parseFloat(component.amount) || 0), 0),
-              isOptional: bucket.isOptional,
-              components: bucket.components.map((component, componentIndex) => ({
-                id: structure.termStructures[index]?.buckets[bucketIndex]?.components[componentIndex]?.id || 
-                    `C-${Date.now()}-${index}-${bucketIndex}-${componentIndex}`,
-                name: component.name,
-                description: component.description,
-                amount: parseFloat(component.amount) || 0,
-                category: component.category
+    setFeeStructures(prev => {
+      const updated = prev.map(structure => {
+        if (structure.id === id) {
+          updatedStructure = {
+            ...structure,
+            name: formData.name,
+            grade: formData.grade,
+            boardingType: formData.boardingType,
+            academicYear: formData.academicYear,
+            lastModified: new Date().toISOString(),
+            termStructures: formData.termStructures.map((term, index) => ({
+              id: structure.termStructures[index]?.id || `TS-${Date.now()}-${index}`,
+              term: term.term as 'Term 1' | 'Term 2' | 'Term 3',
+              totalAmount: term.buckets.reduce((sum, bucket) => 
+                sum + bucket.components.reduce((bucketSum, component) => 
+                  bucketSum + (parseFloat(component.amount) || 0), 0), 0),
+              dueDate: term.dueDate,
+              latePaymentFee: parseFloat(term.latePaymentFee) || 0,
+              earlyPaymentDiscount: parseFloat(term.earlyPaymentDiscount) || 0,
+              earlyPaymentDeadline: term.earlyPaymentDeadline,
+              buckets: term.buckets.map((bucket, bucketIndex) => ({
+                id: structure.termStructures[index]?.buckets[bucketIndex]?.id || `B-${Date.now()}-${index}-${bucketIndex}`,
+                type: bucket.type,
+                name: bucket.name,
+                description: bucket.description,
+                amount: bucket.components.reduce((sum, component) => 
+                  sum + (parseFloat(component.amount) || 0), 0),
+                isOptional: bucket.isOptional,
+                components: bucket.components.map((component, componentIndex) => ({
+                  id: structure.termStructures[index]?.buckets[bucketIndex]?.components[componentIndex]?.id || 
+                      `C-${Date.now()}-${index}-${bucketIndex}-${componentIndex}`,
+                  name: component.name,
+                  description: component.description,
+                  amount: parseFloat(component.amount) || 0,
+                  category: component.category
+                }))
               }))
             }))
-          }))
+          }
+          return updatedStructure
         }
-        return updatedStructure
-      }
-      return structure
-    }))
+        return structure
+      })
+      return updated
+    })
     
     return updatedStructure?.id || null
   }
