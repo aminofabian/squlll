@@ -141,15 +141,22 @@ export default function FeesPage() {
     setShowEditForm(true)
   }
 
-  const handleSaveStructure = (formData: FeeStructureForm) => {
-    if (selectedStructure) {
-      updateFeeStructure(selectedStructure.id, formData)
-    } else {
-      createFeeStructure(formData)
+  const handleSaveStructure = async (formData: FeeStructureForm): Promise<string | null> => {
+    try {
+      let result: string | null = null
+      if (selectedStructure) {
+        result = await updateFeeStructure(selectedStructure.id, formData)
+      } else {
+        result = await createFeeStructure(formData)
+      }
+      setShowCreateForm(false)
+      setShowEditForm(false)
+      setSelectedStructure(null)
+      return result
+    } catch (error) {
+      console.error('Error saving fee structure:', error)
+      return null
     }
-    setShowCreateForm(false)
-    setShowEditForm(false)
-    setSelectedStructure(null)
   }
 
   const handleGenerateInvoices = (feeStructureId: string, term: string) => {
