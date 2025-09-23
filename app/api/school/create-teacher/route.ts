@@ -48,10 +48,9 @@ export async function POST(request: Request) {
 
     // Use proper GraphQL variables instead of string interpolation
     const inviteTeacherMutation = `
-      mutation InviteTeacher($tenantId: String!, $createTeacherDto: CreateTeacherInvitationDto!) {
+      mutation InviteTeacher($createTeacherDto: CreateTeacherInvitationDto!) {
         inviteTeacher(
           createTeacherDto: $createTeacherDto
-          tenantId: $tenantId
         ) {
           email
           fullName
@@ -64,7 +63,6 @@ export async function POST(request: Request) {
     const requestBody = {
       query: inviteTeacherMutation,
       variables: {
-        tenantId: teacherData.tenantId,
         createTeacherDto: {
           email: createTeacherDto.email,
           fullName: createTeacherDto.fullName,

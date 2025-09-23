@@ -190,6 +190,12 @@ export const FeeStructureDrawer = ({
       }
 
       showToast(`✅ Fee bucket "${bucketData.name}" created successfully!`, 'success')
+      // Refresh buckets so it appears immediately in VOTE HEAD select options
+      try {
+        await refetchBuckets()
+      } catch (_) {
+        // Non-blocking; UI still has optimistic formData update
+      }
       return result.data.createFeeBucket
     } catch (error) {
       console.error('Error creating fee bucket:', error)
@@ -1424,89 +1430,67 @@ export const FeeStructureDrawer = ({
                               <td className="border border-primary/30 p-3">
                                 <div className="relative">
                                   <div className="flex items-center gap-2">
-                                    <Select
-                                      value={component.name}
-                                      onValueChange={(value) => {
-                                        if (value === 'custom') {
-                                          // Allow custom input
+                                    {(!formData.termStructures[termIndex].buckets[bucketIndex].id) && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-xs hover:bg-primary/10"
+                                        onClick={() => {
+                                          updateBucket(termIndex, bucketIndex, 'id', undefined as any)
+                                          updateBucket(termIndex, bucketIndex, 'name', '')
+                                          updateBucket(termIndex, bucketIndex, 'description', '')
                                           updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', '')
-                                        } else {
-                                          // Select from existing bucket
-                                          const selectedBucket = feeBuckets.find(bucket => bucket.name === value)
-                                          if (selectedBucket) {
-                                            // Update the entire bucket to use the selected bucket
-                                            updateBucket(termIndex, bucketIndex, 'id', selectedBucket.id)
-                                            updateBucket(termIndex, bucketIndex, 'name', selectedBucket.name)
-                                            updateBucket(termIndex, bucketIndex, 'description', selectedBucket.description)
-                                            updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', selectedBucket.name)
-                                          }
-                                        }
-                                      }}
-                                    >
-                                      <SelectTrigger className="flex-1 bg-transparent border-0 focus:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-lg px-2 py-1 transition-all duration-200 h-8">
-                                        <SelectValue placeholder="Choose fee bucket..." />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="custom" className="text-xs">
-                                          ✏️ Custom Fee Name
-                                        </SelectItem>
-                                        {feeBuckets
-                                          .filter(bucket => {
-                                            // Filter out buckets that are already used in the current fee structure
-                                            // BUT allow the currently selected bucket to remain visible
-                                            const isAlreadyUsed = formData.termStructures.some(term =>
-                                              term.buckets.some(b => 
-                                                b.id === bucket.id
-                                              )
-                                            )
-                                            const isCurrentBucket = formData.termStructures[termIndex].buckets[bucketIndex].id === bucket.id
-                                            return !isAlreadyUsed || isCurrentBucket
-                                          })
-                                          .map((bucket) => {
-                                            const isCurrentBucket = formData.termStructures[termIndex].buckets[bucketIndex].id === bucket.id
-                                            return (
-                                              <SelectItem key={bucket.id} value={bucket.name} className="text-xs">
-                                                <div className="flex items-center gap-2">
-                                                  <span className={isCurrentBucket ? "font-semibold text-primary" : ""}>{bucket.name}</span>
-                                                  {isCurrentBucket && (
-                                                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
-                                                      ✓ Selected
-                                                    </Badge>
-                                                  )}
-                                                  {!bucket.isActive && !isCurrentBucket && (
-                                                    <Badge variant="outline" className="text-xs bg-gray-50 text-gray-500 border-gray-200">
-                                                      Inactive
-                                                    </Badge>
-                                                  )}
-                                                </div>
-                                              </SelectItem>
-                                            )
-                                          })}
-                                      </SelectContent>
-                                    </Select>
-                                    {formData.termStructures[termIndex].buckets[bucketIndex].id && (
-                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                        💾 Saved
-                                      </Badge>
+                                        }}
+                                        title="Custom fee name"
+                                      >
+                                        ✏️ Custom
+                                      </Button>
                                     )}
-                                    {(() => {
-                                      const currentBucket = formData.termStructures[termIndex].buckets[bucketIndex]
-                                      if (currentBucket.id) {
-                                        const isUsedElsewhere = formData.termStructures.some((term, tIndex) =>
-                                          term.buckets.some((b, bIndex) => 
-                                            b.id === currentBucket.id && !(tIndex === termIndex && bIndex === bucketIndex)
-                                          )
-                                        )
-                                        if (isUsedElsewhere) {
+                                    <div className="flex flex-wrap gap-1">
+                                      {(() => {
+                                        const selectedId = formData.termStructures[termIndex].buckets[bucketIndex].id
+                                        const seenNames = new Set<string>()
+                                        const source = selectedId
+                                          ? feeBuckets.filter(b => b.id === selectedId)
+                                          : feeBuckets
+                                              .filter(bucket => {
+                                                const isAlreadyUsed = formData.termStructures.some(term =>
+                                                  term.buckets.some(b => b.id === bucket.id)
+                                                )
+                                                const isCurrentBucket = formData.termStructures[termIndex].buckets[bucketIndex].id === bucket.id
+                                                return !isAlreadyUsed || isCurrentBucket
+                                              })
+                                              .filter(bucket => {
+                                                const key = (bucket.name || '').trim().toLowerCase()
+                                                if (seenNames.has(key)) return false
+                                                seenNames.add(key)
+                                                return true
+                                              })
+                                        return source.map((bucket) => {
+                                          const isCurrentBucket = formData.termStructures[termIndex].buckets[bucketIndex].id === bucket.id
                                           return (
-                                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                                              ⚠️ Duplicate
-                                            </Badge>
+                                            <Button
+                                              key={bucket.id}
+                                              variant={isCurrentBucket ? 'secondary' : 'outline'}
+                                              size="sm"
+                                              className={`h-8 px-2 text-xs ${isCurrentBucket ? 'bg-primary/10 text-primary border-primary/30' : ''}`}
+                                              onClick={() => {
+                                                updateBucket(termIndex, bucketIndex, 'id', bucket.id)
+                                                updateBucket(termIndex, bucketIndex, 'name', bucket.name)
+                                                updateBucket(termIndex, bucketIndex, 'description', bucket.description)
+                                                updateComponent(termIndex, bucketIndex, actualComponentIndex, 'name', bucket.name)
+                                              }}
+                                              title={bucket.name}
+                                            >
+                                              {bucket.name}
+                                              {!bucket.isActive && !isCurrentBucket && (
+                                                <span className="ml-1 text-[10px] text-gray-500">(Inactive)</span>
+                                              )}
+                                            </Button>
                                           )
-                                        }
-                                      }
-                                      return null
-                                    })()}
+                                        })
+                                      })()}
+                                    </div>
                                   </div>
                                   {component.name && !feeBuckets.some(bucket => bucket.name === component.name) && (
                                     <div className="mt-1">

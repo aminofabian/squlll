@@ -5,8 +5,9 @@ const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.
 
 export async function POST(request: Request) {
   try {
-    const staffData = await request.json();
-    console.log('Received staff data:', staffData);
+    const body = await request.json();
+    const { tenantId, ...staffData } = body || {};
+    console.log('Received staff data:', { ...staffData, tenantId });
     
     // Get the token from cookies
     const cookieStore = await cookies();
@@ -25,26 +26,19 @@ export async function POST(request: Request) {
     const firstName = nameParts[0] || staffData.name;
     const lastName = nameParts.slice(1).join(' ') || firstName;
     
-    // Determine role based on staff type
-    let role = "TEACHER"; // Default to teacher
-    if (staffData.staffType === 'administrative') {
-      role = "ADMIN";
-    } else if (staffData.staffType === 'support') {
-      role = "STAFF";
-    } else if (staffData.staffType === 'part-time') {
-      role = "PART_TIME_TEACHER";
-    } else if (staffData.staffType === 'substitute') {
-      role = "SUBSTITUTE_TEACHER";
-    }
+    // Clamp role to a schema-accepted value for inviteTeacher
+    const role = "TEACHER";
     
     // Map staff form fields to match teacher API expectations
+    const normalizedGender = staffData.gender?.toUpperCase();
+    const genderEnum = (normalizedGender === 'MALE' || normalizedGender === 'FEMALE') ? normalizedGender : 'MALE';
     const createStaffDto = {
       email: staffData.email,
       fullName: staffData.name,
       firstName: firstName,
       lastName: lastName,
       role: role,
-      gender: staffData.gender?.toUpperCase() || "OTHER",
+      gender: genderEnum,
       department: staffData.department?.charAt(0).toUpperCase() + staffData.department?.slice(1) || "General",
       phoneNumber: staffData.phone,
       address: staffData.address || "",
@@ -57,10 +51,9 @@ export async function POST(request: Request) {
 
     // Use proper GraphQL variables instead of string interpolation
     const inviteStaffMutation = `
-      mutation InviteTeacher($tenantId: String!, $createTeacherDto: CreateTeacherInvitationDto!) {
+      mutation InviteTeacher($createTeacherDto: CreateTeacherInvitationDto!) {
         inviteTeacher(
           createTeacherDto: $createTeacherDto
-          tenantId: $tenantId
         ) {
           email
           fullName
@@ -73,7 +66,6 @@ export async function POST(request: Request) {
     const requestBody = {
       query: inviteStaffMutation,
       variables: {
-        tenantId: staffData.tenantId,
         createTeacherDto: {
           email: createStaffDto.email,
           fullName: createStaffDto.fullName,
