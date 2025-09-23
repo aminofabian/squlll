@@ -44,24 +44,14 @@ export async function POST(request: Request) {
     }
 
     // Construct the GraphQL mutation
+    // Only request fields supported by InviteTeacherResponse
     const mutation = `
-      mutation InviteTeacher($createTeacherDto: CreateTeacherDto!) {
+      mutation InviteTeacher($createTeacherDto: CreateTeacherInvitationDto!) {
         inviteTeacher(createTeacherDto: $createTeacherDto) {
           email
           fullName
           status
           createdAt
-          id
-          firstName
-          lastName
-          role
-          gender
-          department
-          phoneNumber
-          address
-          employeeId
-          dateOfBirth
-          qualifications
         }
       }
     `;
@@ -84,7 +74,6 @@ export async function POST(request: Request) {
           role: createTeacherDto.role,
           tenantSubjectIds: createTeacherDto.tenantSubjectIds?.length || 0,
           tenantGradeLevelIds: createTeacherDto.tenantGradeLevelIds?.length || 0,
-          tenantStreamIds: createTeacherDto.tenantStreamIds?.length || 0,
           classTeacherTenantStreamId: createTeacherDto.classTeacherTenantStreamId,
           classTeacherTenantGradeLevelId: createTeacherDto.classTeacherTenantGradeLevelId
         }
@@ -129,14 +118,21 @@ export async function POST(request: Request) {
 
     // Handle GraphQL errors
     if (data.errors) {
-      console.error('❌ GraphQL errors:', data.errors);
+      console.error('❌ GraphQL errors:', JSON.stringify(data.errors, null, 2));
       
+      const first = data.errors[0] || {};
       const errorMessages = data.errors.map((error: any) => error.message).join(', ');
+      const validationPayload = first.extensions?.exception?.response
+        || first.extensions?.validation
+        || first.extensions?.exception
+        || null;
+
       return NextResponse.json(
         { 
           error: `GraphQL errors: ${errorMessages}`,
-          details: data.errors,
-          code: data.errors[0]?.extensions?.code
+          details: validationPayload ?? data.errors,
+          originalErrors: data.errors,
+          code: first?.extensions?.code
         },
         { status: 400 }
       );
@@ -160,7 +156,7 @@ export async function POST(request: Request) {
       email: inviteTeacher.email,
       fullName: inviteTeacher.fullName,
       status: inviteTeacher.status,
-      id: inviteTeacher.id
+      createdAt: inviteTeacher.createdAt
     });
 
     // Return the teacher data in the expected format

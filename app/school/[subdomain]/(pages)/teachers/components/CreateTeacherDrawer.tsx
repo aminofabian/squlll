@@ -453,23 +453,44 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
       });
       const tenantSubjectIds = Array.from(allSelectedSubjects);
 
+      // Ensure at least one subject remains after flattening
+      if (tenantSubjectIds.length === 0) {
+        toast.error("No Subjects Selected", {
+          description: "Please select at least one subject for the teacher."
+        });
+        return;
+      }
+
+      // Normalize department to match allowed list (case-insensitive)
+      const allowedDepartments = departments;
+      const selectedDept = data.department?.toString().trim();
+      const normalizedDepartment = allowedDepartments.find(d => d.toLowerCase() === selectedDept?.toLowerCase()) || allowedDepartments[0];
+
+      // Sanitize employeeId (alphanumeric, dash, slash) and clamp length
+      const employeeIdSanitized = data.employeeId
+        ? data.employeeId.toString().trim().replace(/[^A-Za-z0-9\/-]/g, '').slice(0, 32)
+        : '';
+
+      // Clamp long text fields to reasonable lengths
+      const addressClamped = (data.address || '').toString().trim().slice(0, 200);
+      const qualificationsClamped = data.qualifications.toString().trim().slice(0, 300);
+
       // Extract only the fields that are accepted by the API schema
       const createTeacherDto = {
-        email: data.email,
-        fullName: data.fullName,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        email: data.email.trim(),
+        fullName: data.fullName.trim(),
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
         role: "TEACHER",
         gender: data.gender,
-        department: data.department,
-        phoneNumber: data.phoneNumber,
-        address: data.address || "",
-        employeeId: data.employeeId,
+        department: normalizedDepartment,
+        phoneNumber: data.phoneNumber.trim(),
+        address: addressClamped,
+        employeeId: employeeIdSanitized,
         dateOfBirth: data.dateOfBirth,
-        qualifications: data.qualifications,
+        qualifications: qualificationsClamped,
         tenantSubjectIds: tenantSubjectIds,
         tenantGradeLevelIds: validatedGradeLevelIds, // Use filtered IDs
-        tenantStreamIds: data.tenantStreamIds,
         ...(data.isClassTeacher && data.classTeacherType === 'stream' && data.classTeacherTenantStreamId && {
           classTeacherTenantStreamId: data.classTeacherTenantStreamId
         }),

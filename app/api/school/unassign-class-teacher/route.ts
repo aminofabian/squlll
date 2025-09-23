@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       console.error('🔍 Debug - GraphQL Errors:', data.errors);
       
       // If the specific unassign mutation failed, try alternative approaches
-      if (data.errors.some(err => err.extensions?.code === 'INTERNAL_SERVER_ERROR')) {
+      if (data.errors.some((err: any) => err.extensions?.code === 'INTERNAL_SERVER_ERROR')) {
         console.log('🔍 Trying alternative unassign approach...');
         
         try {

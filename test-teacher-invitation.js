@@ -24,7 +24,7 @@ const testTeachers = {
     qualifications: "BSc Physics, BEd",
     tenantSubjectIds: ["f78c4124-a8b3-4d6f-932b-d8851d75fae7"],
     tenantGradeLevelIds: ["75b09d30-95f1-4b5a-9e50-2cbfefe45a5a"],
-    tenantStreamIds: ["6fb80f63-d725-48bb-9366-3eeda78e9740"]
+    // tenantStreams removed per schema; use classTeacherTenantStreamId if needed
   },
   streamClassTeacher: {
     email: "streamteacher@example.com",
@@ -41,7 +41,7 @@ const testTeachers = {
     qualifications: "BSc Mathematics, MSc Education",
     tenantSubjectIds: ["146dfd3d-7566-49a5-b659-c74309e20d09"],
     tenantGradeLevelIds: ["aa04861b-18ed-4668-9ead-c4069c2ee466"],
-    tenantStreamIds: ["6fb80f63-d725-48bb-9366-3eeda78e9740", "db2207c7-02ac-4afc-88aa-5905dea06c4a"],
+    // tenantStreams removed per schema; use classTeacherTenantStreamId if needed
     classTeacherTenantStreamId: "db2207c7-02ac-4afc-88aa-5905dea06c4a"
   },
   gradeLevelClassTeacher: {
@@ -64,23 +64,12 @@ const testTeachers = {
 };
 
 const mutation = `
-  mutation InviteTeacher($createTeacherDto: CreateTeacherDto!) {
+  mutation InviteTeacher($createTeacherDto: CreateTeacherInvitationDto!) {
     inviteTeacher(createTeacherDto: $createTeacherDto) {
       email
       fullName
       status
       createdAt
-      id
-      firstName
-      lastName
-      role
-      gender
-      department
-      phoneNumber
-      address
-      employeeId
-      dateOfBirth
-      qualifications
     }
   }
 `;
@@ -140,7 +129,6 @@ async function testTeacherInvitation(teacherType, teacherData) {
     } else if (data.data && data.data.inviteTeacher) {
       console.log('✅ Success!');
       const teacher = data.data.inviteTeacher;
-      console.log(`   ID: ${teacher.id}`);
       console.log(`   Email: ${teacher.email}`);
       console.log(`   Full Name: ${teacher.fullName}`);
       console.log(`   Status: ${teacher.status}`);
