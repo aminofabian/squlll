@@ -40,7 +40,8 @@ export function TermsManager({ academicYearId, className }: TermsManagerProps) {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<AcademicYear | null>(null)
 
   // Get current academic year if no academicYearId is provided
-  const { data: currentAcademicYear, isLoading: currentAcademicYearLoading } = useCurrentAcademicYear(!academicYearId)
+  const { academicYears, loading: currentAcademicYearLoading, getActiveAcademicYear } = useCurrentAcademicYear()
+  const currentAcademicYear = getActiveAcademicYear()
   
   // Use provided academicYearId or fall back to current academic year
   const effectiveAcademicYearId = academicYearId || currentAcademicYear?.id
