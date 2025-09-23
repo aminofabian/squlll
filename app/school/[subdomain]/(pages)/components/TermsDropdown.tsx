@@ -47,7 +47,8 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
   const [showCreateAcademicYearModal, setShowCreateAcademicYearModal] = useState(false)
 
   // Get current academic year
-  const { data: currentAcademicYear, isLoading: currentAcademicYearLoading } = useCurrentAcademicYear()
+  const { academicYears, loading: currentAcademicYearLoading, getActiveAcademicYear } = useCurrentAcademicYear()
+  const currentAcademicYear = getActiveAcademicYear()
 
   // Query to get all terms for the current academic year
   const { data: terms, isLoading: termsLoading, refetch: refetchTerms } = useQuery({
