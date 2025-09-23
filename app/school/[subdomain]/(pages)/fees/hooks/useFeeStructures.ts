@@ -68,11 +68,11 @@ export const useFeeStructures = () => {
 
   // Update fee structure
   const updateFeeStructure = (id: string, formData: FeeStructureForm) => {
-    let foundStructure: FeeStructure | null = null
+    let updatedStructureId: string | null = null
     
     setFeeStructures(prev => prev.map(structure => {
       if (structure.id === id) {
-        foundStructure = {
+        const updatedStructure: FeeStructure = {
           ...structure,
           name: formData.name,
           grade: formData.grade,
@@ -108,12 +108,13 @@ export const useFeeStructures = () => {
             }))
           }))
         }
-        return foundStructure
+        updatedStructureId = updatedStructure.id
+        return updatedStructure
       }
       return structure
     }))
     
-    return foundStructure ? foundStructure.id : null
+    return updatedStructureId
   }
 
   // Delete fee structure
