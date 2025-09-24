@@ -501,14 +501,15 @@ export function CreateTeacherDrawer({ onTeacherCreated }: CreateTeacherDrawerPro
 
 
 
+      // Note: We no longer send tenantId in the payload - it's not part of the CreateTeacherInvitationDto schema
       const response = await fetch('/api/school/invite-teacher', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          createTeacherDto,
-          tenantId: schoolConfig.tenant.id
+          createTeacherDto
+          // tenantId removed - it will be handled by the API route via auth token
         }),
       });
 
