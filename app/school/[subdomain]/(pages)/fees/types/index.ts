@@ -200,6 +200,7 @@ export interface FeeStructureForm {
   grade: string
   boardingType: 'day' | 'boarding' | 'both'
   academicYear: string
+  academicYearId?: string
   termStructures: TermFeeStructureForm[]
   schoolDetails?: {
     name: string

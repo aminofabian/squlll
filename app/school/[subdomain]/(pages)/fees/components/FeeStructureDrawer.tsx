@@ -86,7 +86,7 @@ export const FeeStructureDrawer = ({
   const subdomain = params.subdomain as string
   const { data: schoolConfig } = useSchoolConfig()
   const { feeBuckets, loading: bucketsLoading, error: bucketsError, refetch: refetchBuckets } = useFeeBuckets()
-  const { academicYears, loading: academicYearsLoading, error: academicYearsError, getActiveAcademicYear, getTermsForAcademicYear } = useAcademicYears()
+  const { academicYears, loading: academicYearsLoading, error: academicYearsError, refetch: refetchAcademicYears, getActiveAcademicYear, getTermsForAcademicYear } = useAcademicYears()
   
   // Get school name from config or format subdomain as fallback
   const getSchoolName = () => {
@@ -715,6 +715,87 @@ export const FeeStructureDrawer = ({
     }
   }
 
+  // Create fee structure (GraphQL) and return ID
+  const createFeeStructureGraphQL = async (name: string, academicYearNameOrId: string, termNameOrId: string) => {
+    try {
+      // Ensure we have academic years loaded
+      let years = academicYears
+      if (!years || years.length === 0) {
+        await refetchAcademicYears()
+        years = academicYears
+      }
+
+      // Resolve Academic Year by id or name (case-insensitive), fallback to active year
+      const normalize = (s: string) => (s || '').trim().toLowerCase()
+      let year: typeof academicYears[number] | undefined = years.find(y => y.id === academicYearNameOrId)
+      if (!year) {
+        year = years.find(y => normalize(y.name) === normalize(academicYearNameOrId))
+      }
+      if (!year) {
+        year = years.find(y => normalize(y.name).includes(normalize(academicYearNameOrId)))
+      }
+      if (!year) {
+        year = getActiveAcademicYear() || undefined
+      }
+      if (!year) {
+        // Graceful fallback: let caller fallback to alternate save path
+        showToast('⚠️ Could not resolve academic year, using fallback save method.', 'info')
+        return null
+      }
+
+      // Resolve Term by id or name within the resolved year; fallback to first term
+      let term: { id: string; name: string } | undefined = year.terms.find(t => t.id === termNameOrId)
+      if (!term) {
+        term = year.terms.find(t => normalize(t.name) === normalize(termNameOrId))
+      }
+      if (!term) {
+        term = year.terms.find(t => normalize(t.name).includes(normalize(termNameOrId)))
+      }
+      if (!term && year.terms && year.terms.length > 0) {
+        term = year.terms[0]
+      }
+      if (!term) {
+        showToast('⚠️ Could not resolve term, using fallback save method.', 'info')
+        return null
+      }
+
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            mutation CreateFeeStructure($input: CreateFeeStructureInput!) {
+              createFeeStructure(input: $input) {
+                id
+                name
+                academicYear { id name }
+                term { id name }
+              }
+            }
+          `,
+          variables: {
+            input: {
+              name,
+              academicYearId: year.id,
+              termId: term.id
+            }
+          }
+        })
+      })
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      const result = await response.json()
+      if (result.errors) throw new Error(result.errors[0]?.message || 'Failed to create fee structure')
+      const created = result.data.createFeeStructure
+      showToast(`✅ Created fee structure "${created.name}" for ${created.term.name}`, 'success')
+      return created.id as string
+    } catch (error) {
+      console.error('Error creating fee structure (GraphQL):', error)
+      // Do not hard fail here; allow fallback to parent onSave
+      showToast(`⚠️ Falling back to alternate save method.`, 'info')
+      return null
+    }
+  }
+
   const handleSave = async () => {
     try {
       // Create separate fee structures for each selected grade
@@ -727,8 +808,13 @@ export const FeeStructureDrawer = ({
             : formData.name
         }
         
-        // Save the fee structure first and get the ID
-        const feeStructureId = await onSave(gradeData)
+        // Save the fee structure first via GraphQL and get the ID (use first term)
+        const firstTermName = gradeData.termStructures[0]?.term || 'Term 1'
+        let feeStructureId = await createFeeStructureGraphQL(gradeData.name, gradeData.academicYearId || gradeData.academicYear, firstTermName)
+        if (!feeStructureId) {
+          // Fallback to parent handler
+          feeStructureId = await onSave(gradeData)
+        }
         
         if (feeStructureId) {
           // Create fee structure items for each bucket component
@@ -739,27 +825,32 @@ export const FeeStructureDrawer = ({
           console.log('Form data termStructures:', formData.termStructures)
           
           for (const term of formData.termStructures) {
+            // Only create items for the same term as the created fee structure
+            if (term.term !== firstTermName) {
+              console.log(`Skipping term ${term.term} (created structure term is ${firstTermName})`)
+              continue
+            }
             console.log(`Processing term: ${term.term}`)
             for (const bucket of term.buckets) {
               console.log(`Processing bucket: ${bucket.name} (ID: ${bucket.id})`)
               if (bucket.id) { // Only create items for buckets with server IDs
                 for (const component of bucket.components) {
-                  const amount = parseFloat(component.amount) || 0
-                  console.log(`Processing component: ${component.name} (Amount: ${amount})`)
+                  const amountNum = parseFloat(component.amount) || 0
+                  console.log(`Processing component: ${component.name} (Amount: ${amountNum})`)
                   
-                  if (amount > 0) { // Only create items with valid amounts
+                  if (amountNum > 0) { // Only create items with valid amounts
                     try {
                       console.log(`Creating fee structure item:`, {
                         feeStructureId,
                         feeBucketId: bucket.id,
-                        amount,
+                        amount: amountNum,
                         isMandatory: !bucket.isOptional
                       })
                       
                       const result = await createFeeStructureItem(
                         feeStructureId,
                         bucket.id,
-                        amount,
+                        amountNum,
                         !bucket.isOptional // isMandatory = !isOptional
                       )
                       
@@ -924,7 +1015,10 @@ export const FeeStructureDrawer = ({
                     FEES STRUCTURE{' '}
                     <Select
                       value={formData.academicYear}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, academicYear: value }))}
+                      onValueChange={(value) => setFormData(prev => {
+                        const year = academicYears.find(y => y.name === value)
+                        return { ...prev, academicYear: value, academicYearId: year?.id }
+                      })}
                     >
                       <SelectTrigger className="inline-flex w-32 h-8 bg-transparent border-0 focus:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-1 text-center">
                         <SelectValue placeholder="Select Year" />
