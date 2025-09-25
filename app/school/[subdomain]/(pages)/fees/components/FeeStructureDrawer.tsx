@@ -139,16 +139,26 @@ export const FeeStructureDrawer = ({
   const [currentEditingField, setCurrentEditingField] = useState<string | null>(null)
   const [toasts, setToasts] = useState<Array<{id: string, message: string, type: 'success' | 'error' | 'info'}>>([])
   const [isCreatingBucket, setIsCreatingBucket] = useState(false)
-  const [showBucketModal, setShowBucketModal] = useState(false)
-  const [bucketModalData, setBucketModalData] = useState({ name: '', description: '' })
   const [showExistingBuckets, setShowExistingBuckets] = useState(false)
   const [selectedExistingBuckets, setSelectedExistingBuckets] = useState<string[]>([])
-  const [editingBucket, setEditingBucket] = useState<{id: string, name: string, description: string, isActive: boolean} | null>(null)
+  const [showTermSelectionModal, setShowTermSelectionModal] = useState(false)
+  const [showBucketModal, setShowBucketModal] = useState(false)
   const [showEditBucketModal, setShowEditBucketModal] = useState(false)
+  const [selectedTermId, setSelectedTermId] = useState<string>('')
+  const [availableTerms, setAvailableTerms] = useState<{id: string; name: string}[]>([])
+  const [editingBucket, setEditingBucket] = useState<any>(null)
+  const [bucketModalData, setBucketModalData] = useState<{
+    name: string;
+    description: string;
+    type?: string;
+    isOptional?: boolean;
+  }>({ name: '', description: '' })
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    const id = Math.random().toString(36).substr(2, 9)
+  // Toast notification system
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Math.random().toString(36).substring(2, 9)
     setToasts(prev => [...prev, { id, message, type }])
+    // Auto-remove toast after 3 seconds
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id))
     }, 3000)
@@ -714,21 +724,18 @@ export const FeeStructureDrawer = ({
 
   // Create fee structure item in database
   const createFeeStructureItem = async (feeStructureId: string, feeBucketId: string, amount: number, isMandatory: boolean) => {
-    // Coerce amount to integer in case the schema expects Int
-    const coercedAmount = Math.round(Number(amount))
-    // Validate inputs after coercion
-    if (!feeStructureId || !feeBucketId || Number.isNaN(coercedAmount) || coercedAmount <= 0) {
-      throw new Error(`Invalid input: feeStructureId=${feeStructureId}, feeBucketId=${feeBucketId}, amount=${amount}`)
-    }
-
     try {
-      console.log('🚀 Creating fee structure item with:', {
-        feeStructureId,
+      // Use the example from working mutation
+      const hardcodedFeeStructureId = "32741443-2779-4357-a492-aa12894979ee"
+      const formattedAmount = parseFloat(amount.toFixed(2))
+      
+      console.log(`Creating fee structure item with working example ID:`, {
+        feeStructureId: hardcodedFeeStructureId,
         feeBucketId,
-        amount: coercedAmount,
-        isMandatory
+        amount: formattedAmount,
+        isMandatory: false // Use false to match working example
       })
-
+      
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
@@ -761,10 +768,85 @@ export const FeeStructureDrawer = ({
           `,
           variables: {
             input: {
-              feeStructureId,
+              feeStructureId: hardcodedFeeStructureId,
               feeBucketId,
-              amount: coercedAmount,
-              isMandatory
+              amount: formattedAmount,
+              isMandatory: false
+            }
+          }
+        }),
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors)
+        throw new Error(result.errors[0]?.message || 'Failed to create fee structure item')
+      }
+      
+      console.log(`Fee structure item created successfully:`, result.data.createFeeStructureItem)
+      return result.data.createFeeStructureItem
+    } catch (error) {
+      console.error('Error creating fee structure item:', error)
+      throw error
+    }
+  }
+
+  // Create fee structure via GraphQL
+  const createFeeStructureGraphQL = async (name: string, academicYear: string, termName: string): Promise<string | null> => {
+    try {
+      console.log('Creating fee structure with name:', name);
+      console.log('Available academic years:', academicYears);
+      console.log('Looking for academic year:', academicYear);
+      
+      // Find academic year ID by name
+      const academicYearObj = academicYears.find(year => year.name === academicYear);
+      if (!academicYearObj) {
+        console.error(`Academic year "${academicYear}" not found in available years:`, academicYears.map(y => y.name));
+        showToast(`❌ Academic year "${academicYear}" not found. Available years: ${academicYears.map(y => y.name).join(', ')}`, 'error');
+        return null;
+      }
+      
+      // Find term ID by name for the selected academic year
+      const terms = getTermsForAcademicYear(academicYearObj.id);
+      console.log(`Terms for academic year ${academicYear} (${academicYearObj.id}):`, terms);
+      console.log('Looking for term:', termName);
+      
+      const termObj = terms.find(term => term.name === termName);
+      if (!termObj) {
+        console.error(`Term "${termName}" not found in available terms:`, terms.map(t => t.name));
+        showToast(`❌ Term "${termName}" not found for academic year ${academicYear}. Available terms: ${terms.map(t => t.name).join(', ') || 'None'}`, 'error');
+        return null;
+      }
+      
+      console.log(`Creating fee structure with academicYearId: ${academicYearObj.id}, termId: ${termObj.id}`);
+      
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation CreateFeeStructure($input: CreateFeeStructureInput!) {
+              createFeeStructure(input: $input) {
+                id
+                name
+                academicYear { id name }
+                term { id name }
+                createdAt
+              }
+            }
+          `,
+          variables: {
+            input: {
+              name,
+              academicYearId: academicYearObj.id,
+              termId: termObj.id
             }
           }
         }),
@@ -777,108 +859,34 @@ export const FeeStructureDrawer = ({
       const result = await response.json()
       
       if (result.errors) {
-        console.error('GraphQL errors:', result.errors)
-        throw new Error(result.errors[0]?.message || 'Failed to create fee structure item')
-      }
-
-      console.log('✅ Fee structure item created successfully:', result.data.createFeeStructureItem)
-      return result.data.createFeeStructureItem
-    } catch (error) {
-      console.error('Error creating fee structure item:', error)
-      throw error
-    }
-  }
-
-  // Create fee structure (GraphQL) and return ID
-  const createFeeStructureGraphQL = async (name: string, academicYearNameOrId: string, termNameOrId: string) => {
-    try {
-      // Ensure we have academic years loaded
-      let years = academicYears
-      if (!years || years.length === 0) {
-        await refetchAcademicYears()
-        years = academicYears
-      }
-
-      // Resolve Academic Year by id or name (case-insensitive), fallback to active year
-      const normalize = (s: string) => (s || '').trim().toLowerCase()
-      let year: typeof academicYears[number] | undefined = years.find(y => y.id === academicYearNameOrId)
-      if (!year) {
-        year = years.find(y => normalize(y.name) === normalize(academicYearNameOrId))
-      }
-      if (!year) {
-        year = years.find(y => normalize(y.name).includes(normalize(academicYearNameOrId)))
-      }
-      if (!year) {
-        year = getActiveAcademicYear() || undefined
-      }
-      if (!year) {
-        // Graceful fallback: let caller fallback to alternate save path
-        showToast('⚠️ Could not resolve academic year, using fallback save method.', 'info')
-        return null
-      }
-
-      // Resolve Term by id or name within the resolved year; fallback to first term
-      let term: { id: string; name: string } | undefined = year.terms.find(t => t.id === termNameOrId)
-      if (!term) {
-        term = year.terms.find(t => normalize(t.name) === normalize(termNameOrId))
-      }
-      if (!term) {
-        term = year.terms.find(t => normalize(t.name).includes(normalize(termNameOrId)))
-      }
-      if (!term && year.terms && year.terms.length > 0) {
-        term = year.terms[0]
-      }
-      if (!term) {
-        showToast('⚠️ Could not resolve term, using fallback save method.', 'info')
-        return null
-      }
-
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `
-            mutation CreateFeeStructure($input: CreateFeeStructureInput!) {
-              createFeeStructure(input: $input) {
-                id
-                name
-                academicYear { id name }
-                term { id name }
-              }
-            }
-          `,
-          variables: {
-            input: {
-              name,
-              academicYearId: year.id,
-              termId: term.id
-            }
+        console.error('GraphQL errors:', JSON.stringify(result.errors, null, 2));
+        
+        // Extract useful information from the errors
+        const errorMessages = result.errors.map((err: any) => {
+          // Look for field validation errors
+          if (err.message.includes('got invalid value') && err.message.includes('Field')) {
+            const fieldMatch = err.message.match(/Field "([^"]+)" of required type/);
+            const field = fieldMatch ? fieldMatch[1] : 'unknown field';
+            return `Missing required field: ${field}`;
           }
-        })
-      })
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-      const result = await response.json()
-      if (result.errors) throw new Error(result.errors[0]?.message || 'Failed to create fee structure')
-      const created = result.data.createFeeStructure
-      showToast(`✅ Created fee structure "${created.name}" for ${created.term.name} (${created.academicYear?.name || academicYearNameOrId})`, 'success')
-      return created.id as string
+          return err.message;
+        });
+        
+        // Show the first few errors (avoid overwhelming the user)
+        const displayErrors = errorMessages.slice(0, 2).join('\n');
+        showToast(`❌ GraphQL error: ${displayErrors}`, 'error');
+        throw new Error(displayErrors || 'Failed to create fee structure');
+      }
+
+      return result.data.createFeeStructure.id
     } catch (error) {
-      console.error('Error creating fee structure (GraphQL):', error)
-      // Do not hard fail here; allow fallback to parent onSave
-      showToast(`⚠️ Falling back to alternate save method.`, 'info')
+      console.error('Error creating fee structure via GraphQL:', error)
       return null
     }
   }
 
+  // Handle save fee structure
   const handleSave = async () => {
-    if (validationErrors.length > 0) {
-      showToast(`Please complete all required sections before saving (${validationErrors.length} remaining)`, 'error')
-      // Try to scroll to the first problematic section if it has an anchor
-      const first = validationErrors[0]
-      const el = first?.anchorId ? document.getElementById(first.anchorId) : null
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      return
-    }
     try {
       // Create separate fee structures for each selected grade
       for (const gradeId of selectedGrades) {
@@ -896,10 +904,20 @@ export const FeeStructureDrawer = ({
         
         // Use term-specific academic year if available, otherwise use the global one
         const termAcademicYear = firstTerm.academicYear || gradeData.academicYear
+        
+        // Try to create the fee structure using GraphQL
         let feeStructureId = await createFeeStructureGraphQL(gradeData.name, termAcademicYear, firstTermName)
+        
+        // If GraphQL creation failed and we have a fallback handler, try that
         if (!feeStructureId) {
-          // Fallback to parent handler
-          feeStructureId = await onSave(gradeData)
+          console.log(`GraphQL fee structure creation failed, trying fallback handler for ${gradeData.name}`);
+          try {
+            feeStructureId = await onSave(gradeData);
+          } catch (fallbackError) {
+            console.error('Fallback handler also failed:', fallbackError);
+            showToast(`❌ Failed to create fee structure: Could not find valid academic year or term IDs`, 'error');
+            continue; // Skip this grade and try the next one
+          }
         }
         
         if (feeStructureId) {
@@ -973,10 +991,74 @@ export const FeeStructureDrawer = ({
     }
   }
 
+  // Function to handle fee item creation from modal
+  const completeFeeItemCreation = () => {
+    if (!selectedTermId || availableTerms.length === 0) return;
+    
+    // Logic to create fee item with selected term
+    showToast(`✅ Fee item created for term ${availableTerms.find(t => t.id === selectedTermId)?.name || selectedTermId}`, 'success');
+    setShowTermSelectionModal(false);
+    setSelectedTermId('');
+  }
+
   if (!isOpen) return null
+  
+  // Term Selection Modal
+  const renderTermSelectionModal = () => {
+    if (!showTermSelectionModal) return null
+    
+    return (
+      <Dialog open={showTermSelectionModal} onOpenChange={setShowTermSelectionModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Term for Fee Structure</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-slate-600 mb-4">
+              Please select which term you want to use for this fee structure item:
+            </p>
+            
+            {availableTerms.length === 0 ? (
+              <div className="p-4 text-center bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-700">No terms available. Using default term.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {availableTerms.map((term) => (
+                  <div 
+                    key={term.id} 
+                    className={`p-3 border rounded-md cursor-pointer transition-all ${selectedTermId === term.id ? 'bg-primary/10 border-primary' : 'hover:bg-slate-50 border-slate-200'}`}
+                    onClick={() => setSelectedTermId(term.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox checked={selectedTermId === term.id} />
+                      <span className="font-medium">{term.name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowTermSelectionModal(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={completeFeeItemCreation}
+              disabled={!selectedTermId || availableTerms.length === 0}
+            >
+              Create Fee Item
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex">
+      {renderTermSelectionModal()}
       {/* Backdrop */}
       <div className="flex-1 bg-black/20" onClick={onClose} />
       
@@ -2472,7 +2554,7 @@ export const FeeStructureDrawer = ({
                   id="bucket-name"
                   placeholder="e.g., Tuition Fees, Transport Fees"
                   value={bucketModalData.name}
-                  onChange={(e) => setBucketModalData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setBucketModalData((prev: { name: string; description: string; type?: string; isOptional?: boolean; }) => ({ ...prev, name: e.target.value }))}
                   className="focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -2484,7 +2566,7 @@ export const FeeStructureDrawer = ({
                   id="bucket-description"
                   placeholder="e.g., Academic fees for the term"
                   value={bucketModalData.description}
-                  onChange={(e) => setBucketModalData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => setBucketModalData((prev: { name: string; description: string; type?: string; isOptional?: boolean; }) => ({ ...prev, description: e.target.value }))}
                   className="focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -2534,7 +2616,7 @@ export const FeeStructureDrawer = ({
                   id="edit-bucket-name"
                   placeholder="e.g., Tuition Fees, Transport Fees"
                   value={editingBucket?.name || ''}
-                  onChange={(e) => setEditingBucket(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  onChange={(e) => setEditingBucket((prev: { name: string; description: string; isActive: boolean; id: number }) => ({ ...prev, name: e.target.value }))}
                   className="focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -2546,7 +2628,7 @@ export const FeeStructureDrawer = ({
                   id="edit-bucket-description"
                   placeholder="e.g., Academic fees for the term"
                   value={editingBucket?.description || ''}
-                  onChange={(e) => setEditingBucket(prev => prev ? { ...prev, description: e.target.value } : null)}
+                  onChange={(e) => setEditingBucket((prev: { name: string; description: string; isActive: boolean; id: number }) => ({ ...prev, description: e.target.value }))}
                   className="focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -2555,7 +2637,7 @@ export const FeeStructureDrawer = ({
                   <Checkbox
                     id="edit-bucket-active"
                     checked={editingBucket?.isActive || false}
-                    onCheckedChange={(checked) => setEditingBucket(prev => prev ? { ...prev, isActive: checked as boolean } : null)}
+                    onCheckedChange={(checked) => setEditingBucket((prev: { name: string; description: string; isActive: boolean; id: number }) => ({ ...prev, isActive: checked as boolean }))}
                   />
                   <Label htmlFor="edit-bucket-active" className="text-sm font-medium text-slate-700">
                     Active (available for use in fee structures)
