@@ -1,7 +1,6 @@
 'use client'
 
-import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
-import { ApolloProvider } from "@apollo/client/react";
+import { ApolloClient, InMemoryCache, HttpLink, ApolloProvider } from "@apollo/client";
 import { useMemo } from "react";
 
 export function ApolloWrapper({ children }: { children: React.ReactNode }) {
