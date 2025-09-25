@@ -10,7 +10,7 @@ import { GradeFilter } from './components/GradeFilter';
 import { ParentsGrid } from './components/ParentsGrid';
 import { ParentDetailView } from './components/ParentDetailView';
 import { mockGrades } from './data/mockData';
-import { useParents } from './hooks/useParentsWithTeachers';
+import { useExactParents as useParents } from './hooks/useExactParents';
 import { 
   PanelLeftOpen, 
   PanelLeftClose,
@@ -34,6 +34,8 @@ export default function ParentsPage() {
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  // Track if we've attempted direct fetch
+  const [directFetchAttempted, setDirectFetchAttempted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -42,7 +44,7 @@ export default function ParentsPage() {
   const [activeTab, setActiveTab] = useState('active-parents');
 
   // Get parents data from API
-  const { parents, loading, error, refetchParents } = useParents();
+  const { parents, loading, error, refetchParents, tryDirectFetch } = useParents();
 
   // Filter parents based on search and filters
   const filteredParents = useMemo(() => {
@@ -156,18 +158,32 @@ export default function ParentsPage() {
           <h3 className="text-lg font-semibold text-red-700 mb-2">Unable to Load Parents</h3>
           <p className="mb-4 text-red-600">{error}</p>
           <div className="text-sm text-gray-600 mb-4">
-            <p>The GraphQL API might not have the required parent data endpoints.</p>
-            <p className="mt-2">We tried several queries including:</p>
+            <p>We're having trouble accessing the parent data from the API.</p>
+            <p className="mt-2 font-medium">Possible Solutions:</p>
             <ul className="list-disc list-inside mt-1 text-left">
-              <li>getParentsByTenant</li>
-              <li>getParentsBySchool</li>
-              <li>getGuardians</li>
-              <li>getAllTeachers (as fallback)</li>
+              <li>Check if the API schema includes getAllParents query</li>
+              <li>Ensure you have proper permissions to access parent data</li>
+              <li>Try direct API access (bypasses some client-side restrictions)</li>
             </ul>
           </div>
-          <div className="flex gap-2 justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
             <Button onClick={refetchParents} variant="default" className="mt-2">
-              Try Again
+              Try Standard Fetch
+            </Button>
+            <Button 
+              onClick={async () => {
+                setDirectFetchAttempted(true);
+                const success = await tryDirectFetch();
+                if (!success) {
+                  // If still failing after direct fetch attempt, provide more guidance
+                  alert('Direct fetch also failed. Please check browser console for more details.');
+                }
+              }} 
+              variant="outline" 
+              className="mt-2"
+              disabled={directFetchAttempted}
+            >
+              {directFetchAttempted ? 'Direct Fetch Attempted' : 'Try Direct API Access'}
             </Button>
             <Button onClick={() => window.location.reload()} variant="outline" className="mt-2">
               Reload Page

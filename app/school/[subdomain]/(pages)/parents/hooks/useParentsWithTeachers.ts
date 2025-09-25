@@ -198,12 +198,12 @@ const transformTeacherToParent = (teacher: GraphQLTeacher): Parent => {
     emergencyContact: '',
     idNumber: '',
     students: [{
-      // Add a placeholder student to match the required type
+      // Add more meaningful placeholder data for teachers
       id: 'placeholder-id',
-      name: 'No Associated Student',
-      grade: 'N/A',
-      class: 'N/A', // Required by the type
-      admissionNumber: 'N/A'
+      name: teacher.department ? `${teacher.department} Department` : 'Faculty',
+      grade: 'Teacher',
+      class: teacher.department || 'Staff',
+      admissionNumber: teacher.email?.split('@')[0] || 'faculty'
     }],
     status: teacher.isActive ? 'active' : 'inactive',
     registrationDate: teacher.createdAt,

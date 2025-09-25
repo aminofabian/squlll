@@ -113,7 +113,9 @@ export function ParentDetailView({
 
       {/* Students */}
       <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-        <h3 className="text-lg font-mono font-bold mb-4">Children ({parent.students.length})</h3>
+        <h3 className="text-lg font-mono font-bold mb-4">
+          {parent.students[0]?.grade === 'Teacher' ? 'Department' : 'Children'} ({parent.students.length})
+        </h3>
         <div className="grid gap-3">
           {parent.students.map(student => (
             <div key={student.id} className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-primary/20">
@@ -121,7 +123,12 @@ export function ParentDetailView({
                 <div>
                   <div className="font-mono font-medium">{student.name}</div>
                   <div className="text-sm text-slate-600 mt-1">
-                    {student.class} • Grade {student.grade}
+                    {student.grade === 'Teacher' ? 
+                      // Display format for teachers
+                      `${student.class}` : 
+                      // Display format for regular students
+                      `${student.class} • Grade ${student.grade}`
+                    }
                   </div>
                 </div>
                 <div className="text-sm font-mono text-slate-500">
