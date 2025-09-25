@@ -1,3 +1,16 @@
+export interface ParentInvitation {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  invitedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export interface Parent {
   id: string
   name: string
@@ -34,11 +47,14 @@ export interface StudentOfParent {
   admissionNumber: string
 }
 
+// Education level type for filtering
+export type EducationLevel = 'preschool' | 'primary' | 'junior-secondary' | 'senior-secondary' | 'all';
+
 export interface Grade {
   id: string
   name: string
   displayName: string
-  level: string
+  level: EducationLevel
   ageGroup: string
   students: number
   classes: number

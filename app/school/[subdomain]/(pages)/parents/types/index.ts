@@ -1,24 +1,24 @@
 // Parent types for the parents page
-export type Parent = {
+export interface Parent {
   id: string;
   name: string;
-  email?: string;
+  email: string;
   phone: string;
-  relationship: "father" | "mother" | "guardian" | "other";
-  occupation?: string;
+  relationship: 'father' | 'mother' | 'guardian' | 'other';
+  occupation: string;
   workAddress?: string;
-  homeAddress?: string;
+  homeAddress: string;
   emergencyContact?: string;
   idNumber?: string; // National ID for Kenya
   students: {
     id: string;
     name: string;
     grade: string;
-    class: string;
+    class?: string;
     stream?: string;
     admissionNumber: string;
   }[];
-  status: "active" | "inactive";
+  status: 'active' | 'inactive' | 'pending';
   registrationDate: string;
   lastContact?: string;
   communicationPreferences: {

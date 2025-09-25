@@ -3,6 +3,9 @@ import { cookies } from 'next/headers';
 
 const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql';
 
+// Mark the route as dynamic to prevent static generation issues
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     // Get the token from cookies

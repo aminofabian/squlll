@@ -81,6 +81,7 @@ export const mockParents: Parent[] = [
   {
     id: "3",
     name: "David Ochieng",
+    email: "david.ochieng@example.com",
     phone: "+254712345678",
     relationship: "guardian",
     occupation: "Business Owner",
