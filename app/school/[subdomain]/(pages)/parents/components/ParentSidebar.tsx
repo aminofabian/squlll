@@ -120,7 +120,8 @@ export function ParentSidebar({
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-3 h-3 rounded-full ${
                         parent.status === 'active' ? 'bg-green-500' : 
-                        parent.status === 'inactive' ? 'bg-gray-400' : 'bg-red-500'
+                        parent.status === 'inactive' ? 'bg-gray-400' : 
+                        parent.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-300'
                       }`} />
                       <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
                         {parent.name}

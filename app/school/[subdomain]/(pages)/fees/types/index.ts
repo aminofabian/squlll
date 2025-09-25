@@ -225,6 +225,7 @@ export interface BankAccount {
 
 export interface TermFeeStructureForm {
   term: string
+  academicYear?: string
   dueDate: string
   latePaymentFee: string
   earlyPaymentDiscount: string

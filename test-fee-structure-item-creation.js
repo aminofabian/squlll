@@ -36,11 +36,6 @@ const testCreateFeeStructureItem = async () => {
                 term {
                   name
                 }
-                tenantGradeLevel {
-                  gradeLevel {
-                    name
-                  }
-                }
               }
               amount
               isMandatory
@@ -78,7 +73,7 @@ const testCreateFeeStructureItem = async () => {
       console.log(`  Structure: ${item.feeStructure.name}`)
       console.log(`  Academic Year: ${item.feeStructure.academicYear?.name || 'N/A'}`)
       console.log(`  Term: ${item.feeStructure.term?.name || 'N/A'}`)
-      console.log(`  Grade Level: ${item.feeStructure.tenantGradeLevel?.gradeLevel?.name || 'N/A'}`)
+      // Grade field no longer exists in the schema
     }
     
   } catch (error) {

@@ -9,7 +9,8 @@ import { ParentStatistics } from './components/ParentStatistics';
 import { GradeFilter } from './components/GradeFilter';
 import { ParentsGrid } from './components/ParentsGrid';
 import { ParentDetailView } from './components/ParentDetailView';
-import { mockParents, mockGrades } from './data/mockData';
+import { mockGrades } from './data/mockData';
+import { useParents } from './hooks/useParentsWithTeachers';
 import { 
   PanelLeftOpen, 
   PanelLeftClose,
@@ -40,26 +41,29 @@ export default function ParentsPage() {
   const [showStats, setShowStats] = useState(false);
   const [activeTab, setActiveTab] = useState('active-parents');
 
+  // Get parents data from API
+  const { parents, loading, error, refetchParents } = useParents();
+
   // Filter parents based on search and filters
   const filteredParents = useMemo(() => {
-    let filtered = mockParents.filter(parent => {
+    let filtered = parents.filter((parent) => {
       const matchesSearch = parent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           parent.phone.includes(searchTerm) ||
                           (parent.email && parent.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          parent.students.some(student => 
+                          parent.students.some((student) => 
                             student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())
                           );
       
       const matchesGrade = selectedGradeId === 'all' || 
-                          parent.students.some(student => student.grade === selectedGradeId);
+                          parent.students.some((student) => student.grade === selectedGradeId);
 
       return matchesSearch && matchesGrade;
     });
 
     // Sort parents
     filtered.sort((a, b) => {
-      let aValue, bValue;
+      let aValue: any, bValue: any;
       
       switch (sortField) {
         case 'name':
@@ -80,7 +84,7 @@ export default function ParentsPage() {
           break;
         default:
           aValue = a.name;
-          bValue = a.name;
+          bValue = b.name;
       }
 
       if (sortDirection === 'asc') {
@@ -91,10 +95,10 @@ export default function ParentsPage() {
     });
 
     return filtered;
-  }, [searchTerm, selectedGradeId, sortField, sortDirection]);
+  }, [parents, searchTerm, selectedGradeId, sortField, sortDirection]);
 
   // Get selected parent
-  const selectedParent = mockParents.find(parent => parent.id === selectedParentId);
+  const selectedParent = parents.find((parent) => parent.id === selectedParentId);
 
   // Event handlers
   const handleSearchChange = (value: string) => {
@@ -132,12 +136,54 @@ export default function ParentsPage() {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+          <p className="text-sm text-slate-600">Loading parents data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+          <h3 className="text-lg font-semibold text-red-700 mb-2">Unable to Load Parents</h3>
+          <p className="mb-4 text-red-600">{error}</p>
+          <div className="text-sm text-gray-600 mb-4">
+            <p>The GraphQL API might not have the required parent data endpoints.</p>
+            <p className="mt-2">We tried several queries including:</p>
+            <ul className="list-disc list-inside mt-1 text-left">
+              <li>getParentsByTenant</li>
+              <li>getParentsBySchool</li>
+              <li>getGuardians</li>
+              <li>getAllTeachers (as fallback)</li>
+            </ul>
+          </div>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={refetchParents} variant="default" className="mt-2">
+              Try Again
+            </Button>
+            <Button onClick={() => window.location.reload()} variant="outline" className="mt-2">
+              Reload Page
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full">
       {/* Search filter column */}
       {!isSidebarCollapsed && (
         <ParentSidebar
-          parents={mockParents}
+          parents={parents}
           filteredParents={filteredParents}
           searchTerm={searchTerm}
           selectedParentId={selectedParentId}
@@ -175,6 +221,17 @@ export default function ParentsPage() {
             <h1 className="text-2xl font-bold">
               {selectedParent ? 'Parent Details' : 'Parents'}
             </h1>
+            {!loading && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={refetchParents} 
+                className="text-xs hover:bg-primary/5"
+                title="Refresh parents data"
+              >
+                Refresh
+              </Button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {/* Sidebar toggle button */}
@@ -217,7 +274,7 @@ export default function ParentsPage() {
               {/* Show grade filter and stats for active parents */}
               {selectedGradeId === 'all' && (
                 <ParentStatistics 
-                  parents={mockParents} 
+                  parents={parents} 
                   showStats={showStats} 
                   onToggleStats={handleToggleStats} 
                 />

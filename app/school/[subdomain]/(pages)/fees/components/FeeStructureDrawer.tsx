@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { X, Plus, Copy, Trash2, Save, Eye, Edit3, GraduationCap, Wand2, Calculator, Clock, ChevronDown, ChevronRight, Sparkles, Zap, BookOpen, Bus, Home, Utensils, FlaskConical, Trophy, Library, Loader2 } from "lucide-react"
+import { X, Plus, Copy, Trash2, Save, Eye, Edit3, GraduationCap, Wand2, Calculator, Clock, ChevronDown, ChevronRight, Sparkles, Zap, BookOpen, Bus, Home, Utensils, FlaskConical, Trophy, Library, Loader2, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +30,7 @@ interface FeeStructureDrawerProps {
 
 const defaultTermStructure: TermFeeStructureForm = {
   term: 'Term 1',
+  academicYear: '',
   dueDate: '',
   latePaymentFee: '0',
   earlyPaymentDiscount: '0',
@@ -82,6 +83,7 @@ export const FeeStructureDrawer = ({
   mode,
   availableGrades
 }: FeeStructureDrawerProps) => {
+  
   const params = useParams()
   const subdomain = params.subdomain as string
   const { data: schoolConfig } = useSchoolConfig()
@@ -151,6 +153,30 @@ export const FeeStructureDrawer = ({
       setToasts(prev => prev.filter(toast => toast.id !== id))
     }, 3000)
   }
+
+  // Validation: compute missing sections (depends on formData/selectedGrades defined above)
+  const validationErrors = useMemo(() => {
+    const errors: { message: string; anchorId?: string }[] = []
+    if (!formData.name?.trim()) errors.push({ message: 'Enter a name for the fee structure', anchorId: 'fee-structure-name' })
+    if (!formData.academicYear?.trim()) errors.push({ message: 'Select the main academic year', anchorId: 'main-academic-year' })
+    if (selectedGrades.length === 0) errors.push({ message: 'Select at least one grade', anchorId: 'grade-selection' })
+    if (formData.termStructures.length === 0) errors.push({ message: 'Add at least one term', anchorId: 'terms-section' })
+    formData.termStructures.forEach((term, tIndex) => {
+      const tId = `term-${tIndex}`
+      if (!term.term) errors.push({ message: `Select term name for term ${tIndex + 1}`, anchorId: tId })
+      if (!term.buckets || term.buckets.length === 0) errors.push({ message: `Add at least one bucket in term ${tIndex + 1}`, anchorId: tId })
+      term.buckets?.forEach((bucket, bIndex) => {
+        const bId = `term-${tIndex}-bucket-${bIndex}`
+        if (!bucket.name?.trim()) errors.push({ message: `Bucket ${bIndex + 1} needs a name`, anchorId: bId })
+        if (!bucket.components || bucket.components.length === 0) errors.push({ message: `Add at least one component in bucket ${bucket.name || bIndex + 1}`, anchorId: bId })
+        bucket.components?.forEach((comp, cIndex) => {
+          const a = String(comp.amount ?? '').trim()
+          if (a === '') errors.push({ message: `Enter amount for ${comp.name || `component ${cIndex + 1}`} in bucket ${bucket.name || bIndex + 1}`, anchorId: bId })
+        })
+      })
+    })
+    return errors
+  }, [formData, selectedGrades])
 
   // GraphQL mutation for creating fee bucket
   const createFeeBucket = async (bucketData: { name: string; description: string }) => {
@@ -228,17 +254,64 @@ export const FeeStructureDrawer = ({
     ]
   }
 
+  // Use a ref to track if we've already fetched academic years
+  const academicYearsRef = useRef<boolean>(false);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Debounced refetch to prevent multiple rapid calls
+  const debouncedRefetch = () => {
+    // Clear any existing timeout
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    
+    // Set a new timeout
+    fetchTimeoutRef.current = setTimeout(() => {
+      refetchAcademicYears()
+        .then(() => {
+          console.log('Academic years fetched successfully')
+        })
+        .catch(err => {
+          console.error('Failed to fetch academic years:', err)
+          academicYearsRef.current = false; // Reset fetched flag to allow retry
+        })
+        .finally(() => {
+          fetchTimeoutRef.current = null;
+        });
+    }, 500); // 500ms debounce
+  };
+  
+  useEffect(() => {
+    // Only fetch academic years once when drawer opens and if we don't have any years yet
+    if (isOpen && !academicYearsRef.current && (academicYears.length === 0 || academicYearsError)) {
+      console.log('Drawer opened, fetching academic years')
+      academicYearsRef.current = true; // Mark as fetched
+      debouncedRefetch();
+    }
+    
+    // Cleanup function to clear any pending timeouts
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, [isOpen, academicYears.length, academicYearsError])
+
   useEffect(() => {
     if (initialData) {
       setFormData(initialData)
       setSelectedGrades([initialData.grade])
     } else {
+      const currentYear = new Date().getFullYear().toString();
       setFormData({
         name: '',
         grade: '',
         boardingType: 'both',
-        academicYear: new Date().getFullYear().toString(),
-        termStructures: [defaultTermStructure],
+        academicYear: currentYear,
+        termStructures: [{
+          ...defaultTermStructure,
+          academicYear: currentYear
+        }],
         schoolDetails: {
           name: getSchoolName(),
           address: 'P.O. Box 100 - 40404, KENYA. Cell: 0710000000',
@@ -310,7 +383,11 @@ export const FeeStructureDrawer = ({
     const newTermNumber = formData.termStructures.length + 1
     setFormData(prev => ({
       ...prev,
-      termStructures: [...prev.termStructures, { ...defaultTermStructure, term: `Term ${newTermNumber}` }]
+      termStructures: [...prev.termStructures, { 
+        ...defaultTermStructure, 
+        term: `Term ${newTermNumber}`,
+        academicYear: prev.academicYear || ''
+      }]
     }))
     showToast(`✅ Term ${newTermNumber} added successfully!`, 'success')
   }
@@ -637,8 +714,10 @@ export const FeeStructureDrawer = ({
 
   // Create fee structure item in database
   const createFeeStructureItem = async (feeStructureId: string, feeBucketId: string, amount: number, isMandatory: boolean) => {
-    // Validate inputs
-    if (!feeStructureId || !feeBucketId || amount <= 0) {
+    // Coerce amount to integer in case the schema expects Int
+    const coercedAmount = Math.round(Number(amount))
+    // Validate inputs after coercion
+    if (!feeStructureId || !feeBucketId || Number.isNaN(coercedAmount) || coercedAmount <= 0) {
       throw new Error(`Invalid input: feeStructureId=${feeStructureId}, feeBucketId=${feeBucketId}, amount=${amount}`)
     }
 
@@ -646,7 +725,7 @@ export const FeeStructureDrawer = ({
       console.log('🚀 Creating fee structure item with:', {
         feeStructureId,
         feeBucketId,
-        amount,
+        amount: coercedAmount,
         isMandatory
       })
 
@@ -674,11 +753,6 @@ export const FeeStructureDrawer = ({
                   term {
                     name
                   }
-                  tenantGradeLevel {
-                    gradeLevel {
-                      name
-                    }
-                  }
                 }
                 amount
                 isMandatory
@@ -689,7 +763,7 @@ export const FeeStructureDrawer = ({
             input: {
               feeStructureId,
               feeBucketId,
-              amount,
+              amount: coercedAmount,
               isMandatory
             }
           }
@@ -786,7 +860,7 @@ export const FeeStructureDrawer = ({
       const result = await response.json()
       if (result.errors) throw new Error(result.errors[0]?.message || 'Failed to create fee structure')
       const created = result.data.createFeeStructure
-      showToast(`✅ Created fee structure "${created.name}" for ${created.term.name}`, 'success')
+      showToast(`✅ Created fee structure "${created.name}" for ${created.term.name} (${created.academicYear?.name || academicYearNameOrId})`, 'success')
       return created.id as string
     } catch (error) {
       console.error('Error creating fee structure (GraphQL):', error)
@@ -797,6 +871,14 @@ export const FeeStructureDrawer = ({
   }
 
   const handleSave = async () => {
+    if (validationErrors.length > 0) {
+      showToast(`Please complete all required sections before saving (${validationErrors.length} remaining)`, 'error')
+      // Try to scroll to the first problematic section if it has an anchor
+      const first = validationErrors[0]
+      const el = first?.anchorId ? document.getElementById(first.anchorId) : null
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
     try {
       // Create separate fee structures for each selected grade
       for (const gradeId of selectedGrades) {
@@ -809,8 +891,12 @@ export const FeeStructureDrawer = ({
         }
         
         // Save the fee structure first via GraphQL and get the ID (use first term)
-        const firstTermName = gradeData.termStructures[0]?.term || 'Term 1'
-        let feeStructureId = await createFeeStructureGraphQL(gradeData.name, gradeData.academicYearId || gradeData.academicYear, firstTermName)
+        const firstTerm = gradeData.termStructures[0] || defaultTermStructure
+        const firstTermName = firstTerm.term || 'Term 1'
+        
+        // Use term-specific academic year if available, otherwise use the global one
+        const termAcademicYear = firstTerm.academicYear || gradeData.academicYear
+        let feeStructureId = await createFeeStructureGraphQL(gradeData.name, termAcademicYear, firstTermName)
         if (!feeStructureId) {
           // Fallback to parent handler
           feeStructureId = await onSave(gradeData)
@@ -830,7 +916,7 @@ export const FeeStructureDrawer = ({
               console.log(`Skipping term ${term.term} (created structure term is ${firstTermName})`)
               continue
             }
-            console.log(`Processing term: ${term.term}`)
+            console.log(`Processing term: ${term.term} - Academic Year: ${term.academicYear || formData.academicYear}`)
             for (const bucket of term.buckets) {
               console.log(`Processing bucket: ${bucket.name} (ID: ${bucket.id})`)
               if (bucket.id) { // Only create items for buckets with server IDs
@@ -906,9 +992,22 @@ export const FeeStructureDrawer = ({
               <h2 className="text-xl font-semibold text-gray-900">
                 {mode === 'create' ? 'Create Fee Structure' : 'Edit Fee Structure'}
               </h2>
-              <p className="text-sm text-slate-600">
-                Set up fees by term and assign to multiple grades
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-slate-600">
+                  Set up fees by term and assign to multiple grades
+                </p>
+                {academicYearsLoading && (
+                  <div className="flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-200">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Loading academic years...</span>
+                  </div>
+                )}
+                {!academicYearsLoading && academicYears.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full border border-green-200">
+                    <span>{academicYears.length} academic years loaded</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose} className="hover:bg-primary/10">
@@ -916,7 +1015,7 @@ export const FeeStructureDrawer = ({
           </Button>
         </div>
 
-        {/* Progress Steps */}
+        {/* Progress Steps and Validation Checklist */}
         <div className="px-6 py-4 bg-primary/5 border-b border-primary/20">
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
@@ -932,6 +1031,39 @@ export const FeeStructureDrawer = ({
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium shadow-sm">3</div>
               <span className="text-slate-700 font-medium">Fee Structure</span>
+            </div>
+          </div>
+          {/* Sticky checklist */}
+          <div className="mt-3 bg-white/70 border border-primary/20 rounded-md p-2">
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              {['Basic Info','Grades Selected','At least 1 Term','Buckets per Term','Components per Bucket','Amounts filled'].map((label, idx) => {
+                const ok = [
+                  !!formData.name && !!formData.academicYear,
+                  selectedGrades.length > 0,
+                  formData.termStructures.length > 0,
+                  formData.termStructures.every(t => (t.buckets?.length ?? 0) > 0),
+                  formData.termStructures.every(t => t.buckets.every(b => (b.components?.length ?? 0) > 0)),
+                  formData.termStructures.every(t => t.buckets.every(b => b.components.every(c => String(c.amount ?? '').trim() !== '')))
+                ][idx]
+                return (
+                  <div key={label} className={`inline-flex items-center gap-1 px-2 py-1 rounded border ${ok ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                    <span className={`w-2 h-2 rounded-full ${ok ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <span>{label}</span>
+                  </div>
+                )
+              })}
+              {validationErrors.length > 0 && (
+                <button
+                  className="ml-auto text-xs text-blue-700 underline"
+                  onClick={() => {
+                    const first = validationErrors[0]
+                    const el = first?.anchorId ? document.getElementById(first.anchorId) : null
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                >
+                  Jump to first missing
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -953,6 +1085,121 @@ export const FeeStructureDrawer = ({
             </div>
 
             <TabsContent value="form" className="flex-1 p-8 m-0">
+              {/* Info box for academic year explanation */}
+              <div className="mb-6 mx-auto max-w-4xl bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">
+                    <Info className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-700">Academic Year Management</h4>
+                    <p className="text-sm text-blue-600 mt-1">
+                      This form allows you to set academic years at two levels:
+                    </p>
+                    <ul className="text-xs text-blue-600 mt-2 space-y-1 list-disc pl-4">
+                      <li><strong>Main Academic Year</strong> - Set at the top of the form and applies to the entire fee structure</li>
+                      <li><strong>Term-specific Academic Year</strong> - Each term can have its own academic year, found in the terms table</li>
+                    </ul>
+                    <p className="text-xs text-blue-600 mt-2">
+                      If you don't set a term-specific academic year, it will use the main academic year by default.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick fill toolbar */}
+              <div className="mb-6 mx-auto max-w-4xl bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-600 mr-2">Quick fill:</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      const input = window.prompt('Set ALL component amounts to (number):', '1000')
+                      if (input == null) return
+                      const value = Math.max(0, Math.round(Number(input)))
+                      if (Number.isNaN(value)) return
+                      setFormData(prev => ({
+                        ...prev,
+                        termStructures: prev.termStructures.map(term => ({
+                          ...term,
+                          buckets: term.buckets.map(bucket => ({
+                            ...bucket,
+                            components: bucket.components.map(c => ({
+                              ...c,
+                              amount: String(value)
+                            }))
+                          }))
+                        }))
+                      }))
+                      showToast(`Applied amount ${value} to all components`, 'success')
+                    }}
+                  >
+                    Set all amounts
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        termStructures: prev.termStructures.map(term => ({
+                          ...term,
+                          buckets: term.buckets.map(bucket => {
+                            const total = bucket.components.reduce((s, c) => s + (Number(c.amount) || 0), 0)
+                            const count = Math.max(1, bucket.components.length)
+                            const per = Math.round(total / count)
+                            return {
+                              ...bucket,
+                              components: bucket.components.map(c => ({ ...c, amount: String(per) }))
+                            }
+                          })
+                        }))
+                      }))
+                      showToast('Distributed each bucket total equally across its components', 'success')
+                    }}
+                  >
+                    Distribute equally per bucket
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        termStructures: prev.termStructures.map(term => ({
+                          ...term,
+                          buckets: term.buckets.map(bucket => ({ ...bucket, isOptional: false }))
+                        }))
+                      }))
+                      showToast('Marked all buckets as mandatory', 'success')
+                    }}
+                  >
+                    Mark all mandatory
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        termStructures: prev.termStructures.map(term => ({
+                          ...term,
+                          buckets: term.buckets.map(bucket => ({ ...bucket, isOptional: true }))
+                        }))
+                      }))
+                      showToast('Marked all buckets as optional', 'success')
+                    }}
+                  >
+                    Mark all optional
+                  </Button>
+                </div>
+              </div>
+              
               {/* Document-style editing interface */}
               <div className="bg-white max-w-4xl mx-auto shadow-lg" style={{ fontFamily: 'Times New Roman, serif' }}>
                 
@@ -1011,16 +1258,62 @@ export const FeeStructureDrawer = ({
 
                 {/* Title */}
                 <div className="text-center mb-6 px-6">
+                  <div className="mb-2 flex justify-center items-center gap-2">
+                    <Badge variant="outline" className="text-sm bg-blue-50 text-blue-700 border-blue-200 py-1 px-3 shadow-sm mb-2">
+                      <GraduationCap className="h-4 w-4 mr-2" />
+                      MAIN ACADEMIC YEAR
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 px-2 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+                      onClick={() => {
+                        if (!academicYearsLoading && !fetchTimeoutRef.current) {
+                          showToast('Refreshing academic years...', 'info')
+                          // Reset the fetch flag to allow refetch
+                          academicYearsRef.current = false;
+                          debouncedRefetch();
+                        }
+                      }}
+                      disabled={academicYearsLoading}
+                    >
+                      {academicYearsLoading ? (
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      ) : (
+                        <Clock className="h-3 w-3 mr-1" />
+                      )}
+                      Refresh Years
+                    </Button>
+                  </div>
                   <h2 className="text-lg font-bold underline">
                     FEES STRUCTURE{' '}
                     <Select
                       value={formData.academicYear}
-                      onValueChange={(value) => setFormData(prev => {
+                      onValueChange={(value) => {
                         const year = academicYears.find(y => y.name === value)
-                        return { ...prev, academicYear: value, academicYearId: year?.id }
-                      })}
+                        
+                        // Update main academic year and propagate to any term without specific setting
+                        setFormData(prev => {
+                          // Update each term that doesn't have a specific academic year set
+                          const updatedTerms = prev.termStructures.map(term => {
+                            if (!term.academicYear) {
+                              return { ...term, academicYear: value }
+                            }
+                            return term
+                          })
+                          
+                          return { 
+                            ...prev, 
+                            academicYear: value, 
+                            academicYearId: year?.id,
+                            termStructures: updatedTerms
+                          }
+                        })
+                        
+                        showToast(`Main academic year updated to ${value}`, 'success')
+                      }}
                     >
-                      <SelectTrigger className="inline-flex w-32 h-8 bg-transparent border-0 focus:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-1 text-center">
+                      <SelectTrigger className="inline-flex w-40 h-8 bg-blue-50 border border-blue-200 hover:bg-blue-100 focus:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-2 text-center font-bold">
                         <SelectValue placeholder="Select Year" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1482,7 +1775,15 @@ export const FeeStructureDrawer = ({
                   <table className="w-full border-collapse border border-black shadow-lg">
                     <thead>
                       <tr className="bg-primary/10">
-                        <th className="border border-primary/30 p-3 text-left font-bold text-slate-700">TERM</th>
+                        <th className="border border-primary/30 p-3 text-left font-bold text-slate-700">
+                          <div className="flex flex-col">
+                            <span>TERM</span>
+                            <span className="text-xs font-normal text-slate-600 flex items-center gap-1">
+                              <GraduationCap className="h-3 w-3" />
+                              ACADEMIC YEAR
+                            </span>
+                          </div>
+                        </th>
                         <th className="border border-primary/30 p-3 text-left font-bold text-slate-700">VOTE HEAD</th>
                         <th className="border border-primary/30 p-3 text-right font-bold text-slate-700">AMOUNT</th>
                         <th className="border border-primary/30 p-3 w-20 text-center font-bold text-slate-700">ACTIONS</th>
@@ -1501,7 +1802,7 @@ export const FeeStructureDrawer = ({
                             <tr key={`${termIndex}-${bucketIndex}-${actualComponentIndex}`} className="hover:bg-primary/5 group transition-all duration-200">
                               <td className="border border-primary/30 p-3 text-center">
                                 {componentIndex === 0 ? (
-                                  <div className="flex items-center justify-center">
+                                  <div className="flex flex-col items-center justify-center gap-1">
                                     <Badge 
                                       variant="outline" 
                                       className={`text-xs font-bold shadow-sm ${
@@ -1513,6 +1814,13 @@ export const FeeStructureDrawer = ({
                                     >
                                       <Clock className="h-3 w-3 mr-1" />
                                       {term.term.toUpperCase()}
+                                    </Badge>
+                                    <Badge 
+                                      variant="outline" 
+                                      className="text-xs bg-blue-50 text-blue-700 border-blue-200 shadow-sm flex items-center"
+                                    >
+                                      <GraduationCap className="h-3 w-3 mr-1" />
+                                      {term.academicYear || formData.academicYear}
                                     </Badge>
                                   </div>
                                 ) : (
@@ -1815,14 +2123,28 @@ export const FeeStructureDrawer = ({
 
                 {/* Termly Payment Schedule */}
                 <div className="mb-8 px-6">
-                  <h3 className="text-center font-bold underline mb-4">
+                  <h3 className="text-center font-bold underline mb-2">
                     TERMLY PAYMENT FOR THE YEAR {formData.academicYear}
                   </h3>
+                  <div className="flex justify-center mb-3">
+                    <div className="inline-flex items-center bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-lg border border-blue-200">
+                      <Info className="h-3 w-3 mr-2" />
+                      Click on the Academic Year field under each term to set a specific year
+                    </div>
+                  </div>
                   <div className="flex justify-center">
                     <table className="border-collapse border border-primary/30">
                       <thead>
                         <tr className="bg-primary/10">
-                          <th className="border border-primary/30 p-2 text-left font-bold text-slate-700">TERM</th>
+                          <th className="border border-primary/30 p-2 text-left font-bold text-slate-700">
+                            <div className="flex items-center gap-2">
+                              <span>TERM</span>
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                <GraduationCap className="h-3 w-3 mr-1" />
+                                ACADEMIC YEAR
+                              </Badge>
+                            </div>
+                          </th>
                           <th className="border border-primary/30 p-2 text-right font-bold text-slate-700">AMOUNT</th>
                           <th className="border border-primary/30 p-2 w-16"></th>
                         </tr>
@@ -1831,40 +2153,95 @@ export const FeeStructureDrawer = ({
                         {formData.termStructures.map((term, index) => (
                           <tr key={index} className="hover:bg-primary/5 group">
                             <td className="border border-primary/30 p-2">
-                              <Select
-                                value={term.term}
-                                onValueChange={(value) => updateTermStructure(index, 'term', value)}
-                              >
-                                <SelectTrigger className="bg-transparent border-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 font-bold h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(() => {
-                                    const selectedAcademicYear = academicYears.find(year => year.name === formData.academicYear)
-                                    const availableTerms = selectedAcademicYear?.terms || []
-                                    
-                                    console.log('Selected academic year:', selectedAcademicYear)
-                                    console.log('Available terms:', availableTerms)
-                                    console.log('Form academic year:', formData.academicYear)
-                                    
-                                    if (availableTerms.length > 0) {
-                                      return availableTerms.map((term) => (
-                                        <SelectItem key={term.id} value={term.name}>
-                                          {term.name.toUpperCase()}
+                              <div className="flex flex-col gap-1">
+                                <Select
+                                  value={term.term}
+                                  onValueChange={(value) => updateTermStructure(index, 'term', value)}
+                                >
+                                  <SelectTrigger className="bg-transparent border-0 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 font-bold h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {(() => {
+                                      const selectedAcademicYear = academicYears.find(year => year.name === formData.academicYear)
+                                      const availableTerms = selectedAcademicYear?.terms || []
+                                      
+                                      if (availableTerms.length > 0) {
+                                        return availableTerms.map((term) => (
+                                          <SelectItem key={term.id} value={term.name}>
+                                            {term.name.toUpperCase()}
+                                          </SelectItem>
+                                        ))
+                                      } else {
+                                        // Fallback to default terms if no academic year is selected
+                                        return [
+                                          <SelectItem key="term1" value="Term 1">TERM 1</SelectItem>,
+                                          <SelectItem key="term2" value="Term 2">TERM 2</SelectItem>,
+                                          <SelectItem key="term3" value="Term 3">TERM 3</SelectItem>,
+                                          <SelectItem key="annual" value="Annual">ANNUAL</SelectItem>
+                                        ]
+                                      }
+                                    })()}
+                                  </SelectContent>
+                                </Select>
+                                <div className="flex items-center gap-1">
+                                  {/* Academic Year Display */}
+                                  <Select
+                                    value={term.academicYear || formData.academicYear}
+                                    onValueChange={(value) => {
+                                      // Update academic year for this specific term
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        termStructures: prev.termStructures.map((t, i) => 
+                                          i === index ? { ...t, academicYear: value } : t
+                                        )
+                                      }))
+                                    }}
+                                  >
+                                    <SelectTrigger className="bg-blue-50 border border-blue-200 hover:bg-blue-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-md px-2 text-xs text-blue-700 font-medium h-7 w-full transition-colors duration-200">
+                                      <div className="flex items-center gap-1">
+                                        <GraduationCap className="h-3 w-3" />
+                                        <SelectValue placeholder="Select Academic Year" />
+                                      </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {academicYearsLoading ? (
+                                        <SelectItem value="loading" disabled>
+                                          <div className="flex items-center gap-2">
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            <span>Loading...</span>
+                                          </div>
                                         </SelectItem>
-                                      ))
-                                    } else {
-                                      // Fallback to default terms if no academic year is selected
-                                      return [
-                                        <SelectItem key="term1" value="Term 1">TERM 1</SelectItem>,
-                                        <SelectItem key="term2" value="Term 2">TERM 2</SelectItem>,
-                                        <SelectItem key="term3" value="Term 3">TERM 3</SelectItem>,
-                                        <SelectItem key="annual" value="Annual">ANNUAL</SelectItem>
-                                      ]
-                                    }
-                                  })()}
-                                </SelectContent>
-                              </Select>
+                                      ) : academicYearsError ? (
+                                        <SelectItem value="error" disabled>
+                                          <div className="flex items-center gap-2 text-red-600">
+                                            <span>Error loading</span>
+                                          </div>
+                                        </SelectItem>
+                                      ) : academicYears.length === 0 ? (
+                                        <SelectItem value="empty" disabled>
+                                          <div className="flex items-center gap-2 text-gray-500">
+                                            <span>No academic years</span>
+                                          </div>
+                                        </SelectItem>
+                                      ) : (
+                                        academicYears.map((year) => (
+                                          <SelectItem key={year.id} value={year.name}>
+                                            <div className="flex items-center gap-2">
+                                              <span>{year.name}</span>
+                                              {year.isActive && (
+                                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                                  Active
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </SelectItem>
+                                        ))
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
                             </td>
                             <td className="border border-primary/30 p-2 text-right">
                               {calculateTermTotal(index).toLocaleString('en-KE', { 
@@ -2253,7 +2630,7 @@ export const FeeStructureDrawer = ({
             </Button>
             <Button 
               onClick={handleSave}
-              disabled={!formData.name || selectedGrades.length === 0}
+              disabled={validationErrors.length > 0}
             >
               <Save className="h-4 w-4 mr-2" />
               Save Fee Structure
