@@ -29,13 +29,15 @@ interface FeeStructureManagerProps {
   onEdit: (feeStructure: FeeStructure) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
   onAssignToGrade: (feeStructureId: string) => void
+  onDelete?: (feeStructureId: string) => void
 }
 
 export const FeeStructureManager = ({
   onCreateNew,
   onEdit,
   onGenerateInvoices,
-  onAssignToGrade
+  onAssignToGrade,
+  onDelete
 }: FeeStructureManagerProps) => {
   const [selectedTab, setSelectedTab] = useState('structures')
   // Only use mock data when GraphQL data is not available
@@ -270,6 +272,20 @@ export const FeeStructureManager = ({
                           })}>
                             <Edit className="h-4 w-4" />
                           </Button>
+                          {onDelete && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete fee structure "${structure.structureName}"? This action cannot be undone.`)) {
+                                  onDelete(structure.structureId);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardHeader>
@@ -382,9 +398,20 @@ export const FeeStructureManager = ({
                             <Button variant="outline" size="sm">
                               <Copy className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {onDelete && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                onClick={() => {
+                                  if (window.confirm(`Are you sure you want to delete fee structure "${structure.name}"? This action cannot be undone.`)) {
+                                    onDelete(structure.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardHeader>

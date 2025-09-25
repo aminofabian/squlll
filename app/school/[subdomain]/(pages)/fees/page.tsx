@@ -19,6 +19,7 @@ import { BulkInvoiceGenerator } from './components/BulkInvoiceGenerator'
 import { useFeesData } from './hooks/useFeesData'
 import { useFormHandlers } from './hooks/useFormHandlers'
 import { useFeeStructures } from './hooks/useFeeStructures'
+import { useGraphQLFeeStructures, UpdateFeeStructureInput } from './hooks/useGraphQLFeeStructures'
 import { FeeInvoice, FeeStructure, FeeStructureForm, BulkInvoiceGeneration } from './types'
 
 // Helper function for status colors
@@ -82,11 +83,20 @@ export default function FeesPage() {
     feeStructures,
     grades,
     createFeeStructure,
-    updateFeeStructure,
     deleteFeeStructure,
     assignFeeStructureToGrade,
     generateBulkInvoices
   } = useFeeStructures()
+
+  // GraphQL Fee Structure hooks
+  const {
+    updateFeeStructure: graphqlUpdateFeeStructure,
+    deleteFeeStructure: graphqlDeleteFeeStructure,
+    isUpdating,
+    updateError,
+    isDeleting,
+    deleteError
+  } = useGraphQLFeeStructures()
 
   // Get selected student invoices for overview
   const selectedStudentInvoices = selectedStudent 
@@ -140,15 +150,53 @@ export default function FeesPage() {
     setSelectedStructure(feeStructure)
     setShowEditForm(true)
   }
+  
+  const handleDelete = async (feeStructureId: string) => {
+    try {
+      console.log('Deleting fee structure:', feeStructureId)
+      const success = await graphqlDeleteFeeStructure(feeStructureId)
+      
+      if (success) {
+        // Show success message (in a real app you'd use a toast notification system)
+        console.log(`Fee structure ${feeStructureId} deleted successfully`)
+        // Refresh the local fee structures list if needed
+      } else if (deleteError) {
+        console.error(`Failed to delete fee structure: ${deleteError}`)
+        // Show error message to the user
+      }
+    } catch (error) {
+      console.error('Error in delete handler:', error)
+    }
+  }
 
   const handleSaveStructure = async (formData: FeeStructureForm): Promise<string | null> => {
     try {
       let result: string | null = null
       if (selectedStructure) {
-        result = await updateFeeStructure(selectedStructure.id, formData)
+        // For edit mode, use GraphQL to update the fee structure
+        console.log('Updating fee structure with GraphQL:', selectedStructure.id);
+        
+        // Extract the academicYearId and termId from the form or use defaults
+        // In a real implementation, you would get these IDs from your form or API
+        const updateInput: UpdateFeeStructureInput = {
+          name: formData.name,
+          isActive: true,
+          // Use the academic year ID and term ID from the user's example
+          // In a real app, these would come from dropdowns or selections
+          academicYearId: "0216c3ab-7197-4538-97be-0527b3a8a164",
+          termId: "6d17670b-11e4-430f-828b-c48e746b5507"
+        };
+        
+        result = await graphqlUpdateFeeStructure(selectedStructure.id, updateInput);
+        if (!result && updateError) {
+          throw new Error(`GraphQL update failed: ${updateError}`); 
+        }
       } else {
+        // For create mode, use the local function
         result = await createFeeStructure(formData)
       }
+      
+      // Reset UI state
       setShowCreateForm(false)
       setShowEditForm(false)
       setSelectedStructure(null)
@@ -310,6 +358,7 @@ export default function FeesPage() {
                 onEdit={handleEdit}
                 onGenerateInvoices={handleGenerateInvoices}
                 onAssignToGrade={handleAssignToGrade}
+                onDelete={handleDelete}
               />
             </div>
           </TabsContent>
