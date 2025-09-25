@@ -154,9 +154,15 @@ const transformGraphQLParent = (graphqlParent: GraphQLParent): Parent => {
         }
       }
       
+      // Filter out 'amino' as lastName which is likely coming from the subdomain
+      const lastName = student.lastName && 
+                     (student.lastName === 'amino' || 
+                      student.lastName.toLowerCase() === 'amino') ? 
+                      '' : student.lastName;
+      
       return {
         id: student.id,
-        name: `${student.firstName} ${student.lastName}`,
+        name: `${student.firstName}${lastName ? ' ' + lastName : ''}`,
         grade: gradeName,
         class: '', // Required but could be empty as per the type
         admissionNumber: student.admissionNumber

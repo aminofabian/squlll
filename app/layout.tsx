@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryClientWrapper } from "./QueryClientWrapper";
+import { ApolloWrapper } from "./ApolloWrapper";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -30,7 +31,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryClientWrapper>
-          {children}
+          <ApolloWrapper>
+            {children}
+          </ApolloWrapper>
         </QueryClientWrapper>
       </body>
     </html>

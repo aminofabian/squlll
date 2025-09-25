@@ -32,36 +32,11 @@ export async function POST(request: Request) {
       body.variables.tenantId = tenantId;
     }
 
-    // DEV MOCK: Allow teachers to access admin-limited school config
-    // Temporarily disabled to test with real API
-    /*
-    if (process.env.NODE_ENV !== 'production' && body.query && body.query.includes('getSchoolConfiguration')) {
-      return NextResponse.json({
-        data: {
-          getSchoolConfiguration: {
-            id: 'mock-school-config-id',
-            selectedLevels: [
-              {
-                id: 'level-1',
-                name: 'Primary',
-                gradeLevels: [
-                  { id: 'grade-1', name: 'Grade 1', code: 'G1', order: 1 },
-                  { id: 'grade-2', name: 'Grade 2', code: 'G2', order: 2 }
-                ],
-                subjects: [
-                  { name: 'Mathematics' },
-                  { name: 'English' },
-                  { name: 'Science' }
-                ]
-              }
-            ],
-            tenant: { id: 'tenant-1', schoolName: 'Mock School' },
-            createdAt: new Date().toISOString()
-          }
-        }
-      });
+    // Log the request for debugging purposes
+    console.log(`Forwarding GraphQL request to ${GRAPHQL_ENDPOINT}`);
+    if (body.query && body.query.includes('feeStructures')) {
+      console.log('Request includes fee structures query');
     }
-    */
 
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
