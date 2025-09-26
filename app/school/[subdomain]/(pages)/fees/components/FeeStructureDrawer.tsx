@@ -29,7 +29,7 @@ interface FeeStructureDrawerProps {
 }
 
 const defaultTermStructure: TermFeeStructureForm = {
-  term: 'Term 1',
+  term: '', // Will be populated from available terms
   academicYear: '',
   dueDate: '',
   latePaymentFee: '0',
@@ -313,14 +313,22 @@ export const FeeStructureDrawer = ({
       setSelectedGrades([initialData.grade])
     } else {
       const currentYear = new Date().getFullYear().toString();
+      // Try to get terms from the active academic year
+      let initialTerm = '';
+      const activeYear = getActiveAcademicYear();
+      if (activeYear && activeYear.terms && activeYear.terms.length > 0) {
+        initialTerm = activeYear.terms[0].name;
+      }
+
       setFormData({
         name: '',
         grade: '',
         boardingType: 'both',
-        academicYear: currentYear,
+        academicYear: activeYear?.name || currentYear,
         termStructures: [{
           ...defaultTermStructure,
-          academicYear: currentYear
+          term: initialTerm,
+          academicYear: activeYear?.name || currentYear
         }],
         schoolDetails: {
           name: getSchoolName(),
@@ -390,16 +398,29 @@ export const FeeStructureDrawer = ({
   }
 
   const addTermStructure = () => {
-    const newTermNumber = formData.termStructures.length + 1
+    // Use first available term from the academic year if possible
+    let termName = '';
+    const selectedAcademicYear = academicYears.find(year => year.name === formData.academicYear);
+    const availableTerms = selectedAcademicYear?.terms || [];
+    
+    // Check if there are any unused terms that can be assigned to the new structure
+    if (availableTerms.length > 0) {
+      const usedTermNames = new Set(formData.termStructures.map(ts => ts.term));
+      const availableTerm = availableTerms.find(t => !usedTermNames.has(t.name));
+      if (availableTerm) {
+        termName = availableTerm.name;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       termStructures: [...prev.termStructures, { 
         ...defaultTermStructure, 
-        term: `Term ${newTermNumber}`,
+        term: termName,
         academicYear: prev.academicYear || ''
       }]
     }))
-    showToast(`✅ Term ${newTermNumber} added successfully!`, 'success')
+    showToast(`✅ New term structure added. Please select a term.`, 'success')
   }
 
   const removeTermStructure = (index: number) => {
@@ -725,15 +746,14 @@ export const FeeStructureDrawer = ({
   // Create fee structure item in database
   const createFeeStructureItem = async (feeStructureId: string, feeBucketId: string, amount: number, isMandatory: boolean) => {
     try {
-      // Use the example from working mutation
-      const hardcodedFeeStructureId = "32741443-2779-4357-a492-aa12894979ee"
+      // Use the actual fee structure ID passed to the function
       const formattedAmount = parseFloat(amount.toFixed(2))
       
-      console.log(`Creating fee structure item with working example ID:`, {
-        feeStructureId: hardcodedFeeStructureId,
+      console.log(`Creating fee structure item:`, {
+        feeStructureId,
         feeBucketId,
         amount: formattedAmount,
-        isMandatory: false // Use false to match working example
+        isMandatory
       })
       
       const response = await fetch('/api/graphql', {
@@ -768,10 +788,10 @@ export const FeeStructureDrawer = ({
           `,
           variables: {
             input: {
-              feeStructureId: hardcodedFeeStructureId,
+              feeStructureId,
               feeBucketId,
               amount: formattedAmount,
-              isMandatory: false
+              isMandatory
             }
           }
         }),
@@ -784,14 +804,31 @@ export const FeeStructureDrawer = ({
       const result = await response.json()
       
       if (result.errors) {
-        console.error('GraphQL errors:', result.errors)
-        throw new Error(result.errors[0]?.message || 'Failed to create fee structure item')
+        console.error('GraphQL errors:', JSON.stringify(result.errors, null, 2))
+        
+        // Extract detailed error information
+        const errorDetail = result.errors[0];
+        let errorMessage = errorDetail?.message || 'Failed to create fee structure item';
+        
+        // Check for specific error types
+        if (errorDetail?.extensions?.code === 'NOTFOUNDEXCEPTION') {
+          errorMessage = `Fee structure not found with ID: ${feeStructureId}. Make sure you're using a valid UUID from createFeeStructure.`;
+        } else if (errorDetail?.extensions?.code === 'BAD_USER_INPUT') {
+          if (errorMessage.includes('feeStructureId')) {
+            errorMessage = `Invalid fee structure ID format: ${feeStructureId}. Must be a valid UUID.`;
+          }
+        }
+        
+        showToast(`\u274c ${errorMessage}`, 'error');
+        throw new Error(errorMessage)
       }
       
       console.log(`Fee structure item created successfully:`, result.data.createFeeStructureItem)
+      showToast(`✅ Fee item created successfully!`, 'success');
       return result.data.createFeeStructureItem
     } catch (error) {
       console.error('Error creating fee structure item:', error)
+      showToast(`❌ ${error instanceof Error ? error.message : 'Unknown error creating fee item'}`, 'error');
       throw error
     }
   }
@@ -825,30 +862,36 @@ export const FeeStructureDrawer = ({
       
       console.log(`Creating fee structure with academicYearId: ${academicYearObj.id}, termId: ${termObj.id}`);
       
+      // Follow exact mutation format as provided in the example
+      console.log('Creating fee structure with exact parameters:', {
+        name,
+        academicYearId: academicYearObj.id,
+        termId: termObj.id
+      });
+
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          // Using the exact mutation format provided
           query: `
-            mutation CreateFeeStructure($input: CreateFeeStructureInput!) {
-              createFeeStructure(input: $input) {
+            mutation CreateFeeStructure {
+              createFeeStructure(
+                input: {
+                  name: "${name.replace(/"/g, '\"')}" 
+                  academicYearId: "${academicYearObj.id}"
+                  termId: "${termObj.id}"
+                }
+              ) {
                 id
                 name
                 academicYear { id name }
                 term { id name }
-                createdAt
               }
             }
-          `,
-          variables: {
-            input: {
-              name,
-              academicYearId: academicYearObj.id,
-              termId: termObj.id
-            }
-          }
+          `
         }),
       })
 
@@ -869,18 +912,41 @@ export const FeeStructureDrawer = ({
             const field = fieldMatch ? fieldMatch[1] : 'unknown field';
             return `Missing required field: ${field}`;
           }
+          
+          // Check for specific error codes
+          if (err.extensions?.code === 'NOTFOUNDEXCEPTION') {
+            return `Resource not found: The academic year or term may not exist on the server.`;
+          } else if (err.extensions?.code === 'BAD_USER_INPUT') {
+            return `Invalid input: ${err.message}`;
+          } else if (err.extensions?.code === 'VALIDATION_ERROR') {
+            return `Validation error: ${err.message}`;
+          }
+          
           return err.message;
         });
         
         // Show the first few errors (avoid overwhelming the user)
         const displayErrors = errorMessages.slice(0, 2).join('\n');
-        showToast(`❌ GraphQL error: ${displayErrors}`, 'error');
+        showToast(`\u274c GraphQL error: ${displayErrors}`, 'error');
         throw new Error(displayErrors || 'Failed to create fee structure');
       }
 
-      return result.data.createFeeStructure.id
+      // Log the full response for debugging
+      console.log('Fee structure creation response:', JSON.stringify(result, null, 2));
+      
+      if (result.data?.createFeeStructure?.id) {
+        const feeStructureId = result.data.createFeeStructure.id;
+        console.log('Fee structure created successfully with ID:', feeStructureId);
+        showToast(`✅ Fee structure "${name}" created with ID: ${feeStructureId}`, 'success');
+        return feeStructureId;
+      } else {
+        console.error('Fee structure created but ID is missing in response:', result);
+        showToast(`⚠ Fee structure created but ID is missing in response`, 'error');
+        return null;
+      }
     } catch (error) {
       console.error('Error creating fee structure via GraphQL:', error)
+      showToast(`❌ Error: ${error instanceof Error ? error.message : 'Failed to create fee structure'}`, 'error');
       return null
     }
   }
@@ -912,14 +978,38 @@ export const FeeStructureDrawer = ({
         if (!feeStructureId) {
           console.log(`GraphQL fee structure creation failed, trying fallback handler for ${gradeData.name}`);
           try {
-            feeStructureId = await onSave(gradeData);
+            // Try fallback handler
+            const fallbackId = await onSave(gradeData);
+            
+            // Check if the fallback ID is a valid UUID
+            const isValidUUID = typeof fallbackId === 'string' && 
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(fallbackId);
+            
+            if (isValidUUID) {
+              feeStructureId = fallbackId;
+              console.log(`Fallback handler returned valid UUID: ${feeStructureId}`);
+            } else {
+              console.error(`Fallback handler returned invalid UUID format: ${fallbackId}`);
+              showToast(`\u26a0 Fallback handler returned invalid ID format`, 'error');
+              continue;
+            }
           } catch (fallbackError) {
             console.error('Fallback handler also failed:', fallbackError);
-            showToast(`❌ Failed to create fee structure: Could not find valid academic year or term IDs`, 'error');
+            showToast(`\u274c Failed to create fee structure: Could not find valid academic year or term IDs`, 'error');
             continue; // Skip this grade and try the next one
           }
         }
         
+        // Validate the fee structure ID format - it should be a UUID
+        const isValidUUID = typeof feeStructureId === 'string' && 
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(feeStructureId);
+        
+        if (!isValidUUID) {
+          console.error('Invalid fee structure ID format:', feeStructureId);
+          showToast(`\u274c Invalid fee structure ID format. Expected UUID format.`, 'error');
+          continue; // Skip this grade and try the next one
+        }
+          
         if (feeStructureId) {
           // Create fee structure items for each bucket component
           let itemsCreated = 0
@@ -2255,13 +2345,11 @@ export const FeeStructureDrawer = ({
                                           </SelectItem>
                                         ))
                                       } else {
-                                        // Fallback to default terms if no academic year is selected
-                                        return [
-                                          <SelectItem key="term1" value="Term 1">TERM 1</SelectItem>,
-                                          <SelectItem key="term2" value="Term 2">TERM 2</SelectItem>,
-                                          <SelectItem key="term3" value="Term 3">TERM 3</SelectItem>,
-                                          <SelectItem key="annual" value="Annual">ANNUAL</SelectItem>
-                                        ]
+                                        return (
+                                          <SelectItem value="" disabled>
+                                            {academicYearsLoading ? "Loading terms..." : "No terms available"}
+                                          </SelectItem>
+                                        )
                                       }
                                     })()}
                                   </SelectContent>

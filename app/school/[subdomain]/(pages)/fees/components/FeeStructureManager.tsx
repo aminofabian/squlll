@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { 
   Plus, 
   Edit, 
@@ -42,6 +43,10 @@ export const FeeStructureManager = ({
   const [selectedTab, setSelectedTab] = useState('structures')
   // Only use mock data when GraphQL data is not available
   const [fallbackFeeStructures] = useState<FeeStructure[]>(mockFeeStructures)
+  
+  // Delete confirmation dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [structureToDelete, setStructureToDelete] = useState<{id: string; name: string} | null>(null)
   
   // Get grade data with fallback mechanism
   const { 
@@ -278,9 +283,11 @@ export const FeeStructureManager = ({
                               size="sm" 
                               className="text-red-600 border-red-200 hover:bg-red-50"
                               onClick={() => {
-                                if (window.confirm(`Are you sure you want to delete fee structure "${structure.structureName}"? This action cannot be undone.`)) {
-                                  onDelete(structure.structureId);
-                                }
+                                setStructureToDelete({ 
+                                  id: structure.structureId, 
+                                  name: structure.structureName 
+                                });
+                                setIsDeleteDialogOpen(true);
                               }}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -404,9 +411,11 @@ export const FeeStructureManager = ({
                                 size="sm"
                                 className="text-red-600 border-red-200 hover:bg-red-50"
                                 onClick={() => {
-                                  if (window.confirm(`Are you sure you want to delete fee structure "${structure.name}"? This action cannot be undone.`)) {
-                                    onDelete(structure.id);
-                                  }
+                                  setStructureToDelete({ 
+                                    id: structure.id, 
+                                    name: structure.name 
+                                  });
+                                  setIsDeleteDialogOpen(true);
                                 }}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -625,6 +634,34 @@ export const FeeStructureManager = ({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Fee Structure</DialogTitle>
+            <DialogDescription className="pt-2">
+              Are you sure you want to delete <span className="font-semibold">{structureToDelete?.name}</span>?
+              <p className="mt-2 text-red-500">This action cannot be undone.</p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                if (structureToDelete && onDelete) {
+                  onDelete(structureToDelete.id);
+                  setIsDeleteDialogOpen(false);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

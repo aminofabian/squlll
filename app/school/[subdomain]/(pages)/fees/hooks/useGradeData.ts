@@ -41,9 +41,11 @@ export const useGradeData = () => {
     
     try {
       // First try to fetch from GraphQL API
+      // Using getGradesByTenant instead of grades, following the pattern in other successful queries
+      const tenantId = window.location.hostname.split('.')[0]; // Extract subdomain as tenant ID
       const query = `
-        query GetGrades {
-          grades {
+        query {
+          getGradesByTenant(tenantId: "${tenantId}") {
             id
             name
             level
@@ -85,11 +87,11 @@ export const useGradeData = () => {
       }
 
       // Check if we have valid grade data
-      if (result.data && result.data.grades && Array.isArray(result.data.grades) && result.data.grades.length > 0) {
-        console.log(`Received ${result.data.grades.length} grades from API`);
+      if (result.data && result.data.getGradesByTenant && Array.isArray(result.data.getGradesByTenant) && result.data.getGradesByTenant.length > 0) {
+        console.log(`Received ${result.data.getGradesByTenant.length} grades from API`);
         
         // Transform GraphQL grades to our Grade interface
-        const transformedGrades = result.data.grades.map((grade: GraphQLGrade) => ({
+        const transformedGrades = result.data.getGradesByTenant.map((grade: GraphQLGrade) => ({
           id: grade.id,
           name: grade.name || grade.gradeLevel?.name || 'Unknown Grade',
           level: grade.level || 0,

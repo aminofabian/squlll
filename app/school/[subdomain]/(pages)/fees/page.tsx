@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Toaster } from "@/components/ui/toaster"
+import { useToast } from "@/components/ui/use-toast"
 import { Download, Settings } from 'lucide-react'
 
 // Import modular components and hooks
@@ -153,18 +155,37 @@ export default function FeesPage() {
   
   const handleDelete = async (feeStructureId: string) => {
     try {
-      console.log('Deleting fee structure:', feeStructureId)
+      // Show loading toast
+      toast({
+        title: "Deleting fee structure...",
+        description: "Please wait while we delete this fee structure.",
+      })
+      
       const success = await graphqlDeleteFeeStructure(feeStructureId)
       
       if (success) {
-        // Show success message (in a real app you'd use a toast notification system)
-        console.log(`Fee structure ${feeStructureId} deleted successfully`)
-        // Refresh the local fee structures list if needed
+        // Show success toast
+        toast({
+          title: "Fee structure deleted",
+          description: "The fee structure has been successfully deleted.",
+          variant: "success",
+        })
       } else if (deleteError) {
-        console.error(`Failed to delete fee structure: ${deleteError}`)
-        // Show error message to the user
+        // Show error toast
+        toast({
+          title: "Deletion failed",
+          description: `Error: ${deleteError}`,
+          variant: "destructive",
+        })
       }
     } catch (error) {
+      // Show unexpected error toast
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast({
+        title: "Unexpected error",
+        description: errorMessage,
+        variant: "destructive",
+      })
       console.error('Error in delete handler:', error)
     }
   }
@@ -256,6 +277,9 @@ export default function FeesPage() {
     }
   }
 
+  // Access the toast function
+  const { toast } = useToast()
+  
   return (
     <div className="flex min-h-screen">
       {/* Student Search Sidebar - only show for invoices tab */}
@@ -422,7 +446,10 @@ export default function FeesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      
+      {/* Toast notifications */}
+      <Toaster />
+      
       {/* Fee Structure Drawer */}
       <FeeStructureDrawer
         isOpen={showCreateForm || showEditForm}
