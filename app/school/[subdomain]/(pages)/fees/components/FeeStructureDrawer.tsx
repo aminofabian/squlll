@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { X, Plus, Copy, Trash2, Save, Eye, Edit3, GraduationCap, Wand2, Calculator, Clock, ChevronDown, ChevronRight, Sparkles, Zap, BookOpen, Bus, Home, Utensils, FlaskConical, Trophy, Library, Loader2, Info } from "lucide-react"
+import { X, Plus, Copy, Trash2, Save, Eye, Edit3, GraduationCap, Wand2, Calculator, Clock, ChevronDown, ChevronRight, ChevronLeft, Sparkles, Zap, BookOpen, Bus, Home, Utensils, FlaskConical, Trophy, Library, Loader2, Info, CheckCircle, DollarSign, FileText, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +17,8 @@ import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { useFeeBuckets } from '@/lib/hooks/useFeeBuckets'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useGradeLevels } from '../hooks/useGradeLevels'
+import { CreateAcademicYearModal } from './CreateAcademicYearModal'
+import FeeStructureStepContent from './FeeStructureStepBasedContent'
 import { FeeStructure, FeeStructureForm, Grade, TermFeeStructureForm, FeeBucketForm, FeeComponentForm, BankAccount } from '../types'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
 
@@ -135,10 +137,26 @@ export const FeeStructureDrawer = ({
   })
 
   const [selectedGrades, setSelectedGrades] = useState<string[]>([])
+  // Step wizard state for guided fee structure creation
+  const [currentStep, setCurrentStep] = useState<number>(1)
+  const totalSteps = 5
+  
+  // Steps definition
+  const steps = [
+    { id: 1, title: 'Basic Info', description: 'Name, academic year & type', icon: FileText },
+    { id: 2, title: 'Grade Selection', description: 'Select grades/levels', icon: GraduationCap },
+    { id: 3, title: 'Terms Setup', description: 'Configure terms & due dates', icon: Calendar },
+    { id: 4, title: 'Fee Components', description: 'Add fee buckets & items', icon: DollarSign },
+    { id: 5, title: 'Review', description: 'Preview & finalize', icon: CheckCircle },
+  ]
+  
   const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form')
   const [activeGradeTab, setActiveGradeTab] = useState<'classes' | 'gradelevels'>('gradelevels')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [collapsedTerms, setCollapsedTerms] = useState<Set<number>>(new Set())
+  
+  // State for academic year/term creation modal
+  const [showCreateAcademicYearModal, setShowCreateAcademicYearModal] = useState<boolean>(false)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [smartSuggestions, setSmartSuggestions] = useState<string[]>([])
   const [currentEditingField, setCurrentEditingField] = useState<string | null>(null)
@@ -167,6 +185,43 @@ export const FeeStructureDrawer = ({
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id))
     }, 3000)
+  }
+  
+  // Step navigation functions
+  const goToNextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(prev => prev + 1)
+    }
+  }
+  
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1)
+    }
+  }
+  
+  const goToStep = (stepNumber: number) => {
+    if (stepNumber >= 1 && stepNumber <= totalSteps) {
+      setCurrentStep(stepNumber)
+    }
+  }
+  
+  // Check if current step is valid before proceeding
+  const isCurrentStepValid = () => {
+    switch(currentStep) {
+      case 1: // Basic Info
+        return formData.name.trim() !== '' && formData.academicYear.trim() !== ''
+      case 2: // Grade Selection
+        return selectedGrades.length > 0
+      case 3: // Terms Setup
+        return formData.termStructures.length > 0 && formData.termStructures.every(term => term.term.trim() !== '')
+      case 4: // Fee Components
+        return formData.termStructures.every(term => term.buckets.some(bucket => bucket.name.trim() !== ''))
+      case 5: // Review
+        return true // Always valid as it's just review
+      default:
+        return false
+    }
   }
 
   // Validation: compute missing sections (depends on formData/selectedGrades defined above)
@@ -319,10 +374,31 @@ export const FeeStructureDrawer = ({
     } else {
       const currentYear = new Date().getFullYear().toString();
       // Try to get terms from the active academic year
-      let initialTerm = '';
-      const activeYear = getActiveAcademicYear();
+      // Find active year directly instead of using the function to avoid dependency issues
+      const activeYear = academicYears.find(year => year.isActive) || academicYears[0];
+      
+      console.log('Active academic year for initialization:', activeYear);
+      
+      let initialTerms = [];
       if (activeYear && activeYear.terms && activeYear.terms.length > 0) {
-        initialTerm = activeYear.terms[0].name;
+        console.log(`Found ${activeYear.terms.length} terms for academic year ${activeYear.name}:`, 
+          activeYear.terms.map(t => t.name).join(', '));
+        
+        // Get the first term for initial setup
+        const initialTerm = activeYear.terms[0].name;
+        
+        // Create a term structure with this term
+        initialTerms = [{
+          ...defaultTermStructure,
+          term: initialTerm,
+          academicYear: activeYear.name
+        }];
+      } else {
+        console.log('No active academic year found or no terms available')
+        initialTerms = [{
+          ...defaultTermStructure,
+          academicYear: activeYear?.name || currentYear
+        }];
       }
 
       setFormData({
@@ -330,11 +406,7 @@ export const FeeStructureDrawer = ({
         grade: '',
         boardingType: 'both',
         academicYear: activeYear?.name || currentYear,
-        termStructures: [{
-          ...defaultTermStructure,
-          term: initialTerm,
-          academicYear: activeYear?.name || currentYear
-        }],
+        termStructures: initialTerms,
         schoolDetails: {
           name: getSchoolName(),
           address: 'P.O. Box 100 - 40404, KENYA. Cell: 0710000000',
@@ -359,7 +431,8 @@ export const FeeStructureDrawer = ({
       })
       setSelectedGrades([])
     }
-  }, [initialData, isOpen, schoolConfig, subdomain])
+  // Remove getActiveAcademicYear from dependencies to prevent infinite rerenders
+  }, [initialData, isOpen, schoolConfig, subdomain, academicYears])
 
   // Update school name when config changes
   useEffect(() => {
@@ -374,15 +447,18 @@ export const FeeStructureDrawer = ({
     }
   }, [schoolConfig])
 
-  // Set active academic year when data loads
+  // Set active academic year when data loads - fixes infinite loop by removing function from deps
   useEffect(() => {
     console.log('Academic years data:', academicYears)
     console.log('Academic years loading:', academicYearsLoading)
     console.log('Academic years error:', academicYearsError)
     console.log('Current form academic year:', formData.academicYear)
     
-    if (academicYears.length > 0 && !formData.academicYear) {
-      const activeYear = getActiveAcademicYear()
+    // Only run this effect if we have academic years data and no academic year set yet
+    // This prevents the infinite loop by adding a guard clause
+    if (academicYears.length > 0 && formData.academicYear === '') {
+      // Find an active academic year directly from the array instead of using the function
+      const activeYear = academicYears.find(year => year.isActive) || academicYears[0]
       console.log('Active academic year:', activeYear)
       if (activeYear) {
         console.log('Setting academic year to:', activeYear.name)
@@ -392,7 +468,8 @@ export const FeeStructureDrawer = ({
         }))
       }
     }
-  }, [academicYears, formData.academicYear, getActiveAcademicYear, academicYearsLoading, academicYearsError])
+  // IMPORTANT: Don't include getActiveAcademicYear in dependencies as it causes infinite rerenders
+  }, [academicYears, academicYearsLoading, academicYearsError])
 
   const handleGradeToggle = (gradeId: string) => {
     setSelectedGrades(prev => 
@@ -403,18 +480,35 @@ export const FeeStructureDrawer = ({
   }
 
   const addTermStructure = () => {
-    // Use first available term from the academic year if possible
-    let termName = '';
+    // Find selected academic year - directly from the array, not using the function
     const selectedAcademicYear = academicYears.find(year => year.name === formData.academicYear);
-    const availableTerms = selectedAcademicYear?.terms || [];
     
-    // Check if there are any unused terms that can be assigned to the new structure
+    // Log the academic years and selection for debugging
+    console.log('All academic years:', academicYears.map(y => `${y.name} (${y.id}): ${y.terms.length} terms`));
+    console.log('Selected academic year from dropdown:', formData.academicYear);
+    console.log('Found academic year object:', selectedAcademicYear);
+    
+    // Get all available terms for this academic year
+    const availableTerms = selectedAcademicYear?.terms || [];
+    console.log('Available terms:', availableTerms.map(t => t.name));
+    
+    // Find a term that isn't already being used
+    let termName = '';
     if (availableTerms.length > 0) {
       const usedTermNames = new Set(formData.termStructures.map(ts => ts.term));
+      console.log('Already used terms:', Array.from(usedTermNames));
+      
       const availableTerm = availableTerms.find(t => !usedTermNames.has(t.name));
       if (availableTerm) {
         termName = availableTerm.name;
+        console.log(`Selected unused term: ${termName}`);
+      } else {
+        // If all terms are used, just use the first one
+        termName = availableTerms[0].name;
+        console.log(`All terms already used, selecting first term: ${termName}`);
       }
+    } else {
+      console.log('No terms available for selected academic year');
     }
     
     setFormData(prev => ({
@@ -425,7 +519,13 @@ export const FeeStructureDrawer = ({
         academicYear: prev.academicYear || ''
       }]
     }))
-    showToast(`✅ New term structure added. Please select a term.`, 'success')
+    
+    // Show appropriate toast message
+    if (termName) {
+      showToast(`✅ Added new term structure with ${termName}`, 'success');
+    } else {
+      showToast(`✅ New term structure added. Please select a term.`, 'info');
+    }
   }
 
   const removeTermStructure = (index: number) => {
@@ -440,12 +540,27 @@ export const FeeStructureDrawer = ({
   }
 
   const updateTermStructure = (index: number, field: keyof TermFeeStructureForm, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      termStructures: prev.termStructures.map((term, i) => 
-        i === index ? { ...term, [field]: value } : term
-      )
-    }))
+    setFormData(prev => {
+      // Special handling for term selection
+      if (field === 'term') {
+        console.log(`Selected term: ${value} for term structure at index ${index}`);
+        // Find the selected academic year object
+        const selectedAcademicYear = academicYears.find(year => year.name === prev.termStructures[index].academicYear || prev.academicYear);
+        
+        if (selectedAcademicYear) {
+          console.log(`Found academic year: ${selectedAcademicYear.name} with ${selectedAcademicYear.terms?.length || 0} terms`);
+        } else {
+          console.log(`Could not find academic year for: ${prev.termStructures[index].academicYear || prev.academicYear}`);
+        }
+      }
+      
+      return {
+        ...prev,
+        termStructures: prev.termStructures.map((term, i) => 
+          i === index ? { ...term, [field]: value } : term
+        )
+      };
+    });
   }
 
   const addBucket = (termIndex: number) => {
@@ -1192,23 +1307,43 @@ export const FeeStructureDrawer = ({
           </Button>
         </div>
 
-        {/* Progress Steps and Validation Checklist */}
+        {/* Step Wizard and Progress Indicators */}
         <div className="px-6 py-4 bg-primary/5 border-b border-primary/20">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium shadow-sm">1</div>
-              <span className="text-slate-700 font-medium">Basic Info</span>
-            </div>
-            <div className="w-8 h-px bg-primary/30"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium shadow-sm">2</div>
-              <span className="text-slate-700 font-medium">Select Grades</span>
-            </div>
-            <div className="w-8 h-px bg-primary/30"></div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-medium shadow-sm">3</div>
-              <span className="text-slate-700 font-medium">Fee Structure</span>
-            </div>
+          <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-thin">
+            {steps.map((step, index) => {
+              const isActive = currentStep === step.id;
+              const isCompleted = currentStep > step.id;
+              const StepIcon = step.icon;
+              
+              return (
+                <React.Fragment key={step.id}>
+                  {index > 0 && (
+                    <div className={`w-8 h-px ${isCompleted ? 'bg-green-500' : 'bg-primary/30'}`}></div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => goToStep(step.id)}
+                    className={`flex items-center gap-2 ${isActive ? 'text-primary' : isCompleted ? 'text-green-600' : 'text-slate-500'} hover:text-primary transition-colors`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium shadow-sm
+                      ${isActive ? 'bg-primary text-white' : 
+                        isCompleted ? 'bg-green-500 text-white' : 
+                        'bg-white border border-primary/30 text-primary/50'}
+                    `}>
+                      {isCompleted ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <StepIcon className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{step.title}</span>
+                      <span className="text-xs opacity-80">{step.description}</span>
+                    </div>
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
           {/* Sticky checklist */}
           <div className="mt-3 bg-white/70 border border-primary/20 rounded-md p-2">
@@ -1262,59 +1397,64 @@ export const FeeStructureDrawer = ({
             </div>
 
             <TabsContent value="form" className="flex-1 p-8 m-0">
-              {/* Info box for academic year explanation */}
-              <div className="mb-6 mx-auto max-w-4xl bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5">
-                    <Info className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-blue-700">Academic Year Management</h4>
-                    <p className="text-sm text-blue-600 mt-1">
-                      This form allows you to set academic years at two levels:
-                    </p>
-                    <ul className="text-xs text-blue-600 mt-2 space-y-1 list-disc pl-4">
-                      <li><strong>Main Academic Year</strong> - Set at the top of the form and applies to the entire fee structure</li>
-                      <li><strong>Term-specific Academic Year</strong> - Each term can have its own academic year, found in the terms table</li>
-                    </ul>
-                    <p className="text-xs text-blue-600 mt-2">
-                      If you don't set a term-specific academic year, it will use the main academic year by default.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick fill toolbar */}
-              <div className="mb-6 mx-auto max-w-4xl bg-primary/5 border border-primary/20 rounded-lg p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-600 mr-2">Quick fill:</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={() => {
-                      const input = window.prompt('Set ALL component amounts to (number):', '1000')
-                      if (input == null) return
-                      const value = Math.max(0, Math.round(Number(input)))
-                      if (Number.isNaN(value)) return
-                      setFormData(prev => ({
-                        ...prev,
-                        termStructures: prev.termStructures.map(term => ({
-                          ...term,
-                          buckets: term.buckets.map(bucket => ({
-                            ...bucket,
-                            components: bucket.components.map(c => ({
-                              ...c,
-                              amount: String(value)
+              {/* Import and use the step-based content component */}
+              <div className="mx-auto max-w-4xl">
+                {/* Step content will be rendered based on currentStep */}
+                <FeeStructureStepContent
+                  currentStep={currentStep}
+                  formData={formData}
+                  setFormData={setFormData}
+                  academicYears={academicYears}
+                  academicYearsLoading={academicYearsLoading}
+                  setShowCreateAcademicYearModal={setShowCreateAcademicYearModal}
+                  handleBoardingTypeChange={(value) => {
+                    setFormData({
+                      ...formData,
+                      boardingType: value as 'day' | 'boarding' | 'both'
+                    });
+                  }}
+                  selectedGrades={selectedGrades}
+                  handleGradeToggle={handleGradeToggle}
+                  availableGrades={availableGrades}
+                  activeGradeTab={activeGradeTab}
+                  setActiveGradeTab={setActiveGradeTab}
+                  gradeLevels={gradeLevels}
+                  isLoadingGradeLevels={isLoadingGradeLevels}
+                  gradeLevelsError={gradeLevelsError}
+                />
+                
+                {/* Quick fill toolbar only displayed for Step 4 (Fee Components) */}
+                {currentStep === 4 && (
+                  <div className="mb-6 bg-primary/5 border border-primary/20 rounded-lg p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-slate-600 mr-2">Quick fill:</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => {
+                          const input = window.prompt('Set ALL component amounts to (number):', '1000')
+                          if (input == null) return
+                          const value = Math.max(0, Math.round(Number(input)))
+                          if (Number.isNaN(value)) return
+                          setFormData(prev => ({
+                            ...prev,
+                            termStructures: prev.termStructures.map(term => ({
+                              ...term,
+                              buckets: term.buckets.map(bucket => ({
+                                ...bucket,
+                                components: bucket.components.map(c => ({
+                                  ...c,
+                                  amount: String(value)
+                                }))
+                              }))
                             }))
                           }))
-                        }))
-                      }))
-                      showToast(`Applied amount ${value} to all components`, 'success')
-                    }}
-                  >
-                    Set all amounts
-                  </Button>
+                          showToast(`Applied amount ${value} to all components`, 'success')
+                        }}
+                      >
+                        Set all amounts
+                      </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -1376,6 +1516,9 @@ export const FeeStructureDrawer = ({
                   </Button>
                 </div>
               </div>
+              )}
+              
+              </div> {/* Closing div for line 1341: mx-auto max-w-4xl */}
               
               {/* Document-style editing interface */}
               <div className="bg-white max-w-4xl mx-auto shadow-lg" style={{ fontFamily: 'Times New Roman, serif' }}>
@@ -1460,6 +1603,16 @@ export const FeeStructureDrawer = ({
                         <Clock className="h-3 w-3 mr-1" />
                       )}
                       Refresh Years
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-7 px-2 text-xs border-green-200 text-green-600 hover:bg-green-50"
+                      onClick={() => setShowCreateAcademicYearModal(true)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Create Year
                     </Button>
                   </div>
                   <h2 className="text-lg font-bold underline">
@@ -2437,10 +2590,18 @@ export const FeeStructureDrawer = ({
                                   </SelectTrigger>
                                   <SelectContent>
                                     {(() => {
+                                      // Find academic year by name
                                       const selectedAcademicYear = academicYears.find(year => year.name === formData.academicYear)
-                                      const availableTerms = selectedAcademicYear?.terms || []
                                       
-                                      if (availableTerms.length > 0) {
+                                      // Get all terms for this academic year
+                                      let availableTerms = selectedAcademicYear?.terms || []
+                                      
+                                      // Log the found terms for debugging
+                                      console.log('Selected academic year:', selectedAcademicYear)
+                                      console.log('Available terms:', availableTerms)
+                                      
+                                      // Render the terms as options
+                                      if (availableTerms && availableTerms.length > 0) {
                                         return availableTerms.map((term) => (
                                           <SelectItem key={term.id} value={term.name}>
                                             {term.name.toUpperCase()}
@@ -2449,7 +2610,7 @@ export const FeeStructureDrawer = ({
                                       } else {
                                         return (
                                           <SelectItem value="" disabled>
-                                            {academicYearsLoading ? "Loading terms..." : "No terms available"}
+                                            {academicYearsLoading ? "Loading terms..." : "No terms available for this academic year"}
                                           </SelectItem>
                                         )
                                       }
@@ -2889,27 +3050,79 @@ export const FeeStructureDrawer = ({
           ))}
         </div>
 
-        {/* Footer */}
+        {/* Footer with step navigation */}
         <div className="border-t border-primary/20 p-6 flex items-center justify-between bg-primary/5">
-          <div className="text-sm text-slate-600">
-            {selectedGrades.length > 0 && (
-              <span>Will create {selectedGrades.length} fee structure(s)</span>
+          <div className="flex items-center gap-3">
+            {currentStep > 1 && (
+              <Button 
+                variant="outline" 
+                onClick={goToPrevStep}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </Button>
             )}
+            
+            <div className="text-sm text-slate-600">
+              {selectedGrades.length > 0 && (
+                <span>Will create {selectedGrades.length} fee structure(s)</span>
+              )}
+              <span className="ml-2 text-primary">
+                Step {currentStep} of {totalSteps}
+              </span>
+            </div>
           </div>
+          
           <div className="flex gap-3">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleSave}
-              disabled={validationErrors.length > 0}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Fee Structure
-            </Button>
+            
+            {currentStep < totalSteps ? (
+              <Button 
+                onClick={goToNextStep}
+                disabled={!isCurrentStepValid()}
+                className="flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleSave}
+                disabled={validationErrors.length > 0}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Fee Structure
+              </Button>
+            )}
           </div>
         </div>
       </div>
+      
+      {/* Create Academic Year Modal */}
+      <CreateAcademicYearModal
+        isOpen={showCreateAcademicYearModal}
+        onClose={() => setShowCreateAcademicYearModal(false)}
+        onSuccess={(newAcademicYear) => {
+          // Refresh the academic years list
+          refetchAcademicYears()
+            .then(() => {
+              // Update the current form with the newly created academic year
+              setFormData(prev => ({
+                ...prev,
+                academicYear: newAcademicYear.name
+              }))
+              
+              showToast(`Academic year ${newAcademicYear.name} created successfully with ${newAcademicYear.terms.length} terms`, 'success')
+            })
+            .catch(error => {
+              console.error('Failed to refresh academic years after creation:', error)
+              showToast('Academic year created but failed to refresh the list', 'error')
+            })
+        }}
+      />
     </div>
   )
 }
