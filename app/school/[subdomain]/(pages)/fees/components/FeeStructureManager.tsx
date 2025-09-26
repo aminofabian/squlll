@@ -19,6 +19,8 @@ import {
   Send,
   Loader2
 } from 'lucide-react'
+import { UpdateFeeStructureItemModal } from './UpdateFeeStructureItemModal'
+import { AssignFeeStructureModal } from './AssignFeeStructureModal'
 import { FeeStructure, Grade, TermFeeStructure } from '../types'
 import { mockFeeStructures } from '../data/mockData'
 import { useGraphQLFeeStructures } from '../hooks/useGraphQLFeeStructures'
@@ -47,6 +49,33 @@ export const FeeStructureManager = ({
   // Delete confirmation dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [structureToDelete, setStructureToDelete] = useState<{id: string; name: string} | null>(null)
+  
+  // Fee structure item update state
+  const [isUpdateItemModalOpen, setIsUpdateItemModalOpen] = useState(false)
+  const [feeItemToUpdate, setFeeItemToUpdate] = useState<{
+    id: string;
+    amount: number;
+    isMandatory: boolean;
+    feeBucket?: {
+      id: string;
+      name: string;
+    };
+    feeStructure?: {
+      id: string;
+      name: string;
+      academicYear?: { name: string };
+      term?: { name: string };
+    };
+  } | null>(null)
+  
+  // Fee structure assignment state
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+  const [feeStructureToAssign, setFeeStructureToAssign] = useState<{
+    id: string;
+    name: string;
+    academicYear?: string;
+    isActive?: boolean;
+  } | null>(null)
   
   // Get grade data with fallback mechanism
   const { 
@@ -178,6 +207,57 @@ export const FeeStructureManager = ({
       default: return 'bg-gray-100 text-gray-800'
     }
   }
+  
+  // Handle opening the update fee structure item modal
+  const handleUpdateFeeItem = (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string) => {
+    setFeeItemToUpdate({
+      id: itemId,
+      amount,
+      isMandatory,
+      feeBucket: { id: '', name: bucketName },
+      feeStructure: { id: '', name: feeStructureName }
+    })
+    setIsUpdateItemModalOpen(true)
+  }
+  
+  // Handle fee structure item update success
+  const handleFeeItemUpdateSuccess = (updatedItem: any) => {
+    // Refresh fee structures to show updated data
+    fetchFeeStructures()
+      .then(() => {
+        // Show success toast or other UI feedback
+        console.log('Fee structure item updated successfully:', updatedItem)
+      })
+      .catch(err => {
+        console.error('Failed to refresh fee structures after update:', err)
+      })
+  }
+  
+  // Handle opening the assign fee structure modal
+  const handleAssignToGrade = (feeStructureId: string, name: string, academicYear?: string) => {
+    setFeeStructureToAssign({
+      id: feeStructureId,
+      name,
+      academicYear,
+      isActive: true
+    })
+    setIsAssignModalOpen(true)
+  }
+  
+  // Handle fee structure assignment success
+  const handleAssignmentSuccess = (assignmentResult: any) => {
+    // Refresh data to show updated assignments
+    Promise.all([
+      fetchFeeStructures(),
+      fetchGradeData()
+    ])
+      .then(() => {
+        console.log('Fee structure assigned successfully:', assignmentResult)
+      })
+      .catch(err => {
+        console.error('Failed to refresh data after assignment:', err)
+      })
+  }
 
   return (
     <div className="space-y-6">
@@ -302,10 +382,26 @@ export const FeeStructureManager = ({
                         <h4 className="text-sm font-medium">Fee Buckets:</h4>
                         <div className="flex flex-wrap gap-2">
                           {structure.buckets && structure.buckets.length > 0 ? structure.buckets.map((bucket) => (
-                            <Badge key={bucket.id} variant="outline" className="text-xs">
-                              {bucket.name}: KES {bucket.totalAmount.toLocaleString()}
-                              {bucket.isOptional && ' (Optional)'}
-                            </Badge>
+                            <div key={bucket.id} className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline" className="text-xs flex-grow">
+                                {bucket.name}: KES {bucket.totalAmount.toLocaleString()}
+                                {bucket.isOptional && ' (Optional)'}
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-6 px-2 text-xs hover:bg-primary/10"
+                                onClick={() => handleUpdateFeeItem(
+                                  bucket.id, // Using bucket ID as a placeholder, would need actual item ID
+                                  bucket.totalAmount,
+                                  !bucket.isOptional,
+                                  bucket.name,
+                                  structure.structureName
+                                )}
+                              >
+                                <Edit className="h-3 w-3 mr-1" /> Edit
+                              </Button>
+                            </div>
                           )) : (
                             <p className="text-sm text-slate-500">No fee items defined yet</p>
                           )}
@@ -314,7 +410,15 @@ export const FeeStructureManager = ({
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 mt-4">
-                        <Button variant="outline" size="sm" onClick={() => onAssignToGrade(structure.structureId)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleAssignToGrade(
+                            structure.structureId, 
+                            structure.structureName, 
+                            structure.academicYear
+                          )}
+                        >
                           <Users className="h-4 w-4 mr-1" />
                           Assign to Grade
                         </Button>
@@ -474,7 +578,11 @@ export const FeeStructureManager = ({
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => onAssignToGrade(structure.id)}
+                            onClick={() => handleAssignToGrade(
+                              structure.id, 
+                              structure.name, 
+                              structure.academicYear
+                            )}
                           >
                             <Users className="h-4 w-4 mr-1" />
                             Assign to Grade
@@ -662,6 +770,23 @@ export const FeeStructureManager = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Update Fee Structure Item Modal */}
+      <UpdateFeeStructureItemModal
+        isOpen={isUpdateItemModalOpen}
+        onClose={() => setIsUpdateItemModalOpen(false)}
+        feeStructureItem={feeItemToUpdate}
+        onSuccess={handleFeeItemUpdateSuccess}
+      />
+      
+      {/* Assign Fee Structure to Grades Modal */}
+      <AssignFeeStructureModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        feeStructure={feeStructureToAssign}
+        availableGrades={grades}
+        onSuccess={handleAssignmentSuccess}
+      />
     </div>
   )
 }

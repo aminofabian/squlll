@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { useFeeBuckets } from '@/lib/hooks/useFeeBuckets'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
+import { useGradeLevels } from '../hooks/useGradeLevels'
 import { FeeStructure, FeeStructureForm, Grade, TermFeeStructureForm, FeeBucketForm, FeeComponentForm, BankAccount } from '../types'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
 
@@ -90,6 +91,9 @@ export const FeeStructureDrawer = ({
   const { feeBuckets, loading: bucketsLoading, error: bucketsError, refetch: refetchBuckets } = useFeeBuckets()
   const { academicYears, loading: academicYearsLoading, error: academicYearsError, refetch: refetchAcademicYears, getActiveAcademicYear, getTermsForAcademicYear } = useAcademicYears()
   
+  // Use the hook to fetch grade levels
+  const { gradeLevels, isLoading: isLoadingGradeLevels, error: gradeLevelsError } = useGradeLevels()
+  
   // Get school name from config or format subdomain as fallback
   const getSchoolName = () => {
     if (schoolConfig?.tenant?.schoolName) {
@@ -132,6 +136,7 @@ export const FeeStructureDrawer = ({
 
   const [selectedGrades, setSelectedGrades] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form')
+  const [activeGradeTab, setActiveGradeTab] = useState<'classes' | 'gradelevels'>('gradelevels')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [collapsedTerms, setCollapsedTerms] = useState<Set<number>>(new Set())
   const [showQuickAdd, setShowQuickAdd] = useState(false)
@@ -1527,69 +1532,166 @@ export const FeeStructureDrawer = ({
                   </h2>
                 </div>
 
-                {/* Smart Grade Selection with AI Suggestions */}
+                {/* Grade/GradeLevel Selection with tabs */}
                 <div className="mb-6 px-6">
                   <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-medium text-slate-700">Smart Grade Assignment</Label>
-                      <Button
-                        variant="ghost"
+                    <div className="flex items-center gap-2 mb-3" id="grade-selection">
+                      <GraduationCap className="h-5 w-5 text-primary" />
+                      <h2 className="font-medium text-base text-slate-800">
+                        Select Grade Levels / Classes
+                      </h2>
+                      <Button 
+                        variant="ghost" 
                         size="sm"
                         className="ml-auto text-xs text-primary hover:bg-primary/10"
                         onClick={() => {
-                          // Auto-select similar grades based on name pattern
-                          const primaryGrades = availableGrades.filter(g => g.name.toLowerCase().includes('primary'))
-                          const secondaryGrades = availableGrades.filter(g => g.name.toLowerCase().includes('secondary'))
-                          if (primaryGrades.length > 0) {
-                            setSelectedGrades(primaryGrades.map(g => g.id))
+                          if (activeGradeTab === 'classes') {
+                            // Auto-select similar grades based on name pattern
+                            const primaryGrades = availableGrades.filter(g => g.name.toLowerCase().includes('primary'))
+                            if (primaryGrades.length > 0) {
+                              setSelectedGrades(primaryGrades.map(g => g.id))
+                            }
+                          } else {
+                            // Auto-select all grade levels
+                            if (gradeLevels.length > 0) {
+                              setSelectedGrades(gradeLevels.map(gl => gl.id))
+                            }
                           }
                         }}
                       >
-                        <Wand2 className="h-3 w-3 mr-1" />
                         Auto-select
                       </Button>
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {availableGrades.map((grade) => (
-                        <label 
-                          key={grade.id} 
-                          className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-all duration-200 hover:scale-105 ${
-                            selectedGrades.includes(grade.id) 
-                              ? 'bg-primary/10 border-primary/30 shadow-md' 
-                              : 'bg-white border-primary/20 hover:bg-primary/5'
-                          }`}
-                        >
-                          <Checkbox
-                            checked={selectedGrades.includes(grade.id)}
-                            onCheckedChange={() => handleGradeToggle(grade.id)}
-                            className="w-4 h-4"
-                          />
-                          <div className="flex items-center gap-1">
-                            <GraduationCap className="h-3 w-3 text-gray-500" />
-                            <span className="text-xs font-medium text-slate-700">{grade.name}{grade.section}</span>
-                          </div>
-                        </label>
-                      ))}
+                    
+                    {/* Tab navigation */}
+                    <div className="flex border-b border-gray-200 mb-4">
+                      <button
+                        type="button" 
+                        className={`px-3 py-2 text-xs font-medium ${activeGradeTab === 'gradelevels' ? 'border-b-2 border-primary text-primary' : 'text-gray-600'}`}
+                        onClick={() => setActiveGradeTab('gradelevels')}
+                      >
+                        Grade Levels
+                      </button>
+                      <button
+                        type="button" 
+                        className={`px-3 py-2 text-xs font-medium ${activeGradeTab === 'classes' ? 'border-b-2 border-primary text-primary' : 'text-gray-600'}`}
+                        onClick={() => setActiveGradeTab('classes')}
+                      >
+                        Classes
+                      </button>
                     </div>
+                    
+                    {/* Grade Levels Tab */}
+                    {activeGradeTab === 'gradelevels' && (
+                      <div>
+                        {isLoadingGradeLevels ? (
+                          <div className="flex items-center justify-center p-6">
+                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            <span className="ml-2 text-sm text-slate-600">Loading grade levels...</span>
+                          </div>
+                        ) : gradeLevelsError ? (
+                          <div className="p-3 border border-red-200 rounded bg-red-50 text-red-600 text-sm">
+                            Failed to load grade levels
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-2">
+                            {gradeLevels.map((gradeLevel) => (
+                              <label 
+                                key={gradeLevel.id} 
+                                className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-all duration-200 hover:scale-105 ${
+                                  selectedGrades.includes(gradeLevel.id) 
+                                    ? 'bg-primary/10 border-primary/30 shadow-md' 
+                                    : 'bg-white border-primary/20 hover:bg-primary/5'
+                                }`}
+                              >
+                                <Checkbox
+                                  checked={selectedGrades.includes(gradeLevel.id)}
+                                  onCheckedChange={() => handleGradeToggle(gradeLevel.id)}
+                                  className="w-4 h-4"
+                                />
+                                <div>
+                                  <div className="flex items-center gap-1">
+                                    <BookOpen className="h-3 w-3 text-gray-500" />
+                                    <span className="text-xs font-medium text-slate-700">{gradeLevel.gradeLevel.name}</span>
+                                  </div>
+                                  <div className="text-xs text-slate-500 mt-0.5 truncate max-w-full" style={{ fontSize: '0.65rem' }}>
+                                    {gradeLevel.curriculum.name}
+                                  </div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Classes Tab */}
+                    {activeGradeTab === 'classes' && (
+                      <div className="grid grid-cols-4 gap-2">
+                        {availableGrades.map((grade) => (
+                          <label 
+                            key={grade.id} 
+                            className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-all duration-200 hover:scale-105 ${
+                              selectedGrades.includes(grade.id) 
+                                ? 'bg-primary/10 border-primary/30 shadow-md' 
+                                : 'bg-white border-primary/20 hover:bg-primary/5'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={selectedGrades.includes(grade.id)}
+                              onCheckedChange={() => handleGradeToggle(grade.id)}
+                              className="w-4 h-4"
+                            />
+                            <div className="flex items-center gap-1">
+                              <GraduationCap className="h-3 w-3 text-gray-500" />
+                              <span className="text-xs font-medium text-slate-700">{grade.name}{grade.section}</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Selected items display */}
                     {selectedGrades.length > 0 && (
                       <div className="mt-3 p-2 bg-white rounded border border-primary/20">
-                        <div className="text-xs text-primary mb-1">Selected ({selectedGrades.length} grades):</div>
+                        <div className="text-xs text-primary mb-1">Selected ({selectedGrades.length}):</div>
                         <div className="flex flex-wrap gap-1">
                           {selectedGrades.map(gradeId => {
+                            // Try to find in grade levels first
+                            const gradeLevel = gradeLevels.find(gl => gl.id === gradeId)
+                            if (gradeLevel) {
+                              return (
+                                <Badge key={gradeId} variant="default" className="bg-primary text-white text-xs">
+                                  {gradeLevel.gradeLevel.name}
+                                  <X 
+                                    className="h-3 w-3 ml-1 cursor-pointer hover:bg-primary/80 rounded-full" 
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      handleGradeToggle(gradeId)
+                                    }}
+                                  />
+                                </Badge>
+                              )
+                            }
+                            
+                            // If not found in grade levels, check in classes
                             const grade = availableGrades.find(g => g.id === gradeId)
-                            return (
-                              <Badge key={gradeId} variant="default" className="bg-primary text-white text-xs">
-                                {grade?.name}{grade?.section}
-                                <X 
-                                  className="h-3 w-3 ml-1 cursor-pointer hover:bg-primary/80 rounded-full" 
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    handleGradeToggle(gradeId)
-                                  }}
-                                />
-                              </Badge>
-                            )
+                            if (grade) {
+                              return (
+                                <Badge key={gradeId} variant="default" className="bg-primary text-white text-xs">
+                                  {grade.name}{grade.section}
+                                  <X 
+                                    className="h-3 w-3 ml-1 cursor-pointer hover:bg-primary/80 rounded-full" 
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      handleGradeToggle(gradeId)
+                                    }}
+                                  />
+                                </Badge>
+                              )
+                            }
+                            
+                            return null
                           })}
                         </div>
                       </div>
