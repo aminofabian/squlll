@@ -150,9 +150,19 @@ export const FeeStructureManager = ({
       structureId: string
       structureName: string
       academicYear: string
+      academicYearId: string
       termName: string
+      termId: string
+      gradeLevels: Array<{ 
+        id: string; 
+        shortName: string | null; 
+        gradeLevel?: { id: string; name: string };
+        name?: string;
+      }>
       buckets: Array<{ id: string; name: string; totalAmount: number; isOptional: boolean }>
       isActive: boolean
+      createdAt: string
+      updatedAt: string
     }>
 
     return structures.map(structure => {
@@ -184,9 +194,14 @@ export const FeeStructureManager = ({
         structureId: structure.id,
         structureName: structure.name,
         academicYear: structure.academicYear?.name || 'N/A',
+        academicYearId: structure.academicYear?.id || '',
         termName: structure.term?.name || 'N/A',
+        termId: structure.term?.id || '',
+        gradeLevels: structure.gradeLevels || [],
         buckets: Array.from(bucketMap.values()),
-        isActive: structure.isActive
+        isActive: structure.isActive,
+        createdAt: structure.createdAt,
+        updatedAt: structure.updatedAt
       };
     });
   }, [structures])
@@ -271,6 +286,19 @@ export const FeeStructureManager = ({
             tooltipText="Refresh all data from API"
             size="sm"
           />
+          {process.env.NODE_ENV !== 'production' && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                console.log('Current GraphQL Fee Structures:', structures);
+                console.log('Processed Fee Structures:', graphQLStructures);
+              }}
+              className="ml-2"
+            >
+              Debug Data
+            </Button>
+          )}
         </div>
         <Button onClick={onCreateNew} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
@@ -293,10 +321,10 @@ export const FeeStructureManager = ({
               <span className="ml-3 text-lg">Loading fee structures...</span>
             </div>
           ) : error ? (
-            <div className="p-6 border border-red-200 rounded-lg bg-red-50">
+            <div className="p-6 border border-red-200  bg-red-50">
               <h3 className="text-red-600 font-medium mb-2">Error loading fee structures</h3>
               <p className="text-red-500">{error}</p>
-              <pre className="mt-2 text-xs text-red-400 bg-red-50 p-2 rounded overflow-auto max-h-40">
+              <pre className="mt-2 text-xs text-red-400 bg-red-50 p-2 overflow-auto max-h-40">
                 GraphQL Error Details
                 Path: /api/graphql
                 Query: GetFeeStructures
@@ -340,6 +368,24 @@ export const FeeStructureManager = ({
                           </CardTitle>
                           <p className="text-sm text-gray-600">
                             Academic Year: {structure.academicYear}
+                          </p>
+                          {structure.gradeLevels && structure.gradeLevels.length > 0 && (
+                            <div className="mt-1">
+                              <p className="text-xs text-gray-500">Grade Levels:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {structure.gradeLevels.map(grade => (
+                                  <Badge key={grade.id} variant="outline" className="text-xs">
+                                    {grade.shortName || (grade.gradeLevel && grade.gradeLevel.name) || grade.name || 'Grade'}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-400 mt-2">
+                            Created: {new Date(structure.createdAt).toLocaleDateString()}
+                            {structure.updatedAt !== structure.createdAt && 
+                              ` • Updated: ${new Date(structure.updatedAt).toLocaleDateString()}`
+                            }
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -431,7 +477,7 @@ export const FeeStructureManager = ({
                   </Card>
                 ))
               ) : (
-                <div className="p-6 border border-amber-200 rounded-lg bg-amber-50">
+                <div className="p-6 border border-amber-200  bg-amber-50">
                   <h3 className="text-amber-600 font-medium mb-2">No fee structures found</h3>
                   <p className="text-sm text-amber-500 mb-3">GraphQL API returned successfully but no fee structures were found in the response.</p>
                   <p className="text-sm text-gray-600 mb-2">Common reasons for this:</p>
@@ -463,7 +509,7 @@ export const FeeStructureManager = ({
               ) : (
                 /* Display fallback data if no GraphQL data */
                 <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-md mb-4 border border-blue-200">
+                  <div className="bg-blue-50 p-4  mb-4 border border-blue-200">
                     <h3 className="text-blue-800 font-medium flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -614,7 +660,7 @@ export const FeeStructureManager = ({
               <span className="ml-3 text-lg">Loading grades...</span>
             </div>
           ) : gradesError ? (
-            <div className="p-6 border border-red-200 rounded-lg bg-red-50">
+            <div className="p-6 border border-red-200  bg-red-50">
               <h3 className="text-red-600 font-medium mb-2">Error loading grades</h3>
               <p className="text-red-500">{gradesError}</p>
               <div className="mt-4">
@@ -631,7 +677,7 @@ export const FeeStructureManager = ({
           ) : (
             <div className="space-y-4">
               {usedGradesFallback && (
-                <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mb-4">
+                <div className="bg-amber-50 p-4  border border-amber-200 mb-4">
                   <div className="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -690,7 +736,7 @@ export const FeeStructureManager = ({
                     </Card>
                   )
                 }) : (
-                  <div className="text-center p-8 border border-dashed border-gray-300 rounded-lg">
+                  <div className="text-center p-8 border border-dashed border-gray-300 ">
                     <h3 className="text-gray-500 font-medium mb-2">No Grades Available</h3>
                     <p className="text-sm text-gray-400">No grade information is currently available.</p>
                   </div>
@@ -711,7 +757,7 @@ export const FeeStructureManager = ({
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {structure.termStructures.map((term: TermFeeStructure) => (
-                      <div key={term.id} className="border rounded-lg p-4">
+                      <div key={term.id} className="border  p-4">
                         <h4 className="font-medium mb-2">{term.term}</h4>
                         <p className="text-sm text-gray-600 mb-2">
                           Due: {new Date(term.dueDate).toLocaleDateString()}
@@ -730,7 +776,7 @@ export const FeeStructureManager = ({
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="mt-4 p-3 bg-gray-50 ">
                     <p className="text-sm text-gray-600">
                       <strong>{getTotalStudents(structure.id)}</strong> students across{' '}
                       <strong>{getAssignedGrades(structure.id).length}</strong> classes will receive invoices

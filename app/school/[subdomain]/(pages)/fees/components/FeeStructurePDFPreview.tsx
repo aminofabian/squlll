@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { FeeStructureForm } from '../types'
 
 interface FeeStructurePDFPreviewProps {
@@ -69,7 +70,7 @@ export const FeeStructurePDFPreview = ({
         <h2 className="text-lg font-bold underline">FEES STRUCTURE {formData.academicYear}</h2>
       </div>
 
-      {/* Fee Structure Table */}
+      {/* Fee Structure Table with Term Distinctions */}
       <div className="mb-8">
         <table className="w-full border-collapse border border-black">
           <thead>
@@ -79,22 +80,63 @@ export const FeeStructurePDFPreview = ({
             </tr>
           </thead>
           <tbody>
-            {formData.termStructures.map((term, termIndex) => 
-              term.buckets.map((bucket, bucketIndex) => 
-                bucket.components.map((component, componentIndex) => (
-                  <tr key={`${termIndex}-${bucketIndex}-${componentIndex}`}>
-                    <td className="border border-black p-2">{component.name}</td>
-                    <td className="border border-black p-2 text-right">
-                      {parseFloat(component.amount).toLocaleString('en-KE', { 
-                        minimumFractionDigits: 2, 
-                        maximumFractionDigits: 2 
-                      })}
-                    </td>
-                  </tr>
-                ))
-              )
-            )}
-            <tr className="bg-gray-100 font-bold">
+            {formData.termStructures.map((term, termIndex) => (
+              <React.Fragment key={`term-section-${termIndex}`}>
+                {/* Term Header Row */}
+                <tr className="bg-gray-200">
+                  <td 
+                    colSpan={2} 
+                    className="border border-black p-2 font-bold text-center"
+                  >
+                    {term.term.toUpperCase()}
+                  </td>
+                </tr>
+                
+                {/* Bucket and Component Rows */}
+                {term.buckets.map((bucket, bucketIndex) => (
+                  <React.Fragment key={`bucket-${termIndex}-${bucketIndex}`}>
+                    {/* Optional Bucket Header */}
+                    {bucket.name && (
+                      <tr className="bg-gray-100">
+                        <td 
+                          colSpan={2} 
+                          className="border border-black p-2 font-semibold"
+                        >
+                          {bucket.name} {bucket.isOptional ? '(Optional)' : ''}
+                        </td>
+                      </tr>
+                    )}
+                    
+                    {/* Component Rows */}
+                    {bucket.components.map((component, componentIndex) => (
+                      <tr key={`${termIndex}-${bucketIndex}-${componentIndex}`}>
+                        <td className="border border-black p-2 pl-4">{component.name}</td>
+                        <td className="border border-black p-2 text-right">
+                          {parseFloat(component.amount).toLocaleString('en-KE', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+                
+                {/* Term Subtotal */}
+                <tr className="bg-gray-100">
+                  <td className="border border-black p-2 font-semibold">{term.term.toUpperCase()} SUBTOTAL</td>
+                  <td className="border border-black p-2 text-right font-semibold">
+                    {calculateTermTotal(termIndex).toLocaleString('en-KE', { 
+                      minimumFractionDigits: 2, 
+                      maximumFractionDigits: 2 
+                    })}
+                  </td>
+                </tr>
+              </React.Fragment>
+            ))}
+            
+            {/* Grand Total */}
+            <tr className="bg-gray-300 font-bold">
               <td className="border border-black p-2">TOTAL</td>
               <td className="border border-black p-2 text-right">
                 {calculateGrandTotal().toLocaleString('en-KE', { 
