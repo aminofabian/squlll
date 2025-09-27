@@ -8,9 +8,31 @@ interface ValidationError {
   anchorId?: string
 }
 
+interface TermComponent {
+  amount?: string | number;
+  // Add other properties as needed
+}
+
+interface Bucket {
+  components?: TermComponent[];
+  // Add other properties as needed
+}
+
+interface TermStructure {
+  buckets: Bucket[];
+  // Add other properties as needed
+}
+
+interface FeeFormData {
+  name: string;
+  academicYear: string;
+  termStructures: TermStructure[];
+  // Add other properties as needed
+}
+
 interface ValidationChecklistProps {
   validationErrors: ValidationError[]
-  formData: any
+  formData: FeeFormData
   selectedGrades: string[]
 }
 
@@ -36,15 +58,15 @@ export const ValidationChecklist: React.FC<ValidationChecklistProps> = ({
     },
     {
       label: 'Buckets per Term',
-      isValid: formData.termStructures.every(t => (t.buckets?.length ?? 0) > 0)
+      isValid: formData.termStructures.every((t: TermStructure) => (t.buckets?.length ?? 0) > 0)
     },
     {
       label: 'Components per Bucket',
-      isValid: formData.termStructures.every(t => t.buckets.every(b => (b.components?.length ?? 0) > 0))
+      isValid: formData.termStructures.every((t: TermStructure) => t.buckets.every((b: Bucket) => (b.components?.length ?? 0) > 0))
     },
     {
       label: 'Amounts filled',
-      isValid: formData.termStructures.every(t => t.buckets.every(b => b.components.every(c => String(c.amount ?? '').trim() !== '')))
+      isValid: formData.termStructures.every((t: TermStructure) => t.buckets.every((b: Bucket) => b.components?.every((c: TermComponent) => String(c.amount ?? '').trim() !== '')))
     }
   ]
 
