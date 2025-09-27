@@ -23,7 +23,7 @@ export const PaymentModesSection: React.FC<PaymentModesSectionProps> = ({
               <input
                 className="w-full bg-transparent border-0 border-b border-primary/30 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 px-1"
                 value={formData.paymentModes?.bankAccounts?.[0]?.bankName || ''}
-                onChange={(e) => setFormData(prev => ({
+                onChange={(e) => setFormData((prev: any) => ({
                   ...prev,
                   paymentModes: {
                     ...prev.paymentModes!,
@@ -41,7 +41,7 @@ export const PaymentModesSection: React.FC<PaymentModesSectionProps> = ({
               <input
                 className="w-full bg-transparent border-0 border-b border-primary/30 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 px-1"
                 value={formData.paymentModes?.bankAccounts?.[0]?.accountNumber || ''}
-                onChange={(e) => setFormData(prev => ({
+                onChange={(e) => setFormData((prev: any) => ({
                   ...prev,
                   paymentModes: {
                     ...prev.paymentModes!,
@@ -59,7 +59,7 @@ export const PaymentModesSection: React.FC<PaymentModesSectionProps> = ({
               <input
                 className="w-full bg-transparent border-0 border-b border-primary/30 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 px-1"
                 value={formData.schoolDetails?.name || ''}
-                onChange={(e) => setFormData(prev => ({
+                onChange={(e) => setFormData((prev: any) => ({
                   ...prev,
                   schoolDetails: { ...prev.schoolDetails!, name: e.target.value }
                 }))}
@@ -71,7 +71,7 @@ export const PaymentModesSection: React.FC<PaymentModesSectionProps> = ({
               <input
                 className="w-full bg-transparent border-0 border-b border-primary/30 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 px-1"
                 value={formData.paymentModes?.bankAccounts?.[0]?.branch || ''}
-                onChange={(e) => setFormData(prev => ({
+                onChange={(e) => setFormData((prev: any) => ({
                   ...prev,
                   paymentModes: {
                     ...prev.paymentModes!,
@@ -95,7 +95,7 @@ export const PaymentModesSection: React.FC<PaymentModesSectionProps> = ({
               <select
                 className="w-full bg-transparent border-0 border-b border-primary/30 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 px-1"
                 value={formData.boardingType}
-                onChange={(e) => setFormData(prev => ({ ...prev, boardingType: e.target.value as any }))}
+                onChange={(e) => setFormData((prev: any) => ({ ...prev, boardingType: e.target.value as any }))}
               >
                 <option value="day">Day Students Only</option>
                 <option value="boarding">Boarding Students Only</option>
@@ -107,7 +107,7 @@ export const PaymentModesSection: React.FC<PaymentModesSectionProps> = ({
               <input
                 className="w-full bg-transparent border-0 border-b border-primary/30 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary/30 px-1"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setFormData((prev: any) => ({ ...prev, name: e.target.value }))}
                 placeholder="e.g., Primary School Fee Structure 2024"
               />
             </div>
