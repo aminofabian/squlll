@@ -767,11 +767,27 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         throw new Error(`Selected term ${termName} not found in academic year ${selectedAcademicYear.name}`);
       }
 
-      // Create a single fee structure for all selected grades
+      // Collect all term IDs from all term structures
+      const allTermIds = formData.termStructures.map(termStructure => {
+        // Find the term ID for the term name in this structure
+        const termName = termStructure.term;
+        const term = selectedAcademicYear.terms?.find(t => t.name === termName);
+        if (!term) {
+          console.warn(`Term '${termName}' not found in academic year ${selectedAcademicYear.name}`);
+          return null;
+        }
+        return term.id;
+      }).filter(id => id !== null) as string[];
+
+      if (allTermIds.length === 0) {
+        throw new Error('No valid terms found in the fee structure');
+      }
+
+      // Create a single fee structure for all selected grades with all term IDs
       const createdFeeStructure = await createFeeStructure({
         name: formData.name,
         academicYearId: selectedAcademicYear.id,
-        termId: selectedTerm.id,
+        termIds: allTermIds, // Use all collected term IDs
         gradeLevelIds: selectedGrades
       });
       

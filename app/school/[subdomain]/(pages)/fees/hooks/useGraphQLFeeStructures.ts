@@ -37,7 +37,7 @@ export interface GraphQLFeeStructure {
   id: string;
   name: string;
   academicYear: GraphQLAcademicYear | null;
-  term: GraphQLTerm | null;
+  terms: GraphQLTerm[] | null;
   gradeLevels: GraphQLGradeLevel[];
   items: GraphQLFeeStructureItem[];
   isActive: boolean;
@@ -53,7 +53,7 @@ export interface FeeStructuresResponse {
 export interface UpdateFeeStructureInput {
   name?: string;
   academicYearId?: string;
-  termId?: string;
+  termIds?: string[];
   isActive?: boolean;
 }
 
@@ -61,7 +61,7 @@ export interface UpdateFeeStructureInput {
 export interface CreateFeeStructureInput {
   name: string;
   academicYearId: string;
-  termId: string;
+  termIds: string[];
   gradeLevelIds: string[];
 }
 
@@ -92,7 +92,7 @@ export const useGraphQLFeeStructures = () => {
               id
               name
             }
-            term {
+            terms {
               id
               name
             }
@@ -318,7 +318,7 @@ export const useGraphQLFeeStructures = () => {
               id
               name
             }
-            term {
+            terms {
               id
               name
             }

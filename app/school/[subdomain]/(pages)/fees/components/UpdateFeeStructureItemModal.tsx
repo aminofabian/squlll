@@ -22,9 +22,9 @@ interface FeeStructureItem {
     academicYear?: {
       name: string
     }
-    term?: {
+    terms?: {
       name: string
-    }
+    }[]
   }
 }
 
@@ -98,7 +98,7 @@ export const UpdateFeeStructureItemModal = ({
                   academicYear {
                     name
                   }
-                  term {
+                  terms {
                     name
                   }
                 }
@@ -158,7 +158,9 @@ export const UpdateFeeStructureItemModal = ({
                     <div className="text-xs text-slate-500 mt-1">
                       {feeStructureItem.feeStructure.name} • 
                       {feeStructureItem.feeStructure.academicYear?.name && ` ${feeStructureItem.feeStructure.academicYear.name} •`} 
-                      {feeStructureItem.feeStructure.term?.name || ''}
+                      {feeStructureItem.feeStructure.terms && feeStructureItem.feeStructure.terms.length > 0 
+                        ? feeStructureItem.feeStructure.terms[0].name 
+                        : ''}
                     </div>
                   )}
                 </div>
