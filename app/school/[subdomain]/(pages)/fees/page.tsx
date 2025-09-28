@@ -205,7 +205,7 @@ export default function FeesPage() {
           // Use the academic year ID and term ID from the user's example
           // In a real app, these would come from dropdowns or selections
           academicYearId: "0216c3ab-7197-4538-97be-0527b3a8a164",
-          termId: "6d17670b-11e4-430f-828b-c48e746b5507"
+          termIds: ["6d17670b-11e4-430f-828b-c48e746b5507"]
         };
         
         result = await graphqlUpdateFeeStructure(selectedStructure.id, updateInput);
