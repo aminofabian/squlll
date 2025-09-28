@@ -153,6 +153,7 @@ export const FeeStructureManager = ({
       academicYearId: string
       termName: string
       termId: string
+      terms: Array<{ id: string; name: string }>
       gradeLevels: Array<{ 
         id: string; 
         shortName: string | null; 
@@ -197,6 +198,7 @@ export const FeeStructureManager = ({
         academicYearId: structure.academicYear?.id || '',
         termName: structure.terms && structure.terms.length > 0 ? structure.terms[0].name : 'N/A',
         termId: structure.terms && structure.terms.length > 0 ? structure.terms[0].id : '',
+        terms: structure.terms || [],
         gradeLevels: structure.gradeLevels || [],
         buckets: Array.from(bucketMap.values()),
         isActive: structure.isActive,
@@ -352,14 +354,35 @@ export const FeeStructureManager = ({
               {structures && structures.length > 0 ? (
                 graphQLStructures.length > 0 ? (
                 /* Display GraphQL data if available */
-                graphQLStructures.map((structure) => (
+                graphQLStructures.map((structure: {
+                  structureId: string;
+                  structureName: string;
+                  academicYear: string;
+                  academicYearId: string;
+                  termName: string;
+                  termId: string;
+                  terms: Array<{ id: string; name: string }>;
+                  gradeLevels: any[];
+                  buckets: Array<{ id: string; name: string; totalAmount: number; isOptional: boolean }>;
+                  isActive: boolean;
+                  createdAt: string;
+                  updatedAt: string;
+                }) => (
                   <Card key={structure.structureId} className="hover:shadow-md transition-shadow">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="flex items-center gap-2">
+                          <CardTitle className="flex flex-wrap items-center gap-2">
                             {structure.structureName}
-                            <Badge variant="outline">{structure.termName || 'N/A'}</Badge>
+                            <div className="flex flex-wrap gap-1">
+                              {structure.terms && structure.terms.length > 0 ? (
+                                structure.terms.map((term: { id: string; name: string }) => (
+                                  <Badge key={term.id} variant="outline">{term.name}</Badge>
+                                ))
+                              ) : (
+                                <Badge variant="outline">No Terms</Badge>
+                              )}
+                            </div>
                             {structure.isActive ? (
                               <Badge variant="default">Active</Badge>
                             ) : (
@@ -608,16 +631,28 @@ export const FeeStructureManager = ({
                           </div>
                         </div>
                         {/* Fee Buckets Preview */}
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Fee Buckets (Term 1):</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {structure.termStructures[0]?.buckets.map((bucket) => (
-                              <Badge key={bucket.id} variant="outline" className="text-xs">
-                                {bucket.name}: KES {bucket.amount.toLocaleString()}
-                                {bucket.isOptional && ' (Optional)'}
-                              </Badge>
-                            ))}
-                          </div>
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-medium">Fee Buckets:</h4>
+                          {/* Display buckets by term */}
+                          {(structure as any).terms && (structure as any).terms.map((term: { id: string; name: string }) => (
+                            <div key={term.id} className="border-l-2 border-primary pl-3 py-1">
+                              <h5 className="text-xs font-medium mb-1">{term.name}:</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {(structure as any).buckets.map((bucket: { id: string; name: string; totalAmount: number; isOptional: boolean }) => (
+                                  <Badge key={`${term.id}-${bucket.id}`} variant="outline" className="text-xs">
+                                    {bucket.name}: KES {bucket.totalAmount.toLocaleString()}
+                                    {bucket.isOptional && ' (Optional)'}
+                                  </Badge>
+                                ))}
+                                {(structure as any).buckets.length === 0 && (
+                                  <span className="text-xs text-slate-500">No buckets defined</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {(!(structure as any).terms || (structure as any).terms.length === 0) && (
+                            <div className="text-xs text-slate-500">No terms defined</div>
+                          )}
                         </div>
                         {/* Action Buttons */}
                         <div className="flex gap-2 mt-4">
@@ -636,7 +671,7 @@ export const FeeStructureManager = ({
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => onGenerateInvoices(structure.id, 'Term 1')}
+                            onClick={() => onGenerateInvoices(structure.id, (structure as any).termName || 'Term 1')}
                           >
                             <FileText className="h-4 w-4 mr-1" />
                             Generate Invoices
