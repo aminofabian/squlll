@@ -104,7 +104,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <div className="flex items-center">
+            <div className="flex items-center max-w-xs lg:max-w-sm">
               <div className="flex-shrink-0 flex items-center">
                 <div className="relative">
                   {/* Main logo */}
@@ -112,32 +112,32 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                     <img
                       src={branding.logos.primary as string}
                       alt={`${resolvedSchoolName} logo`}
-                      className="w-14 h-14 object-contain border-2 border-white shadow-lg bg-white"
+                      className="w-12 h-12 md:w-14 md:h-14 object-contain border-2 border-white shadow-lg bg-white"
                     />
                   ) : (
-                    <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary-light to-primary-dark border-3 border-white shadow-lg flex items-center justify-center relative overflow-hidden">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-primary via-primary-light to-primary-dark border-3 border-white shadow-lg flex items-center justify-center relative overflow-hidden">
                       <div className="absolute inset-0 bg-white/10"></div>
-                      <Building2 className="h-7 w-7 text-white z-10 relative" />
-                      <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 border border-yellow-500 flex items-center justify-center z-20">
-                        <BookOpen className="h-2.5 w-2.5 text-primary-dark" />
+                      <Building2 className="h-6 w-6 md:h-7 md:w-7 text-white z-10 relative" />
+                      <div className="absolute top-1 right-1 w-3 h-3 md:w-4 md:h-4 bg-yellow-400 border border-yellow-500 flex items-center justify-center z-20">
+                        <BookOpen className="h-2 w-2 md:h-2.5 md:w-2.5 text-primary-dark" />
                       </div>
-                      <div className="absolute bottom-1 left-1 w-3 h-3 bg-white border border-primary-dark flex items-center justify-center z-20">
-                        <Star className="h-1.5 w-1.5 text-primary fill-current" />
+                      <div className="absolute bottom-1 left-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-white border border-primary-dark flex items-center justify-center z-20">
+                        <Star className="h-1 w-1 md:h-1.5 md:w-1.5 text-primary fill-current" />
                       </div>
                     </div>
                   )}
                   
                   {/* School name abbreviation overlay */}
-                  <div className="absolute -bottom-2 -right-1 w-6 h-6 bg-primary-dark border-2 border-white flex items-center justify-center text-xs font-black text-white">
+                  <div className="absolute -bottom-1.5 -right-0.5 md:-bottom-2 md:-right-1 w-5 h-5 md:w-6 md:h-6 bg-primary-dark border-2 border-white flex items-center justify-center text-xs font-black text-white">
                     {resolvedSchoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                 </div>
                 
-                <div className="ml-4">
-                  <span className="text-lg font-black text-gray-900 tracking-tight block leading-tight">
+                <div className="ml-3 md:ml-4 min-w-0">
+                  <span className="text-sm md:text-lg font-black text-gray-900 tracking-tight block leading-tight truncate">
                     {resolvedSchoolName.toUpperCase()}
                   </span>
-                  <span className="text-xs font-semibold text-primary uppercase tracking-tight">
+                  <span className="text-xs font-semibold text-primary uppercase tracking-tight truncate block">
                     {tagline.toUpperCase()}
                   </span>
                 </div>
