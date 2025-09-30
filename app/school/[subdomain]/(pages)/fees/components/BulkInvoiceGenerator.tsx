@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,10 +18,12 @@ import {
   Calendar,
   FileText,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react'
-import { FeeStructure, Grade, BulkInvoiceGeneration } from '../types'
-import { mockFeeStructures, mockGrades } from '../data/mockData'
+import { FeeStructure, Grade, BulkInvoiceGeneration, TermFeeStructure, FeeBucket, FeeComponent } from '../types'
+import { useGraphQLFeeStructures } from '../hooks/useGraphQLFeeStructures'
+import { useGradeData } from '../hooks/useGradeData'
 
 interface BulkInvoiceGeneratorProps {
   isOpen: boolean
@@ -38,11 +40,136 @@ export const BulkInvoiceGenerator = ({
   preselectedStructureId,
   preselectedTerm
 }: BulkInvoiceGeneratorProps) => {
-  const [feeStructures] = useState<FeeStructure[]>(mockFeeStructures)
-  const [grades] = useState<Grade[]>(mockGrades)
+  const { structures: graphQLFeeStructures, isLoading: isLoadingStructures, fetchFeeStructures } = useGraphQLFeeStructures()
+  const { grades: graphQLGrades, isLoading: isLoadingGrades, fetchGradeData } = useGradeData()
+  
+  const [feeStructures, setFeeStructures] = useState<FeeStructure[]>([])
+  const [grades, setGrades] = useState<Grade[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [generationComplete, setGenerationComplete] = useState(false)
+
+  // Fetch data from API on component mount, only once when component mounts
+  useEffect(() => {
+    // Store a flag in state to prevent duplicate requests
+    const controller = new AbortController();
+    const signal = controller.signal;
+    
+    const fetchData = async () => {
+      try {
+        if (graphQLFeeStructures.length === 0) {
+          await fetchFeeStructures();
+        }
+        
+        if (graphQLGrades.length === 0) {
+          await fetchGradeData();
+        }
+      } catch (error) {
+        if (!signal.aborted) {
+          console.error('Error fetching data:', error);
+        }
+      }
+    };
+    
+    fetchData();
+    
+    // Cleanup function to abort any pending requests
+    return () => {
+      controller.abort();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])  // Empty dependency array means this runs once on mount
+  
+  // Transform GraphQL fee structures to the format expected by component
+  // Add a reference check to prevent unnecessary re-processing
+  useEffect(() => {
+    if (graphQLFeeStructures.length > 0 && feeStructures.length === 0) {
+      console.log('Transforming fee structures from GraphQL response');
+      const transformedStructures: FeeStructure[] = graphQLFeeStructures.map(gqlStructure => {
+        // Extract terms from GraphQL structure
+        const terms = gqlStructure.terms || []
+        
+        // Create term structures based on terms and fee items
+        const termStructures: TermFeeStructure[] = terms.map(term => {
+          // Get fee items that belong to this term
+          const termItems = gqlStructure.items || []
+          
+          // Group items by bucket
+          const bucketMap = new Map<string, FeeBucket>()
+          
+          termItems.forEach(item => {
+            const bucketId = item.feeBucket.id
+            if (!bucketMap.has(bucketId)) {
+              bucketMap.set(bucketId, {
+                id: bucketId,
+                type: 'tuition', // Default type
+                name: item.feeBucket.name,
+                description: '',
+                amount: 0,
+                isOptional: !item.isMandatory,
+                components: []
+              })
+            }
+            
+            // Add the amount to the bucket total
+            const bucket = bucketMap.get(bucketId)!
+            bucket.amount += item.amount
+            
+            // Add as a component
+            const component: FeeComponent = {
+              id: item.id,
+              name: item.feeBucket.name,
+              description: '',
+              amount: item.amount,
+              category: 'general'
+            }
+            
+            bucket.components.push(component)
+          })
+          
+          // Convert bucket map to array
+          const buckets = Array.from(bucketMap.values())
+          
+          // Calculate total amount for the term
+          const totalAmount = buckets.reduce((sum, bucket) => sum + bucket.amount, 0)
+          
+          return {
+            id: term.id,
+            term: term.name as 'Term 1' | 'Term 2' | 'Term 3',
+            buckets,
+            totalAmount,
+            dueDate: new Date().toISOString().split('T')[0], // Default due date
+            latePaymentFee: 0, // Default late payment fee
+          }
+        })
+        
+        return {
+          id: gqlStructure.id,
+          name: gqlStructure.name,
+          grade: gqlStructure.gradeLevels.map(gl => gl.gradeLevel?.name || gl.shortName || '').join(', '),
+          boardingType: 'both' as 'day' | 'boarding' | 'both', // Type cast to match the required type
+          academicYear: gqlStructure.academicYear?.name || new Date().getFullYear().toString(),
+          isActive: gqlStructure.isActive,
+          createdDate: gqlStructure.createdAt,
+          lastModified: gqlStructure.updatedAt,
+          termStructures
+        }
+      })
+      
+      setFeeStructures(transformedStructures)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphQLFeeStructures])
+  
+  // Transform GraphQL grades to the expected format
+  // Add a reference check to prevent unnecessary re-processing
+  useEffect(() => {
+    if (graphQLGrades.length > 0 && grades.length === 0) {
+      console.log('Setting grades from GraphQL response');
+      setGrades(graphQLGrades);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphQLGrades])
 
   const [formData, setFormData] = useState<BulkInvoiceGeneration>({
     feeStructureId: preselectedStructureId || '',
@@ -216,44 +343,51 @@ export const BulkInvoiceGenerator = ({
                   <CardTitle>Select Fee Structure & Term</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Fee Structure</Label>
-                      <Select 
-                        value={formData.feeStructureId} 
-                        onValueChange={(value) => updateFormData('feeStructureId', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select fee structure" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {feeStructures.map(structure => (
-                            <SelectItem key={structure.id} value={structure.id}>
-                              {structure.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  {isLoadingStructures ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="ml-2 text-lg">Loading fee structures...</span>
                     </div>
-                    <div>
-                      <Label>Term</Label>
-                      <Select 
-                        value={formData.term} 
-                        onValueChange={(value) => updateFormData('term', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {selectedStructure?.termStructures.map(term => (
-                            <SelectItem key={term.id} value={term.term}>
-                              {term.term}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Fee Structure</Label>
+                        <Select 
+                          value={formData.feeStructureId} 
+                          onValueChange={(value) => updateFormData('feeStructureId', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select fee structure" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {feeStructures.map(structure => (
+                              <SelectItem key={structure.id} value={structure.id}>
+                                {structure.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Term</Label>
+                        <Select 
+                          value={formData.term} 
+                          onValueChange={(value) => updateFormData('term', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedStructure?.termStructures.map(term => (
+                              <SelectItem key={term.id} value={term.term}>
+                                {term.term}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {selectedStructure && (
                     <div className="p-4 bg-gray-50 rounded-lg">
@@ -275,7 +409,19 @@ export const BulkInvoiceGenerator = ({
               </Card>
 
               {/* Grade Selection */}
-              {availableGrades.length > 0 && (
+              {isLoadingGrades ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Select Classes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <span className="ml-2 text-lg">Loading classes...</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : availableGrades.length > 0 && (
                 <Card>
                   <CardHeader>
                     <div className="flex justify-between items-center">

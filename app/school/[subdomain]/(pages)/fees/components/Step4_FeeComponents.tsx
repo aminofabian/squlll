@@ -160,6 +160,33 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
     }));
   };
 
+  // Existing bucket amounts per term (one row per existing bucket)
+  const getExistingBucketAmount = (termIndex: number, bucketId: string) => {
+    const term = formData.termStructures[termIndex];
+    return term?.existingBucketAmounts?.[bucketId] ?? '';
+  };
+
+  const setExistingBucketAmount = (termIndex: number, bucketId: string, value: string) => {
+    setFormData((prev: any) => {
+      const term = prev.termStructures[termIndex] || {};
+      const existing = term.existingBucketAmounts || {};
+      return {
+        ...prev,
+        termStructures: prev.termStructures.map((t: any, i: number) =>
+          i === termIndex
+            ? {
+                ...t,
+                existingBucketAmounts: {
+                  ...existing,
+                  [bucketId]: value,
+                },
+              }
+            : t
+        ),
+      };
+    });
+  };
+
   // Functions for handling existing bucket selection
   const handleBucketSelect = (bucketId: string) => {
     setSelectedExistingBuckets(prev => 
@@ -317,6 +344,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
   // Track selected voteheads to remove them from available options
   const [selectedVoteheads, setSelectedVoteheads] = useState<Set<string>>(new Set());
   const [showSelectionForComponent, setShowSelectionForComponent] = useState<string | null>(null);
+  const [voteheadSearch, setVoteheadSearch] = useState<string>('');
 
   // Auto-hide selection when user clicks outside
   React.useEffect(() => {
@@ -350,7 +378,32 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
   }, [showSelectionForComponent]);
 
   // Direct button selection with immediate hiding after selection
-  const selectVotehead = (termIndex: number, bucketIndex: number, componentIndex: number, votehead: any) => {
+  const selectVotehead = async (termIndex: number, bucketIndex: number, componentIndex: number, votehead: any) => {
+    // First, create a persistent bucket in DB for this votehead
+    let createdBucket: { id: string; name: string; description: string } | null = null;
+    try {
+      createdBucket = await createFeeBucket({
+        name: votehead.name,
+        description: votehead.description || ''
+      });
+      // Ensure newly created bucket appears in existing list
+      await refetchBuckets();
+    } catch (e) {
+      // Non-blocking: proceed with local update even if creation fails
+      createdBucket = null;
+    }
+
+    // Update current bucket with the created bucket (treat as existing)
+    if (createdBucket) {
+      updateBucket(termIndex, bucketIndex, 'id', createdBucket.id);
+      updateBucket(termIndex, bucketIndex, 'name', createdBucket.name);
+      updateBucket(termIndex, bucketIndex, 'description', createdBucket.description || '');
+    } else {
+      // Fallback: local-only selection
+      updateBucket(termIndex, bucketIndex, 'name', votehead.name);
+      updateBucket(termIndex, bucketIndex, 'description', votehead.description || '');
+    }
+
     // Update the current component with the selected votehead
     updateComponent(termIndex, bucketIndex, componentIndex, 'name', votehead.name);
     updateComponent(termIndex, bucketIndex, componentIndex, 'description', votehead.description);
@@ -400,8 +453,14 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
   // Function to get available voteheads, excluding those already selected
   const getAvailableVoteheads = (termIndex: number) => {
     const allVoteheads = Array.from(getAllVoteheads(termIndex));
-    return allVoteheads.filter(votehead => 
+    const filtered = allVoteheads.filter(votehead => 
       !selectedVoteheads.has(votehead.name.toLowerCase().trim())
+    );
+    if (!voteheadSearch.trim()) return filtered;
+    const q = voteheadSearch.toLowerCase().trim();
+    return filtered.filter(v => 
+      v.name.toLowerCase().includes(q) ||
+      (v.description || '').toLowerCase().includes(q)
     );
   };
 
@@ -782,18 +841,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
   return (
     <Fragment>
       <div className="animate-in fade-in duration-300">
-      {/* Preview Button */}
-      <div className="flex justify-end mb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setPreviewModalOpen(true)}
-          className="flex items-center gap-2 bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 shadow-sm"
-        >
-          <Eye className="h-4 w-4" />
-          Preview Fee Components PDF
-        </Button>
-      </div>
+      {/* Review preview removed from Step 4; it will show in Step 5 */}
       
       {/* Introduction section */}
       <div className="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-5 shadow-sm">
@@ -1087,6 +1135,42 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                         </tr>
                       ),
                       
+                      // Show all existing buckets for this term (one per row, amount only)
+                      feeBuckets.map((bucket) => (
+                        <tr key={`term-${termIndex}-existing-${bucket.id}`} className="hover:bg-primary/5">
+                          <td className="border border-primary/30 p-3">
+                            {/** empty cell for Term column except first row spacing handled above */}
+                          </td>
+                          <td className="border border-primary/30 p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium text-slate-800">{bucket.name}</div>
+                              <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                Existing
+                              </Badge>
+                            </div>
+                            {bucket.description ? (
+                              <div className="text-[10px] text-slate-500 mt-0.5">{bucket.description}</div>
+                            ) : null}
+                          </td>
+                          <td className="border border-primary/30 p-3 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <span className="text-[10px] text-slate-500">KES</span>
+                              <input
+                                type="number"
+                                className="w-32 bg-white border border-slate-200 rounded px-2 py-1 text-right focus:bg-primary/5 focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                value={getExistingBucketAmount(termIndex, bucket.id)}
+                                onChange={(e) => setExistingBucketAmount(termIndex, bucket.id, e.target.value)}
+                                placeholder="0.00"
+                                min="0"
+                              />
+                            </div>
+                          </td>
+                          <td className="border border-primary/30 p-3 text-center">
+                            <div className="text-[10px] text-slate-400">—</div>
+                          </td>
+                        </tr>
+                      )),
+
                       // Process all components in all buckets of this term
                       ...term.buckets.flatMap((bucket: any, bucketIndex: number) => 
                         bucket.components.map((component: any, componentIndex: number) => {
@@ -1198,15 +1282,24 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                                     </div>
                                   ) : (
                                     <div>
-                                      {/* Simple header */}
-                                      <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-1.5">
+                                      {/* Header with search */}
+                                      <div className="flex items-center justify-between mb-2 gap-2">
+                                        <div className="flex items-center gap-1.5 shrink-0">
                                           <Star className="h-3.5 w-3.5 text-primary" />
                                           <span className="text-xs font-medium text-slate-700">Select votehead</span>
                                         </div>
-                                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                          {getAvailableVoteheads(termIndex).length}
-                                        </Badge>
+                                        <div className="flex items-center gap-2 grow">
+                                          <input
+                                            type="text"
+                                            value={voteheadSearch}
+                                            onChange={(e) => setVoteheadSearch(e.target.value)}
+                                            placeholder="Search voteheads..."
+                                            className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30"
+                                          />
+                                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 shrink-0">
+                                            {getAvailableVoteheads(termIndex).length}
+                                          </Badge>
+                                        </div>
                                       </div>
                                       
                                       {/* Smart suggestions row (if available) */}

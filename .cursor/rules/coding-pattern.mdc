@@ -1,0 +1,874 @@
+---
+alwaysApply: true
+description: "NestJS + TypeORM best practices for entities, repositories, services, and orchestration patterns"
+autoAttach: ["**/*.entity.ts", "**/*.repository.ts", "**/*.service.ts", "**/*.orchestrator.ts", "**/*.module.ts"]
+---
+
+# 🧠 **NestJS + TypeORM: Entity & Repository Best Practices**
+
+> ✨ **Philosophy**: Simple > clever. Readable > compact. Correct > fast.  
+> 🎯 **Goal**: Build maintainable, testable, and domain-rich applications without over-engineering.
+
+---
+
+## ✅ 1. **Use Injectable Repository Services (Not Extended Repositories)**
+
+### ❌ Bad: Extending `Repository<T>` (fragile, deprecated pattern)
+
+```ts
+// DON'T DO THIS
+@Injectable()
+export class UserRepository extends Repository<User> {
+  constructor(@InjectRepository(User) base: Repository<User>) {
+    super(base.target, base.manager, base.queryRunner); // ❌ Fragile!
+  }
+}
+```
+
+> 🔴 **Why?**
+>
+> - Breaks TypeORM metadata in v0.3+
+> - Not officially supported by NestJS
+> - Hard to test and maintain
+
+---
+
+### ✅ Good: Wrap the base repository in an injectable service
+
+```ts
+// user.repository.ts
+@Injectable()
+export class UserRepository {
+  constructor(
+    @InjectRepository(User)
+    private readonly repo: Repository<User>,
+  ) {}
+
+  async save(user: User): Promise<User> {
+    return this.repo.save(user);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.repo.findOneBy({ email });
+  }
+}
+```
+
+> ✅ **Why?**
+>
+> - Safe, simple, and officially recommended
+> - Easy to mock in tests
+> - Fully compatible with TypeORM v0.3+
+
+---
+
+## ✅ 2. **Create Entities with `new Entity()` + `Object.assign()` — Preferably in a Factory**
+
+### ❌ Bad: Raw mapping in services
+
+```ts
+// In service — ❌ Don't do this
+const user = new User();
+user.name = row.firstName + ' ' + row.lastName;
+user.email = row.email?.toLowerCase();
+user.createdAt = new Date();
+```
+
+> 🔴 **Why?**
+>
+> - Duplicated everywhere (CSV, API, CLI)
+> - Hard to test
+> - No single source of truth for "what is a valid user?"
+
+---
+
+### ✅ Good: Use a **static factory on the entity** (minimal logic)
+
+```ts
+// user.entity.ts
+@Entity()
+export class User {
+  @Column() name: string;
+  @Column() email: string;
+  @Column() createdAt: Date;
+
+  // ✅ Simple, pure, reusable
+  static create(params: { name: string; email: string }): User {
+    const user = new User();
+    Object.assign(user, {
+      name: params.name.trim(),
+      email: params.email.toLowerCase().trim(),
+      createdAt: new Date(),
+    });
+    return user;
+  }
+}
+```
+
+> ✅ **Rules for `create()`**:
+>
+> - **No async**
+> - **No external dependencies** (no DB, HTTP, config)
+> - **No complex validation** (basic formatting only)
+> - **One primary method** (avoid `createFromCsv`, `createFromApi`, etc.)
+
+---
+
+### 🔄 Alternative: External factory (if you prefer 100% pure entities)
+
+```ts
+// factories/user.factory.ts
+export const createUser = (dto: CreateUserDto): User => {
+  const user = new User();
+  Object.assign(user, {
+    name: dto.name.trim(),
+    email: dto.email.toLowerCase().trim(),
+    createdAt: new Date(),
+  });
+  return user;
+};
+```
+
+> Use this if your team enforces "entities = data only".
+
+---
+
+## ✅ 3. **Keep Services Thin — Delegate to Repositories**
+
+### ❌ Bad: Service does mapping + saving
+
+```ts
+@Injectable()
+export class UserService {
+  constructor(@InjectRepository(User) private repo: Repository<User>) {}
+
+  async createUser(dto: CreateUserDto) {
+    const user = new User(); // ❌ Mapping in service
+    Object.assign(user, dto);
+    return this.repo.save(user); // ❌ Direct repo use
+  }
+}
+```
+
+---
+
+### ✅ Good: Service orchestrates; repository handles data
+
+```ts
+@Injectable()
+export class UserService {
+  constructor(private userRepository: UserRepository) {}
+
+  async createUser(dto: CreateUserDto): Promise<User> {
+    const user = User.create(dto); // ✅ Entity factory
+    return this.userRepository.save(user); // ✅ Delegated to repo
+  }
+}
+```
+
+> ✅ **Service responsibilities**:
+>
+> - Orchestrate flow
+> - Enforce business rules
+> - Handle transactions (if needed)
+> - **Not**: mapping, querying, or saving
+
+---
+
+## ✅ 4. **Never Mutate External Objects — Return Results**
+
+### ❌ Bad: Side-effect-driven processing
+
+```ts
+async processRow(row, results) {
+  const user = User.create(row);
+  results.users.push(user); // ❌ Mutates shared state
+}
+```
+
+### ✅ Good: Pure function with clear output
+
+```ts
+interface ImportResult {
+  success: boolean;
+  user?: User;
+  errors: string[];
+}
+
+async processUserRow(row: CsvRow): Promise<ImportResult> {
+  try {
+    const user = User.create(mapRowToDto(row));
+    const saved = await this.userRepo.save(user);
+    return { success: true, user: saved, errors: [] };
+  } catch (error) {
+    return { success: false, errors: [error.message] };
+  }
+}
+```
+
+---
+
+## ✅ 5. **Use Transactions for Multi-Entity Operations**
+
+### ✅ Good: Atomic import with QueryRunner
+
+```ts
+@Injectable()
+export class PropertyImportService {
+  constructor(private dataSource: DataSource) {}
+
+  async importPropertyWithUnit(row: CsvRow, companyId: string) {
+    const qr = this.dataSource.createQueryRunner();
+    await qr.connect();
+    await qr.startTransaction();
+
+    try {
+      const propRepo = qr.manager.getRepository(Property);
+      const unitRepo = qr.manager.getRepository(Unit);
+
+      const property = Property.create({ name: row.name, companyId });
+      const savedProp = await propRepo.save(property);
+
+      const unit = Unit.create({ number: row.unit, propertyId: savedProp.id });
+      await unitRepo.save(unit);
+
+      await qr.commitTransaction();
+    } catch (error) {
+      await qr.rollbackTransaction();
+      throw error;
+    } finally {
+      await qr.release();
+    }
+  }
+}
+```
+
+> 💡 Only use `DataSource` when you need transactions. Otherwise, stick to injected repos.
+
+---
+
+## ✅ 6. **Always Call `.save()` — `.create()` Does NOT Persist!**
+
+### ❌ Common mistake
+
+```ts
+const user = this.userRepo.create({ name: 'Alice' });
+// ... and stop → ❌ Not saved to DB!
+```
+
+### ✅ Always do this
+
+```ts
+const user = User.create(dto);
+await this.userRepository.save(user); // ✅ Persists
+```
+
+> 🔁 Remember:
+>
+> - `.create()` = **instantiate only** (TypeORM helper)
+> - `new User()` + `Object.assign` = **your preferred way**
+> - `.save()` = **only way to persist**
+
+---
+
+## 📋 Summary: AI Prompt Cheat Sheet
+
+> When generating NestJS + TypeORM code:
+>
+> 1. **Never extend `Repository<T>`** — use an injectable wrapper service instead
+> 2. **Create entities with `new Entity()` + `Object.assign()`**
+> 3. **Prefer `Entity.create(dto)` static factory** (minimal logic only)
+> 4. **Services should NOT map data or call `.save()` directly** — delegate to repository
+> 5. **Return results — don't mutate inputs**
+> 6. **Use `DataSource` + `QueryRunner` only for transactions**
+> 7. **Always call `.save()` to persist**
+> 8. **Keep entity factories pure: no async, no external deps, no business rules**
+> 9. **Select only needed columns — never use `SELECT *`**
+> 10. **Repository methods: ALWAYS use object notation `{field: true}` — NEVER string arrays**
+> 11. **QueryBuilder: ONLY use for complex joins/aggregations — use string arrays `['alias.field']`**
+> 12. **Simple selections: Use Repository methods, NOT QueryBuilder**
+
+---
+
+## 🌟 Final Example: Full Flow (Ideal)
+
+```ts
+// user.entity.ts
+@Entity()
+export class User {
+  static create(dto: CreateUserDto): User {
+    const user = new User();
+    Object.assign(user, {
+      name: dto.name.trim(),
+      email: dto.email.toLowerCase().trim(),
+      createdAt: new Date(),
+    });
+    return user;
+  }
+}
+
+// user.repository.ts
+@Injectable()
+export class UserRepository {
+  constructor(@InjectRepository(User) private repo: Repository<User>) {}
+  save(user: User) { return this.repo.save(user); }
+  findByEmail(email: string) { return this.repo.findOneBy({ email }); }
+}
+
+// user.service.ts
+@Injectable()
+export class UserService {
+  constructor(private userRepo: UserRepository) {}
+
+  async createUser(dto: CreateUserDto) {
+    const existing = await this.userRepo.findByEmail(dto.email);
+    if (existing) throw new Error('User exists');
+
+    const user = User.create(dto);
+    return this.userRepo.save(user);
+  }
+}
+```
+
+## ✅ 7. **Never Hardcode `createdAt` or `updatedAt` — Let TypeORM Handle It**
+
+### ❌ Bad: Manually setting timestamps in factories or services
+
+```ts
+// DON'T DO THIS
+static create(dto: CreateUserDto): User {
+  const user = new User();
+  Object.assign(user, {
+    name: dto.name,
+    email: dto.email,
+    createdAt: new Date(),   // ❌
+    updatedAt: new Date(),   // ❌
+  });
+  return user;
+}
+```
+
+> 🔴 **Why it’s bad**:
+>
+> - Bypasses TypeORM’s built-in timestamp management
+> - Causes **inconsistent times** (e.g., `createdAt` set in factory, but `updatedAt` updated later by DB)
+> - Makes **unit tests flaky** (time changes on every run)
+> - Prevents using **database-level defaults** (e.g., `DEFAULT CURRENT_TIMESTAMP`)
+
+---
+
+### ✅ Good: Use TypeORM’s `@CreateDateColumn()` and `@UpdateDateColumn()`
+
+```ts
+// user.entity.ts
+import { Entity, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+
+@Entity()
+export class User {
+  @Column()
+  name: string;
+
+  @Column()
+  email: string;
+
+  @CreateDateColumn({ type: 'timestamptz' })    // ✅ Auto-set on INSERT
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })    // ✅ Auto-updated on UPDATE
+  updatedAt: Date;
+
+  // Factory does NOT set timestamps
+  static create(dto: CreateUserDto): User {
+    const user = new User();
+    Object.assign(user, {
+      name: dto.name.trim(),
+      email: dto.email.toLowerCase().trim(),
+      // ✅ createdAt/updatedAt omitted — TypeORM handles them
+    });
+    return user;
+  }
+}
+```
+
+> ✅ **Benefits**:
+>
+> - **Consistent**: DB and app agree on time logic
+> - **Testable**: You can mock or freeze time at the DB level if needed
+> - **Declarative**: Intent is clear in the entity schema
+> - **Database-optimized**: Uses native `DEFAULT` and `ON UPDATE` clauses (in MySQL/PostgreSQL)
+
+---
+
+### 🔄 Exception: When You _Must_ Set Timestamps Manually (Rare)
+
+Only in **data migration**, **historical import**, or **audit replay** scenarios:
+
+```ts
+// In a migration or import script ONLY
+const user = new User();
+Object.assign(user, {
+  name: 'Legacy User',
+  email: 'legacy@example.com',
+  createdAt: new Date('2020-01-01'), // ✅ Allowed for backfill
+  updatedAt: new Date('2023-05-15'),
+});
+```
+
+> 💡 Even then, prefer using **TypeORM’s `@Column({ default: ... })` with raw SQL** or **seeding tools**.
+
+---
+
+Of course. Here are some rules and examples about orchestration that fit perfectly with your existing guide.
+
+---
+
+## ✅ 8. **Separate Business Logic (Services) from Workflows (Orchestrators)**
+
+A **Service** performs a single, specific business action (e.g., "create a user," "find a property"). An **Orchestrator** (or Workflow) coordinates multiple services to fulfill a complex, multi-step business process (e.g., "onboard a new tenant," which involves creating a user, creating a lease, and generating charges).
+
+### ❌ Bad: A "God Service" that does everything
+
+Here, the `LeaseService` is overloaded. It's not just managing leases; it's also creating tenants and generating charges. This creates high coupling and makes it difficult to reuse the individual pieces of logic.
+
+```typescript
+// lease.service.ts - ❌ Overloaded with unrelated responsibilities
+@Injectable()
+export class LeaseService {
+  constructor(
+    private readonly leaseRepo: LeaseRepository,
+    private readonly tenantRepo: TenantRepository, // ❌ Unrelated dependency
+    private readonly chargeRepo: ChargeRepository, // ❌ Unrelated dependency
+  ) {}
+
+  // This method is doing too much!
+  async createLeaseAndOnboardTenant(dto: OnboardDto): Promise<Lease> {
+    // 1. Tenant creation logic is mixed in
+    const tenant = Tenant.create(dto.tenantInfo);
+    const savedTenant = await this.tenantRepo.save(tenant);
+
+    // 2. Lease creation logic
+    const lease = Lease.create({
+      ...dto.leaseInfo,
+      tenantId: savedTenant.id,
+    });
+    const savedLease = await this.leaseRepo.save(lease);
+
+    // 3. Charge generation logic is mixed in
+    const charge = Charge.createInitialRent(savedLease);
+    await this.chargeRepo.save(charge);
+
+    return savedLease;
+  }
+}
+```
+
+> 🔴 **Why it's bad**:
+>
+> - **Violates Single Responsibility**: The service has three reasons to change.
+> - **Poor Reusability**: How do you create a tenant _without_ a lease? You'd have to duplicate the tenant creation logic elsewhere.
+> - **Hard to Test**: To unit-test this method, you need to mock three different repositories.
+> - **Causes Circular Dependencies**: This is the exact pattern that leads to modules needing each other in a circle.
+
+---
+
+### ✅ Good: A lean orchestrator calls focused services
+
+We separate the logic into three distinct, reusable services. The orchestrator's only job is to call them in the correct sequence. It holds the "story" of the business process.
+
+```typescript
+// tenant.service.ts - ✅ Focused on tenants
+@Injectable()
+export class TenantService {
+  constructor(private readonly tenantRepo: TenantRepository) {}
+  async create(dto: TenantDto): Promise<Tenant> {
+    const tenant = Tenant.create(dto);
+    return this.tenantRepo.save(tenant);
+  }
+}
+
+// charge.service.ts - ✅ Focused on charges
+@Injectable()
+export class ChargeService {
+  constructor(private readonly chargeRepo: ChargeRepository) {}
+  async createInitialRent(lease: Lease): Promise<Charge> {
+    const charge = Charge.createInitialRent(lease);
+    return this.chargeRepo.save(charge);
+  }
+}
+
+// lease.service.ts - ✅ Focused on leases
+@Injectable()
+export class LeaseService {
+  constructor(private readonly leaseRepo: LeaseRepository) {}
+  async create(dto: LeaseDto, tenantId: string): Promise<Lease> {
+    const lease = Lease.create({ ...dto, tenantId });
+    return this.leaseRepo.save(lease);
+  }
+}
+
+// onboard-tenant.orchestrator.ts - ✅ Clear, high-level workflow
+@Injectable()
+export class OnboardTenantOrchestrator {
+  constructor(
+    private readonly tenantService: TenantService,
+    private readonly leaseService: LeaseService,
+    private readonly chargeService: ChargeService,
+  ) {}
+
+  @Transactional() // <-- A transaction decorator is ideal here
+  async execute(dto: OnboardDto): Promise<Lease> {
+    const tenant = await this.tenantService.create(dto.tenantInfo);
+    const lease = await this.leaseService.create(dto.leaseInfo, tenant.id);
+    await this.chargeService.createInitialRent(lease);
+    return lease;
+  }
+}
+```
+
+> ✅ **Benefits**:
+>
+> - **Clear Separation of Concerns**: Each service does one thing well.
+> - **Highly Reusable**: You can now use `TenantService` anywhere you need to manage tenants.
+> - **Simple to Test**: Each service can be tested in isolation with minimal mocking.
+> - **No Circular Dependencies**: The dependency flow is one-way: Orchestrator -\> Services -\> Repositories.
+
+---
+
+## ✅ 9. **Select Only Needed Columns — Never Use `SELECT *`**
+
+### ❌ Bad: Fetching all columns when you only need a few
+
+```ts
+// DON'T DO THIS
+async findUserForLogin(email: string): Promise<User | null> {
+  return this.repo.findOneBy({ email }); // ❌ Fetches ALL columns
+}
+
+async findUsersForList(): Promise<User[]> {
+  return this.repo.find(); // ❌ Fetches ALL columns including heavy ones
+}
+
+async findUserWithPassword(email: string): Promise<User | null> {
+  return this.repo.findOne({
+    where: { email },
+    select: ['id', 'email', 'password', 'name', 'createdAt', 'updatedAt', 'lastLogin', 'profileImage', 'settings', 'metadata'] // ❌ Still too many!
+  });
+}
+```
+
+> 🔴 **Why it's bad**:
+>
+> - **Memory waste**: Loading unused columns consumes unnecessary RAM
+> - **Network overhead**: More data transferred over the wire
+> - **Performance degradation**: Slower queries, especially with large tables
+> - **Security risk**: Accidentally exposing sensitive data (passwords, tokens, etc.)
+
+---
+
+### ✅ Good: Select only what you actually need
+
+```ts
+// user.repository.ts
+@Injectable()
+export class UserRepository {
+  constructor(@InjectRepository(User) private repo: Repository<User>) {}
+
+  // ✅ Only fetch what's needed
+  async findForLogin(email: string): Promise<{ id: string; email: string; password: string } | null> {
+    return this.repo.findOne({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+      },
+    });
+  }
+
+  // ✅ Only fetch what's needed for user lists
+  async findForList(): Promise<{ id: string; name: string; email: string; createdAt: Date }[]> {
+    return this.repo.find({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  // ✅ Only fetch what's needed for profile display
+  async findForProfile(id: string): Promise<{ id: string; name: string; email: string; createdAt: Date; lastLogin: Date } | null> {
+    return this.repo.findOne({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+        lastLogin: true,
+      },
+    });
+  }
+
+  // ✅ For full entity when you need everything (rare!)
+  async findComplete(id: string): Promise<User | null> {
+    return this.repo.findOneBy({ id });
+  }
+}
+```
+
+> ✅ **Benefits**:
+>
+> - **Faster queries**: Database only processes needed columns
+> - **Lower memory usage**: Less RAM consumed per query
+> - **Reduced network traffic**: Smaller payloads over the wire
+> - **Better security**: No accidental exposure of sensitive fields
+> - **Clearer intent**: Code explicitly shows what data is needed
+
+---
+
+### 🔄 Advanced: Use QueryBuilder for Complex Selections
+
+```ts
+// For complex queries with joins and specific columns
+async findUsersWithPropertyCount(): Promise<{ id: string; name: string; propertyCount: number }[]> {
+  return this.repo
+    .createQueryBuilder('user')
+    .select(['user.id', 'user.name']) // ✅ QueryBuilder .select() still uses strings
+    .addSelect('COUNT(property.id)', 'propertyCount')
+    .leftJoin('user.properties', 'property')
+    .groupBy('user.id, user.name')
+    .getRawMany();
+}
+
+// For pagination with specific columns - USE findAndCount, NOT QueryBuilder
+async findUsersPaginated(page: number, limit: number): Promise<{ users: any[]; total: number }> {
+  const [users, total] = await this.repo.findAndCount({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { createdAt: 'DESC' },
+  });
+
+  return { users, total };
+}
+```
+
+---
+
+### 📋 **Column Selection Rules**
+
+> **When to select specific columns**:
+>
+> - ✅ **Always** for list views (only display fields)
+> - ✅ **Always** for search results (only searchable + display fields)
+> - ✅ **Always** for API responses (only what the client needs)
+> - ✅ **Always** for reports (only report fields)
+>
+> **When to fetch full entities**:
+>
+> - ✅ **Rarely** - only when you need to modify and save the entity
+> - ✅ **Rarely** - only when you need ALL fields for business logic
+> - ✅ **Rarely** - only for admin/debugging interfaces
+
+---
+
+### 🚨 **Critical Security Note**
+
+```ts
+// ❌ NEVER DO THIS - exposes sensitive data
+async findUser(email: string) {
+  return this.repo.findOneBy({ email }); // Could expose password, tokens, etc.
+}
+
+// ✅ ALWAYS DO THIS - explicit about what you need
+async findUserForApi(email: string) {
+  return this.repo.findOne({
+    where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+    },
+  });
+}
+```
+
+---
+
+### 🎯 **Rule: Always Use Object Notation for Repository Methods**
+
+### ❌ Bad: String arrays in Repository methods (error-prone, no type safety)
+
+```ts
+// DON'T DO THIS - Repository methods with string arrays
+async findUser(email: string) {
+  return this.repo.findOne({
+    where: { email },
+    select: ['id', 'email', 'password'], // ❌ String array in Repository method
+  });
+}
+
+async findUsersWithRelations() {
+  return this.repo.find({
+    select: ['id', 'name', 'email'], // ❌ String array
+    relations: ['profile', 'settings'], // ❌ String array
+  });
+}
+
+// DON'T DO THIS - QueryBuilder for simple selections
+async findUsers() {
+  return this.repo
+    .createQueryBuilder('user')
+    .select(['user.id', 'user.name', 'user.email']) // ❌ Wrong tool for simple selection
+    .getMany();
+}
+```
+
+### ✅ Good: Object notation (type-safe, IDE support)
+
+```ts
+// DO THIS
+async findUser(email: string) {
+  return this.repo.findOne({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+    },
+  });
+}
+
+async findUsersWithRelations() {
+  return this.repo.find({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+    relations: {
+      profile: true,
+      settings: true,
+    },
+  });
+}
+
+// ✅ For nested relations with specific fields
+async findUsersWithProfileDetails() {
+  return this.repo.find({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      profile: {
+        id: true,
+        bio: true,
+        avatar: true,
+      },
+    },
+    relations: {
+      profile: true,
+    },
+  });
+}
+```
+
+> ✅ **Benefits of Object Notation**:
+>
+> - **Type Safety**: TypeScript catches typos and invalid field names
+> - **IDE Support**: Autocomplete and IntelliSense work perfectly
+> - **Refactoring Safe**: Renaming entity properties updates selections automatically
+> - **Readable**: Clear intent about what fields are selected
+> - **Consistent**: Same pattern for both `select` and `relations`
+
+---
+
+### 🚨 **CRITICAL: When to Use QueryBuilder vs Repository Methods**
+
+### ❌ **NEVER Use QueryBuilder for Simple Column Selection**
+
+```ts
+// ❌ WRONG - Don't use QueryBuilder for simple selections
+async findUnits(companyId: string) {
+  return this.unitRepository
+    .createQueryBuilder('unit')
+    .select([
+      'unit.id',
+      'unit.unitNumber',
+      'unit.level',
+      'unit.unitType',
+      'unit.status',
+    ])
+    .where('unit.companyId = :companyId', { companyId })
+    .getMany();
+}
+```
+
+### ✅ **ALWAYS Use Repository Methods for Simple Column Selection**
+
+```ts
+// ✅ CORRECT - Use Repository methods with object notation
+async findUnits(companyId: string) {
+  return this.unitRepository.find({
+    where: { companyId },
+    select: {
+      id: true,
+      unitNumber: true,
+      level: true,
+      unitType: true,
+      status: true,
+    },
+  });
+}
+```
+
+### ✅ **ONLY Use QueryBuilder for Complex Operations**
+
+```ts
+// ✅ CORRECT - QueryBuilder for complex joins, aggregations, raw SQL
+async findUnitsWithPropertyCount(companyId: string) {
+  return this.unitRepository
+    .createQueryBuilder('unit')
+    .select(['unit.id', 'unit.unitNumber']) // ✅ QueryBuilder .select() uses strings
+    .addSelect('COUNT(property.id)', 'propertyCount')
+    .leftJoin('unit.property', 'property')
+    .where('unit.companyId = :companyId', { companyId })
+    .groupBy('unit.id, unit.unitNumber')
+    .getRawMany();
+}
+```
+
+### 📋 **Decision Matrix**
+
+| Scenario                | Use          | Method                  | Selection Format                |
+| ----------------------- | ------------ | ----------------------- | ------------------------------- |
+| Simple column selection | Repository   | `.find()`, `.findOne()` | Object notation `{field: true}` |
+| Simple with relations   | Repository   | `.find()`, `.findOne()` | Object notation `{field: true}` |
+| Pagination              | Repository   | `.findAndCount()`       | Object notation `{field: true}` |
+| Complex joins           | QueryBuilder | `.createQueryBuilder()` | String arrays `['alias.field']` |
+| Aggregations            | QueryBuilder | `.createQueryBuilder()` | String arrays `['alias.field']` |
+| Raw SQL                 | QueryBuilder | `.createQueryBuilder()` | String arrays `['alias.field']` |
+
+---
+
+✅ **This pattern is**:
+
+- Simple
+- Readable
+- Testable
+- Aligned with NestJS + TypeORM (2024)
+- DDD-friendly ("Context 7")
+- Safe for production
+- **Performance-optimized**
+- **Security-conscious**
+
+---

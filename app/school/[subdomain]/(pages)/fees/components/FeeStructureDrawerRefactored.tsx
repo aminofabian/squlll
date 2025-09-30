@@ -59,22 +59,8 @@ const defaultTermStructure: TermFeeStructureForm = {
   latePaymentFee: '0',
   earlyPaymentDiscount: '0',
   earlyPaymentDeadline: '',
-  buckets: [
-    {
-      type: 'tuition',
-      name: 'Tuition Fees',
-      description: 'Academic fees for the term',
-      isOptional: false,
-      components: [
-        {
-          name: 'Base Tuition',
-          description: 'Standard tuition fee',
-          amount: '0',
-          category: 'academic'
-        }
-      ]
-    }
-  ]
+  // Start with NO buckets so the UI always uses live feeBuckets from useFeeBuckets
+  buckets: []
 }
 
 const defaultBucket: FeeBucketForm = {
@@ -99,26 +85,50 @@ const defaultComponent: FeeComponentForm = {
   category: 'academic'
 }
 
-// Smart fee templates from the original component
-const feeTemplates = {
-  academic: [
-    { name: 'Tuition Fee', amount: '15000', icon: FileText, description: 'Regular tuition fees for academic instruction' },
-    { name: 'Examination Fee', amount: '2000', icon: Info, description: 'Costs for tests, exams and assessments' },
-    { name: 'Library Fee', amount: '500', icon: FileText, description: 'Library access, maintenance and materials' },
-    { name: 'Computer Lab Fee', amount: '1000', icon: FileText, description: 'ICT/computer lab access and maintenance' }
-  ],
-  boarding: [
-    { name: 'Boarding Fee', amount: '8000', icon: FileText, description: 'Boarding accommodation and related services' },
-    { name: 'Meals Fee', amount: '6000', icon: FileText, description: 'Meal plans and catering services' },
-    { name: 'Laundry Fee', amount: '1000', icon: FileText, description: 'Laundry services for boarders' }
-  ],
-  transport: [
-    { name: 'Transport Fee', amount: '3000', icon: FileText, description: 'School transport/bus services' }
-  ],
-  activities: [
-    { name: 'Sports Fee', amount: '800', icon: FileText, description: 'Sports activities and equipment' },
-    { name: 'Music Fee', amount: '600', icon: FileText, description: 'Music lessons and activities' }
-  ]
+// Generate fee templates dynamically from feeBuckets instead of hardcoding
+const generateFeeTemplates = (feeBuckets: any[]) => {
+  // Create a mapping of buckets by category
+  const templates: {[key: string]: any[]} = {
+    academic: [],
+    boarding: [],
+    transport: [],
+    activities: []
+  };
+  
+  // Map each bucket to a category based on its name
+  feeBuckets.forEach(bucket => {
+    const name = bucket.name;
+    const defaultAmount = '0';
+    const description = bucket.description || `${name} related fees`;
+    const icon = FileText; // Default icon
+    
+    // Categorize based on name
+    if (name.toLowerCase().includes('tuition') || 
+        name.toLowerCase().includes('exam') ||
+        name.toLowerCase().includes('library')) {
+      templates.academic.push({ name, amount: defaultAmount, icon, description, fromBucket: bucket });
+    } 
+    else if (name.toLowerCase().includes('board') || 
+             name.toLowerCase().includes('meal') || 
+             name.toLowerCase().includes('accommodation')) {
+      templates.boarding.push({ name, amount: defaultAmount, icon, description, fromBucket: bucket });
+    }
+    else if (name.toLowerCase().includes('transport') || 
+             name.toLowerCase().includes('bus')) {
+      templates.transport.push({ name, amount: defaultAmount, icon, description, fromBucket: bucket });
+    }
+    else if (name.toLowerCase().includes('sport') || 
+             name.toLowerCase().includes('music') || 
+             name.toLowerCase().includes('activity')) {
+      templates.activities.push({ name, amount: defaultAmount, icon, description, fromBucket: bucket });
+    }
+    // Default to academic for any other buckets
+    else {
+      templates.academic.push({ name, amount: defaultAmount, icon, description, fromBucket: bucket });
+    }
+  });
+  
+  return templates;
 }
 
 export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
@@ -134,6 +144,8 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   const subdomain = params.subdomain as string
   const { data: schoolConfig } = useSchoolConfig()
   const { feeBuckets, loading: bucketsLoading, error: bucketsError, refetch: refetchBuckets } = useFeeBuckets()
+  // Generate dynamic templates from actual fee buckets
+  const feeTemplates = React.useMemo(() => generateFeeTemplates(feeBuckets), [feeBuckets])
   const { academicYears, loading: academicYearsLoading, error: academicYearsError, refetch: refetchAcademicYears, getActiveAcademicYear, getTermsForAcademicYear } = useAcademicYears()
   
   // Use the hook to fetch grade levels
@@ -159,6 +171,8 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
     boardingType: 'both',
     academicYear: '',
     termStructures: [defaultTermStructure],
+    // Include feeBuckets for use by QuickActions component
+    feeBuckets: feeBuckets,
     schoolDetails: {
       name: getSchoolName(),
       address: 'P.O. Box 100 - 40404, KENYA. Cell: 0710000000',
@@ -414,7 +428,20 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   }
 
   const addBucket = (termIndex: number) => {
-    const newBucket = { ...defaultBucket }
+    // Create a new bucket with completely empty properties
+    // This ensures all available buckets will be shown in the selector
+    const newBucket = { 
+      ...defaultBucket,
+      name: '', // Empty name to ensure the BucketSelector shows all options
+      description: '',
+      components: [
+        {
+          ...defaultComponent,
+          name: '' // Empty component name to match the bucket
+        }
+      ]
+    }
+    
     setFormData(prev => ({
       ...prev,
       termStructures: prev.termStructures.map((term, i) => 
@@ -453,6 +480,13 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   }
 
   const addComponent = (termIndex: number, bucketIndex: number) => {
+    // Always create a fresh component with empty name to ensure bucket selector shows all options
+    const newComponent = { 
+      ...defaultComponent,
+      // Always use empty name to force the BucketSelector to show all options
+      name: ''
+    };
+    
     setFormData(prev => ({
       ...prev,
       termStructures: prev.termStructures.map((term, tIndex) => 
@@ -461,7 +495,12 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
               ...term,
               buckets: term.buckets.map((bucket, bIndex) => 
                 bIndex === bucketIndex 
-                  ? { ...bucket, components: [...bucket.components, { ...defaultComponent }] }
+                  ? { 
+                      ...bucket,
+                      // If the bucket has no ID, make sure it doesn't filter out options
+                      id: bucket.id || undefined,
+                      components: [...bucket.components, newComponent] 
+                    }
                   : bucket
               )
             }
@@ -857,6 +896,16 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
     setSelectedTermId('');
   }
   
+  // Effect to update formData.feeBuckets when buckets are loaded from the API
+  useEffect(() => {
+    if (!bucketsLoading && feeBuckets?.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        feeBuckets: feeBuckets
+      }))
+    }
+  }, [feeBuckets, bucketsLoading])
+
   // Effect for initializing form data from props or default values
   useEffect(() => {
     if (initialData) {

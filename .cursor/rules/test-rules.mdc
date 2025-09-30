@@ -1,0 +1,549 @@
+---
+alwaysApply: true
+description: "Comprehensive NestJS testing best practices, anti-patterns, and correct patterns for writing effective, maintainable tests"
+autoAttach: ["**/*.spec.ts", "**/*.test.ts", "**/*.e2e-spec.ts", "**/*.int-spec.ts"]
+---
+
+# 🧪 **The Definitive Guide to NestJS Testing: Best Practices, Anti-Patterns & Correct Patterns**
+
+Based on the official NestJS documentation, community best practices, and expert analysis, here is a **comprehensive, detailed guide** to writing effective, maintainable, and reliable tests for your NestJS applications.
+
+---
+
+## 📚 **Official Philosophy & Core Principles**
+
+NestJS is built with testing as a first-class citizen. The framework "strives to promote development best practices, including effective testing" and provides built-in features to help developers create robust test suites . The official stance is clear: **tests should be fast, isolated, and focused on behavior**.
+
+---
+
+## 🔍 **Part 1: Fundamental Testing Types & When to Use Them**
+
+### **1. Unit Tests**
+
+- **Purpose**: Test the smallest units of code (usually a single method in a service) in **complete isolation**.
+- **Scope**: A single class/method.
+- **Dependencies**: **All external dependencies must be mocked**.
+- **Speed**: Very fast (milliseconds).
+- **File Naming**: `*.spec.ts`
+
+### **2. Integration Tests**
+
+- **Purpose**: Test how multiple units work together, often including real database connections.
+- **Scope**: A module or a group of interacting services.
+- **Dependencies**: Some real dependencies (e.g., a real database), others may be mocked.
+- **Speed**: Slower (seconds).
+- **File Naming**: `*.int-spec.ts` or `*.e2e-spec.ts` .
+
+> **Critical Insight**: "Unit testing focuses on testing individual units of a software. Integration testing focuses on combining individual units and testing them as a group" .
+
+---
+
+## 🚫 **Part 2: The 10 Most Common NestJS Testing Anti-Patterns (With Examples)**
+
+### **Anti-Pattern 1: Mixing Unit and Integration Tests**
+
+**The Problem**: Using a real database in a unit test file makes it slow, flaky, and not a true unit test.
+
+**❌ Bad Code (Unit Test with Real DB)**:
+
+```ts
+// user.service.spec.ts (WRONG LOCATION & SETUP)
+describe('UserService', () => {
+  let service: UserService;
+
+  // This is an integration test setup, not unit!
+  beforeAll(async () => {
+    const module = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot({ // Real DB connection in a unit test!
+          type: 'postgres',
+          host: 'localhost',
+          port: 5432,
+          username: 'test',
+          password: 'test',
+          database: 'test_db',
+          entities: [User],
+          synchronize: true, // Dangerous!
+        }),
+        UserModule,
+      ],
+    }).compile();
+
+    service = module.get(UserService);
+  });
+
+  it('should create a user', async () => {
+    // This test is slow and depends on DB state
+    const user = await service.create({ name: 'John' });
+    expect(user.id).toBeDefined();
+  });
+});
+```
+
+**✅ Correct Approach**:
+
+- **Unit Test** (`user.service.spec.ts`): Mock the repository.
+- **Integration Test** (`user.service.int-spec.ts`): Use a real, isolated test database.
+
+---
+
+### **Anti-Pattern 2: Over-Mocking / Mocking Implementation Details**
+
+**The Problem**: Mocking every single method call makes tests brittle. When you refactor the internal logic (but not the public behavior), your tests break.
+
+**❌ Bad Code (Brittle Mock)**:
+
+```ts
+it('should create a user', async () => {
+  // This test knows too much about the internal steps
+  const findByEmailSpy = jest.spyOn(repo, 'findByEmail');
+  const saveSpy = jest.spyOn(repo, 'save');
+
+  await service.createUser(dto);
+
+  // These assertions are about HOW, not WHAT
+  expect(findByEmailSpy).toHaveBeenCalledWith(dto.email);
+  expect(saveSpy).toHaveBeenCalled();
+});
+```
+
+**✅ Correct Approach (Behavior-Driven)**:
+
+```ts
+it('should create a user when email is unique', async () => {
+  jest.spyOn(repo, 'findByEmail').mockResolvedValue(null);
+  const savedUser = new User();
+  Object.assign(savedUser, { id: '123', ...dto });
+  jest.spyOn(repo, 'save').mockResolvedValue(savedUser);
+
+  const result = await service.createUser(dto);
+
+  // Assert the outcome, not the steps
+  expect(result.id).toBe('123');
+  expect(result.email).toBe(dto.email.toLowerCase());
+});
+```
+
+> **Principle**: Test **what** your code does, not **how** it does it.
+
+---
+
+### **Anti-Pattern 3: Not Using the NestJS Testing Module Properly**
+
+**The Problem**: Manually instantiating services or creating fake dependency injection trees.
+
+**❌ Bad Code (Manual Instantiation)**:
+
+```ts
+// DON'T DO THIS
+describe('UserService', () => {
+  let service: UserService;
+  let mockRepo: any;
+
+  beforeEach(() => {
+    mockRepo = { save: jest.fn(), findByEmail: jest.fn() };
+    service = new UserService(mockRepo); // Manual creation
+  });
+});
+```
+
+**✅ Correct Approach (Use `Test.createTestingModule`)**:
+
+```ts
+describe('UserService', () => {
+  let service: UserService;
+  let repo: UserRepository;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: UserRepository, // Use the same token as in your real module
+          useValue: {
+            save: jest.fn(),
+            findByEmail: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get(UserService);
+    repo = module.get(UserRepository);
+  });
+});
+```
+
+> **Why?** This ensures your test environment **exactly mirrors** your real DI setup, catching configuration errors.
+
+---
+
+### **Anti-Pattern 4: Using `synchronize: true` in Tests**
+
+**The Problem**: While convenient, `synchronize: true` can lead to tests that pass locally but fail in CI due to schema drift. It’s also not how your production app runs.
+
+**❌ Bad Code**:
+
+```ts
+TypeOrmModule.forRoot({
+  // ...
+  synchronize: true, // ❌ Avoid in all environments, including tests
+})
+```
+
+**✅ Correct Approach (Use Migrations)**:
+
+```ts
+// In your integration test setup
+TypeOrmModule.forRoot({
+  // ...
+  migrations: [path.join(__dirname, '../migrations/*{.ts,.js}')],
+  migrationsRun: true, // Run migrations to set up the test DB schema
+})
+```
+
+> **Best Practice**: "Use Migrations: Avoid relying on synchronize: true in production" — this applies to test environments as well for consistency .
+
+---
+
+### **Anti-Pattern 5: Testing Framework Code Instead of Your Logic**
+
+**The Problem**: Writing tests that only verify that NestJS or TypeORM works, which is a waste of time.
+
+**❌ Bad Code**:
+
+```ts
+it('should call the repository save method', () => {
+  // This test only proves that your mock was called.
+  // It doesn't test any of YOUR business logic.
+  const saveSpy = jest.spyOn(repo, 'save');
+  await service.createUser(dto);
+  expect(saveSpy).toHaveBeenCalled();
+});
+```
+
+**✅ Correct Approach**:
+Focus on your **business rules**:
+
+```ts
+it('should throw a ConflictException if a user with the email already exists', async () => {
+  const existingUser = new User();
+  existingUser.email = 'test@example.com';
+  jest.spyOn(repo, 'findByEmail').mockResolvedValue(existingUser);
+
+  await expect(service.createUser(dto)).rejects.toThrow(ConflictException);
+});
+```
+
+---
+
+### **Anti-Pattern 6: Sharing State Between Tests**
+
+**The Problem**: A test that modifies a global variable or a shared mock can cause other tests to fail unpredictably.
+
+**❌ Bad Code (Shared State)**:
+
+```ts
+let globalUser: User;
+
+beforeEach(() => {
+  globalUser = new User(); // This is shared across all tests in the suite!
+});
+
+it('test 1', () => {
+  globalUser.name = 'Alice';
+});
+
+it('test 2', () => {
+  // This test might fail because `globalUser.name` is 'Alice', not default!
+  expect(globalUser.name).toBe('Default');
+});
+```
+
+**✅ Correct Approach**:
+Always create fresh data for each test.
+
+```ts
+it('should have a default name', () => {
+  const user = new User();
+  expect(user.name).toBe('Default');
+});
+
+it('should allow setting a name', () => {
+  const user = new User();
+  user.name = 'Alice';
+  expect(user.name).toBe('Alice');
+});
+```
+
+---
+
+### **Anti-Pattern 7: Ignoring Asynchronous Test Cleanup**
+
+**The Problem**: Not properly closing database connections or NestJS applications in integration tests can lead to memory leaks and test suite crashes.
+
+**❌ Bad Code (Missing Cleanup)**:
+
+```ts
+describe('Integration Tests', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const module = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    app = module.createNestApplication();
+    await app.init();
+  });
+
+  // Missing afterAll to close the app!
+});
+```
+
+**✅ Correct Approach**:
+
+```ts
+describe('Integration Tests', () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const module = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+    app = module.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close(); // ✅ Critical for cleanup
+  });
+});
+```
+
+---
+
+### **Anti-Pattern 8: Using `any` for Mocks and Test Data**
+
+**The Problem**: Using `any` defeats the purpose of TypeScript and can hide breaking changes in your code.
+
+**❌ Bad Code**:
+
+```ts
+const mockRepo = {
+  save: jest.fn(),
+} as any; // ❌
+
+const testData = { name: 'Test' } as any; // ❌
+```
+
+**✅ Correct Approach**:
+
+```ts
+const mockRepo: Partial<UserRepository> = {
+  save: jest.fn(),
+  findByEmail: jest.fn(),
+};
+
+const testData: CreateUserDto = { name: 'Test', email: 'test@example.com' };
+```
+
+---
+
+### **Anti-Pattern 9: Writing Tests That Are Too Long or Complex**
+
+**The Problem**: A test with many setup steps, multiple assertions, and complex logic is hard to read and maintain.
+
+**❌ Bad Code (God Test)**:
+
+```ts
+it('should do everything', async () => {
+  // 20 lines of setup
+  // 5 different assertions
+  // 3 different scenarios tested in one block
+});
+```
+
+**✅ Correct Approach**:
+Follow the **Single Responsibility Principle for Tests**. One test, one behavior.
+
+```ts
+describe('when the email is unique', () => {
+  it('should create a new user', async () => { /* ... */ });
+  it('should return the created user', async () => { /* ... */ });
+});
+
+describe('when the email already exists', () => {
+  it('should throw a ConflictException', async () => { /* ... */ });
+});
+```
+
+---
+
+### **Anti-Pattern 10: Not Testing Error Cases and Edge Cases**
+
+**The Problem**: Only testing the "happy path" leaves your application vulnerable to crashes in production.
+
+**❌ Bad Code (Happy Path Only)**:
+
+```ts
+it('should create a user', async () => {
+  // Only tests success
+});
+```
+
+**✅ Correct Approach**:
+Always test your error handling.
+
+```ts
+it('should throw BadRequestException for invalid email', async () => {
+  const invalidDto = { name: 'Test', email: 'not-an-email' };
+  await expect(service.createUser(invalidDto)).rejects.toThrow(BadRequestException);
+});
+
+it('should handle database connection errors gracefully', async () => {
+  jest.spyOn(repo, 'save').mockRejectedValue(new Error('DB down'));
+  await expect(service.createUser(dto)).rejects.toThrow(ServiceUnavailableException);
+});
+```
+
+> **Best Practice**: "Don't skip negative case scenarios" .
+
+---
+
+## ✅ **Part 3: The Correct Way — A Complete Example**
+
+### **The Service**
+
+```ts
+// user.service.ts
+@Injectable()
+export class UserService {
+  constructor(private userRepository: UserRepository) {}
+
+  async createUser(dto: CreateUserDto): Promise<User> {
+    const existing = await this.userRepository.findByEmail(dto.email);
+    if (existing) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const user = User.create(dto);
+    return this.userRepository.save(user);
+  }
+}
+```
+
+### **The Unit Test (`user.service.spec.ts`)**
+
+```ts
+// user.service.spec.ts
+describe('UserService', () => {
+  let service: UserService;
+  let userRepository: UserRepository;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: UserRepository,
+          useValue: {
+            findByEmail: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get(UserService);
+    userRepository = module.get(UserRepository);
+  });
+
+  describe('createUser', () => {
+    const dto: CreateUserDto = { name: 'John Doe', email: 'john@example.com' };
+
+    it('should create a new user when email is unique', async () => {
+      jest.spyOn(userRepository, 'findByEmail').mockResolvedValue(null);
+      const savedUser = new User();
+      Object.assign(savedUser, { id: '1', ...dto, email: dto.email.toLowerCase() });
+      jest.spyOn(userRepository, 'save').mockResolvedValue(savedUser);
+
+      const result = await service.createUser(dto);
+
+      expect(result).toEqual(savedUser);
+      expect(userRepository.findByEmail).toHaveBeenCalledWith(dto.email);
+      expect(userRepository.save).toHaveBeenCalledWith(expect.any(User));
+    });
+
+    it('should throw ConflictException if email already exists', async () => {
+      const existingUser = new User();
+      existingUser.email = dto.email;
+      jest.spyOn(userRepository, 'findByEmail').mockResolvedValue(existingUser);
+
+      await expect(service.createUser(dto)).rejects.toThrow(ConflictException);
+    });
+  });
+});
+```
+
+### **The Integration Test (`user.service.int-spec.ts`)**
+
+```ts
+// user.service.int-spec.ts
+describe('UserService (Integration)', () => {
+  let service: UserService;
+  let app: INestApplication;
+  let dataSource: DataSource;
+
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        TypeOrmModule.forRoot({
+          type: 'sqlite',
+          database: ':memory:',
+          entities: [User],
+          synchronize: true, // OK for in-memory DB in tests
+        }),
+        TypeOrmModule.forFeature([User]),
+      ],
+      providers: [UserService, UserRepository],
+    }).compile();
+
+    app = module.createNestApplication();
+    await app.init();
+    service = module.get(UserService);
+    dataSource = module.get(DataSource);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  afterEach(async () => {
+    // Clear the DB after each test
+    const queryRunner = dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.clearTable(User);
+    await queryRunner.release();
+  });
+
+  it('should persist a user to the database', async () => {
+    const dto: CreateUserDto = { name: 'Jane Doe', email: 'jane@example.com' };
+    const user = await service.createUser(dto);
+
+    expect(user.id).toBeDefined();
+    expect(user.email).toBe('jane@example.com');
+
+    // Verify it's in the DB
+    const foundUser = await dataSource.getRepository(User).findOneBy({ id: user.id });
+    expect(foundUser).toBeDefined();
+    expect(foundUser!.email).toBe('jane@example.com');
+  });
+});
+```
+
+This structure ensures:
+
+1. **Fast, isolated unit tests** that verify business logic.
+2. **Slower, realistic integration tests** that verify the system works with a real database.
+3. **No shared state** between tests.
+4. **Proper cleanup** of resources.

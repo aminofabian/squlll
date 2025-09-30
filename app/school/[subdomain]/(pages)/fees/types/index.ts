@@ -202,6 +202,8 @@ export interface FeeStructureForm {
   academicYear: string
   academicYearId?: string
   termStructures: TermFeeStructureForm[]
+  // Add feeBuckets from the database
+  feeBuckets?: any[] // Using any[] since the exact bucket type may vary
   schoolDetails?: {
     name: string
     address: string

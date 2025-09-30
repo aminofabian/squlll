@@ -7,7 +7,7 @@ import { FeeStructureCard } from './FeeStructureCard'
 import { Loader2, Plus, Info } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getBoardingTypeColor } from '../../utils/colorHelpers'
+import { getBoardingTypeColor } from "../../utils/colorHelpers"
 
 interface FeeStructuresTabProps {
   isLoading: boolean

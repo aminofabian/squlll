@@ -1,0 +1,151 @@
+---
+description: "Map entities to responses using Pick + safe object spreading. Never use 'as' or manual field copying."
+alwaysApply: true
+autoAttach: [
+  "**/mappers/**",
+  "**/*mapper*.ts",
+  "**/*dto*.ts",
+  "**/*response*.ts",
+  "**/*.service.ts",
+  "**/*.controller.ts"
+]
+---
+
+# ✅ Response Mapping: Safe, Readable, No Casting
+
+When mapping entities to response DTOs:
+
+1. **Define response types using `Pick`/`Omit`**
+2. **Use object spreading (`...entity`) — never `as`**
+3. **Only add custom logic for nested/transformed fields**
+
+> **Why avoid `as`?** It disables type checking and can leak sensitive fields.
+
+---
+
+## 🚫 BAD: Type Assertion (`as`) — Unsafe
+
+```ts
+// ❌ NEVER do this
+mapEntityToResponse(entity: UnitEntity): UnitResponse {
+  return entity as UnitResponse; // 🔴 Bypasses type safety!
+}
+```
+
+> 🔴 **Risk**: If `UnitResponse` is missing a field from `UnitEntity`, TypeScript won’t warn you.  
+> 🔴 **Worse**: If `UnitEntity` has a sensitive field (e.g., `internalNotes`), and you forget to exclude it from `UnitResponse`, `as` will **silently leak it**.
+
+---
+
+## 🚫 BAD: Manual Field Copying — Unmaintainable
+
+```ts
+// ❌ Avoid this boilerplate
+mapEntityToResponse(entity: UnitEntity): UnitResponse {
+  return {
+    id: entity.id,
+    unitNumber: entity.unitNumber,
+    // ... 20 more lines
+  };
+}
+```
+
+---
+
+## ✅ GOOD: Safe Spreading + Pick (No `as`, No Boilerplate)
+
+### Step 1: Define response type with `Pick`
+
+```ts
+// unit.response.ts
+export type UnitResponse = Pick<
+  UnitEntity,
+  | 'id'
+  | 'unitNumber'
+  | 'level'
+  // ... all public fields
+> & {
+  property: PropertyResponse | null; // ← only custom shape
+};
+```
+
+### Step 2: Use safe spreading in mapper
+
+```ts
+// unit.mapper.ts
+mapEntityToResponse(entity: UnitEntity): UnitResponse {
+  // ✅ TypeScript verifies this is valid at compile time
+  return {
+    ...entity,
+    property: entity.property
+      ? this.mapPropertyToResponse(entity.property)
+      : null,
+  };
+}
+```
+
+> ✅ **Why this is safe**:
+>
+> - If `UnitResponse` is missing a field from `UnitEntity`, **TypeScript errors**
+> - If `UnitEntity` has an extra field not in `UnitResponse`, **TypeScript errors**
+> - **No casting** — full type safety preserved
+> - **Minimal code** — only custom logic is explicit
+
+---
+
+## 🔒 What If You Need to Exclude a Field?
+
+Suppose `UnitEntity` has a `secretFlag` you must exclude:
+
+### ✅ Safe exclusion (no `as`)
+
+```ts
+// unit.response.ts
+export type UnitResponse = Omit<
+  Pick<UnitEntity,
+    | 'id' | 'unitNumber' | /* ... all fields except secretFlag */
+  >,
+  'secretFlag' // explicitly remove if needed
+> & {
+  property: PropertyResponse | null;
+};
+
+// OR better: just don't include it in the Pick list
+export type UnitResponse = Pick<UnitEntity,
+  | 'id'
+  | 'unitNumber'
+  // ... (omit 'secretFlag' from this list)
+> & {
+  property: PropertyResponse | null;
+};
+```
+
+```ts
+// mapper.ts
+mapEntityToResponse(entity: UnitEntity): UnitResponse {
+  const { secretFlag, ...safeFields } = entity; // ✅ Explicit exclusion
+  return {
+    ...safeFields,
+    property: entity.property
+      ? this.mapPropertyToResponse(entity.property)
+      : null,
+  };
+}
+```
+
+> ✅ **Still no `as`**, and **explicit about exclusions**.
+
+---
+
+## 🧠 Key Principle
+
+> **"If TypeScript can verify the shape at compile time, you don’t need `as`."**  
+> Spreading + `Pick` gives you **both safety and simplicity** — no trade-off needed.
+
+This approach is:
+
+- ✅ **Safer** than `as` (compile-time checks)
+- ✅ **Simpler** than manual copying
+- ✅ **More maintainable** (add fields by updating the `Pick` list)
+
+You were right to reject `as` — this is the correct way.

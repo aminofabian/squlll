@@ -497,39 +497,7 @@ export const Step3_TermsSetup: React.FC<FeeStructureStepProps> = ({
   
   return (
     <div className="animate-in fade-in duration-300">
-      <div className="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-5 shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="mt-1 bg-white p-2 rounded-full shadow-sm border border-blue-200">
-            <Calendar className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-blue-800">Terms Setup</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              Configure the terms for this fee structure:
-            </p>
-            <ul className="text-xs text-blue-600 mt-3 space-y-2 list-none pl-0">
-              <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-blue-700">1</span>
-                </div>
-                <span><strong className="text-blue-700">Add Terms</strong> - You must add at least one term</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-blue-700">2</span>
-                </div>
-                <span><strong className="text-blue-700">Set Due Dates</strong> - When payments are expected</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-blue-700">3</span>
-                </div>
-                <span><strong className="text-blue-700">Late Payment Fees</strong> - Optional penalties for late payments</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      {/* Simplified header removed for cleaner UI */}
       
       {/* Scope selector */}
       <div className="mt-6 p-4 border border-blue-200 rounded-lg bg-blue-50/50">
@@ -770,113 +738,82 @@ export const Step5_Review: React.FC<FeeStructureStepProps> = ({
 }) => {
   return (
     <div className="animate-in fade-in duration-300">
-      <div className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-5 shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="mt-1 bg-white p-2 rounded-full shadow-sm border border-green-200">
-            <FileText className="h-5 w-5 text-green-600" />
+      {/* Full PDF-style preview in Review step */}
+      <div className="bg-white p-6 border border-slate-200 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            <h4 className="text-sm font-semibold text-primary">Fee Structure Preview</h4>
           </div>
-          <div>
-            <h4 className="text-sm font-bold text-green-800">Review Fee Structure</h4>
-            <p className="text-sm text-green-700 mt-1">
-              Review all details before saving:
-            </p>
-            <ul className="text-xs text-green-600 mt-3 space-y-2 list-none pl-0">
-              <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-green-700">✓</span>
-                </div>
-                <span>Verify all amounts are correctly entered</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-green-700">✓</span>
-                </div>
-                <span>Ensure all required fields are filled</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-green-700">✓</span>
-                </div>
-                <span>Check that all terms and fee buckets are set up</span>
-              </li>
-            </ul>
-          </div>
+          <span className="text-xs text-slate-500">Read-only preview</span>
         </div>
-      </div>
-      
-      {/* Review summary would go here */}
-      <div className="mt-6 bg-white p-6 border border-slate-200 rounded-lg shadow-sm">
-        <div className="text-center text-lg font-medium text-green-700 mb-6">
-          Fee Structure Summary
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border border-slate-200 rounded-md p-4 bg-slate-50">
-            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-slate-500" />
-              Basic Information
-            </h3>
-            <div className="text-sm space-y-2">
-              <p><span className="text-slate-500">Name:</span> {formData.name || 'Not set'}</p>
-              <p><span className="text-slate-500">Academic Year:</span> {formData.academicYear || 'Not set'}</p>
-              <p><span className="text-slate-500">Boarding Type:</span> {formData.boardingType === 'both' ? 'Both Day & Boarding' : formData.boardingType === 'day' ? 'Day School Only' : 'Boarding School Only'}</p>
-            </div>
-          </div>
-          
-          <div className="border border-slate-200 rounded-md p-4 bg-slate-50">
-            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-slate-500" />
-              Grades Selected
-            </h3>
-            <div className="text-sm">
-              {selectedGrades.length > 0 ? (
-                <div className="space-y-2">
-                  <p><span className="text-slate-500">Number of Grades:</span> <span className="font-medium">{selectedGrades.length}</span></p>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {selectedGrades.map((gradeId: string) => {
-                      // Find matching grade from available grades or grade levels
-                      const grade = availableGrades.find((g: any) => g.id === gradeId);
-                      const gradeLevel = gradeLevels.find((g: any) => g.id === gradeId);
-                      
-                      let displayName = 'Grade';
-                      if (grade) {
-                        displayName = grade.name;
-                      } else if (gradeLevel && gradeLevel.gradeLevel) {
-                        displayName = gradeLevel.gradeLevel.name;
-                      }
-                      
-                      return (
-                        <span key={gradeId} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                          {displayName}
-                        </span>
-                      );
-                    })}
+        <div className="border border-slate-200 rounded-lg overflow-hidden">
+          <div className="max-h-[70vh] overflow-auto">
+            {/* Reuse the same preview layout as Step 4's FeeStructurePreview */}
+            {/* Minimal duplication: we'll inline a simplified preview */}
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-center mb-1">SCHOOL FEE STRUCTURE</h2>
+              <p className="text-center text-slate-600 mb-6">{formData.academicYear || 'Current Academic Year'}</p>
+              {formData.termStructures.map((term: any, termIndex: number) => (
+                <div key={`review-term-${termIndex}`} className={`mb-10 pb-8 ${termIndex < formData.termStructures.length - 1 ? 'border-b-2 border-slate-200' : ''}`}>
+                  <div className="bg-primary/10 py-3 px-4 rounded-t-lg border border-primary/30 mb-4 flex items-center">
+                    <Calendar className="h-5 w-5 text-primary mr-2" />
+                    <h2 className="text-lg font-bold text-primary">{(term.term || `Term ${termIndex + 1}`).toUpperCase()}</h2>
+                  </div>
+                  <div className="overflow-hidden border border-slate-200 rounded-lg mb-4">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-slate-100 border-b border-slate-200">
+                          <th className="py-3 px-4 text-left font-bold text-slate-700 w-[50%]">Vote Head</th>
+                          <th className="py-3 px-4 text-left font-bold text-slate-700 w-[35%]">Category</th>
+                          <th className="py-3 px-4 text-right font-bold text-slate-700 w-[15%]">Amount (KES)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {term.buckets.map((bucket: any, bucketIndex: number) => (
+                          <React.Fragment key={`review-bucket-${termIndex}-${bucketIndex}`}>
+                            <tr className="bg-slate-50 border-t border-slate-200">
+                              <td colSpan={3} className="py-2 px-4 font-semibold text-slate-800 flex justify-between items-center">
+                                <div>{bucket.name}</div>
+                                <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-0.5">{bucket.isOptional ? 'Optional' : 'Required'}</span>
+                              </td>
+                            </tr>
+                            {bucket.components.map((component: any, componentIndex: number) => (
+                              component.name ? (
+                                <tr key={`review-component-${termIndex}-${bucketIndex}-${componentIndex}`} className={`border-t border-slate-100 ${componentIndex % 2 === 1 ? 'bg-slate-50/50' : ''}`}>
+                                  <td className="py-2.5 px-4">{component.name}</td>
+                                  <td className="py-2.5 px-4 capitalize">{component.category || 'academic'}</td>
+                                  <td className="py-2.5 px-4 text-right font-medium">{parseFloat(component.amount || 0).toLocaleString()}</td>
+                                </tr>
+                              ) : null
+                            ))}
+                            <tr className="border-t border-slate-200 bg-slate-50">
+                              <td className="py-3 px-4"></td>
+                              <td className="py-3 px-4 font-medium text-right">Bucket Subtotal:</td>
+                              <td className="py-3 px-4 text-right font-semibold">
+                                {bucket.components.reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0).toLocaleString()}
+                              </td>
+                            </tr>
+                          </React.Fragment>
+                        ))}
+                        <tr className="border-t-2 border-primary/30 bg-primary/5">
+                          <td className="py-3 px-4"></td>
+                          <td className="py-3 px-4 font-bold text-right text-primary">TERM TOTAL:</td>
+                          <td className="py-3 px-4 text-right font-bold text-primary">
+                            {term.buckets.reduce((termTotal: number, b: any) => termTotal + b.components.reduce((s: number, c: any) => s + (parseFloat(c.amount) || 0), 0), 0).toLocaleString()}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              ) : (
-                <p className="text-amber-600">No grades selected</p>
-              )}
-            </div>
-          </div>
-          
-          <div className="border border-slate-200 rounded-md p-4 bg-slate-50">
-            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-slate-500" />
-              Terms
-            </h3>
-            <div className="text-sm">
-              {formData.termStructures && formData.termStructures.length > 0 ? (
-                <div className="space-y-2">
-                  {formData.termStructures.map((term: any, index: number) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-xs text-blue-700 font-medium">{index + 1}</span>
-                      <span>{term.term || `Term ${index + 1}`}</span>
-                    </div>
-                  ))}
+              ))}
+              <div className="mt-8 p-5 bg-primary/10 border-2 border-primary/30 rounded-lg flex justify-between items-center">
+                <div className="text-slate-800 font-bold text-lg">GRAND TOTAL:</div>
+                <div className="text-2xl font-bold text-primary bg-white px-6 py-3 rounded-md border border-primary/30 shadow-sm">
+                  KES {formData.termStructures.reduce((grand: number, term: any) => grand + term.buckets.reduce((tt: number, b: any) => tt + b.components.reduce((s: number, c: any) => s + (parseFloat(c.amount) || 0), 0), 0), 0).toLocaleString()}
                 </div>
-              ) : (
-                <p className="text-amber-600">No terms defined yet</p>
-              )}
+              </div>
             </div>
           </div>
         </div>
