@@ -36,8 +36,9 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SchoolConfiguration } from '../../../../../lib/types/school-config'
+import brandingJson from '../../../../../lib/data/tenant-branding.template.json'
 
 interface SchoolHomepageProps {
   config?: SchoolConfiguration
@@ -47,6 +48,8 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
   const params = useParams()
   const subdomain = params.subdomain as string
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const branding = brandingJson as any
 
   // Extract school name from subdomain
   const getSchoolNameFromSubdomain = (subdomain: string) => {
@@ -59,13 +62,43 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
     return name
   }
 
-  const schoolName = getSchoolNameFromSubdomain(subdomain)
+  // Resolve school name with fallbacks: branding -> cookie -> subdomain-derived
+  const readCookie = (name: string): string | null => {
+    if (typeof document === 'undefined') return null
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) return parts.pop()!.split(';').shift() || null
+    return null
+  }
+
+  const initialName = (branding?.brand?.name as string) || getSchoolNameFromSubdomain(subdomain)
+  const [resolvedSchoolName, setResolvedSchoolName] = useState<string>(initialName)
+
+  useEffect(() => {
+    if (!branding?.brand?.name) {
+      const cookieName = readCookie('schoolName')
+      if (cookieName && cookieName.trim().length > 0) {
+        setResolvedSchoolName(cookieName)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const tagline = (branding?.brand?.tagline as string) || 'Excellence in Education'
+
+  const primary = branding?.colors?.primary
+  const primaryDark = branding?.colors?.primaryDark || primary
+  const primaryLight = branding?.colors?.primaryLight || primary
+  const themeVars: Record<string, string> = {}
+  if (primary) themeVars['--primary'] = primary
+  if (primaryDark) themeVars['--primary-dark'] = primaryDark
+  if (primaryLight) themeVars['--primary-light'] = primaryLight
   const totalLevels = config?.selectedLevels?.length || 0
   const totalGrades = config?.selectedLevels?.reduce((acc, level) => acc + level.gradeLevels.length, 0) || 0
   const totalSubjects = config?.selectedLevels?.reduce((acc, level) => acc + level.subjects.length, 0) || 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" style={themeVars}>
       {/* Navigation */}
       <nav className="bg-white border-b-4 border-primary sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,37 +107,38 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <div className="relative">
-                  {/* Main logo container with gradient background */}
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary-light to-primary-dark border-3 border-white shadow-lg flex items-center justify-center relative overflow-hidden">
-                    {/* Background pattern */}
-                    <div className="absolute inset-0 bg-white/10"></div>
-                    
-                    {/* Main building icon */}
-                    <Building2 className="h-7 w-7 text-white z-10 relative" />
-                    
-                    {/* Educational elements */}
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 border border-yellow-500 flex items-center justify-center z-20">
-                      <BookOpen className="h-2.5 w-2.5 text-primary-dark" />
+                  {/* Main logo */}
+                  {branding?.logos?.primary ? (
+                    <img
+                      src={branding.logos.primary as string}
+                      alt={`${resolvedSchoolName} logo`}
+                      className="w-14 h-14 object-contain border-2 border-white shadow-lg bg-white"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 bg-gradient-to-br from-primary via-primary-light to-primary-dark border-3 border-white shadow-lg flex items-center justify-center relative overflow-hidden">
+                      <div className="absolute inset-0 bg-white/10"></div>
+                      <Building2 className="h-7 w-7 text-white z-10 relative" />
+                      <div className="absolute top-1 right-1 w-4 h-4 bg-yellow-400 border border-yellow-500 flex items-center justify-center z-20">
+                        <BookOpen className="h-2.5 w-2.5 text-primary-dark" />
+                      </div>
+                      <div className="absolute bottom-1 left-1 w-3 h-3 bg-white border border-primary-dark flex items-center justify-center z-20">
+                        <Star className="h-1.5 w-1.5 text-primary fill-current" />
+                      </div>
                     </div>
-                    
-                    {/* Academic excellence indicator */}
-                    <div className="absolute bottom-1 left-1 w-3 h-3 bg-white border border-primary-dark flex items-center justify-center z-20">
-                      <Star className="h-1.5 w-1.5 text-primary fill-current" />
-                    </div>
-                  </div>
+                  )}
                   
                   {/* School name abbreviation overlay */}
                   <div className="absolute -bottom-2 -right-1 w-6 h-6 bg-primary-dark border-2 border-white flex items-center justify-center text-xs font-black text-white">
-                    {schoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
+                    {resolvedSchoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                 </div>
                 
                 <div className="ml-4">
                   <span className="text-lg font-black text-gray-900 tracking-tight block leading-tight">
-                    {schoolName.toUpperCase()}
+                    {resolvedSchoolName.toUpperCase()}
                   </span>
                   <span className="text-xs font-semibold text-primary uppercase tracking-tight">
-                    Excellence in Education
+                    {tagline.toUpperCase()}
                   </span>
                 </div>
               </div>
@@ -223,7 +257,7 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
               <div className="bg-white border-4 border-primary-dark px-6 py-3">
                 <span className="text-primary font-bold text-lg flex items-center">
                   <Award className="w-5 h-5 mr-2" />
-                  EXCELLENCE IN EDUCATION
+                  {tagline.toUpperCase()}
                 </span>
               </div>
             </div>
@@ -232,11 +266,11 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
               WELCOME TO
             </h1>
             <h2 className="text-4xl md:text-6xl font-black text-yellow-400 mb-8 leading-tight tracking-wider border-4 border-yellow-400 inline-block px-8 py-4">
-              {schoolName.toUpperCase()}
+              {resolvedSchoolName.toUpperCase()}
             </h2>
             
             <p className="text-xl md:text-2xl text-green-100 mb-12 max-w-4xl mx-auto leading-relaxed font-semibold">
-              SHAPING TOMORROW'S LEADERS THROUGH QUALITY EDUCATION, INNOVATION, AND CHARACTER DEVELOPMENT. DISCOVER YOUR POTENTIAL WITH US.
+              {branding?.brand?.description || "SHAPING TOMORROW'S LEADERS THROUGH QUALITY EDUCATION, INNOVATION, AND CHARACTER DEVELOPMENT. DISCOVER YOUR POTENTIAL WITH US."}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -543,21 +577,21 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
                   
                   {/* School name abbreviation overlay */}
                   <div className="absolute -bottom-1.5 -right-1 w-5 h-5 bg-primary border-2 border-gray-400 flex items-center justify-center text-xs font-black text-white">
-                    {schoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
+                    {resolvedSchoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                 </div>
                 
                 <div className="ml-3">
                   <span className="text-xl font-black text-white block leading-tight">
-                    {schoolName.toUpperCase()}
+                    {resolvedSchoolName.toUpperCase()}
                   </span>
                   <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                    Excellence in Education
+                    {tagline.toUpperCase()}
                   </span>
                 </div>
               </div>
               <p className="text-gray-400 font-semibold">
-                EMPOWERING EDUCATION THROUGH INNOVATIVE SCHOOL MANAGEMENT SOLUTIONS.
+                {branding?.brand?.description || 'EMPOWERING EDUCATION THROUGH INNOVATIVE SCHOOL MANAGEMENT SOLUTIONS.'}
               </p>
             </div>
             
@@ -576,18 +610,18 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
               <div className="space-y-3 font-semibold text-gray-400">
                 <div className="flex items-center">
                   <Mail className="w-5 h-5 mr-3" />
-                  info@{subdomain}.edu
+                  {branding?.contact?.email || `info@${subdomain}.edu`}
                 </div>
                 <div className="flex items-center">
                   <PhoneCall className="w-5 h-5 mr-3" />
-                  +1 (555) 123-4567
+                  {branding?.contact?.phone || '+1 (555) 123-4567'}
                 </div>
               </div>
             </div>
           </div>
           
           <div className="mt-12 pt-8 border-t-2 border-gray-700 text-center font-semibold text-gray-400">
-            <p>&copy; {new Date().getFullYear()} {schoolName.toUpperCase()}. ALL RIGHTS RESERVED.</p>
+            <p>&copy; {new Date().getFullYear()} {resolvedSchoolName.toUpperCase()}. ALL RIGHTS RESERVED.</p>
           </div>
         </div>
       </footer>

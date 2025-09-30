@@ -1,0 +1,80 @@
+{
+  "version": "1.0.0",
+  "tenant": {
+    "id": "your-tenant-id",
+    "slug": "tenant-subdomain",
+    "domain": "tenant.example.com",
+    "active": true
+  },
+  "brand": {
+    "name": "",
+    "tagline": "Inspiring excellence every day",
+    "description": "Optional short description about the school or organization."
+  },
+  "logos": {
+    "primary": "",
+    "dark": "",
+    "light": "",
+    "mark": "",
+    "square": "",
+    "favicon": ""
+  },
+  "colors": {
+    "primary": "#1E3A8A",
+    "primaryContrast": "#FFFFFF",
+    "secondary": "#F59E0B",
+    "secondaryContrast": "#0B0B0B",
+    "accent": "#10B981",
+    "accentContrast": "#0B0B0B",
+    "background": "#FFFFFF",
+    "surface": "#F8FAFC",
+    "text": "#111827",
+    "mutedText": "#6B7280",
+    "border": "#E5E7EB",
+    "success": "#16A34A",
+    "warning": "#D97706",
+    "error": "#DC2626"
+  },
+  "contact": {
+    "email": "hello@tenant.example.com",
+    "phone": "+1-555-0100",
+    "website": "https://tenant.example.com",
+    "address": {
+      "line1": "123 School Lane",
+      "line2": "",
+      "city": "Springfield",
+      "region": "CA",
+      "postalCode": "94000",
+      "country": "US"
+    },
+    "social": {
+      "facebook": "https://facebook.com/tenant",
+      "instagram": "https://instagram.com/tenant",
+      "twitter": "https://x.com/tenant",
+      "linkedin": "https://linkedin.com/company/tenant",
+      "youtube": "https://youtube.com/@tenant"
+    }
+  },
+  "ui": {
+    "navbar": {
+      "mode": "light",
+      "useTransparentOnHero": true
+    },
+    "buttons": {
+      "radius": 0,
+      "uppercase": false
+    },
+    "tables": {
+      "cellPadding": "12px",
+      "headerBg": "#F3F4F6",
+      "rowHoverBg": "#F9FAFB",
+      "radius": 0
+    },
+    "checkbox": {
+      "tickColor": "#FFFFFF"
+    }
+  },
+  "assets": {
+    "heroImage": "/public/school/hero.jpg"
+  }
+}
