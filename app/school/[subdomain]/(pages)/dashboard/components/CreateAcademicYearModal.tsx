@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateTermModal } from './CreateTermModal'
 
 interface CreateAcademicYearModalProps {
-  onSuccess?: () => void
+  onSuccess?: (year: any) => void
   trigger?: React.ReactNode
 }
 
@@ -109,9 +109,9 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
       setIsOpen(false)
       setShowSuccessDialog(true)
       
-      // Call success callback
+      // Call success callback with created year
       if (onSuccess) {
-        onSuccess()
+        onSuccess(result)
       }
     } catch (error) {
       console.error('Error creating academic year:', error)
@@ -153,7 +153,8 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
 
   const defaultTrigger = (
     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-      <Plus className="h-4 w-4 mr-2" />
+      <Plus className="h-4 w-4 mr-2 text-white" />
+      Create Academic Year
       
     </Button>
   )
@@ -166,7 +167,7 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex flex-row items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
             Create Academic Year
           </DialogTitle>
@@ -176,51 +177,44 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Academic Year Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Academic Year Name</Label>
-            <Input
-              id="name"
-              placeholder="e.g., 2024-2025"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              disabled={isLoading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Enter the academic year in the format "YYYY-YYYY"
-            </p>
-          </div>
+          {/* Single-row inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-3 sm:gap-4 items-end">
+            <div className="space-y-2 sm:col-span-3 sm:max-w-none">
+              <Label htmlFor="name">Academic Year Name</Label>
+              <Input
+                id="name"
+                placeholder="e.g., 2024-2025"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the academic year in the format "YYYY-YYYY"
+              </p>
+            </div>
 
-          {/* Date Range */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Academic Year Period</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-2 sm:max-w-xs">
+              <Label htmlFor="startDate" className="whitespace-nowrap">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => handleInputChange('startDate', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2 sm:max-w-xs">
+              <Label htmlFor="endDate" className="whitespace-nowrap">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => handleInputChange('endDate', e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
 
           {/* Preview */}
           {formData.name && formData.startDate && formData.endDate && (

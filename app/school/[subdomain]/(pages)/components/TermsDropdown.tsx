@@ -44,7 +44,7 @@ interface TermsDropdownProps {
 export function TermsDropdown({ className }: TermsDropdownProps) {
   const { selectedTerm, setSelectedTerm } = useTerm()
   const [showCreateTermModal, setShowCreateTermModal] = useState(false)
-  const [showCreateAcademicYearModal, setShowCreateAcademicYearModal] = useState(false)
+  const [newAcademicYear, setNewAcademicYear] = useState<AcademicYear | null>(null)
 
   // Get current academic year
   const { academicYears, loading: currentAcademicYearLoading, getActiveAcademicYear } = useCurrentAcademicYear()
@@ -113,11 +113,10 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
     setShowCreateTermModal(false)
   }
 
-  const handleAcademicYearCreated = () => {
-    toast.success('Academic year created successfully!')
-    setShowCreateAcademicYearModal(false)
-    // Refresh the page to get the new academic year
-    window.location.reload()
+  const handleAcademicYearCreated = (year: AcademicYear) => {
+    toast.success('Academic year created successfully! Now create a term.')
+    setNewAcademicYear(year)
+    setShowCreateTermModal(true)
   }
 
   // Get the fallback term display (similar to the original hardcoded logic)
@@ -227,15 +226,20 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
 
             {/* No Academic Year */}
             {!currentAcademicYear && !currentAcademicYearLoading && (
-              <DropdownMenuItem
-                className="flex items-center space-x-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer rounded-lg"
-                onClick={() => setShowCreateAcademicYearModal(true)}
-              >
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 dark:bg-primary/20 ring-1 ring-primary/20 dark:ring-primary/30">
-                  <Plus className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">Create Academic Year</span>
-              </DropdownMenuItem>
+              <CreateAcademicYearModal
+                onSuccess={handleAcademicYearCreated}
+                trigger={
+                  <DropdownMenuItem
+                    className="flex items-center space-x-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer rounded-lg"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 dark:bg-primary/20 ring-1 ring-primary/20 dark:ring-primary/30">
+                      <Plus className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">Create Academic Year</span>
+                  </DropdownMenuItem>
+                }
+              />
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -247,24 +251,11 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
           isOpen={showCreateTermModal}
           onClose={() => setShowCreateTermModal(false)}
           onSuccess={handleTermCreated}
-          academicYear={currentAcademicYear}
+          academicYear={newAcademicYear || currentAcademicYear}
         />
       )}
 
-      {/* Create Academic Year Modal */}
-      <CreateAcademicYearModal
-        onSuccess={handleAcademicYearCreated}
-        trigger={null}
-      />
-      {showCreateAcademicYearModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <CreateAcademicYearModal
-              onSuccess={handleAcademicYearCreated}
-            />
-          </div>
-        </div>
-      )}
+      {/* Create Academic Year Modal is triggered from the dropdown item above */}
     </>
   )
 }
