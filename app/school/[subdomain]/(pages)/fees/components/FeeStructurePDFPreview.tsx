@@ -9,18 +9,32 @@ interface FeeStructurePDFPreviewProps {
   schoolAddress?: string
   schoolContact?: string
   schoolEmail?: string
+  feeBuckets?: Array<{ id: string; name: string; description?: string }>
 }
 
 export const FeeStructurePDFPreview = ({
   formData,
   schoolName = "KANYAWANGA HIGH SCHOOL",
   schoolAddress = "P.O. Box 100 - 40404, RONGO KENYA. Cell: 0710215418",
-  schoolEmail = "kanyawangaschool@hotmail.com"
+  schoolEmail = "kanyawangaschool@hotmail.com",
+  feeBuckets = []
 }: FeeStructurePDFPreviewProps) => {
   const calculateTermTotal = (termIndex: number) => {
-    return formData.termStructures[termIndex]?.buckets.reduce((termSum, bucket) => 
+    const term = formData.termStructures[termIndex];
+    if (!term) return 0;
+    
+    // Calculate total from form buckets (components)
+    const formBucketsTotal = term.buckets?.reduce((termSum, bucket) => 
       termSum + bucket.components.reduce((bucketSum, component) => 
-        bucketSum + (parseFloat(component.amount) || 0), 0), 0) || 0
+        bucketSum + (parseFloat(component.amount) || 0), 0), 0) || 0;
+    
+    // Calculate total from existing bucket amounts
+    const existingBucketsTotal = term.existingBucketAmounts 
+      ? Object.values(term.existingBucketAmounts).reduce((sum: number, amount: any) => 
+          sum + (parseFloat(amount) || 0), 0)
+      : 0;
+    
+    return formBucketsTotal + existingBucketsTotal;
   }
 
   const calculateGrandTotal = () => {
@@ -93,34 +107,69 @@ export const FeeStructurePDFPreview = ({
                 </tr>
                 
                 {/* Bucket and Component Rows */}
-                {term.buckets.map((bucket, bucketIndex) => (
-                  <React.Fragment key={`bucket-${termIndex}-${bucketIndex}`}>
-                    {/* Optional Bucket Header */}
-                    {bucket.name && (
-                      <tr className="bg-gray-100">
-                        <td 
-                          colSpan={2} 
-                          className="border border-black p-2 font-semibold"
-                        >
-                          {bucket.name} {bucket.isOptional ? '(Optional)' : ''}
-                        </td>
-                      </tr>
-                    )}
-                    
-                    {/* Component Rows */}
-                    {bucket.components.map((component, componentIndex) => (
-                      <tr key={`${termIndex}-${bucketIndex}-${componentIndex}`}>
-                        <td className="border border-black p-2 pl-4">{component.name}</td>
-                        <td className="border border-black p-2 text-right">
-                          {parseFloat(component.amount).toLocaleString('en-KE', { 
-                            minimumFractionDigits: 2, 
-                            maximumFractionDigits: 2 
-                          })}
-                        </td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
+                {term.buckets.map((bucket, bucketIndex) => {
+                  // Filter components with amounts
+                  const validComponents = bucket.components.filter((comp: any) => 
+                    comp.name && parseFloat(comp.amount || '0') > 0
+                  );
+                  
+                  // Skip buckets with no valid components
+                  if (validComponents.length === 0) return null;
+                  
+                  return (
+                    <React.Fragment key={`bucket-${termIndex}-${bucketIndex}`}>
+                      {/* Only show bucket header if there are multiple components OR if bucket name differs from component name */}
+                      {bucket.name && validComponents.length > 1 && (
+                        <tr className="bg-gray-100">
+                          <td 
+                            colSpan={2} 
+                            className="border border-black p-2 font-semibold"
+                          >
+                            {bucket.name} {bucket.isOptional ? '(Optional)' : ''}
+                          </td>
+                        </tr>
+                      )}
+                      
+                      {/* Component Rows */}
+                      {validComponents.map((component: any, componentIndex: number) => {
+                        const componentAmount = parseFloat(component.amount);
+                        
+                        return (
+                          <tr key={`${termIndex}-${bucketIndex}-${componentIndex}`}>
+                            <td className="border border-black p-2 pl-4">{component.name}</td>
+                            <td className="border border-black p-2 text-right">
+                              {componentAmount.toLocaleString('en-KE', { 
+                                minimumFractionDigits: 2, 
+                                maximumFractionDigits: 2 
+                              })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+                
+                {/* Existing Buckets - show buckets with amounts for this term */}
+                {feeBuckets.map((bucket) => {
+                  const amount = term.existingBucketAmounts?.[bucket.id];
+                  const numericAmount = parseFloat(amount || '0');
+                  
+                  // Skip if no amount or amount is 0
+                  if (!amount || amount === '' || numericAmount <= 0) return null;
+                  
+                  return (
+                    <tr key={`existing-${termIndex}-${bucket.id}`}>
+                      <td className="border border-black p-2 pl-4">{bucket.name}</td>
+                      <td className="border border-black p-2 text-right">
+                        {parseFloat(amount).toLocaleString('en-KE', { 
+                          minimumFractionDigits: 2, 
+                          maximumFractionDigits: 2 
+                        })}
+                      </td>
+                    </tr>
+                  );
+                })}
                 
                 {/* Term Subtotal */}
                 <tr className="bg-gray-100">

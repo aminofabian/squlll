@@ -3,6 +3,8 @@
 import React from 'react'
 import { Info, GraduationCap, Calendar, DollarSign, FileText, Plus, X, Badge} from "lucide-react"
 import { Step4_FeeComponents as OriginalStep4_FeeComponents } from './Step4_FeeComponents'
+import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
+import { useFeeBuckets } from '@/lib/hooks/useFeeBuckets'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -736,9 +738,11 @@ export const Step5_Review: React.FC<FeeStructureStepProps> = ({
   availableGrades,
   gradeLevels
 }) => {
+  const { feeBuckets } = useFeeBuckets()
+  
   return (
     <div className="animate-in fade-in duration-300">
-      {/* Full PDF-style preview in Review step */}
+      {/* PDF-style preview wrapper */}
       <div className="bg-white p-6 border border-slate-200 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -749,72 +753,14 @@ export const Step5_Review: React.FC<FeeStructureStepProps> = ({
         </div>
         <div className="border border-slate-200 rounded-lg overflow-hidden">
           <div className="max-h-[70vh] overflow-auto">
-            {/* Reuse the same preview layout as Step 4's FeeStructurePreview */}
-            {/* Minimal duplication: we'll inline a simplified preview */}
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-center mb-1">SCHOOL FEE STRUCTURE</h2>
-              <p className="text-center text-slate-600 mb-6">{formData.academicYear || 'Current Academic Year'}</p>
-              {formData.termStructures.map((term: any, termIndex: number) => (
-                <div key={`review-term-${termIndex}`} className={`mb-10 pb-8 ${termIndex < formData.termStructures.length - 1 ? 'border-b-2 border-slate-200' : ''}`}>
-                  <div className="bg-primary/10 py-3 px-4 rounded-t-lg border border-primary/30 mb-4 flex items-center">
-                    <Calendar className="h-5 w-5 text-primary mr-2" />
-                    <h2 className="text-lg font-bold text-primary">{(term.term || `Term ${termIndex + 1}`).toUpperCase()}</h2>
-                  </div>
-                  <div className="overflow-hidden border border-slate-200 rounded-lg mb-4">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-slate-100 border-b border-slate-200">
-                          <th className="py-3 px-4 text-left font-bold text-slate-700 w-[50%]">Vote Head</th>
-                          <th className="py-3 px-4 text-left font-bold text-slate-700 w-[35%]">Category</th>
-                          <th className="py-3 px-4 text-right font-bold text-slate-700 w-[15%]">Amount (KES)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {term.buckets.map((bucket: any, bucketIndex: number) => (
-                          <React.Fragment key={`review-bucket-${termIndex}-${bucketIndex}`}>
-                            <tr className="bg-slate-50 border-t border-slate-200">
-                              <td colSpan={3} className="py-2 px-4 font-semibold text-slate-800 flex justify-between items-center">
-                                <div>{bucket.name}</div>
-                                <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-0.5">{bucket.isOptional ? 'Optional' : 'Required'}</span>
-                              </td>
-                            </tr>
-                            {bucket.components.map((component: any, componentIndex: number) => (
-                              component.name ? (
-                                <tr key={`review-component-${termIndex}-${bucketIndex}-${componentIndex}`} className={`border-t border-slate-100 ${componentIndex % 2 === 1 ? 'bg-slate-50/50' : ''}`}>
-                                  <td className="py-2.5 px-4">{component.name}</td>
-                                  <td className="py-2.5 px-4 capitalize">{component.category || 'academic'}</td>
-                                  <td className="py-2.5 px-4 text-right font-medium">{parseFloat(component.amount || 0).toLocaleString()}</td>
-                                </tr>
-                              ) : null
-                            ))}
-                            <tr className="border-t border-slate-200 bg-slate-50">
-                              <td className="py-3 px-4"></td>
-                              <td className="py-3 px-4 font-medium text-right">Bucket Subtotal:</td>
-                              <td className="py-3 px-4 text-right font-semibold">
-                                {bucket.components.reduce((sum: number, c: any) => sum + (parseFloat(c.amount) || 0), 0).toLocaleString()}
-                              </td>
-                            </tr>
-                          </React.Fragment>
-                        ))}
-                        <tr className="border-t-2 border-primary/30 bg-primary/5">
-                          <td className="py-3 px-4"></td>
-                          <td className="py-3 px-4 font-bold text-right text-primary">TERM TOTAL:</td>
-                          <td className="py-3 px-4 text-right font-bold text-primary">
-                            {term.buckets.reduce((termTotal: number, b: any) => termTotal + b.components.reduce((s: number, c: any) => s + (parseFloat(c.amount) || 0), 0), 0).toLocaleString()}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-              <div className="mt-8 p-5 bg-primary/10 border-2 border-primary/30 rounded-lg flex justify-between items-center">
-                <div className="text-slate-800 font-bold text-lg">GRAND TOTAL:</div>
-                <div className="text-2xl font-bold text-primary bg-white px-6 py-3 rounded-md border border-primary/30 shadow-sm">
-                  KES {formData.termStructures.reduce((grand: number, term: any) => grand + term.buckets.reduce((tt: number, b: any) => tt + b.components.reduce((s: number, c: any) => s + (parseFloat(c.amount) || 0), 0), 0), 0).toLocaleString()}
-                </div>
-              </div>
-            </div>
+            <FeeStructurePDFPreview
+              formData={formData}
+              schoolName={formData.schoolDetails?.name}
+              schoolAddress={formData.schoolDetails?.address}
+              schoolContact={formData.schoolDetails?.contact}
+              schoolEmail={formData.schoolDetails?.email}
+              feeBuckets={feeBuckets}
+            />
           </div>
         </div>
       </div>

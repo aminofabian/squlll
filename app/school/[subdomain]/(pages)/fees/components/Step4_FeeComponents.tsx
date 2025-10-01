@@ -697,6 +697,10 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
   
   // Preview component for fee structure
   const FeeStructurePreview = () => {
+    // Debug: Log the formData to see what we're working with
+    console.log('Preview formData:', JSON.stringify(formData, null, 2));
+    console.log('Available feeBuckets:', feeBuckets);
+    
     return (
       <div className="p-6 bg-white rounded-lg border border-slate-200 shadow-md">
         <div className="flex justify-between items-center mb-6 pb-3 border-b border-slate-200">
@@ -720,7 +724,8 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
           <p className="text-slate-600">{formData.academicYear || 'Current Academic Year'}</p>
         </div>
 
-        {formData.termStructures.map((term: any, termIndex: number) => (
+        {formData.termStructures && formData.termStructures.length > 0 ? (
+          formData.termStructures.map((term: any, termIndex: number) => (
           <div 
             key={`preview-term-${termIndex}`} 
             className={`mb-10 pb-8 ${termIndex < formData.termStructures.length - 1 ? 'border-b-2 border-slate-200' : ''}`}
@@ -728,7 +733,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
             {/* Term header with clear distinction */}
             <div className="bg-primary/10 py-3 px-4 rounded-t-lg border border-primary/30 mb-4 flex items-center">
               <Calendar className="h-5 w-5 text-primary mr-2" />
-              <h2 className="text-lg font-bold text-primary">{term.term.toUpperCase()}</h2>
+              <h2 className="text-lg font-bold text-primary">{term.term?.toUpperCase() || 'UNNAMED TERM'}</h2>
               {term.dueDate && (
                 <div className="ml-auto text-sm text-slate-600">
                   <span className="font-medium">Due Date:</span> {term.dueDate}
@@ -747,6 +752,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                   </tr>
                 </thead>
                 <tbody>
+                  {/* Form buckets */}
                   {term.buckets.map((bucket: any, bucketIndex: number) => (
                     <React.Fragment key={`preview-bucket-${termIndex}-${bucketIndex}`}>
                       {/* Bucket header row */}
@@ -789,30 +795,66 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                         <td className="py-3 px-4"></td>
                         <td className="py-3 px-4 font-medium text-right">Bucket Subtotal:</td>
                         <td className="py-3 px-4 text-right font-semibold">
-                          {calculateBucketTotal(termIndex, bucketIndex).toLocaleString()}
+                          {(() => {
+                            const total = bucket.components.reduce((sum: number, component: any) => 
+                              sum + (parseFloat(component.amount) || 0), 0);
+                            console.log(`Bucket "${bucket.name}" subtotal:`, total, 'Components:', bucket.components);
+                            return total.toLocaleString();
+                          })()}
                         </td>
                       </tr>
                     </React.Fragment>
                   ))}
                   
-                  {/* Existing bucket rows */}
+                  {/* Existing buckets */}
                   {feeBuckets.map((bucket) => {
                     const amount = getExistingBucketAmount(termIndex, bucket.id);
-                    if (!amount || parseFloat(amount) <= 0) return null;
+                    const numericAmount = parseFloat(amount);
+                    console.log(`Existing bucket "${bucket.name}" (${bucket.id}) amount:`, amount, 'numeric:', numericAmount, 'for term', termIndex);
+                    // Only skip if amount is empty string, undefined, null, or 0
+                    if (!amount || amount === '' || isNaN(numericAmount) || numericAmount <= 0) {
+                      console.log(`Skipping bucket "${bucket.name}" - no valid amount`);
+                      return null;
+                    }
                     
                     return (
-                      <tr key={`preview-existing-${termIndex}-${bucket.id}`} className="border-t border-slate-100 bg-slate-50/50">
-                        <td className="py-2.5 px-4">{bucket.name}</td>
-                        <td className="py-2.5 px-4">
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-blue-50"></div>
-                            <span className="text-sm capitalize text-blue-600">existing</span>
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-4 text-right font-medium">
-                          {parseFloat(amount).toLocaleString()}
-                        </td>
-                      </tr>
+                      <React.Fragment key={`preview-existing-bucket-${termIndex}-${bucket.id}`}>
+                        {/* Existing bucket header row */}
+                        <tr className="bg-blue-50 border-t border-blue-200">
+                          <td 
+                            colSpan={3} 
+                            className="py-2 px-4 font-semibold text-blue-800 flex justify-between items-center"
+                          >
+                            <div>{bucket.name}</div>
+                            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                              Existing
+                            </Badge>
+                          </td>
+                        </tr>
+                        
+                        {/* Existing bucket amount row */}
+                        <tr className="border-t border-blue-100 bg-blue-50/50">
+                          <td className="py-2.5 px-4">{bucket.description || 'Fee amount'}</td>
+                          <td className="py-2.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-full bg-blue-100"></div>
+                              <span className="text-sm capitalize text-blue-600">existing</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-4 text-right font-medium">
+                            {parseFloat(amount).toLocaleString()}
+                          </td>
+                        </tr>
+                        
+                        {/* Existing bucket subtotal row */}
+                        <tr className="border-t border-blue-200 bg-blue-50">
+                          <td className="py-3 px-4"></td>
+                          <td className="py-3 px-4 font-medium text-right">Bucket Subtotal:</td>
+                          <td className="py-3 px-4 text-right font-semibold">
+                            {parseFloat(amount).toLocaleString()}
+                          </td>
+                        </tr>
+                      </React.Fragment>
                     );
                   })}
                   
@@ -849,15 +891,35 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
               </div>
             )}
           </div>
-        ))}
-        
-        {/* Grand total section */}
-        <div className="mt-8 p-5 bg-primary/10 border-2 border-primary/30 rounded-lg flex justify-between items-center">
-          <div className="text-slate-800 font-bold text-lg">GRAND TOTAL:</div>
-          <div className="text-2xl font-bold text-primary bg-white px-6 py-3 rounded-md border border-primary/30 shadow-sm">
-            KES {calculateGrandTotal().toLocaleString()}
+          ))
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-slate-400 mb-4">
+              <DollarSign className="h-16 w-16 mx-auto mb-4" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-600 mb-2">No Fee Structure Data</h3>
+            <p className="text-slate-500 mb-4">
+              No terms or fee components have been added yet.
+            </p>
+            <div className="text-sm text-slate-400">
+              <p>Add terms and fee buckets in the form above to see the preview.</p>
+            </div>
           </div>
-        </div>
+        )}
+        
+        {/* Grand total section - only show if we have data */}
+        {formData.termStructures && formData.termStructures.length > 0 && (
+          <div className="mt-8 p-5 bg-primary/10 border-2 border-primary/30 rounded-lg flex justify-between items-center">
+            <div className="text-slate-800 font-bold text-lg">GRAND TOTAL:</div>
+            <div className="text-2xl font-bold text-primary bg-white px-6 py-3 rounded-md border border-primary/30 shadow-sm">
+              {(() => {
+                const grandTotal = calculateGrandTotal();
+                console.log('Grand Total:', grandTotal);
+                return `KES ${grandTotal.toLocaleString()}`;
+              })()}
+            </div>
+          </div>
+        )}
         
         {/* Footer note */}
         <div className="mt-8 pt-4 border-t border-slate-200 text-center text-xs text-slate-500">

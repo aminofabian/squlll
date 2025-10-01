@@ -233,6 +233,7 @@ export interface TermFeeStructureForm {
   earlyPaymentDiscount: string
   earlyPaymentDeadline: string
   buckets: FeeBucketForm[]
+  existingBucketAmounts?: { [bucketId: string]: string } // Amounts for existing buckets per term
 }
 
 export interface FeeBucketForm {

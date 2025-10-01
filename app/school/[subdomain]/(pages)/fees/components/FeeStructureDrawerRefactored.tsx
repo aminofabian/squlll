@@ -880,7 +880,8 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       formData.termStructures.forEach((termStructure, tIndex) => {
         console.log(`Processing term structure ${tIndex + 1}: ${termStructure.term}`);
         
-        termStructure.buckets.forEach((bucket, bIndex) => {
+        // Process form buckets (with components)
+        termStructure.buckets?.forEach((bucket, bIndex) => {
           // Skip buckets without ID
           if (!bucket.id) {
             console.warn(`Skipping bucket '${bucket.name}' with no ID in term ${termStructure.term}`);
@@ -925,6 +926,42 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
             console.log(`Added ${feeBucket.name} with amount ${totalAmount} to fee items`);
           }
         });
+        
+        // Process existing bucket amounts (new approach)
+        if (termStructure.existingBucketAmounts) {
+          Object.entries(termStructure.existingBucketAmounts).forEach(([bucketId, amountStr]) => {
+            const amount = parseFloat(amountStr as string) || 0;
+            
+            // Skip zero amounts
+            if (amount <= 0) return;
+            
+            // Find the corresponding fee bucket
+            const feeBucket = feeBuckets.find(fb => fb.id === bucketId);
+            if (!feeBucket) {
+              console.warn(`Bucket ID ${bucketId} not found in available fee buckets, skipping`);
+              return;
+            }
+            
+            console.log(`Processing existing bucket amount: ${feeBucket.name} = ${amount}`);
+            
+            // If this bucket already exists in our map, use the highest amount
+            if (feeBucketMap.has(bucketId)) {
+              const existing = feeBucketMap.get(bucketId)!;
+              if (amount > existing.amount) {
+                console.log(`Updating amount for ${feeBucket.name} from ${existing.amount} to ${amount}`);
+                existing.amount = amount;
+              }
+            } else {
+              // Add new bucket to the map
+              feeBucketMap.set(bucketId, {
+                feeBucketId: bucketId,
+                amount: amount,
+                isMandatory: true // Existing buckets are mandatory by default
+              });
+              console.log(`Added existing bucket ${feeBucket.name} with amount ${amount} to fee items`);
+            }
+          });
+        }
       });
       
       // Convert the map to array of fee items
@@ -1301,6 +1338,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
                   schoolAddress={formData.schoolDetails?.address}
                   schoolContact={formData.schoolDetails?.contact}
                   schoolEmail={formData.schoolDetails?.email}
+                  feeBuckets={feeBuckets}
                 />
               </div>
             </TabsContent>
