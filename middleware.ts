@@ -6,6 +6,11 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const isProd = process.env.NODE_ENV === 'production'
   
+  // React 19 compatibility: Add headers to prevent module loading issues
+  const response = NextResponse.next()
+  response.headers.set('X-React-Version', '19')
+  response.headers.set('X-Next-Version', '15.3.3')
+  
   console.log('Middleware - Processing request:', {
     hostname,
     pathname: url.pathname,

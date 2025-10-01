@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
     serverComponentsExternalPackages: [],
     // Help with module resolution issues
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    // React 19 compatibility fixes
+    reactCompiler: false,
+    // Disable problematic optimizations
+    optimizeCss: false,
+    // Force proper module resolution
+    esmExternals: 'loose',
   },
   
   // Configure server external packages

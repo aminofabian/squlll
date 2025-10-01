@@ -1,9 +1,10 @@
 import { Suspense } from 'react'
-import { SchoolHomepage } from './(pages)/components/SchoolHomepage'
+import { SchoolHomepageWrapper } from './(pages)/components/SchoolHomepageWrapper'
 import { ErrorBoundary } from './(pages)/components/ErrorBoundary'
 
 // Force dynamic rendering and disable caching
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 // Loading component for Suspense fallback
 function HomepageLoading() {
@@ -21,7 +22,7 @@ export default function SchoolHome() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<HomepageLoading />}>
-        <SchoolHomepage />
+        <SchoolHomepageWrapper />
       </Suspense>
     </ErrorBoundary>
   )
