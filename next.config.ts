@@ -6,20 +6,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Add experimental features to help with routing issues
-  experimental: {
-    // Enable better error handling
-    serverComponentsExternalPackages: [],
-    // Help with module resolution issues
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    // React 19 compatibility fixes
-    reactCompiler: false,
-    // Disable problematic optimizations
-    optimizeCss: false,
-    // Force proper module resolution
-    esmExternals: 'loose',
-  },
-  
   // Configure server external packages
   serverExternalPackages: [],
   
