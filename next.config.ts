@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   // Add experimental features to help with routing issues
   experimental: {
     // Enable better error handling
+    serverComponentsExternalPackages: [],
+    // Help with module resolution issues
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
   
   // Configure server external packages

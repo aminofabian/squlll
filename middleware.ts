@@ -68,10 +68,25 @@ export function middleware(request: NextRequest) {
       search: url.search
     })
     
-    // Create the rewrite URL
-    const rewriteUrl = new URL(rewritePath + url.search, request.url)
-    
-    return NextResponse.rewrite(rewriteUrl)
+    try {
+      // Create the rewrite URL
+      const rewriteUrl = new URL(rewritePath + url.search, request.url)
+      
+      // Create response with proper headers to prevent caching issues
+      const response = NextResponse.rewrite(rewriteUrl)
+      
+      // Add headers to prevent caching and ensure proper module loading
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      response.headers.set('Expires', '0')
+      response.headers.set('X-Subdomain', currentHost)
+      
+      return response
+    } catch (error) {
+      console.error('Middleware - Error during rewrite:', error)
+      // Fallback to next() if rewrite fails
+      return NextResponse.next()
+    }
   }
 
   // Handle www subdomain - ensure it works the same as root domain
