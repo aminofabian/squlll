@@ -391,7 +391,9 @@ export default function StudentsPage() {
       const guardianName = studentName.split(' ')[0] || 'Guardian';
       
       // Get grade name from nested gradeLevel object
-      const gradeName = graphqlStudent.grade?.gradeLevel?.name || 'Unknown Grade';
+      const gradeName = typeof graphqlStudent.grade === 'object' 
+        ? graphqlStudent.grade?.gradeLevel?.name || 'Unknown Grade'
+        : graphqlStudent.grade || 'Unknown Grade';
       
 
       
