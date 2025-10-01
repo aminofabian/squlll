@@ -6,8 +6,10 @@ import {
   PaymentPlanForm,
   FeeInvoice 
 } from '../types'
+import { useGraphQLPayments } from './useGraphQLPayments'
 
 export const useFormHandlers = (selectedStudent: string | null, filteredInvoices: FeeInvoice[]) => {
+  const { createPayment } = useGraphQLPayments()
   // Modal states
   const [showNewInvoiceDrawer, setShowNewInvoiceDrawer] = useState(false)
   const [showPaymentReminderDrawer, setShowPaymentReminderDrawer] = useState(false)
@@ -142,19 +144,35 @@ export const useFormHandlers = (selectedStudent: string | null, filteredInvoices
     setShowRecordPaymentDrawer(true)
   }
 
-  const handleSubmitPayment = () => {
-    console.log('Recording payment:', paymentForm)
-    setShowRecordPaymentDrawer(false)
-    setPaymentForm({
-      invoiceId: '',
-      studentId: '',
-      amountPaid: '',
-      paymentMethod: 'cash',
-      paymentDate: '',
-      referenceNumber: '',
-      notes: '',
-      partialPayment: false
-    })
+  const handleSubmitPayment = async () => {
+    if (!paymentForm.invoiceId || !paymentForm.amountPaid || !paymentForm.paymentDate) {
+      console.warn('Missing required payment fields')
+      return
+    }
+
+    const input = {
+      invoiceId: paymentForm.invoiceId,
+      amount: Number(paymentForm.amountPaid),
+      paymentMethod: paymentForm.paymentMethod?.toUpperCase(),
+      transactionReference: paymentForm.referenceNumber || undefined,
+      paymentDate: new Date(paymentForm.paymentDate).toISOString(),
+      notes: paymentForm.notes || undefined,
+    }
+
+    const result = await createPayment(input)
+    if (result) {
+      setShowRecordPaymentDrawer(false)
+      setPaymentForm({
+        invoiceId: '',
+        studentId: '',
+        amountPaid: '',
+        paymentMethod: 'cash',
+        paymentDate: '',
+        referenceNumber: '',
+        notes: '',
+        partialPayment: false
+      })
+    }
   }
 
   // Payment Plan Handlers

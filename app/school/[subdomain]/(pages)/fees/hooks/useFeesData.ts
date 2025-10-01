@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { FeeInvoice, StudentSummary, SummaryStats } from '../types'
 import { mockFeeInvoices } from '../data/mockData'
+import { useStudentsStore, useStudentsQuery } from '@/lib/stores/useStudentsStore'
 
 export const useFeesData = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -11,33 +12,34 @@ export const useFeesData = () => {
   const [dueDateFilter, setDueDateFilter] = useState<string>('all')
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
 
-  // Get unique students for sidebar
+  // Real students from GraphQL
+  const { students } = useStudentsStore()
+  const { fetchStudents } = useStudentsQuery()
+
+  useEffect(() => {
+    fetchStudents().catch(() => {})
+  }, [])
+
+  // Map GraphQL students to StudentSummary for the sidebar
   const allStudents = useMemo(() => {
-    const studentMap = new Map()
-    mockFeeInvoices.forEach(invoice => {
-      if (!studentMap.has(invoice.studentId)) {
-        studentMap.set(invoice.studentId, {
-          id: invoice.studentId,
-          name: invoice.studentName,
-          admissionNumber: invoice.admissionNumber,
-          class: invoice.class,
-          section: invoice.section,
-          totalOutstanding: 0,
-          totalPaid: 0,
-          invoiceCount: 0,
-          overdueCount: 0
-        })
-      }
-      const student = studentMap.get(invoice.studentId)
-      student.totalOutstanding += invoice.amountDue
-      student.totalPaid += invoice.amountPaid
-      student.invoiceCount += 1
-      if (invoice.paymentStatus === 'overdue') {
-        student.overdueCount += 1
+    const mapped: StudentSummary[] = students.map(s => {
+      const className = typeof s.grade === 'string' 
+        ? s.grade 
+        : s.grade?.gradeLevel?.name || ''
+      return {
+        id: s.id,
+        name: s.user?.name || s.admission_number,
+        admissionNumber: s.admission_number,
+        class: className,
+        section: '',
+        totalOutstanding: Number(s.feesOwed ?? 0),
+        totalPaid: Number(s.totalFeesPaid ?? 0),
+        invoiceCount: 0,
+        overdueCount: 0,
       }
     })
-    return Array.from(studentMap.values()).sort((a, b) => a.name.localeCompare(b.name)) as StudentSummary[]
-  }, [])
+    return mapped.sort((a, b) => a.name.localeCompare(b.name))
+  }, [students])
 
   // Filter students by search term
   const filteredStudents = useMemo(() => {

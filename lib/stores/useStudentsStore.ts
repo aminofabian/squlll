@@ -18,15 +18,11 @@ const GET_STUDENTS = gql`
       updatedAt
       streamId
       phone
-      grade {
-        id
-        gradeLevel {
-          id
-          name
-        }
-      }
+      grade
       user {
+        id
         email
+        name
       }
     }
   }

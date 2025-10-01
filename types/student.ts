@@ -30,7 +30,7 @@ export interface GraphQLStudent {
   updatedAt: string;
   streamId: string | null;
   phone: string;
-  grade: {
+  grade: string | {
     id: string;
     gradeLevel: {
       id: string;

@@ -532,9 +532,17 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
     const term = formData.termStructures[termIndex];
     if (!term) return 0;
     
-    return term.buckets.reduce((termTotal: number, bucket: any, bucketIndex: number) => {
+    // Calculate total from form buckets (components)
+    const formBucketsTotal = term.buckets.reduce((termTotal: number, bucket: any, bucketIndex: number) => {
       return termTotal + calculateBucketTotal(termIndex, bucketIndex);
     }, 0);
+    
+    // Calculate total from existing bucket amounts
+    const existingBucketsTotal = Object.values(term.existingBucketAmounts || {}).reduce((sum: number, amount: any) => {
+      return sum + (parseFloat(amount) || 0);
+    }, 0);
+    
+    return formBucketsTotal + existingBucketsTotal;
   };
   
   const calculateGrandTotal = () => {
@@ -786,6 +794,27 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                       </tr>
                     </React.Fragment>
                   ))}
+                  
+                  {/* Existing bucket rows */}
+                  {feeBuckets.map((bucket) => {
+                    const amount = getExistingBucketAmount(termIndex, bucket.id);
+                    if (!amount || parseFloat(amount) <= 0) return null;
+                    
+                    return (
+                      <tr key={`preview-existing-${termIndex}-${bucket.id}`} className="border-t border-slate-100 bg-slate-50/50">
+                        <td className="py-2.5 px-4">{bucket.name}</td>
+                        <td className="py-2.5 px-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full bg-blue-50"></div>
+                            <span className="text-sm capitalize text-blue-600">existing</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-medium">
+                          {parseFloat(amount).toLocaleString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   
                   {/* Term total row - stands out */}
                   <tr className="border-t-2 border-primary/30 bg-primary/5">

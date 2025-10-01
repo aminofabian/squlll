@@ -16,6 +16,8 @@ import { OverviewStatsCards } from './components/OverviewStatsCards'
 import { FiltersSection } from './components/FiltersSection'
 import { FeesDataTable } from './components/FeesDataTable'
 import { FeeStructureDrawer } from './components/FeeStructureDrawerRefactored'
+import RecordPaymentDrawer from './components/RecordPaymentDrawer'
+import StudentPayments from './components/StudentPayments'
 import { FeeStructureManager } from './components/FeeStructureManager'
 import { BulkInvoiceGenerator } from './components/BulkInvoiceGenerator'
 import { useFeesData } from './hooks/useFeesData'
@@ -74,10 +76,18 @@ export default function FeesPage() {
   } = useFeesData()
 
   const {
+    // modal states
+    showRecordPaymentDrawer,
+    setShowRecordPaymentDrawer,
+    // form states
+    paymentForm,
+    setPaymentForm,
+    // handlers
     handleNewInvoice,
     handleSendReminder,
     handleRecordPayment,
-    handleCreatePaymentPlan
+    handleCreatePaymentPlan,
+    handleSubmitPayment
   } = useFormHandlers(selectedStudent, filteredInvoices)
 
   // Fee Structure hooks
@@ -371,6 +381,11 @@ export default function FeesPage() {
                   onViewInvoice={handleViewInvoice}
                   onSelectAll={handleSelectAll}
                 />
+
+                {/* Student Payments */}
+                {selectedStudent && (
+                  <StudentPayments studentId={selectedStudent} />)
+                }
               </div>
             </div>
           </TabsContent>
@@ -470,6 +485,16 @@ export default function FeesPage() {
         onGenerate={handleBulkGeneration}
         preselectedStructureId={preselectedStructureId}
         preselectedTerm={preselectedTerm}
+      />
+
+      {/* Record Payment Drawer */}
+      <RecordPaymentDrawer
+        isOpen={showRecordPaymentDrawer}
+        onClose={() => setShowRecordPaymentDrawer(false)}
+        form={paymentForm}
+        setForm={setPaymentForm}
+        onSubmit={handleSubmitPayment}
+        invoices={selectedStudentInvoices}
       />
     </div>
   )
