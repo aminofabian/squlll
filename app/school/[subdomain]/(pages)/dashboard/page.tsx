@@ -94,9 +94,10 @@ export default function SchoolDashboard() {
   const filteredStudents = useMemo(() => {
     if (!selectedGrade || !selectedGradeInfo) return students
     
-    return students.filter(student => 
-      student.grade.gradeLevel.name.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
-    )
+    return students.filter(student => {
+      if (typeof student.grade === 'string') return false
+      return student.grade.gradeLevel.name.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
+    })
   }, [students, selectedGrade, selectedGradeInfo])
 
   // Calculate real statistics (moved before conditional returns)
