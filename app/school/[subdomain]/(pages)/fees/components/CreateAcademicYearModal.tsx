@@ -492,22 +492,19 @@ export const CreateAcademicYearModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-4xl h-[90vh] overflow-y-auto rounded-none border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
-            Create Academic Year
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <CalendarDays className="h-6 w-6 text-primary" />
+            Academic Year
           </DialogTitle>
-          <DialogDescription>
-            Add a new academic year with terms for fee structures
-          </DialogDescription>
         </DialogHeader>
         
         {/* Progress indicator */}
-        <div className="mb-4">
-          <Progress value={progressValue} className="h-2 w-full" />
-          <div className="flex justify-between mt-1 text-xs text-gray-500">
-            <span className={currentStep === 'academic-year' ? 'font-medium text-primary' : ''}>Academic Year</span>
-            <span className={currentStep === 'terms' ? 'font-medium text-primary' : ''}>Terms</span>
-            <span className={currentStep === 'success' ? 'font-medium text-primary' : ''}>Complete</span>
+        <div className="mb-6">
+          <Progress value={progressValue} className="h-1 w-full" />
+          <div className="flex justify-between mt-2 text-sm">
+            <span className={currentStep === 'academic-year' ? 'font-semibold text-primary' : 'text-gray-400'}>Year</span>
+            <span className={currentStep === 'terms' ? 'font-semibold text-primary' : 'text-gray-400'}>Terms</span>
+            <span className={currentStep === 'success' ? 'font-semibold text-primary' : 'text-gray-400'}>Done</span>
           </div>
         </div>
         
@@ -515,150 +512,130 @@ export const CreateAcademicYearModal = ({
           <div className="grid gap-4 py-4">
             {currentStep === 'academic-year' && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="year-name" className="flex items-center gap-2">
-                    <School className="h-4 w-4 text-primary" />
-                    Academic Year Name
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="year-name"
-                      value={academicYearName}
-                      onChange={(e) => {
-                        setAcademicYearName(e.target.value)
-                        // Auto-suggest dates when user types a valid year pattern
-                        const dates = getAcademicYearDates(e.target.value)
-                        if (dates && !academicYearStartDate && !academicYearEndDate) {
-                          setAcademicYearStartDate(dates.startDate)
-                          setAcademicYearEndDate(dates.endDate)
-                        }
-                      }}
-                      placeholder="e.g. 2025-2026"
-                      className="col-span-3 pr-20"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1 h-8 px-2 text-xs text-primary hover:bg-primary/10"
-                      onClick={() => {
-                        const suggestedYear = getCurrentAcademicYear()
-                        setAcademicYearName(suggestedYear)
-                        const dates = getAcademicYearDates(suggestedYear)
-                        if (dates) {
-                          setAcademicYearStartDate(dates.startDate)
-                          setAcademicYearEndDate(dates.endDate)
-                        }
-                      }}
-                    >
-                      Suggest
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Info className="h-4 w-4" />
-                      <span>Quick suggestions:</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(() => {
-                        const currentYear = new Date().getFullYear()
-                        const suggestions = [
-                          { name: `${currentYear}-${currentYear + 1}`, label: 'Current Year' },
-                          { name: `${currentYear + 1}-${currentYear + 2}`, label: 'Next Year' },
-                          { name: `${currentYear - 1}-${currentYear}`, label: 'Previous Year' }
-                        ]
-                        return suggestions.map((suggestion) => (
-                          <Button
-                            key={suggestion.name}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => {
-                              setAcademicYearName(suggestion.name)
-                              const dates = getAcademicYearDates(suggestion.name)
-                              if (dates) {
-                                setAcademicYearStartDate(dates.startDate)
-                                setAcademicYearEndDate(dates.endDate)
-                              }
-                            }}
-                          >
-                            {suggestion.name}
-                            <span className="ml-1 text-muted-foreground">({suggestion.label})</span>
-                          </Button>
-                        ))
-                      })()}
-                    </div>
-                  </div>
-                </div>
-                
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="year-start-date" className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-green-600" />
-                        Start Date
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="year-start-date"
-                          type="date"
-                          value={academicYearStartDate}
-                          onChange={(e) => setAcademicYearStartDate(e.target.value)}
-                          className="pl-10"
-                        />
-                        <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      </div>
-                      {academicYearStartDate && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDateForDisplay(academicYearStartDate)}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="year-end-date" className="flex items-center gap-2">
-                        <CalendarIcon className="h-4 w-4 text-red-600" />
-                        End Date
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="year-end-date"
-                          type="date"
-                          value={academicYearEndDate}
-                          onChange={(e) => setAcademicYearEndDate(e.target.value)}
-                          className="pl-10"
-                        />
-                        <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      </div>
-                      {academicYearEndDate && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDateForDisplay(academicYearEndDate)}
-                        </div>
-                      )}
+                  <div className="space-y-2">
+                    <Label htmlFor="year-name" className="text-sm font-medium">
+                      Year Name
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="year-name"
+                        value={academicYearName}
+                        onChange={(e) => {
+                          setAcademicYearName(e.target.value)
+                          const dates = getAcademicYearDates(e.target.value)
+                          if (dates && !academicYearStartDate && !academicYearEndDate) {
+                            setAcademicYearStartDate(dates.startDate)
+                            setAcademicYearEndDate(dates.endDate)
+                          }
+                        }}
+                        placeholder="2025-2026"
+                        className="pr-20"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1 h-8 px-3 text-xs text-primary hover:bg-primary/10"
+                        onClick={() => {
+                          const suggestedYear = getCurrentAcademicYear()
+                          setAcademicYearName(suggestedYear)
+                          const dates = getAcademicYearDates(suggestedYear)
+                          if (dates) {
+                            setAcademicYearStartDate(dates.startDate)
+                            setAcademicYearEndDate(dates.endDate)
+                          }
+                        }}
+                      >
+                        Auto
+                      </Button>
                     </div>
                   </div>
                   
-                  {/* Date validation feedback */}
-                  {academicYearStartDate && academicYearEndDate && (() => {
-                    const validation = getDateValidationMessage(academicYearStartDate, academicYearEndDate)
-                    if (!validation) return null
-                    
-                    return (
-                      <div className={`flex items-center gap-2 p-3 text-sm ${
-                        validation.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
-                        validation.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
-                        'bg-green-50 border border-green-200 text-green-700'
-                      }`}>
-                        {validation.type === 'error' && <AlertCircle className="h-4 w-4" />}
-                        {validation.type === 'warning' && <AlertCircle className="h-4 w-4" />}
-                        {validation.type === 'success' && <CheckCircle className="h-4 w-4" />}
-                        <span>{validation.message}</span>
-                      </div>
-                    )
-                  })()}
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const currentYear = new Date().getFullYear()
+                      const suggestions = [
+                        `${currentYear}-${currentYear + 1}`,
+                        `${currentYear + 1}-${currentYear + 2}`,
+                        `${currentYear - 1}-${currentYear}`
+                      ]
+                      return suggestions.map((suggestion) => (
+                        <Button
+                          key={suggestion}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={() => {
+                            setAcademicYearName(suggestion)
+                            const dates = getAcademicYearDates(suggestion)
+                            if (dates) {
+                              setAcademicYearStartDate(dates.startDate)
+                              setAcademicYearEndDate(dates.endDate)
+                            }
+                          }}
+                        >
+                          {suggestion}
+                        </Button>
+                      ))
+                    })()}
+                  </div>
                 </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="year-start-date" className="text-sm font-medium">
+                      Start Date
+                    </Label>
+                    <Input
+                      id="year-start-date"
+                      type="date"
+                      value={academicYearStartDate}
+                      onChange={(e) => setAcademicYearStartDate(e.target.value)}
+                    />
+                    {academicYearStartDate && (
+                      <div className="text-xs text-gray-500">
+                        {formatDateForDisplay(academicYearStartDate)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="year-end-date" className="text-sm font-medium">
+                      End Date
+                    </Label>
+                    <Input
+                      id="year-end-date"
+                      type="date"
+                      value={academicYearEndDate}
+                      onChange={(e) => setAcademicYearEndDate(e.target.value)}
+                    />
+                    {academicYearEndDate && (
+                      <div className="text-xs text-gray-500">
+                        {formatDateForDisplay(academicYearEndDate)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                  
+                {/* Date validation feedback */}
+                {academicYearStartDate && academicYearEndDate && (() => {
+                  const validation = getDateValidationMessage(academicYearStartDate, academicYearEndDate)
+                  if (!validation) return null
+                  
+                  return (
+                    <div className={`flex items-center gap-2 p-3 text-sm ${
+                      validation.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
+                      validation.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
+                      'bg-green-50 border border-green-200 text-green-700'
+                    }`}>
+                      {validation.type === 'error' && <AlertCircle className="h-4 w-4" />}
+                      {validation.type === 'warning' && <AlertCircle className="h-4 w-4" />}
+                      {validation.type === 'success' && <CheckCircle className="h-4 w-4" />}
+                      <span>{validation.message}</span>
+                    </div>
+                  )
+                })()}
               </>
             )}
 
@@ -666,97 +643,49 @@ export const CreateAcademicYearModal = ({
               <>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2 text-lg">
-                      <BookOpen className="h-5 w-5 text-primary" />
-                      Terms for {academicYearName}
-                    </Label>
+                    <h3 className="text-lg font-semibold">Terms</h3>
                     <Button 
                       type="button" 
                       variant="outline" 
                       size="sm"
-                      className="h-8 text-xs"
                       onClick={handleAddTerm}
                     >
-                      <Plus className="h-3 w-3 mr-1" /> Add Term
+                      <Plus className="h-4 w-4 mr-1" /> Add
                     </Button>
                   </div>
                   
-                  {/* Term suggestions based on academic year */}
+                  {/* Quick templates */}
                   {academicYearStartDate && academicYearEndDate && (() => {
                     const suggestions = getTermSuggestions(academicYearStartDate, academicYearEndDate)
                     const traditionalSuggestions = getTraditionalTermSuggestions(academicYearStartDate, academicYearEndDate)
                     if (suggestions.length === 0) return null
                     
                     return (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Info className="h-4 w-4" />
-                          <span>Choose a term structure:</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {/* Traditional school calendar */}
-                          <div className="relative group">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
-                              onClick={() => {
-                                setTerms(traditionalSuggestions)
-                              }}
-                            >
-                              Traditional Calendar
-                              <span className="ml-1 text-xs text-blue-500">(Jan-Apr, May-Aug, Aug-Nov)</span>
-                            </Button>
-                            
-                            {/* Tooltip preview */}
-                            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                              <div className="bg-gray-900 text-white text-xs p-3 shadow-lg min-w-max">
-                                <div className="space-y-1">
-                                  <div className="font-medium mb-2">Traditional School Calendar:</div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                                    <span>Term 1: Jan 15 - Apr 30</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                                    <span>Term 2: May 1 - Aug 15</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                                    <span>Term 3: Aug 16 - Nov 30</span>
-                                  </div>
-                                </div>
-                                <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Auto-calculated suggestions */}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-8 text-xs"
-                            onClick={() => {
-                              setTerms(suggestions)
-                            }}
-                          >
-                            {suggestions.length === 3 ? '3 Terms (Auto)' : suggestions.length === 2 ? '2 Semesters (Auto)' : '1 Term (Auto)'}
-                          </Button>
-                          
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs text-muted-foreground"
-                            onClick={() => {
-                              setTerms([])
-                            }}
-                          >
-                            Clear All
-                          </Button>
-                        </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setTerms(traditionalSuggestions)}
+                        >
+                          Traditional
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setTerms(suggestions)}
+                        >
+                          {suggestions.length === 3 ? '3 Terms' : suggestions.length === 2 ? '2 Semesters' : '1 Term'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setTerms([])}
+                        >
+                          Clear
+                        </Button>
                       </div>
                     )
                   })()}
@@ -764,10 +693,8 @@ export const CreateAcademicYearModal = ({
                   {/* Academic year summary */}
                   {academicYearStartDate && academicYearEndDate && (
                     <div className="bg-blue-50 border border-blue-200 p-3">
-                      <div className="flex items-center gap-2 text-sm text-blue-700">
-                        <CalendarDays className="h-4 w-4" />
-                        <span className="font-medium">Academic Year Summary:</span>
-                        <span>{formatDateForDisplay(academicYearStartDate)} - {formatDateForDisplay(academicYearEndDate)}</span>
+                      <div className="text-sm text-blue-700">
+                        <span className="font-medium">{academicYearName}:</span> {formatDateForDisplay(academicYearStartDate)} - {formatDateForDisplay(academicYearEndDate)}
                       </div>
                     </div>
                   )}
@@ -775,10 +702,10 @@ export const CreateAcademicYearModal = ({
                   
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
                     {terms.length === 0 && (
-                      <div className="col-span-full text-center py-8 text-muted-foreground">
+                      <div className="col-span-full text-center py-8 text-gray-400">
                         <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                        <p className="text-sm">No terms added yet</p>
-                        <p className="text-xs">Click "Add Term" or use the suggestions above to get started</p>
+                        <p className="text-sm">No terms yet</p>
+                        <p className="text-xs">Add terms or use templates above</p>
                       </div>
                     )}
                     
@@ -790,20 +717,19 @@ export const CreateAcademicYearModal = ({
                         <div className="space-y-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
-                              <Label className="text-sm font-medium flex items-center gap-2 mb-1">
-                                <BookOpen className="h-4 w-4 text-primary" />
-                                Term Name
+                              <Label className="text-sm font-medium">
+                                Name
                               </Label>
                               <div className="space-y-2">
                                 <Input
                                   value={term.name}
                                   onChange={(e) => handleTermChange(index, 'name', e.target.value)}
-                                  placeholder="e.g. Term 1, First Semester, etc."
+                                  placeholder="Term 1"
                                   className="w-full"
                                 />
                                 {!term.name && (
                                   <div className="flex flex-wrap gap-1">
-                                    {['Term 1', 'Term 2', 'Term 3', 'Semester 1', 'Semester 2', 'Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'].map((suggestion) => (
+                                    {['Term 1', 'Term 2', 'Term 3', 'Semester 1', 'Semester 2'].map((suggestion) => (
                                       <Button
                                         key={suggestion}
                                         type="button"
@@ -827,69 +753,55 @@ export const CreateAcademicYearModal = ({
                                 className="h-9 px-3 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                                 onClick={() => handleRemoveTerm(index)}
                               >
-                                <span className="text-sm">Remove</span>
+                                Remove
                               </Button>
                             )}
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="space-y-1">
-                              <Label className="text-xs flex items-center gap-1">
-                                <CalendarIcon className="h-3 w-3 text-green-600" />
-                                Start Date
-                              </Label>
-                              <div className="relative">
-                                <Input
-                                  type="date"
-                                  value={term.startDate}
-                                  onChange={(e) => handleTermChange(index, 'startDate', e.target.value)}
-                                  className="text-xs pl-8"
-                                />
-                                <CalendarIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                              </div>
+                              <Label className="text-xs">Start</Label>
+                              <Input
+                                type="date"
+                                value={term.startDate}
+                                onChange={(e) => handleTermChange(index, 'startDate', e.target.value)}
+                                className="text-xs"
+                              />
                               {term.startDate && (
-                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-2.5 w-2.5" />
+                                <div className="text-xs text-gray-500">
                                   {formatDateForDisplay(term.startDate)}
                                 </div>
                               )}
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs flex items-center gap-1">
-                                <CalendarIcon className="h-3 w-3 text-red-600" />
-                                End Date
-                              </Label>
-                              <div className="relative">
-                                <Input
-                                  type="date"
-                                  value={term.endDate}
-                                  onChange={(e) => handleTermChange(index, 'endDate', e.target.value)}
-                                  className="text-xs pl-8"
-                                />
-                                <CalendarIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                              </div>
+                              <Label className="text-xs">End</Label>
+                              <Input
+                                type="date"
+                                value={term.endDate}
+                                onChange={(e) => handleTermChange(index, 'endDate', e.target.value)}
+                                className="text-xs"
+                              />
                               {term.endDate && (
-                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-2.5 w-2.5" />
+                                <div className="text-xs text-gray-500">
                                   {formatDateForDisplay(term.endDate)}
                                 </div>
                               )}
                             </div>
                           </div>
                           
-                          {/* Term date validation */}
+                          {/* Term validation */}
                           {term.startDate && term.endDate && (() => {
                             const validation = getTermValidationMessage(term.startDate, term.endDate)
                             if (!validation) return null
                             
                             return (
-                              <div className={`flex items-center gap-2 p-3 text-sm ${
+                              <div className={`flex items-center gap-2 p-2 text-xs ${
                                 validation.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
                                 validation.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
                                 'bg-green-50 border border-green-200 text-green-700'
                               }`}>
-                                {validation.type === 'error' && <AlertCircle className="h-4 w-4" />}
-                                {validation.type === 'warning' && <AlertCircle className="h-4 w-4" />}
-                                {validation.type === 'success' && <CheckCircle className="h-4 w-4" />}
+                                {validation.type === 'error' && <AlertCircle className="h-3 w-3" />}
+                                {validation.type === 'warning' && <AlertCircle className="h-3 w-3" />}
+                                {validation.type === 'success' && <CheckCircle className="h-3 w-3" />}
                                 <span>{validation.message}</span>
                               </div>
                             )
@@ -902,31 +814,25 @@ export const CreateAcademicYearModal = ({
               )}
             
             {currentStep === 'success' && (
-              <div className="flex flex-col items-center py-4 space-y-4 text-center">
-                <div className="h-16 w-16  bg-primary/10 flex items-center justify-center">
-                  <CheckCircle className="h-10 w-10 text-primary" />
+              <div className="flex flex-col items-center py-8 space-y-6 text-center">
+                <div className="h-20 w-20 bg-green-100 flex items-center justify-center">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">Successfully Created!</h3>
-                  <p className="text-gray-500">{successMessage}</p>
+                  <h3 className="text-2xl font-bold text-gray-900">Done!</h3>
+                  <p className="text-gray-600">{successMessage}</p>
                 </div>
                 
                 {createdTerms.length > 0 && (
-                  <div className="w-full max-w-sm mx-auto mt-4 border p-3 bg-slate-50">
-                    <h4 className="font-medium flex items-center gap-1 mb-2">
-                      <School className="h-4 w-4" />
-                      {academicYearName}
-                    </h4>
+                  <div className="w-full max-w-md mx-auto border border-gray-200 p-4 bg-gray-50">
+                    <h4 className="font-semibold text-gray-900 mb-3">{academicYearName}</h4>
                     <div className="space-y-2">
                       {createdTerms.map((term, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-1">
-                            <BookOpen className="h-3.5 w-3.5 text-gray-500" />
-                            <span>{term.name}</span>
-                          </div>
-                          <Badge variant="outline" className="text-xs py-0 px-2">
+                        <div key={i} className="flex items-center justify-between text-sm bg-white p-2 border border-gray-100">
+                          <span className="font-medium">{term.name}</span>
+                          <span className="text-gray-500 text-xs">
                             {new Date(term.startDate).toLocaleDateString()} - {new Date(term.endDate).toLocaleDateString()}
-                          </Badge>
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -979,10 +885,10 @@ export const CreateAcademicYearModal = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Terms...
+                    Creating...
                   </>
                 ) : (
-                  'Create Terms'
+                  'Create'
                 )}
               </Button>
             )}
