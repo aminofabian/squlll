@@ -302,9 +302,10 @@ const useGradesFromStore = () => {
   const grades = allGradeLevels.flatMap(level => 
     level.grades.map(grade => {
       // Count students in this grade
-      const studentCount = students.filter(student => 
-        student.grade.gradeLevel.name.toLowerCase() === grade.name.toLowerCase()
-      ).length;
+      const studentCount = students.filter(student => {
+        if (typeof student.grade === 'string') return false
+        return student.grade.gradeLevel.name.toLowerCase() === grade.name.toLowerCase()
+      }).length;
       
       // Get subject count for this level
       const levelSubjects = config?.selectedLevels.find(l => l.id === level.levelId)?.subjects || [];

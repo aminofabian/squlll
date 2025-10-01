@@ -43,7 +43,7 @@ const knownRequirements = {
   dateOfBirth: "Required date in YYYY-MM-DD format",
   qualifications: "Required string",
   tenantSubjectIds: "Required array of UUIDs",
-  tenantGradeLevelIds: "Required array of UUIDs",
+  tenantIds: "Required array of UUIDs",
   classTeacherTenantStreamId: "Optional UUID",
   classTeacherTenantGradeLevelId: "Optional UUID"
 };
