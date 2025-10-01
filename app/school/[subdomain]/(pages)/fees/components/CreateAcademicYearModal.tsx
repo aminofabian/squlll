@@ -711,7 +711,7 @@ export const CreateAcademicYearModal = ({
                             
                             {/* Tooltip preview */}
                             <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
-                              <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg min-w-max">
+                              <div className="bg-gray-900 text-white text-xs p-3 shadow-lg min-w-max">
                                 <div className="space-y-1">
                                   <div className="font-medium mb-2">Traditional School Calendar:</div>
                                   <div className="flex items-center gap-2">
@@ -882,7 +882,7 @@ export const CreateAcademicYearModal = ({
                             if (!validation) return null
                             
                             return (
-                              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+                              <div className={`flex items-center gap-2 p-3 text-sm ${
                                 validation.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
                                 validation.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
                                 'bg-green-50 border border-green-200 text-green-700'
@@ -912,7 +912,7 @@ export const CreateAcademicYearModal = ({
                 </div>
                 
                 {createdTerms.length > 0 && (
-                  <div className="w-full max-w-sm mx-auto mt-4 border  p-3 bg-slate-50">
+                  <div className="w-full max-w-sm mx-auto mt-4 border p-3 bg-slate-50">
                     <h4 className="font-medium flex items-center gap-1 mb-2">
                       <School className="h-4 w-4" />
                       {academicYearName}
@@ -936,7 +936,7 @@ export const CreateAcademicYearModal = ({
             )}
             
             {error && (
-              <div className="bg-red-50 border border-red-200  p-3">
+              <div className="bg-red-50 border border-red-200 p-3">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
