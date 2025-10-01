@@ -490,7 +490,7 @@ export const CreateAcademicYearModal = ({
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] max-w-4xl h-[90vh] overflow-y-auto rounded-none border-0 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
@@ -593,7 +593,7 @@ export const CreateAcademicYearModal = ({
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="year-start-date" className="flex items-center gap-2">
                         <CalendarIcon className="h-4 w-4 text-green-600" />
@@ -646,7 +646,7 @@ export const CreateAcademicYearModal = ({
                     if (!validation) return null
                     
                     return (
-                      <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+                      <div className={`flex items-center gap-2 p-3 text-sm ${
                         validation.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
                         validation.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
                         'bg-green-50 border border-green-200 text-green-700'
@@ -763,7 +763,7 @@ export const CreateAcademicYearModal = ({
                   
                   {/* Academic year summary */}
                   {academicYearStartDate && academicYearEndDate && (
-                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                    <div className="bg-blue-50 border border-blue-200 p-3">
                       <div className="flex items-center gap-2 text-sm text-blue-700">
                         <CalendarDays className="h-4 w-4" />
                         <span className="font-medium">Academic Year Summary:</span>
@@ -773,9 +773,9 @@ export const CreateAcademicYearModal = ({
                   )}
                 </div>
                   
-                  <div className="space-y-4 pt-2">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
                     {terms.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
+                      <div className="col-span-full text-center py-8 text-muted-foreground">
                         <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
                         <p className="text-sm">No terms added yet</p>
                         <p className="text-xs">Click "Add Term" or use the suggestions above to get started</p>
@@ -783,12 +783,12 @@ export const CreateAcademicYearModal = ({
                     )}
                     
                     {terms.map((term, index) => (
-                      <div key={index} className="border border-slate-200 p-4 bg-white rounded-lg shadow-sm relative hover:shadow-md transition-shadow">
+                      <div key={index} className="border border-slate-200 p-4 bg-white shadow-sm relative hover:shadow-md transition-shadow">
                         <Badge variant="outline" className="absolute -top-2 -right-2 bg-white border-primary text-primary">
                           {index + 1}
                         </Badge>
                         <div className="space-y-3">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
                               <Label className="text-sm font-medium flex items-center gap-2 mb-1">
                                 <BookOpen className="h-4 w-4 text-primary" />
@@ -824,7 +824,7 @@ export const CreateAcademicYearModal = ({
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-9 px-3 text-red-500 hover:text-red-700 hover:bg-red-50 self-end"
+                                className="h-9 px-3 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                                 onClick={() => handleRemoveTerm(index)}
                               >
                                 <span className="text-sm">Remove</span>
