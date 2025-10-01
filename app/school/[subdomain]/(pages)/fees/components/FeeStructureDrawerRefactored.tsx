@@ -152,7 +152,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   const { gradeLevels, isLoading: isLoadingGradeLevels, error: gradeLevelsError } = useGradeLevels()
   
   // Use the GraphQL hook for fee structures operations
-  const { createFeeStructure, isCreating: isCreatingFeeStructure, createError } = useGraphQLFeeStructures()
+  const { createFeeStructureWithItems, isCreatingWithItems: isCreatingFeeStructure, createWithItemsError: createError } = useGraphQLFeeStructures()
   
   // Get school name from config or format subdomain as fallback
   const getSchoolName = () => {
@@ -428,8 +428,28 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   }
 
   const addBucket = (termIndex: number) => {
-    // Create a new bucket with completely empty properties
-    // This ensures all available buckets will be shown in the selector
+    // First check if we have available fee buckets
+    if (feeBuckets && feeBuckets.length > 0) {
+      // Find a fee bucket that's not already used in this term
+      const usedBucketIds = new Set(
+        formData.termStructures[termIndex]?.buckets
+          .filter(b => b.id)
+          .map(b => b.id)
+      );
+      
+      // Find an unused bucket
+      const unusedBucket = feeBuckets.find(bucket => !usedBucketIds.has(bucket.id));
+      
+      if (unusedBucket) {
+        // Use an existing bucket
+        console.log(`Using existing fee bucket: ${unusedBucket.name} (${unusedBucket.id})`);
+        addExistingBucket(termIndex, unusedBucket.id);
+        return;
+      }
+    }
+    
+    // If no available buckets or all are used, create an empty one
+    console.log('Creating empty bucket (will need to be connected to a fee bucket)');
     const newBucket = { 
       ...defaultBucket,
       name: '', // Empty name to ensure the BucketSelector shows all options
@@ -450,6 +470,9 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
           : term
       )
     }))
+    
+    // Show a warning that this bucket needs to be connected to a fee bucket
+    showToast('⚠️ Please select an existing fee bucket or create a new one for this item', 'info');
   }
 
   const removeBucket = (termIndex: number, bucketIndex: number) => {
@@ -639,10 +662,16 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   // Add existing bucket to fee structure
   const addExistingBucket = (termIndex: number, bucketId: string) => {
     const existingBucket = feeBuckets.find(bucket => bucket.id === bucketId)
-    if (!existingBucket) return
+    if (!existingBucket) {
+      console.error(`Bucket with ID ${bucketId} not found in feeBuckets`);
+      showToast(`❌ Failed to add bucket: Bucket not found`, 'error');
+      return;
+    }
+
+    console.log(`Adding existing bucket: ${JSON.stringify(existingBucket, null, 2)}`);
 
     const newBucket: FeeBucketForm = {
-      id: existingBucket.id,
+      id: existingBucket.id, // Make sure we store the ID for the createFeeStructureWithItems mutation
       type: 'tuition', // Default type, can be changed later
       name: existingBucket.name,
       description: existingBucket.description,
@@ -655,14 +684,17 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       }]
     }
 
-    setFormData(prev => ({
-      ...prev,
-      termStructures: prev.termStructures.map((term, i) => 
-        i === termIndex 
-          ? { ...term, buckets: [...term.buckets, newBucket] }
-          : term
-      )
-    }))
+    setFormData(prev => {
+      console.log(`Adding bucket ${existingBucket.name} with ID ${existingBucket.id} to term ${termIndex}`);
+      return {
+        ...prev,
+        termStructures: prev.termStructures.map((term, i) => 
+          i === termIndex 
+            ? { ...term, buckets: [...term.buckets, newBucket] }
+            : term
+        )
+      };
+    });
 
     showToast(`✅ Added "${existingBucket.name}" bucket to ${formData.termStructures[termIndex].term}`, 'success')
   }
@@ -793,19 +825,6 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         throw new Error('Selected academic year not found');
       }
 
-      // For simplicity, we'll use the first term of the first term structure
-      const firstTermStructure = formData.termStructures[0];
-      if (!firstTermStructure) {
-        throw new Error('No term structure defined');
-      }
-      
-      // Find the term ID from available terms in the academic year
-      const termName = firstTermStructure.term;
-      const selectedTerm = selectedAcademicYear.terms?.find(t => t.name === termName);
-      if (!selectedTerm) {
-        throw new Error(`Selected term ${termName} not found in academic year ${selectedAcademicYear.name}`);
-      }
-
       // Collect all term IDs from all term structures
       const allTermIds = formData.termStructures.map(termStructure => {
         // Find the term ID for the term name in this structure
@@ -822,12 +841,118 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         throw new Error('No valid terms found in the fee structure');
       }
 
-      // Create a single fee structure for all selected grades with all term IDs
-      const createdFeeStructure = await createFeeStructure({
+      // Check that we have existing fee buckets to work with
+      if (!feeBuckets || feeBuckets.length === 0) {
+        throw new Error('No fee buckets are available. Please create fee buckets first.');
+      }
+      
+      console.log('Available fee buckets to use:', JSON.stringify(feeBuckets.map(b => ({ id: b.id, name: b.name })), null, 2));
+      
+      // Log the term structures we're working with
+      console.log('Processing term structures:', formData.termStructures.map(t => t.term));
+      
+      // First, gather all unique fee buckets used across all term structures
+      const feeBucketMap = new Map<string, {
+        feeBucketId: string;
+        amount: number;
+        isMandatory: boolean;
+      }>();
+      
+      // Collect all used bucket IDs from the form data for easy reference
+      const usedBucketIds = new Set<string>();
+      formData.termStructures.forEach(term => {
+        term.buckets.forEach(bucket => {
+          if (bucket.id) usedBucketIds.add(bucket.id);
+        });
+      });
+      
+      console.log(`Found ${usedBucketIds.size} unique bucket IDs in form data: ${Array.from(usedBucketIds).join(', ')}`);
+      
+      // Validate that all used bucket IDs exist in available fee buckets
+      usedBucketIds.forEach(id => {
+        const bucketExists = feeBuckets.some(b => b.id === id);
+        if (!bucketExists) {
+          console.warn(`Warning: Bucket ID ${id} used in form doesn't exist in available fee buckets`);
+        }
+      });
+      
+      // Process all buckets across all term structures
+      formData.termStructures.forEach((termStructure, tIndex) => {
+        console.log(`Processing term structure ${tIndex + 1}: ${termStructure.term}`);
+        
+        termStructure.buckets.forEach((bucket, bIndex) => {
+          // Skip buckets without ID
+          if (!bucket.id) {
+            console.warn(`Skipping bucket '${bucket.name}' with no ID in term ${termStructure.term}`);
+            return;
+          }
+          
+          // Find the corresponding fee bucket from our available buckets
+          const feeBucket = feeBuckets.find(fb => fb.id === bucket.id);
+          if (!feeBucket) {
+            console.warn(`Bucket ID ${bucket.id} not found in available fee buckets, skipping`);
+            return;
+          }
+          
+          console.log(`Using existing bucket: ${feeBucket.name} (ID: ${feeBucket.id})`);
+          
+          // Calculate total amount for this bucket's components
+          const totalAmount = bucket.components.reduce((sum, component) => {
+            const amount = parseFloat(component.amount) || 0;
+            return sum + amount;
+          }, 0);
+          
+          console.log(`Total amount for ${feeBucket.name}: ${totalAmount}`);
+          
+          // If this bucket already exists in our map, use the highest amount
+          if (feeBucketMap.has(bucket.id)) {
+            const existing = feeBucketMap.get(bucket.id)!;
+            if (totalAmount > existing.amount) {
+              console.log(`Updating amount for ${feeBucket.name} from ${existing.amount} to ${totalAmount}`);
+              existing.amount = totalAmount;
+            }
+            // If any occurrence is mandatory, make it mandatory
+            if (!bucket.isOptional) {
+              existing.isMandatory = true;
+            }
+          } else {
+            // Add new bucket to the map
+            feeBucketMap.set(bucket.id, {
+              feeBucketId: bucket.id,
+              amount: totalAmount,
+              isMandatory: !bucket.isOptional
+            });
+            console.log(`Added ${feeBucket.name} with amount ${totalAmount} to fee items`);
+          }
+        });
+      });
+      
+      // Convert the map to array of fee items
+      const feeItems = Array.from(feeBucketMap.values());
+      
+      // Ensure we have fee items
+      if (feeItems.length === 0) {
+        throw new Error('No valid fee buckets found. Please add existing fee buckets with amounts.');
+      }
+      
+      // Log final fee items with their corresponding bucket names for clarity
+      const feeItemsWithNames = feeItems.map(item => {
+        const bucket = feeBuckets.find(b => b.id === item.feeBucketId);
+        return {
+          ...item,
+          bucketName: bucket?.name || 'Unknown'
+        };
+      });
+      
+      console.log('Final fee items to be sent:', JSON.stringify(feeItemsWithNames, null, 2));
+
+      // Create a single fee structure for all selected grades with all term IDs and items
+      const createdFeeStructure = await createFeeStructureWithItems({
         name: formData.name,
         academicYearId: selectedAcademicYear.id,
         termIds: allTermIds, // Use all collected term IDs
-        gradeLevelIds: selectedGrades
+        gradeLevelIds: selectedGrades,
+        items: feeItems
       });
       
       if (!createdFeeStructure) {
@@ -855,7 +980,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
           {
             message: "Fee structure already exists for this combination",
             locations: [{ line: 3, column: 11 }],
-            path: ["createFeeStructure"],
+            path: ["createFeeStructureWithItems"],
             extensions: { code: "CONFLICTEXCEPTION" }
           }
         ],
@@ -878,8 +1003,8 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       // Extract just the error message for the toast
       const errorMessage = errorResponse.errors[0]?.message || 'Unknown error';
       
-      // Always show this specific message for conflict errors
-      showToast("Fee structure already exists for this combination", 'error');
+      // Show the error message
+      showToast(errorMessage, 'error');
       
       // Log the complete error for debugging
       console.log('Complete error details:', error);
@@ -899,10 +1024,17 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
   // Effect to update formData.feeBuckets when buckets are loaded from the API
   useEffect(() => {
     if (!bucketsLoading && feeBuckets?.length > 0) {
+      // Log available fee buckets for reference
+      console.log('Available fee buckets loaded:', feeBuckets.map(bucket => ({
+        id: bucket.id,
+        name: bucket.name,
+        description: bucket.description
+      })));
+      
       setFormData(prev => ({
         ...prev,
         feeBuckets: feeBuckets
-      }))
+      }));
     }
   }, [feeBuckets, bucketsLoading])
 
@@ -921,12 +1053,39 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         // Get the first term for initial setup
         const initialTerm = activeYear.terms[0].name;
         
-        // Create a term structure with this term
+        // Create initial buckets from existing fee buckets if available
+        let initialBuckets: FeeBucketForm[] = [];
+        if (feeBuckets && feeBuckets.length > 0) {
+          // Take the first 2 fee buckets as initial items (similar to the example)
+          const bucketsToUse = feeBuckets.slice(0, 2);
+          
+          initialBuckets = bucketsToUse.map(bucket => {
+            console.log(`Setting up initial fee bucket: ${bucket.name} (${bucket.id})`);
+            return {
+              id: bucket.id,
+              type: 'tuition',
+              name: bucket.name,
+              description: bucket.description || '',
+              isOptional: bucket.name.toLowerCase().includes('transport') || bucket.name.toLowerCase().includes('optional'),
+              components: [{
+                name: bucket.name,
+                description: bucket.description || '',
+                amount: '0',
+                category: 'academic'
+              }]
+            } as FeeBucketForm;
+          });
+        }
+        
+        // Create a term structure with this term and initial buckets
         initialTerms = [{
           ...defaultTermStructure,
           term: initialTerm,
-          academicYear: activeYear.name
+          academicYear: activeYear.name,
+          buckets: initialBuckets
         }];
+        
+        console.log('Setting up initial term structure with buckets:', initialBuckets);
       } else {
         initialTerms = [{
           ...defaultTermStructure,
@@ -940,6 +1099,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         boardingType: 'both',
         academicYear: activeYear?.name || currentYear,
         termStructures: initialTerms,
+        feeBuckets: feeBuckets, // Store available fee buckets in the form data
         schoolDetails: {
           name: getSchoolName(),
           address: 'P.O. Box 100 - 40404, KENYA. Cell: 0710000000',
@@ -964,7 +1124,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       })
       setSelectedGrades([])
     }
-  }, [initialData, isOpen, schoolConfig, subdomain, academicYears])
+  }, [initialData, isOpen, schoolConfig, subdomain, academicYears, feeBuckets])
 
   // Effect to fetch academic years when drawer opens
   useEffect(() => {

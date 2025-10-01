@@ -65,6 +65,21 @@ export interface CreateFeeStructureInput {
   gradeLevelIds: string[];
 }
 
+// Interface for creating a fee structure with items
+export interface FeeStructureItemInput {
+  feeBucketId: string;
+  amount: number;
+  isMandatory: boolean;
+}
+
+export interface CreateFeeStructureWithItemsInput {
+  name: string;
+  academicYearId: string;
+  termIds: string[];
+  gradeLevelIds: string[];
+  items: FeeStructureItemInput[];
+}
+
 export const useGraphQLFeeStructures = () => {
   const [structures, setStructures] = useState<GraphQLFeeStructure[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -76,6 +91,8 @@ export const useGraphQLFeeStructures = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [isCreatingWithItems, setIsCreatingWithItems] = useState<boolean>(false);
+  const [createWithItemsError, setCreateWithItemsError] = useState<string | null>(null);
 
   const fetchFeeStructures = async () => {
     setIsLoading(true);
@@ -414,19 +431,143 @@ export const useGraphQLFeeStructures = () => {
     }
   };
 
+  /**
+   * Creates a fee structure with items using the updated GraphQL mutation
+   */
+  const createFeeStructureWithItems = async (input: CreateFeeStructureWithItemsInput): Promise<GraphQLFeeStructure | null> => {
+    setIsCreatingWithItems(true);
+    setCreateWithItemsError(null);
+    console.log('Creating fee structure with items input:', input);
+
+    try {
+      const mutation = `
+        mutation CreateFeeStructureWithItems($input: CreateFeeStructureWithItemsInput!) {
+          createFeeStructureWithItems(input: $input) {
+            id
+            name
+            academicYear {
+              id
+              name
+            }
+            terms {
+              id
+              name
+            }
+            gradeLevels {
+              id
+              shortName
+              gradeLevel {
+                id
+                name
+              }
+            }
+            items {
+              id
+              feeBucket {
+                id
+                name
+                description
+              }
+              amount
+              isMandatory
+            }
+          }
+        }
+      `;
+
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: mutation,
+          variables: {
+            input
+          }
+        }),
+      });
+
+      console.log(`GraphQL create with items response status: ${response.status}`);
+
+      if (!response.ok) {
+        throw new Error(`GraphQL request failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Create with items response:', result);
+      
+      if (result.errors) {
+        // Extract the primary error message
+        const primaryError = result.errors[0];
+        const errorMessage = primaryError?.message || 'Unknown GraphQL error';
+        const errorCode = primaryError?.extensions?.code;
+        
+        console.error('GraphQL errors:', JSON.stringify(result.errors, null, 2));
+        
+        // Capture the original error message and raw error data
+        const errorWithDetails = new Error(errorMessage);
+        
+        // Use a type assertion to add custom properties without TypeScript errors
+        const enhancedError = errorWithDetails as Error & {
+          graphqlError: boolean;
+          code?: string;
+          extensions?: any;
+          rawGraphQLResponse?: any;
+          rawGraphQLErrors?: any[];
+        };
+        
+        // Add all the GraphQL error details we have
+        enhancedError.graphqlError = true;
+        enhancedError.rawGraphQLResponse = result;
+        enhancedError.rawGraphQLErrors = result.errors;
+        
+        if (errorCode) {
+          enhancedError.code = errorCode;
+        }
+        if (primaryError?.extensions) {
+          enhancedError.extensions = primaryError.extensions;
+        }
+        
+        throw enhancedError;
+      }
+
+      if (!result.data?.createFeeStructureWithItems) {
+        throw new Error('GraphQL response missing createFeeStructureWithItems field');
+      }
+
+      // Add the new structure to the local state
+      const newStructure = result.data.createFeeStructureWithItems;
+      setStructures(prev => [...prev, newStructure]);
+
+      console.log('Fee structure with items created successfully:', newStructure);
+      return newStructure;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setCreateWithItemsError(errorMessage);
+      console.error('Error creating fee structure with items:', err);
+      return null;
+    } finally {
+      setIsCreatingWithItems(false);
+    }
+  };
+
   return {
     structures,
     isLoading,
     isUpdating,
     isDeleting,
     isCreating,
+    isCreatingWithItems,
     error,
     updateError,
     deleteError,
     createError,
+    createWithItemsError,
     lastFetchTime,
     fetchFeeStructures,
     createFeeStructure,
+    createFeeStructureWithItems,
     updateFeeStructure,
     deleteFeeStructure,
   };
