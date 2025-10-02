@@ -565,12 +565,6 @@ export default function StudentsPage() {
     setIsMounted(true);
   }, []);
 
-  // Find the selected student details
-  const selectedStudent = useMemo(() => {
-    if (!selectedStudentId) return null;
-    return students.find(student => student.id === selectedStudentId);
-  }, [selectedStudentId, students]);
-
   // Don't render until mounted to prevent hydration issues
   if (!isMounted) {
     return (
@@ -713,9 +707,9 @@ export default function StudentsPage() {
           </div>
         </div>
         
-        {selectedStudent ? (
+        {selectedStudentId ? (
           <StudentDetailsView
-            student={selectedStudent}
+            studentId={selectedStudentId}
             onClose={() => setSelectedStudentId(null)}
             schoolConfig={config}
           />

@@ -64,6 +64,37 @@ export interface StudentSummaryData {
   feeSummary: FeeSummary;
 }
 
+// Student Detail Summary (from studentSummary query)
+export interface FeeItem {
+  id: string;
+  feeBucketName: string;
+  amount: number;
+  isMandatory: boolean;
+  feeStructureName: string;
+  academicYearName: string;
+}
+
+export interface DetailedFeeSummary extends FeeSummary {
+  feeItems: FeeItem[];
+}
+
+export interface StudentDetailSummary {
+  id: string;
+  admissionNumber: string;
+  studentName: string;
+  email: string;
+  phone: string;
+  gender: string;
+  schoolType: string;
+  gradeLevelName: string;
+  curriculumName: string;
+  streamName: string | null;
+  feeSummary: DetailedFeeSummary;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Grade {
   id: string;
   name: string;
