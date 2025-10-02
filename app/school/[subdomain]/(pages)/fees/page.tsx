@@ -20,10 +20,15 @@ import RecordPaymentDrawer from './components/RecordPaymentDrawer'
 import StudentPayments from './components/StudentPayments'
 import { FeeStructureManager } from './components/FeeStructureManager'
 import { BulkInvoiceGenerator } from './components/BulkInvoiceGenerator'
+import { StudentDetailsCard } from './components/StudentDetailsCard'
+import { FeeSummaryCard } from './components/FeeSummaryCard'
+import { StudentInfoCard } from './components/StudentInfoCard'
 import { useFeesData } from './hooks/useFeesData'
 import { useFormHandlers } from './hooks/useFormHandlers'
 import { useFeeStructures } from './hooks/useFeeStructures'
 import { useGraphQLFeeStructures, UpdateFeeStructureInput } from './hooks/useGraphQLFeeStructures'
+import { useStudentSummary } from './hooks/useStudentSummary'
+import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary'
 import { FeeInvoice, FeeStructure, FeeStructureForm, BulkInvoiceGeneration } from './types'
 
 // Helper function for status colors
@@ -109,6 +114,31 @@ export default function FeesPage() {
     isDeleting,
     deleteError
   } = useGraphQLFeeStructures()
+
+  // Student Summary hook for detailed student data
+  const {
+    studentData: detailedStudentData,
+    loading: studentDataLoading,
+    error: studentDataError,
+    refetch: refetchStudentData
+  } = useStudentSummary(selectedStudent)
+
+  // Fallback hook using the existing working implementation
+  const {
+    studentDetail: fallbackStudentData,
+    loading: fallbackLoading,
+    error: fallbackError,
+    refetch: refetchFallback
+  } = useStudentDetailSummary(selectedStudent || '')
+
+  // Use fallback data if main hook fails
+  const finalStudentData = detailedStudentData || fallbackStudentData
+  const finalLoading = studentDataLoading || fallbackLoading
+  const finalError = studentDataError || fallbackError
+  const finalRefetch = () => {
+    refetchStudentData()
+    refetchFallback()
+  }
 
   // Get selected student invoices for overview
   const selectedStudentInvoices = selectedStudent 
@@ -349,43 +379,97 @@ export default function FeesPage() {
               />
 
               {/* Main Content Area */}
-              <div className="flex-1 p-6 space-y-6">
-                {/* Overview Stats */}
-                <OverviewStatsCards
-                  selectedStudent={selectedStudent}
-                  selectedStudentInvoices={selectedStudentInvoices}
-                  summaryStats={summaryStats}
-                  allStudents={filteredStudents}
-                />
+              <div className="flex-1 p-6">
+                {selectedStudent ? (
+                  // Student-specific view
+                  <div className="space-y-6">
+                    {/* Fee Summary Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold text-gray-900">Fee Summary</h2>
+                        <div className="text-sm text-gray-500">
+                          Current fee status and outstanding amounts
+                        </div>
+                      </div>
+                      <FeeSummaryCard
+                        studentData={finalStudentData}
+                        loading={finalLoading}
+                        error={finalError}
+                      />
+                    </div>
 
-                {/* Filters */}
-                <FiltersSection
-                  selectedFeeType={selectedFeeType}
-                  setSelectedFeeType={setSelectedFeeType}
-                  selectedStatus={selectedStatus}
-                  setSelectedStatus={setSelectedStatus}
-                  selectedClass=""
-                  setSelectedClass={() => {}}
-                  dueDateFilter=""
-                  setDueDateFilter={() => {}}
-                />
+                    {/* Fee Invoices Section */}
+                    <div className="space-y-4">
+                      <h2 className="text-xl font-semibold text-gray-900">Fee Invoices</h2>
+                      <FeesDataTable
+                        selectedStudent={selectedStudent}
+                        selectedStudentInvoices={selectedStudentInvoices}
+                        filteredInvoices={filteredInvoices}
+                        allStudents={filteredStudents}
+                        selectedInvoices={selectedInvoices}
+                        onSelectInvoice={handleSelectInvoice}
+                        onViewInvoice={handleViewInvoice}
+                        onSelectAll={handleSelectAll}
+                      />
+                    </div>
 
-                {/* Data Table */}
-                <FeesDataTable
-                  selectedStudent={selectedStudent}
-                  selectedStudentInvoices={selectedStudentInvoices}
-                  filteredInvoices={filteredInvoices}
-                  allStudents={filteredStudents}
-                  selectedInvoices={selectedInvoices}
-                  onSelectInvoice={handleSelectInvoice}
-                  onViewInvoice={handleViewInvoice}
-                  onSelectAll={handleSelectAll}
-                />
+                    {/* Payment History Section */}
+                    <div className="space-y-4">
+                      <h2 className="text-xl font-semibold text-gray-900">Payment History</h2>
+                      <StudentPayments studentId={selectedStudent} />
+                    </div>
 
-                {/* Student Payments */}
-                {selectedStudent && (
-                  <StudentPayments studentId={selectedStudent} />)
-                }
+                    {/* Student Information Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold text-gray-900">Student Information</h2>
+                        <div className="text-sm text-gray-500">
+                          Personal details and academic information
+                        </div>
+                      </div>
+                      <StudentInfoCard
+                        studentData={finalStudentData}
+                        loading={finalLoading}
+                        error={finalError}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // General overview view
+                  <div className="space-y-6">
+                    {/* Overview Stats */}
+                    <OverviewStatsCards
+                      selectedStudent={selectedStudent}
+                      selectedStudentInvoices={selectedStudentInvoices}
+                      summaryStats={summaryStats}
+                      allStudents={filteredStudents}
+                    />
+
+                    {/* Filters */}
+                    <FiltersSection
+                      selectedFeeType={selectedFeeType}
+                      setSelectedFeeType={setSelectedFeeType}
+                      selectedStatus={selectedStatus}
+                      setSelectedStatus={setSelectedStatus}
+                      selectedClass=""
+                      setSelectedClass={() => {}}
+                      dueDateFilter=""
+                      setDueDateFilter={() => {}}
+                    />
+
+                    {/* Data Table */}
+                    <FeesDataTable
+                      selectedStudent={selectedStudent}
+                      selectedStudentInvoices={selectedStudentInvoices}
+                      filteredInvoices={filteredInvoices}
+                      allStudents={filteredStudents}
+                      selectedInvoices={selectedInvoices}
+                      onSelectInvoice={handleSelectInvoice}
+                      onViewInvoice={handleViewInvoice}
+                      onSelectAll={handleSelectAll}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

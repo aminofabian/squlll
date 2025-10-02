@@ -90,6 +90,16 @@ export interface FeeSummary {
   totalPaid: number
   balance: number
   numberOfFeeItems: number
+  feeItems: FeeItem[]
+}
+
+export interface FeeItem {
+  id: string
+  feeBucketName: string
+  amount: number
+  isMandatory: boolean
+  feeStructureName: string
+  academicYearName: string
 }
 
 export interface StudentSummaryFromAPI {
@@ -98,6 +108,24 @@ export interface StudentSummaryFromAPI {
   studentName: string
   gradeLevelName: string
   feeSummary: FeeSummary
+}
+
+// Detailed Student Summary from GraphQL
+export interface StudentSummaryDetail {
+  id: string
+  admissionNumber: string
+  studentName: string
+  email: string
+  phone: string
+  gender: string
+  schoolType: string
+  gradeLevelName: string
+  curriculumName: string
+  streamName: string | null
+  feeSummary: FeeSummary
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 // Form types
