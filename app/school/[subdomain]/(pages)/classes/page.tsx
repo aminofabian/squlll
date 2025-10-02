@@ -181,15 +181,16 @@ function ClassesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
       {/* Sidebar */}
       <div className={`
         fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r-2 border-primary/20 transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out
         ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        ${isSidebarMinimized ? 'w-16' : 'w-64'}
+        ${isSidebarMinimized ? 'w-16' : 'w-72'}
+        flex flex-col
       `}>
         {/* Toggle button for minimize/expand */}
-        <div className={`p-2 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-end'}`}>
+        <div className={`p-4 border-b-2 border-primary/20 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-end'}`}>
           <Button
             variant="outline"
             size="sm"
@@ -206,143 +207,127 @@ function ClassesPage() {
         </div>
         
         {!isSidebarMinimized && (
-          <SchoolSearchFilter
-            className="p-4"
-            type="grades"
-            onSearch={setSearchTerm}
-            onGradeSelect={handleGradeSelect}
-            onStreamSelect={handleStreamSelect}
-            isLoading={isLoading}
-            selectedGradeId={selectedGradeId}
-            selectedStreamId={selectedStreamId}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <SchoolSearchFilter
+              className="p-4"
+              type="grades"
+              onSearch={setSearchTerm}
+              onGradeSelect={handleGradeSelect}
+              onStreamSelect={handleStreamSelect}
+              isLoading={isLoading}
+              selectedGradeId={selectedGradeId}
+              selectedStreamId={selectedStreamId}
+            />
+          </div>
         )}
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-6 overflow-y-auto relative">
-        {/* Floating toggle button when sidebar is minimized */}
-        {isSidebarMinimized && (
-          <div className="absolute top-6 left-6 z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSidebarMinimized(false)}
-              className="border-primary/20 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-primary hover:bg-white dark:hover:bg-slate-800 hover:text-primary shadow-sm transition-all duration-200"
-              title="Expand sidebar"
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-        <div className="flex justify-between items-start">
-          <div></div>
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-primary/80 to-primary/60 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-              <div className="relative">
-                <CreateClassDrawer onClassCreated={() => {
-                  // TODO: Refresh class list
-                  console.log('Class created successfully');
-                }} />
+      <div className="flex-1 overflow-y-auto relative">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold font-mono text-slate-800 dark:text-slate-200">
+                  Classes & Grades
+                </h1>
+                <p className="mt-2 text-sm font-mono text-slate-600 dark:text-slate-400">
+                  Manage class information, subjects, and fee summaries across all levels
+                </p>
               </div>
-              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-mono px-2 py-1 rounded whitespace-nowrap">
-                  Create a new class
+              
+              <div className="flex items-center gap-3">
+                {isSidebarMinimized && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSidebarMinimized(false)}
+                    className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 font-mono"
+                    title="Expand sidebar"
+                  >
+                    <PanelLeftOpen className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Filters</span>
+                  </Button>
+                )}
+                
+                <div className="relative group">
+                  <CreateClassDrawer onClassCreated={() => {
+                    console.log('Class created successfully');
+                  }} />
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              {/* Sidebar toggle button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-                className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-200"
-                title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
-              >
-                {isSidebarMinimized ? (
-                  <PanelLeftOpen className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </Button>
-              {/* Show filter button on mobile */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="lg:hidden border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-200"
-                onClick={() => setShowMobileFilter(true)}
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
-        </div>
 
-        {/* Active filter indicators */}
-        {!isLoading && config && (selectedGrade || searchTerm) && (
-          <div className="flex flex-wrap gap-2 mb-6 items-center">
-            <p className="text-sm font-mono font-medium mr-2 text-primary">Active filters:</p>
-            
-            {selectedGrade && (
-              <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary font-mono">
-                Grade: {selectedGrade.name} {selectedGrade.streamName && `(${selectedGrade.streamName})`} ({selectedGrade.levelName})
-                <X 
-                  className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" 
+          {/* Active filter indicators */}
+          {!isLoading && config && (selectedGrade || searchTerm) && (
+            <div className="mb-6 p-4 border-2 border-primary/20 bg-white dark:bg-slate-800">
+              <div className="flex flex-wrap gap-3 items-center">
+                <p className="text-sm font-mono font-semibold text-primary">Active Filters:</p>
+                
+                {selectedGrade && (
+                  <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary font-mono px-3 py-1.5">
+                    <span>Grade: {selectedGrade.name} {selectedGrade.streamName && `(${selectedGrade.streamName})`} ({selectedGrade.levelName})</span>
+                    <X 
+                      className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" 
+                      onClick={() => {
+                        setSelectedGradeId('');
+                        setSelectedLevelId('');
+                        setSelectedStreamId('');
+                      }} 
+                    />
+                  </Badge>
+                )}
+                
+                {searchTerm && (
+                  <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary font-mono px-3 py-1.5">
+                    <span>Search: "{searchTerm}"</span>
+                    <X className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
+                  </Badge>
+                )}
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="ml-auto text-slate-600 dark:text-slate-400 hover:text-red-600 hover:border-red-500/20 hover:bg-red-50 dark:hover:bg-red-950/20 border-primary/20 font-mono transition-all duration-200" 
                   onClick={() => {
                     setSelectedGradeId('');
                     setSelectedLevelId('');
                     setSelectedStreamId('');
-                  }} 
+                    setSearchTerm('');
+                  }}
+                >
+                  Clear All
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {/* Display filtered levels or empty state */}
+          <div className="space-y-6">
+            {isLoading ? (
+              // Show skeleton loading state
+              Array.from({ length: 3 }).map((_, index) => (
+                <ClassCardSkeleton key={index} />
+              ))
+            ) : filteredLevels.length > 0 ? (
+              filteredLevels.map((level) => (
+                <ClassCard 
+                  key={level.id} 
+                  level={level} 
+                  selectedGradeId={selectedGradeId}
+                  selectedStreamId={selectedStreamId}
+                  onStreamSelect={handleStreamSelect}
                 />
-              </Badge>
-            )}
-            
-            {searchTerm && (
-              <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary font-mono">
-                Search: {searchTerm}
-                <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
-              </Badge>
-            )}
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="ml-auto text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 border-primary/20 font-mono transition-all duration-200" 
-              onClick={() => {
-                setSelectedGradeId('');
-                setSelectedLevelId('');
-                setSelectedStreamId('');
-                setSearchTerm('');
-              }}
-            >Clear all</Button>
-          </div>
-        )}
-        
-        {/* Display filtered levels or empty state */}
-        <div className="grid grid-cols-1 gap-6">
-          {isLoading ? (
-            // Show skeleton loading state
-            Array.from({ length: 3 }).map((_, index) => (
-              <ClassCardSkeleton key={index} />
-            ))
-          ) : filteredLevels.length > 0 ? (
-            filteredLevels.map((level) => (
-              <ClassCard 
-                key={level.id} 
-                level={level} 
-                selectedGradeId={selectedGradeId}
-                selectedStreamId={selectedStreamId}
-                onStreamSelect={handleStreamSelect}
+              ))
+            ) : config ? (
+              <EmptyState 
+                selectedGrade={selectedGrade}
+                searchTerm={searchTerm} 
               />
-            ))
-          ) : config ? (
-            <EmptyState 
-              selectedGrade={selectedGrade}
-              searchTerm={searchTerm} 
-            />
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

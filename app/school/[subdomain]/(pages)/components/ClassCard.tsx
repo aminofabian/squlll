@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers, UserPlus } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers, UserPlus, DollarSign, Users, TrendingUp, TrendingDown, Eye, EyeOff } from 'lucide-react'
 import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
 import { useState, useMemo } from 'react'
 import { EditSubjectDialog } from './EditSubjectDialog'
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import CreateClassDrawer from "@/app/school/components/CreateClassDrawer"
 import { AddStreamModal } from './AddStreamModal'
 import { AssignTeacherModal } from './AssignTeacherModal'
+import { useGradeLevelFeeSummary } from '@/lib/hooks/useGradeLevelFeeSummary'
 
 interface ClassCardProps {
   level: Level;
@@ -52,9 +53,14 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'optional'>('all')
   const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(null)
+  const [showFeeDetails, setShowFeeDetails] = useState(true)
   
   // Load tenant subjects instead of using school config subjects
   const { data: tenantSubjects = [], isLoading: subjectsLoading } = useTenantSubjects()
+  
+  // Load fee summary for the selected grade
+  const { data: feeSummary, isLoading: feeSummaryLoading } = useGradeLevelFeeSummary(selectedGradeId || null)
+  
   const [showStreamModal, setShowStreamModal] = useState(false)
   const [selectedGradeForStream, setSelectedGradeForStream] = useState<GradeLevel | null>(null)
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false)
@@ -282,6 +288,286 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
             </div>
           )}
         </div>
+
+        {/* Fee Summary Section */}
+        {selectedGrade && (
+          <div className="mt-8 border-t-2 border-primary/20 pt-6">
+            {feeSummaryLoading ? (
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary animate-pulse" />
+                  <h3 className="text-lg font-bold font-mono text-slate-700 dark:text-slate-300">
+                    Loading Fee Summary...
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="border-2 border-primary/20 bg-slate-100 dark:bg-slate-700 p-6 space-y-3 animate-pulse">
+                      <div className="h-4 bg-slate-300 dark:bg-slate-600 w-24"></div>
+                      <div className="h-8 bg-slate-300 dark:bg-slate-600 w-20"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : feeSummary ? (
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-6 w-6 text-primary" />
+                    <h3 className="text-lg font-bold font-mono text-slate-800 dark:text-slate-200">
+                      Financial Overview
+                    </h3>
+                  </div>
+                  <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-mono">
+                    {feeSummary.gradeLevelName}
+                  </Badge>
+                </div>
+
+                {/* Summary Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-primary/40 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                        Total Students
+                      </p>
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">
+                      {feeSummary.totalStudents}
+                    </p>
+                  </div>
+
+                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-orange-500/40 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                        Total Owed
+                      </p>
+                      <TrendingUp className="h-5 w-5 text-orange-500" />
+                    </div>
+                    <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">
+                      {feeSummary.totalFeesOwed.toLocaleString()}
+                    </p>
+                    <p className="text-xs font-mono text-slate-500 dark:text-slate-400">KES</p>
+                  </div>
+
+                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-green-500/40 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                        Total Paid
+                      </p>
+                      <TrendingDown className="h-5 w-5 text-green-500" />
+                    </div>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {feeSummary.totalFeesPaid.toLocaleString()}
+                    </p>
+                    <p className="text-xs font-mono text-slate-500 dark:text-slate-400">KES</p>
+                  </div>
+
+                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-red-500/40 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                        Outstanding
+                      </p>
+                      <DollarSign className="h-5 w-5 text-red-500" />
+                    </div>
+                    <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                      {feeSummary.totalBalance.toLocaleString()}
+                    </p>
+                    <p className="text-xs font-mono text-slate-500 dark:text-slate-400">KES</p>
+                  </div>
+                </div>
+
+                {/* Student Details Table */}
+                {feeSummary.students.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-base font-semibold font-mono text-slate-700 dark:text-slate-300">
+                        Student Fee Breakdown
+                      </h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowFeeDetails(!showFeeDetails)}
+                        className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 font-mono gap-2"
+                      >
+                        {showFeeDetails ? (
+                          <>
+                            <EyeOff className="h-4 w-4" />
+                            Hide Details
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-4 w-4" />
+                            Show Details
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {showFeeDetails && (
+                      <>
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block border-2 border-primary/20 overflow-x-auto">
+                          <table className="w-full">
+                            <thead className="bg-primary/10 border-b-2 border-primary/20">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  Admission
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  Student Name
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  Owed
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  Paid
+                                </th>
+                                <th className="px-4 py-3 text-right text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  Balance
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                  Fee Items
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-primary/20">
+                              {feeSummary.students.map((student) => (
+                                <tr key={student.admissionNumber} className="hover:bg-primary/5 transition-colors">
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-slate-700 dark:text-slate-300">
+                                    {student.admissionNumber}
+                                  </td>
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-800 dark:text-slate-200">
+                                    {student.studentName}
+                                  </td>
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-mono text-slate-700 dark:text-slate-300">
+                                    {student.feeSummary.totalOwed.toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-mono text-green-600 dark:text-green-400">
+                                    {student.feeSummary.totalPaid.toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-mono text-red-600 dark:text-red-400 font-semibold">
+                                    {student.feeSummary.balance.toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-4">
+                                    <div className="flex flex-wrap gap-1.5 justify-center max-w-xs mx-auto">
+                                      {student.feeSummary.feeItems.map((item, itemIndex) => (
+                                        <TooltipProvider key={itemIndex}>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Badge 
+                                                variant={item.isMandatory ? "default" : "outline"}
+                                                className="text-xs font-mono cursor-help border-primary/20"
+                                              >
+                                                {item.feeBucketName}
+                                              </Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <div className="space-y-1">
+                                                <p className="font-semibold">{item.feeBucketName}</p>
+                                                <p className="text-xs">Amount: KES {item.amount.toLocaleString()}</p>
+                                                <p className="text-xs">{item.isMandatory ? '✓ Mandatory' : '○ Optional'}</p>
+                                              </div>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden space-y-4">
+                          {feeSummary.students.map((student) => (
+                            <div 
+                              key={student.admissionNumber} 
+                              className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-4 space-y-4"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="font-medium text-slate-800 dark:text-slate-200">
+                                    {student.studentName}
+                                  </p>
+                                  <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                                    {student.admissionNumber}
+                                  </p>
+                                </div>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`border-2 font-mono ${
+                                    student.feeSummary.balance === 0 
+                                      ? 'border-green-500 text-green-600 dark:text-green-400' 
+                                      : 'border-red-500 text-red-600 dark:text-red-400'
+                                  }`}
+                                >
+                                  {student.feeSummary.balance === 0 ? 'Paid' : 'Pending'}
+                                </Badge>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="space-y-1">
+                                  <p className="text-xs font-mono text-slate-600 dark:text-slate-400">Owed</p>
+                                  <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                                    {student.feeSummary.totalOwed.toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-xs font-mono text-slate-600 dark:text-slate-400">Paid</p>
+                                  <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                                    {student.feeSummary.totalPaid.toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-xs font-mono text-slate-600 dark:text-slate-400">Balance</p>
+                                  <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                                    {student.feeSummary.balance.toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="pt-3 border-t border-primary/20">
+                                <p className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Fee Items</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {student.feeSummary.feeItems.map((item, itemIndex) => (
+                                    <TooltipProvider key={itemIndex}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge 
+                                            variant={item.isMandatory ? "default" : "outline"}
+                                            className="text-xs font-mono cursor-help border-primary/20"
+                                          >
+                                            {item.feeBucketName}
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <div className="space-y-1">
+                                            <p className="font-semibold">{item.feeBucketName}</p>
+                                            <p className="text-xs">Amount: KES {item.amount.toLocaleString()}</p>
+                                            <p className="text-xs">{item.isMandatory ? '✓ Mandatory' : '○ Optional'}</p>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
