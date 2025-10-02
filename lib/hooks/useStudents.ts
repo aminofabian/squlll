@@ -6,45 +6,72 @@ import { graphqlClient } from '../graphql-client';
 import { gql } from 'graphql-request';
 
 const GET_STUDENTS = gql`
-  query GetStudents {
-    allStudents {
+  query GetAllStudentsSummary {
+    allStudentsSummary {
       id
-      admission_number
-      user_id
-      feesOwed
-      gender
-      totalFeesPaid
-      createdAt
-      isActive
-      updatedAt
-      stream {
-        id
-        name
-      }
-      phone
-      grade {
-        id
-        gradeLevel {
-          id
-          name
-        }
-      }
-      user {
-        id
-        email
-        name
+      admissionNumber
+      studentName
+      gradeLevelName
+      feeSummary {
+        totalOwed
+        totalPaid
+        balance
+        numberOfFeeItems
       }
     }
   }
 `;
 
+interface FeeSummary {
+  totalOwed: number;
+  totalPaid: number;
+  balance: number;
+  numberOfFeeItems: number;
+}
+
+interface StudentSummaryData {
+  id: string;
+  admissionNumber: string;
+  studentName: string;
+  gradeLevelName: string;
+  feeSummary: FeeSummary;
+}
+
 interface GetStudentsResponse {
-  allStudents: any[];
+  allStudentsSummary: StudentSummaryData[];
 }
 
 const fetchStudents = async (): Promise<StudentsResponse> => {
   const response = await graphqlClient.request<GetStudentsResponse>(GET_STUDENTS);
-  return { students: response.allStudents };
+  
+  // Transform the new API response to match the existing GraphQLStudent interface
+  const students = response.allStudentsSummary.map((student) => ({
+    id: student.id,
+    admission_number: student.admissionNumber,
+    user_id: '', // Not provided in new API
+    feesOwed: student.feeSummary.balance,
+    gender: '', // Not provided in new API
+    totalFeesPaid: student.feeSummary.totalPaid,
+    createdAt: '',
+    isActive: true,
+    updatedAt: '',
+    streamId: null,
+    phone: '',
+    grade: {
+      id: '',
+      gradeLevel: {
+        id: '',
+        name: student.gradeLevelName,
+      },
+    },
+    user: {
+      id: '',
+      email: '',
+      name: student.studentName,
+    },
+  }));
+  
+  return { students };
 };
 
 export const useStudents = () => {

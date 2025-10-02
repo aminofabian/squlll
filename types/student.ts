@@ -48,6 +48,22 @@ export interface StudentsResponse {
   students: GraphQLStudent[];
 }
 
+// New API Student Summary types (from allStudentsSummary query)
+export interface FeeSummary {
+  totalOwed: number;
+  totalPaid: number;
+  balance: number;
+  numberOfFeeItems: number;
+}
+
+export interface StudentSummaryData {
+  id: string;
+  admissionNumber: string;
+  studentName: string;
+  gradeLevelName: string;
+  feeSummary: FeeSummary;
+}
+
 export interface Grade {
   id: string;
   name: string;

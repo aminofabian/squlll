@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { FeeInvoice, StudentSummary, SummaryStats } from '../types'
 import { mockFeeInvoices } from '../data/mockData'
-import { useStudentsStore, useStudentsQuery } from '@/lib/stores/useStudentsStore'
+import { useStudentsSummary } from '@/lib/hooks/useStudentsSummary'
 
 export const useFeesData = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -12,32 +12,22 @@ export const useFeesData = () => {
   const [dueDateFilter, setDueDateFilter] = useState<string>('all')
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
 
-  // Real students from GraphQL
-  const { students } = useStudentsStore()
-  const { fetchStudents } = useStudentsQuery()
+  // Fetch students using the new summary query
+  const { students } = useStudentsSummary()
 
-  useEffect(() => {
-    fetchStudents().catch(() => {})
-  }, [])
-
-  // Map GraphQL students to StudentSummary for the sidebar
+  // Map API students to StudentSummary for the sidebar
   const allStudents = useMemo(() => {
-    const mapped: StudentSummary[] = students.map(s => {
-      const className = typeof s.grade === 'string' 
-        ? s.grade 
-        : s.grade?.gradeLevel?.name || ''
-      return {
-        id: s.id,
-        name: s.user?.name || s.admission_number,
-        admissionNumber: s.admission_number,
-        class: className,
-        section: '',
-        totalOutstanding: Number(s.feesOwed ?? 0),
-        totalPaid: Number(s.totalFeesPaid ?? 0),
-        invoiceCount: 0,
-        overdueCount: 0,
-      }
-    })
+    const mapped: StudentSummary[] = students.map(s => ({
+      id: s.id,
+      name: s.studentName,
+      admissionNumber: s.admissionNumber,
+      class: s.gradeLevelName,
+      section: '',
+      totalOutstanding: s.feeSummary.balance,
+      totalPaid: s.feeSummary.totalPaid,
+      invoiceCount: s.feeSummary.numberOfFeeItems,
+      overdueCount: 0, // To be populated from actual overdue data
+    }))
     return mapped.sort((a, b) => a.name.localeCompare(b.name))
   }, [students])
 

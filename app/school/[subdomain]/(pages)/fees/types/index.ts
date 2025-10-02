@@ -84,6 +84,22 @@ export interface StudentSummary {
   overdueCount: number
 }
 
+// New API Student Summary types
+export interface FeeSummary {
+  totalOwed: number
+  totalPaid: number
+  balance: number
+  numberOfFeeItems: number
+}
+
+export interface StudentSummaryFromAPI {
+  id: string
+  admissionNumber: string
+  studentName: string
+  gradeLevelName: string
+  feeSummary: FeeSummary
+}
+
 // Form types
 export interface NewInvoiceForm {
   studentId: string
