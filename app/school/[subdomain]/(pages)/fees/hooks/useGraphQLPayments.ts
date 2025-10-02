@@ -115,7 +115,7 @@ export const usePaymentsQuery = () => {
     setError(null);
     try {
       const query = `
-        query GetAllPayments($filters: PaymentFiltersInput) {
+        query GetAllPayments($filters: PaymentFilters) {
           payments(filters: $filters) {
             id
             receiptNumber
