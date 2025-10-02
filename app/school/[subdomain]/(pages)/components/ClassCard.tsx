@@ -179,41 +179,165 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
   };
 
   return (
-    <Card className="w-full mb-4">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex flex-col">
-          <CardTitle className="text-lg">
-            {selectedGrade ? (
-              <span>
-                <span className="font-bold">{selectedGrade.name}</span>
-                {selectedStream && <span> ({selectedStream.name})</span>} - {level.name}
-              </span>
-            ) : (
-              <span>{level.name}</span>
-            )}
-          </CardTitle>
-          <CardDescription>{level.description}</CardDescription>
-          {selectedGrade && (
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center gap-1">
-                <GraduationCap className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">
-                  Selected Grade: <strong>{selectedGrade.name}</strong>
-                  {selectedStream && (
-                    <> - Stream: <strong>{selectedStream.name}</strong></>
-                  )}
-                </span>
+    <div className="w-full space-y-6">
+      {/* Main Level Card */}
+      <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-800/50">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary"></div>
+                  <span>{level.name}</span>
+                </div>
+              </CardTitle>
+              <CardDescription className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                {level.description}
+              </CardDescription>
+          </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsExpanded(!isExpanded)}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                ) : (
+                      <ChevronDown className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                )}
+              </Button>
+            </TooltipTrigger>
+                <TooltipContent>
+              <p>{isExpanded ? 'Hide subjects list' : 'Show subjects list'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+          </div>
+      </CardHeader>
+
+      {isExpanded && (
+          <CardContent className="pt-0">
+            <div className="flex justify-between items-center mb-6">
+            <div className="flex gap-2">
+              <Button
+                variant={selectedFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('all')}
+                  className="h-8 px-3 text-xs font-medium"
+              >
+                All
+              </Button>
+              <Button
+                variant={selectedFilter === 'core' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('core')}
+                  className="h-8 px-3 text-xs font-medium"
+              >
+                Core
+              </Button>
+              <Button
+                variant={selectedFilter === 'optional' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('optional')}
+                  className="h-8 px-3 text-xs font-medium"
+              >
+                Optional
+              </Button>
+            </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleAddSubject}
+                className="h-8 px-3 text-xs font-medium border-primary/20 hover:bg-primary/5"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add Subject
+            </Button>
+          </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredSubjects.map((subject) => (
+              <div
+                key={subject.id}
+                  className="group flex items-start justify-between p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-primary/30 transition-all duration-200"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      {subject.name}
+                    </div>
+                    <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                      {subject.code}
+                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs font-medium ${
+                        subject.subjectType === 'core' 
+                          ? 'border-primary/30 text-primary bg-primary/5' 
+                          : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                    {subject.subjectType}
+                  </Badge>
+                </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditSubject(subject)}
+                      className="h-7 w-7 p-0 hover:bg-primary/10"
+                  >
+                      <Edit className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteSubject(subject.id)}
+                      className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
+                  >
+                      <Trash2 className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      )}
+      </Card>
+
+      {/* Grade Information Card */}
+      {selectedGrade && (
+        <Card className="shadow-sm border-0 bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    {selectedGrade.name}
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">
+                    {selectedStream ? `Stream: ${selectedStream.name}` : 'Grade Level Information'}
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="h-7 px-2 ml-2"
+                        className="h-8 px-3 border-primary/30 hover:bg-primary/10"
                         onClick={() => handleAddStream(selectedGrade.id)}
                       >
-                        <Layers className="h-3.5 w-3.5 mr-1" />
-                        <span className="text-xs">Add Stream</span>
+                        <Layers className="h-3.5 w-3.5 mr-1.5" />
+                        <span className="text-xs font-medium">Add Stream</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -227,11 +351,11 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="h-7 px-2 ml-1"
+                        className="h-8 px-3 border-primary/30 hover:bg-primary/10"
                         onClick={() => handleAssignTeacherToGrade(selectedGrade.id, selectedGrade.name)}
                       >
-                        <UserPlus className="h-3.5 w-3.5 mr-1" />
-                        <span className="text-xs">Assign Teacher</span>
+                        <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                        <span className="text-xs font-medium">Assign Teacher</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -240,69 +364,97 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              
-              {/* Display streams for the selected grade */}
-              {selectedGrade.streams && selectedGrade.streams.length > 0 && (
-                <div className="ml-5 pl-4 border-l-2 border-gray-200">
-                  <div className="text-xs font-medium text-gray-500 mb-2">STREAMS</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {selectedGrade.streams.map((stream) => (
-                      <div
-                        key={stream.id}
-                        className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200 ${
-                          selectedStream?.id === stream.id 
-                            ? 'bg-primary/10 border-primary/30' 
-                            : 'bg-gray-50 border-gray-200 hover:bg-primary/5 hover:border-primary/20'
-                        }`}
-                        onClick={() => handleStreamClick(stream.id)}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Layers className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm font-medium">{stream.name}</span>
-                        </div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 w-6 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAssignTeacherToStream(stream.id, stream.name);
-                                }}
-                              >
-                                <UserPlus className="h-3 w-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Assign class teacher to {stream.name}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          )}
-        </div>
+          </CardHeader>
 
-        {/* Fee Summary Section */}
-        {selectedGrade && (
-          <div className="mt-8 border-t-2 border-primary/20 pt-6">
-            {feeSummaryLoading ? (
-              <div className="space-y-6">
+          {/* Streams Section */}
+          {selectedGrade.streams && selectedGrade.streams.length > 0 && (
+            <CardContent className="pt-0">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-primary animate-pulse" />
-                  <h3 className="text-lg font-bold font-mono text-slate-700 dark:text-slate-300">
-                    Loading Fee Summary...
-                  </h3>
+                  <Layers className="h-4 w-4 text-primary" />
+                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                    Available Streams
+                  </h4>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {selectedGrade.streams.map((stream) => (
+                    <div
+                      key={stream.id}
+                      className={`group flex items-center justify-between p-3 border cursor-pointer transition-all duration-200 ${
+                        selectedStream?.id === stream.id 
+                          ? 'bg-primary/20 border-primary/50 shadow-sm' 
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 hover:bg-primary/10 hover:border-primary/40 hover:shadow-sm'
+                      }`}
+                      onClick={() => handleStreamClick(stream.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 ${
+                          selectedStream?.id === stream.id ? 'bg-primary' : 'bg-slate-400'
+                        }`}></div>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {stream.name}
+                        </span>
+                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAssignTeacherToStream(stream.id, stream.name);
+                              }}
+                            >
+                              <UserPlus className="h-3.5 w-3.5 text-slate-500 hover:text-primary" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Assign class teacher to {stream.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
+      {/* Fee Summary Card */}
+      {selectedGrade && (
+        <Card className="shadow-sm border-0 bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-800 dark:to-slate-900/50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20">
+                  <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                    Financial Overview
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">
+                    Fee summary for {selectedGrade.name}
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-medium">
+                {selectedGrade.name}
+              </Badge>
+            </div>
+          </CardHeader>
+
+          <CardContent className="pt-0">
+            {feeSummaryLoading ? (
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="border-2 border-primary/20 bg-slate-100 dark:bg-slate-700 p-6 space-y-3 animate-pulse">
+                    <div key={i} className="bg-slate-100 dark:bg-slate-800 p-4 space-y-3 animate-pulse">
                       <div className="h-4 bg-slate-300 dark:bg-slate-600 w-24"></div>
                       <div className="h-8 bg-slate-300 dark:bg-slate-600 w-20"></div>
                     </div>
@@ -311,70 +463,65 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
               </div>
             ) : feeSummary ? (
               <div className="space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="h-6 w-6 text-primary" />
-                    <h3 className="text-lg font-bold font-mono text-slate-800 dark:text-slate-200">
-                      Financial Overview
-                    </h3>
-                  </div>
-                  <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-mono">
-                    {feeSummary.gradeLevelName}
-                  </Badge>
-                </div>
-
                 {/* Summary Cards Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-primary/40 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                  <div className="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                         Total Students
                       </p>
-                      <Users className="h-5 w-5 text-primary" />
+                      <div className="p-1.5 bg-primary/10">
+                        <Users className="h-4 w-4 text-primary" />
+                      </div>
                     </div>
-                    <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">
+                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                       {feeSummary.totalStudents}
                     </p>
                   </div>
 
-                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-orange-500/40 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                  <div className="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 hover:border-orange-400/50 hover:shadow-sm transition-all duration-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                         Total Owed
                       </p>
-                      <TrendingUp className="h-5 w-5 text-orange-500" />
+                      <div className="p-1.5 bg-orange-100 dark:bg-orange-900/20">
+                        <TrendingUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                      </div>
                     </div>
-                    <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">
+                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                       {feeSummary.totalFeesOwed.toLocaleString()}
                     </p>
-                    <p className="text-xs font-mono text-slate-500 dark:text-slate-400">KES</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">KES</p>
                   </div>
 
-                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-green-500/40 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                  <div className="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-sm transition-all duration-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                         Total Paid
                       </p>
-                      <TrendingDown className="h-5 w-5 text-green-500" />
+                      <div className="p-1.5 bg-green-100 dark:bg-green-900/20">
+                        <TrendingDown className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
                     </div>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {feeSummary.totalFeesPaid.toLocaleString()}
                     </p>
-                    <p className="text-xs font-mono text-slate-500 dark:text-slate-400">KES</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">KES</p>
                   </div>
 
-                  <div className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-6 space-y-3 hover:border-red-500/40 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-mono font-medium text-slate-600 dark:text-slate-400">
+                  <div className="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 hover:border-red-400/50 hover:shadow-sm transition-all duration-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                         Outstanding
                       </p>
-                      <DollarSign className="h-5 w-5 text-red-500" />
+                      <div className="p-1.5 bg-red-100 dark:bg-red-900/20">
+                        <DollarSign className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      </div>
                     </div>
-                    <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                       {feeSummary.totalBalance.toLocaleString()}
                     </p>
-                    <p className="text-xs font-mono text-slate-500 dark:text-slate-400">KES</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">KES</p>
                   </div>
                 </div>
 
@@ -382,14 +529,14 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
                 {feeSummary.students.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-base font-semibold font-mono text-slate-700 dark:text-slate-300">
+                      <h4 className="text-base font-semibold text-slate-700 dark:text-slate-300">
                         Student Fee Breakdown
                       </h4>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setShowFeeDetails(!showFeeDetails)}
-                        className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 font-mono gap-2"
+                        className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 gap-2"
                       >
                         {showFeeDetails ? (
                           <>
@@ -408,101 +555,103 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
                     {showFeeDetails && (
                       <>
                         {/* Desktop Table View */}
-                        <div className="hidden lg:block border-2 border-primary/20 overflow-x-auto">
-                          <table className="w-full">
-                            <thead className="bg-primary/10 border-b-2 border-primary/20">
-                              <tr>
-                                <th className="px-4 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                  Admission
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                  Student Name
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                  Owed
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                  Paid
-                                </th>
-                                <th className="px-4 py-3 text-right text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                  Balance
-                                </th>
-                                <th className="px-4 py-3 text-center text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                  Fee Items
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-primary/20">
-                              {feeSummary.students.map((student) => (
-                                <tr key={student.admissionNumber} className="hover:bg-primary/5 transition-colors">
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm font-mono text-slate-700 dark:text-slate-300">
-                                    {student.admissionNumber}
-                                  </td>
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-800 dark:text-slate-200">
-                                    {student.studentName}
-                                  </td>
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-mono text-slate-700 dark:text-slate-300">
-                                    {student.feeSummary.totalOwed.toLocaleString()}
-                                  </td>
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-mono text-green-600 dark:text-green-400">
-                                    {student.feeSummary.totalPaid.toLocaleString()}
-                                  </td>
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-mono text-red-600 dark:text-red-400 font-semibold">
-                                    {student.feeSummary.balance.toLocaleString()}
-                                  </td>
-                                  <td className="px-4 py-4">
-                                    <div className="flex flex-wrap gap-1.5 justify-center max-w-xs mx-auto">
-                                      {student.feeSummary.feeItems.map((item, itemIndex) => (
-                                        <TooltipProvider key={itemIndex}>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <Badge 
-                                                variant={item.isMandatory ? "default" : "outline"}
-                                                className="text-xs font-mono cursor-help border-primary/20"
-                                              >
-                                                {item.feeBucketName}
-                                              </Badge>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <div className="space-y-1">
-                                                <p className="font-semibold">{item.feeBucketName}</p>
-                                                <p className="text-xs">Amount: KES {item.amount.toLocaleString()}</p>
-                                                <p className="text-xs">{item.isMandatory ? '✓ Mandatory' : '○ Optional'}</p>
-                                              </div>
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      ))}
-                                    </div>
-                                  </td>
+                        <div className="hidden lg:block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-600">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    Admission
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    Student Name
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    Owed
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    Paid
+                                  </th>
+                                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    Balance
+                                  </th>
+                                  <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                                    Fee Items
+                                  </th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                                {feeSummary.students.map((student) => (
+                                  <tr key={student.admissionNumber} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-700 dark:text-slate-300">
+                                      {student.admissionNumber}
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-800 dark:text-slate-200">
+                                      {student.studentName}
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-medium text-slate-700 dark:text-slate-300">
+                                      {student.feeSummary.totalOwed.toLocaleString()}
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                      {student.feeSummary.totalPaid.toLocaleString()}
+                                    </td>
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600 dark:text-red-400">
+                                      {student.feeSummary.balance.toLocaleString()}
+                                    </td>
+                                    <td className="px-4 py-4">
+                                      <div className="flex flex-wrap gap-1.5 justify-center max-w-xs mx-auto">
+                                        {student.feeSummary.feeItems.map((item, itemIndex) => (
+                                          <TooltipProvider key={itemIndex}>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <Badge 
+                                                  variant={item.isMandatory ? "default" : "outline"}
+                                                  className="text-xs font-medium cursor-help border-slate-200 dark:border-slate-600"
+                                                >
+                                                  {item.feeBucketName}
+                                                </Badge>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <div className="space-y-1">
+                                                  <p className="font-semibold">{item.feeBucketName}</p>
+                                                  <p className="text-xs">Amount: KES {item.amount.toLocaleString()}</p>
+                                                  <p className="text-xs">{item.isMandatory ? '✓ Mandatory' : '○ Optional'}</p>
+                                                </div>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        ))}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
 
                         {/* Mobile Card View */}
-                        <div className="lg:hidden space-y-4">
+                        <div className="lg:hidden space-y-3">
                           {feeSummary.students.map((student) => (
                             <div 
                               key={student.admissionNumber} 
-                              className="border-2 border-primary/20 bg-white dark:bg-slate-800 p-4 space-y-4"
+                              className="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 space-y-4"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
-                                  <p className="font-medium text-slate-800 dark:text-slate-200">
+                                  <p className="font-semibold text-slate-800 dark:text-slate-200">
                                     {student.studentName}
                                   </p>
-                                  <p className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                                     {student.admissionNumber}
                                   </p>
                                 </div>
                                 <Badge 
                                   variant="outline" 
-                                  className={`border-2 font-mono ${
+                                  className={`border-2 font-medium ${
                                     student.feeSummary.balance === 0 
-                                      ? 'border-green-500 text-green-600 dark:text-green-400' 
-                                      : 'border-red-500 text-red-600 dark:text-red-400'
+                                      ? 'border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' 
+                                      : 'border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
                                   }`}
                                 >
                                   {student.feeSummary.balance === 0 ? 'Paid' : 'Pending'}
@@ -511,27 +660,27 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
 
                               <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                  <p className="text-xs font-mono text-slate-600 dark:text-slate-400">Owed</p>
+                                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Owed</p>
                                   <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
                                     {student.feeSummary.totalOwed.toLocaleString()}
                                   </p>
                                 </div>
                                 <div className="space-y-1">
-                                  <p className="text-xs font-mono text-slate-600 dark:text-slate-400">Paid</p>
+                                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Paid</p>
                                   <p className="text-lg font-bold text-green-600 dark:text-green-400">
                                     {student.feeSummary.totalPaid.toLocaleString()}
                                   </p>
                                 </div>
                                 <div className="space-y-1">
-                                  <p className="text-xs font-mono text-slate-600 dark:text-slate-400">Balance</p>
+                                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Balance</p>
                                   <p className="text-lg font-bold text-red-600 dark:text-red-400">
                                     {student.feeSummary.balance.toLocaleString()}
                                   </p>
                                 </div>
                               </div>
 
-                              <div className="pt-3 border-t border-primary/20">
-                                <p className="text-xs font-mono text-slate-600 dark:text-slate-400 mb-2">Fee Items</p>
+                              <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
+                                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Fee Items</p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {student.feeSummary.feeItems.map((item, itemIndex) => (
                                     <TooltipProvider key={itemIndex}>
@@ -539,7 +688,7 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
                                         <TooltipTrigger asChild>
                                           <Badge 
                                             variant={item.isMandatory ? "default" : "outline"}
-                                            className="text-xs font-mono cursor-help border-primary/20"
+                                            className="text-xs font-medium cursor-help border-slate-200 dark:border-slate-600"
                                           >
                                             {item.feeBucketName}
                                           </Badge>
@@ -565,102 +714,8 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
                 )}
               </div>
             ) : null}
-          </div>
-        )}
-
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="relative group"
-              >
-                <div className="absolute -left-24 top-1/2 -translate-y-1/2 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {isExpanded ? 'Hide subjects' : 'Show subjects'}
-                  </span>
-                </div>
-                {isExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>{isExpanded ? 'Hide subjects list' : 'Show subjects list'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </CardHeader>
-
-      {isExpanded && (
-        <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
-              <Button
-                variant={selectedFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('all')}
-              >
-                All
-              </Button>
-              <Button
-                variant={selectedFilter === 'core' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('core')}
-              >
-                Core
-              </Button>
-              <Button
-                variant={selectedFilter === 'optional' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('optional')}
-              >
-                Optional
-              </Button>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleAddSubject}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Subject
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSubjects.map((subject) => (
-              <div
-                key={subject.id}
-                className="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex-1">
-                  <div className="font-medium">{subject.name}</div>
-                  <div className="text-sm text-gray-500">{subject.code}</div>
-                  <Badge variant="outline" className="mt-1">
-                    {subject.subjectType}
-                  </Badge>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditSubject(subject)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteSubject(subject.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
+          </CardContent>
+        </Card>
       )}
 
       {editingSubject && (
@@ -716,6 +771,6 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
         gradeLevelId={assignTeacherData.gradeLevelId}
         gradeName={assignTeacherData.gradeName}
       />
-    </Card>
+    </div>
   );
 }
