@@ -251,19 +251,47 @@ export function StudentLedger({ ledgerData, loading, error }: StudentLedgerProps
           </CardContent>
         </Card>
 
-        <Card className={`border-2 ${ledgerData.summary.totalBalance > 0 ? 'border-red-200 bg-red-50/50' : 'border-green-200 bg-green-50/50'}`}>
+        <Card className={`border-2 ${
+          ledgerData.summary.totalPaid === 0 ? 'border-yellow-200 bg-yellow-50/50' :
+          ledgerData.summary.totalBalance > 0 ? 'border-red-200 bg-red-50/50' : 
+          ledgerData.summary.totalBalance < 0 ? 'border-blue-200 bg-blue-50/50' : 
+          'border-green-200 bg-green-50/50'
+        }`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className={`h-4 w-4 ${ledgerData.summary.totalBalance > 0 ? 'text-red-600' : 'text-green-600'}`} />
-              <span className={`text-xs font-mono uppercase ${ledgerData.summary.totalBalance > 0 ? 'text-red-700' : 'text-green-700'}`}>
+              <DollarSign className={`h-4 w-4 ${
+                ledgerData.summary.totalPaid === 0 ? 'text-yellow-600' :
+                ledgerData.summary.totalBalance > 0 ? 'text-red-600' : 
+                ledgerData.summary.totalBalance < 0 ? 'text-blue-600' : 
+                'text-green-600'
+              }`} />
+              <span className={`text-xs font-mono uppercase ${
+                ledgerData.summary.totalPaid === 0 ? 'text-yellow-700' :
+                ledgerData.summary.totalBalance > 0 ? 'text-red-700' : 
+                ledgerData.summary.totalBalance < 0 ? 'text-blue-700' : 
+                'text-green-700'
+              }`}>
                 Current Balance
               </span>
             </div>
-            <div className={`text-lg font-bold ${ledgerData.summary.totalBalance > 0 ? 'text-red-800' : 'text-green-800'}`}>
+            <div className={`text-lg font-bold ${
+              ledgerData.summary.totalPaid === 0 ? 'text-yellow-800' :
+              ledgerData.summary.totalBalance > 0 ? 'text-red-800' : 
+              ledgerData.summary.totalBalance < 0 ? 'text-blue-800' : 
+              'text-green-800'
+            }`}>
               {formatCurrency(ledgerData.summary.totalBalance)}
             </div>
-            <div className={`text-xs font-mono ${ledgerData.summary.totalBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {ledgerData.summary.totalBalance > 0 ? 'Amount Due' : 'Fully Paid'}
+            <div className={`text-xs font-mono ${
+              ledgerData.summary.totalPaid === 0 ? 'text-yellow-600' :
+              ledgerData.summary.totalBalance > 0 ? 'text-red-600' : 
+              ledgerData.summary.totalBalance < 0 ? 'text-blue-600' : 
+              'text-green-600'
+            }`}>
+              {ledgerData.summary.totalPaid === 0 ? 'Not Updated' :
+               ledgerData.summary.totalBalance > 0 ? 'Amount Due' : 
+               ledgerData.summary.totalBalance < 0 ? 'Overpaid' : 
+               'Fully Paid'}
             </div>
           </CardContent>
         </Card>

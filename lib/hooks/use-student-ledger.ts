@@ -205,6 +205,18 @@ export function useStudentLedger({ studentId, dateRange, skip = false }: UseStud
       const student = data.data?.studentSummary;
       
       if (student) {
+        // Debug: Log the raw fee summary data
+        console.log('Raw student fee summary:', {
+          totalOwed: student.feeSummary.totalOwed,
+          totalPaid: student.feeSummary.totalPaid,
+          balance: student.feeSummary.balance,
+          numberOfFeeItems: student.feeSummary.numberOfFeeItems
+        });
+        
+        // Calculate balance correctly
+        const calculatedBalance = student.feeSummary.totalOwed - student.feeSummary.totalPaid;
+        console.log('Calculated balance:', calculatedBalance);
+        
         // Transform studentSummary data to match ledger format
         const transformedData = {
           studentId: student.id,
@@ -222,7 +234,7 @@ export function useStudentLedger({ studentId, dateRange, skip = false }: UseStud
           summary: {
             totalInvoiced: student.feeSummary.totalOwed,
             totalPaid: student.feeSummary.totalPaid,
-            totalBalance: student.feeSummary.balance,
+            totalBalance: calculatedBalance, // Use calculated balance
             invoiceCount: student.feeSummary.numberOfFeeItems,
             paymentCount: 0, // Not available in summary
             lastPaymentDate: null, // Not available in summary
