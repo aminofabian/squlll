@@ -32,22 +32,46 @@ export const FeesDataTable = ({
   onSelectAll,
   onViewStudent
 }: FeesDataTableProps) => {
-  const getBalanceStatus = (balance: number) => {
-    if (balance === 0) return 'paid'
-    if (balance > 0) return 'pending'
-    return 'overpaid'
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'overpaid':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+  // Dynamic status function based on comprehensive financial data
+  const getStudentStatus = (student: StudentSummaryFromAPI) => {
+    const { totalOwed, totalPaid, balance, numberOfFeeItems } = student.feeSummary
+    
+    // If balance is 0 and there are no fee items, student is pending
+    if (balance === 0 && totalPaid === 0 && numberOfFeeItems === 0) {
+      return {
+        label: "Pending",
+        className: "bg-yellow-50 text-yellow-600 border-yellow-200 font-mono"
+      }
+    }
+    
+    // If balance is 0 but there are fee items and payments, student is paid up
+    if (balance === 0 && totalPaid > 0) {
+      return {
+        label: "Paid up",
+        className: "bg-green-50 text-green-600 border-green-200 font-mono"
+      }
+    }
+    
+    // If there's a positive balance, show amount due
+    if (balance > 0) {
+      return {
+        label: `${formatCurrency(balance)} due`,
+        className: "bg-red-50 text-red-600 border-red-200 font-mono"
+      }
+    }
+    
+    // If balance is negative, student has overpaid
+    if (balance < 0) {
+      return {
+        label: `Overpaid ${formatCurrency(Math.abs(balance))}`,
+        className: "bg-blue-50 text-blue-600 border-blue-200 font-mono"
+      }
+    }
+    
+    // Fallback for any other scenario
+    return {
+      label: "Unknown",
+      className: "bg-gray-50 text-gray-600 border-gray-200 font-mono"
     }
   }
 
@@ -109,7 +133,7 @@ export const FeesDataTable = ({
           </TableHeader>
           <TableBody>
             {students.map((student) => {
-              const status = getBalanceStatus(student.feeSummary.balance)
+              const status = getStudentStatus(student)
               return (
                 <TableRow key={student.id} className="border-primary/20">
                   <TableCell>
@@ -144,9 +168,9 @@ export const FeesDataTable = ({
                   <TableCell>
                     <Badge 
                       variant="outline" 
-                      className={`text-xs font-mono ${getStatusColor(status)}`}
+                      className={`text-xs ${status.className}`}
                     >
-                      {status}
+                      {status.label}
                     </Badge>
                   </TableCell>
                   <TableCell>
