@@ -7,9 +7,11 @@ import {
   FeeInvoice 
 } from '../types'
 import { useGraphQLPayments } from './useGraphQLPayments'
+import { useGraphQLInvoices } from './useGraphQLInvoices'
 
 export const useFormHandlers = (selectedStudent: string | null, filteredInvoices: FeeInvoice[]) => {
   const { createPayment } = useGraphQLPayments()
+  const { generateInvoices, isGenerating: isGeneratingInvoices } = useGraphQLInvoices()
   // Modal states
   const [showNewInvoiceDrawer, setShowNewInvoiceDrawer] = useState(false)
   const [showPaymentReminderDrawer, setShowPaymentReminderDrawer] = useState(false)
@@ -19,14 +21,10 @@ export const useFormHandlers = (selectedStudent: string | null, filteredInvoices
   // New Invoice Form State
   const [newInvoiceForm, setNewInvoiceForm] = useState<NewInvoiceForm>({
     studentId: '',
-    feeType: '',
-    amount: '',
+    termId: '',
+    issueDate: '',
     dueDate: '',
-    term: 'Term 1',
-    academicYear: '2024',
-    description: '',
-    discountAmount: '',
-    discountReason: ''
+    notes: ''
   })
 
   // Payment Reminder Form State
@@ -80,14 +78,10 @@ export const useFormHandlers = (selectedStudent: string | null, filteredInvoices
     setShowNewInvoiceDrawer(false)
     setNewInvoiceForm({
       studentId: selectedStudent || '',
-      feeType: '',
-      amount: '',
+      termId: '',
+      issueDate: '',
       dueDate: '',
-      term: 'Term 1',
-      academicYear: '2024',
-      description: '',
-      discountAmount: '',
-      discountReason: ''
+      notes: ''
     })
   }
 
@@ -98,9 +92,10 @@ export const useFormHandlers = (selectedStudent: string | null, filteredInvoices
     }))
   }
 
-  const handleSubmitInvoice = () => {
-    console.log('Submitting invoice:', newInvoiceForm)
-    handleCloseNewInvoiceDrawer()
+  const handleSubmitInvoice = async () => {
+    // The actual submission is handled in the NewInvoiceDrawer component
+    // This is just a placeholder for the callback
+    console.log('Invoice submission completed')
   }
 
   // Payment Reminder Handlers
@@ -239,6 +234,9 @@ export const useFormHandlers = (selectedStudent: string | null, filteredInvoices
     handleRecordPayment,
     handleSubmitPayment,
     handleCreatePaymentPlan,
-    handleSubmitPaymentPlan
+    handleSubmitPaymentPlan,
+    
+    // GraphQL states
+    isGeneratingInvoices
   }
 }

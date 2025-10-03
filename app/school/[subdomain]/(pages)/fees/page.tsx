@@ -23,6 +23,8 @@ import { BulkInvoiceGenerator } from './components/BulkInvoiceGenerator'
 import { StudentDetailsCard } from './components/StudentDetailsCard'
 import { FeeSummaryCard } from './components/FeeSummaryCard'
 import { StudentInfoCard } from './components/StudentInfoCard'
+import NewInvoiceDrawer from './components/NewInvoiceDrawer'
+import { FeeAssignmentsView } from './components/FeeAssignmentsView'
 import { useFeesData } from './hooks/useFeesData'
 import { useFormHandlers } from './hooks/useFormHandlers'
 import { useFeeStructures } from './hooks/useFeeStructures'
@@ -49,6 +51,7 @@ const getStatusColor = (status: string) => {
 
 export default function FeesPage() {
   const [activeTab, setActiveTab] = useState('invoices')
+  const [invoiceView, setInvoiceView] = useState<'records' | 'assignments'>('records')
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<FeeInvoice | null>(null)
@@ -82,9 +85,13 @@ export default function FeesPage() {
 
   const {
     // modal states
+    showNewInvoiceDrawer,
+    setShowNewInvoiceDrawer,
     showRecordPaymentDrawer,
     setShowRecordPaymentDrawer,
     // form states
+    newInvoiceForm,
+    setNewInvoiceForm,
     paymentForm,
     setPaymentForm,
     // handlers
@@ -92,7 +99,10 @@ export default function FeesPage() {
     handleSendReminder,
     handleRecordPayment,
     handleCreatePaymentPlan,
-    handleSubmitPayment
+    handleSubmitPayment,
+    handleSubmitInvoice,
+    // GraphQL states
+    isGeneratingInvoices
   } = useFormHandlers(selectedStudent, filteredInvoices)
 
   // Fee Structure hooks
@@ -322,8 +332,8 @@ export default function FeesPage() {
   
   return (
     <div className="flex min-h-screen">
-      {/* Student Search Sidebar - only show for invoices tab */}
-      {activeTab === 'invoices' && (
+      {/* Student Search Sidebar - only show for invoices tab with records view */}
+      {activeTab === 'invoices' && invoiceView === 'records' && (
         <StudentSearchSidebar
           isSidebarMinimized={isSidebarMinimized}
           setIsSidebarMinimized={setIsSidebarMinimized}
@@ -361,25 +371,57 @@ export default function FeesPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
           <TabsContent value="invoices" className="flex-1 m-0">
             <div className="flex-1 flex flex-col">
-              {/* Invoice Management Header */}
-              <PageHeader
-                selectedStudent={selectedStudent}
-                allStudents={filteredStudents}
-                selectedStatus={selectedStatus}
-                setSelectedStatus={setSelectedStatus}
-                dueDateFilter=""
-                setDueDateFilter={() => {}}
-                onNewInvoice={handleNewInvoice}
-                onSendReminder={handleSendReminderWrapper}
-                onRecordPayment={handleRecordPayment}
-                onCreatePaymentPlan={handleCreatePaymentPlan}
-                onBackToAll={() => setSelectedStudent(null)}
-                isSidebarMinimized={isSidebarMinimized}
-                setIsSidebarMinimized={setIsSidebarMinimized}
-              />
+              {/* Toggle Button for View Mode */}
+              <div className="border-b border-gray-200 bg-white px-6 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={invoiceView === 'records' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setInvoiceView('records')}
+                      className="font-mono"
+                    >
+                      Fee Records
+                    </Button>
+                    <Button
+                      variant={invoiceView === 'assignments' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setInvoiceView('assignments')}
+                      className="font-mono"
+                    >
+                      Fee Assignments
+                    </Button>
+                  </div>
+                  <p className="text-sm text-slate-600 font-mono">
+                    {invoiceView === 'records' 
+                      ? 'View student invoices and payment status' 
+                      : 'View fee structure assignments to students'
+                    }
+                  </p>
+                </div>
+              </div>
 
-              {/* Main Content Area */}
-              <div className="flex-1 p-6">
+              {invoiceView === 'records' ? (
+                <>
+                  {/* Invoice Management Header */}
+                  <PageHeader
+                    selectedStudent={selectedStudent}
+                    allStudents={filteredStudents}
+                    selectedStatus={selectedStatus}
+                    setSelectedStatus={setSelectedStatus}
+                    dueDateFilter=""
+                    setDueDateFilter={() => {}}
+                    onNewInvoice={handleNewInvoice}
+                    onSendReminder={handleSendReminderWrapper}
+                    onRecordPayment={handleRecordPayment}
+                    onCreatePaymentPlan={handleCreatePaymentPlan}
+                    onBackToAll={() => setSelectedStudent(null)}
+                    isSidebarMinimized={isSidebarMinimized}
+                    setIsSidebarMinimized={setIsSidebarMinimized}
+                  />
+
+                  {/* Main Content Area */}
+                  <div className="flex-1 p-6">
                 {selectedStudent ? (
                   // Student-specific view
                   <div className="space-y-6">
@@ -470,7 +512,13 @@ export default function FeesPage() {
                     />
                   </div>
                 )}
-              </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 p-6">
+                  <FeeAssignmentsView />
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -579,6 +627,18 @@ export default function FeesPage() {
         setForm={setPaymentForm}
         onSubmit={handleSubmitPayment}
         invoices={selectedStudentInvoices}
+      />
+
+      {/* New Invoice Drawer */}
+      <NewInvoiceDrawer
+        isOpen={showNewInvoiceDrawer}
+        onClose={() => setShowNewInvoiceDrawer(false)}
+        form={newInvoiceForm}
+        setForm={setNewInvoiceForm}
+        onSubmit={handleSubmitInvoice}
+        selectedStudent={selectedStudent}
+        allStudents={filteredStudents}
+        isGenerating={isGeneratingInvoices}
       />
     </div>
   )

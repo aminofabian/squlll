@@ -131,14 +131,10 @@ export interface StudentSummaryDetail {
 // Form types
 export interface NewInvoiceForm {
   studentId: string
-  feeType: string
-  amount: string
+  termId: string
+  issueDate: string
   dueDate: string
-  term: string
-  academicYear: string
-  description: string
-  discountAmount: string
-  discountReason: string
+  notes?: string
 }
 
 export interface PaymentReminderForm {
@@ -320,5 +316,67 @@ export interface InvoiceTemplate {
     footerMessage?: string
     paymentInstructions?: string
     latePaymentPolicy?: string
+  }
+}
+
+// Fee Assignment types
+export interface FeeAssignmentData {
+  tenantId: string
+  totalFeeAssignments: number
+  totalStudentsWithFees: number
+  feeAssignments: FeeAssignmentGroup[]
+}
+
+export interface FeeAssignmentGroup {
+  feeAssignment: {
+    id: string
+    feeStructureId: string
+    description: string
+    studentsAssignedCount: number
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+    feeStructure: {
+      id: string
+      name: string
+    }
+    assignedByUser: {
+      id: string
+      name: string
+    }
+  }
+  studentAssignments: StudentAssignment[]
+  totalStudents: number
+}
+
+export interface StudentAssignment {
+  id: string
+  studentId: string
+  isActive: boolean
+  createdAt: string
+  student: {
+    id: string
+    user: {
+      name: string
+    }
+    grade: {
+      id: string
+      gradeLevel: {
+        id: string
+        name: string
+      }
+    }
+  }
+  feeItems: FeeItemAssignment[]
+}
+
+export interface FeeItemAssignment {
+  id: string
+  amount: number
+  isMandatory: boolean
+  isActive: boolean
+  feeStructureItem: {
+    id: string
+    amount: number
   }
 }

@@ -5,7 +5,7 @@ const GRAPHQL_ENDPOINT = process.env.GRAPHQL_ENDPOINT || 'http://localhost:3000/
 
 async function run() {
   const mutation = `
-    mutation GenerateInvoices($input: GenerateInvoicesInput!) {
+    mutation GenerateInvoices($input: CreateInvoiceInput!) {
       generateInvoices(input: $input) {
         id
         invoiceNumber
