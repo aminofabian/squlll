@@ -718,6 +718,7 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
         </Card>
       )}
 
+
       {editingSubject && (
         <EditSubjectDialog
           subject={{
