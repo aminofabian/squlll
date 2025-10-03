@@ -20,7 +20,7 @@ interface FeeStructuresTabProps {
   onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
   onDelete?: (id: string, name: string) => void
-  onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string) => void
+  onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => void
   onCreateNew: () => void
   fetchFeeStructures: () => Promise<any>
   getAssignedGrades: (feeStructureId: string) => any[]
@@ -33,7 +33,7 @@ interface FeeStructureTableProps {
   onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
   onDelete?: (id: string, name: string) => void
-  onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string) => void
+  onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => void
   getAssignedGrades: (feeStructureId: string) => any[]
   getTotalStudents: (feeStructureId: string) => number
 }
