@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryClientWrapper } from "./QueryClientWrapper";
 import { ApolloWrapper } from "./ApolloWrapper";
+import { ErrorHandler } from "@/components/ErrorHandler";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         <QueryClientWrapper>
           <ApolloWrapper>
+            <ErrorHandler />
             {children}
           </ApolloWrapper>
         </QueryClientWrapper>

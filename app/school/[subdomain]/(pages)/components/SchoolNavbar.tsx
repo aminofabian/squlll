@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TermsDropdown } from './TermsDropdown'
+import { useSignout } from '@/lib/hooks/useSignout'
 
 interface SchoolNavbarProps {
   userName: string
@@ -44,6 +45,7 @@ export function SchoolNavbar({
   onToggleSidebarMinimize,
 }: SchoolNavbarProps) {
   const router = useRouter()
+  const { signOut, isSigningOut } = useSignout()
   
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -325,8 +327,12 @@ export function SchoolNavbar({
                 Help & Support
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-700 my-1" />
-              <DropdownMenuItem className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer rounded-lg text-sm">
-                Log out
+              <DropdownMenuItem 
+                onClick={signOut}
+                disabled={isSigningOut}
+                className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer rounded-lg text-sm disabled:opacity-50"
+              >
+                {isSigningOut ? 'Signing Out...' : 'Log out'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -354,8 +360,12 @@ export function SchoolNavbar({
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-700 my-1" />
-              <DropdownMenuItem className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer rounded-lg text-sm">
-                Log out
+              <DropdownMenuItem 
+                onClick={signOut}
+                disabled={isSigningOut}
+                className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 cursor-pointer rounded-lg text-sm disabled:opacity-50"
+              >
+                {isSigningOut ? 'Signing Out...' : 'Log out'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

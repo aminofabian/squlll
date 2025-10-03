@@ -55,14 +55,17 @@ export async function POST(request: Request) {
     if (data.errors) {
       console.error('GraphQL API Route - GraphQL errors:', data.errors);
       
-      // Check if any error is a "Forbidden resource" error
-      const hasForbiddenError = data.errors.some((error: any) => 
+      // Check if any error is an authentication error (Unauthorized or Forbidden)
+      const hasAuthError = data.errors.some((error: any) => 
+        error.message?.includes('Unauthorized') ||
         error.message?.includes('Forbidden resource') ||
+        error.extensions?.code === 'UNAUTHORIZEDEXCEPTION' ||
         error.extensions?.code === 'FORBIDDENEXCEPTION' ||
-        error.extensions?.code === 'FORBIDDEN'
+        error.extensions?.code === 'FORBIDDEN' ||
+        error.extensions?.code === 'UNAUTHORIZED'
       );
       
-      if (hasForbiddenError) {
+      if (hasAuthError) {
         return NextResponse.json({
           data: null,
           errors: [{

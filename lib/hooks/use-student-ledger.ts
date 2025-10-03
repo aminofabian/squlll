@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useHandleGraphQLError } from './useGraphQLErrorHandler';
 
 interface DateRangeInput {
   startDate: string;
@@ -22,6 +23,7 @@ export function useStudentLedger({ studentId, dateRange, skip = false }: UseStud
   const [ledgerData, setLedgerData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { handleError } = useHandleGraphQLError();
 
   const fetchStudentLedger = async () => {
     if (skip || !studentId) return;
@@ -111,6 +113,11 @@ export function useStudentLedger({ studentId, dateRange, skip = false }: UseStud
       if (data.errors) {
         console.error('GraphQL errors:', data.errors);
         
+        // Check if it's an authentication error first
+        if (handleError(data)) {
+          return; // Error was handled by redirecting to login
+        }
+        
         // Check if it's a "field doesn't exist" error
         const hasFieldError = data.errors.some((error: any) => 
           error.message?.includes('Cannot query field "studentLedger"') ||
@@ -199,6 +206,11 @@ export function useStudentLedger({ studentId, dateRange, skip = false }: UseStud
       const data = await response.json();
 
       if (data.errors) {
+        // Check if it's an authentication error first
+        if (handleError(data)) {
+          return; // Error was handled by redirecting to login
+        }
+        
         throw new Error(data.errors[0]?.message || 'GraphQL error');
       }
 

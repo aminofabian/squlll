@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
 import { useParams } from 'next/navigation';
+import { useSignout } from "@/lib/hooks/useSignout";
 
 interface SidebarProps {
   className?: string
@@ -86,6 +87,7 @@ export function StaffSidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const params = useParams();
   const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
+  const { signOut, isSigningOut } = useSignout();
 
   return (
     <div className={cn(
@@ -216,13 +218,17 @@ export function StaffSidebar({ className }: SidebarProps) {
         >
           <Button 
             variant="outline" 
-            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50/50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10"
+            onClick={signOut}
+            disabled={isSigningOut}
+            className="w-full justify-start h-11 text-sm relative overflow-hidden group transition-all duration-300 hover:bg-red-50/50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-900/10 disabled:opacity-50"
           >
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-6 w-6 rounded-full bg-muted group-hover:bg-red-100/30 transition-colors">
                 <LogOut className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-red-500" />
               </div>
-              <span className="font-medium group-hover:text-red-600">Sign Out</span>
+              <span className="font-medium group-hover:text-red-600">
+                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+              </span>
             </div>
           </Button>
         </motion.div>

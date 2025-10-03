@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut
 } from "lucide-react"
+import { useSignout } from "@/lib/hooks/useSignout"
 
 interface SidebarProps {
   className?: string
@@ -15,6 +16,7 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
+  const { signOut, isSigningOut } = useSignout()
 
   return (
     <div className={cn(
@@ -44,10 +46,12 @@ export function Sidebar({ className }: SidebarProps) {
         </Link>
         <Button 
           variant="ghost" 
-          className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm"
+          onClick={signOut}
+          disabled={isSigningOut}
+          className="w-full justify-start h-11 font-mono text-sm tracking-wide uppercase text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-sm disabled:opacity-50"
         >
           <LogOut className="mr-3 h-4 w-4" />
-          Sign Out
+          {isSigningOut ? 'Signing Out...' : 'Sign Out'}
         </Button>
       </div>
     </div>

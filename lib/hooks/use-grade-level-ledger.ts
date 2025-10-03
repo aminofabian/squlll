@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useHandleGraphQLError } from './useGraphQLErrorHandler';
 
 export interface GradeLevelLedgerEntry {
   date: string;
@@ -50,6 +51,7 @@ export function useGradeLevelLedger({
   const [ledgerData, setLedgerData] = useState<GradeLevelLedgerData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { handleError } = useHandleGraphQLError();
 
   const fetchGradeLevelLedger = async () => {
     if (skip || !gradeLevelId) return;
@@ -116,6 +118,12 @@ export function useGradeLevelLedger({
 
       if (data.errors) {
         console.error('GraphQL errors:', data.errors);
+        
+        // Check if it's an authentication error first
+        if (handleError(data)) {
+          return; // Error was handled by redirecting to login
+        }
+        
         throw new Error(data.errors.map((e: any) => e.message).join(', '));
       }
 

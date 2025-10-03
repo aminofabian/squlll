@@ -6,6 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useSignout } from "@/lib/hooks/useSignout"
 import { 
   LayoutDashboard, 
   Store, 
@@ -357,6 +358,7 @@ const getSchoolColor = (schoolName: string): { from: string; to: string } => {
 
 export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = false, onToggleMinimize }: SchoolSidebarProps) => {
   const pathname = usePathname();
+  const { signOut, isSigningOut } = useSignout();
   
   // State for the More drawer
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -847,7 +849,8 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
       {/* Footer */}
       <div className="p-4 bg-primary/5 border-t-2 border-primary/20 space-y-2">
         <div 
-          className="w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border-2 border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700"
+          onClick={signOut}
+          className={`w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 relative group cursor-pointer bg-white dark:bg-slate-800 shadow-sm hover:shadow-md border-2 border-red-200 dark:border-red-800 hover:border-red-300 dark:hover:border-red-700 ${isSigningOut ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {/* Colored background indicator on hover */}
           <div 
@@ -883,7 +886,9 @@ export const SchoolSidebar = ({ className, subdomain, schoolName, isMinimized = 
           </div>
           
           {/* Title */}
-          <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-red-600 dark:text-red-400">Sign Out</span>
+          <span className="flex-1 font-mono font-medium text-xs uppercase tracking-wide text-red-600 dark:text-red-400">
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+          </span>
         </div>
       </div>
     </div>
