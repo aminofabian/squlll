@@ -122,7 +122,7 @@ export const FeeStructureManager = ({
         totalAmount: number; 
         isOptional: boolean; 
         firstItemId?: string; // Store the first item ID for editing
-        bucketId: string; 
+        feeBucketId: string; 
       }>();
       
       // Process items if they exist
