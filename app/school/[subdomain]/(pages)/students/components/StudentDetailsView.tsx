@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 import SchoolReportCard from './ReportCard';
 import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary';
+import { StudentLedger } from './StudentLedger';
+import { useStudentLedger } from '@/lib/hooks/use-student-ledger';
 
 interface StudentDetailsViewProps {
   studentId: string;
@@ -47,6 +49,15 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
   const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
   const { studentDetail, loading, error, refetch } = useStudentDetailSummary(studentId);
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
+  
+  // Student ledger data
+  const { ledgerData, loading: ledgerLoading, error: ledgerError } = useStudentLedger({
+    studentId,
+    dateRange: {
+      startDate: "2024-01-01",
+      endDate: "2024-12-31"
+    }
+  });
 
   // Show loading state
   if (loading) {
@@ -164,11 +175,12 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
       
       {/* Student details tabs */}
       <Tabs defaultValue="details">
-        <TabsList className="grid grid-cols-5 mb-6 border-2 border-primary/20 bg-primary/5 rounded-xl p-1">
+        <TabsList className="grid grid-cols-6 mb-6 border-2 border-primary/20 bg-primary/5 rounded-xl p-1">
           <TabsTrigger value="details" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Details</TabsTrigger>
           <TabsTrigger value="attendance" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Attendance</TabsTrigger>
           <TabsTrigger value="academics" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Academics</TabsTrigger>
           <TabsTrigger value="fees" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Fees</TabsTrigger>
+          <TabsTrigger value="ledger" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Ledger</TabsTrigger>
           <TabsTrigger value="documents" className="font-mono text-xs data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm">Documents</TabsTrigger>
         </TabsList>
         
@@ -412,6 +424,14 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="ledger">
+          <StudentLedger 
+            ledgerData={ledgerData}
+            loading={ledgerLoading}
+            error={ledgerError}
+          />
         </TabsContent>
         
         <TabsContent value="documents">
