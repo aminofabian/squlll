@@ -1,4 +1,4 @@
-import { Eye, Printer, DollarSign } from "lucide-react"
+import { Eye, DollarSign } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -10,42 +10,79 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { FeeInvoice, StudentSummary } from '../types'
-import { getStatusColor, getFeeTypeIcon, formatCurrency } from '../utils'
+import { StudentSummaryFromAPI } from '../types'
+import { formatCurrency } from '../utils'
 
 interface FeesDataTableProps {
-  selectedStudent: string | null
-  selectedStudentInvoices: FeeInvoice[]
-  filteredInvoices: FeeInvoice[]
-  allStudents: StudentSummary[]
-  selectedInvoices: string[]
-  onSelectInvoice: (invoiceId: string) => void
+  students: StudentSummaryFromAPI[]
+  loading: boolean
+  error: string | null
+  selectedStudents: string[]
+  onSelectStudent: (studentId: string) => void
   onSelectAll: () => void
-  onViewInvoice: (invoice: FeeInvoice) => void
+  onViewStudent: (student: StudentSummaryFromAPI) => void
 }
 
 export const FeesDataTable = ({
-  selectedStudent,
-  selectedStudentInvoices,
-  filteredInvoices,
-  allStudents,
-  selectedInvoices,
-  onSelectInvoice,
+  students,
+  loading,
+  error,
+  selectedStudents,
+  onSelectStudent,
   onSelectAll,
-  onViewInvoice
+  onViewStudent
 }: FeesDataTableProps) => {
-  const invoicesToShow = selectedStudent ? selectedStudentInvoices : filteredInvoices
-  const recordCount = selectedStudent ? selectedStudentInvoices.length : filteredInvoices.length
+  const getBalanceStatus = (balance: number) => {
+    if (balance === 0) return 'paid'
+    if (balance > 0) return 'pending'
+    return 'overpaid'
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'overpaid':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="border-2 border-primary/20 rounded-xl overflow-hidden">
+        <div className="p-12 text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-sm font-mono text-slate-600">Loading students...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="border-2 border-red-200 rounded-xl overflow-hidden bg-red-50">
+        <div className="p-12 text-center">
+          <DollarSign className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-mono font-medium text-red-600 mb-2">
+            Error Loading Data
+          </h3>
+          <p className="text-sm text-red-500 font-mono">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="border-2 border-primary/20 rounded-xl overflow-hidden">
       <div className="p-4 border-b-2 border-primary/20 bg-primary/5">
         <div className="flex justify-between items-center">
-          <h3 className="font-mono font-bold">
-            {selectedStudent ? `Fee Records for ${allStudents.find(s => s.id === selectedStudent)?.name}` : 'Fee Records'}
-          </h3>
+          <h3 className="font-mono font-bold">Students Fee Summary</h3>
           <p className="text-sm font-mono text-slate-600">
-            {recordCount} records found
+            {students.length} students found
           </p>
         </div>
       </div>
@@ -54,91 +91,74 @@ export const FeesDataTable = ({
         <Table>
           <TableHeader>
             <TableRow className="border-primary/20">
-              {!selectedStudent && (
-                <TableHead className="w-12">
-                  <Checkbox 
-                    checked={selectedInvoices.length === filteredInvoices.length}
-                    onCheckedChange={onSelectAll}
-                  />
-                </TableHead>
-              )}
+              <TableHead className="w-12">
+                <Checkbox 
+                  checked={selectedStudents.length === students.length && students.length > 0}
+                  onCheckedChange={onSelectAll}
+                />
+              </TableHead>
               <TableHead className="font-mono">Student</TableHead>
               <TableHead className="font-mono">Class</TableHead>
-              <TableHead className="font-mono">Invoice ID</TableHead>
-              <TableHead className="font-mono">Fee Type</TableHead>
-              <TableHead className="font-mono">Amount Due</TableHead>
-              <TableHead className="font-mono">Amount Paid</TableHead>
-              <TableHead className="font-mono">Due Date</TableHead>
+              <TableHead className="font-mono">Total Owed</TableHead>
+              <TableHead className="font-mono">Total Paid</TableHead>
+              <TableHead className="font-mono">Balance</TableHead>
+              <TableHead className="font-mono">Fee Items</TableHead>
               <TableHead className="font-mono">Status</TableHead>
               <TableHead className="font-mono">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoicesToShow.map((invoice) => {
-              const IconComponent = getFeeTypeIcon(invoice.feeType)
+            {students.map((student) => {
+              const status = getBalanceStatus(student.feeSummary.balance)
               return (
-                <TableRow key={invoice.id} className="border-primary/20">
-                  {!selectedStudent && (
-                    <TableCell>
-                      <Checkbox 
-                        checked={selectedInvoices.includes(invoice.id)}
-                        onCheckedChange={() => onSelectInvoice(invoice.id)}
-                      />
-                    </TableCell>
-                  )}
+                <TableRow key={student.id} className="border-primary/20">
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedStudents.includes(student.id)}
+                      onCheckedChange={() => onSelectStudent(student.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono">
                     <div>
-                      <div className="font-medium">{invoice.studentName}</div>
-                      <div className="text-xs text-slate-500">{invoice.admissionNumber}</div>
+                      <div className="font-medium">{student.studentName}</div>
+                      <div className="text-xs text-slate-500">{student.admissionNumber}</div>
                     </div>
                   </TableCell>
                   <TableCell className="font-mono">
-                    {invoice.class} {invoice.section}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {invoice.id}
-                  </TableCell>
-                  <TableCell className="font-mono">
-                    <div className="flex items-center gap-2">
-                      <IconComponent className="h-4 w-4" />
-                      {invoice.feeType.charAt(0).toUpperCase() + invoice.feeType.slice(1)}
-                    </div>
+                    {student.gradeLevelName}
                   </TableCell>
                   <TableCell className="font-mono font-medium">
-                    {formatCurrency(invoice.amountDue)}
+                    {formatCurrency(student.feeSummary.totalOwed)}
                   </TableCell>
-                  <TableCell className="font-mono">
-                    {formatCurrency(invoice.amountPaid)}
+                  <TableCell className="font-mono text-green-600">
+                    {formatCurrency(student.feeSummary.totalPaid)}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {new Date(invoice.dueDate).toLocaleDateString()}
+                  <TableCell className="font-mono font-bold">
+                    {formatCurrency(student.feeSummary.balance)}
+                  </TableCell>
+                  <TableCell className="font-mono text-center">
+                    <Badge variant="outline" className="text-xs">
+                      {student.feeSummary.numberOfFeeItems}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge 
                       variant="outline" 
-                      className={`text-xs font-mono ${getStatusColor(invoice.paymentStatus)}`}
+                      className={`text-xs font-mono ${getStatusColor(status)}`}
                     >
-                      {invoice.paymentStatus}
+                      {status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewInvoice(invoice)}
-                        className="font-mono text-xs"
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="font-mono text-xs"
-                      >
-                        <Printer className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewStudent(student)}
+                      className="font-mono text-xs"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View
+                    </Button>
                   </TableCell>
                 </TableRow>
               )
@@ -148,17 +168,14 @@ export const FeesDataTable = ({
       </div>
 
       {/* Empty State */}
-      {recordCount === 0 && (
+      {students.length === 0 && (
         <div className="text-center py-12 border-t-2 border-dashed border-primary/20">
           <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-mono font-medium text-slate-600 dark:text-slate-400 mb-2">
-            {selectedStudent ? 'No fee records for this student' : 'No fee records found'}
+            No students found
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-500 font-mono">
-            {selectedStudent 
-              ? 'This student has no fee invoices yet'
-              : 'Try adjusting your filters or search terms'
-            }
+            No students with fee records are available
           </p>
         </div>
       )}

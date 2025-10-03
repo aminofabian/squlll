@@ -15,6 +15,7 @@ import { PageHeader } from './components/PageHeader'
 import { OverviewStatsCards } from './components/OverviewStatsCards'
 import { FiltersSection } from './components/FiltersSection'
 import { FeesDataTable } from './components/FeesDataTable'
+import { StudentInvoicesTable } from './components/StudentInvoicesTable'
 import { FeeStructureDrawer } from './components/FeeStructureDrawerRefactored'
 import RecordPaymentDrawer from './components/RecordPaymentDrawer'
 import StudentPayments from './components/StudentPayments'
@@ -31,7 +32,8 @@ import { useFeeStructures } from './hooks/useFeeStructures'
 import { useGraphQLFeeStructures, UpdateFeeStructureInput } from './hooks/useGraphQLFeeStructures'
 import { useStudentSummary } from './hooks/useStudentSummary'
 import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary'
-import { FeeInvoice, FeeStructure, FeeStructureForm, BulkInvoiceGeneration } from './types'
+import { useAllStudentsSummary } from './hooks/useAllStudentsSummary'
+import { FeeInvoice, FeeStructure, FeeStructureForm, BulkInvoiceGeneration, StudentSummaryFromAPI } from './types'
 
 // Helper function for status colors
 const getStatusColor = (status: string) => {
@@ -56,6 +58,8 @@ export default function FeesPage() {
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<FeeInvoice | null>(null)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [selectedStudentsForTable, setSelectedStudentsForTable] = useState<string[]>([])
+  const [viewingStudent, setViewingStudent] = useState<StudentSummaryFromAPI | null>(null)
   
   // Fee Structure states
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -155,6 +159,14 @@ export default function FeesPage() {
     ? filteredInvoices.filter(inv => inv.studentId === selectedStudent)
     : []
 
+  // Fetch all students summary for the new table
+  const {
+    students: allStudentsSummary,
+    loading: studentsLoading,
+    error: studentsError,
+    refetch: refetchStudents
+  } = useAllStudentsSummary()
+
   // Event handlers
   const handleViewInvoice = (invoice: FeeInvoice) => {
     setSelectedInvoice(invoice)
@@ -185,6 +197,29 @@ export default function FeesPage() {
     } else {
       setSelectedInvoices(filteredInvoices.map(inv => inv.id))
     }
+  }
+
+  // Handlers for new students table
+  const handleSelectStudent = (studentId: string) => {
+    setSelectedStudentsForTable(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    )
+  }
+
+  const handleSelectAllStudents = () => {
+    if (selectedStudentsForTable.length === allStudentsSummary.length) {
+      setSelectedStudentsForTable([])
+    } else {
+      setSelectedStudentsForTable(allStudentsSummary.map(s => s.id))
+    }
+  }
+
+  const handleViewStudent = (student: StudentSummaryFromAPI) => {
+    setViewingStudent(student)
+    // You can navigate to detailed view or open a modal
+    setSelectedStudent(student.id)
   }
 
   // Wrapper functions for PageHeader
@@ -443,15 +478,10 @@ export default function FeesPage() {
                     {/* Fee Invoices Section */}
                     <div className="space-y-4">
                       <h2 className="text-xl font-semibold text-gray-900">Fee Invoices</h2>
-                      <FeesDataTable
-                        selectedStudent={selectedStudent}
-                        selectedStudentInvoices={selectedStudentInvoices}
-                        filteredInvoices={filteredInvoices}
-                        allStudents={filteredStudents}
-                        selectedInvoices={selectedInvoices}
-                        onSelectInvoice={handleSelectInvoice}
+                      <StudentInvoicesTable
+                        invoices={selectedStudentInvoices}
+                        studentName={finalStudentData?.studentName || 'Student'}
                         onViewInvoice={handleViewInvoice}
-                        onSelectAll={handleSelectAll}
                       />
                     </div>
 
@@ -499,16 +529,15 @@ export default function FeesPage() {
                       setDueDateFilter={() => {}}
                     />
 
-                    {/* Data Table */}
+                    {/* Data Table - Using new allStudentsSummary query */}
                     <FeesDataTable
-                      selectedStudent={selectedStudent}
-                      selectedStudentInvoices={selectedStudentInvoices}
-                      filteredInvoices={filteredInvoices}
-                      allStudents={filteredStudents}
-                      selectedInvoices={selectedInvoices}
-                      onSelectInvoice={handleSelectInvoice}
-                      onViewInvoice={handleViewInvoice}
-                      onSelectAll={handleSelectAll}
+                      students={allStudentsSummary}
+                      loading={studentsLoading}
+                      error={studentsError}
+                      selectedStudents={selectedStudentsForTable}
+                      onSelectStudent={handleSelectStudent}
+                      onSelectAll={handleSelectAllStudents}
+                      onViewStudent={handleViewStudent}
                     />
                   </div>
                 )}
