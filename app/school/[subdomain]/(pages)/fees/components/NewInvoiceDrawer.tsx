@@ -49,7 +49,6 @@ export default function NewInvoiceDrawer({
   const { toast } = useToast()
   const { generateInvoices } = useGraphQLInvoices()
   const { academicYears, loading: academicYearsLoading } = useAcademicYears()
-  const { gradeLevels, loading: gradeLevelsLoading } = useGradeLevels()
   
   const [issueDate, setIssueDate] = useState<Date | undefined>(new Date())
   const [dueDate, setDueDate] = useState<Date | undefined>(new Date())
