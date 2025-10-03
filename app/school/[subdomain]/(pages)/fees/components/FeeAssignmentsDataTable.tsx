@@ -53,7 +53,7 @@ export const FeeAssignmentsDataTable = ({
 
   return (
     <div className="border-2 border-primary/20 overflow-hidden">
-      <TableHeader data={data} />
+      <TableHeaderComponent data={data} />
       <div className="overflow-x-auto">
         <Table>
           <TableColumnHeaders />
@@ -73,7 +73,7 @@ export const FeeAssignmentsDataTable = ({
   )
 }
 
-const TableHeader = ({ data }: { data: FeeAssignmentData | null }) => {
+const TableHeaderComponent = ({ data }: { data: FeeAssignmentData | null }) => {
   if (!data) return null
   
   return (
