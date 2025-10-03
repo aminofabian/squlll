@@ -569,7 +569,7 @@ export const mockStudents = [
       curriculumAdopted: 'CBC Early Years Education'
     },
     {
-      id: 'pp2',
+      id: '',
       name: 'PP2',
       displayName: 'PP2',
       level: 'preschool',

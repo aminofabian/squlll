@@ -55,7 +55,14 @@ export interface ProcessedFeeStructure {
     gradeLevel?: { id: string; name: string }
     name?: string
   }>
-  buckets: Array<{ id: string; name: string; totalAmount: number; isOptional: boolean }>
+  buckets: Array<{ 
+    id: string; 
+    name: string; 
+    totalAmount: number; 
+    isOptional: boolean;
+    firstItemId?: string;
+    feeBucketId: string;
+  }>
   isActive: boolean
   createdAt: string
   updatedAt: string

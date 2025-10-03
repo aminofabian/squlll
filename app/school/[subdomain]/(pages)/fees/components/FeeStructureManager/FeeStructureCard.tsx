@@ -121,11 +121,12 @@ export const FeeStructureCard = ({
                   variant="ghost" 
                   className="h-6 px-2 text-xs hover:bg-primary/10"
                   onClick={() => onUpdateFeeItem(
-                    bucket.id, // Using bucket ID as a placeholder, would need actual item ID
+                    bucket.firstItemId || bucket.id, // Use firstItemId if available, fallback to bucket.id
                     bucket.totalAmount,
                     !bucket.isOptional,
                     bucket.name,
-                    structure.structureName
+                    structure.structureName,
+                    bucket.feeBucketId // Pass the bucket ID separately
                   )}
                 >
                   <Edit className="h-3 w-3 mr-1" /> Edit

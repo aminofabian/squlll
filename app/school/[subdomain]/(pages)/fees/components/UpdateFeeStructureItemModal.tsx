@@ -70,6 +70,19 @@ export const UpdateFeeStructureItemModal = ({
         throw new Error('Please enter a valid amount')
       }
       
+      // Validate the fee structure item ID
+      if (!feeStructureItem.id || feeStructureItem.id.trim() === '') {
+        throw new Error('Invalid fee structure item ID')
+      }
+      
+      // Log the request for debugging
+      console.log('Updating fee structure item:', {
+        id: feeStructureItem.id,
+        amount: parsedAmount,
+        isMandatory: isMandatory,
+        itemData: feeStructureItem // Log the full item for debugging
+      })
+      
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
@@ -77,14 +90,8 @@ export const UpdateFeeStructureItemModal = ({
         },
         body: JSON.stringify({
           query: `
-            mutation UpdateFeeStructureItem {
-              updateFeeStructureItem(
-                id: "${feeStructureItem.id}"
-                input: {
-                  amount: ${parsedAmount.toFixed(2)}
-                  isMandatory: ${isMandatory}
-                }
-              ) {
+            mutation UpdateFeeStructureItem($id: ID!, $input: UpdateFeeStructureItemInput!) {
+              updateFeeStructureItem(id: $id, input: $input) {
                 id
                 amount
                 isMandatory
@@ -104,7 +111,14 @@ export const UpdateFeeStructureItemModal = ({
                 }
               }
             }
-          `
+          `,
+          variables: {
+            id: feeStructureItem.id,
+            input: {
+              amount: parsedAmount,
+              isMandatory: isMandatory
+            }
+          }
         }),
       })
       
@@ -114,8 +128,19 @@ export const UpdateFeeStructureItemModal = ({
       
       const result = await response.json()
       
+      // Log the response for debugging
+      console.log('Update fee structure item response:', result)
+      
       if (result.errors) {
-        throw new Error(result.errors[0]?.message || 'Failed to update fee structure item')
+        const error = result.errors[0]
+        console.error('GraphQL error details:', error)
+        
+        // Provide more specific error messages
+        if (error.message === 'Fee structure item not found') {
+          throw new Error(`Fee structure item with ID "${feeStructureItem.id}" was not found. This item may have been deleted or you may not have permission to update it.`)
+        }
+        
+        throw new Error(error.message || 'Failed to update fee structure item')
       }
       
       // Handle successful update

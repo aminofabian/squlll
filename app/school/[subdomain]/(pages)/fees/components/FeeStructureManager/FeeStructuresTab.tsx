@@ -177,11 +177,12 @@ const FeeStructureTable = ({
                               variant="ghost"
                               className="h-8 w-8 p-0"
                               onClick={() => onUpdateFeeItem(
-                                bucket.id,
+                                bucket.firstItemId || bucket.id, // Use firstItemId if available, fallback to bucket.id
                                 bucket.totalAmount,
                                 !bucket.isOptional,
                                 bucket.name,
-                                structure.structureName
+                                structure.structureName,
+                                bucket.feeBucketId // Pass the bucket ID separately
                               )}
                             >
                               <Edit className="h-3.5 w-3.5 text-slate-600" />
@@ -546,7 +547,7 @@ export const FeeStructuresTab = ({
                     variant="ghost" 
                     className="h-8 px-2 text-xs hover:bg-primary/10"
                     onClick={() => onUpdateFeeItem(
-                      `${structure.id}-${index}`,
+                      `${structure.id}-${index}`, // This is fallback data, keep as is for now
                       bucket.amount,
                       true,
                       bucket.name,

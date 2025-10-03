@@ -115,8 +115,15 @@ export const FeeStructureManager = ({
     if (!structures || structures.length === 0) return []
 
     return structures.map(structure => {
-      // Group items by bucket
-      const bucketMap = new Map<string, { id: string; name: string; totalAmount: number; isOptional: boolean }>();
+      // Group items by bucket but preserve the first item ID for editing
+      const bucketMap = new Map<string, { 
+        id: string; 
+        name: string; 
+        totalAmount: number; 
+        isOptional: boolean; 
+        firstItemId?: string; // Store the first item ID for editing
+        bucketId: string; 
+      }>();
       
       // Process items if they exist
       if (structure.items && structure.items.length > 0) {
@@ -134,6 +141,8 @@ export const FeeStructureManager = ({
               name: item.feeBucket.name,
               totalAmount: item.amount,
               isOptional: !item.isMandatory,
+              firstItemId: item.id, // Store the first item's ID for editing
+              feeBucketId: item.feeBucket.id,
             });
           }
         });
@@ -165,12 +174,14 @@ export const FeeStructureManager = ({
   }
   
   // Handle opening the update fee structure item modal
-  const handleUpdateFeeItem = (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string) => {
+  const handleUpdateFeeItem = (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => {
+    console.log('HandleUpdateFeeItem called with:', { itemId, amount, isMandatory, bucketName, feeStructureName, bucketId })
+    
     setFeeItemToUpdate({
       id: itemId,
       amount,
       isMandatory,
-      feeBucket: { id: '', name: bucketName },
+      feeBucket: { id: bucketId || '', name: bucketName },
       feeStructure: { id: '', name: feeStructureName }
     })
     setIsUpdateItemModalOpen(true)

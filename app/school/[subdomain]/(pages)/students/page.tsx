@@ -98,7 +98,7 @@ const mockGrades: Grade[] = [
   {
     id: 'baby-class',
     name: 'Baby',
-    displayName: 'Baby Class',
+    displayName: 'BC',
     level: 'preschool',
     ageGroup: '3 years',
     students: 42,
