@@ -6,6 +6,45 @@ import { Badge } from "@/components/ui/badge"
 import { StudentSummary } from '../types'
 import { formatCurrency } from '../utils'
 
+// Dynamic status function based on financial data
+const getStudentStatus = (student: StudentSummary) => {
+  const { totalOutstanding, totalPaid, invoiceCount } = student
+  
+  // If balance is 0 and there are no invoices, student is pending
+  if (totalOutstanding === 0 && totalPaid === 0 && invoiceCount === 0) {
+    return {
+      label: "Pending",
+      variant: "outline" as const,
+      className: "bg-yellow-50 text-yellow-600 border-yellow-200 font-mono"
+    }
+  }
+  
+  // If balance is 0 but there are invoices and payments, student is paid up
+  if (totalOutstanding === 0 && totalPaid > 0) {
+    return {
+      label: "Paid up",
+      variant: "outline" as const,
+      className: "bg-green-50 text-green-600 border-green-200 font-mono"
+    }
+  }
+  
+  // If there's a positive balance, show amount due
+  if (totalOutstanding > 0) {
+    return {
+      label: `${formatCurrency(totalOutstanding)} due`,
+      variant: "outline" as const,
+      className: "bg-red-50 text-red-600 border-red-200 font-mono"
+    }
+  }
+  
+  // Fallback for any other scenario
+  return {
+    label: "Unknown",
+    variant: "outline" as const,
+    className: "bg-gray-50 text-gray-600 border-gray-200 font-mono"
+  }
+}
+
 interface StudentSearchSidebarProps {
   searchTerm: string
   setSearchTerm: (term: string) => void
@@ -136,15 +175,14 @@ export const StudentSearchSidebar = ({
                     {student.admissionNumber} • {student.class} {student.section}
                   </div>
                   <div className="flex items-center gap-2 text-xs">
-                    {student.totalOutstanding > 0 ? (
-                      <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 font-mono">
-                        {formatCurrency(student.totalOutstanding)} due
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 font-mono">
-                        Paid up
-                      </Badge>
-                    )}
+                    {(() => {
+                      const status = getStudentStatus(student)
+                      return (
+                        <Badge variant={status.variant} className={status.className}>
+                          {status.label}
+                        </Badge>
+                      )
+                    })()}
                     {student.overdueCount > 0 && (
                       <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 font-mono">
                         {student.overdueCount} overdue
