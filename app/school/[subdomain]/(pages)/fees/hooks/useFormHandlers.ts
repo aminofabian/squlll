@@ -9,7 +9,11 @@ import {
 import { useGraphQLPayments } from './useGraphQLPayments'
 import { useGraphQLInvoices } from './useGraphQLInvoices'
 
-export const useFormHandlers = (selectedStudent: string | null, filteredInvoices: FeeInvoice[]) => {
+export const useFormHandlers = (
+  selectedStudent: string | null, 
+  filteredInvoices: FeeInvoice[],
+  onDataChange?: () => void
+) => {
   const { createPayment } = useGraphQLPayments()
   const { generateInvoices, isGenerating: isGeneratingInvoices } = useGraphQLInvoices()
   // Modal states
@@ -167,6 +171,11 @@ export const useFormHandlers = (selectedStudent: string | null, filteredInvoices
         notes: '',
         partialPayment: false
       })
+      
+      // Trigger data refresh after successful payment
+      if (onDataChange) {
+        onDataChange()
+      }
     }
   }
 

@@ -30,6 +30,7 @@ interface RecordPaymentDrawerProps {
     admissionNumber: string
     className: string
   }
+  onPaymentSuccess?: () => void
 }
 
 export default function RecordPaymentDrawer({
@@ -40,14 +41,38 @@ export default function RecordPaymentDrawer({
   onSubmit,
   studentId,
   studentInfo,
+  onPaymentSuccess,
 }: RecordPaymentDrawerProps) {
   // Query invoices for the selected student
-  const { invoices, loading: invoicesLoading, error: invoicesError } = useStudentInvoices(studentId, studentInfo)
+  const { invoices, loading: invoicesLoading, error: invoicesError, refetch: refetchInvoices } = useStudentInvoices(studentId, studentInfo)
   const handleChange = (field: keyof RecordPaymentForm, value: string | boolean) => {
     setForm((prev) => ({
       ...prev,
       [field]: value,
     }))
+  }
+
+  const handleSubmit = async () => {
+    try {
+      // Execute the payment submission
+      await onSubmit()
+      
+      console.log('🔄 Payment submitted successfully, refreshing all data...')
+      
+      // Force refresh invoices with cache busting
+      console.log('📊 Refreshing invoice data...')
+      refetchInvoices()
+      
+      // Call parent callback to refresh student summary and fee data
+      if (onPaymentSuccess) {
+        console.log('📈 Refreshing student summary and fee data...')
+        onPaymentSuccess()
+      }
+      
+      console.log('✅ All data refresh operations triggered')
+    } catch (error) {
+      console.error('❌ Error during payment submission:', error)
+    }
   }
 
   const paymentMethods = [
@@ -165,7 +190,7 @@ export default function RecordPaymentDrawer({
         <DrawerFooter>
           <div className="flex gap-2">
             <Button 
-              onClick={onSubmit} 
+              onClick={handleSubmit} 
               disabled={!form.invoiceId || !form.amountPaid || !form.paymentDate || invoicesLoading}
             >
               {invoicesLoading ? (

@@ -61,16 +61,31 @@ export const useGraphQLPayments = () => {
 
       const result = await response.json();
 
+      console.log('💰 PAYMENT CREATION RESPONSE:', result);
+
       if (result.errors) {
         const message = result.errors.map((e: any) => e.message).join(', ');
+        console.error('❌ Payment creation errors:', result.errors);
         throw new Error(message);
       }
 
       if (!result.data?.createPayment) {
+        console.error('❌ No createPayment data in response:', result.data);
         throw new Error('GraphQL response missing createPayment field');
       }
 
-      return result.data.createPayment as CreatePaymentResponse;
+      const payment = result.data.createPayment;
+      console.log('✅ Payment created successfully:', {
+        id: payment.id,
+        receiptNumber: payment.receiptNumber,
+        amount: payment.amount,
+        paymentMethod: payment.paymentMethod,
+        invoiceId: payment.invoice?.id,
+        invoiceNumber: payment.invoice?.invoiceNumber,
+        updatedInvoiceBalance: payment.invoice?.balanceAmount
+      });
+
+      return payment as CreatePaymentResponse;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error creating payment';
       setError(message);

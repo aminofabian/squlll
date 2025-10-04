@@ -20,10 +20,22 @@ export function useStudentDetailSummary(studentId: string): UseStudentDetailSumm
     setError(null);
 
     try {
+      // Add cache-busting timestamp to force fresh data
+      const cacheBuster = Date.now()
+      console.log(`🔄 FORCE REFETCH: Student detail with cache buster: ${cacheBuster}`)
+      
+      // Clear any existing data to force UI refresh
+      setStudentDetail(null)
+      
+      // Add extra delay to ensure server-side data is fully committed
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
         body: JSON.stringify({
           query: `

@@ -45,7 +45,7 @@ export function useStudentLedger({ studentId, dateRange, skip = false }: UseStud
         },
         body: JSON.stringify({
           query: `
-            query GetStudentLedger($studentId: String!, $dateRange: DateRangeInput!) {
+            query GetStudentLedger($studentId: ID!, $dateRange: DateRangeInput!) {
               studentLedger(studentId: $studentId, dateRange: $dateRange) {
                 studentId
                 student {

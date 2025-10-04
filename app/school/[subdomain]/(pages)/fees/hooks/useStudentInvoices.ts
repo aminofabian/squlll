@@ -62,19 +62,31 @@ export function useStudentInvoices(
     setError(null)
 
     try {
-      console.log('=== useStudentInvoices Debug ===')
+      // Add cache-busting timestamp to force fresh data
+      const cacheBuster = Date.now()
+      console.log('=== FORCE REFETCH: useStudentInvoices ===')
       console.log('Student ID:', studentId)
-      console.log('Making GraphQL request to /api/graphql')
+      console.log(`🔄 FORCE FETCH: Invoices with cache buster: ${cacheBuster}`)
+      
+      // Clear any existing data to force UI refresh
+      setInvoices([])
+      
+      // Add extra delay to ensure server-side data is fully committed
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      console.log('Making fresh GraphQL request to /api/graphql')
 
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
         },
-        body: JSON.stringify({
-          query: `
-            query GetStudentInvoices($studentId: ID!) {
-              invoicesByStudent(studentId: $studentId) {
+          body: JSON.stringify({
+            query: `
+              query GetStudentInvoices($studentId: ID!) {
+                invoicesByStudent(studentId: $studentId) {
                 id
                 invoiceNumber
                 term {
@@ -136,7 +148,24 @@ export function useStudentInvoices(
       }
 
       const studentInvoices: StudentInvoice[] = data.data?.invoicesByStudent || []
-      console.log('Student invoices received:', studentInvoices)
+      console.log('📊 Student invoices received:', studentInvoices)
+      
+      // Debug: Check if any invoices have payments
+      studentInvoices.forEach((invoice, index) => {
+        console.log(`📋 Invoice ${index + 1}:`, {
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          totalAmount: invoice.totalAmount,
+          paidAmount: invoice.paidAmount,
+          balanceAmount: invoice.balanceAmount,
+          status: invoice.status,
+          paymentCount: invoice.payments?.length || 0
+        })
+        
+        if (invoice.payments && invoice.payments.length > 0) {
+          console.log(`💰 Payments for invoice ${invoice.invoiceNumber}:`, invoice.payments)
+        }
+      })
 
       // We need to get student info separately since it's not in the invoice response
       // For now, we'll use placeholder data and let the parent component provide student info

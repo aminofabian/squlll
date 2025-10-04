@@ -87,28 +87,6 @@ export default function FeesPage() {
     filteredStudents
   } = useFeesData()
 
-  const {
-    // modal states
-    showNewInvoiceDrawer,
-    setShowNewInvoiceDrawer,
-    showRecordPaymentDrawer,
-    setShowRecordPaymentDrawer,
-    // form states
-    newInvoiceForm,
-    setNewInvoiceForm,
-    paymentForm,
-    setPaymentForm,
-    // handlers
-    handleNewInvoice,
-    handleSendReminder,
-    handleRecordPayment,
-    handleCreatePaymentPlan,
-    handleSubmitPayment,
-    handleSubmitInvoice,
-    // GraphQL states
-    isGeneratingInvoices
-  } = useFormHandlers(selectedStudent, filteredInvoices)
-
   // Fee Structure hooks
   const {
     feeStructures,
@@ -149,10 +127,68 @@ export default function FeesPage() {
   const finalStudentData = detailedStudentData || fallbackStudentData
   const finalLoading = studentDataLoading || fallbackLoading
   const finalError = studentDataError || fallbackError
-  const finalRefetch = () => {
-    refetchStudentData()
-    refetchFallback()
+  
+  // Debug logging to see what data we're getting
+  console.log('🔍 DEBUG: finalStudentData:', finalStudentData)
+  if (finalStudentData?.feeSummary) {
+    console.log('💰 DEBUG: Fee Summary Data:', {
+      totalOwed: finalStudentData.feeSummary.totalOwed,
+      totalPaid: finalStudentData.feeSummary.totalPaid,
+      balance: finalStudentData.feeSummary.balance,
+      numberOfFeeItems: finalStudentData.feeSummary.numberOfFeeItems
+    })
   }
+  const finalRefetch = () => {
+    console.log('🔄 FORCE REFRESH: Starting comprehensive data refresh...')
+    
+    // Force refresh student summary data
+    console.log('📊 Refreshing student summary data...')
+    refetchStudentData()
+    
+    // Force refresh fallback student data
+    console.log('📋 Refreshing fallback student data...')
+    refetchFallback()
+    
+    // Add a small delay to ensure all refetches complete
+    setTimeout(() => {
+      console.log('✅ Force refresh completed - all data should be updated')
+    }, 1000)
+  }
+
+  // Force page revalidation function
+  const forcePageRefresh = () => {
+    console.log('🔄 FORCE PAGE REFRESH: Triggering complete page revalidation...')
+    
+    // Trigger all data refreshes
+    finalRefetch()
+    
+    // Optionally refresh the entire page if needed (uncomment if required)
+    // window.location.reload()
+    
+    console.log('✅ Page refresh operations completed')
+  }
+
+  const {
+    // modal states
+    showNewInvoiceDrawer,
+    setShowNewInvoiceDrawer,
+    showRecordPaymentDrawer,
+    setShowRecordPaymentDrawer,
+    // form states
+    newInvoiceForm,
+    setNewInvoiceForm,
+    paymentForm,
+    setPaymentForm,
+    // handlers
+    handleNewInvoice,
+    handleSendReminder,
+    handleRecordPayment,
+    handleCreatePaymentPlan,
+    handleSubmitPayment,
+    handleSubmitInvoice,
+    // GraphQL states
+    isGeneratingInvoices
+  } = useFormHandlers(selectedStudent, filteredInvoices, forcePageRefresh)
 
   // Get selected student invoices for overview
   const selectedStudentInvoices = selectedStudent 
@@ -661,6 +697,7 @@ export default function FeesPage() {
           admissionNumber: finalStudentData.admissionNumber,
           className: finalStudentData.gradeLevelName
         } : undefined}
+        onPaymentSuccess={forcePageRefresh}
       />
 
       {/* New Invoice Drawer */}

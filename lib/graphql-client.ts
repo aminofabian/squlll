@@ -18,6 +18,8 @@ const createGraphQLClient = () => {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
     },
   });
 };
