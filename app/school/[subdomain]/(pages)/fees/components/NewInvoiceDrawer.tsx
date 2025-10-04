@@ -1,14 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
-} from '@/components/ui/drawer'
+// Removed drawer imports - using custom right-side drawer
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -156,7 +149,7 @@ export default function NewInvoiceDrawer({
       } else {
         toast({
           title: "No Invoice Generated",
-          description: "No invoices were generated. Please check if the student has fee structures assigned.",
+          description: "No invoices were generated. The student may not have fee structures assigned. Please assign fee structures to the student first.",
           variant: "destructive",
         })
       }
@@ -172,16 +165,40 @@ export default function NewInvoiceDrawer({
   const selectedStudentData = allStudents.find(s => s.id === selectedStudentId)
 
   return (
-    <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="max-w-2xl mx-auto">
-        <DrawerHeader>
-          <DrawerTitle className="text-xl font-semibold">
-            Generate New Invoice
-          </DrawerTitle>
+    <>
+      {/* Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 animate-in fade-in-0"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Right Side Drawer */}
+      <div className={cn(
+        "fixed top-0 right-0 h-full w-full max-w-2xl bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )}>
+        {/* Header */}
+        <div className="flex flex-col space-y-1.5 p-6 pb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">
+              Generate New Invoice
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <span className="sr-only">Close</span>
+              ×
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Create a new invoice for the selected student and term
           </p>
-        </DrawerHeader>
+        </div>
 
         <div className="px-4 pb-4 space-y-6">
           {/* Student Selection */}
@@ -210,6 +227,27 @@ export default function NewInvoiceDrawer({
               </p>
             )}
           </div>
+
+          {/* Helpful Information */}
+          {selectedStudentData && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-blue-600 text-xs">ℹ</span>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-blue-900">Before Generating Invoice</h4>
+                  <p className="text-xs text-blue-700">
+                    Make sure the student has fee structures assigned. If no invoice is generated, 
+                    you may need to assign fee structures to this student first.
+                  </p>
+                  <p className="text-xs text-blue-600 font-medium">
+                    💡 Tip: Go to Fee Assignments to assign fee structures to students.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Academic Year */}
           <div className="space-y-2">
@@ -315,13 +353,16 @@ export default function NewInvoiceDrawer({
           </div>
         </div>
 
-        <DrawerFooter>
+        {/* Footer */}
+        <div className="p-6 pt-4">
           <div className="flex gap-2">
-            <DrawerClose asChild>
-              <Button variant="outline" className="flex-1">
-                Cancel
-              </Button>
-            </DrawerClose>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
             <Button 
               onClick={handleSubmit} 
               disabled={isGenerating}
@@ -337,8 +378,8 @@ export default function NewInvoiceDrawer({
               )}
             </Button>
           </div>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </div>
+      </div>
+    </>
   )
 }
