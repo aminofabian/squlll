@@ -111,42 +111,52 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
 
         <Separator />
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-600">Number of Fee Items</span>
-            <Badge variant="outline">{studentData.feeSummary.numberOfFeeItems}</Badge>
+        {/* Fee Items Table */}
+        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+          <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+            <h3 className="text-xs font-mono uppercase tracking-wide text-primary">Fee Structure Details</h3>
           </div>
-
-          {studentData.feeSummary.feeItems.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-600">Fee Items:</p>
-              <div className="space-y-2">
-                {studentData.feeSummary.feeItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{item.feeBucketName}</p>
-                        {item.isMandatory && (
-                          <Badge variant="destructive" className="text-xs">
-                            Mandatory
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {item.feeStructureName} • {item.academicYearName}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
-                        {formatCurrency(item.amount)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          
+          {studentData.feeSummary.feeItems.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-primary/20">
+                    <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Fee Item</th>
+                    <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Amount</th>
+                    <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Type</th>
+                    <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Structure</th>
+                    <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Academic Year</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {studentData.feeSummary.feeItems.map((item) => (
+                    <tr key={item.id} className="border-b border-primary/10 hover:bg-primary/5 transition-colors">
+                      <td className="py-3 px-4 font-mono text-sm text-slate-900 dark:text-slate-100">
+                        {item.feeBucketName}
+                      </td>
+                      <td className="py-3 px-4 font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
+                        KSh {item.amount.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant={item.isMandatory ? "default" : "outline"} className="font-mono text-xs">
+                          {item.isMandatory ? 'Mandatory' : 'Optional'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 font-mono text-sm text-slate-700 dark:text-slate-300">
+                        {item.feeStructureName}
+                      </td>
+                      <td className="py-3 px-4 font-mono text-sm text-slate-700 dark:text-slate-300">
+                        {item.academicYearName}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center p-8 text-slate-600 dark:text-slate-400 font-mono">
+              No fee items found
             </div>
           )}
         </div>
