@@ -655,7 +655,12 @@ export default function FeesPage() {
         form={paymentForm}
         setForm={setPaymentForm}
         onSubmit={handleSubmitPayment}
-        invoices={selectedStudentInvoices}
+        studentId={selectedStudent}
+        studentInfo={finalStudentData ? {
+          name: finalStudentData.studentName,
+          admissionNumber: finalStudentData.admissionNumber,
+          className: finalStudentData.gradeLevelName
+        } : undefined}
       />
 
       {/* New Invoice Drawer */}

@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Loader2 } from 'lucide-react'
 import type { FeeInvoice, RecordPaymentForm } from '../types'
+import { useStudentInvoices } from '../hooks/useStudentInvoices'
 
 interface RecordPaymentDrawerProps {
   isOpen: boolean
@@ -22,7 +24,12 @@ interface RecordPaymentDrawerProps {
   form: RecordPaymentForm
   setForm: (updater: (prev: RecordPaymentForm) => RecordPaymentForm) => void
   onSubmit: () => void
-  invoices: FeeInvoice[]
+  studentId: string | null
+  studentInfo?: {
+    name: string
+    admissionNumber: string
+    className: string
+  }
 }
 
 export default function RecordPaymentDrawer({
@@ -31,8 +38,11 @@ export default function RecordPaymentDrawer({
   form,
   setForm,
   onSubmit,
-  invoices,
+  studentId,
+  studentInfo,
 }: RecordPaymentDrawerProps) {
+  // Query invoices for the selected student
+  const { invoices, loading: invoicesLoading, error: invoicesError } = useStudentInvoices(studentId, studentInfo)
   const handleChange = (field: keyof RecordPaymentForm, value: string | boolean) => {
     setForm((prev) => ({
       ...prev,
@@ -60,14 +70,29 @@ export default function RecordPaymentDrawer({
             <Label htmlFor="invoice">Invoice</Label>
             <Select value={form.invoiceId} onValueChange={(v) => handleChange('invoiceId', v)}>
               <SelectTrigger id="invoice">
-                <SelectValue placeholder="Select invoice" />
+                <SelectValue placeholder={invoicesLoading ? "Loading invoices..." : "Select invoice"} />
               </SelectTrigger>
               <SelectContent>
-                {invoices.map((inv) => (
-                  <SelectItem key={inv.id} value={inv.id}>
-                    {inv.feeType.toUpperCase()} • Due {new Date(inv.dueDate).toLocaleDateString()} • KES {inv.amountDue.toLocaleString()}
-                  </SelectItem>
-                ))}
+                {invoicesLoading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="ml-2">Loading invoices...</span>
+                  </div>
+                ) : invoicesError ? (
+                  <div className="p-4 text-sm text-red-600">
+                    Error loading invoices: {invoicesError}
+                  </div>
+                ) : invoices.length === 0 ? (
+                  <div className="p-4 text-sm text-gray-500">
+                    No invoices found for this student
+                  </div>
+                ) : (
+                  invoices.map((inv) => (
+                    <SelectItem key={inv.id} value={inv.id}>
+                      {inv.feeType.toUpperCase()} • Due {new Date(inv.dueDate).toLocaleDateString()} • KES {inv.amountDue.toLocaleString()}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -139,8 +164,18 @@ export default function RecordPaymentDrawer({
 
         <DrawerFooter>
           <div className="flex gap-2">
-            <Button onClick={onSubmit} disabled={!form.invoiceId || !form.amountPaid || !form.paymentDate}>
-              Save Payment
+            <Button 
+              onClick={onSubmit} 
+              disabled={!form.invoiceId || !form.amountPaid || !form.paymentDate || invoicesLoading}
+            >
+              {invoicesLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Save Payment'
+              )}
             </Button>
             <DrawerClose asChild>
               <Button variant="outline" onClick={onClose}>Cancel</Button>

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { FeeInvoice, StudentSummary, SummaryStats } from '../types'
 import { mockFeeInvoices } from '../data/mockData'
 import { useStudentsSummary } from '@/lib/hooks/useStudentsSummary'
+import { useStudentInvoices } from './useStudentInvoices'
 
 export const useFeesData = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -40,11 +41,8 @@ export const useFeesData = () => {
     )
   }, [allStudents, searchTerm])
 
-  // Get invoices for selected student
-  const selectedStudentInvoices = useMemo(() => {
-    if (!selectedStudent) return []
-    return mockFeeInvoices.filter(invoice => invoice.studentId === selectedStudent)
-  }, [selectedStudent])
+  // Get invoices for selected student using GraphQL
+  const { invoices: selectedStudentInvoices, loading: selectedStudentInvoicesLoading, error: selectedStudentInvoicesError } = useStudentInvoices(selectedStudent)
 
   // Filter and calculate statistics
   const filteredInvoices = useMemo(() => {
@@ -124,6 +122,8 @@ export const useFeesData = () => {
     allStudents,
     filteredStudents,
     selectedStudentInvoices,
+    selectedStudentInvoicesLoading,
+    selectedStudentInvoicesError,
     filteredInvoices,
     summaryStats
   }
