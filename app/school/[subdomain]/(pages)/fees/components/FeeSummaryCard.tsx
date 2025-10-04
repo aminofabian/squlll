@@ -54,6 +54,15 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
     ? calculateFeeSummaryFromInvoices(invoiceData)
     : studentData?.feeSummary
 
+  // Force debug which data source is being used
+  console.log('🎯 Data source decision:', {
+    hasInvoiceData: !!invoiceData,
+    invoiceDataLength: invoiceData?.length || 0,
+    hasStudentData: !!studentData?.feeSummary,
+    finalDataSource: invoiceData && invoiceData.length > 0 ? 'INVOICE_DATA' : 'STUDENT_DATA',
+    finalSummary: feeSummary
+  })
+
   // Get fee items from invoice data or student data
   const feeItems = invoiceData && invoiceData.length > 0
     ? invoiceData.flatMap(invoice => 
@@ -73,8 +82,22 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
     invoiceCount: invoiceData?.length || 0,
     invoiceData: invoiceData,
     calculatedSummary: feeSummary,
-    studentDataSummary: studentData?.feeSummary
+    studentDataSummary: studentData?.feeSummary,
+    usingInvoiceData: !!(invoiceData && invoiceData.length > 0),
+    usingStudentData: !!(!invoiceData || invoiceData.length === 0)
   })
+  
+  // Force debug the first invoice if available
+  if (invoiceData && invoiceData.length > 0) {
+    console.log('🔍 First invoice details:', {
+      id: invoiceData[0].id,
+      totalAmount: invoiceData[0].totalAmount,
+      amountPaid: invoiceData[0].amountPaid,
+      amountDue: invoiceData[0].amountDue,
+      paymentHistory: invoiceData[0].paymentHistory,
+      paymentHistoryLength: invoiceData[0].paymentHistory?.length || 0
+    })
+  }
   if (loading) {
     return (
       <Card className="w-full">
