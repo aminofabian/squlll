@@ -2,20 +2,79 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { StudentSummaryDetail } from '../types'
+import { StudentSummaryDetail, FeeInvoice } from '../types'
 import { DollarSign } from 'lucide-react'
 
 interface FeeSummaryCardProps {
   studentData: StudentSummaryDetail | null
+  invoiceData?: FeeInvoice[] | null
   loading: boolean
   error: string | null
 }
 
 export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
   studentData,
+  invoiceData,
   loading,
   error
 }) => {
+  // Calculate fee summary from actual invoice data
+  const calculateFeeSummaryFromInvoices = (invoices: FeeInvoice[]) => {
+    console.log('🔢 Calculating fee summary from invoices:', invoices)
+    
+    const totalOwed = invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0)
+    const totalPaid = invoices.reduce((sum, invoice) => sum + invoice.amountPaid, 0)
+    const balance = invoices.reduce((sum, invoice) => sum + invoice.amountDue, 0)
+    const numberOfFeeItems = invoices.reduce((sum, invoice) => sum + (invoice.paymentHistory?.length || 0), 0)
+    
+    console.log('📊 Calculated values:', {
+      totalOwed,
+      totalPaid,
+      balance,
+      numberOfFeeItems,
+      invoiceBreakdown: invoices.map(inv => ({
+        id: inv.id,
+        totalAmount: inv.totalAmount,
+        amountPaid: inv.amountPaid,
+        amountDue: inv.amountDue,
+        paymentCount: inv.paymentHistory?.length || 0
+      }))
+    })
+    
+    return {
+      totalOwed,
+      totalPaid,
+      balance,
+      numberOfFeeItems
+    }
+  }
+
+  // Use invoice data if available, otherwise fall back to student data
+  const feeSummary = invoiceData && invoiceData.length > 0 
+    ? calculateFeeSummaryFromInvoices(invoiceData)
+    : studentData?.feeSummary
+
+  // Get fee items from invoice data or student data
+  const feeItems = invoiceData && invoiceData.length > 0
+    ? invoiceData.flatMap(invoice => 
+        invoice.paymentHistory?.map(payment => ({
+          id: payment.id,
+          feeBucketName: invoice.feeType,
+          amount: payment.amount,
+          isMandatory: true,
+          feeStructureName: invoice.term,
+          academicYearName: invoice.academicYear
+        })) || []
+      )
+    : studentData?.feeSummary?.feeItems || []
+
+  console.log('💰 FeeSummaryCard Debug:', {
+    hasInvoiceData: !!invoiceData,
+    invoiceCount: invoiceData?.length || 0,
+    invoiceData: invoiceData,
+    calculatedSummary: feeSummary,
+    studentDataSummary: studentData?.feeSummary
+  })
   if (loading) {
     return (
       <Card className="w-full">
@@ -52,7 +111,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
     )
   }
 
-  if (!studentData) {
+  if (!feeSummary) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -62,7 +121,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-500">No student selected</p>
+          <p className="text-gray-500">No fee data available</p>
         </CardContent>
       </Card>
     )
@@ -96,28 +155,28 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
             <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
               <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Total Owed</p>
               <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
-                KSh {studentData.feeSummary.totalOwed.toLocaleString()}
+                KSh {feeSummary.totalOwed.toLocaleString()}
               </p>
             </div>
 
             <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
               <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Total Paid</p>
               <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
-                KSh {studentData.feeSummary.totalPaid.toLocaleString()}
+                KSh {feeSummary.totalPaid.toLocaleString()}
               </p>
             </div>
 
             <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
               <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Balance</p>
               <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
-                KSh {studentData.feeSummary.balance.toLocaleString()}
+                KSh {feeSummary.balance.toLocaleString()}
               </p>
             </div>
 
             <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
               <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Fee Items</p>
               <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
-                {studentData.feeSummary.numberOfFeeItems}
+                {feeSummary.numberOfFeeItems}
               </p>
             </div>
           </div>
@@ -129,7 +188,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
             <h3 className="text-xs font-mono uppercase tracking-wide text-primary">Fee Structure Details</h3>
           </div>
           
-          {studentData.feeSummary.feeItems.length > 0 ? (
+          {feeItems.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
@@ -142,7 +201,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {studentData.feeSummary.feeItems.map((item) => (
+                  {feeItems.map((item) => (
                     <tr key={item.id} className="border-b border-primary/10 hover:bg-primary/5 transition-colors">
                       <td className="py-3 px-4 font-mono text-sm text-slate-900 dark:text-slate-100">
                         {item.feeBucketName}

@@ -84,7 +84,10 @@ export default function FeesPage() {
     setDueDateFilter,
     filteredInvoices,
     summaryStats,
-    filteredStudents
+    filteredStudents,
+    selectedStudentInvoices,
+    selectedStudentInvoicesLoading,
+    selectedStudentInvoicesError
   } = useFeesData()
 
   // Fee Structure hooks
@@ -130,6 +133,10 @@ export default function FeesPage() {
   
   // Debug logging to see what data we're getting
   console.log('🔍 DEBUG: finalStudentData:', finalStudentData)
+  console.log('📊 DEBUG: selectedStudentInvoices:', selectedStudentInvoices)
+  console.log('📊 DEBUG: selectedStudentInvoicesLoading:', selectedStudentInvoicesLoading)
+  console.log('📊 DEBUG: selectedStudentInvoicesError:', selectedStudentInvoicesError)
+  
   if (finalStudentData?.feeSummary) {
     console.log('💰 DEBUG: Fee Summary Data:', {
       totalOwed: finalStudentData.feeSummary.totalOwed,
@@ -190,10 +197,7 @@ export default function FeesPage() {
     isGeneratingInvoices
   } = useFormHandlers(selectedStudent, filteredInvoices, forcePageRefresh)
 
-  // Get selected student invoices for overview
-  const selectedStudentInvoices = selectedStudent 
-    ? filteredInvoices.filter(inv => inv.studentId === selectedStudent)
-    : []
+  // selectedStudentInvoices is now provided by useFeesData hook
 
   // Fetch all students summary for the new table
   const {
@@ -506,6 +510,7 @@ export default function FeesPage() {
                       </div>
                       <FeeSummaryCard
                         studentData={finalStudentData}
+                        invoiceData={selectedStudentInvoices}
                         loading={finalLoading}
                         error={finalError}
                       />
