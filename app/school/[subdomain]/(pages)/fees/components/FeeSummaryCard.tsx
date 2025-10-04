@@ -86,30 +86,42 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm font-medium text-blue-600">Total Owed</p>
-            <p className="text-2xl font-bold text-blue-900">
-              {formatCurrency(studentData.feeSummary.totalOwed)}
-            </p>
+        {/* Fee Summary Stats */}
+        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
+          <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
+            <h3 className="text-xs font-mono uppercase tracking-wide text-primary">Fee Summary Overview</h3>
           </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+              <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Total Owed</p>
+              <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+                KSh {studentData.feeSummary.totalOwed.toLocaleString()}
+              </p>
+            </div>
 
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <p className="text-sm font-medium text-green-600">Total Paid</p>
-            <p className="text-2xl font-bold text-green-900">
-              {formatCurrency(studentData.feeSummary.totalPaid)}
-            </p>
-          </div>
+            <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+              <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Total Paid</p>
+              <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+                KSh {studentData.feeSummary.totalPaid.toLocaleString()}
+              </p>
+            </div>
 
-          <div className="text-center p-4 bg-red-50 rounded-lg">
-            <p className="text-sm font-medium text-red-600">Balance</p>
-            <p className="text-2xl font-bold text-red-900">
-              {formatCurrency(studentData.feeSummary.balance)}
-            </p>
+            <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+              <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Balance</p>
+              <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+                KSh {studentData.feeSummary.balance.toLocaleString()}
+              </p>
+            </div>
+
+            <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+              <p className="text-xs font-mono uppercase tracking-wide text-slate-700 dark:text-slate-300 mb-2">Fee Items</p>
+              <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+                {studentData.feeSummary.numberOfFeeItems}
+              </p>
+            </div>
           </div>
         </div>
-
-        <Separator />
 
         {/* Fee Items Table */}
         <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
