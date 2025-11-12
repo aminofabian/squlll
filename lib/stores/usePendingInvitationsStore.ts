@@ -78,9 +78,8 @@ let globalFetchInProgress = false;
 let globalFetchPromise: Promise<GetPendingInvitationsResponse> | null = null;
 let moduleInitialized = false; // Module-level flag to ensure fetch only happens once
 
-export const usePendingInvitationsStore = create<PendingInvitationsState>()(
-  devtools(
-    (set, get) => ({
+// Only enable devtools in browser environment
+const createStore = (set: any, get: any) => ({
       ...initialState,
 
       // Setters
@@ -212,11 +211,12 @@ export const usePendingInvitationsStore = create<PendingInvitationsState>()(
         moduleInitialized = false;
         set(initialState);
       },
-    }),
-    {
-      name: 'pending-invitations-store',
-    }
-  )
+});
+
+export const usePendingInvitationsStore = create<PendingInvitationsState>()(
+  typeof window !== 'undefined'
+    ? devtools(createStore, { name: 'pending-invitations-store' })
+    : createStore
 );
 
 // React Query hook for fetching pending invitations - now just returns the store function

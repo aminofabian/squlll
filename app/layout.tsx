@@ -1,3 +1,6 @@
+// Polyfill localStorage for SSR before anything else
+import "@/lib/polyfills/localStorage";
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryClientWrapper } from "./QueryClientWrapper";

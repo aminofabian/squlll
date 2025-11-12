@@ -63,71 +63,71 @@ const initialState = {
   error: null,
 };
 
+// Only enable devtools in browser environment
+const createStore = (set: any, get: any) => ({
+  ...initialState,
+
+  // Setters
+  setStudents: (students: GraphQLStudent[]) => {
+    console.log('Setting students:', students.length);
+    set({ students, error: null });
+  },
+  setLoading: (isLoading: boolean) => set({ isLoading }),
+  setError: (error: string | null) => set({ error }),
+
+  // Getters
+  getStudentById: (studentId: string) => {
+    const state = get();
+    return state.students.find((student: GraphQLStudent) => student.id === studentId);
+  },
+
+  getStudentsByTenantId: (tenantId: string) => {
+    const state = get();
+    // Since tenantId is not available on student objects, return all students
+    // The filtering should be done at the API level
+    return state.students;
+  },
+
+  getStudentByAdmissionNumber: (admissionNumber: string) => {
+    const state = get();
+    return state.students.find((student: GraphQLStudent) => student.admission_number === admissionNumber);
+  },
+
+  getStudentByEmail: (email: string) => {
+    const state = get();
+    return state.students.find((student: GraphQLStudent) => student.user.email === email);
+  },
+
+  // Actions
+  addStudent: (student: GraphQLStudent) => {
+    const state = get();
+    set({ students: [...state.students, student] });
+  },
+
+  updateStudent: (studentId: string, updates: Partial<GraphQLStudent>) => {
+    const state = get();
+    set({
+      students: state.students.map((student: GraphQLStudent) =>
+        student.id === studentId ? { ...student, ...updates } : student
+      )
+    });
+  },
+
+  removeStudent: (studentId: string) => {
+    const state = get();
+    set({
+      students: state.students.filter((student: GraphQLStudent) => student.id !== studentId)
+    });
+  },
+
+  // Reset
+  reset: () => set(initialState),
+});
+
 export const useStudentsStore = create<StudentsState>()(
-  devtools(
-    (set, get) => ({
-      ...initialState,
-
-      // Setters
-      setStudents: (students) => {
-        console.log('Setting students:', students.length);
-        set({ students, error: null });
-      },
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
-
-      // Getters
-      getStudentById: (studentId) => {
-        const state = get();
-        return state.students.find(student => student.id === studentId);
-      },
-
-      getStudentsByTenantId: (tenantId) => {
-        const state = get();
-        // Since tenantId is not available on student objects, return all students
-        // The filtering should be done at the API level
-        return state.students;
-      },
-
-      getStudentByAdmissionNumber: (admissionNumber) => {
-        const state = get();
-        return state.students.find(student => student.admission_number === admissionNumber);
-      },
-
-      getStudentByEmail: (email) => {
-        const state = get();
-        return state.students.find(student => student.user.email === email);
-      },
-
-      // Actions
-      addStudent: (student) => {
-        const state = get();
-        set({ students: [...state.students, student] });
-      },
-
-      updateStudent: (studentId, updates) => {
-        const state = get();
-        set({
-          students: state.students.map(student =>
-            student.id === studentId ? { ...student, ...updates } : student
-          )
-        });
-      },
-
-      removeStudent: (studentId) => {
-        const state = get();
-        set({
-          students: state.students.filter(student => student.id !== studentId)
-        });
-      },
-
-      // Reset
-      reset: () => set(initialState),
-    }),
-    {
-      name: 'students-store',
-    }
-  )
+  typeof window !== 'undefined'
+    ? devtools(createStore, { name: 'students-store' })
+    : createStore
 );
 
 // React Query hook for fetching students

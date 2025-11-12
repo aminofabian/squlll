@@ -68,9 +68,8 @@ const initialState = {
   error: null,
 };
 
-export const useTeachersStore = create<TeachersState>()(
-  devtools(
-    (set, get) => ({
+// Only enable devtools in browser environment
+const createStore = (set: any, get: any) => ({
       ...initialState,
 
       // Setters
@@ -189,11 +188,12 @@ export const useTeachersStore = create<TeachersState>()(
 
       // Reset
       reset: () => set(initialState),
-    }),
-    {
-      name: 'teachers-store',
-    }
-  )
+});
+
+export const useTeachersStore = create<TeachersState>()(
+  typeof window !== 'undefined'
+    ? devtools(createStore, { name: 'teachers-store' })
+    : createStore
 );
 
 // React Query hook for fetching teachers/staff by tenant

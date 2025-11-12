@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import mockData from '../data/mock-timetable-data.json';
 
 // Types
@@ -187,111 +187,129 @@ const loadMockData = (): TimetableData => {
 // Initial data
 const initialMainTimetable: TimetableData = loadMockData();
 
-export const useTimetableStore = create<TimetableStore>()(
-  persist(
-    (set, get) => ({
-      mainTimetable: initialMainTimetable,
-      teacherTimetable: convertMainToTeacherTimetable(initialMainTimetable),
+// Create a storage object that works with SSR
+const createNoopStorage = (): any => {
+  return {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+  };
+};
 
-      updateMainTimetable: (data) => {
-        console.log('Updating main timetable with:', data);
-        set((state) => {
-          const updatedMain = {
-            ...state.mainTimetable,
-            ...data,
-            lastUpdated: new Date().toISOString()
-          };
-          
-          console.log('Updated main timetable:', updatedMain);
-          const convertedTeacher = convertMainToTeacherTimetable(updatedMain);
-          console.log('Converted teacher timetable:', convertedTeacher);
-          
-          return {
-            mainTimetable: updatedMain,
-            teacherTimetable: convertedTeacher
-          };
-        });
-      },
-
-      updateTeacherTimetable: (data) => {
-        set((state) => ({
-          teacherTimetable: {
-            ...state.teacherTimetable,
-            ...data,
-            lastUpdated: new Date().toISOString()
-          }
-        }));
-      },
-
-      syncTeacherTimetable: () => {
-        set((state) => ({
-          teacherTimetable: convertMainToTeacherTimetable(state.mainTimetable)
-        }));
-      },
-
-      resetTimetable: () => {
-        set({
-          mainTimetable: initialMainTimetable,
-          teacherTimetable: convertMainToTeacherTimetable(initialMainTimetable)
-        });
-      },
-
-      loadMockData: () => {
-        console.log('Loading mock data...');
-        const freshMockData = {
-          subjects: mockData.timetable,
-          teachers: mockData.metadata.teachers,
-          timeSlots: mockData.metadata.timeSlots,
-          breaks: mockData.metadata.breaks as Break[],
-          selectedGrade: mockData.metadata.grade,
-          lastUpdated: new Date().toISOString()
-        };
-        
-        // Debug: Log the data being loaded
-        console.log('Total subjects loaded:', Object.keys(freshMockData.subjects).length);
-        console.log('Breaks in data:', Object.entries(freshMockData.subjects).filter(([key, data]) => data?.isBreak).length);
-        
-        // Clear any cached data and force reload
-        set({
-          mainTimetable: freshMockData,
-          teacherTimetable: convertMainToTeacherTimetable(freshMockData)
-        });
-        console.log('Mock data loaded successfully');
-      },
-
-      // Force reload mock data (clears cache)
-      forceReloadMockData: () => {
-        console.log('Force reloading mock data...');
-        // Clear localStorage cache
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('timetable-store');
-        }
-        
-        const freshMockData = {
-          subjects: mockData.timetable,
-          teachers: mockData.metadata.teachers,
-          timeSlots: mockData.metadata.timeSlots,
-          breaks: mockData.metadata.breaks as Break[],
-          selectedGrade: mockData.metadata.grade,
-          lastUpdated: new Date().toISOString()
-        };
-        
-        console.log('Force reload - Total subjects loaded:', Object.keys(freshMockData.subjects).length);
-        console.log('Force reload - Breaks in data:', Object.entries(freshMockData.subjects).filter(([key, data]) => data?.isBreak).length);
-        
-        set({
-          mainTimetable: freshMockData,
-          teacherTimetable: convertMainToTeacherTimetable(freshMockData)
-        });
-        console.log('Mock data force reloaded successfully');
-      }
-    }),
-    {
-      name: 'timetable-store',
-      partialize: (state) => ({
-        mainTimetable: state.mainTimetable,
-        teacherTimetable: state.teacherTimetable
-      })
+// Safe function to get localStorage
+const getSafeStorage = () => {
+  try {
+    if (typeof window !== 'undefined' && 
+        window.localStorage && 
+        typeof window.localStorage.getItem === 'function') {
+      return window.localStorage;
     }
-  )
+  } catch (e) {
+    console.warn('localStorage is not available:', e);
+  }
+  return createNoopStorage();
+};
+
+// Store creator function
+const createTimetableStore = (set: any, get: any) => ({
+  mainTimetable: initialMainTimetable,
+  teacherTimetable: convertMainToTeacherTimetable(initialMainTimetable),
+
+  updateMainTimetable: (data: Partial<TimetableData>) => {
+    set((state: TimetableStore) => {
+      const updatedMain = {
+        ...state.mainTimetable,
+        ...data,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      return {
+        mainTimetable: updatedMain,
+        teacherTimetable: convertMainToTeacherTimetable(updatedMain)
+      };
+    });
+  },
+
+  updateTeacherTimetable: (data: Partial<TeacherTimetableData>) => {
+    set((state: TimetableStore) => ({
+      teacherTimetable: {
+        ...state.teacherTimetable,
+        ...data,
+        lastUpdated: new Date().toISOString()
+      }
+    }));
+  },
+
+  syncTeacherTimetable: () => {
+    set((state: TimetableStore) => ({
+      teacherTimetable: convertMainToTeacherTimetable(state.mainTimetable)
+    }));
+  },
+
+  resetTimetable: () => {
+    set({
+      mainTimetable: initialMainTimetable,
+      teacherTimetable: convertMainToTeacherTimetable(initialMainTimetable)
+    });
+  },
+
+  loadMockData: () => {
+    const freshMockData = {
+      subjects: mockData.timetable,
+      teachers: mockData.metadata.teachers,
+      timeSlots: mockData.metadata.timeSlots,
+      breaks: mockData.metadata.breaks as Break[],
+      selectedGrade: mockData.metadata.grade,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    set({
+      mainTimetable: freshMockData,
+      teacherTimetable: convertMainToTeacherTimetable(freshMockData)
+    });
+  },
+
+  // Force reload mock data (clears cache)
+  forceReloadMockData: () => {
+    // Clear localStorage cache safely
+    try {
+      const storage = getSafeStorage();
+      if (storage && typeof storage.removeItem === 'function') {
+        storage.removeItem('timetable-store');
+      }
+    } catch (error) {
+      // Silent fail
+    }
+    
+    const freshMockData = {
+      subjects: mockData.timetable,
+      teachers: mockData.metadata.teachers,
+      timeSlots: mockData.metadata.timeSlots,
+      breaks: mockData.metadata.breaks as Break[],
+      selectedGrade: mockData.metadata.grade,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    set({
+      mainTimetable: freshMockData,
+      teacherTimetable: convertMainToTeacherTimetable(freshMockData)
+    });
+  }
+});
+
+// Only use persist on client-side, plain store on server
+export const useTimetableStore = create<TimetableStore>()(
+  typeof window !== 'undefined'
+    ? persist(
+        createTimetableStore,
+        {
+          name: 'timetable-store',
+          storage: createJSONStorage(() => getSafeStorage()),
+          partialize: (state) => ({
+            mainTimetable: state.mainTimetable,
+            teacherTimetable: state.teacherTimetable
+          })
+        }
+      )
+    : createTimetableStore
 ); 

@@ -65,19 +65,21 @@ const initialState: Pick<FeeStructureItemsState, 'items' | 'isLoading' | 'error'
   error: null,
 }
 
+// Only enable devtools in browser environment
+const createStore = (set: any) => ({
+  ...initialState,
+
+  setItems: (items: GraphQLFeeStructureItem[]) => set({ items, error: null }),
+  setLoading: (isLoading: boolean) => set({ isLoading }),
+  setError: (error: string | null) => set({ error }),
+
+  reset: () => set(initialState),
+});
+
 export const useFeeStructureItemsStore = create<FeeStructureItemsState>()(
-  devtools(
-    (set) => ({
-      ...initialState,
-
-      setItems: (items) => set({ items, error: null }),
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
-
-      reset: () => set(initialState),
-    }),
-    { name: 'fee-structure-items-store' }
-  )
+  typeof window !== 'undefined'
+    ? devtools(createStore, { name: 'fee-structure-items-store' })
+    : createStore
 )
 
 // React-friendly fetcher

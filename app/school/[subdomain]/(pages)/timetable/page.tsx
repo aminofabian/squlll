@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { CheckCircle, Clock, PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronUp, Menu, X, Settings, BarChart3, AlertTriangle, Users, Calendar, Coffee, Save, Upload, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,44 +18,15 @@ import {
   TimetableFilter
 } from './components';
 import { useTimetableStore, type Teacher, type CellData, type TimeSlot, type Break } from '@/lib/stores/useTimetableStore';
+import {
+  useTimetableStats,
+  useTimetableConflicts,
+  useConflictCount,
+  useMergedSubjects,
+  useFilteredSubjects,
+} from './hooks';
 
-// Type definitions
-interface Conflict {
-  teacher: string;
-  conflictingClasses: Array<{
-    grade: string;
-    cellKey: string;
-    subject: string;
-  }>;
-}
-
-interface TeacherSchedule {
-  [teacher: string]: {
-    [scheduleKey: string]: Array<{
-      grade: string;
-      cellKey: string;
-      subject: string;
-    }>;
-  };
-}
-
-interface LessonStats {
-  totalLessons: number;
-  totalTeachers: number;
-  totalSubjects: number;
-  doubleLessons: number;
-  totalBreaks: number;
-  mostBusyTeacher: string;
-  mostBusyDay: string;
-  mostBusyTime: string;
-  averageLessonsPerDay: number;
-  completionPercentage: number;
-  teacherWorkload: Record<string, number>;
-  subjectDistribution: Record<string, number>;
-  dayDistribution: Record<string, number>;
-  timeSlotUsage: Record<string, number>;
-  breakDistribution: Record<string, number>;
-}
+// Note: Types are now imported from hooks
 
 const SmartTimetable = () => {
   // Use shared store
@@ -85,16 +56,17 @@ const SmartTimetable = () => {
     'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
   ]);
 
-  const days = [
+  // Memoize constants
+  const days = useMemo(() => [
     { name: 'MON', color: 'bg-primary' },
     { name: 'TUE', color: 'bg-primary/80' },
     { name: 'WED', color: 'bg-primary/70' },
     { name: 'THU', color: 'bg-primary/60' },
     { name: 'FRI', color: 'bg-primary/50' }
-  ];
+  ], []);
 
-  // Function to transform grade names for display
-  const getDisplayGradeName = (gradeName: string): string => {
+  // Memoize helper functions
+  const getDisplayGradeName = useCallback((gradeName: string): string => {
     if (gradeName.startsWith('Grade')) {
       const gradeNum = parseInt(gradeName.split(' ')[1]);
       if (gradeNum >= 7 && gradeNum <= 12) {
@@ -102,40 +74,21 @@ const SmartTimetable = () => {
       }
     }
     return gradeName;
-  };
+  }, []);
 
-  // Use display names in UI but keep internal grade names for logic
-  const displayGrades = grades.map(grade => ({
-    internal: grade,
-    display: getDisplayGradeName(grade)
-  }));
+  // Memoize display grades
+  const displayGrades = useMemo(() => 
+    grades.map(grade => ({
+      internal: grade,
+      display: getDisplayGradeName(grade)
+    })),
+    [grades, getDisplayGradeName]
+  );
 
-  const getCellKey = (grade: string, timeId: number, dayIndex: number): string => {
-    // If we're passed a display name, convert it back to internal name
-    const internalGrade = displayGrades.find(g => g.display === grade)?.internal || grade;
-    return `${internalGrade}-${dayIndex + 1}-${timeId - 1}`;
-  };
-
-  const getGradeProgress = (grade: string): number => {
-    let totalCells = timeSlots.length * days.length;
-    let filledCells = 0;
-    
-    timeSlots.forEach(slot => {
-      days.forEach((day, dayIndex) => {
-        const cellKey = getCellKey(grade, slot.id, dayIndex);
-        if (mergedSubjects[cellKey]) {
-          filledCells++;
-        }
-      });
-    });
-    
-    return Math.round((filledCells / totalCells) * 100);
-  };
   const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [showBreakModal, setShowBreakModal] = useState(false);
   const [showTimeSlotAddModal, setShowTimeSlotAddModal] = useState(false);
-  const [conflicts, setConflicts] = useState<Record<string, Conflict>>({});
   const [showConflicts, setShowConflicts] = useState(false);
   const [isSummaryPanelMinimized, setIsSummaryPanelMinimized] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -152,209 +105,50 @@ const SmartTimetable = () => {
   // Extract data from store
   const { subjects, teachers, timeSlots, breaks, selectedGrade } = mainTimetable;
 
-  // Create a merged subjects object that includes breaks from all grades
-  const mergedSubjects = { ...subjects };
-  
-  // Add breaks from all grades to ensure they're always visible
-  Object.entries(subjects).forEach(([cellKey, cellData]) => {
-    if (cellData && cellData.isBreak) {
-      // Extract the time and day from the cell key
-      const [grade, dayIndex, timeId] = cellKey.split('-');
-      
-      // Create a cell key for the current grade with the same time and day
-      const currentGradeCellKey = `${selectedGrade}-${dayIndex}-${timeId}`;
-      
-      // Always add the break for the current grade, regardless of whether it exists
-      mergedSubjects[currentGradeCellKey] = cellData;
-    }
-  });
+  // Use optimized hooks for data merging and filtering
+  const mergedSubjects = useMergedSubjects(subjects, selectedGrade);
+  const filteredSubjects = useFilteredSubjects(mergedSubjects, searchTerm);
 
-  // Filter subjects based on search term
-  const filteredSubjects = useMemo(() => {
-    if (!searchTerm.trim()) return mergedSubjects;
+  const getCellKey = useCallback((grade: string, timeId: number, dayIndex: number): string => {
+    const internalGrade = displayGrades.find(g => g.display === grade)?.internal || grade;
+    return `${internalGrade}-${dayIndex + 1}-${timeId - 1}`;
+  }, [displayGrades]);
+
+  const getGradeProgress = useCallback((grade: string): number => {
+    const totalCells = timeSlots.length * days.length;
+    let filledCells = 0;
     
-    const filtered: Record<string, CellData> = {};
-    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
-      if (cellData && (
-        cellData.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cellData.teacher.toLowerCase().includes(searchTerm.toLowerCase())
-      )) {
-        filtered[cellKey] = cellData;
-      }
-    });
-    return filtered;
-  }, [mergedSubjects, searchTerm]);
-
-  // Debug: Log what we're doing
-  console.log('Selected grade:', selectedGrade);
-  console.log('Total subjects in mergedSubjects:', Object.keys(mergedSubjects).length);
-  console.log('Breaks in mergedSubjects:', Object.entries(mergedSubjects).filter(([key, data]) => data?.isBreak).length);
-
-  // Check if input is a break
-  const isBreakInput = (input: string): Break | null => {
-    return breaks.find(breakItem => 
-      breakItem.name.toLowerCase() === input.toLowerCase()
-    ) || null;
-  };
-
-  // Calculate comprehensive lesson statistics
-  const calculateLessonStats = (): LessonStats => {
-    const teacherWorkload: Record<string, number> = {};
-    const subjectDistribution: Record<string, number> = {};
-    const dayDistribution: Record<string, number> = {};
-    const timeSlotUsage: Record<string, number> = {};
-    const breakDistribution: Record<string, number> = {};
-    let totalLessons = 0;
-    let doubleLessons = 0;
-    let totalBreaks = 0;
-
-    // Analyze each cell
-    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
-      if (cellData && cellData.subject) {
-        const isBreak = isBreakInput(cellData.subject);
-        
-        if (isBreak) {
-          totalBreaks++;
-          breakDistribution[isBreak.name] = (breakDistribution[isBreak.name] || 0) + 1;
-        } else {
-          totalLessons++;
-          
-          // Teacher workload
-          if (cellData.teacher) {
-            teacherWorkload[cellData.teacher] = (teacherWorkload[cellData.teacher] || 0) + 1;
-          }
-          
-          // Subject distribution
-          subjectDistribution[cellData.subject] = (subjectDistribution[cellData.subject] || 0) + 1;
-        }
-        
-        // Parse cell key to get day and time
-        const [grade, timeId, dayIndex] = cellKey.split('-');
-        const dayName = days[parseInt(dayIndex)]?.name || 'Unknown';
-        const timeSlot = timeSlots.find(t => t.id === parseInt(timeId));
-        
-        // Day distribution
-        dayDistribution[dayName] = (dayDistribution[dayName] || 0) + 1;
-        
-        // Time slot usage
-        if (timeSlot) {
-          timeSlotUsage[timeSlot.time] = (timeSlotUsage[timeSlot.time] || 0) + 1;
-        }
-      }
-    });
-
-    // Check for double lessons (same subject in consecutive time slots)
-    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
-      if (cellData && cellData.subject && !isBreakInput(cellData.subject)) {
-        const [grade, timeId, dayIndex] = cellKey.split('-');
-        const currentTimeId = parseInt(timeId);
-        const currentDayIndex = parseInt(dayIndex);
-        
-        // Check next time slot
-        const nextCellKey = getCellKey(selectedGrade, currentTimeId + 1, currentDayIndex);
-        const nextCellData = mergedSubjects[nextCellKey];
-        
-        if (nextCellData && nextCellData.subject === cellData.subject && nextCellData.teacher === cellData.teacher) {
-          doubleLessons++;
-        }
-      }
-    });
-
-    // Find most busy teacher
-    const mostBusyTeacher = Object.entries(teacherWorkload).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
-    
-    // Find most busy day
-    const mostBusyDay = Object.entries(dayDistribution).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
-    
-    // Find most busy time slot
-    const mostBusyTime = Object.entries(timeSlotUsage).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
-    
-    // Calculate averages
-    const totalDays = days.length;
-    const averageLessonsPerDay = totalDays > 0 ? Math.round((totalLessons / totalDays) * 10) / 10 : 0;
-    
-    // Completion percentage (excluding breaks)
-    const totalPossibleCells = timeSlots.length * days.length;
-    const completionPercentage = totalPossibleCells > 0 ? Math.round(((totalLessons + totalBreaks) / totalPossibleCells) * 100) : 0;
-
-    return {
-      totalLessons,
-      totalTeachers: Object.keys(teacherWorkload).length,
-      totalSubjects: Object.keys(subjectDistribution).length,
-      doubleLessons,
-      totalBreaks,
-      mostBusyTeacher,
-      mostBusyDay,
-      mostBusyTime,
-      averageLessonsPerDay,
-      completionPercentage,
-      teacherWorkload,
-      subjectDistribution,
-      dayDistribution,
-      timeSlotUsage,
-      breakDistribution
-    };
-  };
-
-  const stats = calculateLessonStats();
-
-  // Check for teacher conflicts
-  const checkTeacherConflicts = () => {
-    const newConflicts: Record<string, Conflict> = {};
-    const teacherSchedule: TeacherSchedule = {};
-
-    // Build teacher schedule map
-    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
-      if (cellData && cellData.teacher && !isBreakInput(cellData.subject)) {
-        const teacher = cellData.teacher;
-        const [grade, timeId, dayIndex] = cellKey.split('-');
-        const scheduleKey = `${timeId}-${dayIndex}`;
-        
-        if (!teacherSchedule[teacher]) {
-          teacherSchedule[teacher] = {};
-        }
-        
-        if (!teacherSchedule[teacher][scheduleKey]) {
-          teacherSchedule[teacher][scheduleKey] = [];
-        }
-        
-        teacherSchedule[teacher][scheduleKey].push({
-          grade,
-          cellKey,
-          subject: cellData.subject
-        });
-      }
-    });
-
-    // Find conflicts
-    Object.entries(teacherSchedule).forEach(([teacher, schedule]) => {
-      Object.entries(schedule).forEach(([scheduleKey, classes]) => {
-        if (classes.length > 1) {
-          classes.forEach(classInfo => {
-            newConflicts[classInfo.cellKey] = {
-              teacher,
-              conflictingClasses: classes.filter(c => c.cellKey !== classInfo.cellKey)
-            };
-          });
+    timeSlots.forEach(slot => {
+      days.forEach((_day, dayIndex) => {
+        const cellKey = getCellKey(grade, slot.id, dayIndex);
+        if (mergedSubjects[cellKey]) {
+          filledCells++;
         }
       });
     });
+    
+    return Math.round((filledCells / totalCells) * 100);
+  }, [timeSlots, days, getCellKey, mergedSubjects]);
 
-    setConflicts(newConflicts);
-    return Object.keys(newConflicts).length > 0;
-  };
+  // Use optimized hooks for calculations
+  const stats = useTimetableStats(mergedSubjects, breaks, timeSlots, days, selectedGrade);
+  const conflicts = useTimetableConflicts(mergedSubjects, breaks);
+  const totalConflicts = useConflictCount(conflicts);
 
-  useEffect(() => {
-    checkTeacherConflicts();
-  }, [mainTimetable.subjects]);
+  // Check if input is a break
+  const isBreakInput = useCallback((input: string): Break | null => {
+    return breaks.find(breakItem => 
+      breakItem.name.toLowerCase() === input.toLowerCase()
+    ) || null;
+  }, [breaks]);
 
-  const handleCellClick = (timeId: number, dayIndex: number) => {
+  const handleCellClick = useCallback((timeId: number, dayIndex: number) => {
     const cellKey = getCellKey(selectedGrade, timeId, dayIndex);
     setEditingCell(cellKey);
     const currentData = mergedSubjects[cellKey];
     setInputValue(currentData?.subject || '');
     setSelectedTeacher(currentData?.teacher || '');
-  };
+  }, [getCellKey, selectedGrade, mergedSubjects]);
 
   const handleTimeSlotClick = (timeId: number) => {
     const timeSlot = timeSlots.find(slot => slot.id === timeId);
@@ -453,7 +247,7 @@ const SmartTimetable = () => {
     setShowTimeSlotAddModal(false);
   };
 
-  const handleInputSubmit = () => {
+  const handleInputSubmit = useCallback(() => {
     if (editingCell && inputValue.trim()) {
       const breakInfo = isBreakInput(inputValue);
       const newCellData: CellData = {
@@ -463,12 +257,6 @@ const SmartTimetable = () => {
         breakType: breakInfo?.type
       };
 
-      console.log('Adding lesson to main timetable:', {
-        cellKey: editingCell,
-        cellData: newCellData
-      });
-
-      // Update the subjects object properly
       const updatedSubjects = {
         ...mergedSubjects,
         [editingCell]: newCellData
@@ -479,7 +267,7 @@ const SmartTimetable = () => {
       setInputValue('');
       setSelectedTeacher('');
     }
-  };
+  }, [editingCell, inputValue, isBreakInput, selectedTeacher, mergedSubjects, updateMainTimetable]);
 
   const handleAddBreak = (cellKey: string, breakName: string) => {
     const breakInfo = breaks.find(breakItem => breakItem.name === breakName);
@@ -539,13 +327,9 @@ const SmartTimetable = () => {
     }
   };
 
-  const getTeacherConflictCount = (teacher: string): number => {
+  const getTeacherConflictCount = useCallback((teacher: string): number => {
     return Object.values(conflicts).filter(conflict => conflict.teacher === teacher).length;
-  };
-
-  const getTotalConflicts = (): number => {
-    return Object.keys(conflicts).length;
-  };
+  }, [conflicts]);
 
   const clearCell = (cellKey: string) => {
     const newSubjects = { ...mergedSubjects };
@@ -744,10 +528,10 @@ const SmartTimetable = () => {
                     <span className="text-xs text-gray-600">{stats.totalTeachers} Teachers</span>
                   </div>
                 </div>
-                {getTotalConflicts() > 0 && (
+                {totalConflicts > 0 && (
                   <div className="flex items-center space-x-1.5 px-2 py-1 bg-red-50 border border-red-200">
                     <AlertTriangle className="h-3 w-3 text-red-600" />
-                    <span className="text-xs text-red-600 font-medium">{getTotalConflicts()} conflicts</span>
+                    <span className="text-xs text-red-600 font-medium">{totalConflicts} conflicts</span>
                   </div>
                 )}
               </div>
@@ -854,11 +638,11 @@ const SmartTimetable = () => {
                         </div>
                         <div className="flex-1 text-left">
                           <p className="font-semibold text-red-700">Conflicts</p>
-                          <p className="text-xs text-red-600">{getTotalConflicts()} issues to resolve</p>
+                          <p className="text-xs text-red-600">{totalConflicts} issues to resolve</p>
                         </div>
-                        {getTotalConflicts() > 0 && (
+                        {totalConflicts > 0 && (
                           <div className="w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center font-medium">
-                            {getTotalConflicts()}
+                            {totalConflicts}
                           </div>
                         )}
                       </Button>
@@ -930,7 +714,7 @@ const SmartTimetable = () => {
           {/* Desktop Header - Student timetable style */}
           <div className="hidden md:block p-4 md:p-8">
             <div className="max-w-7xl mx-auto">
-              <TimetableHeader totalConflicts={getTotalConflicts()} />
+              <TimetableHeader totalConflicts={totalConflicts} />
             </div>
           </div>
 
@@ -956,7 +740,7 @@ const SmartTimetable = () => {
                 selectedGrade={getDisplayGradeName(selectedGrade)}
                 grades={displayGrades.map(g => g.display)}
                 showGradeDropdown={showGradeDropdown}
-                totalConflicts={getTotalConflicts()}
+                totalConflicts={totalConflicts}
                 onGradeSelect={(displayGrade) => {
                   const internalGrade = displayGrades.find(g => g.display === displayGrade)?.internal || displayGrade;
                   updateMainTimetable({ selectedGrade: internalGrade });
@@ -982,7 +766,7 @@ const SmartTimetable = () => {
           {/* Mobile Collapsible Sections */}
           <div className="md:hidden">
             {/* Conflicts Section */}
-            {(showConflicts || expandedSections.conflicts) && getTotalConflicts() > 0 && (
+            {(showConflicts || expandedSections.conflicts) && totalConflicts > 0 && (
               <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
                 <div className="px-4 py-4">
                   <div className="flex items-center justify-between mb-3">
@@ -992,7 +776,7 @@ const SmartTimetable = () => {
                       </div>
                       <h3 className="text-sm font-semibold text-gray-900">Conflicts</h3>
                       <div className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium border border-red-200">
-                        {getTotalConflicts()}
+                        {totalConflicts}
                       </div>
                     </div>
                     <Button

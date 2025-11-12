@@ -43,9 +43,8 @@ const initialState = {
   error: null,
 };
 
-export const useStaffStore = create<StaffState>()(
-  devtools(
-    (set, get) => ({
+// Only enable devtools in browser environment
+const createStore = (set: any, get: any) => ({
       ...initialState,
 
       // Setters
@@ -96,11 +95,12 @@ export const useStaffStore = create<StaffState>()(
 
       // Reset
       reset: () => set(initialState),
-    }),
-    {
-      name: 'staff-store',
-    }
-  )
+});
+
+export const useStaffStore = create<StaffState>()(
+  typeof window !== 'undefined'
+    ? devtools(createStore, { name: 'staff-store' })
+    : createStore
 );
 
 // Hook for fetching staff by tenant

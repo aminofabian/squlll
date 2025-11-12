@@ -32,6 +32,11 @@ export function useAuth(): AuthState {
   });
 
   useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // In a real implementation, this would:
     // 1. Check for stored tokens in localStorage/cookies
     // 2. Validate tokens with your auth server
@@ -41,9 +46,15 @@ export function useAuth(): AuthState {
     // For now, we'll simulate getting auth data
     const loadAuthData = async () => {
       try {
+        // Check if localStorage is available and functional
+        if (typeof window.localStorage === 'undefined' || 
+            typeof window.localStorage.getItem !== 'function') {
+          throw new Error('localStorage is not available');
+        }
+
         // Check localStorage for auth data
-        const storedToken = localStorage.getItem('accessToken');
-        const storedUser = localStorage.getItem('user');
+        const storedToken = window.localStorage.getItem('accessToken');
+        const storedUser = window.localStorage.getItem('user');
         
         if (storedToken && storedUser) {
           const user = JSON.parse(storedUser);
@@ -68,8 +79,10 @@ export function useAuth(): AuthState {
           const mockToken = 'your_actual_access_token_here'; // <-- PUT YOUR REAL TOKEN HERE
           
           // Store in localStorage for persistence
-          localStorage.setItem('user', JSON.stringify(mockUser));
-          localStorage.setItem('accessToken', mockToken);
+          if (typeof window.localStorage.setItem === 'function') {
+            window.localStorage.setItem('user', JSON.stringify(mockUser));
+            window.localStorage.setItem('accessToken', mockToken);
+          }
           
           setAuthState({
             user: mockUser,
@@ -107,7 +120,19 @@ export function useAccessToken(): string | null {
  * Utility function to clear auth data (logout)
  */
 export function clearAuthData() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('user');
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
+  try {
+    if (typeof window.localStorage !== 'undefined' && 
+        typeof window.localStorage.removeItem === 'function') {
+      window.localStorage.removeItem('accessToken');
+      window.localStorage.removeItem('user');
+    }
+  } catch (error) {
+    console.error('Error clearing auth data:', error);
+  }
+  
   window.location.reload(); // Simple way to reset app state
 }
