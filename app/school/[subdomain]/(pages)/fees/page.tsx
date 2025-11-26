@@ -437,18 +437,35 @@ export default function FeesPage() {
         if (!result && updateError) {
           throw new Error(`GraphQL update failed: ${updateError}`);
         }
+        
+        // Refresh fee structures after update
+        await fetchFeeStructures()
       } else {
-        // For create mode, use the local function
-        result = await createFeeStructure(formData)
+        // For create mode, the wizard handles creation via GraphQL
+        // Just refresh the fee structures list
+        result = 'created' // Return a success indicator
+        await fetchFeeStructures()
       }
 
       // Reset UI state
       setShowCreateForm(false)
       setShowEditForm(false)
       setSelectedStructure(null)
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: selectedStructure ? "Fee structure updated successfully" : "Fee structure created successfully",
+      })
+      
       return result
     } catch (error) {
       console.error('Error saving fee structure:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save fee structure",
+        variant: "destructive",
+      })
       return null
     }
   }

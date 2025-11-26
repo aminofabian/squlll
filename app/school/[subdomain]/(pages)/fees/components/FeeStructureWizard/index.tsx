@@ -25,6 +25,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
     const [currentStep, setCurrentStep] = useState(1)
     const [isSaving, setIsSaving] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
 
     const [formData, setFormData] = useState({
         name: '',
@@ -90,34 +91,179 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
         setIsSaving(true)
 
         try {
-            const feeStructureData = {
-                name: formData.name,
-                grade: formData.grade,
-                boardingType: formData.boardingType,
-                academicYear: formData.academicYear,
-                termStructures: [{
-                    term: 'Term 1' as const,
-                    dueDate: '',
-                    latePaymentFee: '',
-                    earlyPaymentDiscount: '',
-                    earlyPaymentDeadline: '',
-                    buckets: Object.values(formData.bucketAmounts).map(bucket => ({
-                        type: bucket.id as any,
-                        name: bucket.name,
-                        description: bucket.name,
-                        isOptional: !bucket.isMandatory,
-                        components: [{
-                            name: bucket.name,
-                            description: '',
-                            amount: bucket.amount.toString(),
-                            category: bucket.id
-                        }]
-                    }))
-                }]
+            // Step 1: Fetch academic years to get the academic year ID
+            const academicYearsResponse = await fetch('/api/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: `
+                        query GetAcademicYears {
+                            academicYears {
+                                id
+                                name
+                                terms {
+                                    id
+                                    name
+                                }
+                            }
+                        }
+                    `
+                })
+            })
+
+            const academicYearsResult = await academicYearsResponse.json()
+            if (academicYearsResult.errors) {
+                throw new Error(academicYearsResult.errors[0]?.message || 'Failed to fetch academic years')
             }
 
-            await onSave(feeStructureData)
+            // Find the academic year by name
+            const academicYear = academicYearsResult.data.academicYears.find(
+                (ay: any) => ay.name === formData.academicYear || ay.name.includes(formData.academicYear)
+            )
 
+            if (!academicYear) {
+                throw new Error(`Academic year "${formData.academicYear}" not found`)
+            }
+
+            // Get all term IDs for this academic year
+            const termIds = academicYear.terms.map((term: any) => term.id)
+            if (termIds.length === 0) {
+                throw new Error(`No terms found for academic year "${formData.academicYear}"`)
+            }
+
+            // Step 2: Fetch grades to get grade level IDs
+            const gradesResponse = await fetch('/api/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: `
+                        query GetGrades {
+                            grades {
+                                id
+                                name
+                                gradeLevel {
+                                    id
+                                }
+                            }
+                        }
+                    `
+                })
+            })
+
+            const gradesResult = await gradesResponse.json()
+            if (gradesResult.errors) {
+                throw new Error(gradesResult.errors[0]?.message || 'Failed to fetch grades')
+            }
+
+            // Map selected grade names to grade level IDs
+            const gradeLevelIds: string[] = []
+            const missingGrades: string[] = []
+            
+            formData.selectedGrades.forEach((gradeName: string) => {
+                const grade = gradesResult.data.grades.find((g: any) => 
+                    g.name === gradeName || g.name.includes(gradeName) || gradeName.includes(g.name)
+                )
+                if (grade?.gradeLevel?.id) {
+                    gradeLevelIds.push(grade.gradeLevel.id)
+                } else {
+                    missingGrades.push(gradeName)
+                }
+            })
+
+            if (gradeLevelIds.length === 0) {
+                throw new Error(
+                    missingGrades.length > 0 
+                        ? `No valid grade levels found for: ${missingGrades.join(', ')}`
+                        : 'No valid grade levels found for selected grades'
+                )
+            }
+            
+            if (missingGrades.length > 0 && gradeLevelIds.length > 0) {
+                console.warn(`Some grades could not be mapped: ${missingGrades.join(', ')}`)
+            }
+
+            // Step 3: Create fee structure items from bucket amounts
+            const items = formData.selectedBuckets.map((bucketId: string) => {
+                const bucket = formData.bucketAmounts[bucketId]
+                if (!bucket) {
+                    throw new Error(`Bucket data missing for ${bucketId}`)
+                }
+                return {
+                    feeBucketId: bucketId,
+                    amount: bucket.amount,
+                    isMandatory: bucket.isMandatory
+                }
+            })
+
+            // Step 4: Create the fee structure via GraphQL
+            const createResponse = await fetch('/api/graphql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: `
+                        mutation CreateFeeStructureWithItems($input: CreateFeeStructureWithItemsInput!) {
+                            createFeeStructureWithItems(input: $input) {
+                                id
+                                name
+                                academicYear {
+                                    id
+                                    name
+                                }
+                                terms {
+                                    id
+                                    name
+                                }
+                                gradeLevels {
+                                    id
+                                    shortName
+                                    gradeLevel {
+                                        id
+                                        name
+                                    }
+                                }
+                                items {
+                                    id
+                                    feeBucket {
+                                        id
+                                        name
+                                    }
+                                    amount
+                                    isMandatory
+                                }
+                            }
+                        }
+                    `,
+                    variables: {
+                        input: {
+                            name: formData.name,
+                            academicYearId: academicYear.id,
+                            termIds: termIds,
+                            gradeLevelIds: gradeLevelIds,
+                            items: items
+                        }
+                    }
+                })
+            })
+
+            const createResult = await createResponse.json()
+            if (createResult.errors) {
+                throw new Error(createResult.errors[0]?.message || 'Failed to create fee structure')
+            }
+
+            if (!createResult.data?.createFeeStructureWithItems) {
+                throw new Error('Failed to create fee structure')
+            }
+
+            // Call the parent's onSave callback
+            await onSave({
+                name: formData.name,
+                grade: formData.selectedGrades.join(', '),
+                boardingType: formData.boardingType,
+                academicYear: formData.academicYear,
+                termStructures: []
+            })
+
+            setSaveError(null)
             setShowSuccess(true)
             setTimeout(() => {
                 setShowSuccess(false)
@@ -135,6 +281,8 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
             }, 1500)
         } catch (error) {
             console.error('Failed to save:', error)
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create fee structure'
+            setSaveError(errorMessage)
         } finally {
             setIsSaving(false)
         }
@@ -162,6 +310,14 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
                             <Step3Review formData={formData} onChange={updateFormData} />
                         )}
                     </div>
+                    
+                    {/* Error Message */}
+                    {saveError && (
+                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-600 font-medium">Error creating fee structure</p>
+                            <p className="text-xs text-red-500 mt-1">{saveError}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
