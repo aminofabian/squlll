@@ -52,9 +52,21 @@ export const FeeStructureCard = ({
     const [showPDFPreview, setShowPDFPreview] = useState(false)
     const [isCreatingBucket, setIsCreatingBucket] = useState(false)
     const [bucketModalData, setBucketModalData] = useState({ name: '', description: '' })
+    const [selectedTermId, setSelectedTermId] = useState(structure.termId)
 
-    const totalFees = structure.buckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
+    // Get buckets for the selected term
+    const displayBuckets = structure.termFeesMap && selectedTermId
+        ? (structure.termFeesMap[selectedTermId] || [])
+        : structure.buckets
+
+    const totalFees = displayBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
     const hasAssignments = assignedGrades.length > 0
+
+    // Handle term click to filter fees
+    const handleTermClick = (termId: string) => {
+        setSelectedTermId(termId)
+        setIsExpanded(false) // Collapse expanded view when switching terms
+    }
 
     // Create fee bucket via GraphQL
     const createFeeBucket = async (bucketData: { name: string; description: string }) => {

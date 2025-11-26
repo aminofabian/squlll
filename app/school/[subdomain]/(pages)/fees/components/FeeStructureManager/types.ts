@@ -49,21 +49,31 @@ export interface ProcessedFeeStructure {
   termName: string
   termId: string
   terms: Array<{ id: string; name: string }>
-  gradeLevels: Array<{ 
+  gradeLevels: Array<{
     id: string
     shortName: string | null
     gradeLevel?: { id: string; name: string }
     name?: string
   }>
-  buckets: Array<{ 
-    id: string; 
-    name: string; 
-    totalAmount: number; 
+  buckets: Array<{
+    id: string;
+    name: string;
+    totalAmount: number;
     isOptional: boolean;
     firstItemId?: string;
     feeBucketId: string;
   }>
+  termFeesMap?: Record<string, Array<{
+    id: string;
+    name: string;
+    totalAmount: number;
+    isOptional: boolean;
+    firstItemId?: string;
+    feeBucketId: string;
+  }>>
+  allStructures?: any[]
   isActive: boolean
   createdAt: string
   updatedAt: string
 }
+

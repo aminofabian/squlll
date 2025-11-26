@@ -124,56 +124,96 @@ export default function FeesPage() {
     fetchGradeData
   } = useGradeData()
 
-  // Process GraphQL structures for display
+  // Process GraphQL structures for display - Group by academic year
   const processedFeeStructures = useMemo(() => {
     if (!graphQLStructures || graphQLStructures.length === 0) return []
 
-    return graphQLStructures.map(structure => {
-      // Group items by bucket but preserve the first item ID for editing
-      const bucketMap = new Map<string, {
-        id: string;
-        name: string;
-        totalAmount: number;
-        isOptional: boolean;
-        firstItemId?: string;
-        feeBucketId: string;
-      }>();
+    // Group structures by base name (removing " - Term X" suffix) and academic year
+    const groupedStructures = new Map<string, any[]>();
 
-      // Process items if they exist
-      if (structure.items && structure.items.length > 0) {
-        structure.items.forEach((item: any) => {
-          const bucketKey = item.feeBucket.id;
-          const existingBucket = bucketMap.get(bucketKey);
+    graphQLStructures.forEach(structure => {
+      // Extract base name by removing " - Term X" pattern
+      const baseName = structure.name.replace(/\s*-\s*Term\s+\d+\s*$/i, '').trim();
+      const academicYearId = structure.academicYear?.id || '';
+      const groupKey = `${baseName}__${academicYearId}`;
 
-          if (existingBucket) {
-            existingBucket.totalAmount += item.amount;
-            existingBucket.isOptional = existingBucket.isOptional && !item.isMandatory;
-          } else {
-            bucketMap.set(bucketKey, {
-              id: item.feeBucket.id,
-              name: item.feeBucket.name,
-              totalAmount: item.amount,
-              isOptional: !item.isMandatory,
-              firstItemId: item.id,
-              feeBucketId: item.feeBucket.id,
-            });
-          }
-        });
+      if (!groupedStructures.has(groupKey)) {
+        groupedStructures.set(groupKey, []);
       }
+      groupedStructures.get(groupKey)!.push(structure);
+    });
+
+    // Process each group
+    return Array.from(groupedStructures.entries()).map(([groupKey, structures]) => {
+      // Combine all terms from grouped structures
+      const allTerms = structures.flatMap(s => s.terms || []);
+
+      // Combine all grade levels (unique)
+      const gradeLevelMap = new Map();
+      structures.forEach(s => {
+        s.gradeLevels?.forEach((gl: any) => {
+          gradeLevelMap.set(gl.id, gl);
+        });
+      });
+
+      // Create a map of term ID to fee buckets for that specific term
+      const termFeesMap = new Map<string, any[]>();
+
+      structures.forEach(structure => {
+        const termId = structure.terms?.[0]?.id;
+        if (!termId) return;
+
+        const buckets: any[] = [];
+        if (structure.items && structure.items.length > 0) {
+          const bucketMap = new Map();
+          structure.items.forEach((item: any) => {
+            const bucketKey = item.feeBucket.id;
+            const existingBucket = bucketMap.get(bucketKey);
+
+            if (existingBucket) {
+              existingBucket.totalAmount += item.amount;
+              existingBucket.isOptional = existingBucket.isOptional && !item.isMandatory;
+            } else {
+              bucketMap.set(bucketKey, {
+                id: item.feeBucket.id,
+                name: item.feeBucket.name,
+                totalAmount: item.amount,
+                isOptional: !item.isMandatory,
+                firstItemId: item.id,
+                feeBucketId: item.feeBucket.id,
+              });
+            }
+          });
+          buckets.push(...Array.from(bucketMap.values()));
+        }
+        termFeesMap.set(termId, buckets);
+      });
+
+      // Use the first structure as the base
+      const baseStructure = structures[0];
+      const baseName = baseStructure.name.replace(/\s*-\s*Term\s+\d+\s*$/i, '').trim();
+
+      // Get buckets for first term (default display)
+      const defaultTermId = allTerms[0]?.id || '';
+      const defaultBuckets = termFeesMap.get(defaultTermId) || [];
 
       return {
-        structureId: structure.id,
-        structureName: structure.name,
-        academicYear: structure.academicYear?.name || 'N/A',
-        academicYearId: structure.academicYear?.id || '',
-        termName: structure.terms && structure.terms.length > 0 ? structure.terms[0].name : 'N/A',
-        termId: structure.terms && structure.terms.length > 0 ? structure.terms[0].id : '',
-        terms: structure.terms || [],
-        gradeLevels: structure.gradeLevels || [],
-        buckets: Array.from(bucketMap.values()),
-        isActive: structure.isActive,
-        createdAt: structure.createdAt,
-        updatedAt: structure.updatedAt
+        structureId: baseStructure.id,
+        structureName: baseName,
+        academicYear: baseStructure.academicYear?.name || 'N/A',
+        academicYearId: baseStructure.academicYear?.id || '',
+        termName: allTerms.length > 0 ? allTerms[0].name : 'N/A',
+        termId: defaultTermId,
+        terms: allTerms,
+        gradeLevels: Array.from(gradeLevelMap.values()),
+        buckets: defaultBuckets, // Default to first term's buckets
+        termFeesMap: Object.fromEntries(termFeesMap), // Store all term-specific fees
+        allStructures: structures, // Store original structures for reference
+        isActive: structures.some(s => s.isActive),
+        createdAt: baseStructure.createdAt,
+        updatedAt: structures.reduce((latest, s) => {
+          return s.updatedAt > latest ? s.updatedAt : latest;
+        }, baseStructure.updatedAt)
       };
     });
   }, [graphQLStructures])
