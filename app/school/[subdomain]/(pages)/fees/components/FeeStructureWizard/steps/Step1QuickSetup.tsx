@@ -1,8 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Check } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Step1QuickSetupProps {
@@ -11,6 +12,8 @@ interface Step1QuickSetupProps {
         selectedGrades: string[]
         boardingType: 'day' | 'boarding' | 'both'
         academicYear: string
+        academicYearId?: string
+        terms?: Array<{ id: string; name: string }>
     }
     onChange: (field: string, value: any) => void
     errors?: Record<string, string>
@@ -18,11 +21,72 @@ interface Step1QuickSetupProps {
 
 export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupProps) => {
     const currentYear = new Date().getFullYear()
+    const [academicYears, setAcademicYears] = useState<Array<{ id: string; name: string; terms: Array<{ id: string; name: string }> }>>([])
+    const [isLoadingYears, setIsLoadingYears] = useState(false)
+    
     const grades = [
         'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
         'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8',
         'Form 1', 'Form 2', 'Form 3', 'Form 4'
     ]
+
+    // Fetch academic years with terms
+    useEffect(() => {
+        const fetchAcademicYears = async () => {
+            setIsLoadingYears(true)
+            try {
+                const response = await fetch('/api/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: `
+                            query GetAcademicYears {
+                                academicYears {
+                                    id
+                                    name
+                                    terms {
+                                        id
+                                        name
+                                    }
+                                }
+                            }
+                        `
+                    })
+                })
+
+                if (!response.ok) return
+
+                const result = await response.json()
+                if (result.errors || !result.data?.academicYears) return
+
+                setAcademicYears(result.data.academicYears)
+                
+                // Auto-select first academic year if none selected
+                if (!formData.academicYearId && result.data.academicYears.length > 0) {
+                    const firstYear = result.data.academicYears[0]
+                    onChange('academicYear', firstYear.name)
+                    onChange('academicYearId', firstYear.id)
+                    onChange('terms', firstYear.terms || [])
+                }
+            } catch (error) {
+                console.error('Error fetching academic years:', error)
+            } finally {
+                setIsLoadingYears(false)
+            }
+        }
+
+        fetchAcademicYears()
+    }, [])
+
+    // Update terms when academic year changes
+    const handleAcademicYearChange = (yearName: string) => {
+        onChange('academicYear', yearName)
+        const selectedYear = academicYears.find(ay => ay.name === yearName)
+        if (selectedYear) {
+            onChange('academicYearId', selectedYear.id)
+            onChange('terms', selectedYear.terms || [])
+        }
+    }
 
     const toggleGrade = (grade: string) => {
         const selected = formData.selectedGrades || []
@@ -56,16 +120,30 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
                     <label className="text-sm font-medium text-slate-700 mb-2 block">
                         Academic Year
                     </label>
-                    <Select value={formData.academicYear} onValueChange={(v) => onChange('academicYear', v)}>
-                        <SelectTrigger className="h-11">
-                            <SelectValue placeholder="Select year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[currentYear - 1, currentYear, currentYear + 1].map(y => (
-                                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    {isLoadingYears ? (
+                        <div className="h-11 flex items-center gap-2 text-sm text-slate-500">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading...
+                        </div>
+                    ) : (
+                        <Select value={formData.academicYear} onValueChange={handleAcademicYearChange}>
+                            <SelectTrigger className="h-11">
+                                <SelectValue placeholder="Select academic year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {academicYears.map(ay => (
+                                    <SelectItem key={ay.id} value={ay.name}>
+                                        {ay.name} {ay.terms.length > 0 && `(${ay.terms.length} terms)`}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                    {formData.terms && formData.terms.length > 0 && (
+                        <p className="text-xs text-slate-500 mt-1">
+                            {formData.terms.length} term{formData.terms.length !== 1 ? 's' : ''} available: {formData.terms.map(t => t.name).join(', ')}
+                        </p>
+                    )}
                 </div>
 
                 <div>

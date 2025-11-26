@@ -88,7 +88,7 @@ export const FeeStructureCard = ({
             }
 
             const result = await response.json()
-            
+
             if (result.errors) {
                 throw new Error(result.errors[0]?.message || 'Failed to create fee bucket')
             }
@@ -96,7 +96,7 @@ export const FeeStructureCard = ({
             // Reset modal and close
             setBucketModalData({ name: '', description: '' })
             setShowBucketModal(false)
-            
+
             return result.data.createFeeBucket
         } catch (error) {
             console.error('Error creating fee bucket:', error)
@@ -173,235 +173,267 @@ export const FeeStructureCard = ({
 
     return (
         <Card className={cn(
-            "group relative overflow-hidden transition-all duration-300 hover:shadow-xl border-2",
+            "group relative overflow-hidden transition-all duration-300 rounded-none",
             structure.isActive
-                ? "border-primary/20 hover:border-primary/40 bg-gradient-to-br from-white to-primary/5"
-                : "border-slate-200 bg-slate-50/50"
+                ? "bg-white shadow-md hover:shadow-xl border border-primary/20"
+                : "bg-slate-50 shadow-sm hover:shadow-md border border-slate-200"
         )}>
-            {/* Status Ribbon */}
+            {/* Top accent bar */}
             <div className={cn(
-                "absolute top-4 -right-10 px-12 py-1 text-xs font-bold text-white transform rotate-45 shadow-md",
-                structure.isActive ? "bg-primary" : "bg-slate-400"
-            )}>
-                {structure.isActive ? "ACTIVE" : "INACTIVE"}
-            </div>
+                "absolute top-0 left-0 right-0 h-1",
+                structure.isActive
+                    ? "bg-primary"
+                    : "bg-slate-300"
+            )} />
 
-            <div className="p-6">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 pr-8">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <FileText className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg text-slate-900 group-hover:text-primary transition-colors">
-                                    {structure.structureName}
-                                </h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary">
-                                        <Calendar className="h-3 w-3 mr-1" />
-                                        {structure.academicYear}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs font-medium">
+            {/* Status Badge - moved inline with title */}
+            <div className="p-3 pt-2">
+                <div className="flex items-start gap-2 mb-3">
+                    <div className={cn(
+                        "h-10 w-10 flex items-center justify-center flex-shrink-0",
+                        structure.isActive
+                            ? "bg-primary"
+                            : "bg-slate-400"
+                    )}>
+                        <FileText className="h-5 w-5 text-white" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-3 mb-0.5">
+                            <h3 className="text-base font-bold text-slate-900">
+                                {structure.structureName}
+                            </h3>
+                            <Badge className={cn(
+                                "text-[10px] font-bold uppercase flex-shrink-0",
+                                structure.isActive
+                                    ? "bg-primary text-white"
+                                    : "bg-slate-400 text-white"
+                            )}>
+                                {structure.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                        </div>
+                        <div className="text-sm text-slate-500">
+                            <Calendar className="h-3 w-3 inline mr-1" />
+                            {structure.academicYear}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mb-3 space-y-2">
+                    {/* Terms */}
+                    {(structure.terms && structure.terms.length > 0) || structure.termName ? (
+                        <div>
+                            <div className="text-[10px] font-bold text-slate-500 uppercase mb-2">Terms</div>
+                            <div className="flex flex-wrap gap-2">
+                                {structure.terms && structure.terms.length > 0 ? (
+                                    structure.terms.map((term: { id: string; name: string }) => (
+                                        <button
+                                            key={term.id}
+                                            className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary border border-primary/30 rounded-md hover:bg-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
+                                        >
+                                            {term.name}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <button className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary border border-primary/30 rounded-md hover:bg-primary/20 hover:border-primary/40 transition-colors cursor-pointer">
                                         {structure.termName}
-                                    </Badge>
-                                </div>
+                                    </button>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    ) : null}
 
-                    {/* Quick Actions - Hidden on mobile, visible on hover on desktop */}
-                    <div className="hidden md:flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={onEdit}
-                            className="hover:bg-primary/10 hover:text-primary"
-                        >
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={onDelete}
-                            className="hover:bg-red-50 hover:text-red-600"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    {/* Grades */}
+                    {structure.gradeLevels && structure.gradeLevels.length > 0 && (
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="text-[10px] font-bold text-slate-500 uppercase">Grades</div>
+                                <Badge variant="outline" className="text-[10px] border-slate-300 text-slate-600">
+                                    {structure.gradeLevels?.length || 0} assigned
+                                </Badge>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {structure.gradeLevels.map((gradeLevel: any) => (
+                                    <button
+                                        key={gradeLevel.id}
+                                        className="px-2.5 py-1 text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300 rounded-md hover:bg-slate-200 hover:border-slate-400 transition-colors cursor-pointer"
+                                    >
+                                        {gradeLevel.gradeLevel?.name || gradeLevel.shortName || gradeLevel.name || 'Unknown'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                        <div className="flex items-center gap-2 mb-1">
-                            <DollarSign className="h-4 w-4 text-primary" />
-                            <span className="text-xs font-medium text-slate-600">Total Fees</span>
-                        </div>
-                        <div className="text-lg font-bold text-primary">
-                            ${totalFees.toLocaleString()}
-                        </div>
-                    </div>
-
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Building2 className="h-4 w-4 text-slate-600" />
-                            <span className="text-xs font-medium text-slate-600">Grades</span>
-                        </div>
-                        <div className="text-lg font-bold text-slate-900">
-                            {assignedGrades.length}
-                        </div>
-                    </div>
-
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Users className="h-4 w-4 text-slate-600" />
-                            <span className="text-xs font-medium text-slate-600">Students</span>
-                        </div>
-                        <div className="text-lg font-bold text-slate-900">
-                            {totalStudents}
+                {/* Stats Section - Total Fees Only */}
+                <div className="mb-3">
+                    <div className="p-4 bg-primary/10 border border-primary/20">
+                        <div className="flex items-center justify-between">
+                            <div className="text-xs text-slate-500">Total Fees</div>
+                            <div className="text-xl font-bold text-primary">${totalFees.toLocaleString()}</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Fee Buckets Preview */}
-                {!isExpanded && structure.buckets.length > 0 && (
-                    <div className="mb-4 p-3 bg-white rounded-lg border border-slate-100">
-                        <div className="text-xs font-semibold text-slate-500 mb-2">Fee Components</div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {structure.buckets.slice(0, 3).map((bucket: any, idx: number) => (
-                                <Badge
-                                    key={idx}
-                                    variant="secondary"
-                                    className="text-xs"
-                                >
-                                    {bucket.name}: ${bucket.totalAmount}
-                                </Badge>
-                            ))}
-                            {structure.buckets.length > 3 && (
-                                <Badge variant="secondary" className="text-xs">
-                                    +{structure.buckets.length - 3} more
-                                </Badge>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Expanded Details */}
-                {isExpanded && (
-                    <div className="mb-4 p-4 bg-white rounded-lg border border-slate-200 space-y-3">
-                        <div className="text-sm font-semibold text-slate-700 mb-3">Fee Breakdown</div>
-                        {structure.buckets.map((bucket: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded">
-                                <div className="flex items-center gap-2">
-                                    <div className={cn(
-                                        "h-2 w-2 rounded-full",
-                                        bucket.isOptional ? "bg-amber-400" : "bg-primary"
-                                    )} />
-                                    <span className="text-sm text-slate-700">{bucket.name}</span>
-                                    {bucket.isOptional && (
-                                        <Badge variant="outline" className="text-xs">Optional</Badge>
-                                    )}
-                                </div>
-                                <span className="text-sm font-semibold text-slate-900">
-                                    ${bucket.totalAmount.toLocaleString()}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Expand/Collapse Button */}
+                {/* Fee Breakdown Section */}
                 {structure.buckets.length > 0 && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="w-full mb-4 text-primary hover:bg-primary/5"
-                    >
-                        {isExpanded ? (
-                            <>
-                                <ChevronDown className="h-4 w-4 mr-2" />
-                                Show Less
-                            </>
+                    <div className="mb-3">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-xs font-bold text-slate-600 uppercase">Fee Components</h4>
+                            <Badge variant="secondary" className="text-xs">{structure.buckets.length} total</Badge>
+                        </div>
+
+                        {!isExpanded ? (
+                            <div className="space-y-2">
+                                {structure.buckets.slice(0, 1).map((bucket: any, idx: number) => (
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between p-2.5 bg-white border border-slate-200 hover:border-primary/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn(
+                                                "h-2 w-2 rounded-full",
+                                                bucket.isOptional ? "bg-amber-400" : "bg-primary"
+                                            )} />
+                                            <span className="text-sm font-medium text-slate-800">
+                                                {bucket.name}
+                                            </span>
+                                            {bucket.isOptional && (
+                                                <Badge variant="outline" className="text-[10px] border-amber-200 text-amber-700">
+                                                    Optional
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-900">
+                                            ${bucket.totalAmount.toLocaleString()}
+                                        </span>
+                                    </div>
+                                ))}
+                                {structure.buckets.length > 1 && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsExpanded(true)}
+                                        className="w-full text-primary text-xs"
+                                    >
+                                        <ChevronRight className="h-3.5 w-3.5 mr-1" />
+                                        Show {structure.buckets.length - 1} more
+                                    </Button>
+                                )}
+                            </div>
                         ) : (
-                            <>
-                                <ChevronRight className="h-4 w-4 mr-2" />
-                                View Full Breakdown
-                            </>
+                            <div className="space-y-2">
+                                {structure.buckets.map((bucket: any, idx: number) => (
+                                    <div
+                                        key={idx}
+                                        className="flex items-center justify-between p-2.5 bg-white border border-slate-200 hover:border-primary/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn(
+                                                "h-2 w-2 rounded-full",
+                                                bucket.isOptional ? "bg-amber-400" : "bg-primary"
+                                            )} />
+                                            <span className="text-sm font-medium text-slate-800">
+                                                {bucket.name}
+                                            </span>
+                                            {bucket.isOptional && (
+                                                <Badge variant="outline" className="text-[10px] border-amber-200 text-amber-700">
+                                                    Optional
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-bold text-slate-900">
+                                            ${bucket.totalAmount.toLocaleString()}
+                                        </span>
+                                    </div>
+                                ))}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setIsExpanded(false)}
+                                    className="w-full text-primary text-xs"
+                                >
+                                    <ChevronDown className="h-3.5 w-3.5 mr-1" />
+                                    Show less
+                                </Button>
+                            </div>
                         )}
-                    </Button>
+                    </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        {hasAssignments ? (
-                            <Button
-                                onClick={onGenerateInvoices}
-                                className="flex-1 bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg transition-all duration-300 group"
-                            >
-                                <FileText className="h-4 w-4 mr-2" />
-                                Generate Invoices
-                                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={onAssignToGrade}
-                                className="flex-1 bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg transition-all duration-300 group"
-                            >
-                                <Users className="h-4 w-4 mr-2" />
-                                Assign to Grades
-                                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Button>
-                        )}
+                {/* Assignment Status Section */}
+                {hasAssignments && (
+                    <div className="mb-3 p-2.5 bg-emerald-50 border border-emerald-200">
+                        <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-xs font-bold text-emerald-900">Currently Assigned</div>
+                                <div className="text-xs text-slate-600">
+                                    {assignedGrades.length} grade{assignedGrades.length !== 1 ? 's' : ''} • {totalStudents} student{totalStudents !== 1 ? 's' : ''}
+                                </div>
+                            </div>
+                            <Badge className="bg-emerald-600 text-white text-[10px]">Active</Badge>
+                        </div>
+                    </div>
+                )}
 
+                <div className="space-y-2">
+                    {/* Primary CTA */}
+                    {hasAssignments ? (
+                        <Button
+                            onClick={onGenerateInvoices}
+                            className="w-full bg-primary hover:bg-primary/90 text-white h-10"
+                        >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Generate Invoices
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={onAssignToGrade}
+                            className="w-full bg-primary hover:bg-primary/90 text-white h-10"
+                        >
+                            <Users className="h-4 w-4 mr-2" />
+                            Assign to Grades
+                        </Button>
+                    )}
+
+                    {/* Secondary Actions */}
+                    <div className="grid grid-cols-2 gap-2">
                         <Button
                             onClick={onEdit}
                             variant="outline"
-                            className="sm:w-auto border-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300"
+                            size="sm"
+                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
                         >
-                            <Edit className="h-4 w-4 mr-2" />
+                            <Edit className="h-3.5 w-3.5 mr-1.5" />
                             Edit
                         </Button>
-                    </div>
 
-                    {/* Secondary Actions */}
-                    <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-200">
                         <Button
                             onClick={() => setShowBucketModal(true)}
                             variant="outline"
                             size="sm"
-                            className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
                         >
                             <Plus className="h-3.5 w-3.5 mr-1.5" />
-                            Create Bucket
-                        </Button>
-                        <Button
-                            onClick={() => setShowPDFPreview(true)}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                        >
-                            <Eye className="h-3.5 w-3.5 mr-1.5" />
-                            Preview PDF
+                            Add Bucket
                         </Button>
                     </div>
-                </div>
 
-                {/* Assignment Status Indicator */}
-                {hasAssignments && (
-                    <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                        <div className="flex items-center gap-2 text-sm">
-                            <CheckCircle className="h-4 w-4 text-primary" />
-                            <span className="font-medium text-primary">
-                                Assigned to {assignedGrades.length} grade{assignedGrades.length !== 1 ? 's' : ''}
-                                {totalStudents > 0 && ` • ${totalStudents} student${totalStudents !== 1 ? 's' : ''}`}
-                            </span>
-                        </div>
-                    </div>
-                )}
+                    {/* Tertiary Action */}
+                    <Button
+                        onClick={() => setShowPDFPreview(true)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
+                    >
+                        <Eye className="h-3.5 w-3.5 mr-2" />
+                        Preview PDF
+                    </Button>
+                </div>
             </div>
 
             {/* Bucket Creation Modal */}

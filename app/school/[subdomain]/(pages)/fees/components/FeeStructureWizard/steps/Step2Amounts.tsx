@@ -20,6 +20,8 @@ interface Step2AmountsProps {
         boardingType: 'day' | 'boarding' | 'both'
         selectedBuckets: string[]
         bucketAmounts: Record<string, BucketAmount>
+        terms?: Array<{ id: string; name: string }>
+        termBucketAmounts?: Record<string, Record<string, BucketAmount>>
     }
     onChange: (field: string, value: any) => void
     errors?: Record<string, string>
@@ -251,17 +253,64 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
         return { name: 'Unknown', icon: Building2, default: 0 }
     }
 
-    const updateAmount = (bucketId: string, amount: number) => {
+    const updateAmount = (bucketId: string, amount: number, termId?: string) => {
         const info = getBucketInfo(bucketId)
-        onChange('bucketAmounts', {
-            ...bucketAmounts,
-            [bucketId]: {
-                id: bucketId,
-                name: info.name,
-                amount,
-                isMandatory: bucketAmounts[bucketId]?.isMandatory ?? true
+        
+        if (termId && formData.terms && formData.terms.length > 0) {
+            // Update term-specific amount
+            const termAmounts = formData.termBucketAmounts || {}
+            const bucketTermAmounts = termAmounts[termId] || {}
+            
+            onChange('termBucketAmounts', {
+                ...termAmounts,
+                [termId]: {
+                    ...bucketTermAmounts,
+                    [bucketId]: {
+                        id: bucketId,
+                        name: info.name,
+                        amount,
+                        isMandatory: bucketTermAmounts[bucketId]?.isMandatory ?? bucketAmounts[bucketId]?.isMandatory ?? true
+                    }
+                }
+            })
+        } else {
+            // Update global amount (fallback for backward compatibility)
+            onChange('bucketAmounts', {
+                ...bucketAmounts,
+                [bucketId]: {
+                    id: bucketId,
+                    name: info.name,
+                    amount,
+                    isMandatory: bucketAmounts[bucketId]?.isMandatory ?? true
+                }
+            })
+        }
+    }
+    
+    const getAmountForTerm = (bucketId: string, termId: string): number => {
+        if (formData.termBucketAmounts?.[termId]?.[bucketId]) {
+            return formData.termBucketAmounts[termId][bucketId].amount || 0
+        }
+        // Fallback to global amount
+        return bucketAmounts[bucketId]?.amount || 0
+    }
+    
+    const getTotalForTerm = (termId: string): number => {
+        if (!formData.selectedBuckets || !formData.termBucketAmounts?.[termId]) return 0
+        return formData.selectedBuckets.reduce((sum, bucketId) => {
+            return sum + getAmountForTerm(bucketId, termId)
+        }, 0)
+    }
+    
+    const getMandatoryTotalForTerm = (termId: string): number => {
+        if (!formData.selectedBuckets || !formData.termBucketAmounts?.[termId]) return 0
+        return formData.selectedBuckets.reduce((sum, bucketId) => {
+            const bucket = formData.termBucketAmounts?.[termId]?.[bucketId] || bucketAmounts[bucketId]
+            if (bucket?.isMandatory) {
+                return sum + getAmountForTerm(bucketId, termId)
             }
-        })
+            return sum
+        }, 0)
     }
 
     const updateMandatory = (bucketId: string, isMandatory: boolean) => {
@@ -286,10 +335,16 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
         }
     }
 
-    const totalAmount = Object.values(bucketAmounts).reduce((sum, b) => sum + (b.amount || 0), 0)
-    const mandatoryAmount = Object.values(bucketAmounts)
-        .filter(b => b.isMandatory)
-        .reduce((sum, b) => sum + (b.amount || 0), 0)
+    // Calculate totals - if terms exist, show per-term totals, otherwise show global total
+    const hasTerms = formData.terms && formData.terms.length > 0
+    const totalAmount = hasTerms 
+        ? (formData.terms?.reduce((sum, term) => sum + getTotalForTerm(term.id), 0) || 0)
+        : Object.values(bucketAmounts).reduce((sum, b) => sum + (b.amount || 0), 0)
+    const mandatoryAmount = hasTerms
+        ? (formData.terms?.reduce((sum, term) => sum + getMandatoryTotalForTerm(term.id), 0) || 0)
+        : Object.values(bucketAmounts)
+            .filter(b => b.isMandatory)
+            .reduce((sum, b) => sum + (b.amount || 0), 0)
 
     return (
         <div className="space-y-6">
@@ -416,79 +471,191 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
                 <>
                     <div className="border-t pt-6">
                         <label className="text-sm font-medium text-slate-700 mb-3 block">
-                            Set Fee Amounts
+                            Set Fee Amounts {hasTerms && `(per term)`}
                         </label>
-                        <div className="space-y-1">
-                            {formData.selectedBuckets.map((bucketId, index) => {
-                                const info = getBucketInfo(bucketId)
-                                const bucket = bucketAmounts[bucketId] || {
-                                    id: bucketId,
-                                    name: info.name,
-                                    amount: info.default,
-                                    isMandatory: true
-                                }
-                                const Icon = info.icon
+                        
+                        {hasTerms ? (
+                            // Term-specific amounts table
+                            <div className="overflow-x-auto">
+                                <div className="min-w-full">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="text-left py-3 px-2 text-sm font-medium text-slate-700">Fee Component</th>
+                                                {formData.terms?.map(term => (
+                                                    <th key={term.id} className="text-center py-3 px-2 text-sm font-medium text-slate-700 min-w-[140px]">
+                                                        {term.name}
+                                                    </th>
+                                                ))}
+                                                <th className="text-center py-3 px-2 text-sm font-medium text-slate-700 w-24">Required</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {formData.selectedBuckets.map((bucketId, rowIndex) => {
+                                                const info = getBucketInfo(bucketId)
+                                                const Icon = info.icon
+                                                const bucket = bucketAmounts[bucketId] || {
+                                                    id: bucketId,
+                                                    name: info.name,
+                                                    amount: 0,
+                                                    isMandatory: true
+                                                }
 
-                                return (
-                                    <div
-                                        key={bucketId}
-                                        className="flex items-center gap-4 hover:bg-slate-50 -mx-2 px-2 py-2.5 rounded-lg transition-colors"
-                                    >
-                                        <Icon className="h-5 w-5 text-primary flex-shrink-0" />
-                                        <span className="font-medium text-slate-900 text-sm flex-1 min-w-0 truncate">
-                                            {info.name}
-                                        </span>
+                                                return (
+                                                    <tr key={bucketId} className="border-b hover:bg-slate-50">
+                                                        <td className="py-3 px-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+                                                                <span className="font-medium text-slate-900 text-sm">
+                                                                    {info.name}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        {formData.terms?.map((term, termIndex) => {
+                                                            const amount = getAmountForTerm(bucketId, term.id)
+                                                            return (
+                                                                <td key={term.id} className="py-3 px-2">
+                                                                    <div className="relative">
+                                                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                                                                            KES
+                                                                        </span>
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={amount || ''}
+                                                                            onChange={(e) => updateAmount(bucketId, parseFloat(e.target.value) || 0, term.id)}
+                                                                            onKeyDown={(e) => handleKeyDown(e, rowIndex * (formData.terms?.length || 1) + termIndex)}
+                                                                            placeholder="0"
+                                                                            className={cn(
+                                                                                "pl-10 h-9 text-right font-semibold text-sm",
+                                                                                amount > 0 ? "text-primary" : "text-slate-400"
+                                                                            )}
+                                                                        />
+                                                                    </div>
+                                                                </td>
+                                                            )
+                                                        })}
+                                                        <td className="py-3 px-2">
+                                                            <div className="flex items-center justify-center">
+                                                                <Switch
+                                                                    checked={bucket.isMandatory}
+                                                                    onCheckedChange={(checked) => updateMandatory(bucketId, checked)}
+                                                                    className="data-[state=checked]:bg-primary"
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                            {/* Totals row */}
+                                            <tr className="bg-slate-50 font-semibold">
+                                                <td className="py-3 px-2 text-slate-700">Total</td>
+                                                {formData.terms?.map(term => {
+                                                    const termTotal = getTotalForTerm(term.id)
+                                                    const mandatoryTotal = getMandatoryTotalForTerm(term.id)
+                                                    return (
+                                                        <td key={term.id} className="py-3 px-2 text-center">
+                                                            <div className="text-primary text-sm">
+                                                                {termTotal.toLocaleString()}
+                                                            </div>
+                                                            {termTotal !== mandatoryTotal && (
+                                                                <div className="text-xs text-slate-600 mt-1">
+                                                                    Required: {mandatoryTotal.toLocaleString()}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    )
+                                                })}
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ) : (
+                            // Single amount per bucket (no terms)
+                            <div className="space-y-1">
+                                {formData.selectedBuckets.map((bucketId, index) => {
+                                    const info = getBucketInfo(bucketId)
+                                    const bucket = bucketAmounts[bucketId] || {
+                                        id: bucketId,
+                                        name: info.name,
+                                        amount: info.default,
+                                        isMandatory: true
+                                    }
+                                    const Icon = info.icon
 
-                                        <div className="relative w-40">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-                                                KES
+                                    return (
+                                        <div
+                                            key={bucketId}
+                                            className="flex items-center gap-4 hover:bg-slate-50 -mx-2 px-2 py-2.5 rounded-lg transition-colors"
+                                        >
+                                            <Icon className="h-5 w-5 text-primary flex-shrink-0" />
+                                            <span className="font-medium text-slate-900 text-sm flex-1 min-w-0 truncate">
+                                                {info.name}
                                             </span>
-                                            <Input
-                                                type="number"
-                                                value={bucket.amount || ''}
-                                                onChange={(e) => updateAmount(bucketId, parseFloat(e.target.value) || 0)}
-                                                onKeyDown={(e) => handleKeyDown(e, index)}
-                                                placeholder="0"
-                                                className={cn(
-                                                    "pl-12 h-10 text-right font-semibold",
-                                                    bucket.amount > 0 ? "text-primary" : "text-slate-400"
-                                                )}
-                                            />
-                                        </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <Switch
-                                                checked={bucket.isMandatory}
-                                                onCheckedChange={(checked) => updateMandatory(bucketId, checked)}
-                                                className="data-[state=checked]:bg-primary"
-                                            />
-                                            <span className="text-xs text-slate-600 w-16">
-                                                {bucket.isMandatory ? 'Required' : 'Optional'}
-                                            </span>
+                                            <div className="relative w-40">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+                                                    KES
+                                                </span>
+                                                <Input
+                                                    type="number"
+                                                    value={bucket.amount || ''}
+                                                    onChange={(e) => updateAmount(bucketId, parseFloat(e.target.value) || 0)}
+                                                    onKeyDown={(e) => handleKeyDown(e, index)}
+                                                    placeholder="0"
+                                                    className={cn(
+                                                        "pl-12 h-10 text-right font-semibold",
+                                                        bucket.amount > 0 ? "text-primary" : "text-slate-400"
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <Switch
+                                                    checked={bucket.isMandatory}
+                                                    onCheckedChange={(checked) => updateMandatory(bucketId, checked)}
+                                                    className="data-[state=checked]:bg-primary"
+                                                />
+                                                <span className="text-xs text-slate-600 w-16">
+                                                    {bucket.isMandatory ? 'Required' : 'Optional'}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                                    )
+                                })}
+                            </div>
+                        )}
                     </div>
                     {errors?.bucketAmounts && (
                         <p className="text-sm text-red-600 mt-2">{errors.bucketAmounts}</p>
                     )}
 
-                    {/* Total */}
+                    {/* Total Summary */}
                     <div className="bg-primary/10 rounded-lg p-5 border-2 border-primary/30">
                         <div className="flex items-end justify-between">
                             <div>
                                 <div className="text-4xl font-bold text-primary">
-                                    {totalAmount.toLocaleString()}
+                                    {hasTerms 
+                                        ? formData.terms?.reduce((sum, term) => sum + getTotalForTerm(term.id), 0).toLocaleString() || '0'
+                                        : totalAmount.toLocaleString()
+                                    }
                                 </div>
-                                <div className="text-sm text-slate-600 mt-1">KES per term</div>
+                                <div className="text-sm text-slate-600 mt-1">
+                                    {hasTerms 
+                                        ? `KES total (${formData.terms?.length} terms)`
+                                        : 'KES per term'
+                                    }
+                                </div>
                             </div>
                             {totalAmount !== mandatoryAmount && (
                                 <div className="text-right">
                                     <div className="text-xs text-slate-600">Required</div>
                                     <div className="text-2xl font-bold text-slate-900">
-                                        {mandatoryAmount.toLocaleString()}
+                                        {hasTerms
+                                            ? formData.terms?.reduce((sum, term) => sum + getMandatoryTotalForTerm(term.id), 0).toLocaleString() || '0'
+                                            : mandatoryAmount.toLocaleString()
+                                        }
                                     </div>
                                 </div>
                             )}

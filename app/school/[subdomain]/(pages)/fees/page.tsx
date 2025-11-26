@@ -437,35 +437,18 @@ export default function FeesPage() {
         if (!result && updateError) {
           throw new Error(`GraphQL update failed: ${updateError}`);
         }
-        
-        // Refresh fee structures after update
-        await fetchFeeStructures()
       } else {
-        // For create mode, the wizard handles creation via GraphQL
-        // Just refresh the fee structures list
-        result = 'created' // Return a success indicator
-        await fetchFeeStructures()
+        // For create mode, use the local function
+        result = await createFeeStructure(formData)
       }
 
       // Reset UI state
       setShowCreateForm(false)
       setShowEditForm(false)
       setSelectedStructure(null)
-      
-      // Show success toast
-      toast({
-        title: "Success",
-        description: selectedStructure ? "Fee structure updated successfully" : "Fee structure created successfully",
-      })
-      
       return result
     } catch (error) {
       console.error('Error saving fee structure:', error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save fee structure",
-        variant: "destructive",
-      })
       return null
     }
   }
@@ -546,7 +529,7 @@ export default function FeesPage() {
       <div className="flex-1 flex flex-col w-full">
         {/* Header with Back Button when not on dashboard */}
         {currentView !== 'dashboard' && (
-          <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <div className="bg-white border-b border-slate-200 px-6 py-2">
             <Button
               variant="ghost"
               onClick={() => setCurrentView('dashboard')}
@@ -559,12 +542,9 @@ export default function FeesPage() {
 
         {/* Content Based on Current View */}
         {currentView === 'dashboard' ? (
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-3">
             <div className="max-w-7xl mx-auto">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-primary mb-2">Fees Management</h1>
-                <p className="text-slate-600">Manage fee structures, invoices, and payments</p>
-              </div>
+
               <FeesActionDashboard
                 onViewStructures={handleViewStructures}
                 onCreateStructure={handleCreateNew}
