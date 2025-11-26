@@ -3,32 +3,19 @@
 import React, { useState, useEffect } from "react";
 import { 
   BookOpen, 
-  FileText, 
   Users, 
   Calendar, 
-  MessageSquare, 
-  FolderOpen,
   Plus,
   Eye,
   CheckSquare,
   ClipboardList,
-  Clock,
   Send,
   Inbox,
-  Megaphone,
   Upload,
-  Download,
-  Settings,
-  Home,
-  BarChart3,
-  Target,
   Award,
-  Activity,
-  CheckCircle2,
-  User,
   TrendingUp,
-  Copy,
-  Search
+  Search,
+  RefreshCw
 } from "lucide-react";
 import CreateTestSection from "./CreateTestSection";
 import MarkRegisterSection from "./MarkRegisterSection";
@@ -250,29 +237,23 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   ];
 
   const renderQuickActions = () => (
-          <div className="mb-2">
-      <div className="flex items-center gap-3 mb-8 justify-center">
-        <h2 className="text-2xl font-bold text-foreground">
-          {teacherName ? `${teacherName}'s Quick Actions` : 'Quick Actions'}
-        </h2>
-      </div>
-      <div className="flex justify-center">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-3xl w-full">
-          {quickActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={action.onClick}
-              className="group flex flex-col items-center justify-center w-32 h-32 bg-card border border-primary/20 shadow-sm hover:shadow-md transition-all duration-150 hover:bg-primary/5 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 select-none rounded-none cursor-pointer"
-            >
-              <span className={`flex items-center justify-center w-12 h-12 mb-2 ${action.bgClass} text-white shadow-md rounded transition-all duration-200 cursor-pointer group-hover:scale-110 group-hover:ring-2 group-hover:ring-primary/20`}>
-                {action.icon}
-              </span>
-              <span className="text-xs font-semibold text-foreground text-center leading-tight">
-                {action.title}
-              </span>
-            </button>
-          ))}
-        </div>
+    <div className="mb-6">
+     
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+        {quickActions.map((action) => (
+          <button
+            key={action.id}
+            onClick={action.onClick}
+            className="group flex flex-col items-center justify-center p-3 sm:p-4 aspect-square bg-card border border-primary/20 shadow-sm hover:shadow-md transition-all duration-150 hover:bg-primary/5 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 rounded-lg"
+          >
+            <span className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mb-2 ${action.bgClass} text-white shadow-md rounded-lg transition-all duration-200 group-hover:scale-110`}>
+              {action.icon}
+            </span>
+            <span className="text-[10px] sm:text-xs font-semibold text-foreground text-center leading-tight">
+              {action.title}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -295,45 +276,48 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
   };
 
   const renderTeacherStats = () => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 w-full max-w-5xl mx-auto">
-      {/* Next Lesson */}
-      <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar className="w-5 h-5 text-primary" />
-          <span className="text-xs font-semibold text-foreground">Next Lesson</span>
+    <div className="mb-6">
+      <h2 className="text-base sm:text-lg font-bold text-foreground mb-3 px-1">
+        Stats Overview
+      </h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+        {/* Next Lesson */}
+        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
+          <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Next Lesson</span>
+          <div className="text-[11px] sm:text-sm font-bold text-foreground text-center mt-0.5">{teacherStats.nextLesson.subject}</div>
+          <div className="text-[9px] sm:text-xs text-muted-foreground">{teacherStats.nextLesson.time}</div>
         </div>
-        <div className="text-sm font-bold text-foreground text-center">{teacherStats.nextLesson.subject} – {teacherStats.nextLesson.class}</div>
-        <div className="text-xs text-muted-foreground">{teacherStats.nextLesson.time} <span className="text-primary">({teacherStats.nextLesson.countdown})</span></div>
-      </div>
-      {/* Active Assignments */}
-      <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
-        <BookOpen className="w-5 h-5 text-primary mb-1" />
-        <span className="text-xs font-semibold text-foreground">Active Assignments</span>
-        <span className="text-xl font-bold text-foreground">{teacherStats.activeAssignments}</span>
-      </div>
-      {/* Pending Tasks */}
-      <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
-        <ClipboardList className="w-5 h-5 text-primary mb-1" />
-        <span className="text-xs font-semibold text-foreground">Pending Tasks</span>
-        <span className="text-xl font-bold text-foreground">{teacherStats.pendingTasks}</span>
-      </div>
-      {/* Unread Messages */}
-      <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
-        <Inbox className="w-5 h-5 text-primary mb-1" />
-        <span className="text-xs font-semibold text-foreground">Unread Messages</span>
-        <span className="text-xl font-bold text-foreground">{teacherStats.unreadMessages}</span>
-      </div>
-      {/* Students Present Today */}
-      <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
-        <Users className="w-5 h-5 text-primary mb-1" />
-        <span className="text-xs font-semibold text-foreground">Students Today</span>
-        <span className="text-xl font-bold text-foreground">{teacherStats.studentsPresent}/{teacherStats.studentsTotal}</span>
-      </div>
-      {/* Upcoming Duty */}
-      <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
-        <Award className="w-5 h-5 text-primary mb-1" />
-        <span className="text-xs font-semibold text-foreground">Upcoming Duty</span>
-        <span className="text-sm font-bold text-foreground">{teacherStats.onDuty ? teacherStats.dutyText : 'No Duty Today'}</span>
+        {/* Active Assignments */}
+        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
+          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Assignments</span>
+          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.activeAssignments}</span>
+        </div>
+        {/* Pending Tasks */}
+        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
+          <ClipboardList className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Tasks</span>
+          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.pendingTasks}</span>
+        </div>
+        {/* Unread Messages */}
+        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
+          <Inbox className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Messages</span>
+          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.unreadMessages}</span>
+        </div>
+        {/* Students Present Today */}
+        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
+          <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Present</span>
+          <span className="text-lg sm:text-xl font-bold text-foreground">{teacherStats.studentsPresent}/{teacherStats.studentsTotal}</span>
+        </div>
+        {/* Upcoming Duty */}
+        <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-2.5 sm:p-3 shadow-sm rounded-lg">
+          <Award className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+          <span className="text-[10px] sm:text-xs font-semibold text-foreground">Duty</span>
+          <span className="text-[10px] sm:text-sm font-bold text-foreground text-center">{teacherStats.onDuty ? 'This Week' : 'None'}</span>
+        </div>
       </div>
     </div>
   );
@@ -343,62 +327,48 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-card/95 via-white/90 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
-        <div className="px-6 py-6 lg:px-10 lg:py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <BookOpen className="w-6 h-6 text-primary-foreground text-white" />
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                  {teacherName ? `Teacher ${teacherName}` : 'Teacher Dashboard'}
-                </h1>
-                <p className="text-sm text-muted-foreground/90 font-medium">
-                  {teacherName ? `Welcome back, ${teacherName}!` : 'Welcome back!'} Manage your classes efficiently.
-                </p>
-              </div>
+      {/* Compact Mobile-First Header */}
+      <div className="bg-card/95 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
+        <div className="px-3 py-3 sm:px-6 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            {/* Teacher Name */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <DynamicLogo subdomain={subdomain} size="sm" showText={false} />
+              <h1 className="text-sm sm:text-base font-bold text-foreground truncate">
+                {teacherName || 'Teacher Dashboard'}
+              </h1>
             </div>
             
-            <div className="flex items-center gap-4">
-              {/* Teacher Info Card */}
-              {teacherName && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center rounded-full text-white font-bold text-sm">
-                    {getInitials(teacherName)}
-                  </div>
-                  <div className="hidden sm:flex flex-col">
-                    <span className="text-sm font-semibold text-foreground">
-                      {teacherName}
-                    </span>
-                    {teacherEmail && (
-                      <span className="text-xs text-muted-foreground">
-                        {teacherEmail}
-                      </span>
-                    )}
-                  </div>
+            {/* Next Lesson + Refresh Button */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-white/50 rounded-full border border-primary/10 min-w-0">
+                <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] sm:text-xs font-semibold text-foreground truncate">
+                    {teacherStats.nextLesson.subject}
+                  </span>
+                  <span className="text-[9px] sm:text-xs text-muted-foreground truncate">
+                    {teacherStats.nextLesson.time}
+                  </span>
                 </div>
-              )}
-              
-              {/* Date */}
-              <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-full border border-primary/10 shadow-sm">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-foreground/80">
-                  {currentDate}
-                </span>
               </div>
+              
+              <button
+                onClick={() => window.location.reload()}
+                className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-white/50 hover:bg-white/80 rounded-full border border-primary/10 hover:border-primary/30 transition-all duration-200 hover:scale-105 active:scale-95"
+                title="Refresh page"
+                aria-label="Refresh page"
+              >
+                <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-6 lg:px-8 lg:py-8">
+      <div className="px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="w-full flex justify-center py-6">
-            <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
-          </div>
           {showCreateTest ? (
             <CreateTestSection 
               subdomain={subdomain} 
@@ -434,8 +404,8 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
             />
           ) : (
             <>
-              {renderTeacherStats()}
               {renderQuickActions()}
+              {renderTeacherStats()}
             </>
           )}
         </div>

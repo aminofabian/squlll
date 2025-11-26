@@ -1,17 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/components/ui/use-toast"
-import { Download, Settings } from 'lucide-react'
+import { Download } from 'lucide-react'
 
 // Import modular components and hooks
-import { StudentSearchSidebar } from './components/StudentSearchSidebar'
-import { PageHeader } from './components/PageHeader'
+import { StudentSearchBar } from './components/StudentSearchBar'
 import { OverviewStatsCards } from './components/OverviewStatsCards'
 import { FiltersSection } from './components/FiltersSection'
 import { FeesDataTable } from './components/FeesDataTable'
@@ -21,15 +19,17 @@ import RecordPaymentDrawer from './components/RecordPaymentDrawer'
 import StudentPayments from './components/StudentPayments'
 import { FeeStructureManager } from './components/FeeStructureManager'
 import { BulkInvoiceGenerator } from './components/BulkInvoiceGenerator'
-import { StudentDetailsCard } from './components/StudentDetailsCard'
 import { FeeSummaryCard } from './components/FeeSummaryCard'
-import { StudentInfoCard } from './components/StudentInfoCard'
 import NewInvoiceDrawer from './components/NewInvoiceDrawer'
-import { FeeAssignmentsView } from './components/FeeAssignmentsView'
+import { StudentDetailsDrawer } from './components/StudentDetailsDrawer'
+import { WorkflowGuidance } from './components/WorkflowGuidance'
+import { FeesActionDashboard } from './components/FeesActionDashboard'
+import { FeeStructuresTab } from './components/FeeStructureManager/FeeStructuresTab'
 import { useFeesData } from './hooks/useFeesData'
 import { useFormHandlers } from './hooks/useFormHandlers'
 import { useFeeStructures } from './hooks/useFeeStructures'
 import { useGraphQLFeeStructures, UpdateFeeStructureInput } from './hooks/useGraphQLFeeStructures'
+import { useGradeData } from './hooks/useGradeData'
 import { useStudentSummary } from './hooks/useStudentSummary'
 import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary'
 import { useAllStudentsSummary } from './hooks/useAllStudentsSummary'
@@ -52,15 +52,16 @@ const getStatusColor = (status: string) => {
 }
 
 export default function FeesPage() {
-  const [activeTab, setActiveTab] = useState('invoices')
-  const [invoiceView, setInvoiceView] = useState<'records' | 'assignments'>('records')
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
+  const [currentView, setCurrentView] = useState<'dashboard' | 'structures' | 'invoices'>('dashboard')
+  const [showFeeStructuresInDashboard, setShowFeeStructuresInDashboard] = useState(false)
+  const [showInvoicesInDashboard, setShowInvoicesInDashboard] = useState(false)
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<FeeInvoice | null>(null)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [selectedStudentsForTable, setSelectedStudentsForTable] = useState<string[]>([])
   const [viewingStudent, setViewingStudent] = useState<StudentSummaryFromAPI | null>(null)
-  
+  const [showStudentDetailsDrawer, setShowStudentDetailsDrawer] = useState(false)
+
   // Fee Structure states
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
@@ -93,7 +94,7 @@ export default function FeesPage() {
   // Fee Structure hooks
   const {
     feeStructures,
-    grades,
+    grades: feeStructureGrades,
     createFeeStructure,
     deleteFeeStructure,
     assignFeeStructureToGrade,
@@ -107,8 +108,102 @@ export default function FeesPage() {
     isUpdating,
     updateError,
     isDeleting,
-    deleteError
+    deleteError,
+    structures: graphQLStructures,
+    isLoading: structuresLoading,
+    error: structuresError,
+    fetchFeeStructures,
+    lastFetchTime
   } = useGraphQLFeeStructures()
+
+  // Get grade data for fee structures
+  const { 
+    grades, 
+    isLoading: isLoadingGrades, 
+    error: gradesError,
+    fetchGradeData
+  } = useGradeData()
+
+  // Process GraphQL structures for display
+  const processedFeeStructures = useMemo(() => {
+    if (!graphQLStructures || graphQLStructures.length === 0) return []
+
+    return graphQLStructures.map(structure => {
+      // Group items by bucket but preserve the first item ID for editing
+      const bucketMap = new Map<string, { 
+        id: string; 
+        name: string; 
+        totalAmount: number; 
+        isOptional: boolean; 
+        firstItemId?: string;
+        feeBucketId: string; 
+      }>();
+      
+      // Process items if they exist
+      if (structure.items && structure.items.length > 0) {
+        structure.items.forEach((item: any) => {
+          const bucketKey = item.feeBucket.id;
+          const existingBucket = bucketMap.get(bucketKey);
+          
+          if (existingBucket) {
+            existingBucket.totalAmount += item.amount;
+            existingBucket.isOptional = existingBucket.isOptional && !item.isMandatory;
+          } else {
+            bucketMap.set(bucketKey, {
+              id: item.feeBucket.id,
+              name: item.feeBucket.name,
+              totalAmount: item.amount,
+              isOptional: !item.isMandatory,
+              firstItemId: item.id,
+              feeBucketId: item.feeBucket.id,
+            });
+          }
+        });
+      }
+      
+      return {
+        structureId: structure.id,
+        structureName: structure.name,
+        academicYear: structure.academicYear?.name || 'N/A',
+        academicYearId: structure.academicYear?.id || '',
+        termName: structure.terms && structure.terms.length > 0 ? structure.terms[0].name : 'N/A',
+        termId: structure.terms && structure.terms.length > 0 ? structure.terms[0].id : '',
+        terms: structure.terms || [],
+        gradeLevels: structure.gradeLevels || [],
+        buckets: Array.from(bucketMap.values()),
+        isActive: structure.isActive,
+        createdAt: structure.createdAt,
+        updatedAt: structure.updatedAt
+      };
+    });
+  }, [graphQLStructures])
+
+  const getAssignedGrades = (feeStructureId: string) => {
+    return grades.filter((grade: any) => grade.feeStructureId === feeStructureId)
+  }
+
+  const getTotalStudents = (feeStructureId: string) => {
+    return getAssignedGrades(feeStructureId).reduce((sum: number, grade: any) => sum + grade.studentCount, 0)
+  }
+
+  const handleUpdateFeeItem = (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => {
+    // This will be handled by the modal
+    console.log('Update fee item:', { itemId, amount, isMandatory, bucketName, feeStructureName, bucketId })
+  }
+
+  // Auto-fetch fee structures on mount
+  useEffect(() => {
+    console.log('Fees page mounted - fetching fee structures...')
+    fetchFeeStructures()
+  }, []) // Only run on mount
+
+  // Auto-fetch when user clicks to view fee structures (if not already loaded)
+  useEffect(() => {
+    if (showFeeStructuresInDashboard && graphQLStructures.length === 0 && !structuresLoading) {
+      console.log('Viewing fee structures - fetching data...')
+      fetchFeeStructures()
+    }
+  }, [showFeeStructuresInDashboard, graphQLStructures.length, structuresLoading])
 
   // Student Summary hook for detailed student data
   const {
@@ -130,13 +225,13 @@ export default function FeesPage() {
   const finalStudentData = detailedStudentData || fallbackStudentData
   const finalLoading = studentDataLoading || fallbackLoading
   const finalError = studentDataError || fallbackError
-  
+
   // Debug logging to see what data we're getting
   console.log('🔍 DEBUG: finalStudentData:', finalStudentData)
   console.log('📊 DEBUG: selectedStudentInvoices:', selectedStudentInvoices)
   console.log('📊 DEBUG: selectedStudentInvoicesLoading:', selectedStudentInvoicesLoading)
   console.log('📊 DEBUG: selectedStudentInvoicesError:', selectedStudentInvoicesError)
-  
+
   if (finalStudentData?.feeSummary) {
     console.log('💰 DEBUG: Fee Summary Data:', {
       totalOwed: finalStudentData.feeSummary.totalOwed,
@@ -147,15 +242,15 @@ export default function FeesPage() {
   }
   const finalRefetch = () => {
     console.log('🔄 FORCE REFRESH: Starting comprehensive data refresh...')
-    
+
     // Force refresh student summary data
     console.log('📊 Refreshing student summary data...')
     refetchStudentData()
-    
+
     // Force refresh fallback student data
     console.log('📋 Refreshing fallback student data...')
     refetchFallback()
-    
+
     // Add a small delay to ensure all refetches complete
     setTimeout(() => {
       console.log('✅ Force refresh completed - all data should be updated')
@@ -165,13 +260,13 @@ export default function FeesPage() {
   // Force page revalidation function
   const forcePageRefresh = () => {
     console.log('🔄 FORCE PAGE REFRESH: Triggering complete page revalidation...')
-    
+
     // Trigger all data refreshes
     finalRefetch()
-    
+
     // Optionally refresh the entire page if needed (uncomment if required)
     // window.location.reload()
-    
+
     console.log('✅ Page refresh operations completed')
   }
 
@@ -207,25 +302,19 @@ export default function FeesPage() {
     refetch: refetchStudents
   } = useAllStudentsSummary()
 
+  // Access the toast function
+  const { toast } = useToast()
+
   // Event handlers
   const handleViewInvoice = (invoice: FeeInvoice) => {
     setSelectedInvoice(invoice)
     setShowInvoiceModal(true)
   }
 
-  const handleStudentSelect = (studentId: string) => {
-    setSelectedStudent(studentId)
-    setSelectedInvoices([])
-  }
-
-  const handleBackToAll = () => {
-    setSelectedStudent(null)
-    setSelectedInvoices([])
-  }
 
   const handleSelectInvoice = (invoiceId: string) => {
-    setSelectedInvoices(prev => 
-      prev.includes(invoiceId) 
+    setSelectedInvoices(prev =>
+      prev.includes(invoiceId)
         ? prev.filter(id => id !== invoiceId)
         : [...prev, invoiceId]
     )
@@ -241,8 +330,8 @@ export default function FeesPage() {
 
   // Handlers for new students table
   const handleSelectStudent = (studentId: string) => {
-    setSelectedStudentsForTable(prev => 
-      prev.includes(studentId) 
+    setSelectedStudentsForTable(prev =>
+      prev.includes(studentId)
         ? prev.filter(id => id !== studentId)
         : [...prev, studentId]
     )
@@ -258,8 +347,19 @@ export default function FeesPage() {
 
   const handleViewStudent = (student: StudentSummaryFromAPI) => {
     setViewingStudent(student)
-    // You can navigate to detailed view or open a modal
     setSelectedStudent(student.id)
+    setShowStudentDetailsDrawer(true)
+  }
+
+  const handleStudentSelect = (studentId: string) => {
+    setSelectedStudent(studentId)
+    setSelectedInvoices([])
+    setShowStudentDetailsDrawer(true)
+  }
+
+  const handleClearStudentSelection = () => {
+    setSelectedStudent(null)
+    setShowStudentDetailsDrawer(false)
   }
 
   // Wrapper functions for PageHeader
@@ -277,7 +377,7 @@ export default function FeesPage() {
     setSelectedStructure(feeStructure)
     setShowEditForm(true)
   }
-  
+
   const handleDelete = async (feeStructureId: string) => {
     try {
       // Show loading toast
@@ -285,9 +385,9 @@ export default function FeesPage() {
         title: "Deleting fee structure...",
         description: "Please wait while we delete this fee structure.",
       })
-      
+
       const success = await graphqlDeleteFeeStructure(feeStructureId)
-      
+
       if (success) {
         // Show success toast
         toast({
@@ -321,7 +421,7 @@ export default function FeesPage() {
       if (selectedStructure) {
         // For edit mode, use GraphQL to update the fee structure
         console.log('Updating fee structure with GraphQL:', selectedStructure.id);
-        
+
         // Extract the academicYearId and termId from the form or use defaults
         // In a real implementation, you would get these IDs from your form or API
         const updateInput: UpdateFeeStructureInput = {
@@ -332,16 +432,16 @@ export default function FeesPage() {
           academicYearId: "0216c3ab-7197-4538-97be-0527b3a8a164",
           termIds: ["6d17670b-11e4-430f-828b-c48e746b5507"]
         };
-        
+
         result = await graphqlUpdateFeeStructure(selectedStructure.id, updateInput);
         if (!result && updateError) {
-          throw new Error(`GraphQL update failed: ${updateError}`); 
+          throw new Error(`GraphQL update failed: ${updateError}`);
         }
       } else {
         // For create mode, use the local function
         result = await createFeeStructure(formData)
       }
-      
+
       // Reset UI state
       setShowCreateForm(false)
       setShowEditForm(false)
@@ -363,8 +463,8 @@ export default function FeesPage() {
     try {
       const newInvoices = generateBulkInvoices(generation)
       console.log(`Generated ${newInvoices.length} invoices successfully`)
-      // Switch to invoices tab to show the new invoices
-      setActiveTab('invoices')
+      // Switch to invoices view to show the new invoices
+      setCurrentView('invoices')
     } catch (error) {
       console.error('Failed to generate invoices:', error)
     }
@@ -402,111 +502,136 @@ export default function FeesPage() {
     }
   }
 
-  // Access the toast function
-  const { toast } = useToast()
-  
+  // Action handlers for dashboard
+  const handleViewStructures = () => {
+    setShowFeeStructuresInDashboard(true)
+    setShowInvoicesInDashboard(false)
+  }
+
+  const handleBackToOverview = () => {
+    setShowFeeStructuresInDashboard(false)
+    setShowInvoicesInDashboard(false)
+  }
+
+  const handleViewInvoices = () => {
+    setShowInvoicesInDashboard(true)
+    setShowFeeStructuresInDashboard(false)
+  }
+
+  const handleAssignToGradeAction = () => {
+    setCurrentView('structures')
+    // This will be handled by the FeeStructureManager
+  }
+
   return (
-    <div className="flex min-h-screen">
-      {/* Student Search Sidebar - only show for invoices tab with records view */}
-      {activeTab === 'invoices' && invoiceView === 'records' && (
-        <StudentSearchSidebar
-          isSidebarMinimized={isSidebarMinimized}
-          setIsSidebarMinimized={setIsSidebarMinimized}
-          selectedStudent={selectedStudent}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filteredStudents={filteredStudents}
-          onStudentSelect={setSelectedStudent}
-          onBackToAll={() => setSelectedStudent(null)}
-        />
-      )}
-
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Page Header with Tabs */}
-        <div className="border-b border-gray-200 bg-white">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">Fees Management</h1>
-              <div className="flex items-center space-x-2">
-                <Settings className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="invoices">Invoice Management</TabsTrigger>
-                <TabsTrigger value="structures">Fee Structures</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      <div className="flex-1 flex flex-col w-full">
+        {/* Header with Back Button when not on dashboard */}
+        {currentView !== 'dashboard' && (
+          <div className="bg-white border-b border-slate-200 px-6 py-4">
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentView('dashboard')}
+              className="flex items-center gap-2"
+            >
+              ← Back to Dashboard
+            </Button>
           </div>
-        </div>
+        )}
 
-        {/* Tab Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-          <TabsContent value="invoices" className="flex-1 m-0">
-            <div className="flex-1 flex flex-col">
-              {/* Toggle Button for View Mode */}
-              <div className="border-b border-gray-200 bg-white px-6 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={invoiceView === 'records' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setInvoiceView('records')}
-                      className="font-mono"
-                    >
-                      Fee Records
-                    </Button>
-                    <Button
-                      variant={invoiceView === 'assignments' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setInvoiceView('assignments')}
-                      className="font-mono"
-                    >
-                      Fee Assignments
-                    </Button>
-                  </div>
-                  <p className="text-sm text-slate-600 font-mono">
-                    {invoiceView === 'records' 
-                      ? 'View student invoices and payment status' 
-                      : 'View fee structure assignments to students'
-                    }
-                  </p>
-                </div>
+        {/* Content Based on Current View */}
+        {currentView === 'dashboard' ? (
+          <div className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-primary mb-2">Fees Management</h1>
+                <p className="text-slate-600">Manage fee structures, invoices, and payments</p>
               </div>
-
-              {invoiceView === 'records' ? (
-                <>
-                  {/* Invoice Management Header */}
-                  <PageHeader
-                    selectedStudent={selectedStudent}
-                    allStudents={filteredStudents}
-                    selectedStatus={selectedStatus}
-                    setSelectedStatus={setSelectedStatus}
-                    dueDateFilter=""
-                    setDueDateFilter={() => {}}
-                    onNewInvoice={handleNewInvoice}
-                    onSendReminder={handleSendReminderWrapper}
-                    onRecordPayment={handleRecordPayment}
-                    onCreatePaymentPlan={handleCreatePaymentPlan}
-                    onBackToAll={() => setSelectedStudent(null)}
-                    isSidebarMinimized={isSidebarMinimized}
-                    setIsSidebarMinimized={setIsSidebarMinimized}
+              <FeesActionDashboard
+                onViewStructures={handleViewStructures}
+                onCreateStructure={handleCreateNew}
+                onGenerateInvoices={() => {
+                  setShowInvoiceGenerator(true)
+                }}
+                onViewInvoices={handleViewInvoices}
+                onAssignToGrade={handleAssignToGradeAction}
+                onRecordPayment={handleRecordPayment}
+                onViewPayments={handleViewInvoices}
+                stats={{
+                  feeStructures: feeStructures?.length || 0,
+                  students: filteredStudents?.length || allStudentsSummary?.length || 0,
+                  invoices: filteredInvoices?.length || 0,
+                  totalRevenue: summaryStats?.totalCollected || 0
+                }}
+                showFeeStructures={showFeeStructuresInDashboard}
+                showInvoices={showInvoicesInDashboard}
+                onBackToOverview={handleBackToOverview}
+                feeStructuresContent={
+                  <FeeStructuresTab
+                    isLoading={structuresLoading}
+                    error={structuresError}
+                    structures={graphQLStructures}
+                    graphQLStructures={processedFeeStructures}
+                    fallbackFeeStructures={[]}
+                    onEdit={handleEdit}
+                    onAssignToGrade={handleAssignToGrade}
+                    onGenerateInvoices={handleGenerateInvoices}
+                    onDelete={handleDelete}
+                    onUpdateFeeItem={handleUpdateFeeItem}
+                    onCreateNew={handleCreateNew}
+                    fetchFeeStructures={fetchFeeStructures}
+                    getAssignedGrades={getAssignedGrades}
+                    getTotalStudents={getTotalStudents}
+                    hasFetched={!!lastFetchTime}
                   />
+                }
+                invoicesContent={
+                  <FeesDataTable
+                    students={allStudentsSummary}
+                    loading={studentsLoading}
+                    error={studentsError}
+                    selectedStudents={selectedStudentsForTable}
+                    onSelectStudent={handleSelectStudent}
+                    onSelectAll={handleSelectAllStudents}
+                    onViewStudent={handleViewStudent}
+                  />
+                }
+              />
+            </div>
+          </div>
+        ) : currentView === 'structures' ? (
+          <div className="flex-1 p-6 space-y-6">
+            {/* Workflow Guidance */}
+            <WorkflowGuidance />
 
-                  {/* Main Content Area */}
-                  <div className="flex-1 p-6">
+            {/* Fee Structure Manager */}
+            <FeeStructureManager
+              onCreateNew={handleCreateNew}
+              onEdit={handleEdit}
+              onGenerateInvoices={handleGenerateInvoices}
+              onAssignToGrade={handleAssignToGrade}
+              onDelete={handleDelete}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col">
+            {/* Main Content Area */}
+            <div className="flex-1 p-6">
                 {selectedStudent ? (
-                  // Student-specific view
+                  // Student-specific view (unified invoice view)
                   <div className="space-y-6">
                     {/* Fee Summary Section */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold text-gray-900">Fee Summary</h2>
-                        <div className="text-sm text-gray-500">
-                          Current fee status and outstanding amounts
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowStudentDetailsDrawer(true)}
+                        >
+                          View Full Details
+                        </Button>
                       </div>
                       <FeeSummaryCard
                         studentData={finalStudentData}
@@ -531,21 +656,6 @@ export default function FeesPage() {
                       <h2 className="text-xl font-semibold text-gray-900">Payment History</h2>
                       <StudentPayments studentId={selectedStudent} />
                     </div>
-
-                    {/* Student Information Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold text-gray-900">Student Information</h2>
-                        <div className="text-sm text-gray-500">
-                          Personal details and academic information
-                        </div>
-                      </div>
-                      <StudentInfoCard
-                        studentData={finalStudentData}
-                        loading={finalLoading}
-                        error={finalError}
-                      />
-                    </div>
                   </div>
                 ) : (
                   // General overview view
@@ -565,9 +675,9 @@ export default function FeesPage() {
                       selectedStatus={selectedStatus}
                       setSelectedStatus={setSelectedStatus}
                       selectedClass=""
-                      setSelectedClass={() => {}}
+                      setSelectedClass={() => { }}
                       dueDateFilter=""
-                      setDueDateFilter={() => {}}
+                      setDueDateFilter={() => { }}
                     />
 
                     {/* Data Table - Using new allStudentsSummary query */}
@@ -582,28 +692,9 @@ export default function FeesPage() {
                     />
                   </div>
                 )}
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 p-6">
-                  <FeeAssignmentsView />
-                </div>
-              )}
             </div>
-          </TabsContent>
-
-          <TabsContent value="structures" className="flex-1 m-0">
-            <div className="flex-1 p-6">
-              <FeeStructureManager
-                onCreateNew={handleCreateNew}
-                onEdit={handleEdit}
-                onGenerateInvoices={handleGenerateInvoices}
-                onAssignToGrade={handleAssignToGrade}
-                onDelete={handleDelete}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
 
       {/* Invoice Details Modal */}
@@ -645,9 +736,11 @@ export default function FeesPage() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Status</Label>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedInvoice.paymentStatus)}`}>
-                    {selectedInvoice.paymentStatus}
-                  </span>
+                  {selectedInvoice && (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedInvoice.paymentStatus)}`}>
+                      {selectedInvoice.paymentStatus}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -663,10 +756,10 @@ export default function FeesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Toast notifications */}
       <Toaster />
-      
+
       {/* Fee Structure Drawer */}
       <FeeStructureDrawer
         isOpen={showCreateForm || showEditForm}
@@ -676,7 +769,7 @@ export default function FeesPage() {
           setSelectedStructure(null)
         }}
         onSave={handleSaveStructure}
-        initialData={selectedStructure ? convertStructureToForm(selectedStructure) : undefined}
+        initialData={selectedStructure && showEditForm ? convertStructureToForm(selectedStructure) : undefined}
         mode={showCreateForm ? 'create' : 'edit'}
         availableGrades={grades}
       />
@@ -716,6 +809,18 @@ export default function FeesPage() {
         allStudents={filteredStudents}
         isGenerating={isGeneratingInvoices}
       />
+
+      {/* Student Details Drawer */}
+      {finalStudentData && (
+        <StudentDetailsDrawer
+          isOpen={showStudentDetailsDrawer}
+          onClose={() => setShowStudentDetailsDrawer(false)}
+          studentData={finalStudentData}
+          loading={finalLoading}
+          error={finalError}
+          onRefresh={finalRefetch}
+        />
+      )}
     </div>
   )
 }

@@ -36,11 +36,12 @@ alwaysApply: true
 - **Prevent shipping code** that works but doesn't solve the actual problem
 - **Challenge unclear or vague requirements**
 
-### 4. **Test-Driven Development is MANDATORY**
-- **ALWAYS provide** corresponding unit or integration test skeletons
-- **Treat testing as non-negotiable** for every function, class, or endpoint
-- **Include test cases** for edge cases and error scenarios
-- **REFUSE to implement features** without proper test coverage
+### 4. **Testing: Pragmatic & Value-Driven**
+- Write tests where they provide real value - complex logic, critical paths, business rules
+- Focus on behavior and integration tests over exhaustive unit tests
+- Test edge cases and error scenarios for important functionality
+- Use judgment - simple CRUD and straightforward code may not need extensive tests
+- Quality over quantity - meaningful tests beat coverage metrics
 
 ### 5. **Simplicity Over Complexity**
 - **Suggest simpler alternatives** before complex solutions
@@ -66,16 +67,16 @@ alwaysApply: true
 ### **Security & Performance**
 - **Run security audits** (`npm audit`) and fix vulnerabilities immediately
 - **Use ESLint** with security plugins to catch vulnerabilities early
-- **Monitor test coverage** with tools like Istanbul/NYC (minimum 90% coverage)
+- **Monitor test coverage** where it matters - focus on critical paths over arbitrary percentages
 - **Identify synchronous I/O** operations that block the event loop
 - **Check for vulnerable dependencies** in CI pipeline
 
 ### **Testing & Quality Gates**
-- **Implement code quality gates** in CI/CD pipeline
+- **Implement code quality gates** in CI/CD pipeline for linting and type checking
 - **Tag tests** for selective execution (#sanity, #api, #regression)
 - **Run API tests early** - they're easier to implement and provide broader coverage
 - **Use linters** to detect code issues before commit
-- **Set coverage thresholds** to enforce minimum testing levels
+- Tests should focus on business value, not hitting arbitrary coverage numbers
 
 ### **Error Handling & Monitoring**
 - **Implement comprehensive error handling** with try-catch blocks
@@ -86,9 +87,10 @@ alwaysApply: true
 
 ### **Documentation & Comments**
 - **Use standard comment formats** (TODO, FIXME, NOTE) with issue references
-- **Document complex business logic** with clear explanations
-- **Provide code examples** in README files
-- **Keep documentation up-to-date** with code changes
+- **Document complex business logic** with clear explanations and inline comments
+- **NEVER auto-create markdown documentation files** (README, GUIDE, etc.) unless explicitly requested
+- Focus on self-documenting code with clear naming and structure
+- **Keep existing documentation up-to-date** with code changes when it exists
 
 ## 🚀 **PRODUCTIVITY ACCELERATORS**
 
@@ -113,30 +115,28 @@ alwaysApply: true
 - **Plan for scalability** from the beginning
 - **Consider maintenance costs** of every decision
 
-## 🧪 **TESTABLE CODE STANDARDS**
+## 🧪 **TESTABLE CODE STANDARDS** (When Writing Tests)
 
-### **Testability Requirements**
-- **Every function MUST be testable** - no side effects, pure functions when possible
-- **Dependency injection is MANDATORY** - no hardcoded dependencies
-- **Mock external services** - database, APIs, file system, etc.
-- **Single responsibility principle** - one function, one purpose, one test
-- **Avoid static methods** - they're hard to test and mock
-- **Use interfaces/abstractions** - enables easy mocking and testing
+### **Testability Principles**
+- Write testable code - prefer pure functions and dependency injection where practical
+- Use dependency injection for external services to enable easier testing when needed
+- Follow single responsibility principle - makes code easier to understand and test
+- Consider testability during design, but don't over-engineer for 100% test coverage
 
-### **Test Structure Standards**
-- **AAA Pattern** - Arrange, Act, Assert for every test
-- **Test naming** - `should_do_something_when_condition` format
-- **One assertion per test** - if you need multiple assertions, split into multiple tests
-- **Test edge cases** - null, empty, invalid inputs, boundary conditions
-- **Test error scenarios** - exceptions, failures, timeouts
-- **Mock external dependencies** - never test with real databases/APIs
+### **Test Structure Guidelines** (When You Write Tests)
+- **AAA Pattern** - Arrange, Act, Assert is a clear structure
+- **Descriptive naming** - `should_do_something_when_condition` format helps readability
+- Focus on testing behavior and outcomes, not implementation details
+- **Test important edge cases** - null, empty, boundary conditions for critical logic
+- **Test error scenarios** - for error handling in critical paths
+- Use appropriate test types - unit for logic, integration for workflows
 
-### **Test Coverage Requirements**
-- **Minimum 90% code coverage** - no exceptions
-- **100% coverage for critical paths** - authentication, payments, data validation
-- **Test all public methods** - private methods through public interface
-- **Integration tests for APIs** - test the full request/response cycle
-- **E2E tests for user workflows** - critical business processes
+### **Smart Test Coverage Approach**
+- Focus on **critical paths** - authentication, payments, data validation, core business logic
+- Integration tests often provide more value than exhaustive unit tests
+- Test what breaks easily or has high business impact
+- Simple getters, setters, and basic CRUD may not need tests
+- Aim for confidence in your code, not arbitrary coverage percentages
 
 ## 📁 **FILE ORGANIZATION RULES**
 
@@ -167,39 +167,35 @@ alwaysApply: true
 
 ## 🔍 **CODE REVIEW CHECKLIST**
 
-### **Testability Review**
-- [ ] Is every function testable?
-- [ ] Are dependencies injected?
-- [ ] Are external services mocked?
-- [ ] Are edge cases covered?
-- [ ] Are error scenarios tested?
-
-### **File Organization Review**
-- [ ] Is file size under 300 lines?
-- [ ] Are functions under 50 lines?
-- [ ] Is there only one class per file?
-- [ ] Are imports organized properly?
-- [ ] Is the file structure logical?
-
 ### **Code Quality Review**
 - [ ] Are naming conventions followed?
 - [ ] Is the code readable and maintainable?
 - [ ] Are there any magic numbers or strings?
-- [ ] Is error handling comprehensive?
+- [ ] Is error handling appropriate for the context?
 - [ ] Are performance implications considered?
+- [ ] Is the code reasonably testable (if testing is needed)?
 
-## ⚡ **IMMEDIATE ACTION ITEMS**
-1. **Set up ESLint** with security plugins
-2. **Configure test coverage** reporting with thresholds (90% minimum)
-3. **Implement pre-commit hooks** for code quality
-4. **Add security auditing** to CI pipeline
-5. **Establish code review** checklist with these standards
-6. **Refactor large files** - split any files over 300 lines
-7. **Add missing tests** - ensure 90% coverage for all modules
-8. **Set up test utilities** - create common test helpers and mocks
+### **File Organization Review**
+- [ ] Is file size reasonable (aim for under 300 lines)?
+- [ ] Are functions reasonably sized (aim for under 50 lines)?
+- [ ] Is there generally one class per file?
+- [ ] Are imports organized properly?
+- [ ] Is the file structure logical?
 
-## 📋 **CURSOR RULES IMPLEMENTATION**
+### **Security & Safety Review**
+- [ ] Are user inputs validated?
+- [ ] Are sensitive data handled securely?
+- [ ] Are external dependencies safe?
+- [ ] Are error messages safe (no sensitive data exposure)?
 
+## ⚡ **SUGGESTED SETUP TASKS** (When Starting New Projects)
+1. **Set up ESLint** with security plugins for code quality
+2. **Implement pre-commit hooks** for linting and formatting
+3. **Add security auditing** to CI pipeline (npm audit, dependency scanning)
+4. **Establish code review** standards with team
+5. **Organize project structure** - consistent folder layout and naming
+6. **Set up error logging** and monitoring for production
 
+## 📋 **REMEMBER**
 
-**Remember: These rules are NON-NEGOTIABLE. Code quality, testability, and proper file organization are essential for shipping robust, maintainable software that won't break in production.**
+**Balance is key**: Write quality code that's maintainable, secure, and testable where it matters. Focus on business value and pragmatic solutions over rigid rules. Tests and documentation should serve the code, not the other way around.

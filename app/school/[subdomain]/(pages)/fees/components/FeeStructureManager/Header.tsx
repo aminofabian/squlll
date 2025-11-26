@@ -1,20 +1,17 @@
 'use client'
 
-import { Button } from "@/components/ui/button"
-import { Plus } from 'lucide-react'
 import { RefreshDataButton } from '../RefreshDataButton'
 
 interface HeaderProps {
-  onCreateNew: () => void
   onRefreshAll: () => Promise<any>
   onDebugData?: () => void
 }
 
-export const Header = ({ onCreateNew, onRefreshAll, onDebugData }: HeaderProps) => {
+export const Header = ({ onRefreshAll, onDebugData }: HeaderProps) => {
   return (
-    <div className="flex justify-between items-center mb-4">
+    <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Fee Structure Management</h1>
+        <h2 className="text-xl font-semibold text-gray-900">Fee Structures</h2>
         <RefreshDataButton 
           onRefresh={onRefreshAll}
           label="Refresh Data"
@@ -22,20 +19,17 @@ export const Header = ({ onCreateNew, onRefreshAll, onDebugData }: HeaderProps) 
           size="sm"
         />
         {process.env.NODE_ENV !== 'production' && onDebugData && (
-          <Button 
-            variant="outline" 
-            size="sm"
+          <button
             onClick={onDebugData}
-            className="ml-2"
+            className="text-xs px-2 py-1 text-slate-600 hover:text-slate-900 border border-slate-300 rounded hover:bg-slate-50 transition-colors"
           >
             Debug Data
-          </Button>
+          </button>
         )}
       </div>
-      <Button onClick={onCreateNew} className="flex items-center gap-2">
-        <Plus className="h-4 w-4" />
-        Create New Structure
-      </Button>
+      <p className="text-sm text-gray-600">
+        Manage and configure fee structures for your school
+      </p>
     </div>
   )
 }

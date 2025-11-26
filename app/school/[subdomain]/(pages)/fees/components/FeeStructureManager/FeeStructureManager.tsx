@@ -242,7 +242,6 @@ export const FeeStructureManager = ({
     <div className="space-y-6">
       {/* Header Component */}
       <Header 
-        onCreateNew={onCreateNew} 
         onRefreshAll={refreshAllData}
         onDebugData={handleDebugData}
       />

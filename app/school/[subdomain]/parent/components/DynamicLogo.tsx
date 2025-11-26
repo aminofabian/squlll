@@ -14,8 +14,9 @@ const styleSchoolName = (name: string): string => {
   // Remove hyphens and split into words
   const words = name.replace(/-/g, ' ').split(' ');
   
-  // Capitalize each word and join with spaces
-  return words.map(word => word.toUpperCase()).join(' ');
+  // Capitalize each word and join with spaces, then append SCHOOL
+  const formattedName = words.map(word => word.toUpperCase()).join(' ');
+  return `${formattedName} SCHOOL`;
 };
 
 // Function to style initials creatively
@@ -107,38 +108,20 @@ export const DynamicLogo = ({ subdomain, size = 'md', showText = true, className
         />
       </div>
 
-      {/* School name and details with refined typography */}
+      {/* School name with refined typography */}
       {showText && (
         <div className="relative py-0.5">
           <div className="flex flex-col">
-            <div className="flex items-baseline gap-1">
-              <span className="font-mono font-bold text-sm tracking-[0.15em] text-slate-900 dark:text-slate-100 relative group-hover:translate-x-1 transition-all duration-300">
-                {styleSchoolName(subdomain)}
-                {/* Animated underline */}
-                <div 
-                  className="absolute bottom-0 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
-                  style={{ 
-                    background: `linear-gradient(to right, ${fromColor}, ${toColor})` 
-                  }}
-                />
-              </span>
+            <span className="font-bold text-sm tracking-wide text-slate-900 dark:text-slate-100 relative group-hover:translate-x-1 transition-all duration-300">
+              {styleSchoolName(subdomain)}
+              {/* Animated underline */}
               <div 
-                className="text-[0.6rem] font-medium px-1 rounded"
-                style={{ color: fromColor }}
-              >
-                PRO
-              </div>
-            </div>
-            
-            {/* Tagline with dot separator */}
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span 
-                className="text-[0.65rem] tracking-wider opacity-60 group-hover:opacity-90 transition-all duration-300"
-                style={{ color: fromColor }}
-              >
-                ACADEMY
-              </span>
-            </div>
+                className="absolute bottom-0 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
+                style={{ 
+                  background: `linear-gradient(to right, ${fromColor}, ${toColor})` 
+                }}
+              />
+            </span>
           </div>
         </div>
       )}

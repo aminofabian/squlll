@@ -1,1027 +1,438 @@
-'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { CheckCircle, Clock, PanelLeftClose, PanelLeftOpen, ChevronDown, ChevronUp, Menu, X, Settings, BarChart3, AlertTriangle, Users, Calendar, Coffee, Save, Upload, Download, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import {
-  TimetableHeader,
-  TimetableControls,
-  ConflictsPanel,
-  TimetableGrid,
-  LessonSummaryPanel,
-  TeacherManagementModal,
-  TimeSlotManager,
-  BreakManager,
-  TimeSlotModal,
-  TimetableFilter
-} from './components';
-import { useTimetableStore, type Teacher, type CellData, type TimeSlot, type Break } from '@/lib/stores/useTimetableStore';
-import {
-  useTimetableStats,
-  useTimetableConflicts,
-  useConflictCount,
-  useMergedSubjects,
-  useFilteredSubjects,
-} from './hooks';
+'use client';
 
-// Note: Types are now imported from hooks
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
+import { 
+  useSelectedGradeTimetable, 
+  useTimetableGrid,
+  useGradeStatistics 
+} from './hooks/useTimetableData';
+import { useAllConflicts } from './hooks/useTimetableConflictsNew';
+import { LessonEditDialog } from './components/LessonEditDialog';
+import { TimeslotEditDialog } from './components/TimeslotEditDialog';
+import { BreakEditDialog } from './components/BreakEditDialog';
+import { BulkScheduleDrawer } from './components/BulkScheduleDrawer';
+import { DebugStoreButton } from './debug-store-button';
+import { Toaster } from '@/components/ui/toaster';
 
-const SmartTimetable = () => {
-  // Use shared store
-  const { 
-    mainTimetable, 
-    updateMainTimetable,
-    loadMockData
+export default function SmartTimetableNew() {
+  // Get store data and actions
+  const {
+    grades,
+    subjects,
+    teachers,
+    timeSlots,
+    selectedGradeId,
+    setSelectedGrade,
+    searchTerm,
+    setSearchTerm,
+    showConflicts,
+    toggleConflicts,
+    loadTimeSlots,
   } = useTimetableStore();
 
-  // Local state
-  const [editingCell, setEditingCell] = useState<string | null>(null);
-  const [editingTimeSlot, setEditingTimeSlot] = useState<number | null>(null);
-  const [inputValue, setInputValue] = useState('');
-  const [timeSlotEditValue, setTimeSlotEditValue] = useState('');
-  const [selectedTeacher, setSelectedTeacher] = useState('');
-  const [showTimeSlotSuccess, setShowTimeSlotSuccess] = useState(false);
-  const [newTimeSlotData, setNewTimeSlotData] = useState({
-    startHour: '9',
-    startMinute: '00',
-    startPeriod: 'AM',
-    endHour: '10',
-    endMinute: '00',
-    endPeriod: 'AM'
-  });
-  const [grades] = useState([
-    'PP1', 'PP2', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 
-    'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
-  ]);
+  // Load time slots from backend on mount
+  useEffect(() => {
+    setLoadingTimeSlots(true);
+    loadTimeSlots()
+      .then(() => {
+        console.log('Time slots loaded successfully:', timeSlots);
+      })
+      .catch((error) => {
+        console.error('Failed to load time slots:', error);
+      })
+      .finally(() => {
+        setLoadingTimeSlots(false);
+      });
+  }, [loadTimeSlots]);
 
-  // Memoize constants
-  const days = useMemo(() => [
-    { name: 'MON', color: 'bg-primary' },
-    { name: 'TUE', color: 'bg-primary/80' },
-    { name: 'WED', color: 'bg-primary/70' },
-    { name: 'THU', color: 'bg-primary/60' },
-    { name: 'FRI', color: 'bg-primary/50' }
-  ], []);
+  // Get enriched entries for selected grade (memoized!)
+  const entries = useSelectedGradeTimetable();
+  
+  // Get grid organized by day/period (memoized!)
+  const grid = useTimetableGrid(selectedGradeId);
+  
+  // Get statistics (memoized!)
+  const stats = useGradeStatistics(selectedGradeId);
+  
+  // Get conflicts (memoized!)
+  const { total: conflictCount, teacher: teacherConflicts } = useAllConflicts();
 
-  // Memoize helper functions
-  const getDisplayGradeName = useCallback((gradeName: string): string => {
-    if (gradeName.startsWith('Grade')) {
-      const gradeNum = parseInt(gradeName.split(' ')[1]);
-      if (gradeNum >= 7 && gradeNum <= 12) {
-        return `F${gradeNum - 6}`;
-      }
-    }
-    return gradeName;
-  }, []);
-
-  // Memoize display grades
-  const displayGrades = useMemo(() => 
-    grades.map(grade => ({
-      internal: grade,
-      display: getDisplayGradeName(grade)
-    })),
-    [grades, getDisplayGradeName]
+  // Days array (memoized)
+  const days = useMemo(
+    () => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    []
   );
 
-  const [showTeacherModal, setShowTeacherModal] = useState(false);
-  const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
-  const [showBreakModal, setShowBreakModal] = useState(false);
-  const [showTimeSlotAddModal, setShowTimeSlotAddModal] = useState(false);
-  const [showConflicts, setShowConflicts] = useState(false);
-  const [isSummaryPanelMinimized, setIsSummaryPanelMinimized] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showGradeDropdown, setShowGradeDropdown] = useState(false);
-  
-  // Mobile-specific state
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    controls: false,
-    conflicts: false,
-    stats: false
-  });
+  // Get breaks from store
+  const breaks = useTimetableStore((state) => state.breaks);
 
-  // Extract data from store
-  const { subjects, teachers, timeSlots, breaks, selectedGrade } = mainTimetable;
+  // Handle grade selection
+  const handleGradeChange = useCallback(
+    (gradeId: string) => {
+      setSelectedGrade(gradeId);
+    },
+    [setSelectedGrade]
+  );
 
-  // Use optimized hooks for data merging and filtering
-  const mergedSubjects = useMergedSubjects(subjects, selectedGrade);
-  const filteredSubjects = useFilteredSubjects(mergedSubjects, searchTerm);
+  // State for editing
+  const [editingLesson, setEditingLesson] = useState<any | null>(null);
+  const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
+  const [editingBreak, setEditingBreak] = useState<any | null>(null);
+  const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
 
-  const getCellKey = useCallback((grade: string, timeId: number, dayIndex: number): string => {
-    const internalGrade = displayGrades.find(g => g.display === grade)?.internal || grade;
-    return `${internalGrade}-${dayIndex + 1}-${timeId - 1}`;
-  }, [displayGrades]);
-
-  const getGradeProgress = useCallback((grade: string): number => {
-    const totalCells = timeSlots.length * days.length;
-    let filledCells = 0;
-    
-    timeSlots.forEach(slot => {
-      days.forEach((_day, dayIndex) => {
-        const cellKey = getCellKey(grade, slot.id, dayIndex);
-        if (mergedSubjects[cellKey]) {
-          filledCells++;
-        }
-      });
-    });
-    
-    return Math.round((filledCells / totalCells) * 100);
-  }, [timeSlots, days, getCellKey, mergedSubjects]);
-
-  // Use optimized hooks for calculations
-  const stats = useTimetableStats(mergedSubjects, breaks, timeSlots, days, selectedGrade);
-  const conflicts = useTimetableConflicts(mergedSubjects, breaks);
-  const totalConflicts = useConflictCount(conflicts);
-
-  // Check if input is a break
-  const isBreakInput = useCallback((input: string): Break | null => {
-    return breaks.find(breakItem => 
-      breakItem.name.toLowerCase() === input.toLowerCase()
-    ) || null;
-  }, [breaks]);
-
-  const handleCellClick = useCallback((timeId: number, dayIndex: number) => {
-    const cellKey = getCellKey(selectedGrade, timeId, dayIndex);
-    setEditingCell(cellKey);
-    const currentData = mergedSubjects[cellKey];
-    setInputValue(currentData?.subject || '');
-    setSelectedTeacher(currentData?.teacher || '');
-  }, [getCellKey, selectedGrade, mergedSubjects]);
-
-  const handleTimeSlotClick = (timeId: number) => {
-    const timeSlot = timeSlots.find(slot => slot.id === timeId);
-    if (timeSlot) {
-      setEditingTimeSlot(timeId);
-      setTimeSlotEditValue(timeSlot.time);
-    }
-  };
-
-  const handleTimeSlotSave = (timeId: number) => {
-    if (timeSlotEditValue.trim()) {
-      const updatedTimeSlots = timeSlots.map(slot =>
-        slot.id === timeId ? { ...slot, time: timeSlotEditValue.trim() } : slot
-      );
-      updateMainTimetable({ timeSlots: updatedTimeSlots });
-    }
-    setEditingTimeSlot(null);
-    setTimeSlotEditValue('');
-  };
-
-  const handleTimeSlotKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && editingTimeSlot) {
-      handleTimeSlotSave(editingTimeSlot);
-    } else if (e.key === 'Escape') {
-      setEditingTimeSlot(null);
-      setTimeSlotEditValue('');
-    }
-  };
-
-  const handleNewTimeSlotDataChange = (field: string, value: string) => {
-    setNewTimeSlotData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleNewTimeSlotKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTimeSlot();
-    } else if (e.key === 'Escape') {
-      setShowTimeSlotAddModal(false);
-    }
-  };
-
-  const handleStartAddTimeSlot = () => {
-    setShowTimeSlotAddModal(true);
-  };
-
-  const handleAddTimeSlot = () => {
-    const startTime = `${newTimeSlotData.startHour}:${newTimeSlotData.startMinute} ${newTimeSlotData.startPeriod}`;
-    const endTime = `${newTimeSlotData.endHour}:${newTimeSlotData.endMinute} ${newTimeSlotData.endPeriod}`;
-    const timeString = `${startTime} – ${endTime}`;
-    
-    const colors = [
-      'border-l-primary',
-      'border-l-emerald-600',
-      'border-l-amber-500',
-      'border-l-sky-500',
-      'border-l-orange-500',
-      'border-l-green-600'
-    ];
-    
-    const newTimeSlot: TimeSlot = {
-      id: Math.max(...timeSlots.map(slot => slot.id), 0) + 1,
-      time: timeString,
-      color: colors[timeSlots.length % colors.length]
-    };
-    
-    updateMainTimetable({ timeSlots: [...timeSlots, newTimeSlot] });
-    setShowTimeSlotAddModal(false);
-    
-    // Reset time slot data to default values
-    setNewTimeSlotData({
-      startHour: '9',
-      startMinute: '00',
-      startPeriod: 'AM',
-      endHour: '10',
-      endMinute: '00',
-      endPeriod: 'AM'
-    });
-    
-    // Show success feedback
-    setShowTimeSlotSuccess(true);
-    setTimeout(() => setShowTimeSlotSuccess(false), 3000);
-    
-    // Scroll to the new time slot
-    setTimeout(() => {
-      const newSlotElement = document.querySelector(`[data-time-slot-id="${newTimeSlot.id}"]`);
-      if (newSlotElement) {
-        newSlotElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-  };
-
-  const handleCancelAddTimeSlot = () => {
-    setShowTimeSlotAddModal(false);
-  };
-
-  const handleInputSubmit = useCallback(() => {
-    if (editingCell && inputValue.trim()) {
-      const breakInfo = isBreakInput(inputValue);
-      const newCellData: CellData = {
-        subject: inputValue.trim(),
-        teacher: breakInfo ? '' : selectedTeacher,
-        isBreak: !!breakInfo,
-        breakType: breakInfo?.type
-      };
-
-      const updatedSubjects = {
-        ...mergedSubjects,
-        [editingCell]: newCellData
-      };
-
-      updateMainTimetable({ subjects: updatedSubjects });
-      setEditingCell(null);
-      setInputValue('');
-      setSelectedTeacher('');
-    }
-  }, [editingCell, inputValue, isBreakInput, selectedTeacher, mergedSubjects, updateMainTimetable]);
-
-  const handleAddBreak = (cellKey: string, breakName: string) => {
-    const breakInfo = breaks.find(breakItem => breakItem.name === breakName);
-    if (breakInfo) {
-      const newCellData: CellData = {
-        subject: breakName,
-        teacher: '',
-        isBreak: true,
-        breakType: breakInfo.type
-      };
-
-      // Update the subjects object properly
-      const updatedSubjects = {
-        ...mergedSubjects,
-        [cellKey]: newCellData
-      };
-
-      updateMainTimetable({ subjects: updatedSubjects });
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleInputSubmit();
-    } else if (e.key === 'Escape') {
-      setEditingCell(null);
-      setInputValue('');
-      setSelectedTeacher('');
-    }
-  };
-
-  const addNewTeacher = () => {
-    const name = prompt('Enter teacher name:');
-    const subjectsInput = prompt('Enter subjects (comma-separated):');
-    
-    if (name && subjectsInput) {
-      const teacherSubjects = subjectsInput.split(',').map(s => s.trim());
-      const colors = [
-        'bg-primary text-white',
-        'bg-emerald-600 text-white',
-        'bg-amber-500 text-white',
-        'bg-sky-500 text-white',
-        'bg-orange-500 text-white',
-        'bg-green-600 text-white'
-      ];
-      
-      updateMainTimetable({
-        teachers: {
-          ...teachers,
-          [name]: {
-            id: Object.keys(teachers).length + 1,
-            subjects: teacherSubjects,
-            color: colors[Object.keys(teachers).length % colors.length]
-          }
-        }
-      });
-    }
-  };
-
-  const getTeacherConflictCount = useCallback((teacher: string): number => {
-    return Object.values(conflicts).filter(conflict => conflict.teacher === teacher).length;
-  }, [conflicts]);
-
-  const clearCell = (cellKey: string) => {
-    const newSubjects = { ...mergedSubjects };
-    delete newSubjects[cellKey];
-    updateMainTimetable({ subjects: newSubjects });
-  };
-
-  const handleUpdateTimeSlots = (newTimeSlots: TimeSlot[]) => {
-    updateMainTimetable({ timeSlots: newTimeSlots });
-    // Clear any subjects that reference removed time slots
-    const newSubjects = { ...mergedSubjects };
-    Object.keys(newSubjects).forEach(cellKey => {
-      const [grade, timeId, dayIndex] = cellKey.split('-');
-      const timeSlotExists = newTimeSlots.some(slot => slot.id === parseInt(timeId));
-      if (!timeSlotExists) {
-        delete newSubjects[cellKey];
-      }
-    });
-    updateMainTimetable({ subjects: newSubjects });
-  };
-
-  const handleUpdateBreaks = (newBreaks: Break[]) => {
-    updateMainTimetable({ breaks: newBreaks });
-  };
-
-  const handleSaveTimetable = () => {
-    // Create the timetable data structure
-    const timetableData = {
-      timetable: {} as Record<string, { subject: string; teacher: string; isBreak?: boolean; breakType?: string }>,
-      metadata: {
-        grade: selectedGrade,
-        timeSlots: timeSlots,
-        breaks: breaks,
-        teachers: teachers,
-        lastSaved: new Date().toISOString()
-      }
-    };
-
-    // Convert subjects to the required format
-    Object.entries(mergedSubjects).forEach(([cellKey, cellData]) => {
-      if (cellData) {
-        timetableData.timetable[cellKey] = {
-          subject: cellData.subject,
-          teacher: cellData.teacher || '',
-          isBreak: cellData.isBreak || false,
-          breakType: cellData.breakType || undefined
-        };
-      }
-    });
-
-    // Create and download the JSON file
-    const dataStr = JSON.stringify(timetableData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `timetable-${selectedGrade}-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    // Show success message
-    alert(`Timetable for ${selectedGrade} saved successfully!`);
-  };
-
-  const handleLoadTimetable = () => {
-    // Create file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const data = JSON.parse(event.target?.result as string);
-            
-            if (data.timetable && data.metadata) {
-              // Load the timetable data
-              const newSubjects: Record<string, CellData> = {};
-              
-              Object.entries(data.timetable).forEach(([cellKey, cellData]: [string, any]) => {
-                newSubjects[cellKey] = {
-                  subject: cellData.subject,
-                  teacher: cellData.teacher || '',
-                  isBreak: cellData.isBreak || false,
-                  breakType: cellData.breakType || undefined
-                };
-              });
-
-              // Update state
-              updateMainTimetable({ subjects: newSubjects });
-              
-              // Optionally load other data if available
-              if (data.metadata.timeSlots) {
-                updateMainTimetable({ timeSlots: data.metadata.timeSlots });
-              }
-              if (data.metadata.breaks) {
-                updateMainTimetable({ breaks: data.metadata.breaks });
-              }
-              if (data.metadata.teachers) {
-                updateMainTimetable({ teachers: data.metadata.teachers });
-              }
-              if (data.metadata.grade) {
-                updateMainTimetable({ selectedGrade: data.metadata.grade });
-              }
-
-              alert(`Timetable loaded successfully!`);
-            } else {
-              alert('Invalid timetable file format.');
-            }
-          } catch (error) {
-            alert('Error loading timetable file. Please check the file format.');
-          }
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  };
-
-  // Toggle section expansion
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowGradeDropdown(false);
-    };
-
-    if (showGradeDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showGradeDropdown]);
+  // Get current grade name
+  const currentGrade = useMemo(
+    () => grades.find(g => g.id === selectedGradeId),
+    [grades, selectedGradeId]
+  );
 
   return (
-    <DashboardLayout
-      searchFilter={
-        <TimetableFilter
-          selectedGrade={selectedGrade}
-          onGradeSelect={(grade) => updateMainTimetable({ selectedGrade: grade })}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          getDisplayGradeName={getDisplayGradeName}
-        />
-      }
-    >
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-        {/* Mobile-optimized container with no overflow */}
-        <div className="w-full max-w-full overflow-hidden">
-          {/* Mobile Header - Styled like student timetable */}
-          <div className="sticky top-0 z-40 md:hidden">
-            <div className="bg-white/95 backdrop-blur-lg border-b border-gray-200 px-4 py-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-primary flex items-center justify-center shadow-lg">
-                    <Calendar className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-gray-900">Timetable</h1>
-                    <p className="text-xs text-gray-600">Schedule Management</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium border border-gray-200">
-                    {selectedGrade}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    className="p-2 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                  >
-                    {showMobileMenu ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Status Bar - Student timetable style */}
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-1.5">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span className="text-xs text-gray-600">{stats.completionPercentage}% Complete</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <Users className="h-3 w-3 text-gray-500" />
-                    <span className="text-xs text-gray-600">{stats.totalTeachers} Teachers</span>
-                  </div>
-                </div>
-                {totalConflicts > 0 && (
-                  <div className="flex items-center space-x-1.5 px-2 py-1 bg-red-50 border border-red-200">
-                    <AlertTriangle className="h-3 w-3 text-red-600" />
-                    <span className="text-xs text-red-600 font-medium">{totalConflicts} conflicts</span>
-                  </div>
-                )}
-              </div>
-            </div>
+    <div className="container mx-auto p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Smart Timetable</h1>
+            <p className="text-gray-600">
+              Viewing: {currentGrade?.name || 'Select a grade'}
+            </p>
           </div>
+          <button
+            onClick={() => setBulkScheduleOpen(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+          >
+            <span>⚙️</span>
+            <span>Bulk Schedule Setup</span>
+          </button>
+        </div>
+        
+        {/* Debug Buttons */}
+        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+          <p className="text-sm text-yellow-800 mb-2">
+            <strong>Debug Tools:</strong> If you don't see any data, use these buttons
+          </p>
+          <DebugStoreButton />
+        </div>
+      </div>
 
-          {/* Mobile Menu Overlay - Student timetable style */}
-          {showMobileMenu && (
-            <div className="fixed inset-0 z-50 md:hidden">
-              <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)} />
-              <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary flex items-center justify-center shadow-lg">
-                      <Settings className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-gray-900">Tools</h2>
-                      <p className="text-xs text-gray-600">Timetable Management</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowMobileMenu(false)}
-                    className="p-2 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                  >
-                    <X className="h-5 w-5 text-gray-600" />
-                  </Button>
-                </div>
-                
-                <div className="p-4 space-y-1">
-                  {/* Management Section */}
-                  <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">Management</h3>
-                    <div className="space-y-1">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                        onClick={() => {
-                          setShowTeacherModal(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-gray-100 flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-gray-200">
-                          <Users className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-gray-900">Teachers</p>
-                          <p className="text-xs text-gray-500">Manage staff & subjects</p>
-                        </div>
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                        onClick={() => {
-                          setShowTimeSlotModal(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-gray-100 flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-gray-200">
-                          <Clock className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-gray-900">Time Slots</p>
-                          <p className="text-xs text-gray-500">Configure periods</p>
-                        </div>
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                        onClick={() => {
-                          setShowBreakModal(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-gray-100 flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-gray-200">
-                          <Coffee className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-gray-900">Breaks</p>
-                          <p className="text-xs text-gray-500">Manage break periods</p>
-                        </div>
-                      </Button>
-                    </div>
-                  </div>
+      {/* Grade Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Select Grade:</label>
+        <select
+          value={selectedGradeId || ''}
+          onChange={(e) => handleGradeChange(e.target.value)}
+          className="px-4 py-2 border rounded-lg"
+        >
+          {grades.map((grade) => (
+            <option key={grade.id} value={grade.id}>
+              {grade.displayName || grade.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-                  {/* Quick Actions */}
-                  <div className="mb-6">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">Quick Actions</h3>
-                    <div className="space-y-1">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-red-50 hover:text-red-700 transition-all duration-200 border border-transparent hover:border-red-200 hover:shadow-sm"
-                        onClick={() => {
-                          toggleSection('conflicts');
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-red-50 flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-red-100">
-                          <AlertTriangle className="h-4 w-4 text-red-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-red-700">Conflicts</p>
-                          <p className="text-xs text-red-600">{totalConflicts} issues to resolve</p>
-                        </div>
-                        {totalConflicts > 0 && (
-                          <div className="w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center font-medium">
-                            {totalConflicts}
-                          </div>
-                        )}
-                      </Button>
-                      
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start h-12 px-3 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                        onClick={() => {
-                          toggleSection('stats');
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <div className="w-8 h-8 bg-gray-100 flex items-center justify-center mr-3 transition-colors duration-200 group-hover:bg-gray-200">
-                          <BarChart3 className="h-4 w-4 text-gray-600" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-semibold text-gray-900">Statistics</p>
-                          <p className="text-xs text-gray-500">View analytics</p>
-                        </div>
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* File Operations */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-3">File Operations</h3>
-                    <div className="space-y-2">
-                      <Button
-                        className="w-full h-11 bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl text-white font-semibold transition-all duration-200 border border-primary/20 hover:border-primary/30"
-                        onClick={() => {
-                          handleSaveTimetable();
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Timetable
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-semibold transition-all duration-200 hover:shadow-md"
-                        onClick={() => {
-                          handleLoadTimetable();
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Load Timetable
-                      </Button>
-                      
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-semibold transition-all duration-200 hover:shadow-md"
-                        onClick={() => {
-                          loadMockData();
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Load Sample Data
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Desktop Header - Student timetable style */}
-          <div className="hidden md:block p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              <TimetableHeader totalConflicts={totalConflicts} />
-            </div>
+      {/* Statistics Card */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-blue-600">
+            {stats.totalLessons}
           </div>
-
-          {/* Success Notification */}
-          {showTimeSlotSuccess && (
-            <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4 shadow-2xl flex items-center gap-3 backdrop-blur-sm">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-green-800">Success!</div>
-                  <div className="text-xs text-green-600">New time slot added to schedule</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Desktop Controls - Student timetable style */}
-          <div className="hidden md:block p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              <TimetableControls
-                selectedGrade={getDisplayGradeName(selectedGrade)}
-                grades={displayGrades.map(g => g.display)}
-                showGradeDropdown={showGradeDropdown}
-                totalConflicts={totalConflicts}
-                onGradeSelect={(displayGrade) => {
-                  const internalGrade = displayGrades.find(g => g.display === displayGrade)?.internal || displayGrade;
-                  updateMainTimetable({ selectedGrade: internalGrade });
-                  setShowGradeDropdown(false);
-                }}
-                onGradeDropdownToggle={() => setShowGradeDropdown(!showGradeDropdown)}
-                onManageTeachers={() => setShowTeacherModal(true)}
-                onManageTimeSlots={() => setShowTimeSlotModal(true)}
-                onManageBreaks={() => setShowBreakModal(true)}
-                onToggleConflicts={() => setShowConflicts(!showConflicts)}
-                onSaveTimetable={handleSaveTimetable}
-                onLoadTimetable={handleLoadTimetable}
-                onLoadMockData={loadMockData}
-                showConflicts={showConflicts}
-                getGradeProgress={(displayGrade) => {
-                  const internalGrade = displayGrades.find(g => g.display === displayGrade)?.internal || displayGrade;
-                  return getGradeProgress(internalGrade);
-                }}
-              />
-            </div>
+          <div className="text-sm text-gray-600">Total Lessons</div>
+        </div>
+        
+        <div className="bg-green-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-green-600">
+            {stats.completionPercentage}%
           </div>
-
-          {/* Mobile Collapsible Sections */}
-          <div className="md:hidden">
-            {/* Conflicts Section */}
-            {(showConflicts || expandedSections.conflicts) && totalConflicts > 0 && (
-              <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-                <div className="px-4 py-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-red-100 flex items-center justify-center">
-                        <AlertTriangle className="h-3 w-3 text-red-600" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900">Conflicts</h3>
-                      <div className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium border border-red-200">
-                        {totalConflicts}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowConflicts(false);
-                        toggleSection('conflicts');
-                      }}
-                      className="p-1.5 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                    >
-                      <ChevronUp className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </div>
-                  <div className="max-h-40 overflow-y-auto border border-gray-200 bg-gray-50">
-                    <ConflictsPanel
-                      conflicts={conflicts}
-                      timeSlots={timeSlots}
-                      days={days}
-                      onClearCell={clearCell}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Statistics Section */}
-            {expandedSections.stats && (
-              <div className="bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-                <div className="px-4 py-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gray-100 flex items-center justify-center">
-                        <BarChart3 className="h-3 w-3 text-gray-600" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-gray-900">Statistics</h3>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleSection('stats')}
-                      className="p-1.5 hover:bg-gray-100 transition-all duration-200 border border-transparent hover:border-gray-200 hover:shadow-sm"
-                    >
-                      <ChevronUp className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto border border-gray-200 bg-gray-50">
-                    <LessonSummaryPanel stats={stats} />
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="text-sm text-gray-600">Completion</div>
+        </div>
+        
+        <div className={`p-4 rounded-lg ${conflictCount > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+          <div className={`text-2xl font-bold ${conflictCount > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+            {conflictCount}
           </div>
-
-          {/* Desktop Conflicts Panel */}
-          {showConflicts && (
-            <div className="hidden md:block p-4 md:p-8">
-              <div className="max-w-7xl mx-auto">
-                <ConflictsPanel
-                  conflicts={conflicts}
-                  timeSlots={timeSlots}
-                  days={days}
-                  onClearCell={clearCell}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Main Content */}
-          <div className="p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
-                {/* Timetable Grid */}
-                <div className="flex-1 min-w-0">
-                  {/* Floating toggle button when summary panel is minimized (desktop only) */}
-                  {isSummaryPanelMinimized && (
-                    <div className="hidden lg:block absolute top-6 right-6 z-10">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsSummaryPanelMinimized(false)}
-                        className="border-gray-200 bg-white/80 backdrop-blur-sm text-gray-600 hover:bg-white hover:text-gray-900 hover:border-gray-300 shadow-sm transition-all duration-200"
-                        title="Expand summary panel"
-                      >
-                        <PanelLeftOpen className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  
-                  <TimetableGrid
-                    selectedGrade={selectedGrade}
-                    subjects={searchTerm ? filteredSubjects : mergedSubjects}
-                    teachers={teachers}
-                    breaks={breaks}
-                    conflicts={conflicts}
-                    days={days}
-                    timeSlots={timeSlots}
-                    editingCell={editingCell}
-                    editingTimeSlot={editingTimeSlot}
-                    inputValue={inputValue}
-                    selectedTeacher={selectedTeacher}
-                    timeSlotEditValue={timeSlotEditValue}
-                    isAddingTimeSlot={false}
-                    newTimeSlotValue=""
-                    showTimeSlotSuccess={showTimeSlotSuccess}
-                    newTimeSlotData={newTimeSlotData}
-                    onCellClick={handleCellClick}
-                    onTimeSlotClick={handleTimeSlotClick}
-                    onInputChange={setInputValue}
-                    onTimeSlotEditChange={setTimeSlotEditValue}
-                    onTeacherChange={setSelectedTeacher}
-                    onInputSubmit={handleInputSubmit}
-                    onTimeSlotSave={handleTimeSlotSave}
-                    onCancelEdit={() => {
-                      setEditingCell(null);
-                      setInputValue('');
-                      setSelectedTeacher('');
-                    }}
-                    onCancelTimeSlotEdit={() => {
-                      setEditingTimeSlot(null);
-                      setTimeSlotEditValue('');
-                    }}
-                    onKeyPress={handleKeyPress}
-                    onTimeSlotKeyPress={handleTimeSlotKeyPress}
-                    onAddBreak={handleAddBreak}
-                    onStartAddTimeSlot={handleStartAddTimeSlot}
-                    onAddTimeSlot={handleAddTimeSlot}
-                    onNewTimeSlotChange={() => {}}
-                    onNewTimeSlotKeyPress={() => {}}
-                    onCancelAddTimeSlot={handleCancelAddTimeSlot}
-                    onNewTimeSlotDataChange={handleNewTimeSlotDataChange}
-                    onGradeSelect={(grade) => updateMainTimetable({ selectedGrade: grade })}
-                    getCellKey={getCellKey}
-                  />
-                </div>
-
-                {/* Desktop Summary Panel */}
-                {isSummaryPanelMinimized ? (
-                  <div className="hidden lg:flex w-16 flex-col items-center space-y-4 p-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsSummaryPanelMinimized(false)}
-                      className="border-gray-300 hover:bg-gray-50"
-                      title="Expand summary panel"
-                    >
-                      <PanelLeftOpen className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="hidden lg:block w-80 space-y-4 lg:space-y-6 relative">
-                    <div className="flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsSummaryPanelMinimized(true)}
-                        className="border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 transition-all duration-200"
-                        title="Minimize summary panel"
-                      >
-                        <PanelLeftClose className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <LessonSummaryPanel stats={stats} />
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="text-sm text-gray-600">Conflicts</div>
+        </div>
+        
+        <div className="bg-purple-50 p-4 rounded-lg">
+          <div className="text-2xl font-bold text-purple-600">
+            {Object.keys(stats.subjectDistribution).length}
           </div>
+          <div className="text-sm text-gray-600">Subjects</div>
+        </div>
+      </div>
 
-          {/* Mobile Instructions */}
-          <div className="md:hidden px-4 py-6 bg-gray-50 border-t border-gray-200">
-            <div className="text-center space-y-3">
-              <div className="w-12 h-12 bg-primary flex items-center justify-center mx-auto shadow-lg">
-                <Calendar className="h-6 w-6 text-white" />
+      {/* Conflict Warnings */}
+      {showConflicts && conflictCount > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-red-900 mb-2">
+            ⚠️ {conflictCount} Conflicts Detected
+          </h3>
+          <div className="space-y-2">
+            {teacherConflicts.map((conflict, index) => (
+              <div key={index} className="text-sm text-red-800">
+                <strong>{conflict.teacher?.name}</strong> is scheduled in multiple grades:
+                <ul className="ml-4 mt-1">
+                  {conflict.entries.map((entry, i) => (
+                    <li key={i}>
+                      {entry.grade} - {entry.subject} ({entry.timeSlot})
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">Getting Started</h3>
-                <p className="text-sm text-gray-600">
-                  Tap any cell to add subjects and teachers
-                </p>
-              </div>
-              <div className="flex justify-center space-x-6 pt-2">
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-gray-100 flex items-center justify-center mx-auto mb-1">
-                    <Coffee className="h-4 w-4 text-gray-600" />
-                  </div>
-                  <p className="text-xs text-gray-500">Add breaks</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-gray-100 flex items-center justify-center mx-auto mb-1">
-                    <Menu className="h-4 w-4 text-gray-600" />
-                  </div>
-                  <p className="text-xs text-gray-500">Use menu</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Instructions */}
-          <div className="hidden md:block px-4 md:px-8 pb-6">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center text-xs md:text-sm text-gray-600 space-y-2">
-                <p>Click any cell to assign a subject and teacher. Click time slots to edit them directly.</p>
-                <p>Type break names (like "Lunch", "Recess") to add break periods with special styling.</p>
-                <p>Red cells indicate teacher conflicts. Use the conflict panel to resolve scheduling issues.</p>
-                <p>Hover over time slots to see the edit icon, or use the management buttons for advanced options.</p>
-                <p>Click "Add New Time Slot" to open a modal with an intuitive time picker for start/end times.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Modals */}
-        <TeacherManagementModal
-          isOpen={showTeacherModal}
-          teachers={teachers}
-          onClose={() => setShowTeacherModal(false)}
-          onAddTeacher={addNewTeacher}
-          getTeacherConflictCount={getTeacherConflictCount}
-        />
-
-        <TimeSlotManager
-          timeSlots={timeSlots}
-          onUpdateTimeSlots={handleUpdateTimeSlots}
-          isOpen={showTimeSlotModal}
-          onClose={() => setShowTimeSlotModal(false)}
-        />
-
-        <BreakManager
-          breaks={breaks}
-          onUpdateBreaks={handleUpdateBreaks}
-          isOpen={showBreakModal}
-          onClose={() => setShowBreakModal(false)}
-        />
-
-        <TimeSlotModal
-          isOpen={showTimeSlotAddModal}
-          onClose={() => setShowTimeSlotAddModal(false)}
-          onAdd={handleAddTimeSlot}
-          timeSlotData={newTimeSlotData}
-          onTimeSlotDataChange={handleNewTimeSlotDataChange}
-        />
+      {/* Time Slots Debug Info */}
+      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="font-semibold text-blue-900 mb-2">Time Slots from Backend</h3>
+        {loadingTimeSlots ? (
+          <p className="text-sm text-blue-700">Loading time slots...</p>
+        ) : timeSlots.length === 0 ? (
+          <p className="text-sm text-blue-700">No time slots found. Use "Bulk Schedule Setup" to create time slots.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-blue-700">
+              Found <strong>{timeSlots.length}</strong> time slot{timeSlots.length !== 1 ? 's' : ''}:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {timeSlots.map((slot) => (
+                <div key={slot.id} className="bg-white p-2 rounded border border-blue-200 text-xs">
+                  <div className="font-semibold">Period {slot.periodNumber}</div>
+                  <div className="text-gray-600">{slot.time}</div>
+                  <div className="text-gray-500">{slot.startTime} - {slot.endTime}</div>
+                  <div className="text-gray-400">ID: {slot.id.substring(0, 8)}...</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </DashboardLayout>
-  );
-};
 
-export default SmartTimetable;
+      {/* Timetable Grid */}
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border p-3 text-left font-semibold">Time</th>
+              {days.map((day, index) => (
+                <th key={index} className="border p-3 text-left font-semibold">
+                  {day}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loadingTimeSlots ? (
+              <tr>
+                <td colSpan={6} className="border p-8 text-center text-gray-500">
+                  Loading time slots...
+                </td>
+              </tr>
+            ) : timeSlots.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="border p-8 text-center text-gray-500">
+                  No time slots available. Click "Bulk Schedule Setup" to create time slots.
+                </td>
+              </tr>
+            ) : (
+              timeSlots.map((slot, slotIndex) => {
+              // Get breaks that come after this period
+              const breaksAfterThisPeriod = breaks.filter(
+                (b) => b.afterPeriod === slot.periodNumber
+              );
+
+              return (
+                <React.Fragment key={slot.id}>
+                  {/* Regular lesson row */}
+                  <tr className="hover:bg-gray-50">
+                    <td className="border p-3 font-medium text-sm">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div>{slot.time}</div>
+                          <div className="text-xs text-gray-500">Period {slot.periodNumber}</div>
+                        </div>
+                        <button
+                          onClick={() => setEditingTimeslot(slot)}
+                          className="text-blue-600 hover:text-blue-800 text-xs"
+                          title="Edit timeslot"
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                    </td>
+                    {days.map((_, dayIndex) => {
+                      const dayOfWeek = dayIndex + 1;
+                      const entry = grid[dayOfWeek]?.[slot.id];
+
+                      return (
+                        <td key={dayIndex} className="border p-3">
+                          {entry ? (
+                            <div 
+                              className="space-y-1 cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors"
+                              onClick={() => setEditingLesson(entry)}
+                              title="Click to edit"
+                            >
+                              <div className="font-semibold text-sm">
+                                {entry.subject.name}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {entry.teacher.name}
+                              </div>
+                              {entry.roomNumber && (
+                                <div className="text-xs text-gray-500">
+                                  {entry.roomNumber}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setEditingLesson({
+                                  gradeId: selectedGradeId,
+                                  dayOfWeek,
+                                  timeSlotId: slot.id,
+                                  isNew: true,
+                                });
+                              }}
+                              className="text-xs text-blue-500 hover:text-blue-700 italic w-full text-left"
+                            >
+                              + Add lesson
+                            </button>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+
+                  {/* Break rows (if any after this period) */}
+                  {breaksAfterThisPeriod.length > 0 && (
+                    <tr className="bg-orange-50 border-y-2 border-orange-200 hover:bg-orange-100 transition-colors">
+                      <td className="border p-3 font-medium text-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span>{breaksAfterThisPeriod[0].icon}</span>
+                            <div>
+                              <div className="font-semibold">{breaksAfterThisPeriod[0].name}</div>
+                              <div className="text-xs text-gray-600">
+                                {breaksAfterThisPeriod[0].durationMinutes} min
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      {days.map((day, dayIndex) => {
+                        const dayBreak = breaksAfterThisPeriod.find(
+                          (b) => b.dayOfWeek === dayIndex + 1
+                        );
+                        return (
+                          <td key={dayIndex} className="border p-3 text-center text-sm text-gray-600">
+                            {dayBreak ? (
+                              <div 
+                                className="flex items-center justify-center gap-2 cursor-pointer hover:bg-orange-200 p-2 rounded transition-colors"
+                                onClick={() => setEditingBreak(dayBreak)}
+                                title="Click to edit break"
+                              >
+                                <span>{dayBreak.icon}</span>
+                                <span>{dayBreak.durationMinutes}min</span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingBreak({
+                                    isNew: true,
+                                    afterPeriod: slot.periodNumber,
+                                    dayOfWeek: dayIndex + 1,
+                                  });
+                                }}
+                                className="text-xs text-blue-500 hover:text-blue-700 italic"
+                                title="Add break for this day"
+                              >
+                                + Add
+                              </button>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Subject Distribution */}
+      <div className="mt-8 bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Subject Distribution</h3>
+        <div className="grid grid-cols-3 gap-4">
+          {Object.entries(stats.subjectDistribution).map(([subject, count]) => (
+            <div key={subject} className="flex justify-between items-center">
+              <span className="text-sm">{subject}</span>
+              <span className="font-semibold text-blue-600">{count} lessons</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Teacher Workload */}
+      <div className="mt-8 bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Teacher Workload (This Grade)</h3>
+        <div className="grid grid-cols-3 gap-4">
+          {Object.entries(stats.teacherWorkload).map(([teacher, count]) => (
+            <div key={teacher} className="flex justify-between items-center">
+              <span className="text-sm">{teacher}</span>
+              <span className="font-semibold text-purple-600">{count} lessons</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="mt-8 flex gap-4">
+        <button
+          onClick={toggleConflicts}
+          className={`px-4 py-2 rounded-lg ${
+            showConflicts
+              ? 'bg-red-600 text-white'
+              : 'bg-gray-200 text-gray-700'
+          }`}
+        >
+          {showConflicts ? 'Hide' : 'Show'} Conflicts
+        </button>
+      </div>
+
+      {/* Edit Dialogs */}
+      <LessonEditDialog 
+        lesson={editingLesson} 
+        onClose={() => setEditingLesson(null)} 
+      />
+      <TimeslotEditDialog 
+        timeslot={editingTimeslot} 
+        onClose={() => setEditingTimeslot(null)} 
+      />
+      <BreakEditDialog 
+        breakData={editingBreak} 
+        onClose={() => setEditingBreak(null)} 
+      />
+      
+      {/* Bulk Schedule Drawer */}
+      <BulkScheduleDrawer 
+        open={bulkScheduleOpen} 
+        onClose={() => setBulkScheduleOpen(false)} 
+      />
+      
+      {/* Toast Notifications */}
+      <Toaster />
+    </div>
+  );
+}
+
+

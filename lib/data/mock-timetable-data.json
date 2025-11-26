@@ -1479,6 +1479,27 @@
       "className": "4B",
       "room": "Room 11",
       "studentCount": 43
+    },
+    "Grade 11-1-0": {
+      "subject": "Advanced Calculus",
+      "teacher": "Emma Thompson",
+      "className": "11A",
+      "room": "Room 11",
+      "studentCount": 43
+    },
+    "Grade 11-1-2": {
+      "subject": "Advanced Calculus",
+      "teacher": "Emma Thompson",
+      "className": "11B",
+      "room": "Room 11",
+      "studentCount": 43
+    },
+    "Grade 11-1-6": {
+      "subject": "Advanced Calculus",
+      "teacher": "Emma Thompson",
+      "className": "11C",
+      "room": "Room 11",
+      "studentCount": 43
     }
   },
   "metadata": {
@@ -1816,7 +1837,7 @@
         ],
         "color": "bg-orange-400 text-white"
       }
-    },
-    "lastSaved": "2025-01-27T10:30:00.000Z"
-  }
+    }
+  },
+  "lastSaved": "2025-01-27T10:30:00.000Z"
 }

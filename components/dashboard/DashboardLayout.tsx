@@ -1,9 +1,11 @@
 "use client"
 
 import { ReactNode, useState } from "react"
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { DynamicLogo } from "@/app/school/[subdomain]/parent/components/DynamicLogo"
 
 interface DashboardLayoutProps {
   sidebar?: ReactNode
@@ -11,6 +13,7 @@ interface DashboardLayoutProps {
   children: ReactNode
   showMobileNav?: boolean
   mobileNav?: ReactNode
+  subdomain?: string
 }
 
 export function DashboardLayout({ 
@@ -18,8 +21,17 @@ export function DashboardLayout({
   searchFilter, 
   children, 
   showMobileNav = true,
-  mobileNav 
+  mobileNav,
+  subdomain: subdomainProp
 }: DashboardLayoutProps) {
+  const params = useParams()
+  // Get subdomain from URL params first, then fall back to prop, then 'admin'
+  const subdomain = typeof params.subdomain === 'string' 
+    ? params.subdomain 
+    : Array.isArray(params.subdomain) 
+      ? params.subdomain[0] 
+      : subdomainProp || 'admin'
+  
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const [isFilterMinimized, setIsFilterMinimized] = useState(false)
@@ -28,11 +40,11 @@ export function DashboardLayout({
     <div className="min-h-screen bg-background">
       {/* Mobile Header */}
       <div className="lg:hidden sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3 px-4 py-3">
           {sidebar && (
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Open sidebar</span>
                 </Button>
@@ -43,12 +55,14 @@ export function DashboardLayout({
             </Sheet>
           )}
           
-          <h1 className="font-semibold text-lg">SQUL Admin</h1>
+          <div className="flex items-center justify-center flex-1 min-w-0">
+            <DynamicLogo subdomain={subdomain} size="sm" showText={true} />
+          </div>
           
           {searchFilter && (
             <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden">
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden shrink-0">
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
                   </svg>
