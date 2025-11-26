@@ -55,7 +55,7 @@ export const BucketCreationModal: React.FC<BucketCreationModalProps> = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="bucket-description" className="text-sm font-medium text-slate-700">
-              Description
+              Description <span className="text-slate-400 font-normal">(Optional)</span>
             </Label>
             <Input
               id="bucket-description"
@@ -78,7 +78,7 @@ export const BucketCreationModal: React.FC<BucketCreationModalProps> = ({
           </Button>
           <Button
             onClick={onCreateBucket}
-            disabled={!bucketData.name.trim() || !bucketData.description.trim() || isCreating}
+            disabled={!bucketData.name.trim() || isCreating}
             className="bg-primary text-white hover:bg-primary/80"
           >
             {isCreating ? 'Creating...' : 'Create Bucket'}

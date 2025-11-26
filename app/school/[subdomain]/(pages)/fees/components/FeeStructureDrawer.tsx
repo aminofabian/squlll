@@ -1,4 +1,4 @@
 'use client'
 
-// Re-export the FeeStructureDrawer component from the refactored file
-export { FeeStructureDrawer } from './FeeStructureDrawerRefactored'
+// Re-export the new wizard-based FeeStructureDrawer component
+export { FeeStructureWizard as FeeStructureDrawer } from './FeeStructureWizard'

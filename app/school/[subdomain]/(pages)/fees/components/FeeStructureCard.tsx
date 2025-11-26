@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
     Edit,
     Trash2,
@@ -14,11 +15,18 @@ import {
     Calendar,
     Building2,
     CheckCircle,
-    ArrowRight
+    ArrowRight,
+    Plus,
+    Eye,
+    Download,
+    X
 } from 'lucide-react'
 import { ProcessedFeeStructure } from './FeeStructureManager/types'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { BucketCreationModal } from './drawer/BucketCreationModal'
+import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
+import { FeeStructureForm } from '../types'
 
 interface FeeStructureCardProps {
     structure: ProcessedFeeStructure
@@ -40,9 +48,128 @@ export const FeeStructureCard = ({
     totalStudents
 }: FeeStructureCardProps) => {
     const [isExpanded, setIsExpanded] = useState(false)
+    const [showBucketModal, setShowBucketModal] = useState(false)
+    const [showPDFPreview, setShowPDFPreview] = useState(false)
+    const [isCreatingBucket, setIsCreatingBucket] = useState(false)
+    const [bucketModalData, setBucketModalData] = useState({ name: '', description: '' })
 
     const totalFees = structure.buckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
     const hasAssignments = assignedGrades.length > 0
+
+    // Create fee bucket via GraphQL
+    const createFeeBucket = async (bucketData: { name: string; description: string }) => {
+        setIsCreatingBucket(true)
+        try {
+            const response = await fetch('/api/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: `
+                        mutation CreateFeeBucket($input: CreateFeeBucketInput!) {
+                            createFeeBucket(input: $input) {
+                                id
+                                name
+                                description
+                                isActive
+                                createdAt
+                            }
+                        }
+                    `,
+                    variables: {
+                        input: bucketData
+                    }
+                }),
+            })
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+
+            const result = await response.json()
+            
+            if (result.errors) {
+                throw new Error(result.errors[0]?.message || 'Failed to create fee bucket')
+            }
+
+            // Reset modal and close
+            setBucketModalData({ name: '', description: '' })
+            setShowBucketModal(false)
+            
+            return result.data.createFeeBucket
+        } catch (error) {
+            console.error('Error creating fee bucket:', error)
+            throw error
+        } finally {
+            setIsCreatingBucket(false)
+        }
+    }
+
+    // Convert ProcessedFeeStructure to FeeStructureForm for PDF preview
+    const convertToPDFForm = (): FeeStructureForm => {
+        // Group buckets by term - for now, we'll create a single term structure
+        // since ProcessedFeeStructure doesn't have term-specific buckets
+        const termStructures = structure.terms.map((term, index) => ({
+            term: term.name as 'Term 1' | 'Term 2' | 'Term 3',
+            academicYear: structure.academicYear,
+            dueDate: '',
+            latePaymentFee: '',
+            earlyPaymentDiscount: '',
+            earlyPaymentDeadline: '',
+            buckets: structure.buckets.map(bucket => ({
+                id: bucket.feeBucketId,
+                type: 'tuition' as const,
+                name: bucket.name,
+                description: '',
+                isOptional: bucket.isOptional,
+                components: [{
+                    name: bucket.name,
+                    description: '',
+                    amount: bucket.totalAmount.toString(),
+                    category: 'fee'
+                }]
+            })),
+            existingBucketAmounts: {}
+        }))
+
+        return {
+            name: structure.structureName,
+            grade: '',
+            boardingType: 'both',
+            academicYear: structure.academicYear,
+            academicYearId: structure.academicYearId,
+            termStructures: termStructures.length > 0 ? termStructures : [{
+                term: structure.termName as 'Term 1' | 'Term 2' | 'Term 3',
+                academicYear: structure.academicYear,
+                dueDate: '',
+                latePaymentFee: '',
+                earlyPaymentDiscount: '',
+                earlyPaymentDeadline: '',
+                buckets: structure.buckets.map(bucket => ({
+                    id: bucket.feeBucketId,
+                    type: 'tuition' as const,
+                    name: bucket.name,
+                    description: '',
+                    isOptional: bucket.isOptional,
+                    components: [{
+                        name: bucket.name,
+                        description: '',
+                        amount: bucket.totalAmount.toString(),
+                        category: 'fee'
+                    }]
+                })),
+                existingBucketAmounts: {}
+            }]
+        }
+    }
+
+    // Handle PDF download
+    const handleDownloadPDF = () => {
+        // This would use a library like jsPDF or html2pdf
+        // For now, we'll use the browser's print functionality
+        window.print()
+    }
 
     return (
         <Card className={cn(
@@ -208,35 +335,59 @@ export const FeeStructureCard = ({
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                    {hasAssignments ? (
-                        <Button
-                            onClick={onGenerateInvoices}
-                            className="flex-1 bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg transition-all duration-300 group"
-                        >
-                            <FileText className="h-4 w-4 mr-2" />
-                            Generate Invoices
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    ) : (
-                        <Button
-                            onClick={onAssignToGrade}
-                            className="flex-1 bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg transition-all duration-300 group"
-                        >
-                            <Users className="h-4 w-4 mr-2" />
-                            Assign to Grades
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    )}
+                <div className="flex flex-col gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        {hasAssignments ? (
+                            <Button
+                                onClick={onGenerateInvoices}
+                                className="flex-1 bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg transition-all duration-300 group"
+                            >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Generate Invoices
+                                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={onAssignToGrade}
+                                className="flex-1 bg-primary hover:bg-primary-dark text-white shadow-md hover:shadow-lg transition-all duration-300 group"
+                            >
+                                <Users className="h-4 w-4 mr-2" />
+                                Assign to Grades
+                                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        )}
 
-                    <Button
-                        onClick={onEdit}
-                        variant="outline"
-                        className="sm:w-auto border-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300"
-                    >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                    </Button>
+                        <Button
+                            onClick={onEdit}
+                            variant="outline"
+                            className="sm:w-auto border-2 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300"
+                        >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button>
+                    </div>
+
+                    {/* Secondary Actions */}
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-200">
+                        <Button
+                            onClick={() => setShowBucketModal(true)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50"
+                        >
+                            <Plus className="h-3.5 w-3.5 mr-1.5" />
+                            Create Bucket
+                        </Button>
+                        <Button
+                            onClick={() => setShowPDFPreview(true)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        >
+                            <Eye className="h-3.5 w-3.5 mr-1.5" />
+                            Preview PDF
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Assignment Status Indicator */}
@@ -252,6 +403,73 @@ export const FeeStructureCard = ({
                     </div>
                 )}
             </div>
+
+            {/* Bucket Creation Modal */}
+            <BucketCreationModal
+                isOpen={showBucketModal}
+                onClose={() => {
+                    setShowBucketModal(false)
+                    setBucketModalData({ name: '', description: '' })
+                }}
+                bucketData={bucketModalData}
+                isCreating={isCreatingBucket}
+                onChange={setBucketModalData}
+                onCreateBucket={async () => {
+                    if (bucketModalData.name.trim()) {
+                        try {
+                            await createFeeBucket({
+                                name: bucketModalData.name.trim(),
+                                description: bucketModalData.description.trim()
+                            })
+                        } catch (error) {
+                            // Error is already logged in createFeeBucket
+                        }
+                    }
+                }}
+            />
+
+            {/* PDF Preview Modal */}
+            <Dialog open={showPDFPreview} onOpenChange={setShowPDFPreview}>
+                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <div className="flex items-center justify-between">
+                            <DialogTitle className="flex items-center gap-2">
+                                <FileText className="h-5 w-5 text-primary" />
+                                Fee Structure Preview - {structure.structureName}
+                            </DialogTitle>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDownloadPDF}
+                                    className="border-primary/30 text-primary hover:bg-primary/5"
+                                >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Download PDF
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowPDFPreview(false)}
+                                    className="h-8 w-8 p-0"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </DialogHeader>
+                    <div className="mt-4">
+                        <FeeStructurePDFPreview
+                            formData={convertToPDFForm()}
+                            feeBuckets={structure.buckets.map(b => ({
+                                id: b.feeBucketId,
+                                name: b.name,
+                                description: ''
+                            }))}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </Card>
     )
 }

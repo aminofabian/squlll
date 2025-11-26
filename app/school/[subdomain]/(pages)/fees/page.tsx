@@ -14,7 +14,7 @@ import { OverviewStatsCards } from './components/OverviewStatsCards'
 import { FiltersSection } from './components/FiltersSection'
 import { FeesDataTable } from './components/FeesDataTable'
 import { StudentInvoicesTable } from './components/StudentInvoicesTable'
-import { FeeStructureDrawer } from './components/FeeStructureDrawerRefactored'
+import { FeeStructureDrawer } from './components/FeeStructureDrawer'
 import RecordPaymentDrawer from './components/RecordPaymentDrawer'
 import StudentPayments from './components/StudentPayments'
 import { FeeStructureManager } from './components/FeeStructureManager'
@@ -117,9 +117,9 @@ export default function FeesPage() {
   } = useGraphQLFeeStructures()
 
   // Get grade data for fee structures
-  const { 
-    grades, 
-    isLoading: isLoadingGrades, 
+  const {
+    grades,
+    isLoading: isLoadingGrades,
     error: gradesError,
     fetchGradeData
   } = useGradeData()
@@ -130,21 +130,21 @@ export default function FeesPage() {
 
     return graphQLStructures.map(structure => {
       // Group items by bucket but preserve the first item ID for editing
-      const bucketMap = new Map<string, { 
-        id: string; 
-        name: string; 
-        totalAmount: number; 
-        isOptional: boolean; 
+      const bucketMap = new Map<string, {
+        id: string;
+        name: string;
+        totalAmount: number;
+        isOptional: boolean;
         firstItemId?: string;
-        feeBucketId: string; 
+        feeBucketId: string;
       }>();
-      
+
       // Process items if they exist
       if (structure.items && structure.items.length > 0) {
         structure.items.forEach((item: any) => {
           const bucketKey = item.feeBucket.id;
           const existingBucket = bucketMap.get(bucketKey);
-          
+
           if (existingBucket) {
             existingBucket.totalAmount += item.amount;
             existingBucket.isOptional = existingBucket.isOptional && !item.isMandatory;
@@ -160,7 +160,7 @@ export default function FeesPage() {
           }
         });
       }
-      
+
       return {
         structureId: structure.id,
         structureName: structure.name,
@@ -618,80 +618,80 @@ export default function FeesPage() {
           <div className="flex-1 flex flex-col">
             {/* Main Content Area */}
             <div className="flex-1 p-6">
-                {selectedStudent ? (
-                  // Student-specific view (unified invoice view)
-                  <div className="space-y-6">
-                    {/* Fee Summary Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold text-gray-900">Fee Summary</h2>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowStudentDetailsDrawer(true)}
-                        >
-                          View Full Details
-                        </Button>
-                      </div>
-                      <FeeSummaryCard
-                        studentData={finalStudentData}
-                        invoiceData={selectedStudentInvoices}
-                        loading={finalLoading}
-                        error={finalError}
-                      />
+              {selectedStudent ? (
+                // Student-specific view (unified invoice view)
+                <div className="space-y-6">
+                  {/* Fee Summary Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-gray-900">Fee Summary</h2>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowStudentDetailsDrawer(true)}
+                      >
+                        View Full Details
+                      </Button>
                     </div>
-
-                    {/* Fee Invoices Section */}
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-semibold text-gray-900">Fee Invoices</h2>
-                      <StudentInvoicesTable
-                        invoices={selectedStudentInvoices}
-                        studentName={finalStudentData?.studentName || 'Student'}
-                        onViewInvoice={handleViewInvoice}
-                      />
-                    </div>
-
-                    {/* Payment History Section */}
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-semibold text-gray-900">Payment History</h2>
-                      <StudentPayments studentId={selectedStudent} />
-                    </div>
-                  </div>
-                ) : (
-                  // General overview view
-                  <div className="space-y-6">
-                    {/* Overview Stats */}
-                    <OverviewStatsCards
-                      selectedStudent={selectedStudent}
-                      selectedStudentInvoices={selectedStudentInvoices}
-                      summaryStats={summaryStats}
-                      allStudents={filteredStudents}
-                    />
-
-                    {/* Filters */}
-                    <FiltersSection
-                      selectedFeeType={selectedFeeType}
-                      setSelectedFeeType={setSelectedFeeType}
-                      selectedStatus={selectedStatus}
-                      setSelectedStatus={setSelectedStatus}
-                      selectedClass=""
-                      setSelectedClass={() => { }}
-                      dueDateFilter=""
-                      setDueDateFilter={() => { }}
-                    />
-
-                    {/* Data Table - Using new allStudentsSummary query */}
-                    <FeesDataTable
-                      students={allStudentsSummary}
-                      loading={studentsLoading}
-                      error={studentsError}
-                      selectedStudents={selectedStudentsForTable}
-                      onSelectStudent={handleSelectStudent}
-                      onSelectAll={handleSelectAllStudents}
-                      onViewStudent={handleViewStudent}
+                    <FeeSummaryCard
+                      studentData={finalStudentData}
+                      invoiceData={selectedStudentInvoices}
+                      loading={finalLoading}
+                      error={finalError}
                     />
                   </div>
-                )}
+
+                  {/* Fee Invoices Section */}
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Fee Invoices</h2>
+                    <StudentInvoicesTable
+                      invoices={selectedStudentInvoices}
+                      studentName={finalStudentData?.studentName || 'Student'}
+                      onViewInvoice={handleViewInvoice}
+                    />
+                  </div>
+
+                  {/* Payment History Section */}
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Payment History</h2>
+                    <StudentPayments studentId={selectedStudent} />
+                  </div>
+                </div>
+              ) : (
+                // General overview view
+                <div className="space-y-6">
+                  {/* Overview Stats */}
+                  <OverviewStatsCards
+                    selectedStudent={selectedStudent}
+                    selectedStudentInvoices={selectedStudentInvoices}
+                    summaryStats={summaryStats}
+                    allStudents={filteredStudents}
+                  />
+
+                  {/* Filters */}
+                  <FiltersSection
+                    selectedFeeType={selectedFeeType}
+                    setSelectedFeeType={setSelectedFeeType}
+                    selectedStatus={selectedStatus}
+                    setSelectedStatus={setSelectedStatus}
+                    selectedClass=""
+                    setSelectedClass={() => { }}
+                    dueDateFilter=""
+                    setDueDateFilter={() => { }}
+                  />
+
+                  {/* Data Table - Using new allStudentsSummary query */}
+                  <FeesDataTable
+                    students={allStudentsSummary}
+                    loading={studentsLoading}
+                    error={studentsError}
+                    selectedStudents={selectedStudentsForTable}
+                    onSelectStudent={handleSelectStudent}
+                    onSelectAll={handleSelectAllStudents}
+                    onViewStudent={handleViewStudent}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -769,9 +769,6 @@ export default function FeesPage() {
           setSelectedStructure(null)
         }}
         onSave={handleSaveStructure}
-        initialData={selectedStructure && showEditForm ? convertStructureToForm(selectedStructure) : undefined}
-        mode={showCreateForm ? 'create' : 'edit'}
-        availableGrades={grades}
       />
 
       <BulkInvoiceGenerator
