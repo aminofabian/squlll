@@ -385,17 +385,19 @@ export const FeeStructureCard = ({
                     {hasAssignments ? (
                         <Button
                             onClick={onGenerateInvoices}
-                            className="w-full bg-primary hover:bg-primary/90 text-white h-10"
+                            size="sm"
+                            className="w-full bg-primary hover:bg-primary/90 text-white"
                         >
-                            <FileText className="h-4 w-4 mr-2" />
+                            <FileText className="h-3.5 w-3.5 mr-1.5" />
                             Generate Invoices
                         </Button>
                     ) : (
                         <Button
                             onClick={onAssignToGrade}
-                            className="w-full bg-primary hover:bg-primary/90 text-white h-10"
+                            size="sm"
+                            className="w-full bg-primary hover:bg-primary/90 text-white"
                         >
-                            <Users className="h-4 w-4 mr-2" />
+                            <Users className="h-3.5 w-3.5 mr-1.5" />
                             Assign to Grades
                         </Button>
                     )}
@@ -406,9 +408,9 @@ export const FeeStructureCard = ({
                             onClick={onEdit}
                             variant="outline"
                             size="sm"
-                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                            className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
                         >
-                            <Edit className="h-3.5 w-3.5 mr-1.5" />
+                            <Edit className="h-3 w-3 mr-1" />
                             Edit
                         </Button>
 
@@ -416,9 +418,9 @@ export const FeeStructureCard = ({
                             onClick={() => setShowBucketModal(true)}
                             variant="outline"
                             size="sm"
-                            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                            className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
                         >
-                            <Plus className="h-3.5 w-3.5 mr-1.5" />
+                            <Plus className="h-3 w-3 mr-1" />
                             Add Bucket
                         </Button>
                     </div>
@@ -428,9 +430,9 @@ export const FeeStructureCard = ({
                         onClick={() => setShowPDFPreview(true)}
                         variant="outline"
                         size="sm"
-                        className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
+                        className="w-full border-slate-300 text-slate-700 hover:bg-slate-50 text-xs"
                     >
-                        <Eye className="h-3.5 w-3.5 mr-2" />
+                        <Eye className="h-3 w-3 mr-1.5" />
                         Preview PDF
                     </Button>
                 </div>
