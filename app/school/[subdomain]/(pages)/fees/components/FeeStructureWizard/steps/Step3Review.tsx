@@ -41,24 +41,36 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
     }
     
     const getTotalForTerm = (termId: string): number => {
-        if (!formData.selectedBuckets || !formData.termBucketAmounts?.[termId]) {
-            return Object.values(formData.bucketAmounts).reduce((sum, b) => sum + b.amount, 0)
+        if (!formData.selectedBuckets) return 0
+        // If termBucketAmounts exists for this term, use it; otherwise fallback to global bucketAmounts
+        if (formData.termBucketAmounts?.[termId]) {
+            return formData.selectedBuckets.reduce((sum, bucketId) => {
+                return sum + getAmountForTerm(bucketId, termId)
+            }, 0)
         }
+        // Fallback to global amounts if term-specific amounts don't exist
         return formData.selectedBuckets.reduce((sum, bucketId) => {
-            return sum + getAmountForTerm(bucketId, termId)
+            return sum + (formData.bucketAmounts[bucketId]?.amount || 0)
         }, 0)
     }
     
     const getMandatoryTotalForTerm = (termId: string): number => {
-        if (!formData.selectedBuckets || !formData.termBucketAmounts?.[termId]) {
-            return Object.values(formData.bucketAmounts)
-                .filter(b => b.isMandatory)
-                .reduce((sum, b) => sum + b.amount, 0)
+        if (!formData.selectedBuckets) return 0
+        // If termBucketAmounts exists for this term, use it; otherwise fallback to global bucketAmounts
+        if (formData.termBucketAmounts?.[termId]) {
+            return formData.selectedBuckets.reduce((sum, bucketId) => {
+                const bucket = formData.termBucketAmounts?.[termId]?.[bucketId] || formData.bucketAmounts[bucketId]
+                if (bucket?.isMandatory) {
+                    return sum + getAmountForTerm(bucketId, termId)
+                }
+                return sum
+            }, 0)
         }
+        // Fallback to global amounts
         return formData.selectedBuckets.reduce((sum, bucketId) => {
-            const bucket = formData.termBucketAmounts?.[termId]?.[bucketId] || formData.bucketAmounts[bucketId]
+            const bucket = formData.bucketAmounts[bucketId]
             if (bucket?.isMandatory) {
-                return sum + getAmountForTerm(bucketId, termId)
+                return sum + (bucket.amount || 0)
             }
             return sum
         }, 0)
@@ -298,30 +310,89 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
                 </div>
             )}
 
-            {/* Total */}
-            <div className="bg-gradient-to-r from-primary/10 to-primary-light/5 rounded-xl p-6 border-2 border-primary/30 mt-6">
-                <div className="flex items-end justify-between">
-                    <div>
-                        <div className="text-5xl font-bold text-primary">
-                            {totalAmount.toLocaleString()}
-                        </div>
-                        <div className="text-sm text-slate-600 mt-2">
-                            {hasTerms && hasTermSpecificAmounts
-                                ? `KES total (${formData.terms?.length} terms)`
-                                : 'KES per term'
-                            }
+            {/* Total - Enhanced with per-term breakdown */}
+            {hasTerms && formData.terms && formData.terms.length > 0 ? (
+                <div className="space-y-4 mt-6">
+                    {/* Per-term totals */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {formData.terms.map((term) => {
+                            const termTotal = getTotalForTerm(term.id)
+                            const termMandatory = getMandatoryTotalForTerm(term.id)
+                            return (
+                                <div key={term.id} className="bg-gradient-to-br from-slate-50 to-white rounded-lg p-4 border border-slate-200">
+                                    <div className="text-xs font-medium text-slate-600 mb-1">{term.name}</div>
+                                    <div className="text-2xl font-bold text-primary">
+                                        {termTotal.toLocaleString()} KES
+                                    </div>
+                                    {termTotal !== termMandatory && (
+                                        <div className="text-xs text-slate-500 mt-1">
+                                            Required: {termMandatory.toLocaleString()} KES
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    {/* Grand Total - Creative Design */}
+                    <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 rounded-xl p-6 border-2 border-primary shadow-lg relative overflow-hidden">
+                        {/* Decorative elements */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
+                        
+                        <div className="relative flex items-end justify-between">
+                            <div>
+                                <div className="text-xs font-semibold text-white/90 uppercase tracking-wider mb-2">
+                                    Grand Total
+                                </div>
+                                <div className="text-6xl font-bold text-white mb-1">
+                                    {totalAmount.toLocaleString()}
+                                </div>
+                                <div className="text-sm text-white/80 font-medium">
+                                    KES across {formData.terms.length} term{formData.terms.length !== 1 ? 's' : ''}
+                                </div>
+                                {formData.terms.length > 1 && (
+                                    <div className="text-xs text-white/70 mt-2">
+                                        Average: {(totalAmount / formData.terms.length).toLocaleString(undefined, { maximumFractionDigits: 0 })} KES per term
+                                    </div>
+                                )}
+                            </div>
+                            {totalAmount !== mandatoryAmount && (
+                                <div className="text-right bg-white/20 rounded-lg px-4 py-3 backdrop-blur-sm">
+                                    <div className="text-xs text-white/90 font-medium mb-1">Required Amount</div>
+                                    <div className="text-3xl font-bold text-white">
+                                        {mandatoryAmount.toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-white/80 mt-1">
+                                        Optional: {(totalAmount - mandatoryAmount).toLocaleString()} KES
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-                    {totalAmount !== mandatoryAmount && (
-                        <div className="text-right">
-                            <div className="text-xs text-slate-600">Required</div>
-                            <div className="text-2xl font-bold text-slate-900">
-                                {mandatoryAmount.toLocaleString()}
+                </div>
+            ) : (
+                <div className="bg-gradient-to-r from-primary/10 to-primary-light/5 rounded-xl p-6 border-2 border-primary/30 mt-6">
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <div className="text-5xl font-bold text-primary">
+                                {totalAmount.toLocaleString()}
+                            </div>
+                            <div className="text-sm text-slate-600 mt-2">
+                                KES per term
                             </div>
                         </div>
-                    )}
+                        {totalAmount !== mandatoryAmount && (
+                            <div className="text-right">
+                                <div className="text-xs text-slate-600">Required</div>
+                                <div className="text-2xl font-bold text-slate-900">
+                                    {mandatoryAmount.toLocaleString()}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* PDF Preview Link */}
             <div className="mt-6 pt-6 border-t border-slate-200">

@@ -201,11 +201,13 @@ export const FeeStructureManager = ({
   }
   
   // Handle opening the assign fee structure modal
-  const handleAssignToGrade = (feeStructureId: string, name: string, academicYear?: string) => {
+  const handleAssignToGrade = (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => {
     setFeeStructureToAssign({
       id: feeStructureId,
       name,
       academicYear,
+      academicYearId,
+      termId,
       isActive: true
     })
     setIsAssignModalOpen(true)

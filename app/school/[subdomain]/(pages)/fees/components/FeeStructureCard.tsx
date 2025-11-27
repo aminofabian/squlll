@@ -583,6 +583,16 @@ export const FeeStructureCard = ({
                         >
                             <Eye className="h-4 w-4" />
                         </Button>
+
+                        <Button
+                            onClick={onDelete}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-all duration-200 h-8 px-2 shadow-sm hover:shadow-md hover:scale-105"
+                            title="Delete Structure"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
             </div>

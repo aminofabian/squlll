@@ -16,7 +16,7 @@ import { ProcessedFeeStructure } from './types'
 interface FeeStructureCardProps {
   structure: ProcessedFeeStructure
   onEdit: (feeStructure: FeeStructure) => void
-  onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string) => void
+  onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
   onDelete?: (id: string, name: string) => void
   onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => void
@@ -146,7 +146,9 @@ export const FeeStructureCard = ({
             onClick={() => onAssignToGrade(
               structure.structureId, 
               structure.structureName, 
-              structure.academicYear
+              structure.academicYear,
+              structure.academicYearId,
+              structure.termId
             )}
           >
             <Users className="h-4 w-4 mr-1" />

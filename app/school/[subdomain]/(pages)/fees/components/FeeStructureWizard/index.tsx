@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -8,12 +8,19 @@ import { WizardProgress } from './WizardProgress'
 import { Step1QuickSetup } from './steps/Step1QuickSetup'
 import { Step2Amounts } from './steps/Step2Amounts'
 import { Step3Review } from './steps/Step3Review'
-import { useGraphQLFeeStructures } from '../../hooks/useGraphQLFeeStructures'
+import { useGraphQLFeeStructures, UpdateFeeStructureInput, GraphQLFeeStructure } from '../../hooks/useGraphQLFeeStructures'
+import { FeeStructureForm } from '../../types'
 
 interface FeeStructureWizardProps {
     isOpen: boolean
     onClose: () => void
     onSave: (data: any) => void
+    initialData?: FeeStructureForm
+    mode?: 'create' | 'edit'
+    availableGrades?: any[]
+    structureId?: string // ID of the structure being edited
+    structureData?: GraphQLFeeStructure // Full GraphQL structure data (preferred over fetching)
+    processedStructureData?: any // Processed structure with all terms grouped
 }
 
 const steps = [
@@ -22,11 +29,13 @@ const steps = [
     { number: 3, title: 'Review' }
 ]
 
-export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWizardProps) => {
+export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode = 'create', availableGrades = [], structureId, structureData, processedStructureData }: FeeStructureWizardProps) => {
     const [currentStep, setCurrentStep] = useState(1)
     const [isSaving, setIsSaving] = useState(false)
     const [showSuccess, setShowSuccess] = useState(false)
-    const { createFeeStructureWithItems } = useGraphQLFeeStructures()
+    const [isLoadingStructure, setIsLoadingStructure] = useState(false)
+    const { createFeeStructureWithItems, updateFeeStructure } = useGraphQLFeeStructures()
+    const isEditMode = mode === 'edit'
 
     const [formData, setFormData] = useState({
         name: '',
@@ -40,6 +49,251 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
         bucketAmounts: {} as Record<string, { id: string; name: string; amount: number; isMandatory: boolean }>,
         termBucketAmounts: {} as Record<string, Record<string, { id: string; name: string; amount: number; isMandatory: boolean }>>
     })
+
+    // Initialize form data from structureData when in edit mode
+    useEffect(() => {
+        const initializeStructureData = () => {
+            if (isEditMode && isOpen) {
+                // Use structureData if provided, otherwise we'll need to fetch
+                const structure = structureData
+                
+                if (!structure) {
+                    // If no structureData provided, try to fetch it
+                    if (structureId) {
+                        setIsLoadingStructure(true)
+                        fetch('/api/graphql', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                query: `
+                                    query GetFeeStructure($id: ID!) {
+                                        feeStructure(id: $id) {
+                                            id
+                                            name
+                                            isActive
+                                            academicYear {
+                                                id
+                                                name
+                                            }
+                                            terms {
+                                                id
+                                                name
+                                            }
+                                            gradeLevels {
+                                                id
+                                                shortName
+                                                gradeLevel {
+                                                    id
+                                                    name
+                                                }
+                                            }
+                                            items {
+                                                id
+                                                feeBucket {
+                                                    id
+                                                    name
+                                                }
+                                                amount
+                                                isMandatory
+                                            }
+                                        }
+                                    }
+                                `,
+                                variables: { id: structureId }
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.errors || !result.data?.feeStructure) {
+                                console.error('Error fetching fee structure:', result.errors)
+                                setIsLoadingStructure(false)
+                                return
+                            }
+                            populateFormData(result.data.feeStructure, processedStructureData)
+                            setIsLoadingStructure(false)
+                        })
+                        .catch(error => {
+                            console.error('Error fetching fee structure:', error)
+                            setIsLoadingStructure(false)
+                        })
+                    }
+                    return
+                }
+
+                // Use the provided structureData directly
+                // Note: populateFormData will use processedStructureData for all terms if available
+                populateFormData(structure, processedStructureData)
+            } else if (!isEditMode && isOpen) {
+                // Reset form when opening in create mode
+                setCurrentStep(1)
+                setFormData({
+                    name: '',
+                    grade: '',
+                    boardingType: 'day',
+                    academicYear: new Date().getFullYear().toString(),
+                    academicYearId: '',
+                    selectedGrades: [],
+                    selectedBuckets: [],
+                    terms: [],
+                    bucketAmounts: {},
+                    termBucketAmounts: {}
+                })
+            }
+        }
+
+        const populateFormData = (structure: GraphQLFeeStructure, processedData?: any) => {
+            // Extract grade names from gradeLevels
+            const gradeNames = structure.gradeLevels?.map((gl: any) => 
+                gl.gradeLevel?.name || gl.shortName || ''
+            ).filter((name: string) => name) || []
+
+            // Extract terms - use all terms from processedStructureData if available (has all terms from grouped structures)
+            // Otherwise use terms from the single structure
+            let terms: Array<{ id: string; name: string }> = []
+            if (processedData?.terms && processedData.terms.length > 0) {
+                // Use all terms from the processed structure (grouped)
+                terms = processedData.terms.map((term: any) => ({
+                    id: term.id,
+                    name: term.name
+                }))
+                console.log('✅ Using all terms from processed structure:', terms.length, 'terms:', terms.map(t => t.name))
+            } else {
+                // Fallback to terms from single structure
+                terms = structure.terms?.map((term: any) => ({
+                    id: term.id,
+                    name: term.name
+                })) || []
+                console.log('⚠️ Using terms from single structure:', terms.length, 'terms:', terms.map(t => t.name))
+            }
+
+            // Extract buckets and amounts - use actual term-specific data from allStructures
+            const selectedBuckets: string[] = []
+            const bucketAmounts: Record<string, { id: string; name: string; amount: number; isMandatory: boolean }> = {}
+            const termBucketAmounts: Record<string, Record<string, { id: string; name: string; amount: number; isMandatory: boolean }>> = {}
+            
+            // If we have processedData with allStructures, use actual term-specific amounts
+            if (processedData?.allStructures && processedData.allStructures.length > 0) {
+                console.log('📊 Using allStructures to get term-specific amounts:', processedData.allStructures.length, 'structures')
+                
+                // Process each structure to get term-specific amounts
+                // Each structure in allStructures represents a fee structure for specific term(s)
+                processedData.allStructures.forEach((struct: any) => {
+                    const structTerms = struct.terms || []
+                    console.log(`  📋 Processing structure "${struct.name}" with terms:`, structTerms.map((t: any) => t.name), `and ${struct.items?.length || 0} items`)
+                    
+                    // Process items from this structure - these items apply to this structure's terms
+                    struct.items?.forEach((item: any) => {
+                        const bucketId = item.feeBucket?.id
+                        if (!bucketId) return
+
+                        // Add to selected buckets if not already there
+                        if (!selectedBuckets.includes(bucketId)) {
+                            selectedBuckets.push(bucketId)
+                        }
+
+                        // Map items to their specific terms (this structure's terms)
+                        // Each structure's items are mapped to its own terms
+                        structTerms.forEach((term: any) => {
+                            if (!termBucketAmounts[term.id]) {
+                                termBucketAmounts[term.id] = {}
+                            }
+                            
+                            // Store the actual amount for this term and bucket from this structure
+                            // This ensures each term gets its actual amounts, not duplicated
+                            const existing = termBucketAmounts[term.id][bucketId]
+                            if (existing && existing.amount !== item.amount) {
+                                console.log(`  ⚠️ Term ${term.name} bucket ${item.feeBucket.name} has different amounts: ${existing.amount} vs ${item.amount}, using ${item.amount}`)
+                            }
+                            
+                            termBucketAmounts[term.id][bucketId] = {
+                                id: bucketId,
+                                name: item.feeBucket.name,
+                                amount: item.amount, // Use actual amount from this structure
+                                isMandatory: item.isMandatory
+                            }
+                        })
+                    })
+                })
+                
+                // Also populate global bucketAmounts (use first term's amounts as default/fallback)
+                if (terms.length > 0 && termBucketAmounts[terms[0].id]) {
+                    Object.assign(bucketAmounts, termBucketAmounts[terms[0].id])
+                }
+                
+                // Log the actual amounts per term for debugging
+                console.log('✅ Populated term-specific amounts:', {
+                    terms: terms.length,
+                    buckets: selectedBuckets.length,
+                    termAmounts: terms.map(term => {
+                        const termAmounts = termBucketAmounts[term.id] || {}
+                        const termTotal = Object.values(termAmounts).reduce((sum: number, b: any) => sum + (b.amount || 0), 0)
+                        return {
+                            term: term.name,
+                            buckets: Object.keys(termAmounts).length,
+                            total: termTotal
+                        }
+                    })
+                })
+            } else {
+                // Fallback: use single structure's items (no term-specific data available)
+                console.log('⚠️ No allStructures available, using single structure items')
+                structure.items?.forEach((item: any) => {
+                    const bucketId = item.feeBucket?.id
+                    if (!bucketId) return
+
+                    // Add to selected buckets if not already there
+                    if (!selectedBuckets.includes(bucketId)) {
+                        selectedBuckets.push(bucketId)
+                    }
+
+                    // Store bucket amount in global amounts
+                    bucketAmounts[bucketId] = {
+                        id: bucketId,
+                        name: item.feeBucket.name,
+                        amount: item.amount,
+                        isMandatory: item.isMandatory
+                    }
+                })
+
+                // Populate termBucketAmounts for ALL terms with the same bucket amounts (fallback)
+                terms.forEach((term) => {
+                    termBucketAmounts[term.id] = {}
+                    selectedBuckets.forEach((bucketId) => {
+                        const bucket = bucketAmounts[bucketId]
+                        if (bucket) {
+                            termBucketAmounts[term.id][bucketId] = { ...bucket }
+                        }
+                    })
+                })
+            }
+
+            // Set form data with structure data
+            setFormData({
+                name: structure.name || '',
+                grade: gradeNames[0] || '',
+                boardingType: 'day',
+                academicYear: structure.academicYear?.name || new Date().getFullYear().toString(),
+                academicYearId: structure.academicYear?.id || '',
+                selectedGrades: gradeNames,
+                selectedBuckets: selectedBuckets,
+                terms: terms,
+                bucketAmounts: bucketAmounts,
+                termBucketAmounts: termBucketAmounts // Now populated for all terms!
+            })
+
+            console.log('✅ Fee structure loaded for editing:', {
+                name: structure.name,
+                academicYearId: structure.academicYear?.id,
+                termsCount: terms.length,
+                bucketsCount: selectedBuckets.length,
+                bucketAmounts: Object.keys(bucketAmounts).length
+            })
+
+            setCurrentStep(1)
+        }
+
+        initializeStructureData()
+    }, [isEditMode, structureId, isOpen, structureData, processedStructureData])
 
     const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -125,6 +379,84 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
             if (formData.selectedBuckets.length === 0) {
                 throw new Error('At least one fee component is required')
             }
+
+            // Handle edit mode - use update mutation
+            if (isEditMode && structureId) {
+                // Fetch grade level IDs for the selected grades
+                const gradeLevelsResponse = await fetch('/api/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: `
+                            query GradeLevelsForSchoolType {
+                                gradeLevelsForSchoolType {
+                                    id
+                                    shortName
+                                    gradeLevel {
+                                        id
+                                        name
+                                    }
+                                }
+                            }
+                        `
+                    })
+                })
+
+                if (!gradeLevelsResponse.ok) {
+                    throw new Error('Failed to fetch grade levels')
+                }
+
+                const gradeLevelsResult = await gradeLevelsResponse.json()
+                if (gradeLevelsResult.errors) {
+                    throw new Error(gradeLevelsResult.errors[0]?.message || 'Failed to fetch grade levels')
+                }
+
+                const allGradeLevels = gradeLevelsResult.data?.gradeLevelsForSchoolType || []
+                const gradeLevelIds = formData.selectedGrades
+                    .map(gradeName => {
+                        const gradeLevel = allGradeLevels.find((gl: any) => 
+                            gl.gradeLevel?.name === gradeName || gl.shortName === gradeName
+                        )
+                        return gradeLevel?.id
+                    })
+                    .filter((id): id is string => !!id)
+
+                if (gradeLevelIds.length === 0) {
+                    throw new Error('Could not find grade level IDs for selected grades. Please try again.')
+                }
+
+                // Update the fee structure
+                const updateInput: UpdateFeeStructureInput = {
+                    name: formData.name,
+                    isActive: true,
+                    gradeLevelIds: gradeLevelIds
+                }
+
+                const updatedStructureId = await updateFeeStructure(structureId, updateInput)
+                
+                if (!updatedStructureId) {
+                    throw new Error('Failed to update fee structure')
+                }
+
+                // Call onSave with the updated data
+                await onSave({
+                    id: updatedStructureId,
+                    name: formData.name,
+                    selectedGrades: formData.selectedGrades,
+                    academicYear: formData.academicYear,
+                    terms: formData.terms.map(t => t.name).join(', ')
+                })
+
+                setShowSuccess(true)
+                setTimeout(() => {
+                    setShowSuccess(false)
+                    onClose()
+                    setCurrentStep(1)
+                }, 1500)
+                return
+            }
+
+            // Continue with create mode logic below...
 
             // Fetch grade level IDs from the API
             const gradeLevelsResponse = await fetch('/api/graphql', {
@@ -421,26 +753,35 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent side="right" className="w-full sm:max-w-2xl p-0 flex flex-col">
                 <SheetHeader className="px-6 pt-6 pb-4 border-b flex-shrink-0">
-                    <SheetTitle className="text-xl font-bold">Create Fee Structure</SheetTitle>
+                    <SheetTitle className="text-xl font-bold">
+                        {isEditMode ? 'Edit Fee Structure' : 'Create Fee Structure'}
+                    </SheetTitle>
                     <SheetDescription className="text-sm text-slate-600 mt-1">
-                        Set up fee components and amounts
+                        {isEditMode ? 'Update fee structure details and components' : 'Set up fee components and amounts'}
                     </SheetDescription>
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto px-6 py-8">
                     <WizardProgress currentStep={currentStep} steps={steps} />
 
-                    <div className="mt-10">
-                        {currentStep === 1 && (
-                            <Step1QuickSetup formData={formData} onChange={updateFormData} errors={errors} />
-                        )}
-                        {currentStep === 2 && (
-                            <Step2Amounts formData={formData} onChange={updateFormData} errors={errors} />
-                        )}
-                        {currentStep === 3 && (
-                            <Step3Review formData={formData} onChange={updateFormData} />
-                        )}
-                    </div>
+                    {isLoadingStructure ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <span className="ml-3 text-slate-600">Loading fee structure...</span>
+                        </div>
+                    ) : (
+                        <div className="mt-10">
+                            {currentStep === 1 && (
+                                <Step1QuickSetup formData={formData} onChange={updateFormData} errors={errors} />
+                            )}
+                            {currentStep === 2 && (
+                                <Step2Amounts formData={formData} onChange={updateFormData} errors={errors} />
+                            )}
+                            {currentStep === 3 && (
+                                <Step3Review formData={formData} onChange={updateFormData} />
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -480,7 +821,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
                                         Saving...
                                     </>
                                 ) : (
-                                    'Create'
+                                    isEditMode ? 'Update' : 'Create'
                                 )}
                             </Button>
                         )}

@@ -68,6 +68,8 @@ export default function FeesPage() {
   const [showEditForm, setShowEditForm] = useState(false)
   const [showInvoiceGenerator, setShowInvoiceGenerator] = useState(false)
   const [selectedStructure, setSelectedStructure] = useState<FeeStructure | null>(null)
+  const [selectedGraphQLStructure, setSelectedGraphQLStructure] = useState<any>(null)
+  const [selectedProcessedStructure, setSelectedProcessedStructure] = useState<any>(null)
   const [preselectedStructureId, setPreselectedStructureId] = useState<string>('')
   const [preselectedTerm, setPreselectedTerm] = useState<string>('')
   
@@ -435,32 +437,51 @@ export default function FeesPage() {
   }
 
   const handleEdit = (feeStructure: FeeStructure) => {
+    // Find the processed structure which has all terms grouped
+    const processedStructure = processedFeeStructures.find(s => s.structureId === feeStructure.id)
+    
+    // Find the full GraphQL structure data (use first one from the group if available)
+    const graphQLStructure = processedStructure?.allStructures?.[0] || 
+                              graphQLStructures.find(s => s.id === feeStructure.id)
+    
+    // If we have a processed structure, we can get all terms from it
+    // Otherwise, we'll need to fetch terms from the academic year
     setSelectedStructure(feeStructure)
+    setSelectedGraphQLStructure(graphQLStructure || null)
+    setSelectedProcessedStructure(processedStructure || null)
     setShowEditForm(true)
   }
 
-  const handleDelete = async (feeStructureId: string) => {
+  const handleDelete = async (feeStructureId: string, structureName?: string) => {
     try {
       // Show loading toast
       toast({
         title: "Deleting fee structure...",
-        description: "Please wait while we delete this fee structure.",
+        description: structureName 
+          ? `Please wait while we delete "${structureName}".`
+          : "Please wait while we delete this fee structure.",
       })
 
       const success = await graphqlDeleteFeeStructure(feeStructureId)
 
       if (success) {
+        // Refresh fee structures list after successful deletion
+        await fetchFeeStructures()
+        
         // Show success toast
         toast({
           title: "Fee structure deleted",
-          description: "The fee structure has been successfully deleted.",
-          variant: "success",
+          description: structureName
+            ? `"${structureName}" has been successfully deleted.`
+            : "The fee structure has been successfully deleted.",
+          variant: "default",
         })
-      } else if (deleteError) {
-        // Show error toast
+      } else {
+        // Show error toast with detailed error message
+        const errorMsg = deleteError || 'Failed to delete fee structure. The structure may be in use or you may not have permission to delete it.'
         toast({
           title: "Deletion failed",
-          description: `Error: ${deleteError}`,
+          description: errorMsg,
           variant: "destructive",
         })
       }
@@ -483,15 +504,16 @@ export default function FeesPage() {
         // For edit mode, use GraphQL to update the fee structure
         console.log('Updating fee structure with GraphQL:', selectedStructure.id);
 
-        // Extract the academicYearId and termId from the form or use defaults
-        // In a real implementation, you would get these IDs from your form or API
+        // Find the structure in graphQLStructures to get current gradeLevelIds
+        const currentStructure = graphQLStructures.find(s => s.id === selectedStructure.id);
+        const gradeLevelIds = currentStructure?.gradeLevels?.map(gl => gl.id) || [];
+
+        // Build update input with new format
         const updateInput: UpdateFeeStructureInput = {
           name: formData.name,
           isActive: true,
-          // Use the academic year ID and term ID from the user's example
-          // In a real app, these would come from dropdowns or selections
-          academicYearId: "0216c3ab-7197-4538-97be-0527b3a8a164",
-          termIds: ["6d17670b-11e4-430f-828b-c48e746b5507"]
+          // Include gradeLevelIds if available, otherwise keep existing ones
+          gradeLevelIds: gradeLevelIds.length > 0 ? gradeLevelIds : undefined
         };
 
         result = await graphqlUpdateFeeStructure(selectedStructure.id, updateInput);
@@ -901,8 +923,43 @@ export default function FeesPage() {
           setShowCreateForm(false)
           setShowEditForm(false)
           setSelectedStructure(null)
+          setSelectedGraphQLStructure(null)
+          setSelectedProcessedStructure(null)
         }}
         onSave={handleSaveStructure}
+        mode={showEditForm ? 'edit' : 'create'}
+        structureId={selectedStructure?.id}
+        structureData={selectedGraphQLStructure}
+        processedStructureData={selectedProcessedStructure}
+        initialData={selectedStructure ? {
+          name: selectedStructure.name,
+          grade: selectedStructure.grade,
+          boardingType: selectedStructure.boardingType,
+          academicYear: selectedStructure.academicYear,
+          academicYearId: selectedStructure.academicYearId,
+          termStructures: selectedStructure.termStructures.map(term => ({
+            term: term.term as string,
+            academicYear: selectedStructure.academicYear,
+            dueDate: term.dueDate,
+            latePaymentFee: term.latePaymentFee.toString(),
+            earlyPaymentDiscount: term.earlyPaymentDiscount?.toString() || '0',
+            earlyPaymentDeadline: term.earlyPaymentDeadline || '',
+            buckets: term.buckets.map(bucket => ({
+              id: bucket.id,
+              type: bucket.type,
+              name: bucket.name,
+              description: bucket.description,
+              isOptional: bucket.isOptional,
+              components: bucket.components.map(component => ({
+                name: component.name,
+                description: component.description,
+                amount: component.amount.toString(),
+                category: component.category
+              }))
+            }))
+          }))
+        } : undefined}
+        availableGrades={grades}
       />
 
       <BulkInvoiceGenerator

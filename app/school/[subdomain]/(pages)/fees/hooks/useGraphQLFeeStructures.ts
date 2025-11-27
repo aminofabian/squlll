@@ -52,9 +52,8 @@ export interface FeeStructuresResponse {
 // Interface for the update fee structure input
 export interface UpdateFeeStructureInput {
   name?: string;
-  academicYearId?: string;
-  termIds?: string[];
   isActive?: boolean;
+  gradeLevelIds?: string[];
 }
 
 // Interface for creating a fee structure
@@ -200,6 +199,10 @@ export const useGraphQLFeeStructures = () => {
             id
             name
             isActive
+            gradeLevels {
+              id
+              shortName
+            }
           }
         }
       `;
@@ -228,9 +231,35 @@ export const useGraphQLFeeStructures = () => {
       console.log('Update response:', result);
       
       if (result.errors) {
-        const errorMessage = result.errors.map((e: any) => e.message).join(', ');
-        console.error('GraphQL errors:', result.errors);
-        throw new Error(errorMessage);
+        // Extract detailed error information
+        const errorMessages = result.errors.map((e: any) => {
+          const baseMessage = e.message || 'Unknown error';
+          const exceptionMessage = e.extensions?.exception?.message;
+          const code = e.extensions?.code;
+          const originalError = e.extensions?.originalError?.message;
+          
+          let detailedMessage = baseMessage;
+          if (code) detailedMessage += ` [${code}]`;
+          if (exceptionMessage && exceptionMessage !== baseMessage) {
+            detailedMessage += `: ${exceptionMessage}`;
+          } else if (originalError) {
+            detailedMessage += `: ${originalError}`;
+          }
+          
+          return detailedMessage;
+        }).join(', ');
+        
+        console.error('❌ GraphQL Update Fee Structure Error:', {
+          message: result.errors[0]?.message,
+          path: result.errors[0]?.path,
+          code: result.errors[0]?.extensions?.code,
+          exception: result.errors[0]?.extensions?.exception,
+          originalError: result.errors[0]?.extensions?.originalError,
+          fullError: result.errors[0],
+          allErrors: result.errors
+        });
+        
+        throw new Error(errorMessages);
       }
 
       if (!result.data?.updateFeeStructure) {
@@ -240,7 +269,12 @@ export const useGraphQLFeeStructures = () => {
       // Update the structure in the local state
       const updatedStructure = result.data.updateFeeStructure;
       setStructures(prev => prev.map(structure => 
-        structure.id === id ? { ...structure, ...updatedStructure } : structure
+        structure.id === id ? { 
+          ...structure, 
+          name: updatedStructure.name,
+          isActive: updatedStructure.isActive,
+          gradeLevels: updatedStructure.gradeLevels || structure.gradeLevels
+        } : structure
       ));
 
       // Refresh the full list to ensure proper grouping and processing
@@ -296,13 +330,48 @@ export const useGraphQLFeeStructures = () => {
       console.log('Delete response:', result);
       
       if (result.errors) {
-        const errorMessage = result.errors.map((e: any) => e.message).join(', ');
-        console.error('GraphQL errors:', result.errors);
-        throw new Error(errorMessage);
+        // Extract detailed error information
+        const errorMessages = result.errors.map((e: any) => {
+          const baseMessage = e.message || 'Unknown error';
+          
+          // Check for additional error details in extensions
+          const exceptionMessage = e.extensions?.exception?.message;
+          const exceptionStack = e.extensions?.exception?.stack;
+          const code = e.extensions?.code;
+          const originalError = e.extensions?.originalError?.message;
+          
+          // Build detailed error message
+          let detailedMessage = baseMessage;
+          if (code) detailedMessage += ` [${code}]`;
+          if (exceptionMessage && exceptionMessage !== baseMessage) {
+            detailedMessage += `: ${exceptionMessage}`;
+          } else if (originalError) {
+            detailedMessage += `: ${originalError}`;
+          }
+          
+          return detailedMessage;
+        }).join(', ');
+        
+        // Log full error details for debugging
+        console.error('❌ GraphQL Delete Fee Structure Error:', {
+          message: result.errors[0]?.message,
+          path: result.errors[0]?.path,
+          code: result.errors[0]?.extensions?.code,
+          exception: result.errors[0]?.extensions?.exception,
+          originalError: result.errors[0]?.extensions?.originalError,
+          fullError: result.errors[0],
+          allErrors: result.errors
+        });
+        
+        throw new Error(errorMessages);
       }
 
       if (result.data?.deleteFeeStructure !== true) {
-        throw new Error('Failed to delete fee structure');
+        // Check if data is null or false
+        if (result.data === null) {
+          throw new Error('Failed to delete fee structure: The structure may be in use or does not exist');
+        }
+        throw new Error('Failed to delete fee structure: Unexpected response from server');
       }
 
       // Remove the structure from local state

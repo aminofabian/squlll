@@ -296,18 +296,36 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
     }
     
     const getTotalForTerm = (termId: string): number => {
-        if (!formData.selectedBuckets || !formData.termBucketAmounts?.[termId]) return 0
+        if (!formData.selectedBuckets) return 0
+        // If termBucketAmounts exists for this term, use it; otherwise fallback to global bucketAmounts
+        if (formData.termBucketAmounts?.[termId]) {
+            return formData.selectedBuckets.reduce((sum, bucketId) => {
+                return sum + getAmountForTerm(bucketId, termId)
+            }, 0)
+        }
+        // Fallback to global amounts if term-specific amounts don't exist
         return formData.selectedBuckets.reduce((sum, bucketId) => {
-            return sum + getAmountForTerm(bucketId, termId)
+            return sum + (bucketAmounts[bucketId]?.amount || 0)
         }, 0)
     }
     
     const getMandatoryTotalForTerm = (termId: string): number => {
-        if (!formData.selectedBuckets || !formData.termBucketAmounts?.[termId]) return 0
+        if (!formData.selectedBuckets) return 0
+        // If termBucketAmounts exists for this term, use it; otherwise fallback to global bucketAmounts
+        if (formData.termBucketAmounts?.[termId]) {
+            return formData.selectedBuckets.reduce((sum, bucketId) => {
+                const bucket = formData.termBucketAmounts?.[termId]?.[bucketId] || bucketAmounts[bucketId]
+                if (bucket?.isMandatory) {
+                    return sum + getAmountForTerm(bucketId, termId)
+                }
+                return sum
+            }, 0)
+        }
+        // Fallback to global amounts
         return formData.selectedBuckets.reduce((sum, bucketId) => {
-            const bucket = formData.termBucketAmounts?.[termId]?.[bucketId] || bucketAmounts[bucketId]
+            const bucket = bucketAmounts[bucketId]
             if (bucket?.isMandatory) {
-                return sum + getAmountForTerm(bucketId, termId)
+                return sum + (bucket.amount || 0)
             }
             return sum
         }, 0)
@@ -631,36 +649,75 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
                         <p className="text-sm text-red-600 mt-2">{errors.bucketAmounts}</p>
                     )}
 
-                    {/* Total Summary */}
-                    <div className="bg-primary/10 rounded-lg p-5 border-2 border-primary/30">
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <div className="text-4xl font-bold text-primary">
-                                    {hasTerms 
-                                        ? formData.terms?.reduce((sum, term) => sum + getTotalForTerm(term.id), 0).toLocaleString() || '0'
-                                        : totalAmount.toLocaleString()
-                                    }
-                                </div>
-                                <div className="text-sm text-slate-600 mt-1">
-                                    {hasTerms 
-                                        ? `KES total (${formData.terms?.length} terms)`
-                                        : 'KES per term'
-                                    }
+                    {/* Total Summary - Enhanced */}
+                    {hasTerms && formData.terms && formData.terms.length > 0 ? (
+                        <div className="space-y-3">
+                            {/* Per-term breakdown */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                {formData.terms.map((term) => {
+                                    const termTotal = getTotalForTerm(term.id)
+                                    return (
+                                        <div key={term.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                                            <div className="text-xs font-medium text-slate-600 mb-1">{term.name}</div>
+                                            <div className="text-lg font-bold text-primary">
+                                                {termTotal.toLocaleString()} KES
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            
+                            {/* Grand Total */}
+                            <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 rounded-lg p-5 border-2 border-primary shadow-md">
+                                <div className="flex items-end justify-between">
+                                    <div>
+                                        <div className="text-xs font-semibold text-white/90 uppercase tracking-wider mb-1">
+                                            Grand Total
+                                        </div>
+                                        <div className="text-5xl font-bold text-white">
+                                            {formData.terms.reduce((sum, term) => sum + getTotalForTerm(term.id), 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-sm text-white/80 font-medium mt-1">
+                                            KES across {formData.terms.length} term{formData.terms.length !== 1 ? 's' : ''}
+                                        </div>
+                                    </div>
+                                    {(() => {
+                                        const grandMandatory = formData.terms.reduce((sum, term) => sum + getMandatoryTotalForTerm(term.id), 0)
+                                        const grandTotal = formData.terms.reduce((sum, term) => sum + getTotalForTerm(term.id), 0)
+                                        return grandTotal !== grandMandatory ? (
+                                            <div className="text-right bg-white/20 rounded-lg px-3 py-2 backdrop-blur-sm">
+                                                <div className="text-xs text-white/90 font-medium">Required</div>
+                                                <div className="text-2xl font-bold text-white">
+                                                    {grandMandatory.toLocaleString()}
+                                                </div>
+                                            </div>
+                                        ) : null
+                                    })()}
                                 </div>
                             </div>
-                            {totalAmount !== mandatoryAmount && (
-                                <div className="text-right">
-                                    <div className="text-xs text-slate-600">Required</div>
-                                    <div className="text-2xl font-bold text-slate-900">
-                                        {hasTerms
-                                            ? formData.terms?.reduce((sum, term) => sum + getMandatoryTotalForTerm(term.id), 0).toLocaleString() || '0'
-                                            : mandatoryAmount.toLocaleString()
-                                        }
+                        </div>
+                    ) : (
+                        <div className="bg-primary/10 rounded-lg p-5 border-2 border-primary/30">
+                            <div className="flex items-end justify-between">
+                                <div>
+                                    <div className="text-4xl font-bold text-primary">
+                                        {totalAmount.toLocaleString()}
+                                    </div>
+                                    <div className="text-sm text-slate-600 mt-1">
+                                        KES per term
                                     </div>
                                 </div>
-                            )}
+                                {totalAmount !== mandatoryAmount && (
+                                    <div className="text-right">
+                                        <div className="text-xs text-slate-600">Required</div>
+                                        <div className="text-2xl font-bold text-slate-900">
+                                            {mandatoryAmount.toLocaleString()}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </>
             )}
         </div>

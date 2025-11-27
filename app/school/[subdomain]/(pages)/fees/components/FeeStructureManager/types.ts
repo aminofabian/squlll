@@ -31,6 +31,8 @@ export interface FeeStructureToAssign {
   id: string
   name: string
   academicYear?: string
+  academicYearId?: string
+  termId?: string
   isActive?: boolean
 }
 
