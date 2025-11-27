@@ -517,8 +517,8 @@ export default function FeesPage() {
         };
 
         result = await graphqlUpdateFeeStructure(selectedStructure.id, updateInput);
-        if (!result && updateError) {
-          throw new Error(`GraphQL update failed: ${updateError}`);
+        if (!result) {
+          throw new Error(`GraphQL update failed: ${updateError || 'Unknown error'}`);
         }
         
         // Refresh the list after update

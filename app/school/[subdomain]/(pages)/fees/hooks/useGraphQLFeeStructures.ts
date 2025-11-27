@@ -222,14 +222,27 @@ export const useGraphQLFeeStructures = () => {
       });
 
       console.log(`GraphQL update response status: ${response.status}`);
+      console.log('📤 Update request details:', {
+        id,
+        input: JSON.stringify(input, null, 2),
+        url: '/api/graphql',
+        method: 'POST'
+      });
 
-      if (!response.ok) {
-        throw new Error(`GraphQL request failed with status ${response.status}`);
+      // Parse JSON even if status is not ok - GraphQL may return errors in JSON body
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        // If we can't parse JSON, throw a generic error
+        const text = await response.text();
+        console.error('❌ Failed to parse JSON response. Raw response:', text);
+        throw new Error(`GraphQL request failed with status ${response.status} and could not parse response`);
       }
 
-      const result = await response.json();
-      console.log('Update response:', result);
+      console.log('📥 Update response:', JSON.stringify(result, null, 2));
       
+      // Check for GraphQL errors first (even if status is 200)
       if (result.errors) {
         // Extract detailed error information
         const errorMessages = result.errors.map((e: any) => {
@@ -237,9 +250,11 @@ export const useGraphQLFeeStructures = () => {
           const exceptionMessage = e.extensions?.exception?.message;
           const code = e.extensions?.code;
           const originalError = e.extensions?.originalError?.message;
+          const statusCode = e.extensions?.exception?.status;
           
           let detailedMessage = baseMessage;
           if (code) detailedMessage += ` [${code}]`;
+          if (statusCode) detailedMessage += ` (HTTP ${statusCode})`;
           if (exceptionMessage && exceptionMessage !== baseMessage) {
             detailedMessage += `: ${exceptionMessage}`;
           } else if (originalError) {
@@ -256,10 +271,18 @@ export const useGraphQLFeeStructures = () => {
           exception: result.errors[0]?.extensions?.exception,
           originalError: result.errors[0]?.extensions?.originalError,
           fullError: result.errors[0],
-          allErrors: result.errors
+          allErrors: result.errors,
+          // Log the full error object as JSON for easier inspection
+          fullErrorJSON: JSON.stringify(result.errors[0], null, 2),
+          allErrorsJSON: JSON.stringify(result.errors, null, 2)
         });
         
         throw new Error(errorMessages);
+      }
+
+      // If no GraphQL errors but HTTP status is not ok, throw generic error
+      if (!response.ok) {
+        throw new Error(`GraphQL request failed with status ${response.status}`);
       }
 
       if (!result.data?.updateFeeStructure) {
@@ -281,12 +304,14 @@ export const useGraphQLFeeStructures = () => {
       await fetchFeeStructures();
 
       console.log('Fee structure updated successfully:', updatedStructure);
+      setUpdateError(null); // Clear any previous errors
       return updatedStructure.id;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setUpdateError(errorMessage);
       console.error('Error updating fee structure:', err);
-      return null;
+      // Re-throw the error so the caller can handle it
+      throw err;
     } finally {
       setIsUpdating(false);
     }

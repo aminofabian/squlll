@@ -213,7 +213,6 @@ export async function POST(request: Request) {
         startTime: "${slot.startTime}"
         endTime: "${slot.endTime}"
         color: "${slot.color}"
-        ${tenantId ? `tenantId: "${tenantId}"` : ''}
       }) {
         id
         periodNumber
@@ -236,13 +235,16 @@ export async function POST(request: Request) {
       fullMutation
     });
 
-    // Call external GraphQL API with enhanced error handling
+    // Call internal GraphQL proxy - forward cookies for authentication
     const result = await handleGraphQLCall(async () => {
+      // Forward all cookies from the original request
+      const cookieHeader = request.headers.get('cookie');
+
       return await fetch(GRAPHQL_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
         },
         body: JSON.stringify({
           query: fullMutation
@@ -354,13 +356,16 @@ export async function GET(request: Request) {
       query
     });
 
-    // Call external GraphQL API with enhanced error handling
+    // Call internal GraphQL proxy - forward cookies for authentication
     const result = await handleGraphQLCall(async () => {
+      // Forward all cookies from the original request
+      const cookieHeader = request.headers.get('cookie');
+
       return await fetch(GRAPHQL_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
         },
         body: JSON.stringify({
           query
@@ -410,7 +415,8 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json(result.data);
+    // Wrap the GraphQL data in a 'data' property to match store expectations
+    return NextResponse.json({ data: result.data });
   } catch (error) {
     console.error('Error fetching time slots:', error);
     return NextResponse.json(
@@ -440,9 +446,10 @@ export async function PUT(request: Request) {
     }
 
     // Prepare the GraphQL mutation for updating
+    // Note: The schema expects 'id' as a separate argument, not inside 'input'
     const mutation = `
-      mutation UpdateTimeSlot($input: UpdateTimeSlotInput!) {
-        updateTimeSlot(input: $input) {
+      mutation UpdateTimeSlot($id: String!, $input: UpdateTimeSlotInput!) {
+        updateTimeSlot(id: $id, input: $input) {
           id
           periodNumber
           displayTime
@@ -460,19 +467,22 @@ export async function PUT(request: Request) {
       mutation
     });
 
-    // Call external GraphQL API with enhanced error handling
+    // Call internal GraphQL proxy - forward cookies for authentication
     const result = await handleGraphQLCall(async () => {
+      // Forward all cookies from the original request
+      const cookieHeader = request.headers.get('cookie');
+
       return await fetch(GRAPHQL_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
         },
         body: JSON.stringify({
           query: mutation,
           variables: {
+            id,
             input: {
-              id,
               ...updateData,
               ...(tenantId && { tenantId })
             }
@@ -511,7 +521,8 @@ export async function PUT(request: Request) {
       );
     }
 
-    return NextResponse.json(result.data);
+    // Wrap the GraphQL data in a 'data' property to match store expectations
+    return NextResponse.json({ data: result.data });
   } catch (error) {
     console.error('Error updating time slot:', error);
     return NextResponse.json(

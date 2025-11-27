@@ -425,6 +425,20 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     throw new Error('Could not find grade level IDs for selected grades. Please try again.')
                 }
 
+                // Validate structureId
+                if (!structureId || structureId.trim() === '') {
+                    throw new Error('Invalid fee structure ID. Please refresh the page and try again.')
+                }
+
+                // Log the update details for debugging
+                console.log('🔄 Updating fee structure:', {
+                    structureId,
+                    name: formData.name,
+                    gradeLevelIds,
+                    gradeLevelCount: gradeLevelIds.length,
+                    selectedGrades: formData.selectedGrades
+                })
+
                 // Update the fee structure
                 const updateInput: UpdateFeeStructureInput = {
                     name: formData.name,
@@ -435,7 +449,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 const updatedStructureId = await updateFeeStructure(structureId, updateInput)
                 
                 if (!updatedStructureId) {
-                    throw new Error('Failed to update fee structure')
+                    throw new Error('Failed to update fee structure: No structure ID returned')
                 }
 
                 // Call onSave with the updated data
