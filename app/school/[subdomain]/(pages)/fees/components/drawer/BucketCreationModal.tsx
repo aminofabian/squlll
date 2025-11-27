@@ -1,7 +1,14 @@
 'use client'
 
 import React from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,15 +39,15 @@ export const BucketCreationModal: React.FC<BucketCreationModalProps> = ({
   onCreateBucket
 }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }} direction="right">
+      <DrawerContent className="max-w-md">
+        <DrawerHeader>
+          <DrawerTitle className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary" />
             Create New Fee Bucket
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
+          </DrawerTitle>
+        </DrawerHeader>
+        <div className="px-4 space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="bucket-name" className="text-sm font-medium text-slate-700">
               Bucket Name
@@ -66,25 +73,28 @@ export const BucketCreationModal: React.FC<BucketCreationModalProps> = ({
             />
           </div>
         </div>
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => {
-              onClose()
-              onChange({ name: '', description: '' })
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={onCreateBucket}
-            disabled={!bucketData.name.trim() || isCreating}
-            className="bg-primary text-white hover:bg-primary/80"
-          >
-            {isCreating ? 'Creating...' : 'Create Bucket'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter>
+          <div className="flex justify-end gap-3">
+            <DrawerClose asChild>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  onChange({ name: '', description: '' })
+                }}
+              >
+                Cancel
+              </Button>
+            </DrawerClose>
+            <Button
+              onClick={onCreateBucket}
+              disabled={!bucketData.name.trim() || isCreating}
+              className="bg-primary text-white hover:bg-primary/80"
+            >
+              {isCreating ? 'Creating...' : 'Create Bucket'}
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   )
 }

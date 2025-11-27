@@ -1,7 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -225,14 +233,14 @@ export const AssignFeeStructureModal = ({
   const allSelected = availableGrades.length > 0 && selectedGradeIds.length === availableGrades.length
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }} direction="right">
+      <DrawerContent className="max-w-2xl">
+        <DrawerHeader>
+          <DrawerTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             Assign Fee Structure to Grades
-          </DialogTitle>
-          <DialogDescription>
+          </DrawerTitle>
+          <DrawerDescription>
             {feeStructure ? (
               <span>
                 Assign <span className="font-medium">{feeStructure.name}</span> to selected grades
@@ -240,12 +248,13 @@ export const AssignFeeStructureModal = ({
             ) : (
               'Select grades to assign this fee structure'
             )}
-          </DialogDescription>
-        </DialogHeader>
+          </DrawerDescription>
+        </DrawerHeader>
         
         {feeStructure && (
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
+          <form onSubmit={handleSubmit} className="flex flex-col h-full">
+            <ScrollArea className="flex-1 px-4">
+              <div className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="description">Assignment Description</Label>
                 <Input
@@ -462,30 +471,35 @@ export const AssignFeeStructureModal = ({
                   <p className="text-sm text-rose-700/70">{error}</p>
                 </div>
               )}
-            </div>
+              </div>
+            </ScrollArea>
             
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting || selectedGradeIds.length === 0}
-                className="min-w-[120px]"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Assigning...
-                  </>
-                ) : (
-                  `Assign to ${selectedGradeIds.length} ${activeTab === 'gradelevels' ? 'Grade Level' : 'Class'}${selectedGradeIds.length !== 1 ? 's' : ''}`
-                )}
-              </Button>
-            </DialogFooter>
+            <DrawerFooter>
+              <div className="flex gap-3">
+                <DrawerClose asChild>
+                  <Button type="button" variant="outline" disabled={isSubmitting}>
+                    Cancel
+                  </Button>
+                </DrawerClose>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting || selectedGradeIds.length === 0}
+                  className="min-w-[120px]"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Assigning...
+                    </>
+                  ) : (
+                    `Assign to ${selectedGradeIds.length} ${activeTab === 'gradelevels' ? 'Grade Level' : 'Class'}${selectedGradeIds.length !== 1 ? 's' : ''}`
+                  )}
+                </Button>
+              </div>
+            </DrawerFooter>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   )
 }

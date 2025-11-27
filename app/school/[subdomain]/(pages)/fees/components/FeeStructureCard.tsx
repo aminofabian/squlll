@@ -5,6 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerClose,
+} from '@/components/ui/drawer'
+import {
     Edit,
     Trash2,
     Users,
@@ -19,7 +28,8 @@ import {
     Plus,
     Eye,
     Download,
-    X
+    X,
+    Loader2
 } from 'lucide-react'
 import { ProcessedFeeStructure } from './FeeStructureManager/types'
 import { useState, useMemo, useEffect } from 'react'
@@ -28,6 +38,8 @@ import { cn } from '@/lib/utils'
 import { BucketCreationModal } from './drawer/BucketCreationModal'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
 import { FeeStructureForm } from '../types'
+import { useFeeAssignmentsByGradeLevels } from '../hooks/useFeeAssignmentsByGradeLevels'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface FeeStructureCardProps {
     structure: ProcessedFeeStructure
@@ -68,6 +80,10 @@ export const FeeStructureCard = ({
     const [isCreatingBucket, setIsCreatingBucket] = useState(false)
     const [bucketModalData, setBucketModalData] = useState({ name: '', description: '' })
     const [selectedTermId, setSelectedTermId] = useState(structure.termId)
+    const [showGradeFeeStructure, setShowGradeFeeStructure] = useState(false)
+    const [selectedGradeLevelId, setSelectedGradeLevelId] = useState<string | null>(null)
+    
+    const { data: gradeFeeAssignments, loading: loadingGradeFees, error: gradeFeesError, fetchAssignments } = useFeeAssignmentsByGradeLevels()
 
     // Sync selectedTermId if structure changes
     useEffect(() => {
@@ -369,7 +385,15 @@ export const FeeStructureCard = ({
                             {structure.gradeLevels.map((gradeLevel: any) => (
                                 <button
                                     key={gradeLevel.id}
-                                    className="px-2 py-0.5 text-[10px] font-normal bg-slate-50 text-slate-700 border border-slate-200 rounded-md hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer"
+                                    onClick={() => {
+                                        setSelectedGradeLevelId(gradeLevel.id)
+                                        setShowGradeFeeStructure(true)
+                                        fetchAssignments({
+                                            tenantGradeLevelIds: [gradeLevel.id],
+                                            feeStructureId: structure.structureId
+                                        })
+                                    }}
+                                    className="px-2 py-0.5 text-[10px] font-normal bg-slate-50 text-slate-700 border border-slate-200 rounded-md hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all cursor-pointer"
                                 >
                                     {gradeLevel.gradeLevel?.name || gradeLevel.shortName || gradeLevel.name || 'Unknown'}
                                 </button>
@@ -679,18 +703,27 @@ export const FeeStructureCard = ({
                     }
                 `}</style>
                 <DialogContent className="max-w-[280mm] w-[280mm] max-h-[95vh] p-0 overflow-hidden flex flex-col print:p-0 print:m-0 print:max-w-none print:w-full print:h-full">
-                    <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 print:hidden">
+                    <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200/60 bg-gradient-to-br from-white via-slate-50/30 to-white flex-shrink-0 print:hidden shadow-sm">
                         <div className="flex items-center justify-between">
-                            <DialogTitle className="flex items-center gap-2">
-                                <FileText className="h-5 w-5 text-primary" />
-                                Fee Structure Preview - {structure.structureName}
+                            <DialogTitle className="flex items-center gap-3">
+                                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white shadow-md ring-2 ring-primary/20">
+                                    <FileText className="h-5 w-5 drop-shadow-sm" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-base font-semibold text-slate-900 leading-tight">
+                                        Fee Structure Preview
+                                    </span>
+                                    <span className="text-sm text-slate-600 font-medium truncate max-w-md">
+                                        {structure.structureName}
+                                    </span>
+                                </div>
                             </DialogTitle>
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleDownloadPDF}
-                                    className="border-primary/30 text-primary hover:bg-primary/5 print:hidden"
+                                    className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-md transition-all duration-200 font-medium print:hidden"
                                 >
                                     <Download className="h-4 w-4 mr-2" />
                                     Download PDF
@@ -699,7 +732,7 @@ export const FeeStructureCard = ({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowPDFPreview(false)}
-                                    className="h-8 w-8 p-0 print:hidden"
+                                    className="h-9 w-9 p-0 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 print:hidden rounded-lg"
                                 >
                                     <X className="h-4 w-4" />
                                 </Button>
@@ -722,6 +755,110 @@ export const FeeStructureCard = ({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Grade Fee Structure Drawer */}
+            <Drawer open={showGradeFeeStructure} onOpenChange={(open) => { if (!open) setShowGradeFeeStructure(false) }} direction="right">
+                <DrawerContent className="max-w-2xl">
+                    <DrawerHeader>
+                        <DrawerTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-primary" />
+                            Fee Structure for Grade
+                        </DrawerTitle>
+                        <DrawerDescription>
+                            {structure.gradeLevels.find((gl: any) => gl.id === selectedGradeLevelId)?.gradeLevel?.name || 
+                             structure.gradeLevels.find((gl: any) => gl.id === selectedGradeLevelId)?.shortName || 
+                             'Selected Grade'}
+                        </DrawerDescription>
+                    </DrawerHeader>
+
+                    <ScrollArea className="flex-1 px-4">
+                        {loadingGradeFees ? (
+                            <div className="flex items-center justify-center p-8">
+                                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <span className="ml-2 text-sm">Loading fee assignments...</span>
+                            </div>
+                        ) : gradeFeesError ? (
+                            <div className="p-4 border border-rose-200/40 rounded-md bg-rose-50/30 text-rose-700/70">
+                                <p className="text-sm">{gradeFeesError}</p>
+                            </div>
+                        ) : gradeFeeAssignments && gradeFeeAssignments.length > 0 ? (
+                            <div className="space-y-4 py-4">
+                                {gradeFeeAssignments.map((assignment, index) => (
+                                    <Card key={assignment.feeAssignment.id || index} className="p-4">
+                                        <div className="space-y-3">
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <h3 className="font-semibold text-sm">{assignment.feeAssignment.feeStructure.name}</h3>
+                                                    <p className="text-xs text-slate-600 mt-1">{assignment.feeAssignment.description}</p>
+                                                </div>
+                                                <Badge variant={assignment.feeAssignment.isActive ? "default" : "secondary"}>
+                                                    {assignment.feeAssignment.isActive ? "Active" : "Inactive"}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                                <div>
+                                                    <span className="text-slate-500">Total Students:</span>
+                                                    <span className="ml-2 font-medium">{assignment.totalStudents}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500">Assigned By:</span>
+                                                    <span className="ml-2 font-medium">{assignment.feeAssignment.assignedByUser.name}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500">Created:</span>
+                                                    <span className="ml-2 font-medium">{new Date(assignment.feeAssignment.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500">Students Assigned:</span>
+                                                    <span className="ml-2 font-medium">{assignment.feeAssignment.studentsAssignedCount}</span>
+                                                </div>
+                                            </div>
+
+                                            {assignment.studentAssignments && assignment.studentAssignments.length > 0 && (
+                                                <div className="mt-4 pt-4 border-t">
+                                                    <h4 className="text-xs font-semibold mb-2">Student Assignments ({assignment.studentAssignments.length})</h4>
+                                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                                        {assignment.studentAssignments.map((studentAssignment) => (
+                                                            <div key={studentAssignment.id} className="p-2 bg-slate-50 rounded text-xs">
+                                                                <div className="font-medium">{studentAssignment.student.user.name}</div>
+                                                                <div className="text-slate-600">
+                                                                    {studentAssignment.student.grade.gradeLevel.name}
+                                                                </div>
+                                                                {studentAssignment.feeItems && studentAssignment.feeItems.length > 0 && (
+                                                                    <div className="mt-1 text-slate-500">
+                                                                        {studentAssignment.feeItems.length} fee item{studentAssignment.feeItems.length !== 1 ? 's' : ''}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {assignment.studentAssignments.length === 0 && (
+                                                <div className="text-center py-4 text-sm text-slate-500">
+                                                    No students assigned yet
+                                                </div>
+                                            )}
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-8 text-center">
+                                <p className="text-sm text-slate-500">No fee assignments found for this grade level</p>
+                            </div>
+                        )}
+                    </ScrollArea>
+
+                    <DrawerFooter>
+                        <DrawerClose asChild>
+                            <Button variant="outline">Close</Button>
+                        </DrawerClose>
+                    </DrawerFooter>
+                </DrawerContent>
+            </Drawer>
         </Card>
     )
 }
