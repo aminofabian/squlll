@@ -22,7 +22,7 @@ import {
     X
 } from 'lucide-react'
 import { ProcessedFeeStructure } from './FeeStructureManager/types'
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { BucketCreationModal } from './drawer/BucketCreationModal'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
@@ -54,16 +54,67 @@ export const FeeStructureCard = ({
     const [bucketModalData, setBucketModalData] = useState({ name: '', description: '' })
     const [selectedTermId, setSelectedTermId] = useState(structure.termId)
 
-    // Get buckets for the selected term
-    const displayBuckets = structure.termFeesMap && selectedTermId
-        ? (structure.termFeesMap[selectedTermId] || [])
-        : structure.buckets
+    // Sync selectedTermId if structure changes
+    useEffect(() => {
+        if (structure.termId && structure.termId !== selectedTermId) {
+            setSelectedTermId(structure.termId)
+        }
+    }, [structure.termId])
 
-    const totalFees = displayBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
+    // Debug: Log the structure data
+    console.log(`🎯 FeeStructureCard - ${structure.structureName}:`, {
+        termId: structure.termId,
+        terms: structure.terms,
+        termFeesMapKeys: structure.termFeesMap ? Object.keys(structure.termFeesMap) : [],
+        selectedTermId
+    })
+
+    // Get buckets for the selected term - use useMemo to ensure proper recomputation
+    const displayBuckets = useMemo(() => {
+        console.log(`  🔍 Computing displayBuckets for term: ${selectedTermId}`)
+
+        if (structure.termFeesMap && selectedTermId) {
+            const buckets = structure.termFeesMap[selectedTermId]
+            console.log(`  📦 Found ${buckets?.length || 0} buckets in termFeesMap for term ${selectedTermId}`)
+            if (buckets && buckets.length > 0) {
+                return buckets
+            }
+        }
+
+        console.log(`  ⚠️ Falling back to default buckets (${structure.buckets?.length || 0})`)
+        return structure.buckets || []
+    }, [structure.termFeesMap, structure.buckets, selectedTermId])
+
+    console.log(`  💰 Final display buckets:`, displayBuckets.map(b => `${b.name}: $${b.totalAmount}`))
+
+    // Calculate term total (currently selected term)
+    const termTotal = displayBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
+
+    // Calculate year total (all terms combined)
+    const yearTotal = useMemo(() => {
+        console.log(`  🧮 Calculating year total...`)
+
+        if (!structure.termFeesMap || Object.keys(structure.termFeesMap).length === 0) {
+            console.log(`  ⚠️ No termFeesMap, using termTotal * number of terms`)
+            return termTotal * structure.terms.length
+        }
+
+        // Sum all buckets from all terms
+        const total = Object.entries(structure.termFeesMap).reduce((yearSum, [termId, termBuckets]) => {
+            const termSum = termBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
+            console.log(`    📊 Term ${termId}: $${termSum}`)
+            return yearSum + termSum
+        }, 0)
+
+        console.log(`  💵 Year Total: $${total}`)
+        return total
+    }, [structure.termFeesMap, structure.terms.length, termTotal])
+
     const hasAssignments = assignedGrades.length > 0
 
     // Handle term click to filter fees
     const handleTermClick = (termId: string) => {
+        console.log(`🔄 User clicked term: ${termId}`)
         setSelectedTermId(termId)
         setIsExpanded(false) // Collapse expanded view when switching terms
     }
@@ -120,30 +171,34 @@ export const FeeStructureCard = ({
 
     // Convert ProcessedFeeStructure to FeeStructureForm for PDF preview
     const convertToPDFForm = (): FeeStructureForm => {
-        // Group buckets by term - for now, we'll create a single term structure
-        // since ProcessedFeeStructure doesn't have term-specific buckets
-        const termStructures = structure.terms.map((term, index) => ({
-            term: term.name as 'Term 1' | 'Term 2' | 'Term 3',
-            academicYear: structure.academicYear,
-            dueDate: '',
-            latePaymentFee: '',
-            earlyPaymentDiscount: '',
-            earlyPaymentDeadline: '',
-            buckets: structure.buckets.map(bucket => ({
-                id: bucket.feeBucketId,
-                type: 'tuition' as const,
-                name: bucket.name,
-                description: '',
-                isOptional: bucket.isOptional,
-                components: [{
+        // Use term-specific buckets from termFeesMap
+        const termStructures = structure.terms.map((term) => {
+            // Get buckets for this specific term, fallback to default buckets
+            const termBuckets = structure.termFeesMap?.[term.id] || displayBuckets
+
+            return {
+                term: term.name as 'Term 1' | 'Term 2' | 'Term 3',
+                academicYear: structure.academicYear,
+                dueDate: '',
+                latePaymentFee: '',
+                earlyPaymentDiscount: '',
+                earlyPaymentDeadline: '',
+                buckets: termBuckets.map(bucket => ({
+                    id: bucket.feeBucketId,
+                    type: 'tuition' as const,
                     name: bucket.name,
                     description: '',
-                    amount: bucket.totalAmount.toString(),
-                    category: 'fee'
-                }]
-            })),
-            existingBucketAmounts: {}
-        }))
+                    isOptional: bucket.isOptional,
+                    components: [{
+                        name: bucket.name,
+                        description: '',
+                        amount: bucket.totalAmount.toString(),
+                        category: 'fee'
+                    }]
+                })),
+                existingBucketAmounts: {}
+            }
+        })
 
         return {
             name: structure.structureName,
@@ -158,7 +213,7 @@ export const FeeStructureCard = ({
                 latePaymentFee: '',
                 earlyPaymentDiscount: '',
                 earlyPaymentDeadline: '',
-                buckets: structure.buckets.map(bucket => ({
+                buckets: displayBuckets.map(bucket => ({
                     id: bucket.feeBucketId,
                     type: 'tuition' as const,
                     name: bucket.name,
@@ -241,7 +296,13 @@ export const FeeStructureCard = ({
                                     structure.terms.map((term: { id: string; name: string }) => (
                                         <button
                                             key={term.id}
-                                            className="px-2.5 py-1 text-xs font-medium bg-primary/10 text-primary border border-primary/30 rounded-md hover:bg-primary/20 hover:border-primary/40 transition-colors cursor-pointer"
+                                            onClick={() => handleTermClick(term.id)}
+                                            className={cn(
+                                                "px-2.5 py-1 text-xs font-medium border rounded-md transition-colors cursor-pointer",
+                                                selectedTermId === term.id
+                                                    ? "bg-primary text-white border-primary"
+                                                    : "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 hover:border-primary/40"
+                                            )}
                                         >
                                             {term.name}
                                         </button>
@@ -278,27 +339,43 @@ export const FeeStructureCard = ({
                     )}
                 </div>
 
-                {/* Stats Section - Total Fees Only */}
-                <div className="mb-3">
-                    <div className="p-4 bg-primary/10 border border-primary/20">
+                {/* Stats Section - Term Total & Year Total */}
+                <div className="mb-3 space-y-2">
+                    {/* Term Total */}
+                    <div className="p-3 bg-primary/10 border border-primary/20">
                         <div className="flex items-center justify-between">
-                            <div className="text-xs text-slate-500">Total Fees</div>
-                            <div className="text-xl font-bold text-primary">${totalFees.toLocaleString()}</div>
+                            <div className="text-xs font-medium text-slate-600">
+                                {structure.terms.find(t => t.id === selectedTermId)?.name || 'Term'} Total
+                            </div>
+                            <div className="text-lg font-bold text-primary">${termTotal.toLocaleString()}</div>
                         </div>
                     </div>
+
+                    {/* Year Total */}
+                    {structure.terms.length > 1 && (
+                        <div className="p-3 bg-emerald-50 border border-emerald-200">
+                            <div className="flex items-center justify-between">
+                                <div className="text-xs font-medium text-slate-600">Academic Year Total</div>
+                                <div className="text-lg font-bold text-emerald-700">${yearTotal.toLocaleString()}</div>
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-1">
+                                {structure.terms.length} terms combined
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Fee Breakdown Section */}
-                {structure.buckets.length > 0 && (
+                {displayBuckets.length > 0 && (
                     <div className="mb-3">
                         <div className="flex items-center justify-between mb-2">
                             <h4 className="text-xs font-bold text-slate-600 uppercase">Fee Components</h4>
-                            <Badge variant="secondary" className="text-xs">{structure.buckets.length} total</Badge>
+                            <Badge variant="secondary" className="text-xs">{displayBuckets.length} total</Badge>
                         </div>
 
                         {!isExpanded ? (
                             <div className="space-y-2">
-                                {structure.buckets.slice(0, 1).map((bucket: any, idx: number) => (
+                                {displayBuckets.slice(0, 1).map((bucket: any, idx: number) => (
                                     <div
                                         key={idx}
                                         className="flex items-center justify-between p-2.5 bg-white border border-slate-200 hover:border-primary/30 transition-colors"
@@ -322,7 +399,7 @@ export const FeeStructureCard = ({
                                         </span>
                                     </div>
                                 ))}
-                                {structure.buckets.length > 1 && (
+                                {displayBuckets.length > 1 && (
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -330,13 +407,13 @@ export const FeeStructureCard = ({
                                         className="w-full text-primary text-xs"
                                     >
                                         <ChevronRight className="h-3.5 w-3.5 mr-1" />
-                                        Show {structure.buckets.length - 1} more
+                                        Show {displayBuckets.length - 1} more
                                     </Button>
                                 )}
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {structure.buckets.map((bucket: any, idx: number) => (
+                                {displayBuckets.map((bucket: any, idx: number) => (
                                     <div
                                         key={idx}
                                         className="flex items-center justify-between p-2.5 bg-white border border-slate-200 hover:border-primary/30 transition-colors"
@@ -507,7 +584,7 @@ export const FeeStructureCard = ({
                     <div className="mt-4">
                         <FeeStructurePDFPreview
                             formData={convertToPDFForm()}
-                            feeBuckets={structure.buckets.map(b => ({
+                            feeBuckets={displayBuckets.map(b => ({
                                 id: b.feeBucketId,
                                 name: b.name,
                                 description: ''

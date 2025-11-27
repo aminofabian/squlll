@@ -160,9 +160,16 @@ export default function FeesPage() {
       const termFeesMap = new Map<string, any[]>();
 
       structures.forEach(structure => {
-        const termId = structure.terms?.[0]?.id;
-        if (!termId) return;
+        // A structure can have multiple terms - handle all of them
+        const structureTerms = structure.terms || [];
+        console.log(`📊 Processing structure: ${structure.name}, Terms: ${structureTerms.map((t: any) => t.name).join(', ')}, Items: ${structure.items?.length || 0}`);
 
+        if (structureTerms.length === 0) {
+          console.warn(`⚠️ Structure ${structure.name} has no terms, skipping`);
+          return;
+        }
+
+        // Create buckets from items
         const buckets: any[] = [];
         if (structure.items && structure.items.length > 0) {
           const bucketMap = new Map();
@@ -185,9 +192,18 @@ export default function FeesPage() {
             }
           });
           buckets.push(...Array.from(bucketMap.values()));
+          console.log(`  ✅ Created ${buckets.length} buckets:`, buckets.map(b => `${b.name}: $${b.totalAmount}`));
         }
-        termFeesMap.set(termId, buckets);
+
+        // If structure has multiple terms, apply the same buckets to all terms
+        // This handles cases where one fee structure applies to multiple terms
+        structureTerms.forEach((term: any) => {
+          console.log(`  📌 Mapping buckets to term: ${term.name} (${term.id})`);
+          termFeesMap.set(term.id, buckets);
+        });
       });
+
+      console.log(`📦 Complete termFeesMap for group:`, Object.fromEntries(termFeesMap));
 
       // Use the first structure as the base
       const baseStructure = structures[0];
