@@ -152,9 +152,20 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
         }
     }
 
-    // Handle PDF download
+    // Handle PDF download with slug-based filename
     const handleDownloadPDF = () => {
+        // Create a slug from form data name
+        const pdfId = formData.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'fee-structure'
+        
+        // Use browser's print functionality
+        // The print dialog will allow saving as PDF with the suggested filename
+        // Note: To enable direct download with slug URL, install html2pdf.js:
+        // npm install html2pdf.js
         window.print()
+        
+        // After print dialog opens, the browser will suggest the filename
+        // For direct download with slug URL like /fee/[pdf-id], 
+        // you would need a server-side route or html2pdf.js library
     }
 
     const updateBucketAmount = (bucketId: string, newAmount: number) => {
@@ -327,8 +338,97 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
 
             {/* PDF Preview Modal */}
             <Dialog open={showPDFPreview} onOpenChange={setShowPDFPreview}>
-                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
+                <style>{`
+                    @media print {
+                        @page {
+                            margin: 15mm;
+                            size: A4;
+                        }
+                        /* Hide dialog elements */
+                        [data-radix-dialog-overlay],
+                        [data-radix-dialog-content] > header,
+                        button {
+                            display: none !important;
+                        }
+                        /* Make dialog content full page */
+                        [data-radix-dialog-content] {
+                            position: static !important;
+                            max-width: 100% !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            max-height: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            box-shadow: none !important;
+                            border: none !important;
+                            overflow: visible !important;
+                            page-break-inside: auto !important;
+                        }
+                        /* Remove any flex constraints */
+                        [data-radix-dialog-content] > div {
+                            height: auto !important;
+                            max-height: none !important;
+                            overflow: visible !important;
+                            page-break-inside: auto !important;
+                        }
+                        /* PDF content container */
+                        [data-pdf-content] {
+                            position: static !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            min-height: 0 !important;
+                            max-height: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            overflow: visible !important;
+                            display: block !important;
+                            page-break-inside: auto !important;
+                            break-inside: auto !important;
+                        }
+                        /* PDF preview container */
+                        [data-pdf-content] > div {
+                            position: static !important;
+                            width: 100% !important;
+                            height: auto !important;
+                            min-height: 0 !important;
+                            max-height: none !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            page-break-inside: auto !important;
+                            break-inside: auto !important;
+                            overflow: visible !important;
+                        }
+                        /* Force content to flow */
+                        [data-pdf-content] > div > * {
+                            page-break-inside: auto !important;
+                            break-inside: auto !important;
+                        }
+                        /* Allow tables to break across pages */
+                        table {
+                            page-break-inside: auto !important;
+                        }
+                        /* Allow rows to break */
+                        tr {
+                            page-break-inside: auto !important;
+                        }
+                        /* Table headers repeat on each page */
+                        thead {
+                            display: table-header-group !important;
+                        }
+                        /* Allow sections to break */
+                        div {
+                            page-break-inside: auto !important;
+                        }
+                        /* Body and html */
+                        body, html {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            height: auto !important;
+                        }
+                    }
+                `}</style>
+                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:p-0 print:m-0 print:max-w-none print:w-full print:h-full">
+                    <DialogHeader className="print:hidden">
                         <div className="flex items-center justify-between">
                             <DialogTitle className="flex items-center gap-2">
                                 <FileText className="h-5 w-5 text-primary" />
@@ -339,7 +439,7 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleDownloadPDF}
-                                    className="border-primary/30 text-primary hover:bg-primary/5"
+                                    className="border-primary/30 text-primary hover:bg-primary/5 print:hidden"
                                 >
                                     <Download className="h-4 w-4 mr-2" />
                                     Download PDF
@@ -348,15 +448,16 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowPDFPreview(false)}
-                                    className="h-8 w-8 p-0"
+                                    className="h-8 w-8 p-0 print:hidden"
                                 >
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
                     </DialogHeader>
-                    <div className="mt-4">
-                        <FeeStructurePDFPreview
+                    <div className="mt-4 print:mt-0 print:overflow-visible print:h-auto print:max-h-none">
+                        <div data-pdf-content className="print:block print:w-full print:h-auto print:max-h-none">
+                            <FeeStructurePDFPreview
                             formData={convertToPDFForm()}
                             feeBuckets={formData.selectedBuckets.map(bucketId => {
                                 // Try to get bucket from term-specific amounts first, then fallback to global
@@ -376,7 +477,8 @@ export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
                                     description: bucket?.name || ''
                                 }
                             })}
-                        />
+                            />
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -1,4 +1,4 @@
-import { Plus, FileText, DollarSign, Settings as SettingsIcon } from 'lucide-react'
+import { Plus, FileText, Coins, Settings as SettingsIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface QuickActionsBarProps {
@@ -90,7 +90,7 @@ export const QuickActionsBar = ({
                 >
                     <div className="relative z-10">
                         <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-lg mb-3">
-                            <DollarSign className="h-6 w-6" />
+                            <Coins className="h-6 w-6" />
                         </div>
                         <h4 className="font-bold text-lg mb-1">Record Payment</h4>
                         <p className="text-sm text-emerald-100">Log a student payment</p>

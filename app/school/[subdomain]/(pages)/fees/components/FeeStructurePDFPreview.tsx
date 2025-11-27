@@ -10,6 +10,7 @@ interface FeeStructurePDFPreviewProps {
   schoolContact?: string
   schoolEmail?: string
   feeBuckets?: Array<{ id: string; name: string; description?: string }>
+  gradeLevels?: Array<{ id: string; name?: string; gradeLevel?: { name: string } }>
 }
 
 export const FeeStructurePDFPreview = ({
@@ -17,7 +18,8 @@ export const FeeStructurePDFPreview = ({
   schoolName = "KANYAWANGA HIGH SCHOOL",
   schoolAddress = "P.O. Box 100 - 40404, RONGO KENYA. Cell: 0710215418",
   schoolEmail = "kanyawangaschool@hotmail.com",
-  feeBuckets = []
+  feeBuckets = [],
+  gradeLevels = []
 }: FeeStructurePDFPreviewProps) => {
   const calculateTermTotal = (termIndex: number) => {
     const term = formData.termStructures[termIndex];
@@ -50,8 +52,46 @@ export const FeeStructurePDFPreview = ({
     })
   }
 
+  // Format academic year for title (e.g., "2025-2026" or "2025/2026")
+  const formatAcademicYear = (year: string): string => {
+    // Try to extract years from various formats
+    const yearMatch = year.match(/(\d{4})[-\/](\d{4})/)
+    if (yearMatch) {
+      return `${yearMatch[1]}-${yearMatch[2]}`
+    }
+    // If single year, assume next year
+    const singleYear = year.match(/\d{4}/)
+    if (singleYear) {
+      const startYear = parseInt(singleYear[0])
+      return `${startYear}-${startYear + 1}`
+    }
+    return year
+  }
+
+  // Get grade levels text for title
+  const getGradeText = (): string => {
+    if (!gradeLevels || gradeLevels.length === 0) return ''
+    if (gradeLevels.length === 1) {
+      const grade = gradeLevels[0].gradeLevel?.name || gradeLevels[0].name || ''
+      return grade ? ` - ${grade.toUpperCase()}` : ''
+    }
+    return ` - ${gradeLevels.length} GRADES`
+  }
+
+  const academicYearFormatted = formatAcademicYear(formData.academicYear)
+  const titleText = `FEES STRUCTURE ${academicYearFormatted}${getGradeText()}`
+
   return (
-    <div className="bg-white p-8 max-w-4xl mx-auto shadow-lg" style={{ fontFamily: 'Times New Roman, serif' }}>
+    <div 
+      className="bg-white p-8 mx-auto shadow-lg print:shadow-none print:p-0 print:m-0" 
+      style={{ 
+        fontFamily: 'Times New Roman, serif',
+        width: '260mm', // Wider than A4 for better readability
+        maxWidth: '100%',
+        pageBreakInside: 'auto',
+        breakInside: 'auto'
+      }}
+    >
       {/* Header */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-4 mb-2">
@@ -81,12 +121,12 @@ export const FeeStructurePDFPreview = ({
 
       {/* Title */}
       <div className="text-center mb-6">
-        <h2 className="text-lg font-bold underline">FEES STRUCTURE {formData.academicYear}</h2>
+        <h2 className="text-xl font-bold underline tracking-wide">{titleText}</h2>
       </div>
 
       {/* Fee Structure Table with Term Distinctions */}
-      <div className="mb-8">
-        <table className="w-full border-collapse border border-black">
+      <div className="mb-8" style={{ pageBreakInside: 'auto' }}>
+        <table className="w-full border-collapse border border-black" style={{ pageBreakInside: 'auto', pageBreakAfter: 'auto' }}>
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-black p-2 text-left font-bold">VOTE HEAD</th>
@@ -138,7 +178,7 @@ export const FeeStructurePDFPreview = ({
                           <tr key={`${termIndex}-${bucketIndex}-${componentIndex}`}>
                             <td className="border border-black p-2 pl-4">{component.name}</td>
                             <td className="border border-black p-2 text-right">
-                              {componentAmount.toLocaleString('en-KE', { 
+                              <span className="text-[8px] opacity-70">KES</span> {componentAmount.toLocaleString('en-KE', { 
                                 minimumFractionDigits: 2, 
                                 maximumFractionDigits: 2 
                               })}
@@ -162,7 +202,7 @@ export const FeeStructurePDFPreview = ({
                     <tr key={`existing-${termIndex}-${bucket.id}`}>
                       <td className="border border-black p-2 pl-4">{bucket.name}</td>
                       <td className="border border-black p-2 text-right">
-                        {parseFloat(amount).toLocaleString('en-KE', { 
+                        <span className="text-[8px] opacity-70">KES</span> {parseFloat(amount).toLocaleString('en-KE', { 
                           minimumFractionDigits: 2, 
                           maximumFractionDigits: 2 
                         })}
@@ -175,7 +215,7 @@ export const FeeStructurePDFPreview = ({
                 <tr className="bg-gray-100">
                   <td className="border border-black p-2 font-semibold">{term.term.toUpperCase()} SUBTOTAL</td>
                   <td className="border border-black p-2 text-right font-semibold">
-                    {calculateTermTotal(termIndex).toLocaleString('en-KE', { 
+                    <span className="text-[8px] opacity-70">KES</span> {calculateTermTotal(termIndex).toLocaleString('en-KE', { 
                       minimumFractionDigits: 2, 
                       maximumFractionDigits: 2 
                     })}
@@ -188,7 +228,7 @@ export const FeeStructurePDFPreview = ({
             <tr className="bg-gray-300 font-bold">
               <td className="border border-black p-2">TOTAL</td>
               <td className="border border-black p-2 text-right">
-                {calculateGrandTotal().toLocaleString('en-KE', { 
+                <span className="text-[8px] opacity-70">KES</span> {calculateGrandTotal().toLocaleString('en-KE', { 
                   minimumFractionDigits: 2, 
                   maximumFractionDigits: 2 
                 })}
@@ -199,7 +239,7 @@ export const FeeStructurePDFPreview = ({
       </div>
 
       {/* Termly Payment Schedule */}
-      <div className="mb-8">
+      <div className="mb-8" style={{ pageBreakInside: 'auto' }}>
         <h3 className="text-center font-bold underline mb-4">
           TERMLY PAYMENT FOR THE YEAR {formData.academicYear}
         </h3>
@@ -216,7 +256,7 @@ export const FeeStructurePDFPreview = ({
                 <tr key={index}>
                   <td className="border border-black p-2">{term.term.toUpperCase()}</td>
                   <td className="border border-black p-2 text-right">
-                    {calculateTermTotal(index).toLocaleString('en-KE', { 
+                    <span className="text-[8px] opacity-70">KES</span> {calculateTermTotal(index).toLocaleString('en-KE', { 
                       minimumFractionDigits: 2, 
                       maximumFractionDigits: 2 
                     })}
@@ -226,7 +266,7 @@ export const FeeStructurePDFPreview = ({
               <tr className="bg-gray-100 font-bold">
                 <td className="border border-black p-2">TOTAL</td>
                 <td className="border border-black p-2 text-right">
-                  {calculateGrandTotal().toLocaleString('en-KE', { 
+                  <span className="text-[8px] opacity-70">KES</span> {calculateGrandTotal().toLocaleString('en-KE', { 
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2 
                   })}
@@ -238,7 +278,7 @@ export const FeeStructurePDFPreview = ({
       </div>
 
       {/* Mode of Payment */}
-      <div className="mb-8">
+      <div className="mb-8" style={{ pageBreakInside: 'auto' }}>
         <h3 className="font-bold underline mb-4">MODE OF PAYMENT:</h3>
         <p className="mb-4">
           Full school fees should be paid at the beginning of the term to any of the school accounts listed hereunder.
@@ -262,7 +302,7 @@ export const FeeStructurePDFPreview = ({
       </div>
 
       {/* Signature Section */}
-      <div className="mt-12">
+      <div className="mt-12" style={{ pageBreakInside: 'auto' }}>
         <div className="flex justify-between items-end">
           <div>
             <p className="font-bold">JACOB MBOGO</p>

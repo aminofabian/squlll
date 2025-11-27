@@ -1,5 +1,5 @@
 import { 
-  DollarSign,
+  Coins,
   FileText,
   Calendar,
   Users,
@@ -29,7 +29,7 @@ export const getFeeTypeIcon = (type: string) => {
     case 'transport': return Calendar
     case 'hostel': return Users
     case 'exam': return CheckCircle
-    default: return DollarSign
+    default: return Coins
   }
 }
 

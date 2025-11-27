@@ -1,4 +1,4 @@
-import { Eye, DollarSign } from "lucide-react"
+import { Eye, Coins } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -90,7 +90,7 @@ export const FeesDataTable = ({
     return (
       <div className="border-2 border-red-200 rounded-xl overflow-hidden bg-red-50">
         <div className="p-12 text-center">
-          <DollarSign className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <Coins className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h3 className="text-lg font-mono font-medium text-red-600 mb-2">
             Error Loading Data
           </h3>
@@ -194,7 +194,7 @@ export const FeesDataTable = ({
       {/* Empty State */}
       {students.length === 0 && (
         <div className="text-center py-12 border-t-2 border-dashed border-primary/20">
-          <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <Coins className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-mono font-medium text-slate-600 dark:text-slate-400 mb-2">
             No students found
           </h3>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, Fragment } from 'react';
-import { Check, ChevronDown, Plus, X, Star, Info, Activity, BookOpen, DollarSign, Bus, Utensils, Calendar, Wrench, List, Home, Heart, TrendingUp, Shield, Eye, EyeOff, Table } from "lucide-react";
+import { Check, ChevronDown, Plus, X, Star, Info, Activity, BookOpen, Coins, Bus, Utensils, Calendar, Wrench, List, Home, Heart, TrendingUp, Shield, Eye, EyeOff, Table } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -479,7 +479,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
       development: { icon: TrendingUp, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
       security: { icon: Shield, color: 'text-gray-600', bgColor: 'bg-gray-50' }
     };
-    return categoryMap[category] || { icon: DollarSign, color: 'text-slate-600', bgColor: 'bg-slate-50' };
+    return categoryMap[category] || { icon: Coins, color: 'text-slate-600', bgColor: 'bg-slate-50' };
   };
 
   // Group voteheads by category
@@ -895,7 +895,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
         ) : (
           <div className="text-center py-12">
             <div className="text-slate-400 mb-4">
-              <DollarSign className="h-16 w-16 mx-auto mb-4" />
+              <Coins className="h-16 w-16 mx-auto mb-4" />
             </div>
             <h3 className="text-lg font-semibold text-slate-600 mb-2">No Fee Structure Data</h3>
             <p className="text-slate-500 mb-4">
@@ -938,7 +938,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
       <div className="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-5 shadow-sm">
         <div className="flex items-start gap-4">
           <div className="mt-1 bg-white p-2 rounded-full shadow-sm border border-blue-200">
-            <DollarSign className="h-5 w-5 text-blue-600" />
+            <Coins className="h-5 w-5 text-blue-600" />
           </div>
           <div>
             <h4 className="text-sm font-bold text-blue-800">Fee Components</h4>
@@ -1004,7 +1004,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
         <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-white rounded-lg shadow-sm border border-blue-200">
-              <DollarSign className="h-5 w-5 text-blue-600" />
+              <Coins className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <h5 className="text-sm font-semibold text-blue-800">Fee Buckets Management</h5>
@@ -1036,7 +1036,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white rounded-full shadow-sm border border-blue-300 group-hover:shadow-md group-hover:border-blue-400 transition-all duration-200">
-                    <DollarSign className="h-5 w-5 text-blue-600" />
+                    <Coins className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
                     <h6 className="font-medium text-sm text-blue-800">Choose from Existing <span className="text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded-full">{feeBuckets.length}</span></h6>
@@ -1061,7 +1061,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
           <div className="flex items-center justify-between mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white rounded-full shadow-sm border border-blue-200">
-                <DollarSign className="h-5 w-5 text-blue-600" />
+                <Coins className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-blue-800">Choose from Existing Buckets</h4>
@@ -1101,7 +1101,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
       <div className="mt-6 space-y-6 bg-white p-4 rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
         {formData.termStructures.length === 0 ? (
           <div className="text-center py-8">
-            <DollarSign className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+            <Coins className="h-12 w-12 mx-auto mb-4 text-slate-300" />
             <p className="text-slate-600">Please add at least one term in the previous step before configuring fees.</p>
             <Button 
               variant="outline" 
@@ -1129,7 +1129,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
           </div>
         ) : !hasFeeComponents ? (
           <div className="text-center py-8">
-            <DollarSign className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+            <Coins className="h-12 w-12 mx-auto mb-4 text-slate-300" />
             <p className="text-slate-600">No fee components added yet. Add your first component below.</p>
             <div className="flex flex-col items-center mt-6 gap-3">
               {/* Primary actions */}
@@ -1151,7 +1151,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                     onClick={() => setShowExistingBuckets(true)}
                     className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                   >
-                    <DollarSign className="h-4 w-4 mr-2" />
+                    <Coins className="h-4 w-4 mr-2" />
                     Choose from Existing ({feeBuckets.length})
                   </Button>
                 )}
@@ -1190,7 +1190,7 @@ export const Step4_FeeComponents: React.FC<Step4Props> = ({ formData, setFormDat
                     <th className="border border-primary/30 p-4 text-left font-bold">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5">
-                          <DollarSign className="h-4 w-4 text-primary" />
+                          <Coins className="h-4 w-4 text-primary" />
                           <span>Vote Head</span>
                         </div>
                         {formData.termStructures.length > 0 && getAllVoteheads(0).length > 0 && (

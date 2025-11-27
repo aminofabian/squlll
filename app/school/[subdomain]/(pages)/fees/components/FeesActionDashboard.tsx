@@ -5,7 +5,7 @@ import {
   Plus, 
   Receipt, 
   Users, 
-  DollarSign, 
+  Coins, 
   Eye,
   Settings,
   Zap,
@@ -134,7 +134,7 @@ export const FeesActionDashboard = ({
               onClick={onCreateStructure}
             />
             <QuickActionCard
-              icon={<DollarSign className="h-6 w-6" />}
+              icon={<Coins className="h-6 w-6" />}
               label="Generate Invoices"
               onClick={onGenerateInvoices}
             />
@@ -218,7 +218,7 @@ export const FeesActionDashboard = ({
                 <StatCard
                   title="Invoices"
                   value={invoices}
-                  icon={<DollarSign className="h-6 w-6" />}
+                  icon={<Coins className="h-6 w-6" />}
                   gradient="bg-gradient-to-br from-primary to-primary-dark"
                 />
                 <StatCard

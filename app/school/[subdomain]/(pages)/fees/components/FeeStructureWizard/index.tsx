@@ -270,13 +270,13 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave }: FeeStructureWiza
                     })
                     
                     if (termItems.length === 0) {
-                        console.warn(`No items with amounts > 0 for ${term.name}, skipping`)
+                        console.warn(`No items with amounts > 0 for {term.name}, skipping`)
                         continue
                     }
                     
                     // Create fee structure for this term
                     const termStructureName = `${formData.name} - ${term.name}`
-                    console.log(`Creating fee structure for ${term.name}:`, {
+                    console.log(`Creating fee structure for {term.name}:`, {
                         name: termStructureName,
                         academicYearId: formData.academicYearId,
                         termIds: [term.id],

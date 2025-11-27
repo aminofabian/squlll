@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, Users, School, GraduationCap, BookOpen, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useToast } from "@/components/ui/use-toast"
 import { Grade } from '../types'
 import { useGradeLevels, TenantGradeLevel } from '../hooks/useGradeLevels'
 
@@ -40,6 +41,7 @@ export const AssignFeeStructureModal = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'grades' | 'gradelevels'>('gradelevels')
+  const { toast } = useToast()
   
   // Use the hook to fetch grade levels
   const { gradeLevels, isLoading: isLoadingGradeLevels, error: gradeLevelsError } = useGradeLevels()
@@ -58,6 +60,17 @@ export const AssignFeeStructureModal = ({
       setError(null)
     }
   }, [isOpen, feeStructure])
+
+  // Show toast for grade levels loading error
+  useEffect(() => {
+    if (gradeLevelsError) {
+      toast({
+        title: "Error Loading Grade Levels",
+        description: gradeLevelsError,
+        variant: "destructive",
+      })
+    }
+  }, [gradeLevelsError, toast])
   
   const handleGradeToggle = (gradeId: string) => {
     setSelectedGradeIds(prev => 
@@ -97,7 +110,18 @@ export const AssignFeeStructureModal = ({
     }
     
     if (selectedGradeIds.length === 0) {
-      setError("Please select at least one grade")
+      setError("Please select at least one grade level")
+      return
+    }
+    
+    // Ensure we're using tenant grade level IDs (from the gradelevels tab)
+    // If grades tab was used, we need to validate or map those IDs
+    const tenantGradeLevelIds = activeTab === 'gradelevels' 
+      ? selectedGradeIds 
+      : selectedGradeIds.filter(id => gradeLevels.some(gl => gl.id === id))
+    
+    if (tenantGradeLevelIds.length === 0) {
+      setError("Please select at least one grade level from the Grade Levels tab")
       return
     }
     
@@ -112,14 +136,8 @@ export const AssignFeeStructureModal = ({
         },
         body: JSON.stringify({
           query: `
-            mutation CreateFeeAssignment {
-              createFeeAssignment(
-                createFeeAssignmentInput: {
-                  feeStructureId: "${feeStructure.id}"
-                  tenantGradeLevelIds: ${JSON.stringify(selectedGradeIds)}
-                  description: "${description.replace(/"/g, '\\"')}"
-                }
-              ) {
+            mutation CreateFeeAssignment($input: CreateFeeAssignmentInput!) {
+              createFeeAssignment(createFeeAssignmentInput: $input) {
                 id
                 feeStructureId
                 assignedBy
@@ -136,22 +154,51 @@ export const AssignFeeStructureModal = ({
                 }
               }
             }
-          `
+          `,
+          variables: {
+            input: {
+              feeStructureId: feeStructure.id,
+              tenantGradeLevelIds: tenantGradeLevelIds,
+              description: description
+            }
+          }
         }),
       })
       
+      // Always parse the response first, even for error status codes
+      // GraphQL can return errors in the response body even with error HTTP status codes
+      let result
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        // If we can't parse JSON, fall back to HTTP status error
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        throw new Error('Failed to parse response from server')
+      }
+      
+      // Check for GraphQL errors first (these contain the actual error messages)
+      if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+        const errorMessage = result.errors[0]?.message || 'Failed to assign fee structure to grades'
+        throw new Error(errorMessage)
+      }
+      
+      // If no GraphQL errors but HTTP status is not ok, throw HTTP error
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const result = await response.json()
-      
-      if (result.errors) {
-        throw new Error(result.errors[0]?.message || 'Failed to assign fee structure to grades')
-      }
-      
       // Handle successful assignment
       const assignmentResult = result.data.createFeeAssignment
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Fee structure assigned to ${tenantGradeLevelIds.length} grade level${tenantGradeLevelIds.length !== 1 ? 's' : ''} successfully`,
+        variant: "default",
+      })
+      
       if (onSuccess && assignmentResult) {
         onSuccess(assignmentResult)
       }
@@ -160,8 +207,16 @@ export const AssignFeeStructureModal = ({
       onClose()
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred')
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+      setError(errorMessage)
       console.error('Error assigning fee structure to grades:', err)
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -248,7 +303,7 @@ export const AssignFeeStructureModal = ({
                         <span className="ml-2 text-sm font-medium">Loading grade levels...</span>
                       </div>
                     ) : gradeLevelsError ? (
-                      <div className="p-4 border border-red-200 rounded-md bg-red-50 text-red-600">
+                      <div className="p-4 border border-rose-200/40 rounded-md bg-rose-50/30 text-rose-700/70">
                         Failed to load grade levels: {gradeLevelsError}
                       </div>
                     ) : (
@@ -403,8 +458,8 @@ export const AssignFeeStructureModal = ({
               )}
               
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                  <p className="text-sm text-red-600">{error}</p>
+                <div className="bg-rose-50/30 border border-rose-200/40 rounded-md p-3">
+                  <p className="text-sm text-rose-700/70">{error}</p>
                 </div>
               )}
             </div>

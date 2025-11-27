@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { StudentSummaryDetail, FeeInvoice } from '../types'
-import { DollarSign } from 'lucide-react'
+import { Coins } from 'lucide-react'
 
 interface FeeSummaryCardProps {
   studentData: StudentSummaryDetail | null
@@ -103,7 +103,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <Coins className="h-5 w-5" />
             Fee Summary
           </CardTitle>
         </CardHeader>
@@ -123,7 +123,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-600">
-            <DollarSign className="h-5 w-5" />
+            <Coins className="h-5 w-5" />
             Fee Summary Error
           </CardTitle>
         </CardHeader>
@@ -139,7 +139,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <Coins className="h-5 w-5" />
             Fee Summary
           </CardTitle>
         </CardHeader>
@@ -163,7 +163,7 @@ export const FeeSummaryCard: React.FC<FeeSummaryCardProps> = ({
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
+          <Coins className="h-5 w-5" />
           Fee Summary
         </CardTitle>
       </CardHeader>

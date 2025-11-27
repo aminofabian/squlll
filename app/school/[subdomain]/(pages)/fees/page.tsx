@@ -25,6 +25,7 @@ import { StudentDetailsDrawer } from './components/StudentDetailsDrawer'
 import { WorkflowGuidance } from './components/WorkflowGuidance'
 import { FeesActionDashboard } from './components/FeesActionDashboard'
 import { FeeStructuresTab } from './components/FeeStructureManager/FeeStructuresTab'
+import { AssignFeeStructureModal } from './components/AssignFeeStructureModal'
 import { useFeesData } from './hooks/useFeesData'
 import { useFormHandlers } from './hooks/useFormHandlers'
 import { useFeeStructures } from './hooks/useFeeStructures'
@@ -69,6 +70,10 @@ export default function FeesPage() {
   const [selectedStructure, setSelectedStructure] = useState<FeeStructure | null>(null)
   const [preselectedStructureId, setPreselectedStructureId] = useState<string>('')
   const [preselectedTerm, setPreselectedTerm] = useState<string>('')
+  
+  // Assign to grades modal state
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+  const [feeStructureToAssign, setFeeStructureToAssign] = useState<{ id: string; name: string; academicYear?: string; isActive?: boolean } | null>(null)
 
   const {
     selectedStudent,
@@ -493,18 +498,41 @@ export default function FeesPage() {
         if (!result && updateError) {
           throw new Error(`GraphQL update failed: ${updateError}`);
         }
+        
+        // Refresh the list after update
+        await fetchFeeStructures()
       } else {
         // For create mode, use the local function
         result = await createFeeStructure(formData)
+        
+        // Refresh the list after creation
+        await fetchFeeStructures()
       }
 
       // Reset UI state
       setShowCreateForm(false)
       setShowEditForm(false)
       setSelectedStructure(null)
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: selectedStructure ? "Fee structure updated successfully" : "Fee structure created successfully",
+        variant: "default",
+      })
+      
       return result
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
       console.error('Error saving fee structure:', error)
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: `Failed to ${selectedStructure ? 'update' : 'create'} fee structure: ${errorMessage}`,
+        variant: "destructive",
+      })
+      
       return null
     }
   }
@@ -519,15 +547,68 @@ export default function FeesPage() {
     try {
       const newInvoices = generateBulkInvoices(generation)
       console.log(`Generated ${newInvoices.length} invoices successfully`)
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Generated ${newInvoices.length} invoice${newInvoices.length !== 1 ? 's' : ''} successfully`,
+        variant: "default",
+      })
+      
       // Switch to invoices view to show the new invoices
       setCurrentView('invoices')
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
       console.error('Failed to generate invoices:', error)
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: `Failed to generate invoices: ${errorMessage}`,
+        variant: "destructive",
+      })
     }
   }
 
   const handleAssignToGrade = (feeStructureId: string) => {
     console.log('Assign to grade:', feeStructureId)
+    
+    // Find the fee structure from processed structures
+    const structure = processedFeeStructures.find(s => s.structureId === feeStructureId)
+    
+    if (structure) {
+      setFeeStructureToAssign({
+        id: structure.structureId,
+        name: structure.structureName,
+        academicYear: structure.academicYear,
+        isActive: structure.isActive
+      })
+      setIsAssignModalOpen(true)
+    } else {
+      console.error('Fee structure not found:', feeStructureId)
+      toast({
+        title: "Error",
+        description: "Fee structure not found. Please refresh the page and try again.",
+        variant: "destructive",
+      })
+    }
+  }
+  
+  // Handle assignment success
+  const handleAssignmentSuccess = (assignmentResult: any) => {
+    console.log('Fee structure assigned successfully:', assignmentResult)
+    // Refresh fee structures and grade data
+    Promise.all([
+      fetchFeeStructures(),
+      fetchGradeData()
+    ]).catch(err => {
+      console.error('Failed to refresh data after assignment:', err)
+      toast({
+        title: "Warning",
+        description: "Assignment successful but failed to refresh data. Please refresh the page.",
+        variant: "destructive",
+      })
+    })
   }
 
   const convertStructureToForm = (structure: FeeStructure): FeeStructureForm => {
@@ -871,6 +952,18 @@ export default function FeesPage() {
           onRefresh={finalRefetch}
         />
       )}
+
+      {/* Assign Fee Structure to Grades Modal */}
+      <AssignFeeStructureModal
+        isOpen={isAssignModalOpen}
+        onClose={() => {
+          setIsAssignModalOpen(false)
+          setFeeStructureToAssign(null)
+        }}
+        feeStructure={feeStructureToAssign}
+        availableGrades={grades}
+        onSuccess={handleAssignmentSuccess}
+      />
     </div>
   )
 }

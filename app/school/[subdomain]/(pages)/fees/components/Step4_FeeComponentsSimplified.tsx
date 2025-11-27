@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, Fragment } from 'react';
-import { Check, Plus, X, DollarSign, Calendar, AlertCircle } from "lucide-react";
+import { Check, Plus, X, Coins, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -116,7 +116,7 @@ export const Step4_FeeComponentsSimplified: React.FC<Step4Props> = ({ formData, 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-primary rounded-lg">
-                <DollarSign className="h-6 w-6 text-white" />
+                <Coins className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Fee Components</h3>
@@ -185,7 +185,7 @@ export const Step4_FeeComponentsSimplified: React.FC<Step4Props> = ({ formData, 
                 </div>
               ) : feeBuckets.length === 0 ? (
                 <div className="p-16 text-center">
-                  <DollarSign className="h-16 w-16 mx-auto text-slate-300 mb-4" />
+                  <Coins className="h-16 w-16 mx-auto text-slate-300 mb-4" />
                   <h4 className="text-lg font-semibold mb-2">No Fee Buckets</h4>
                   <p className="text-slate-600 mb-6">Create your first fee bucket</p>
                   <Button onClick={() => setShowBucketModal(true)}>

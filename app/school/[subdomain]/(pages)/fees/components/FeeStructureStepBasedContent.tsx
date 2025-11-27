@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Info, GraduationCap, Calendar, DollarSign, FileText, Plus, X, Badge} from "lucide-react"
+import { Info, GraduationCap, Calendar, Coins, FileText, Plus, X, Badge} from "lucide-react"
 import { Step4_FeeComponents as OriginalStep4_FeeComponents } from './Step4_FeeComponents'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
 import { useFeeBuckets } from '@/lib/hooks/useFeeBuckets'

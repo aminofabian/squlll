@@ -243,6 +243,9 @@ export const useGraphQLFeeStructures = () => {
         structure.id === id ? { ...structure, ...updatedStructure } : structure
       ));
 
+      // Refresh the full list to ensure proper grouping and processing
+      await fetchFeeStructures();
+
       console.log('Fee structure updated successfully:', updatedStructure);
       return updatedStructure.id;
     } catch (err) {
@@ -419,6 +422,9 @@ export const useGraphQLFeeStructures = () => {
       const newStructure = result.data.createFeeStructure;
       setStructures(prev => [...prev, newStructure]);
 
+      // Refresh the full list to ensure proper grouping and processing
+      await fetchFeeStructures();
+
       console.log('Fee structure created successfully:', newStructure);
       return newStructure;
     } catch (err) {
@@ -539,6 +545,9 @@ export const useGraphQLFeeStructures = () => {
       // Add the new structure to the local state
       const newStructure = result.data.createFeeStructureWithItems;
       setStructures(prev => [...prev, newStructure]);
+
+      // Refresh the full list to ensure proper grouping and processing
+      await fetchFeeStructures();
 
       console.log('Fee structure with items created successfully:', newStructure);
       return newStructure;

@@ -14,7 +14,7 @@ import {
   Send, 
   X, 
   Users, 
-  DollarSign, 
+  Coins, 
   Calendar,
   FileText,
   CheckCircle,
@@ -544,7 +544,7 @@ export const BulkInvoiceGenerator = ({
                         <p className="text-xs text-gray-600">Students</p>
                       </div>
                       <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <DollarSign className="h-6 w-6 text-green-500 mx-auto mb-1" />
+                        <Coins className="h-6 w-6 text-green-500 mx-auto mb-1" />
                         <p className="text-lg font-bold text-green-700">
                           KES {calculateTotalAmount().toLocaleString()}
                         </p>

@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, DollarSign, Plus, Receipt } from 'lucide-react'
+import { FileText, Coins, Plus, Receipt } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface IntegratedTabNavigationProps {
@@ -81,7 +81,7 @@ export const IntegratedTabNavigation = ({
               "p-3 rounded-lg",
               activeTab === 'invoices' ? "bg-white/20" : "bg-white"
             )}>
-              <DollarSign className={cn(
+              <Coins className={cn(
                 "h-6 w-6",
                 activeTab === 'invoices' ? "text-white" : "text-emerald-600"
               )} />

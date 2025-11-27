@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { Edit3, Trash2, Clock, GraduationCap, Plus, Eye, ChevronDown, ChevronRight, DollarSign, CheckCircle, Calendar } from "lucide-react"
+import { Edit3, Trash2, Clock, GraduationCap, Plus, Eye, ChevronDown, ChevronRight, Coins, CheckCircle, Calendar } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -220,7 +220,7 @@ export const ExistingFeeBucketsSection: React.FC<ExistingFeeBucketsSectionProps>
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <div className={`p-1.5 rounded-md ${isSelected ? 'bg-primary/20' : 'bg-blue-50'}`}>
-                                <DollarSign className={`h-4 w-4 ${isSelected ? 'text-primary' : 'text-blue-600'}`} />
+                                <Coins className={`h-4 w-4 ${isSelected ? 'text-primary' : 'text-blue-600'}`} />
                               </div>
                               <h5 className="text-sm font-semibold text-slate-800 truncate">
                                 {bucket.name}
@@ -272,7 +272,7 @@ export const ExistingFeeBucketsSection: React.FC<ExistingFeeBucketsSectionProps>
                               <div className="flex justify-between items-center mb-2">
                                 <div className="text-xs font-medium text-blue-700 flex items-center gap-1.5">
                                   <div className="p-1 rounded bg-blue-50">
-                                    <DollarSign className="h-3 w-3 text-blue-600" />
+                                    <Coins className="h-3 w-3 text-blue-600" />
                                   </div>
                                   Vote Heads ({bucket.components?.length})
                                 </div>
@@ -296,7 +296,7 @@ export const ExistingFeeBucketsSection: React.FC<ExistingFeeBucketsSectionProps>
                                     <div key={index} className="flex items-center justify-between text-xs bg-white p-2 rounded border border-blue-100 hover:bg-blue-50/30 transition-colors duration-200">
                                       <div className="flex items-center gap-2">
                                         <div className={`p-1 rounded ${bgColor}`}>
-                                          <DollarSign className={`h-3 w-3 ${color}`} />
+                                          <Coins className={`h-3 w-3 ${color}`} />
                                         </div>
                                         <div className="flex-1">
                                           <span className="font-medium text-slate-800">{component.name}</span>

@@ -15,7 +15,7 @@ import {
   Trash2, 
   Save, 
   X,
-  DollarSign,
+  Coins,
   Calendar,
   Users,
   BookOpen,
@@ -487,7 +487,7 @@ export const FeeStructureFormComponent = ({
                     <div className="space-y-6">
                       <div className="flex justify-between items-center">
                         <h4 className="font-medium flex items-center gap-2">
-                          <DollarSign className="h-5 w-5 text-primary" />
+                          <Coins className="h-5 w-5 text-primary" />
                           Fee Buckets
                         </h4>
                         <div className="flex gap-2">
@@ -579,7 +579,7 @@ export const FeeStructureFormComponent = ({
                           <CardHeader className="pb-3">
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4" />
+                                <Coins className="h-4 w-4" />
                                 <span className="font-medium">{bucket.name || 'Unnamed Bucket'}</span>
                                 <Badge variant="outline">
                                   KES {calculateBucketTotal(bucket).toLocaleString()}

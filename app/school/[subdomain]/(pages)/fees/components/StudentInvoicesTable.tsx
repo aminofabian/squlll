@@ -1,4 +1,4 @@
-import { Eye, Printer, DollarSign } from "lucide-react"
+import { Eye, Printer, Coins } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -113,7 +113,7 @@ export const StudentInvoicesTable = ({
       {/* Empty State */}
       {invoices.length === 0 && (
         <div className="text-center py-12 border-t-2 border-dashed border-primary/20">
-          <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <Coins className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h3 className="text-lg font-mono font-medium text-slate-600 dark:text-slate-400 mb-2">
             No invoices found
           </h3>

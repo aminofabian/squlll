@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { StudentSummaryDetail } from '../types'
-import { User, Mail, Phone, GraduationCap, Calendar, DollarSign, AlertCircle, RefreshCw } from 'lucide-react'
+import { User, Mail, Phone, GraduationCap, Calendar, Coins, AlertCircle, RefreshCw } from 'lucide-react'
 
 interface StudentDetailsCardProps {
   studentData: StudentSummaryDetail | null
@@ -232,7 +232,7 @@ export const StudentDetailsCard: React.FC<StudentDetailsCardProps> = ({
       <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <Coins className="h-5 w-5" />
             Fee Summary
           </CardTitle>
         </CardHeader>

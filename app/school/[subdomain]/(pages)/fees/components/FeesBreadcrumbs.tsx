@@ -8,7 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { Home, FileText, DollarSign } from 'lucide-react'
+import { Home, FileText, Coins } from 'lucide-react'
 
 interface FeesBreadcrumbsProps {
   activeTab: 'structures' | 'invoices'
@@ -29,7 +29,7 @@ export const FeesBreadcrumbs = ({ activeTab, selectedStudent, studentName }: Fee
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbLink href="#" className="flex items-center gap-1.5">
-            <DollarSign className="h-4 w-4" />
+            <Coins className="h-4 w-4" />
             <span>Fees</span>
           </BreadcrumbLink>
         </BreadcrumbItem>
