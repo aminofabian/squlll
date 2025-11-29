@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // Define TypeScript interfaces for the GraphQL response
 export interface GraphQLFeeStructureItem {
@@ -93,7 +93,7 @@ export const useGraphQLFeeStructures = () => {
   const [isCreatingWithItems, setIsCreatingWithItems] = useState<boolean>(false);
   const [createWithItemsError, setCreateWithItemsError] = useState<string | null>(null);
 
-  const fetchFeeStructures = async () => {
+  const fetchFeeStructures = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     console.log('Fetching fee structures from GraphQL API...');
@@ -150,28 +150,39 @@ export const useGraphQLFeeStructures = () => {
       console.log(`GraphQL response status: ${response.status}`);
 
       if (!response.ok) {
-        throw new Error(`GraphQL request failed with status ${response.status}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('GraphQL request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText.substring(0, 500)
+        });
+        throw new Error(`GraphQL request failed with status ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
       console.log('Raw GraphQL response:', result);
       
       if (result.errors) {
-        throw new Error(result.errors.map((e: any) => e.message).join(', '));
+        const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+        console.error('GraphQL errors:', result.errors);
+        throw new Error(errorMessages);
       }
 
       if (!result.data) {
+        console.error('GraphQL response missing data field. Full response:', result);
         throw new Error('GraphQL response missing data field');
       }
 
       if (!result.data.feeStructures) {
-        console.warn('GraphQL response missing feeStructures field');
+        console.warn('GraphQL response missing feeStructures field. Available data keys:', Object.keys(result.data || {}));
         setStructures([]);
+        setError('GraphQL response missing feeStructures field');
         return [];
       }
 
-      console.log(`Received ${result.data.feeStructures.length} fee structures`);
+      console.log(`✅ Successfully received ${result.data.feeStructures.length} fee structures`);
       setStructures(result.data.feeStructures);
+      setError(null); // Clear any previous errors
       setLastFetchTime(new Date());
       return result.data.feeStructures;
     } catch (err) {
@@ -182,7 +193,7 @@ export const useGraphQLFeeStructures = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []); // Empty deps - function doesn't depend on any props or state
 
   /**
    * Updates a fee structure using GraphQL mutation

@@ -85,22 +85,22 @@ export const FeeStructuresTab = ({
   // Show loading if actively loading OR if we haven't fetched yet
   if (isLoading || (!hasFetched && !error && graphQLStructures.length === 0)) {
     return (
-      <div className="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-white to-primary/5 rounded-2xl border-2 border-primary/10">
+      <div className="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-white to-primary/5 border-2 border-primary/10">
         <div className="relative">
           <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
           <Loader2 className="h-12 w-12 animate-spin text-primary relative z-10" />
         </div>
         <span className="mt-6 text-base font-medium text-slate-700">Loading fee structures...</span>
-        <span className="mt-2 text-sm text-slate-500">Please wait while we fetch your data</span>
+        <span className="mt-2 text-sm text-primary/70">Please wait while we fetch your data</span>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="p-8 border-2 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50 rounded-2xl">
+      <div className="p-8 border-2 border-red-200 bg-gradient-to-br from-red-50 to-red-100/50">
         <div className="flex items-start gap-4">
-          <div className="h-12 w-12 rounded-lg bg-red-200 flex items-center justify-center flex-shrink-0">
+          <div className="h-12 w-12 bg-red-200 flex items-center justify-center flex-shrink-0">
             <span className="text-2xl">⚠️</span>
           </div>
           <div className="flex-1">
@@ -125,7 +125,7 @@ export const FeeStructuresTab = ({
   // Check if we have structures from GraphQL but they're being processed
   if (structures && structures.length > 0 && graphQLStructures.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-white to-primary/5 rounded-2xl border-2 border-primary/10">
+      <div className="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-white to-primary/5 border-2 border-primary/10">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <span className="text-base font-medium text-slate-700">Processing fee structures...</span>
       </div>
@@ -137,7 +137,7 @@ export const FeeStructuresTab = ({
     return (
       <div className="space-y-6">
         {/* Header Section */}
-        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent rounded-xl p-4 lg:p-6 border border-primary/10">
+        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent p-4 lg:p-6 border-2 border-primary/10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="min-w-0 flex-1">
               <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-1 truncate">Fee Structures</h2>
@@ -149,7 +149,7 @@ export const FeeStructuresTab = ({
 
             <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 p-1 bg-white/80 backdrop-blur-sm rounded-lg border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-1 p-1 bg-white/80 backdrop-blur-sm border-2 border-primary/10 shadow-sm">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -201,7 +201,7 @@ export const FeeStructuresTab = ({
         </div>
 
         {/* Filters Section */}
-        <div className="bg-white rounded-xl border border-slate-200 p-3 lg:p-4 shadow-sm">
+        <div className="bg-white border-2 border-primary/10 p-3 lg:p-4 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
             {/* Search */}
             <div className="flex-1 relative min-w-0">
@@ -252,7 +252,7 @@ export const FeeStructuresTab = ({
                 <select
                   value={academicYearFilter}
                   onChange={(e) => setAcademicYearFilter(e.target.value)}
-                  className="h-10 px-3 rounded-md border border-slate-300 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all min-w-[120px]"
+                  className="h-10 px-3 border-2 border-primary/10 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all min-w-[120px]"
                 >
                   <option value="all">All Years</option>
                   {academicYears.map(year => (
@@ -308,9 +308,9 @@ export const FeeStructuresTab = ({
             })}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border-2 border-dashed border-slate-300 p-12 text-center">
+          <div className="bg-white border-2 border-dashed border-primary/20 p-12 text-center">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Search className="h-8 w-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">No structures found</h3>

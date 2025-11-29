@@ -18,7 +18,7 @@ export const FeeStructureEmptyState = ({ onCreateNew, onViewSample }: FeeStructu
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary-light/5 rounded-full blur-3xl -z-10" />
 
                 {/* Icon */}
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-6 relative">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 mb-6 relative">
                     <FileText className="h-10 w-10 text-primary" />
                     <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                         <Sparkles className="h-4 w-4 text-white" />
@@ -61,28 +61,28 @@ export const FeeStructureEmptyState = ({ onCreateNew, onViewSample }: FeeStructu
 
                 {/* Quick Info Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 max-w-3xl mx-auto">
-                    <div className="p-4 bg-white rounded-lg shadow-sm border border-primary/10">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 mx-auto">
+                    <div className="p-4 bg-white shadow-sm border-2 border-primary/10">
+                        <div className="w-10 h-10 bg-primary/10 flex items-center justify-center mb-3 mx-auto">
                             <span className="text-xl">📝</span>
                         </div>
                         <h4 className="font-semibold text-sm text-slate-900 mb-1">Easy Setup</h4>
-                        <p className="text-xs text-slate-600">Simple wizard to create fee structures in minutes</p>
+                        <p className="text-xs text-primary/70">Simple wizard to create fee structures in minutes</p>
                     </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow-sm border border-primary/10">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 mx-auto">
+                    <div className="p-4 bg-white shadow-sm border-2 border-primary/10">
+                        <div className="w-10 h-10 bg-primary/10 flex items-center justify-center mb-3 mx-auto">
                             <span className="text-xl">🎯</span>
                         </div>
                         <h4 className="font-semibold text-sm text-slate-900 mb-1">Flexible</h4>
-                        <p className="text-xs text-slate-600">Customize fees for different grades and terms</p>
+                        <p className="text-xs text-primary/70">Customize fees for different grades and terms</p>
                     </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow-sm border border-primary/10">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3 mx-auto">
+                    <div className="p-4 bg-white shadow-sm border-2 border-primary/10">
+                        <div className="w-10 h-10 bg-primary/10 flex items-center justify-center mb-3 mx-auto">
                             <span className="text-xl">⚡</span>
                         </div>
                         <h4 className="font-semibold text-sm text-slate-900 mb-1">Automated</h4>
-                        <p className="text-xs text-slate-600">Generate invoices automatically from structures</p>
+                        <p className="text-xs text-primary/70">Generate invoices automatically from structures</p>
                     </div>
                 </div>
             </div>

@@ -322,14 +322,14 @@ export const FeeStructureCard = ({
                 {/* Header Section */}
                 <div className="flex items-start gap-3 mb-4">
                     <div className={cn(
-                        "h-10 w-10 flex items-center justify-center flex-shrink-0 rounded-xl shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg relative",
+                        "h-10 w-10 flex items-center justify-center flex-shrink-0 shadow-md transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg relative",
                         structure.isActive
                             ? "bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white ring-2 ring-primary/20"
                             : "bg-gradient-to-br from-slate-400 via-slate-450 to-slate-500 text-white ring-2 ring-slate-200/50"
                     )}>
                         <FileText className="h-5 w-5 drop-shadow-sm" />
                         {structure.isActive && (
-                            <div className="absolute inset-0 rounded-xl bg-primary/20 blur-sm -z-10" />
+                            <div className="absolute inset-0 bg-primary/20 blur-sm -z-10" />
                         )}
                     </div>
 
@@ -716,7 +716,7 @@ export const FeeStructureCard = ({
                     <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200/60 bg-gradient-to-br from-white via-slate-50/30 to-white flex-shrink-0 print:hidden shadow-sm">
                         <div className="flex items-center justify-between">
                             <DialogTitle className="flex items-center gap-3">
-                                <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white shadow-md ring-2 ring-primary/20">
+                                <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white shadow-md ring-2 ring-primary/20">
                                     <FileText className="h-5 w-5 drop-shadow-sm" />
                                 </div>
                                 <div className="flex flex-col">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -72,6 +72,9 @@ export default function FeesPage() {
   const [selectedProcessedStructure, setSelectedProcessedStructure] = useState<any>(null)
   const [preselectedStructureId, setPreselectedStructureId] = useState<string>('')
   const [preselectedTerm, setPreselectedTerm] = useState<string>('')
+  
+  // Track if we've already fetched on mount to prevent request floods
+  const hasFetchedOnMount = useRef(false)
   
   // Assign to grades modal state
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
@@ -254,19 +257,47 @@ export default function FeesPage() {
     console.log('Update fee item:', { itemId, amount, isMandatory, bucketName, feeStructureName, bucketId })
   }
 
-  // Auto-fetch fee structures on mount
+  // Auto-fetch fee structures on mount (only once)
   useEffect(() => {
-    console.log('Fees page mounted - fetching fee structures...')
-    fetchFeeStructures()
-  }, []) // Only run on mount
+    if (!hasFetchedOnMount.current) {
+      console.log('Fees page mounted - fetching fee structures...')
+      hasFetchedOnMount.current = true
+      fetchFeeStructures().catch((err) => {
+        console.error('Failed to fetch fee structures on mount:', err)
+        hasFetchedOnMount.current = false // Reset on error so we can retry
+      })
+    }
+  }, []) // Empty deps - only run once on mount
 
   // Auto-fetch when user clicks to view fee structures (if not already loaded)
+  // Use a ref to prevent multiple fetches
+  const isFetchingRef = useRef(false)
+  
   useEffect(() => {
-    if (showFeeStructuresInDashboard && graphQLStructures.length === 0 && !structuresLoading) {
+    // Only fetch if:
+    // 1. User clicked to view fee structures
+    // 2. We have no structures loaded
+    // 3. We're not currently loading
+    // 4. We're not currently fetching (prevent flood)
+    // 5. We've already done the initial mount fetch
+    if (showFeeStructuresInDashboard && 
+        graphQLStructures.length === 0 && 
+        !structuresLoading && 
+        !structuresError && 
+        hasFetchedOnMount.current &&
+        !isFetchingRef.current) {
       console.log('Viewing fee structures - fetching data...')
+      isFetchingRef.current = true
       fetchFeeStructures()
+        .then(() => {
+          isFetchingRef.current = false
+        })
+        .catch((err) => {
+          console.error('Failed to fetch fee structures when viewing:', err)
+          isFetchingRef.current = false
+        })
     }
-  }, [showFeeStructuresInDashboard, graphQLStructures.length, structuresLoading])
+  }, [showFeeStructuresInDashboard]) // Only depend on showFeeStructuresInDashboard to prevent loops
 
   // Student Summary hook for detailed student data
   const {
@@ -683,16 +714,16 @@ export default function FeesPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-primary/5 to-primary/10">
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full">
         {/* Header with Back Button when not on dashboard */}
         {currentView !== 'dashboard' && (
-          <div className="bg-white border-b border-slate-200 px-6 py-2">
+          <div className="bg-white border-b border-primary/10 px-6 py-3 shadow-sm">
             <Button
               variant="ghost"
               onClick={() => setCurrentView('dashboard')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-primary hover:text-primary-dark hover:bg-primary/5"
             >
               ← Back to Dashboard
             </Button>
@@ -936,7 +967,7 @@ export default function FeesPage() {
           grade: selectedStructure.grade,
           boardingType: selectedStructure.boardingType,
           academicYear: selectedStructure.academicYear,
-          academicYearId: selectedStructure.academicYearId,
+          academicYearId: selectedGraphQLStructure?.academicYearId || selectedGraphQLStructure?.academicYear?.id,
           termStructures: selectedStructure.termStructures.map(term => ({
             term: term.term as string,
             academicYear: selectedStructure.academicYear,

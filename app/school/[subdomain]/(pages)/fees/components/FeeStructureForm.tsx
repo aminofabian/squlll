@@ -839,20 +839,20 @@ export const FeeStructureFormComponent = ({
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="font-medium">Structure Name:</Label>
-                        <p>{formData.name || 'Unnamed Structure'}</p>
+                        <Label className="text-sm font-semibold text-slate-700 mb-1 block">Structure Name:</Label>
+                        <p className="text-base text-slate-900 font-medium">{formData.name || 'Unnamed Structure'}</p>
+                      </div>
+                      <div className="bg-primary/5 border-2 border-primary/10 p-3">
+                        <Label className="text-xs font-semibold text-primary/70 uppercase tracking-wide mb-2 block">Select Grade:</Label>
+                        <p className="text-lg font-bold text-primary">{formData.grade || 'Not selected'}</p>
                       </div>
                       <div>
-                        <Label className="font-medium">Grade:</Label>
-                        <p>{formData.grade || 'Not selected'}</p>
+                        <Label className="text-sm font-semibold text-slate-700 mb-1 block">Boarding Type:</Label>
+                        <p className="text-base text-slate-900 font-medium capitalize">{formData.boardingType}</p>
                       </div>
                       <div>
-                        <Label className="font-medium">Boarding Type:</Label>
-                        <p className="capitalize">{formData.boardingType}</p>
-                      </div>
-                      <div>
-                        <Label className="font-medium">Academic Year:</Label>
-                        <p>{formData.academicYear}</p>
+                        <Label className="text-sm font-semibold text-slate-700 mb-1 block">Academic Year:</Label>
+                        <p className="text-base text-slate-900 font-medium">{formData.academicYear}</p>
                       </div>
                     </div>
 

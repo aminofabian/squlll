@@ -25,12 +25,12 @@ const QuickActionCard = ({ icon, label, onClick }: QuickActionCardProps) => {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-xl hover:bg-primary/5 hover:border-primary/20 border border-slate-200 transition-all duration-200 shadow-sm hover:shadow-md group"
+      className="flex flex-col items-center justify-center p-6 bg-white hover:bg-primary/10 hover:border-primary/30 border-2 border-primary/10 transition-all duration-200 shadow-sm hover:shadow-lg group"
     >
-      <div className="mb-3 text-slate-600 group-hover:text-primary transition-colors">
+      <div className="mb-3 text-primary/70 group-hover:text-primary transition-colors">
         {icon}
       </div>
-      <span className="text-sm font-medium text-slate-700 group-hover:text-primary">
+      <span className="text-sm font-semibold text-slate-700 group-hover:text-primary transition-colors">
         {label}
       </span>
     </button>
@@ -46,7 +46,7 @@ interface StatCardProps {
 
 const StatCard = ({ title, value, icon, gradient }: StatCardProps) => {
   return (
-    <div className={cn("rounded-xl p-6 text-white shadow-sm hover:shadow-md transition-shadow", gradient)}>
+    <div className={cn("p-6 text-white shadow-sm hover:shadow-md transition-shadow", gradient)}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium opacity-90">{title}</span>
         <div className="opacity-80">
@@ -109,15 +109,15 @@ export const FeesActionDashboard = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Sidebar - Quick Actions */}
       <div className="lg:col-span-1">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div className="bg-white p-6 shadow-md border-2 border-primary/10">
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-primary rounded-lg">
+            <div className="p-2 bg-gradient-to-br from-primary to-primary-dark shadow-sm">
               <Zap className="h-5 w-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Quick Actions</h2>
-              <p className="text-xs text-slate-500">Instant access to key features</p>
+              <p className="text-xs text-primary/70 font-medium">Instant access to key features</p>
             </div>
           </div>
 
@@ -156,9 +156,9 @@ export const FeesActionDashboard = ({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-2 text-xs text-slate-500 pt-4 border-t border-slate-200">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
-            <span>6 quick actions available</span>
+          <div className="flex items-center gap-2 text-xs text-primary/70 pt-4 border-t border-primary/10">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <span className="font-medium">6 quick actions available</span>
           </div>
         </div>
       </div>
@@ -167,13 +167,13 @@ export const FeesActionDashboard = ({
       <div className="lg:col-span-2 space-y-6">
         {showFeeStructures ? (
           /* Fee Structures List */
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div className="bg-white p-6 shadow-md border-2 border-primary/10">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900">Fee Structures</h3>
               {onBackToOverview && (
                 <button
                   onClick={onBackToOverview}
-                  className="text-sm text-primary hover:text-primary-dark font-medium"
+                  className="text-sm text-primary hover:text-primary-dark font-semibold transition-colors"
                 >
                   ← Back to Overview
                 </button>
@@ -183,13 +183,13 @@ export const FeesActionDashboard = ({
           </div>
         ) : showInvoices ? (
           /* Invoices List */
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <div className="bg-white p-6 shadow-md border-2 border-primary/10">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900">Invoices</h3>
               {onBackToOverview && (
                 <button
                   onClick={onBackToOverview}
-                  className="text-sm text-primary hover:text-primary-dark font-medium"
+                  className="text-sm text-primary hover:text-primary-dark font-semibold transition-colors"
                 >
                   ← Back to Overview
                 </button>
@@ -233,37 +233,37 @@ export const FeesActionDashboard = ({
             {/* System Health & Recent Activity */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* System Health */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <div className="bg-white p-6 shadow-md border-2 border-primary/10">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">System Health</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-700">Fee Structures API</span>
+                  <div className="flex items-center justify-between p-2 hover:bg-primary/5 transition-colors">
+                    <span className="text-sm text-slate-700 font-medium">Fee Structures API</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-sm text-primary font-medium">Online</span>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      <span className="text-sm text-primary font-semibold">Online</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-700">Payment Processing</span>
+                  <div className="flex items-center justify-between p-2 hover:bg-primary/5 transition-colors">
+                    <span className="text-sm text-slate-700 font-medium">Payment Processing</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-sm text-primary font-medium">Active</span>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      <span className="text-sm text-primary font-semibold">Active</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-700">Invoice Generation</span>
+                  <div className="flex items-center justify-between p-2 hover:bg-primary/5 transition-colors">
+                    <span className="text-sm text-slate-700 font-medium">Invoice Generation</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      <span className="text-sm text-primary font-medium">Ready</span>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      <span className="text-sm text-primary font-semibold">Ready</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <div className="bg-white p-6 shadow-md border-2 border-primary/10">
                 <h3 className="text-lg font-bold text-slate-900 mb-4">Recent Activity</h3>
-                <div className="text-sm text-slate-500">
+                <div className="text-sm text-primary/70 font-medium">
                   No recent system alerts
                 </div>
               </div>

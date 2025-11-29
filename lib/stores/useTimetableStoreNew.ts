@@ -35,6 +35,9 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   // GraphQL subject actions
   loadSubjects: (gradeId?: string) => Promise<void>;
   
+  // GraphQL teacher actions
+  loadTeachers: () => Promise<void>;
+  
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
   createBreaks: (breaks: Omit<Break, 'id'>[]) => Promise<void>;
@@ -445,6 +448,61 @@ export const useTimetableStore = create<TimetableStore>()(
           }));
         } catch (error) {
           console.error('Error loading subjects:', error);
+          throw error;
+        }
+      },
+
+      loadTeachers: async () => {
+        try {
+          const response = await fetch('/api/school/teacher', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.getTeachers) {
+            throw new Error('Invalid response format: missing getTeachers data');
+          }
+
+          // Convert response to Teacher format and update store
+          const fetchedTeachers = result.data.getTeachers.map((teacher: any) => {
+            // Parse name into firstName and lastName
+            const fullName = teacher.user?.name || 'Unknown Teacher';
+            const nameParts = fullName.trim().split(/\s+/);
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            // Extract subject names from tenantSubjects
+            const subjectNames = teacher.tenantSubjects?.map((ts: any) => ts.name) || [];
+
+            return {
+              id: teacher.id,
+              firstName,
+              lastName,
+              name: fullName,
+              email: teacher.user?.email,
+              subjects: subjectNames, // Array of subject names (not IDs, as per interface)
+              color: undefined, // Can be set later if needed
+            };
+          });
+
+          set((state) => ({
+            teachers: fetchedTeachers,
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error loading teachers:', error);
           throw error;
         }
       },
