@@ -105,6 +105,10 @@ export default function SmartTimetableNew() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  
+  // State for showing all items
+  const [showAllTimeSlots, setShowAllTimeSlots] = useState(false);
+  const [showAllBreaks, setShowAllBreaks] = useState(false);
 
   // Get current grade name
   const currentGrade = useMemo(
@@ -261,86 +265,116 @@ export default function SmartTimetableNew() {
         </div>
       )}
 
-      {/* Breaks Section */}
-      <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-orange-900">Timetable Breaks</h3>
-          <button
-            onClick={() => {
-              setEditingBreak({
-                isNew: true,
-                afterPeriod: 3,
-                dayOfWeek: 1,
-              });
-            }}
-            className="px-3 py-1.5 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
-          >
-            <span>➕</span>
-            <span>Create Break</span>
-          </button>
-        </div>
-        {breaks.length === 0 ? (
-          <p className="text-sm text-orange-700">No breaks configured. Click "Create Break" to add one.</p>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-orange-700">
-              Found <strong>{breaks.length}</strong> break{breaks.length !== 1 ? 's' : ''}:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {breaks.map((breakItem) => (
-                <div key={breakItem.id} className="bg-white p-2 rounded border border-orange-200 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span>{breakItem.icon}</span>
-                    <div className="font-semibold">{breakItem.name}</div>
-                  </div>
-                  <div className="text-gray-600">
-                    After Period {breakItem.afterPeriod} • {breakItem.durationMinutes} min
-                  </div>
-                  <div className="text-gray-500">
-                    Day {breakItem.dayOfWeek} ({days[breakItem.dayOfWeek - 1] || 'Unknown'})
+      {/* Time Slots & Breaks - Side by Side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+        {/* Time Slots Section */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-l-4 border-blue-500 rounded-lg p-3 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⏰</span>
+              <h3 className="font-semibold text-blue-900 text-sm">Time Slots</h3>
+              {!loadingTimeSlots && timeSlots.length > 0 && (
+                <span className="text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded-full font-medium">
+                  {timeSlots.length}
+                </span>
+              )}
+            </div>
+            {!loadingTimeSlots && timeSlots.length > 0 && (
+              <button
+                onClick={() => setShowDeleteAllDialog(true)}
+                className="text-xs text-red-600 hover:text-red-800 transition-colors"
+                title="Delete all time slots"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+          {loadingTimeSlots ? (
+            <p className="text-xs text-blue-700">Loading...</p>
+          ) : timeSlots.length === 0 ? (
+            <p className="text-xs text-blue-600">No time slots. Use "Bulk Schedule Setup" to create.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {(showAllTimeSlots ? timeSlots : timeSlots.slice(0, 1)).map((slot) => (
+                <div key={slot.id} className="bg-white/80 backdrop-blur-sm p-1.5 rounded border border-blue-200/50 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-blue-700">P{slot.periodNumber}</span>
+                      <span className="text-gray-700">{slot.time}</span>
+                    </div>
+                    <span className="text-gray-500 text-[10px]">{slot.startTime}-{slot.endTime}</span>
                   </div>
                 </div>
               ))}
+              {timeSlots.length > 1 && (
+                <button
+                  onClick={() => setShowAllTimeSlots(!showAllTimeSlots)}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium w-full text-left"
+                >
+                  {showAllTimeSlots ? '▲ Show Less' : `▼ Show ${timeSlots.length - 1} more`}
+                </button>
+              )}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Time Slots Debug Info */}
-      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-blue-900">Time Slots from Backend</h3>
-          {!loadingTimeSlots && timeSlots.length > 0 && (
-            <button
-              onClick={() => setShowDeleteAllDialog(true)}
-              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-            >
-              <span>🗑️</span>
-              <span>Delete All</span>
-            </button>
           )}
         </div>
-        {loadingTimeSlots ? (
-          <p className="text-sm text-blue-700">Loading time slots...</p>
-        ) : timeSlots.length === 0 ? (
-          <p className="text-sm text-blue-700">No time slots found. Use "Bulk Schedule Setup" to create time slots.</p>
-        ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-blue-700">
-              Found <strong>{timeSlots.length}</strong> time slot{timeSlots.length !== 1 ? 's' : ''}:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {timeSlots.map((slot) => (
-                <div key={slot.id} className="bg-white p-2 rounded border border-blue-200 text-xs">
-                  <div className="font-semibold">Period {slot.periodNumber}</div>
-                  <div className="text-gray-600">{slot.time}</div>
-                  <div className="text-gray-500">{slot.startTime} - {slot.endTime}</div>
-                  <div className="text-gray-400">ID: {slot.id.substring(0, 8)}...</div>
+
+        {/* Breaks Section */}
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-l-4 border-orange-500 rounded-lg p-3 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">☕</span>
+              <h3 className="font-semibold text-orange-900 text-sm">Breaks</h3>
+              {breaks.length > 0 && (
+                <span className="text-xs bg-orange-200 text-orange-800 px-1.5 py-0.5 rounded-full font-medium">
+                  {breaks.length}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                setEditingBreak({
+                  isNew: true,
+                  afterPeriod: 3,
+                  dayOfWeek: 1,
+                });
+              }}
+              className="text-xs text-orange-700 hover:text-orange-900 transition-colors"
+              title="Create break"
+            >
+              ➕
+            </button>
+          </div>
+          {breaks.length === 0 ? (
+            <p className="text-xs text-orange-600">No breaks. Click ➕ to add one.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {(showAllBreaks ? breaks : breaks.slice(0, 1)).map((breakItem) => (
+                <div key={breakItem.id} className="bg-white/80 backdrop-blur-sm p-1.5 rounded border border-orange-200/50 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span>{breakItem.icon}</span>
+                      <span className="font-medium text-orange-900">{breakItem.name}</span>
+                    </div>
+                    <div className="text-gray-600 text-[10px]">
+                      P{breakItem.afterPeriod} • {breakItem.durationMinutes}m
+                    </div>
+                  </div>
+                  <div className="text-gray-500 text-[10px] mt-0.5">
+                    {days[breakItem.dayOfWeek - 1] || 'Unknown'}
+                  </div>
                 </div>
               ))}
+              {breaks.length > 1 && (
+                <button
+                  onClick={() => setShowAllBreaks(!showAllBreaks)}
+                  className="text-xs text-orange-600 hover:text-orange-800 font-medium w-full text-left"
+                >
+                  {showAllBreaks ? '▲ Show Less' : `▼ Show ${breaks.length - 1} more`}
+                </button>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Timetable Grid */}
