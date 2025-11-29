@@ -34,6 +34,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   loadBreaks: () => Promise<void>;
   updateBreak: (id: string, updates: Partial<Break>) => void;
   deleteBreak: (id: string) => void;
+  deleteAllBreaks: () => Promise<void>;
   
   // Bulk actions
   bulkSetSchedule: (timeSlots: TimeSlot[], breaks: Break[]) => void;
@@ -463,6 +464,46 @@ export const useTimetableStore = create<TimetableStore>()(
           breaks: state.breaks.filter((breakItem) => breakItem.id !== id),
           lastUpdated: new Date().toISOString(),
         }));
+      },
+
+      deleteAllBreaks: async () => {
+        try {
+          const response = await fetch('/api/school/break?all=true', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          // Check if deletion was successful
+          if (result.data?.deleteAllTimetableBreaks !== true && result.data?.deleteAllTimetableBreaks !== false) {
+            // If the mutation isn't implemented, still remove from local store
+            if (result.featureNotAvailable) {
+              console.warn('Delete all breaks mutation not available on server, removing from local store only');
+            } else {
+              throw new Error('Invalid response format: deleteAllTimetableBreaks result missing');
+            }
+          }
+
+          // Clear all breaks from store
+          set((state) => ({
+            breaks: [],
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error deleting all breaks:', error);
+          throw error;
+        }
       },
 
       // Bulk schedule setup

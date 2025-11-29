@@ -416,3 +416,112 @@ export async function GET(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  const requestUrl = new URL(request.url);
+  const GRAPHQL_ENDPOINT = `${requestUrl.origin}/api/graphql`;
+  try {
+    // Extract query parameters
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const deleteAll = searchParams.get('all') === 'true';
+
+    // Get the token from cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken')?.value;
+    const tenantId = cookieStore.get('tenantId')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please log in.' },
+        { status: 401 }
+      );
+    }
+
+    // Determine which mutation to use
+    let mutation: string;
+    let variables: any = {};
+
+    if (deleteAll) {
+      // Delete all breaks
+      mutation = `
+        mutation DeleteAllBreaks {
+          deleteAllTimetableBreaks
+        }
+      `;
+    } else if (id) {
+      // Delete single break (if needed in the future)
+      mutation = `
+        mutation DeleteBreak($id: String!) {
+          deleteTimetableBreak(id: $id)
+        }
+      `;
+      variables = { id };
+    } else {
+      return NextResponse.json(
+        { error: 'Either break ID or all=true parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Delete Break Debug:', {
+      id,
+      deleteAll,
+      tenantId,
+      mutation
+    });
+
+    // Call internal GraphQL proxy - forward cookies for authentication
+    const result = await handleGraphQLCall(async () => {
+      const cookieHeader = request.headers.get('cookie');
+
+      return await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
+        },
+        body: JSON.stringify({
+          query: mutation,
+          ...(Object.keys(variables).length > 0 && { variables })
+        })
+      });
+    });
+
+    // Check for GraphQL errors
+    if (result.errors) {
+      console.error('GraphQL errors:', result.errors);
+
+      const firstError = result.errors[0];
+      const errorClassification = classifyGraphQLError(firstError);
+
+      if (errorClassification.type === GraphQLErrorType.SCHEMA_NOT_IMPLEMENTED) {
+        console.warn('Break delete schema not implemented, returning success for local operation');
+        return NextResponse.json({
+          success: true,
+          message: errorClassification.userMessage,
+          featureNotAvailable: true,
+          data: deleteAll ? { deleteAllTimetableBreaks: true } : { deleteTimetableBreak: true }
+        });
+      }
+
+      return NextResponse.json(
+        {
+          error: errorClassification.userMessage,
+          type: errorClassification.type,
+          details: result.errors
+        },
+        { status: 500 }
+      );
+    }
+
+    // Wrap the GraphQL data in a 'data' property to match store expectations
+    return NextResponse.json({ data: result.data });
+  } catch (error) {
+    console.error('Error deleting break:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete break' },
+      { status: 500 }
+    );
+  }
+}
+

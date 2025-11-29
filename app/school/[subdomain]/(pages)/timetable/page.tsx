@@ -44,6 +44,7 @@ export default function SmartTimetableNew() {
     deleteTimeSlot,
     deleteAllTimeSlots,
     createBreaks,
+    deleteAllBreaks,
   } = useTimetableStore();
 
   // Toast for notifications
@@ -105,6 +106,8 @@ export default function SmartTimetableNew() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [showDeleteAllBreaksDialog, setShowDeleteAllBreaksDialog] = useState(false);
+  const [isDeletingAllBreaks, setIsDeletingAllBreaks] = useState(false);
   
   // State for showing all items
   const [showAllTimeSlots, setShowAllTimeSlots] = useState(false);
@@ -165,6 +168,28 @@ export default function SmartTimetableNew() {
       setIsDeletingAll(false);
     }
   }, [deleteAllTimeSlots, loadTimeSlots, toast, timeSlots.length]);
+
+  // Handle delete all breaks
+  const handleDeleteAllBreaks = useCallback(async () => {
+    setIsDeletingAllBreaks(true);
+    try {
+      await deleteAllBreaks();
+      toast({
+        title: 'All breaks deleted',
+        description: `All ${breaks.length} break${breaks.length !== 1 ? 's' : ''} have been successfully deleted.`,
+      });
+      setShowDeleteAllBreaksDialog(false);
+    } catch (error) {
+      console.error('Error deleting all breaks:', error);
+      toast({
+        title: 'Failed to delete all breaks',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingAllBreaks(false);
+    }
+  }, [deleteAllBreaks, toast, breaks.length]);
 
   return (
     <div className="container mx-auto p-6">
@@ -330,19 +355,30 @@ export default function SmartTimetableNew() {
                 </span>
               )}
             </div>
-            <button
-              onClick={() => {
-                setEditingBreak({
-                  isNew: true,
-                  afterPeriod: 3,
-                  dayOfWeek: 1,
-                });
-              }}
-              className="text-xs text-orange-700 hover:text-orange-900 transition-colors"
-              title="Create break"
-            >
-              ➕
-            </button>
+            <div className="flex items-center gap-1">
+              {breaks.length > 0 && (
+                <button
+                  onClick={() => setShowDeleteAllBreaksDialog(true)}
+                  className="text-xs text-red-600 hover:text-red-800 transition-colors"
+                  title="Delete all breaks"
+                >
+                  🗑️
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setEditingBreak({
+                    isNew: true,
+                    afterPeriod: 3,
+                    dayOfWeek: 1,
+                  });
+                }}
+                className="text-xs text-orange-700 hover:text-orange-900 transition-colors"
+                title="Create break"
+              >
+                ➕
+              </button>
+            </div>
           </div>
           {breaks.length === 0 ? (
             <p className="text-xs text-orange-600">No breaks. Click ➕ to add one.</p>
@@ -634,7 +670,7 @@ export default function SmartTimetableNew() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete All Confirmation Dialog */}
+      {/* Delete All Time Slots Confirmation Dialog */}
       <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -659,6 +695,36 @@ export default function SmartTimetableNew() {
                 </>
               ) : (
                 'Delete All Time Slots'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete All Breaks Confirmation Dialog */}
+      <AlertDialog open={showDeleteAllBreaksDialog} onOpenChange={setShowDeleteAllBreaksDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Breaks</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold">all {breaks.length} break{breaks.length !== 1 ? 's' : ''}</span>?
+              <p className="mt-2 text-red-500 font-semibold">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAllBreaks}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllBreaks}
+              disabled={isDeletingAllBreaks}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeletingAllBreaks ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Deleting All...
+                </>
+              ) : (
+                'Delete All Breaks'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
