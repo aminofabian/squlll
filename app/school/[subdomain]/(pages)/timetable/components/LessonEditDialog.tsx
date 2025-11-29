@@ -27,7 +27,7 @@ interface LessonEditDialogProps {
 }
 
 export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
-  const { subjects, teachers, entries, updateEntry, addEntry, deleteEntry } = useTimetableStore();
+  const { subjects, teachers, entries, timeSlots, grades, updateEntry, addEntry, deleteEntry } = useTimetableStore();
   
   const [formData, setFormData] = useState({
     subjectId: '',
@@ -104,6 +104,10 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   const isNew = lesson.isNew;
   const selectedSubject = subjects.find((s) => s.id === formData.subjectId);
   const selectedTeacher = teachers.find((t) => t.id === formData.teacherId);
+  
+  // Get timeslot and grade information
+  const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+  const grade = grades.find((g) => g.id === lesson.gradeId);
 
   // Find teachers already scheduled at this timeslot
   const busyTeacherIds = new Set(
@@ -141,6 +145,31 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           <DrawerTitle>
             {isNew ? 'Add New Lesson' : 'Edit Lesson'}
           </DrawerTitle>
+          {/* Timeslot and Grade Info */}
+          <div className="mt-3 space-y-2 pt-3 border-t">
+            {timeSlot && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Time Slot:</span>
+                <span className="font-medium text-blue-700">
+                  Period {timeSlot.periodNumber} • {timeSlot.time}
+                </span>
+              </div>
+            )}
+            {grade && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Grade:</span>
+                <span className="font-medium text-purple-700">
+                  {grade.displayName || grade.name}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Day:</span>
+              <span className="font-medium">
+                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][lesson.dayOfWeek - 1]}
+              </span>
+            </div>
+          </div>
         </DrawerHeader>
 
         <div className="space-y-4 px-4 pb-4 overflow-y-auto flex-1">
@@ -282,27 +311,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             />
           </div>
 
-          {/* Info Display */}
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Day:</span>
-              <span className="font-medium">
-                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][lesson.dayOfWeek - 1]}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Time:</span>
-              <span className="font-medium">
-                {!isNew && lesson.timeSlot ? lesson.timeSlot.time : 'N/A'}
-              </span>
-            </div>
-            {!isNew && lesson.grade && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Grade:</span>
-                <span className="font-medium">{lesson.grade.displayName || lesson.grade.name}</span>
-              </div>
-            )}
-          </div>
         </div>
 
         <DrawerFooter className="gap-2">
