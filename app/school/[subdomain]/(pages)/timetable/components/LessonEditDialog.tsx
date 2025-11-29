@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import type { EnrichedTimetableEntry } from '@/lib/types/timetable';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -135,15 +135,15 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   });
 
   return (
-    <Dialog open={!!lesson} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
+    <Drawer open={!!lesson} onOpenChange={onClose} direction="right">
+      <DrawerContent className="max-w-md flex flex-col h-full">
+        <DrawerHeader className="flex-shrink-0">
+          <DrawerTitle>
             {isNew ? 'Add New Lesson' : 'Edit Lesson'}
-          </DialogTitle>
-        </DialogHeader>
+          </DrawerTitle>
+        </DrawerHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 px-4 pb-4 overflow-y-auto flex-1">
           {/* Subject Selection */}
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
@@ -305,24 +305,28 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
-          {!isNew && (
-            <Button variant="destructive" onClick={handleDelete} className="mr-auto">
-              Delete
-            </Button>
-          )}
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!formData.subjectId || !formData.teacherId}
-          >
-            {isNew ? 'Add Lesson' : 'Save Changes'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="gap-2">
+          <div className="flex items-center justify-between w-full">
+            {!isNew && (
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete
+              </Button>
+            )}
+            <div className={`flex gap-2 ${!isNew ? 'ml-auto' : 'ml-auto'}`}>
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={!formData.subjectId || !formData.teacherId}
+              >
+                {isNew ? 'Add Lesson' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
 
