@@ -15,6 +15,17 @@ import { BreakEditDialog } from './components/BreakEditDialog';
 import { BulkScheduleDrawer } from './components/BulkScheduleDrawer';
 import { DebugStoreButton } from './debug-store-button';
 import { Toaster } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function SmartTimetableNew() {
   // Get store data and actions
@@ -30,7 +41,11 @@ export default function SmartTimetableNew() {
     showConflicts,
     toggleConflicts,
     loadTimeSlots,
+    deleteTimeSlot,
   } = useTimetableStore();
+
+  // Toast for notifications
+  const { toast } = useToast();
 
   // Load time slots from backend on mount
   useEffect(() => {
@@ -82,12 +97,42 @@ export default function SmartTimetableNew() {
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
   const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
+  
+  // State for delete confirmation
+  const [timeslotToDelete, setTimeslotToDelete] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get current grade name
   const currentGrade = useMemo(
     () => grades.find(g => g.id === selectedGradeId),
     [grades, selectedGradeId]
   );
+
+  // Handle timeslot deletion
+  const handleDeleteTimeslot = useCallback(async () => {
+    if (!timeslotToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteTimeSlot(timeslotToDelete.id);
+      toast({
+        title: 'Timeslot deleted',
+        description: `Period ${timeslotToDelete.periodNumber} has been successfully deleted.`,
+      });
+      setTimeslotToDelete(null);
+      // Reload timeslots to ensure UI is in sync
+      await loadTimeSlots();
+    } catch (error) {
+      console.error('Error deleting timeslot:', error);
+      toast({
+        title: 'Failed to delete timeslot',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [timeslotToDelete, deleteTimeSlot, loadTimeSlots, toast]);
 
   return (
     <div className="container mx-auto p-6">
@@ -257,13 +302,22 @@ export default function SmartTimetableNew() {
                           <div>{slot.time}</div>
                           <div className="text-xs text-gray-500">Period {slot.periodNumber}</div>
                         </div>
-                        <button
-                          onClick={() => setEditingTimeslot(slot)}
-                          className="text-blue-600 hover:text-blue-800 text-xs"
-                          title="Edit timeslot"
-                        >
-                          ✏️
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditingTimeslot(slot)}
+                            className="text-blue-600 hover:text-blue-800 text-xs"
+                            title="Edit timeslot"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => setTimeslotToDelete(slot)}
+                            className="text-red-600 hover:text-red-800 text-xs"
+                            title="Delete timeslot"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     </td>
                     {days.map((_, dayIndex) => {
@@ -431,6 +485,36 @@ export default function SmartTimetableNew() {
       
       {/* Toast Notifications */}
       <Toaster />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!timeslotToDelete} onOpenChange={(open) => !open && setTimeslotToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Timeslot</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold">Period {timeslotToDelete?.periodNumber}</span> ({timeslotToDelete?.time})?
+              <p className="mt-2 text-red-500">This action cannot be undone. All lessons scheduled in this timeslot will also be removed.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTimeslot}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                'Delete Timeslot'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

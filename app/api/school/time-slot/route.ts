@@ -294,7 +294,8 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(result.data);
+    // Wrap the GraphQL data in a 'data' property to match store expectations
+    return NextResponse.json({ data: result.data });
   } catch (error) {
     console.error('Error creating time slot:', error);
     return NextResponse.json(
@@ -527,6 +528,108 @@ export async function PUT(request: Request) {
     console.error('Error updating time slot:', error);
     return NextResponse.json(
       { error: 'Failed to update time slot' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  // Construct full URL for internal GraphQL proxy route
+  const requestUrl = new URL(request.url);
+  const GRAPHQL_ENDPOINT = `${requestUrl.origin}/api/graphql`;
+  try {
+    // Extract ID from query parameters
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Time slot ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get the token from cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken')?.value;
+    const tenantId = cookieStore.get('tenantId')?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please log in.' },
+        { status: 401 }
+      );
+    }
+
+    // Prepare the GraphQL mutation for deletion
+    const mutation = `
+      mutation DeleteTimeSlot($id: String!) {
+        deleteTimeSlot(id: $id)
+      }
+    `;
+
+    console.log('Delete TimeSlot Debug:', {
+      id,
+      tenantId,
+      mutation
+    });
+
+    // Call internal GraphQL proxy - forward cookies for authentication
+    const result = await handleGraphQLCall(async () => {
+      // Forward all cookies from the original request
+      const cookieHeader = request.headers.get('cookie');
+
+      return await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(cookieHeader && { 'Cookie': cookieHeader }),
+        },
+        body: JSON.stringify({
+          query: mutation,
+          variables: {
+            id
+          }
+        })
+      });
+    });
+
+    // Check for GraphQL errors
+    if (result.errors) {
+      console.error('GraphQL errors:', result.errors);
+
+      // Check if this is a schema implementation error that can be handled gracefully
+      const firstError = result.errors[0];
+      const errorClassification = classifyGraphQLError(firstError);
+
+      if (errorClassification.type === GraphQLErrorType.SCHEMA_NOT_IMPLEMENTED) {
+        // Return user-friendly response for schema limitations
+        console.warn('Time slot delete schema not implemented, returning success for local operation');
+        return NextResponse.json({
+          success: true,
+          message: errorClassification.userMessage,
+          featureNotAvailable: true,
+          data: { deleteTimeSlot: true }
+        });
+      }
+
+      // For other GraphQL errors, return user-friendly message
+      return NextResponse.json(
+        {
+          error: errorClassification.userMessage,
+          type: errorClassification.type,
+          details: result.errors
+        },
+        { status: 500 }
+      );
+    }
+
+    // Wrap the GraphQL data in a 'data' property to match store expectations
+    return NextResponse.json({ data: result.data });
+  } catch (error) {
+    console.error('Error deleting time slot:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete time slot' },
       { status: 500 }
     );
   }

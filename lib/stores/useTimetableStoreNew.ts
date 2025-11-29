@@ -25,6 +25,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   createTimeSlots: (timeSlots: TimeSlotInput[]) => Promise<void>;
   createTimeSlot: (timeSlot: TimeSlotInput) => Promise<void>;
   loadTimeSlots: () => Promise<void>;
+  deleteTimeSlot: (id: string) => Promise<void>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
@@ -221,6 +222,48 @@ export const useTimetableStore = create<TimetableStore>()(
           }));
         } catch (error) {
           console.error('Error loading time slots:', error);
+          throw error;
+        }
+      },
+
+      deleteTimeSlot: async (id: string) => {
+        try {
+          const response = await fetch(`/api/school/time-slot?id=${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          // Check if deletion was successful
+          if (result.data?.deleteTimeSlot !== true && result.data?.deleteTimeSlot !== false) {
+            // If the mutation isn't implemented, still remove from local store
+            if (result.featureNotAvailable) {
+              console.warn('Time slot delete mutation not available on server, removing from local store only');
+            } else {
+              throw new Error('Invalid response format: deleteTimeSlot result missing');
+            }
+          }
+
+          // Remove from store
+          set((state) => ({
+            timeSlots: state.timeSlots.filter((slot) => slot.id !== id),
+            // Also remove any entries that reference this timeslot
+            entries: state.entries.filter((entry) => entry.timeSlotId !== id),
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error deleting time slot:', error);
           throw error;
         }
       },
