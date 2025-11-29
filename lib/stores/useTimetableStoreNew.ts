@@ -28,6 +28,9 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   deleteTimeSlot: (id: string) => Promise<void>;
   deleteAllTimeSlots: () => Promise<void>;
   
+  // GraphQL grade actions
+  loadGrades: () => Promise<void>;
+  
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
   createBreaks: (breaks: Omit<Break, 'id'>[]) => Promise<void>;
@@ -313,6 +316,73 @@ export const useTimetableStore = create<TimetableStore>()(
           });
         } catch (error) {
           console.error('Error deleting all time slots:', error);
+          throw error;
+        }
+      },
+
+      loadGrades: async () => {
+        try {
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: `
+                query GradeLevelsForSchoolType {
+                  gradeLevelsForSchoolType {
+                    id
+                    isActive
+                    shortName
+                    sortOrder
+                    gradeLevel {
+                      id
+                      name
+                    }
+                  }
+                }
+              `
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.gradeLevelsForSchoolType) {
+            throw new Error('Invalid response format: missing gradeLevelsForSchoolType data');
+          }
+
+          // Convert response to Grade format and update store
+          const fetchedGrades = result.data.gradeLevelsForSchoolType
+            .filter((item: any) => item.isActive) // Only include active grades
+            .map((item: any) => {
+              // Extract level number from name (e.g., "Grade 7" -> 7, "Form 1" -> 1)
+              const name = item.gradeLevel?.name || item.shortName || 'Unknown';
+              const levelMatch = name.match(/\d+/);
+              const level = levelMatch ? parseInt(levelMatch[0], 10) : item.sortOrder || 0;
+
+              return {
+                id: item.id,
+                name: name,
+                level: level,
+                displayName: item.shortName || name,
+              };
+            })
+            .sort((a: any, b: any) => a.level - b.level); // Sort by level
+
+          set((state) => ({
+            grades: fetchedGrades,
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error loading grades:', error);
           throw error;
         }
       },

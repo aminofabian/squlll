@@ -41,6 +41,7 @@ export default function SmartTimetableNew() {
     showConflicts,
     toggleConflicts,
     loadTimeSlots,
+    loadGrades,
     deleteTimeSlot,
     deleteAllTimeSlots,
     createBreaks,
@@ -50,20 +51,23 @@ export default function SmartTimetableNew() {
   // Toast for notifications
   const { toast } = useToast();
 
-  // Load time slots from backend on mount
+  // Load time slots and grades from backend on mount
   useEffect(() => {
     setLoadingTimeSlots(true);
-    loadTimeSlots()
+    Promise.all([
+      loadTimeSlots(),
+      loadGrades(),
+    ])
       .then(() => {
-        console.log('Time slots loaded successfully:', timeSlots);
+        console.log('Time slots and grades loaded successfully');
       })
       .catch((error) => {
-        console.error('Failed to load time slots:', error);
+        console.error('Failed to load data:', error);
       })
       .finally(() => {
         setLoadingTimeSlots(false);
       });
-  }, [loadTimeSlots]);
+  }, [loadTimeSlots, loadGrades]);
 
   // Get enriched entries for selected grade (memoized!)
   const entries = useSelectedGradeTimetable();
