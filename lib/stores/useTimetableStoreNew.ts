@@ -12,6 +12,7 @@ import type {
   TimeSlot,
   Break,
 } from '../types/timetable';
+import { useSchoolConfigStore } from './useSchoolConfigStore';
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -30,6 +31,9 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   
   // GraphQL grade actions
   loadGrades: () => Promise<void>;
+  
+  // GraphQL subject actions
+  loadSubjects: (gradeId?: string) => Promise<void>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
@@ -383,6 +387,64 @@ export const useTimetableStore = create<TimetableStore>()(
           }));
         } catch (error) {
           console.error('Error loading grades:', error);
+          throw error;
+        }
+      },
+
+      loadSubjects: async (gradeId?: string) => {
+        try {
+          // Get school config store
+          const schoolConfigStore = useSchoolConfigStore.getState();
+          const config = schoolConfigStore.config;
+
+          if (!config) {
+            // If config is not loaded, try to fetch it first
+            console.warn('School config not loaded, subjects will be empty');
+            set((state) => ({
+              subjects: [],
+              lastUpdated: new Date().toISOString(),
+            }));
+            return;
+          }
+
+          let subjectsToLoad: any[] = [];
+
+          if (gradeId) {
+            // Find the level that contains this grade
+            const gradeInfo = schoolConfigStore.getGradeById(gradeId);
+            if (gradeInfo) {
+              // Get subjects from the level that contains this grade
+              subjectsToLoad = schoolConfigStore.getSubjectsByLevelId(gradeInfo.levelId);
+            } else {
+              console.warn(`Grade ${gradeId} not found in school config`);
+            }
+          } else {
+            // Load all subjects from all levels
+            subjectsToLoad = schoolConfigStore.getAllSubjects();
+          }
+
+          // Convert to Subject format and remove duplicates by ID
+          const uniqueSubjects = new Map<string, any>();
+          subjectsToLoad.forEach((subject) => {
+            if (!uniqueSubjects.has(subject.id)) {
+              uniqueSubjects.set(subject.id, {
+                id: subject.id,
+                name: subject.name,
+                code: subject.code || subject.shortName,
+                color: undefined, // Can be set later if needed
+                department: subject.department || subject.category,
+              });
+            }
+          });
+
+          const fetchedSubjects = Array.from(uniqueSubjects.values());
+
+          set((state) => ({
+            subjects: fetchedSubjects,
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error loading subjects:', error);
           throw error;
         }
       },

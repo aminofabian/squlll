@@ -42,6 +42,7 @@ export default function SmartTimetableNew() {
     toggleConflicts,
     loadTimeSlots,
     loadGrades,
+    loadSubjects,
     deleteTimeSlot,
     deleteAllTimeSlots,
     createBreaks,
@@ -57,9 +58,10 @@ export default function SmartTimetableNew() {
     Promise.all([
       loadTimeSlots(),
       loadGrades(),
+      loadSubjects(), // Load all subjects initially
     ])
       .then(() => {
-        console.log('Time slots and grades loaded successfully');
+        console.log('Time slots, grades, and subjects loaded successfully');
       })
       .catch((error) => {
         console.error('Failed to load data:', error);
@@ -67,7 +69,20 @@ export default function SmartTimetableNew() {
       .finally(() => {
         setLoadingTimeSlots(false);
       });
-  }, [loadTimeSlots, loadGrades]);
+  }, [loadTimeSlots, loadGrades, loadSubjects]);
+
+  // Reload subjects when grade selection changes
+  useEffect(() => {
+    if (selectedGradeId) {
+      loadSubjects(selectedGradeId)
+        .then(() => {
+          console.log('Subjects loaded for grade:', selectedGradeId);
+        })
+        .catch((error) => {
+          console.error('Failed to load subjects for grade:', error);
+        });
+    }
+  }, [selectedGradeId, loadSubjects]);
 
   // Get enriched entries for selected grade (memoized!)
   const entries = useSelectedGradeTimetable();
