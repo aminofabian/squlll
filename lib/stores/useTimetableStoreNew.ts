@@ -26,6 +26,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   createTimeSlot: (timeSlot: TimeSlotInput) => Promise<void>;
   loadTimeSlots: () => Promise<void>;
   deleteTimeSlot: (id: string) => Promise<void>;
+  deleteAllTimeSlots: () => Promise<void>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
@@ -264,6 +265,51 @@ export const useTimetableStore = create<TimetableStore>()(
           }));
         } catch (error) {
           console.error('Error deleting time slot:', error);
+          throw error;
+        }
+      },
+
+      deleteAllTimeSlots: async () => {
+        try {
+          const response = await fetch('/api/school/time-slot?all=true', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          // Check if deletion was successful
+          if (result.data?.deleteAllTimeSlots !== true && result.data?.deleteAllTimeSlots !== false) {
+            // If the mutation isn't implemented, still remove from local store
+            if (result.featureNotAvailable) {
+              console.warn('Delete all time slots mutation not available on server, removing from local store only');
+            } else {
+              throw new Error('Invalid response format: deleteAllTimeSlots result missing');
+            }
+          }
+
+          // Clear all time slots from store and remove entries that reference them
+          set((state) => {
+            const timeSlotIds = new Set(state.timeSlots.map((slot) => slot.id));
+            return {
+              timeSlots: [],
+              // Also remove any entries that reference any timeslot
+              entries: state.entries.filter((entry) => !timeSlotIds.has(entry.timeSlotId)),
+              lastUpdated: new Date().toISOString(),
+            };
+          });
+        } catch (error) {
+          console.error('Error deleting all time slots:', error);
           throw error;
         }
       },

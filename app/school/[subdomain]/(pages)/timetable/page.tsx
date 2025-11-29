@@ -42,6 +42,7 @@ export default function SmartTimetableNew() {
     toggleConflicts,
     loadTimeSlots,
     deleteTimeSlot,
+    deleteAllTimeSlots,
   } = useTimetableStore();
 
   // Toast for notifications
@@ -101,6 +102,8 @@ export default function SmartTimetableNew() {
   // State for delete confirmation
   const [timeslotToDelete, setTimeslotToDelete] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Get current grade name
   const currentGrade = useMemo(
@@ -133,6 +136,30 @@ export default function SmartTimetableNew() {
       setIsDeleting(false);
     }
   }, [timeslotToDelete, deleteTimeSlot, loadTimeSlots, toast]);
+
+  // Handle delete all timeslots
+  const handleDeleteAllTimeslots = useCallback(async () => {
+    setIsDeletingAll(true);
+    try {
+      await deleteAllTimeSlots();
+      toast({
+        title: 'All timeslots deleted',
+        description: `All ${timeSlots.length} time slot${timeSlots.length !== 1 ? 's' : ''} have been successfully deleted.`,
+      });
+      setShowDeleteAllDialog(false);
+      // Reload timeslots to ensure UI is in sync
+      await loadTimeSlots();
+    } catch (error) {
+      console.error('Error deleting all timeslots:', error);
+      toast({
+        title: 'Failed to delete all timeslots',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingAll(false);
+    }
+  }, [deleteAllTimeSlots, loadTimeSlots, toast, timeSlots.length]);
 
   return (
     <div className="container mx-auto p-6">
@@ -235,7 +262,18 @@ export default function SmartTimetableNew() {
 
       {/* Time Slots Debug Info */}
       <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">Time Slots from Backend</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-blue-900">Time Slots from Backend</h3>
+          {!loadingTimeSlots && timeSlots.length > 0 && (
+            <button
+              onClick={() => setShowDeleteAllDialog(true)}
+              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <span>🗑️</span>
+              <span>Delete All</span>
+            </button>
+          )}
+        </div>
         {loadingTimeSlots ? (
           <p className="text-sm text-blue-700">Loading time slots...</p>
         ) : timeSlots.length === 0 ? (
@@ -510,6 +548,37 @@ export default function SmartTimetableNew() {
                 </>
               ) : (
                 'Delete Timeslot'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete All Confirmation Dialog */}
+      <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Time Slots</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold">all {timeSlots.length} time slot{timeSlots.length !== 1 ? 's' : ''}</span>?
+              <p className="mt-2 text-red-500 font-semibold">This action cannot be undone.</p>
+              <p className="mt-2 text-red-500">All lessons scheduled in these timeslots will also be removed.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAllTimeslots}
+              disabled={isDeletingAll}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeletingAll ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Deleting All...
+                </>
+              ) : (
+                'Delete All Time Slots'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

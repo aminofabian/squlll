@@ -538,16 +538,10 @@ export async function DELETE(request: Request) {
   const requestUrl = new URL(request.url);
   const GRAPHQL_ENDPOINT = `${requestUrl.origin}/api/graphql`;
   try {
-    // Extract ID from query parameters
+    // Extract query parameters
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Time slot ID is required' },
-        { status: 400 }
-      );
-    }
+    const deleteAll = searchParams.get('all') === 'true';
 
     // Get the token from cookies
     const cookieStore = await cookies();
@@ -561,15 +555,35 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Prepare the GraphQL mutation for deletion
-    const mutation = `
-      mutation DeleteTimeSlot($id: String!) {
-        deleteTimeSlot(id: $id)
-      }
-    `;
+    // Determine which mutation to use
+    let mutation: string;
+    let variables: any = {};
+
+    if (deleteAll) {
+      // Delete all time slots
+      mutation = `
+        mutation DeleteAllTimeSlots {
+          deleteAllTimeSlots
+        }
+      `;
+    } else if (id) {
+      // Delete single time slot
+      mutation = `
+        mutation DeleteTimeSlot($id: String!) {
+          deleteTimeSlot(id: $id)
+        }
+      `;
+      variables = { id };
+    } else {
+      return NextResponse.json(
+        { error: 'Either time slot ID or all=true parameter is required' },
+        { status: 400 }
+      );
+    }
 
     console.log('Delete TimeSlot Debug:', {
       id,
+      deleteAll,
       tenantId,
       mutation
     });
@@ -587,9 +601,7 @@ export async function DELETE(request: Request) {
         },
         body: JSON.stringify({
           query: mutation,
-          variables: {
-            id
-          }
+          ...(Object.keys(variables).length > 0 && { variables })
         })
       });
     });
@@ -609,7 +621,7 @@ export async function DELETE(request: Request) {
           success: true,
           message: errorClassification.userMessage,
           featureNotAvailable: true,
-          data: { deleteTimeSlot: true }
+          data: deleteAll ? { deleteAllTimeSlots: true } : { deleteTimeSlot: true }
         });
       }
 
