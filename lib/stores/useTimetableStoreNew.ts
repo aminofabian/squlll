@@ -30,6 +30,8 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
+  createBreaks: (breaks: Omit<Break, 'id'>[]) => Promise<void>;
+  loadBreaks: () => Promise<void>;
   updateBreak: (id: string, updates: Partial<Break>) => void;
   deleteBreak: (id: string) => void;
   
@@ -327,6 +329,124 @@ export const useTimetableStore = create<TimetableStore>()(
         }));
 
         return newBreak;
+      },
+
+      createBreaks: async (breaks: Omit<Break, 'id'>[]) => {
+        try {
+          const response = await fetch('/api/school/break', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(breaks),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data) {
+            throw new Error('Invalid response format: missing data');
+          }
+
+          // Convert response to Break format and update store
+          // The response has keys like break1, break2, etc.
+          const newBreaks = Object.values(result.data).map((breakItem: any) => {
+            // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
+            const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
+            
+            // Map GraphQL enum to frontend type
+            const typeMap: Record<string, string> = {
+              'SHORT_BREAK': 'short_break',
+              'LUNCH': 'lunch',
+              'ASSEMBLY': 'assembly',
+            };
+            const breakType = typeMap[breakItem.type] || 'short_break';
+            
+            return {
+              id: breakItem.id,
+              name: breakItem.name,
+              type: breakType,
+              dayOfWeek,
+              afterPeriod: breakItem.afterPeriod,
+              durationMinutes: breakItem.durationMinutes,
+              icon: breakItem.icon || '☕',
+              color: breakItem.color || 'bg-blue-500',
+            };
+          });
+
+          set((state) => ({
+            breaks: [...state.breaks, ...newBreaks],
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error creating breaks:', error);
+          throw error;
+        }
+      },
+
+      loadBreaks: async () => {
+        try {
+          const response = await fetch('/api/school/break', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.getTimetableBreaks) {
+            throw new Error('Invalid response format: missing getTimetableBreaks data');
+          }
+
+          // Convert response to Break format and update store
+          const fetchedBreaks = result.data.getTimetableBreaks.map((breakItem: any) => {
+            // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
+            const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
+            
+            // Map GraphQL enum to frontend type
+            const typeMap: Record<string, string> = {
+              'SHORT_BREAK': 'short_break',
+              'LUNCH': 'lunch',
+              'ASSEMBLY': 'assembly',
+            };
+            const breakType = typeMap[breakItem.type] || 'short_break';
+            
+            return {
+              id: breakItem.id,
+              name: breakItem.name,
+              type: breakType,
+              dayOfWeek,
+              afterPeriod: breakItem.afterPeriod,
+              durationMinutes: breakItem.durationMinutes,
+              icon: breakItem.icon || '☕',
+              color: breakItem.color || 'bg-blue-500',
+            };
+          });
+
+          set((state) => ({
+            breaks: fetchedBreaks,
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error loading breaks:', error);
+          throw error;
+        }
       },
 
       updateBreak: (id: string, updates: Partial<Break>) => {

@@ -43,6 +43,7 @@ export default function SmartTimetableNew() {
     loadTimeSlots,
     deleteTimeSlot,
     deleteAllTimeSlots,
+    createBreaks,
   } = useTimetableStore();
 
   // Toast for notifications
@@ -259,6 +260,51 @@ export default function SmartTimetableNew() {
           </div>
         </div>
       )}
+
+      {/* Breaks Section */}
+      <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-orange-900">Timetable Breaks</h3>
+          <button
+            onClick={() => {
+              setEditingBreak({
+                isNew: true,
+                afterPeriod: 3,
+                dayOfWeek: 1,
+              });
+            }}
+            className="px-3 py-1.5 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
+          >
+            <span>➕</span>
+            <span>Create Break</span>
+          </button>
+        </div>
+        {breaks.length === 0 ? (
+          <p className="text-sm text-orange-700">No breaks configured. Click "Create Break" to add one.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-orange-700">
+              Found <strong>{breaks.length}</strong> break{breaks.length !== 1 ? 's' : ''}:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {breaks.map((breakItem) => (
+                <div key={breakItem.id} className="bg-white p-2 rounded border border-orange-200 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span>{breakItem.icon}</span>
+                    <div className="font-semibold">{breakItem.name}</div>
+                  </div>
+                  <div className="text-gray-600">
+                    After Period {breakItem.afterPeriod} • {breakItem.durationMinutes} min
+                  </div>
+                  <div className="text-gray-500">
+                    Day {breakItem.dayOfWeek} ({days[breakItem.dayOfWeek - 1] || 'Unknown'})
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Time Slots Debug Info */}
       <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -41,7 +41,8 @@ const DAYS = [
 ];
 
 export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
-  const { timeSlots, updateBreak, addBreak, deleteBreak } = useTimetableStore();
+  const { timeSlots, updateBreak, addBreak, deleteBreak, createBreaks } = useTimetableStore();
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -81,15 +82,16 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
     }
   }, [breakData]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!breakData) return;
 
     if (breakData.isNew) {
-      // Add new break(s)
-      if (applyToAllDays) {
-        // Create break for all days
-        DAYS.forEach((day) => {
-          addBreak({
+      setIsSaving(true);
+      try {
+        // Add new break(s) via API
+        if (applyToAllDays) {
+          // Create break for all days
+          const breaksToCreate = DAYS.map((day) => ({
             name: formData.name,
             type: formData.type,
             dayOfWeek: day.value,
@@ -97,19 +99,50 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
             durationMinutes: formData.durationMinutes,
             icon: formData.icon,
             color: formData.color,
+          }));
+          await createBreaks(breaksToCreate);
+        } else {
+          // Create break for single day
+          await createBreaks([{
+            name: formData.name,
+            type: formData.type,
+            dayOfWeek: formData.dayOfWeek,
+            afterPeriod: formData.afterPeriod,
+            durationMinutes: formData.durationMinutes,
+            icon: formData.icon,
+            color: formData.color,
+          }]);
+        }
+        onClose();
+      } catch (error) {
+        console.error('Error creating break:', error);
+        // Fallback to local storage if API fails
+        if (applyToAllDays) {
+          DAYS.forEach((day) => {
+            addBreak({
+              name: formData.name,
+              type: formData.type,
+              dayOfWeek: day.value,
+              afterPeriod: formData.afterPeriod,
+              durationMinutes: formData.durationMinutes,
+              icon: formData.icon,
+              color: formData.color,
+            });
           });
-        });
-      } else {
-        // Create break for single day
-        addBreak({
-          name: formData.name,
-          type: formData.type,
-          dayOfWeek: formData.dayOfWeek,
-          afterPeriod: formData.afterPeriod,
-          durationMinutes: formData.durationMinutes,
-          icon: formData.icon,
-          color: formData.color,
-        });
+        } else {
+          addBreak({
+            name: formData.name,
+            type: formData.type,
+            dayOfWeek: formData.dayOfWeek,
+            afterPeriod: formData.afterPeriod,
+            durationMinutes: formData.durationMinutes,
+            icon: formData.icon,
+            color: formData.color,
+          });
+        }
+        onClose();
+      } finally {
+        setIsSaving(false);
       }
     } else {
       // Update existing break
@@ -122,8 +155,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         color: formData.color,
         // Note: Can't change dayOfWeek for existing break
       });
+      onClose();
     }
-    onClose();
   };
 
   const handleDelete = () => {
@@ -320,11 +353,18 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
               Delete
             </Button>
           )}
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!formData.name.trim()}>
-            {isNew ? 'Add Break' : 'Save Changes'}
+          <Button onClick={handleSave} disabled={!formData.name.trim() || isSaving}>
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Creating...
+              </>
+            ) : (
+              isNew ? 'Add Break' : 'Save Changes'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
