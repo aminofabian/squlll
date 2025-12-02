@@ -113,4 +113,60 @@ export const useDeleteTeacher = () => {
   return {
     deleteTeacher,
   };
+};
+
+// Hook to set teacher status (activate/deactivate)
+export const useSetTeacherStatus = () => {
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const setTeacherStatus = React.useCallback(async (teacherId: string, isActive: boolean) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: `
+            mutation SetTeacherStatus($teacherId: String!, $isActive: Boolean!) {
+              setTeacherStatus(teacherId: $teacherId, isActive: $isActive)
+            }
+          `,
+          variables: {
+            teacherId,
+            isActive,
+          },
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to set teacher status');
+      }
+
+      if (!result.data?.setTeacherStatus) {
+        throw new Error('Failed to set teacher status');
+      }
+
+      return result.data.setTeacherStatus;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return {
+    setTeacherStatus,
+    isLoading,
+    error,
+  };
 }; 

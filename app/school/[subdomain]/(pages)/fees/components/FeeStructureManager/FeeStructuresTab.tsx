@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { FeeStructure } from '../../types'
 import { ProcessedFeeStructure } from './types'
 import { Loader2, Plus, RefreshCw, Grid3x3, List, Search, Filter, X } from 'lucide-react'
-import { FeeStructureCard } from '../FeeStructureCard'
+import { FeeStructureCard } from './FeeStructureCard'
 import { FeeStructureEmptyState } from '../FeeStructureEmptyState'
 import { cn } from '@/lib/utils'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
@@ -354,8 +354,7 @@ export const FeeStructuresTab = ({
                   onGenerateInvoices={() => {
                     onGenerateInvoices(structure.structureId, structure.termName)
                   }}
-                  assignedGrades={assignedGrades}
-                  totalStudents={totalStudents}
+                  onUpdateFeeItem={onUpdateFeeItem}
                 />
               )
             })}

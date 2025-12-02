@@ -40,10 +40,10 @@ const createStore = (set: any, get: any) => ({
     // Debug: Log the config being set
     console.log('Setting config:', {
       id: config.id,
-      levels: config.selectedLevels.map(l => ({
+      levels: config.selectedLevels.map((l: Level) => ({
         name: l.name,
         subjects: l.subjects.length,
-        grades: l.gradeLevels?.map(g => ({
+        grades: l.gradeLevels?.map((g: GradeLevel) => ({
           id: g.id,
           name: g.name,
           age: g.age,
@@ -81,11 +81,11 @@ const createStore = (set: any, get: any) => ({
     console.log('Getting grades for level:', {
       levelId,
       levelName: level?.name,
-      grades: level?.gradeLevels?.map(g => ({
+      grades: level?.gradeLevels?.map((g: GradeLevel) => ({
         id: g.id,
         name: g.name,
         age: g.age,
-        streams: g.streams?.map(s => s.name) || []
+        streams: g.streams?.map((s: Stream) => s.name) || []
       }))
     });
     return level?.gradeLevels || [];
@@ -105,7 +105,7 @@ const createStore = (set: any, get: any) => ({
     if (!state.config) return undefined;
 
     for (const level of state.config.selectedLevels) {
-      const grade = level.gradeLevels?.find(g => g.id === gradeId);
+      const grade = level.gradeLevels?.find((g: GradeLevel) => g.id === gradeId);
       if (grade) {
         return {
           grade,
@@ -122,7 +122,7 @@ const createStore = (set: any, get: any) => ({
     if (!state.config) return [];
     
     for (const level of state.config.selectedLevels) {
-      const grade = level.gradeLevels?.find(g => g.id === gradeId);
+      const grade = level.gradeLevels?.find((g: GradeLevel) => g.id === gradeId);
       if (grade) {
         return grade.streams || [];
       }

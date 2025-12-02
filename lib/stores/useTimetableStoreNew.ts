@@ -776,17 +776,17 @@ export const useTimetableStore = create<TimetableStore>()(
 
           // Convert response to Break format and update store
           // The response has keys like break1, break2, etc.
-          const newBreaks = Object.values(result.data).map((breakItem: any) => {
+          const newBreaks: Break[] = Object.values(result.data).map((breakItem: any) => {
             // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
             const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
             
             // Map GraphQL enum to frontend type
-            const typeMap: Record<string, string> = {
+            const typeMap: Record<string, 'short_break' | 'lunch' | 'assembly'> = {
               'SHORT_BREAK': 'short_break',
               'LUNCH': 'lunch',
               'ASSEMBLY': 'assembly',
             };
-            const breakType = typeMap[breakItem.type] || 'short_break';
+            const breakType: 'short_break' | 'lunch' | 'assembly' = typeMap[breakItem.type] || 'short_break';
             
             return {
               id: breakItem.id,
@@ -797,7 +797,7 @@ export const useTimetableStore = create<TimetableStore>()(
               durationMinutes: breakItem.durationMinutes,
               icon: breakItem.icon || '☕',
               color: breakItem.color || 'bg-blue-500',
-            };
+            } as Break;
           });
 
           set((state) => ({

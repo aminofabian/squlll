@@ -103,7 +103,27 @@ export const GradeAssignmentsTab = ({
                           variant="outline" 
                           size="sm" 
                           className="mt-2"
-                          onClick={() => onAssignToGrade(grade.id)}
+                          onClick={() => {
+                            // Find the first available structure to use for assignment
+                            const availableStructure = structures && structures.length > 0 
+                              ? structures[0]
+                              : fallbackFeeStructures.length > 0 
+                                ? fallbackFeeStructures[0]
+                                : null;
+                            
+                            if (availableStructure) {
+                              onAssignToGrade(
+                                availableStructure.id || availableStructure.structureId || '',
+                                availableStructure.name || availableStructure.structureName || '',
+                                availableStructure.academicYear,
+                                availableStructure.academicYearId,
+                                availableStructure.termId
+                              );
+                            } else {
+                              // If no structures available, show a message
+                              alert('No fee structures available. Please create a fee structure first.');
+                            }
+                          }}
                         >
                           Assign Structure
                         </Button>

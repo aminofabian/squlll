@@ -83,48 +83,48 @@ const createStore = (set: any, get: any) => ({
       ...initialState,
 
       // Setters
-      setInvitations: (invitations) => {
+      setInvitations: (invitations: PendingInvitation[]) => {
         console.log('Setting pending invitations:', invitations.length);
         set({ invitations, error: null });
       },
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
+      setLoading: (isLoading: boolean) => set({ isLoading }),
+      setError: (error: string | null) => set({ error }),
 
       // Getters
-      getInvitationById: (invitationId) => {
+      getInvitationById: (invitationId: string) => {
         const state = get();
-        return state.invitations.find(invitation => invitation.id === invitationId);
+        return state.invitations.find((invitation: PendingInvitation) => invitation.id === invitationId);
       },
 
-      getInvitationsByRole: (role) => {
+      getInvitationsByRole: (role: string) => {
         const state = get();
-        return state.invitations.filter(invitation => invitation.role === role);
+        return state.invitations.filter((invitation: PendingInvitation) => invitation.role === role);
       },
 
-      getInvitationByEmail: (email) => {
+      getInvitationByEmail: (email: string) => {
         const state = get();
-        return state.invitations.find(invitation => invitation.email === email);
+        return state.invitations.find((invitation: PendingInvitation) => invitation.email === email);
       },
 
       // Actions
-      addInvitation: (invitation) => {
+      addInvitation: (invitation: PendingInvitation) => {
         const state = get();
         set({ invitations: [...state.invitations, invitation] });
       },
 
-      updateInvitation: (invitationId, updates) => {
+      updateInvitation: (invitationId: string, updates: Partial<PendingInvitation>) => {
         const state = get();
         set({
-          invitations: state.invitations.map(invitation =>
+          invitations: state.invitations.map((invitation: PendingInvitation) =>
             invitation.id === invitationId ? { ...invitation, ...updates } : invitation
           )
         });
       },
 
-      removeInvitation: (invitationId) => {
+      removeInvitation: (invitationId: string) => {
         const state = get();
         set({
-          invitations: state.invitations.filter(invitation => invitation.id !== invitationId)
+          invitations: state.invitations.filter((invitation: PendingInvitation) => invitation.id !== invitationId)
         });
       },
 

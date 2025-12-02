@@ -48,48 +48,48 @@ const createStore = (set: any, get: any) => ({
       ...initialState,
 
       // Setters
-      setStaff: (staff) => {
+      setStaff: (staff: StaffUser[]) => {
         console.log('Setting staff:', staff.length);
         set({ staff, error: null });
       },
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
+      setLoading: (isLoading: boolean) => set({ isLoading }),
+      setError: (error: string | null) => set({ error }),
 
       // Getters
-      getStaffById: (staffId) => {
+      getStaffById: (staffId: string) => {
         const state = get();
-        return state.staff.find(staff => staff.id === staffId);
+        return state.staff.find((staff: StaffUser) => staff.id === staffId);
       },
 
-      getStaffByEmail: (email) => {
+      getStaffByEmail: (email: string) => {
         const state = get();
-        return state.staff.find(staff => staff.email === email);
+        return state.staff.find((staff: StaffUser) => staff.email === email);
       },
 
-      getStaffByName: (name) => {
+      getStaffByName: (name: string) => {
         const state = get();
-        return state.staff.find(staff => staff.name === name);
+        return state.staff.find((staff: StaffUser) => staff.name === name);
       },
 
       // Actions
-      addStaff: (staff) => {
+      addStaff: (staff: StaffUser) => {
         const state = get();
         set({ staff: [...state.staff, staff] });
       },
 
-      updateStaff: (staffId, updates) => {
+      updateStaff: (staffId: string, updates: Partial<StaffUser>) => {
         const state = get();
         set({
-          staff: state.staff.map(staff =>
+          staff: state.staff.map((staff: StaffUser) =>
             staff.id === staffId ? { ...staff, ...updates } : staff
           )
         });
       },
 
-      removeStaff: (staffId) => {
+      removeStaff: (staffId: string) => {
         const state = get();
         set({
-          staff: state.staff.filter(staff => staff.id !== staffId)
+          staff: state.staff.filter((staff: StaffUser) => staff.id !== staffId)
         });
       },
 

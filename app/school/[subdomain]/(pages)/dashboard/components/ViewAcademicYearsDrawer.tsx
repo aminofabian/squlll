@@ -40,6 +40,7 @@ interface Term {
   isActive: boolean
   isCurrent?: boolean
   academicYear: {
+    id: string
     name: string
   }
 }
@@ -92,6 +93,7 @@ function AcademicYearCard({
                 isActive
                 isCurrent
                 academicYear {
+                  id
                   name
                 }
               }

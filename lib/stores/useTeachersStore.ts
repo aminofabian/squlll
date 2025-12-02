@@ -73,73 +73,73 @@ const createStore = (set: any, get: any) => ({
       ...initialState,
 
       // Setters
-      setTeachers: (teachers) => {
+      setTeachers: (teachers: GraphQLTeacher[]) => {
         console.log('Setting teachers:', teachers.length);
         set({ teachers, error: null });
       },
-      setTeacherStaffUsers: (teacherStaffUsers) => {
+      setTeacherStaffUsers: (teacherStaffUsers: TeacherStaffUser[]) => {
         console.log('Setting teacher/staff users:', teacherStaffUsers.length);
         set({ teacherStaffUsers, error: null });
       },
-      setLoading: (isLoading) => set({ isLoading }),
-      setError: (error) => set({ error }),
+      setLoading: (isLoading: boolean) => set({ isLoading }),
+      setError: (error: string | null) => set({ error }),
 
       // Getters
-      getTeacherById: (teacherId) => {
+      getTeacherById: (teacherId: string) => {
         const state = get();
-        return state.teachers.find(teacher => teacher.id === teacherId);
+        return state.teachers.find((teacher: GraphQLTeacher) => teacher.id === teacherId);
       },
 
-      getTeachersByTenantId: (tenantId) => {
+      getTeachersByTenantId: (tenantId: string) => {
         const state = get();
         // Since tenantId is not available on teacher objects, return all teachers
         // The filtering should be done at the API level
         return state.teachers;
       },
 
-      getTeacherByEmail: (email) => {
+      getTeacherByEmail: (email: string) => {
         const state = get();
-        return state.teachers.find(teacher => teacher.email === email);
+        return state.teachers.find((teacher: GraphQLTeacher) => teacher.email === email);
       },
 
-      getTeacherByName: (name) => {
+      getTeacherByName: (name: string) => {
         const state = get();
-        return state.teachers.find(teacher => teacher.fullName === name);
+        return state.teachers.find((teacher: GraphQLTeacher) => teacher.fullName === name);
       },
 
-      getTeacherStaffUserById: (userId) => {
+      getTeacherStaffUserById: (userId: string) => {
         const state = get();
-        return state.teacherStaffUsers.find(user => user.id === userId);
+        return state.teacherStaffUsers.find((user: TeacherStaffUser) => user.id === userId);
       },
 
-      getTeacherStaffUserByEmail: (email) => {
+      getTeacherStaffUserByEmail: (email: string) => {
         const state = get();
-        return state.teacherStaffUsers.find(user => user.email === email);
+        return state.teacherStaffUsers.find((user: TeacherStaffUser) => user.email === email);
       },
 
       // Actions
-      addTeacher: (teacher) => {
+      addTeacher: (teacher: GraphQLTeacher) => {
         const state = get();
         set({ teachers: [...state.teachers, teacher] });
       },
 
-      updateTeacher: (teacherId, updates) => {
+      updateTeacher: (teacherId: string, updates: Partial<GraphQLTeacher>) => {
         const state = get();
         set({
-          teachers: state.teachers.map(teacher =>
+          teachers: state.teachers.map((teacher: GraphQLTeacher) =>
             teacher.id === teacherId ? { ...teacher, ...updates } : teacher
           )
         });
       },
 
-      removeTeacher: (teacherId) => {
+      removeTeacher: (teacherId: string) => {
         const state = get();
         set({
-          teachers: state.teachers.filter(teacher => teacher.id !== teacherId)
+          teachers: state.teachers.filter((teacher: GraphQLTeacher) => teacher.id !== teacherId)
         });
       },
 
-      deleteTeacher: async (teacherId, tenantId) => {
+      deleteTeacher: async (teacherId: string, tenantId: string) => {
         const state = get();
         set({ isLoading: true, error: null });
         
@@ -152,8 +152,8 @@ const createStore = (set: any, get: any) => ({
           
           // Remove teacher from store after successful deletion
           set({
-            teachers: state.teachers.filter(teacher => teacher.id !== teacherId),
-            teacherStaffUsers: state.teacherStaffUsers.filter(user => user.id !== teacherId),
+            teachers: state.teachers.filter((teacher: GraphQLTeacher) => teacher.id !== teacherId),
+            teacherStaffUsers: state.teacherStaffUsers.filter((user: TeacherStaffUser) => user.id !== teacherId),
             isLoading: false
           });
           
@@ -169,8 +169,8 @@ const createStore = (set: any, get: any) => ({
             // Remove from local state since the user doesn't have a corresponding staff record
             // This is likely a user with TEACHER role but no staff record
             set({
-              teachers: state.teachers.filter(teacher => teacher.id !== teacherId),
-              teacherStaffUsers: state.teacherStaffUsers.filter(user => user.id !== teacherId),
+              teachers: state.teachers.filter((teacher: GraphQLTeacher) => teacher.id !== teacherId),
+              teacherStaffUsers: state.teacherStaffUsers.filter((user: TeacherStaffUser) => user.id !== teacherId),
               isLoading: false,
               error: null
             });

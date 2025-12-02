@@ -15,11 +15,13 @@ import {
   InfoIcon,
   Loader2,
   RefreshCw,
-  X
+  X,
+  CheckCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
+import { useSetTeacherStatus } from "@/lib/hooks/useTeachers";
 
 // Resend invitation response type
 type ResendInvitationResponse = {
@@ -40,6 +42,8 @@ interface PendingInvitationsProps {
 export function PendingInvitations({ invitations, isLoading, error, onInvitationResent, onInvitationRevoked }: PendingInvitationsProps) {
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
+  const [activatingEmails, setActivatingEmails] = useState<Set<string>>(new Set());
+  const { setTeacherStatus } = useSetTeacherStatus();
 
   const resendInvitation = async (invitationId: string) => {
     setResendingIds(prev => new Set(prev).add(invitationId));
@@ -135,6 +139,65 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
       setRevokingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(invitationId);
+        return newSet;
+      });
+    }
+  };
+
+  const getTeacherIdByEmail = async (email: string): Promise<string | null> => {
+    try {
+      // Get the user ID from usersByTenant
+      const response = await fetch('/api/teachers', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch teachers');
+      }
+
+      const result = await response.json();
+      const user = result.usersByTenant?.find((u: any) => u.email === email);
+      
+      if (!user) {
+        throw new Error(`Teacher with email ${email} not found`);
+      }
+
+      // Return the user ID - the mutation may accept this directly
+      // If it requires the teacher record ID, we'll need to add a query for that
+      return user.id;
+    } catch (error) {
+      console.error('Error getting teacher ID:', error);
+      throw error;
+    }
+  };
+
+  const activateTeacher = async (email: string) => {
+    setActivatingEmails(prev => new Set(prev).add(email));
+    
+    try {
+      // Get the teacher ID from email
+      const teacherId = await getTeacherIdByEmail(email);
+      
+      if (!teacherId) {
+        throw new Error(`Could not find teacher record for ${email}`);
+      }
+
+      await setTeacherStatus(teacherId, true);
+      toast.success(`Teacher ${email} has been activated successfully`);
+      
+      // Optionally refresh invitations or teachers list
+      // The parent component can handle this via callbacks if needed
+    } catch (error) {
+      console.error('Error activating teacher:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to activate teacher');
+    } finally {
+      setActivatingEmails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(email);
         return newSet;
       });
     }
@@ -288,6 +351,24 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                             <X className="h-3 w-3" />
                           )}
                           {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
+                        </Button>
+                      </div>
+                    )}
+                    {invitation.status === 'ACCEPTED' && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => activateTeacher(invitation.email)}
+                          disabled={activatingEmails.has(invitation.email)}
+                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
+                        >
+                          {activatingEmails.has(invitation.email) ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-3 w-3" />
+                          )}
+                          {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
                         </Button>
                       </div>
                     )}
@@ -453,6 +534,22 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                               {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
                             </Button>
                           </>
+                        )}
+                        {invitation.status === 'ACCEPTED' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => activateTeacher(invitation.email)}
+                            disabled={activatingEmails.has(invitation.email)}
+                            className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
+                          >
+                            {activatingEmails.has(invitation.email) ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-3 w-3" />
+                            )}
+                            {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -684,6 +781,24 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                                 <X className="h-3 w-3" />
                               )}
                               {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
+                            </Button>
+                          </div>
+                        )}
+                        {invitation.status === 'ACCEPTED' && (
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => activateTeacher(invitation.email)}
+                              disabled={activatingEmails.has(invitation.email)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
+                            >
+                              {activatingEmails.has(invitation.email) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                              {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
                             </Button>
                           </div>
                         )}

@@ -180,7 +180,7 @@ const loadMockData = (): TimetableData => {
     timeSlots: mockData.metadata.timeSlots,
     breaks: mockData.metadata.breaks as Break[],
     selectedGrade: mockData.metadata.grade,
-    lastUpdated: mockData.metadata.lastSaved || new Date().toISOString()
+    lastUpdated: new Date().toISOString()
   };
 };
 
