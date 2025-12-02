@@ -26,6 +26,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
+import { Button } from '@/components/ui/button';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter';
+import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 
 export default function SmartTimetableNew() {
   // Get selected term from context
@@ -156,12 +160,24 @@ export default function SmartTimetableNew() {
     [setSelectedGrade]
   );
 
+  // Handle grade selection from sidebar
+  const handleGradeSelect = useCallback(
+    (gradeId: string, levelId: string) => {
+      setSelectedGrade(gradeId);
+    },
+    [setSelectedGrade]
+  );
+
   // State for editing
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
   const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  
+  // Fetch school config for the search filter
+  const { isLoading: isLoadingConfig } = useSchoolConfig();
   
   // State for delete confirmation
   const [timeslotToDelete, setTimeslotToDelete] = useState<any | null>(null);
@@ -254,44 +270,97 @@ export default function SmartTimetableNew() {
   }, [deleteAllBreaks, toast, breaks.length]);
 
   return (
-    <div className="container mx-auto p-3">
-      {/* Header - Compact */}
-      <div className="mb-2">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold">Smart Timetable</h1>
-            <span className="text-xs text-gray-500">•</span>
-            <p className="text-xs text-gray-600">
-              {currentGrade?.name || 'Choose a grade to view schedule'}
-            </p>
-          </div>
-          <button
-            onClick={() => setBulkScheduleOpen(true)}
-            className="px-3 py-1.5 text-xs bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r-2 border-primary/20 transform md:relative md:translate-x-0 transition-all duration-300 ease-in-out
+        ${isSidebarMinimized ? 'w-16' : 'w-72'}
+        flex flex-col
+      `}>
+        {/* Sidebar Toggle */}
+        <div className={`p-4 border-b-2 border-primary/20 ${isSidebarMinimized ? 'flex justify-center' : 'flex justify-end'}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 transition-all duration-200"
+            title={isSidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
           >
-            <span>⚙️</span>
-            <span>Create Time Slots</span>
-          </button>
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
         </div>
+        
+        {/* Search Filter */}
+        {!isSidebarMinimized && (
+          <div className="flex-1 overflow-y-auto">
+            <SchoolSearchFilter
+              className="p-4"
+              type="grades"
+              onGradeSelect={handleGradeSelect}
+              isLoading={isLoadingConfig}
+              selectedGradeId={selectedGradeId || undefined}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Grade Selector - Inline with Stats */}
-      <div className="mb-2 flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">View Schedule For:</label>
-          <select
-            value={selectedGradeId || ''}
-            onChange={(e) => handleGradeChange(e.target.value)}
-            className="px-2 py-1 text-sm border-2 border-primary/10 bg-white text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-          >
-            <option value="">Select a grade...</option>
-            {grades.map((grade) => (
-              <option key={grade.id} value={grade.id}>
-                {grade.displayName || grade.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="container mx-auto p-3">
+          {/* Header - Compact */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-bold">Smart Timetable</h1>
+                <span className="text-xs text-gray-500">•</span>
+                <p className="text-xs text-gray-600">
+                  {currentGrade?.name || 'Choose a grade to view schedule'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {isSidebarMinimized && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSidebarMinimized(false)}
+                    className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5"
+                  >
+                    <PanelLeftOpen className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Grades</span>
+                  </Button>
+                )}
+                <button
+                  onClick={() => setBulkScheduleOpen(true)}
+                  className="px-3 py-1.5 text-xs bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                >
+                  <span>⚙️</span>
+                  <span>Create Time Slots</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Grade Selector - Inline with Stats (Fallback for mobile or when sidebar is minimized) */}
+          <div className="mb-2 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">View Schedule For:</label>
+              <select
+                value={selectedGradeId || ''}
+                onChange={(e) => handleGradeChange(e.target.value)}
+                className="px-2 py-1 text-sm border-2 border-primary/10 bg-white text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+              >
+                <option value="">Select a grade...</option>
+                {grades.map((grade) => (
+                  <option key={grade.id} value={grade.id}>
+                    {grade.displayName || grade.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
         {/* Statistics - Compact Inline */}
         <div className="flex items-center gap-3 flex-1">
@@ -794,6 +863,8 @@ export default function SmartTimetableNew() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </div>
+      </div>
     </div>
   );
 }
