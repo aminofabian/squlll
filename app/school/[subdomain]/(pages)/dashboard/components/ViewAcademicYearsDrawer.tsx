@@ -17,6 +17,7 @@ import { useAcademicYears, type AcademicYear } from '@/lib/hooks/useAcademicYear
 import { CreateAcademicYearModal } from './CreateAcademicYearModal'
 import { EditAcademicYearDialog } from './EditAcademicYearDialog'
 import { CreateTermModal } from './CreateTermModal'
+import { EditTermDialog } from './EditTermDialog'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
@@ -65,6 +66,7 @@ function AcademicYearCard({
   formatDate 
 }: AcademicYearCardProps) {
   const [showCreateTermModal, setShowCreateTermModal] = useState(false)
+  const [editingTerm, setEditingTerm] = useState<Term | null>(null)
   const [deletingTermId, setDeletingTermId] = useState<string | null>(null)
   const [isDeletingTerm, setIsDeletingTerm] = useState(false)
   
@@ -252,15 +254,25 @@ function AcademicYearCard({
                             </div>
                           </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setDeletingTermId(term.id)}
-                          className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shrink-0"
-                          disabled={isDeletingTerm}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingTerm(term)}
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDeletingTermId(term.id)}
+                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                            disabled={isDeletingTerm}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -303,6 +315,19 @@ function AcademicYearCard({
             endDate: year.endDate
           }}
         />
+
+        {/* Edit Term Dialog */}
+        {editingTerm && (
+          <EditTermDialog
+            term={editingTerm}
+            isOpen={!!editingTerm}
+            onClose={() => setEditingTerm(null)}
+            onSuccess={() => {
+              setEditingTerm(null)
+              refetchTerms()
+            }}
+          />
+        )}
 
         {/* Delete Term Confirmation Dialog */}
         <AlertDialog open={!!deletingTermId} onOpenChange={(open) => !open && setDeletingTermId(null)}>
