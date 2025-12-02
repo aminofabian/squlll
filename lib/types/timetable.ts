@@ -37,7 +37,8 @@ export interface Teacher {
   lastName: string;
   name: string;           // Computed: "John Smith"
   email?: string;
-  subjects: string[];     // Subject IDs they can teach
+  subjects: string[];     // Subject names they can teach
+  gradeLevels?: string[]; // Grade level names they can teach (e.g., ["Grade 1", "Grade 2"])
   color?: string;         // For UI color coding
 }
 

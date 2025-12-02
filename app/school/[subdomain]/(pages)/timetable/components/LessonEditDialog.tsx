@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
+import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
 import type { EnrichedTimetableEntry } from '@/lib/types/timetable';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Drawer,
   DrawerContent,
@@ -27,7 +29,10 @@ interface LessonEditDialogProps {
 }
 
 export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
-  const { subjects, teachers, entries, timeSlots, grades, updateEntry, addEntry, deleteEntry } = useTimetableStore();
+  const { subjects, teachers, entries, timeSlots, grades, updateEntry, addEntry, deleteEntry, loadEntries, selectedGradeId, selectedTermId } = useTimetableStore();
+  const { selectedTerm } = useSelectedTerm();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     subjectId: '',
@@ -54,10 +59,11 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
       );
 
       const firstSubject = subjects[0];
+      // Find a teacher who can teach this grade
       const firstAvailableTeacher = teachers.find((teacher) => {
-        const canTeachSubject = firstSubject && teacher.subjects.includes(firstSubject.name);
+        const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
         const isAvailable = !busyTeacherIds.has(teacher.id);
-        return canTeachSubject && isAvailable;
+        return canTeachGrade && isAvailable;
       });
 
       setFormData({
@@ -68,34 +74,257 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     }
   }, [lesson, subjects, teachers, entries]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!lesson) return;
 
-    if (lesson.isNew) {
-      // Add new lesson
-      addEntry({
-        gradeId: lesson.gradeId,
-        subjectId: formData.subjectId,
-        teacherId: formData.teacherId,
-        timeSlotId: lesson.timeSlotId,
-        dayOfWeek: lesson.dayOfWeek,
-        roomNumber: formData.roomNumber || undefined,
+    // Get termId from context or store
+    const termId = selectedTerm?.id || selectedTermId;
+    
+    if (!termId) {
+      toast({
+        title: 'Error',
+        description: 'No term selected. Please select a term first.',
+        variant: 'destructive',
       });
-    } else {
-      // Update existing lesson
-      updateEntry(lesson.id, {
-        subjectId: formData.subjectId,
-        teacherId: formData.teacherId,
-        roomNumber: formData.roomNumber || undefined,
-      });
+      return;
     }
-    onClose();
+
+    setIsSaving(true);
+
+    try {
+      if (lesson.isNew) {
+        // Create new entry via GraphQL
+        const mutation = `
+          mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
+            createTimetableEntry(input: $input) {
+              id
+              dayOfWeek
+              roomNumber
+              grade {
+                name
+              }
+              subject {
+                name
+              }
+              teacher {
+                user {
+                  name
+                }
+              }
+              timeSlot {
+                periodNumber
+                displayTime
+              }
+            }
+          }
+        `;
+
+        // Validate all required IDs are present
+        if (!lesson.gradeId || !formData.subjectId || !formData.teacherId || !lesson.timeSlotId) {
+          toast({
+            title: 'Error',
+            description: 'Missing required information. Please check all fields are selected.',
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Build input object - only include roomNumber if it has a value
+        // Make sure we're using the correct IDs from the lesson object
+        const input: any = {
+          termId: termId,
+          gradeId: lesson.gradeId, // This should be the grade entity ID
+          subjectId: formData.subjectId, // This should be the subject entity ID
+          teacherId: formData.teacherId, // This should be the teacher entity ID (not user ID)
+          timeSlotId: lesson.timeSlotId, // This should be the timeSlot entity ID
+          dayOfWeek: lesson.dayOfWeek,
+        };
+
+        // Verify the IDs exist in the store
+        const grade = grades.find((g) => g.id === lesson.gradeId);
+        const subject = subjects.find((s) => s.id === formData.subjectId);
+        const teacher = teachers.find((t) => t.id === formData.teacherId);
+        const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+
+        console.log('Creating entry with IDs:', {
+          termId,
+          gradeId: lesson.gradeId,
+          gradeName: grade?.name,
+          subjectId: formData.subjectId,
+          subjectName: subject?.name,
+          teacherId: formData.teacherId,
+          teacherName: teacher?.name,
+          timeSlotId: lesson.timeSlotId,
+          timeSlotPeriod: timeSlot?.periodNumber,
+          dayOfWeek: lesson.dayOfWeek,
+        });
+
+        // Validate IDs exist
+        if (!grade) {
+          console.error('Grade not found:', lesson.gradeId);
+          toast({
+            title: 'Error',
+            description: `Grade ID ${lesson.gradeId} not found in store`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+        if (!subject) {
+          console.error('Subject not found:', formData.subjectId);
+          toast({
+            title: 'Error',
+            description: `Subject ID ${formData.subjectId} not found in store`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+        if (!teacher) {
+          console.error('Teacher not found:', formData.teacherId);
+          toast({
+            title: 'Error',
+            description: `Teacher ID ${formData.teacherId} not found in store`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+        if (!timeSlot) {
+          console.error('TimeSlot not found:', lesson.timeSlotId);
+          toast({
+            title: 'Error',
+            description: `TimeSlot ID ${lesson.timeSlotId} not found in store`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Only include roomNumber if it's not empty
+        if (formData.roomNumber && formData.roomNumber.trim()) {
+          input.roomNumber = formData.roomNumber.trim();
+        }
+
+        const variables = {
+          input,
+        };
+
+        console.log('Creating timetable entry with input:', input);
+
+        const response = await fetch('/api/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            query: mutation,
+            variables,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('HTTP error response:', errorText);
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('GraphQL response:', result);
+
+        if (result.errors) {
+          console.error('GraphQL errors:', result.errors);
+          const errorMessages = result.errors.map((e: any) => {
+            // Include more details if available
+            if (e.extensions) {
+              return `${e.message} (${JSON.stringify(e.extensions)})`;
+            }
+            return e.message;
+          }).join(', ');
+          throw new Error(`GraphQL errors: ${errorMessages}`);
+        }
+
+        if (!result.data || !result.data.createTimetableEntry) {
+          throw new Error('Invalid response format');
+        }
+
+        // Reload entries to update the UI
+        if (selectedGradeId && termId) {
+          await loadEntries(termId, selectedGradeId);
+        }
+
+        toast({
+          title: 'Success',
+          description: 'Lesson created successfully',
+        });
+
+        onClose();
+      } else {
+        // Update existing entry - for now, use local update
+        // TODO: Implement update mutation when backend supports it
+        updateEntry(lesson.id, {
+          subjectId: formData.subjectId,
+          teacherId: formData.teacherId,
+          roomNumber: formData.roomNumber || undefined,
+        });
+
+        toast({
+          title: 'Success',
+          description: 'Lesson updated successfully',
+        });
+
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error saving lesson:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save lesson',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (lesson && !lesson.isNew && confirm('Are you sure you want to delete this lesson?')) {
+  const handleDelete = async () => {
+    if (!lesson || lesson.isNew) return;
+    
+    if (!confirm('Are you sure you want to delete this lesson?')) {
+      return;
+    }
+
+    const termId = selectedTerm?.id || selectedTermId;
+    
+    setIsSaving(true);
+
+    try {
+      // TODO: Implement delete mutation when backend supports it
+      // For now, use local delete
       deleteEntry(lesson.id);
+
+      // Reload entries to update the UI
+      if (selectedGradeId && termId) {
+        await loadEntries(termId, selectedGradeId);
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Lesson deleted successfully',
+      });
+
       onClose();
+    } catch (error) {
+      console.error('Error deleting lesson:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete lesson',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -123,19 +352,21 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   );
 
   // Filter teachers who:
-  // 1. Can teach the selected subject
+  // 1. Can teach the selected grade (or show all if no grade selected)
   // 2. Are NOT already scheduled at this timeslot
   const availableTeachers = teachers.filter((teacher) => {
-    const canTeachSubject = teacher.subjects.includes(selectedSubject?.name || '');
+    // Filter by grade level - show teachers who can teach this grade
+    const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
     const isAvailable = !busyTeacherIds.has(teacher.id);
-    return canTeachSubject && isAvailable;
+    return canTeachGrade && isAvailable;
   });
 
-  // Separate list: teachers who can teach but are busy (for display purposes)
+  // Separate list: teachers who can teach this grade but are busy (for display purposes)
   const busyButQualifiedTeachers = teachers.filter((teacher) => {
-    const canTeachSubject = teacher.subjects.includes(selectedSubject?.name || '');
+    // Filter by grade level - show teachers who can teach this grade
+    const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
     const isBusy = busyTeacherIds.has(teacher.id);
-    return canTeachSubject && isBusy;
+    return canTeachGrade && isBusy;
   });
 
   return (
@@ -194,17 +425,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
                 );
 
                 const currentTeacherValid = 
-                  newSubject &&
                   currentTeacher &&
-                  currentTeacher.subjects.includes(newSubject.name) &&
+                  (!grade?.name || (currentTeacher.gradeLevels && currentTeacher.gradeLevels.includes(grade.name))) &&
                   !busyTeacherIds.has(currentTeacher.id);
 
                 if (!currentTeacherValid) {
-                  // Find first available teacher for this subject
+                  // Find first available teacher for this grade
                   const firstAvailable = teachers.find((t) => {
-                    const canTeach = newSubject && t.subjects.includes(newSubject.name);
+                    const canTeachGrade = !grade?.name || (t.gradeLevels && t.gradeLevels.includes(grade.name));
                     const isAvailable = !busyTeacherIds.has(t.id);
-                    return canTeach && isAvailable;
+                    return canTeachGrade && isAvailable;
                   });
 
                   setFormData({
@@ -281,7 +511,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
                   </p>
                 ) : (
                   <p className="text-gray-600">
-                    No teachers can teach {selectedSubject?.name}
+                    No teachers assigned to {grade?.name || 'this grade'}
                   </p>
                 )}
               </div>
@@ -326,9 +556,9 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!formData.subjectId || !formData.teacherId}
+                disabled={!formData.subjectId || !formData.teacherId || isSaving}
               >
-                {isNew ? 'Add Lesson' : 'Save Changes'}
+                {isSaving ? 'Saving...' : isNew ? 'Add Lesson' : 'Save Changes'}
               </Button>
             </div>
           </div>

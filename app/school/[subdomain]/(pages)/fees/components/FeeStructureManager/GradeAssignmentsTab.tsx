@@ -13,7 +13,7 @@ interface GradeAssignmentsTabProps {
   usedGradesFallback: boolean
   structures: Array<any> | null
   fallbackFeeStructures: FeeStructure[]
-  onAssignToGrade: (feeStructureId: string) => void
+  onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => void
 }
 
 export const GradeAssignmentsTab = ({

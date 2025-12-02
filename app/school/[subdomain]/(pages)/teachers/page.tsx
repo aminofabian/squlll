@@ -482,8 +482,11 @@ function TeachersPage() {
           </div>
         )}
 
-        {selectedTeacher ? (
-          <TeacherDetailView teacher={selectedTeacher} />
+        {selectedTeacherId ? (
+          <TeacherDetailView 
+            teacherId={selectedTeacherId}
+            onClose={() => setSelectedTeacherId(null)}
+          />
         ) : (
           // Show department filter and stats
           <>

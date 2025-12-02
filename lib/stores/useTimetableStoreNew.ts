@@ -38,6 +38,9 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   // GraphQL teacher actions
   loadTeachers: () => Promise<void>;
   
+  // GraphQL timetable entry actions
+  loadEntries: (termId: string, gradeId: string) => Promise<void>;
+  
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
   createBreaks: (breaks: Omit<Break, 'id'>[]) => Promise<void>;
@@ -454,55 +457,280 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadTeachers: async () => {
         try {
+          console.log('Loading teachers from /api/school/teacher...');
           const response = await fetch('/api/school/teacher', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
           });
+
+          console.log('Teachers API response status:', response.status);
 
           if (!response.ok) {
             const errorText = await response.text();
+            console.error('Teachers API error response:', errorText);
             throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
           }
 
           const result = await response.json();
+          console.log('Teachers API response:', result);
+
+          // Handle error responses from API
+          if (result.error) {
+            console.error('API returned error:', result.error);
+            // If feature not available, set empty array instead of throwing
+            if (result.featureNotAvailable) {
+              console.warn('Teachers feature not available, using empty array');
+              set((state) => ({
+                teachers: [],
+                lastUpdated: new Date().toISOString(),
+              }));
+              return;
+            }
+            throw new Error(result.error);
+          }
 
           if (result.errors) {
             const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            console.error('GraphQL errors:', errorMessages);
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getTeachers) {
+            console.error('Invalid response format:', result);
             throw new Error('Invalid response format: missing getTeachers data');
           }
 
+          const teachersData = result.data.getTeachers;
+          console.log(`Fetched ${teachersData.length} teachers`);
+
           // Convert response to Teacher format and update store
-          const fetchedTeachers = result.data.getTeachers.map((teacher: any) => {
-            // Parse name into firstName and lastName
-            const fullName = teacher.user?.name || 'Unknown Teacher';
-            const nameParts = fullName.trim().split(/\s+/);
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
+          const fetchedTeachers = teachersData
+            .filter((teacher: any) => {
+              // Filter out teachers with no user (they can't be assigned)
+              // But keep teachers with user: null if they have subjects
+              return teacher.user !== null || (teacher.tenantSubjects && teacher.tenantSubjects.length > 0);
+            })
+            .map((teacher: any) => {
+              // Parse name into firstName and lastName
+              const fullName = teacher.user?.name || `Teacher ${teacher.id.slice(-6)}`;
+              const nameParts = fullName.trim().split(/\s+/);
+              const firstName = nameParts[0] || '';
+              const lastName = nameParts.slice(1).join(' ') || '';
 
-            // Extract subject names from tenantSubjects
-            const subjectNames = teacher.tenantSubjects?.map((ts: any) => ts.name) || [];
+              // Extract subject names from tenantSubjects (remove duplicates)
+              const subjectNames = Array.from(
+                new Set(teacher.tenantSubjects?.map((ts: any) => ts.name).filter(Boolean) || [])
+              );
 
-            return {
-              id: teacher.id,
-              firstName,
-              lastName,
-              name: fullName,
-              email: teacher.user?.email,
-              subjects: subjectNames, // Array of subject names (not IDs, as per interface)
-              color: undefined, // Can be set later if needed
-            };
-          });
+              // Extract grade level names from tenantGradeLevels
+              const gradeLevelNames = Array.from(
+                new Set(
+                  teacher.tenantGradeLevels?.map((tgl: any) => tgl.gradeLevel?.name).filter(Boolean) || []
+                )
+              );
 
+              const processedTeacher = {
+                id: teacher.id,
+                firstName,
+                lastName,
+                name: fullName,
+                email: teacher.user?.email || undefined,
+                subjects: subjectNames, // Array of subject names (not IDs, as per interface)
+                gradeLevels: gradeLevelNames, // Array of grade level names
+                color: undefined, // Can be set later if needed
+              };
+
+              console.log('Processed teacher:', processedTeacher);
+              return processedTeacher;
+            });
+
+          console.log(`Processed ${fetchedTeachers.length} teachers (filtered from ${teachersData.length} total)`);
           set((state) => ({
             teachers: fetchedTeachers,
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
           console.error('Error loading teachers:', error);
+          // Set empty array on error to prevent UI from breaking
+          set((state) => ({
+            teachers: [],
+            lastUpdated: new Date().toISOString(),
+          }));
+          // Still throw so calling code knows there was an error
+          throw error;
+        }
+      },
+
+      loadEntries: async (termId: string, gradeId: string) => {
+        try {
+          console.log('Loading timetable entries for term:', termId, 'grade:', gradeId);
+          
+          const query = `
+            query GetGradeTimetable($termId: String!, $gradeId: String!) {
+              getGradeTimetableEntries(termId: $termId, gradeId: $gradeId) {
+                id
+                dayOfWeek
+                roomNumber
+                grade {
+                  id
+                  name
+                }
+                subject {
+                  id
+                  name
+                }
+                teacher {
+                  id
+                  user {
+                    id
+                    name
+                  }
+                }
+                timeSlot {
+                  id
+                  periodNumber
+                  displayTime
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query,
+              variables: {
+                termId,
+                gradeId,
+              },
+            }),
+          });
+
+          console.log('Timetable entries API response status:', response.status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Timetable entries API error response:', errorText);
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+          console.log('Timetable entries API response:', result);
+
+          // Handle error responses from API
+          if (result.error) {
+            console.error('API returned error:', result.error);
+            throw new Error(result.error);
+          }
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            console.error('GraphQL errors:', errorMessages);
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.getGradeTimetableEntries) {
+            console.error('Invalid response format:', result);
+            throw new Error('Invalid response format: missing getGradeTimetableEntries data');
+          }
+
+          const entriesData = result.data.getGradeTimetableEntries;
+          console.log(`Fetched ${entriesData.length} timetable entries from API`);
+
+          // Get current state to match teachers by name if needed
+          const state = get();
+          const { teachers: allTeachers } = state;
+
+          // Convert response to TimetableEntry format
+          const fetchedEntries: TimetableEntry[] = entriesData
+            .map((entry: any) => {
+              // Find teacher by ID first (most reliable)
+              let teacherId: string | null = null;
+              
+              if (entry.teacher?.id) {
+                // Try to find teacher by ID in the loaded teachers
+                const teacherById = allTeachers.find((t) => t.id === entry.teacher.id);
+                if (teacherById) {
+                  teacherId = teacherById.id;
+                } else {
+                  // If teacher ID exists but not in our loaded teachers, use it directly
+                  // This handles cases where teacher exists in DB but wasn't loaded yet
+                  teacherId = entry.teacher.id;
+                  console.warn(`Teacher ${entry.teacher.id} not found in loaded teachers, using ID directly`);
+                }
+              }
+              
+              // Fallback: try to find by name if user exists
+              if (!teacherId && entry.teacher?.user?.name) {
+                const teacherByName = allTeachers.find((t) => t.name === entry.teacher.user.name);
+                if (teacherByName) {
+                  teacherId = teacherByName.id;
+                }
+              }
+
+              // If still no teacher found and teacher.user is null, skip this entry
+              if (!teacherId) {
+                console.warn(`Skipping entry ${entry.id} - no valid teacher found. Teacher data:`, entry.teacher);
+                return null;
+              }
+
+              return {
+                id: entry.id,
+                gradeId: entry.grade.id,
+                subjectId: entry.subject.id,
+                teacherId: teacherId,
+                timeSlotId: entry.timeSlot.id,
+                dayOfWeek: entry.dayOfWeek,
+                roomNumber: entry.roomNumber || undefined,
+                isDoublePeriod: false, // Default, can be updated if API provides this
+                notes: undefined, // Default, can be updated if API provides this
+              };
+            })
+            .filter((entry: TimetableEntry | null): entry is TimetableEntry => entry !== null);
+
+          console.log(`Processed ${fetchedEntries.length} timetable entries (filtered from ${entriesData.length} total)`);
+
+          // Update store with entries for this grade
+          // Remove existing entries for this grade and add new ones
+          set((state) => {
+            const existingEntries = state.entries || [];
+            const otherGradeEntries = existingEntries.filter((e) => e.gradeId !== gradeId);
+            const newEntries = [...otherGradeEntries, ...fetchedEntries];
+            
+            console.log('Updating store entries:', {
+              existingCount: existingEntries.length,
+              otherGradeCount: otherGradeEntries.length,
+              fetchedCount: fetchedEntries.length,
+              newTotalCount: newEntries.length,
+              gradeId,
+            });
+            
+            const updatedState = {
+              entries: newEntries,
+              lastUpdated: new Date().toISOString(),
+            };
+            
+            // Log immediately after setting
+            console.log('Store updated. New entries count:', newEntries.length);
+            console.log('Entries for this grade:', newEntries.filter(e => e.gradeId === gradeId).length);
+            
+            return updatedState;
+          });
+          
+          // Double-check entries were persisted
+          const finalState = get();
+          console.log('Final verification - Store entries count:', finalState.entries.length);
+          console.log('Final verification - Entries for grade', gradeId, ':', finalState.entries.filter(e => e.gradeId === gradeId).length);
+        } catch (error) {
+          console.error('Error loading timetable entries:', error);
+          // Don't clear entries on error - keep existing ones
           throw error;
         }
       },
@@ -798,6 +1026,13 @@ export const useTimetableStore = create<TimetableStore>()(
         entries: state.entries,
         lastUpdated: state.lastUpdated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // After rehydration, check if we need to preserve fresh entries
+        if (state) {
+          console.log('Store rehydrated. Entries count:', state.entries.length);
+          // Don't clear entries on rehydration - let loadEntries handle it
+        }
+      },
     }
   )
 );
@@ -835,13 +1070,35 @@ export const useTimetableSelectors = () => {
       ),
 
     // Enrich an entry with full data
-    enrichEntry: (entry: TimetableEntry) => ({
-      ...entry,
-      subject: store.subjects.find((s) => s.id === entry.subjectId)!,
-      teacher: store.teachers.find((t) => t.id === entry.teacherId)!,
-      timeSlot: store.timeSlots.find((ts) => ts.id === entry.timeSlotId)!,
-      grade: store.grades.find((g) => g.id === entry.gradeId)!,
-    }),
+    enrichEntry: (entry: TimetableEntry) => {
+      const subject = store.subjects.find((s) => s.id === entry.subjectId);
+      const teacher = store.teachers.find((t) => t.id === entry.teacherId);
+      const timeSlot = store.timeSlots.find((ts) => ts.id === entry.timeSlotId);
+      const grade = store.grades.find((g) => g.id === entry.gradeId);
+
+      // If any required data is missing, log a warning but still return the entry
+      if (!subject || !teacher || !timeSlot || !grade) {
+        console.warn('Missing data for entry:', {
+          entryId: entry.id,
+          hasSubject: !!subject,
+          hasTeacher: !!teacher,
+          hasTimeSlot: !!timeSlot,
+          hasGrade: !!grade,
+          subjectId: entry.subjectId,
+          teacherId: entry.teacherId,
+          timeSlotId: entry.timeSlotId,
+          gradeId: entry.gradeId,
+        });
+      }
+
+      return {
+        ...entry,
+        subject: subject || { id: entry.subjectId, name: 'Unknown Subject' } as any,
+        teacher: teacher || { id: entry.teacherId, name: 'Unknown Teacher', firstName: '', lastName: '', subjects: [] } as any,
+        timeSlot: timeSlot || { id: entry.timeSlotId, periodNumber: 0, time: 'Unknown', startTime: '', endTime: '', color: '' } as any,
+        grade: grade || { id: entry.gradeId, name: 'Unknown Grade', level: 0 } as any,
+      };
+    },
   };
 };
 

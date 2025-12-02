@@ -5,7 +5,7 @@ export interface FeeStructureManagerProps {
   onCreateNew: () => void
   onEdit: (feeStructure: FeeStructure) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
-  onAssignToGrade: (feeStructureId: string) => void
+  onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => void
   onDelete?: (feeStructureId: string) => void
 }
 

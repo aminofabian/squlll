@@ -95,15 +95,42 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
   const filteredSubjects = useMemo(() => {
     let subjects = transformedSubjects;
 
-    // First filter based on selected type
+    // Filter by grade level if a grade is selected AND it belongs to this level
+    if (selectedGradeId) {
+      // Check if the selected grade belongs to this level
+      const gradeBelongsToLevel = level.gradeLevels?.some(
+        grade => grade.id === selectedGradeId
+      );
+
+      if (gradeBelongsToLevel) {
+        // Get subjects from the level that contains the selected grade
+        // Match tenant subjects with level subjects by name or code
+        const levelSubjectNames = new Set(
+          level.subjects.map(s => s.name.toLowerCase().trim())
+        );
+        const levelSubjectCodes = new Set(
+          level.subjects.map(s => s.code?.toLowerCase().trim()).filter(Boolean)
+        );
+
+        subjects = subjects.filter(subject => {
+          const subjectName = subject.name.toLowerCase().trim();
+          const subjectCode = subject.code?.toLowerCase().trim();
+          
+          // Match by name or code
+          return levelSubjectNames.has(subjectName) || 
+                 (subjectCode && levelSubjectCodes.has(subjectCode));
+        });
+      } else {
+        // If selected grade doesn't belong to this level, show no subjects
+        subjects = [];
+      }
+    }
+
+    // Then filter based on selected type (all/core/optional)
     subjects = subjects.filter(subject => {
       if (selectedFilter === 'all') return true;
       return selectedFilter === 'core' ? subject.subjectType === 'core' : subject.subjectType !== 'core';
     });
-    
-    // If there's a selected stream, we could add stream-specific filtering here
-    // For now, streams share the same subjects as their grades/levels
-    // This is where you would add custom stream-subject filtering logic if needed
     
     // Then sort: core subjects first, then by name within each group
     return subjects.sort((a, b) => {
@@ -114,7 +141,7 @@ export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSe
       // Then sort alphabetically by name within each group
       return a.name.localeCompare(b.name);
     });
-  }, [transformedSubjects, selectedFilter]);
+  }, [transformedSubjects, selectedFilter, selectedGradeId, level.subjects, level.gradeLevels]);
 
   // Get the selected grade and stream if any
   const selectedGrade = useMemo(() => {

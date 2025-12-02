@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { DashboardSearchSidebar } from './components/DashboardSearchSidebar'
 import { CreateAcademicYearModal } from './components/CreateAcademicYearModal'
+import { ViewAcademicYearsModal } from './components/ViewAcademicYearsModal'
 import { TermsManager } from './components/TermsManager'
 
 export default function SchoolDashboard() {
@@ -409,9 +410,9 @@ export default function SchoolDashboard() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            {/* Create Academic Year button */}
-            <CreateAcademicYearModal 
-              onSuccess={() => {
+            {/* View Academic Years button */}
+            <ViewAcademicYearsModal 
+              onAcademicYearCreated={() => {
                 // Optionally refresh data or show success message
                 console.log('Academic year created successfully')
               }}
@@ -768,8 +769,8 @@ export default function SchoolDashboard() {
                     <GraduationCap className="h-4 w-4 text-primary mb-2 shrink-0" />
                     <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Enter Grades</span>
                   </button>
-                  <CreateAcademicYearModal 
-                    onSuccess={() => {
+                  <ViewAcademicYearsModal 
+                    onAcademicYearCreated={() => {
                       console.log('Academic year created successfully')
                     }}
                     trigger={

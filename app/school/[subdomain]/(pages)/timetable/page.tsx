@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { 
   useSelectedGradeTimetable, 
@@ -25,8 +25,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
 
 export default function SmartTimetableNew() {
+  // Get selected term from context
+  const { selectedTerm } = useSelectedTerm();
   // Get store data and actions
   const {
     grades,
@@ -34,6 +37,7 @@ export default function SmartTimetableNew() {
     teachers,
     timeSlots,
     selectedGradeId,
+    selectedTermId,
     setSelectedGrade,
     searchTerm,
     setSearchTerm,
@@ -43,6 +47,7 @@ export default function SmartTimetableNew() {
     loadGrades,
     loadSubjects,
     loadTeachers,
+    loadEntries,
     deleteTimeSlot,
     deleteAllTimeSlots,
     createBreaks,
@@ -84,6 +89,43 @@ export default function SmartTimetableNew() {
         });
     }
   }, [selectedGradeId, loadSubjects]);
+
+  // Load timetable entries automatically when grade is selected
+  useEffect(() => {
+    // Don't load if no grade is selected
+    if (!selectedGradeId) {
+      return;
+    }
+
+    // Use term from context if available, otherwise use selectedTermId from store
+    const termId = selectedTerm?.id || selectedTermId;
+    
+    // If no term is available, show a message but don't block
+    if (!termId) {
+      console.warn('No term selected. Please select a term to load timetable entries.');
+      toast({
+        title: 'No Term Selected',
+        description: 'Please select a term to view timetable entries.',
+        variant: 'default',
+      });
+      return;
+    }
+    
+    // Load entries for the selected grade and term
+    console.log('Loading entries for grade:', selectedGradeId, 'term:', termId);
+    loadEntries(termId, selectedGradeId)
+      .then(() => {
+        console.log('Timetable entries loaded successfully for grade:', selectedGradeId, 'term:', termId);
+      })
+      .catch((error) => {
+        console.error('Failed to load timetable entries:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load timetable entries. Please try again.',
+          variant: 'destructive',
+        });
+      });
+  }, [selectedGradeId, selectedTermId, selectedTerm?.id, loadEntries, toast]);
 
   // Get enriched entries for selected grade (memoized!)
   const entries = useSelectedGradeTimetable();

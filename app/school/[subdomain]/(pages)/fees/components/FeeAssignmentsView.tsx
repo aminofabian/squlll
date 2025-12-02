@@ -91,7 +91,7 @@ const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
   </div>
 )
 
-const ErrorAlert = ({ error }: { error: Error }) => (
+const ErrorAlert = ({ error }: { error: string }) => (
   <div className="border-2 border-red-200 bg-red-50 p-4">
     <div className="flex items-start">
       <div className="flex-1">
@@ -99,7 +99,7 @@ const ErrorAlert = ({ error }: { error: Error }) => (
           Error Loading Fee Assignments
         </h3>
         <p className="font-mono text-sm text-red-700 mb-2">
-          {error.message}
+          {error}
         </p>
         <p className="font-mono text-xs text-red-600">
           Check the browser console for more details. Make sure the GraphQL endpoint is accessible and the query matches your schema.
