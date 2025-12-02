@@ -14,7 +14,8 @@ import {
   Info,
   InfoIcon,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  X
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -33,10 +34,12 @@ interface PendingInvitationsProps {
   isLoading: boolean;
   error: string | null;
   onInvitationResent?: (invitationId: string) => void;
+  onInvitationRevoked?: (invitationId: string) => void;
 }
 
-export function PendingInvitations({ invitations, isLoading, error, onInvitationResent }: PendingInvitationsProps) {
+export function PendingInvitations({ invitations, isLoading, error, onInvitationResent, onInvitationRevoked }: PendingInvitationsProps) {
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
+  const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
 
   const resendInvitation = async (invitationId: string) => {
     setResendingIds(prev => new Set(prev).add(invitationId));
@@ -88,6 +91,55 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
       });
     }
   };
+
+  const revokeInvitation = async (invitationId: string) => {
+    setRevokingIds(prev => new Set(prev).add(invitationId));
+    
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation RevokeInvitation($invitationId: String!) {
+              revokeInvitation(invitationId: $invitationId) {
+                message
+              }
+            }
+          `,
+          variables: {
+            invitationId
+          }
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to revoke invitation');
+      }
+
+      const revokeData = result.data.revokeInvitation;
+      
+      toast.success(revokeData.message || 'Invitation revoked successfully');
+      
+      // Call the callback if provided
+      onInvitationRevoked?.(invitationId);
+      
+    } catch (error) {
+      console.error('Error revoking invitation:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to revoke invitation');
+    } finally {
+      setRevokingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(invitationId);
+        return newSet;
+      });
+    }
+  };
+
   return (
     <div className="mb-8">
       <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
@@ -208,20 +260,36 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                     </div>
                     
                     {invitation.status === 'PENDING' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => resendInvitation(invitation.id)}
-                        disabled={resendingIds.has(invitation.id)}
-                        className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
-                      >
-                        {resendingIds.has(invitation.id) ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-3 w-3" />
-                        )}
-                        {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => resendInvitation(invitation.id)}
+                          disabled={resendingIds.has(invitation.id)}
+                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
+                        >
+                          {resendingIds.has(invitation.id) ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                          {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revokeInvitation(invitation.id)}
+                          disabled={revokingIds.has(invitation.id)}
+                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-red-50 hover:border-red-200 hover:text-red-700 shadow-sm"
+                        >
+                          {revokingIds.has(invitation.id) ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <X className="h-3 w-3" />
+                          )}
+                          {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
+                        </Button>
+                      </div>
                     )}
                   </div>
                   
@@ -353,22 +421,38 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                           </Tooltip>
                         </TooltipProvider>
                       </div>
-                      <div className="col-span-2 flex justify-end">
+                      <div className="col-span-2 flex justify-end gap-2">
                         {invitation.status === 'PENDING' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => resendInvitation(invitation.id)}
-                            disabled={resendingIds.has(invitation.id)}
-                            className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
-                          >
-                            {resendingIds.has(invitation.id) ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-3 w-3" />
-                            )}
-                            {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => resendInvitation(invitation.id)}
+                              disabled={resendingIds.has(invitation.id)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
+                            >
+                              {resendingIds.has(invitation.id) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-3 w-3" />
+                              )}
+                              {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => revokeInvitation(invitation.id)}
+                              disabled={revokingIds.has(invitation.id)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-red-50 hover:border-red-200 hover:text-red-700 shadow-sm"
+                            >
+                              {revokingIds.has(invitation.id) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <X className="h-3 w-3" />
+                              )}
+                              {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -572,20 +656,36 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                       </td>
                       <td className="px-6 py-4 text-sm text-right">
                         {invitation.status === 'PENDING' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => resendInvitation(invitation.id)}
-                            disabled={resendingIds.has(invitation.id)}
-                            className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm ml-auto"
-                          >
-                            {resendingIds.has(invitation.id) ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <RefreshCw className="h-3 w-3" />
-                            )}
-                            {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => resendInvitation(invitation.id)}
+                              disabled={resendingIds.has(invitation.id)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
+                            >
+                              {resendingIds.has(invitation.id) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-3 w-3" />
+                              )}
+                              {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => revokeInvitation(invitation.id)}
+                              disabled={revokingIds.has(invitation.id)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-red-50 hover:border-red-200 hover:text-red-700 shadow-sm"
+                            >
+                              {revokingIds.has(invitation.id) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <X className="h-3 w-3" />
+                              )}
+                              {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>

@@ -609,6 +609,12 @@ function TeachersPage() {
                   fetchPendingInvitations(tenantId);
                 }
               }}
+              onInvitationRevoked={(invitationId) => {
+                // Refetch invitations after revoke
+                if (tenantId) {
+                  fetchPendingInvitations(tenantId);
+                }
+              }}
             />
 
             {/* Teachers Table */}
