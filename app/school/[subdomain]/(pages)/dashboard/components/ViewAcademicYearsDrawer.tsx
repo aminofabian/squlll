@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Calendar, Plus, BookOpen, CheckCircle2, Edit2, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Loader2, Calendar, Plus, BookOpen, CheckCircle2, Edit2, Trash2, ChevronDown, ChevronRight, Star } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { useAcademicYears, type AcademicYear } from '@/lib/hooks/useAcademicYears'
 import { CreateAcademicYearModal } from './CreateAcademicYearModal'
@@ -38,6 +38,7 @@ interface Term {
   startDate: string
   endDate: string
   isActive: boolean
+  isCurrent?: boolean
   academicYear: {
     name: string
   }
@@ -69,6 +70,7 @@ function AcademicYearCard({
   const [editingTerm, setEditingTerm] = useState<Term | null>(null)
   const [deletingTermId, setDeletingTermId] = useState<string | null>(null)
   const [isDeletingTerm, setIsDeletingTerm] = useState(false)
+  const [settingCurrentTermId, setSettingCurrentTermId] = useState<string | null>(null)
   
   // Fetch terms when expanded
   const { data: terms, isLoading: termsLoading, error: termsError, refetch: refetchTerms } = useQuery<Term[]>({
@@ -88,6 +90,7 @@ function AcademicYearCard({
                 startDate
                 endDate
                 isActive
+                isCurrent
                 academicYear {
                   name
                 }
@@ -226,7 +229,7 @@ function AcademicYearCard({
                   <Card 
                     key={term.id}
                     className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 ${
-                      term.isActive ? 'border-l-4 border-l-primary' : ''
+                      term.isCurrent ? 'border-l-4 border-l-yellow-500' : term.isActive ? 'border-l-4 border-l-primary' : ''
                     }`}
                   >
                     <CardContent className="pt-3 pb-3">
@@ -236,7 +239,13 @@ function AcademicYearCard({
                             <span className="font-medium text-sm text-slate-900 dark:text-slate-100">
                               {term.name}
                             </span>
-                            {term.isActive && (
+                            {term.isCurrent && (
+                              <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white border-0 text-xs">
+                                <Star className="h-2.5 w-2.5 mr-1 fill-white" />
+                                Current
+                              </Badge>
+                            )}
+                            {term.isActive && !term.isCurrent && (
                               <Badge className="bg-green-500 hover:bg-green-600 text-white border-0 text-xs">
                                 Active
                               </Badge>
@@ -255,6 +264,72 @@ function AcademicYearCard({
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                          {!term.isCurrent && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                setSettingCurrentTermId(term.id)
+                                try {
+                                  const response = await fetch('/api/graphql', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      query: `
+                                        mutation SetCurrentTerm($id: ID!) {
+                                          setCurrentTerm(id: $id) {
+                                            id
+                                            name
+                                            isCurrent
+                                            academicYear {
+                                              id
+                                              name
+                                            }
+                                          }
+                                        }
+                                      `,
+                                      variables: {
+                                        id: term.id
+                                      }
+                                    }),
+                                  })
+
+                                  if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`)
+                                  }
+
+                                  const result = await response.json()
+                                  
+                                  if (result.errors) {
+                                    throw new Error(result.errors[0]?.message || 'Failed to set current term')
+                                  }
+
+                                  if (result.data?.setCurrentTerm) {
+                                    toast.success(`Term "${term.name}" set as current!`)
+                                    refetchTerms()
+                                  } else {
+                                    throw new Error('Set current term operation failed')
+                                  }
+                                } catch (error) {
+                                  console.error('Error setting current term:', error)
+                                  toast.error(error instanceof Error ? error.message : 'Failed to set current term')
+                                } finally {
+                                  setSettingCurrentTermId(null)
+                                }
+                              }}
+                              disabled={settingCurrentTermId === term.id}
+                              className="border-yellow-200 text-yellow-600 hover:bg-yellow-50 hover:border-yellow-300"
+                              title="Set as current term"
+                            >
+                              {settingCurrentTermId === term.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Star className="h-3 w-3" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
