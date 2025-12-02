@@ -65,6 +65,8 @@ function AcademicYearCard({
   formatDate 
 }: AcademicYearCardProps) {
   const [showCreateTermModal, setShowCreateTermModal] = useState(false)
+  const [deletingTermId, setDeletingTermId] = useState<string | null>(null)
+  const [isDeletingTerm, setIsDeletingTerm] = useState(false)
   
   // Fetch terms when expanded
   const { data: terms, isLoading: termsLoading, error: termsError, refetch: refetchTerms } = useQuery<Term[]>({
@@ -250,6 +252,15 @@ function AcademicYearCard({
                             </div>
                           </div>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeletingTermId(term.id)}
+                          className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shrink-0"
+                          disabled={isDeletingTerm}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -292,6 +303,86 @@ function AcademicYearCard({
             endDate: year.endDate
           }}
         />
+
+        {/* Delete Term Confirmation Dialog */}
+        <AlertDialog open={!!deletingTermId} onOpenChange={(open) => !open && setDeletingTermId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Term</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{terms?.find(t => t.id === deletingTermId)?.name}"? This action cannot be undone.
+                {terms?.find(t => t.id === deletingTermId)?.isActive && (
+                  <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                    Warning: This is an active term.
+                  </span>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeletingTerm}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  if (!deletingTermId) return
+
+                  setIsDeletingTerm(true)
+                  try {
+                    const response = await fetch('/api/graphql', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        query: `
+                          mutation DeleteTerm($id: ID!) {
+                            deleteTerm(id: $id)
+                          }
+                        `,
+                        variables: {
+                          id: deletingTermId
+                        }
+                      }),
+                    })
+
+                    if (!response.ok) {
+                      throw new Error(`HTTP error! status: ${response.status}`)
+                    }
+
+                    const result = await response.json()
+                    
+                    if (result.errors) {
+                      throw new Error(result.errors[0]?.message || 'Failed to delete term')
+                    }
+
+                    if (result.data?.deleteTerm) {
+                      const termName = terms?.find(t => t.id === deletingTermId)?.name
+                      toast.success(`Term "${termName}" deleted successfully!`)
+                      setDeletingTermId(null)
+                      refetchTerms()
+                    } else {
+                      throw new Error('Delete operation returned false')
+                    }
+                  } catch (error) {
+                    console.error('Error deleting term:', error)
+                    toast.error(error instanceof Error ? error.message : 'Failed to delete term')
+                  } finally {
+                    setIsDeletingTerm(false)
+                  }
+                }}
+                disabled={isDeletingTerm}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeletingTerm ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   )
