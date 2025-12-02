@@ -29,6 +29,7 @@ interface FeeStructuresTabProps {
   getAssignedGrades: (feeStructureId: string) => any[]
   getTotalStudents: (feeStructureId: string) => number
   hasFetched?: boolean
+  isDeleting?: boolean
 }
 
 export const FeeStructuresTab = ({
@@ -46,7 +47,8 @@ export const FeeStructuresTab = ({
   fetchFeeStructures,
   getAssignedGrades,
   getTotalStudents,
-  hasFetched = false
+  hasFetched = false,
+  isDeleting = false
 }: FeeStructuresTabProps) => {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -355,6 +357,7 @@ export const FeeStructuresTab = ({
                     onGenerateInvoices(structure.structureId, structure.termName)
                   }}
                   onUpdateFeeItem={onUpdateFeeItem}
+                  isDeleting={isDeleting}
                 />
               )
             })}

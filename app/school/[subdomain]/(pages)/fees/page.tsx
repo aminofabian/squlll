@@ -76,6 +76,9 @@ export default function FeesPage() {
   // Track if we've already fetched on mount to prevent request floods
   const hasFetchedOnMount = useRef(false)
   
+  // Track if a delete is in progress to prevent multiple simultaneous deletions
+  const deletingStructureId = useRef<string | null>(null)
+  
   // Assign to grades modal state
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [feeStructureToAssign, setFeeStructureToAssign] = useState<{ id: string; name: string; academicYear?: string; isActive?: boolean } | null>(null)
@@ -484,7 +487,23 @@ export default function FeesPage() {
   }
 
   const handleDelete = async (feeStructureId: string, structureName?: string) => {
+    // Prevent multiple simultaneous deletions
+    if (deletingStructureId.current !== null) {
+      console.log('⚠️ Delete already in progress, ignoring duplicate request')
+      return
+    }
+
+    // Prevent deletion if already deleting this specific structure
+    if (deletingStructureId.current === feeStructureId) {
+      console.log(`⚠️ Already deleting structure ${feeStructureId}, ignoring duplicate request`)
+      return
+    }
+
     try {
+      // Mark this structure as being deleted
+      deletingStructureId.current = feeStructureId
+      console.log(`🗑️ Starting deletion of fee structure: ${feeStructureId} (${structureName || 'unnamed'})`)
+
       // Show loading toast
       toast({
         title: "Deleting fee structure...",
@@ -494,10 +513,19 @@ export default function FeesPage() {
       })
 
       const success = await graphqlDeleteFeeStructure(feeStructureId)
+      console.log(`📊 Delete result for ${feeStructureId}:`, { success, deleteError })
 
       if (success) {
+        console.log(`✅ Successfully deleted fee structure ${feeStructureId}, refreshing list...`)
+        
         // Refresh fee structures list after successful deletion
-        await fetchFeeStructures()
+        try {
+          await fetchFeeStructures()
+          console.log(`✅ Fee structures list refreshed`)
+        } catch (refreshError) {
+          console.error('⚠️ Failed to refresh fee structures list, but deletion succeeded:', refreshError)
+          // Don't show error to user since deletion succeeded - the hook already removed it from local state
+        }
         
         // Show success toast
         toast({
@@ -510,6 +538,7 @@ export default function FeesPage() {
       } else {
         // Show error toast with detailed error message
         const errorMsg = deleteError || 'Failed to delete fee structure. The structure may be in use or you may not have permission to delete it.'
+        console.error(`❌ Delete failed for ${feeStructureId}:`, errorMsg)
         toast({
           title: "Deletion failed",
           description: errorMsg,
@@ -519,12 +548,16 @@ export default function FeesPage() {
     } catch (error) {
       // Show unexpected error toast
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Unexpected error deleting fee structure ${feeStructureId}:`, error)
       toast({
         title: "Unexpected error",
         description: errorMessage,
         variant: "destructive",
       })
-      console.error('Error in delete handler:', error)
+    } finally {
+      // Clear the deleting flag
+      console.log(`🧹 Clearing deletion flag for ${feeStructureId}`)
+      deletingStructureId.current = null
     }
   }
 
@@ -783,6 +816,7 @@ export default function FeesPage() {
                     getAssignedGrades={getAssignedGrades}
                     getTotalStudents={getTotalStudents}
                     hasFetched={!!lastFetchTime}
+                    isDeleting={isDeleting}
                   />
                 }
                 invoicesContent={

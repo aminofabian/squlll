@@ -363,7 +363,7 @@ export const useGraphQLFeeStructures = () => {
       }
 
       const result = await response.json();
-      console.log('Delete response:', result);
+      console.log('📦 Delete response:', JSON.stringify(result, null, 2));
       
       if (result.errors) {
         // Extract detailed error information
@@ -402,12 +402,35 @@ export const useGraphQLFeeStructures = () => {
         throw new Error(errorMessages);
       }
 
-      if (result.data?.deleteFeeStructure !== true) {
-        // Check if data is null or false
-        if (result.data === null) {
-          throw new Error('Failed to delete fee structure: The structure may be in use or does not exist');
-        }
-        throw new Error('Failed to delete fee structure: Unexpected response from server');
+      // Check the response more carefully
+      console.log('🔍 Checking delete response data:', {
+        hasData: !!result.data,
+        deleteFeeStructure: result.data?.deleteFeeStructure,
+        dataType: typeof result.data?.deleteFeeStructure,
+        fullData: result.data
+      });
+
+      // Handle different response formats
+      if (!result.data) {
+        console.error('❌ No data in response');
+        throw new Error('Failed to delete fee structure: No response data from server');
+      }
+
+      const deleteResult = result.data.deleteFeeStructure;
+      
+      // Check if result is explicitly false or null
+      if (deleteResult === false || deleteResult === null) {
+        console.error('❌ Delete returned false or null');
+        throw new Error('Failed to delete fee structure: The structure may be in use or does not exist');
+      }
+
+      // Check if result is true (success)
+      if (deleteResult === true) {
+        console.log('✅ Delete mutation returned true - success!');
+      } else {
+        // Unexpected response format
+        console.error('❌ Unexpected delete response format:', deleteResult);
+        throw new Error(`Failed to delete fee structure: Unexpected response format. Got: ${JSON.stringify(deleteResult)}`);
       }
 
       // Remove the structure from local state

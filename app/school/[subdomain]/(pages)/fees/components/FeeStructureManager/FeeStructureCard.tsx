@@ -20,6 +20,7 @@ interface FeeStructureCardProps {
   onGenerateInvoices: (feeStructureId: string, term: string) => void
   onDelete?: (id: string, name: string) => void
   onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => void
+  isDeleting?: boolean
 }
 
 export const FeeStructureCard = ({
@@ -28,7 +29,8 @@ export const FeeStructureCard = ({
   onAssignToGrade,
   onGenerateInvoices,
   onDelete,
-  onUpdateFeeItem
+  onUpdateFeeItem,
+  isDeleting = false
 }: FeeStructureCardProps) => {
   return (
     <Card key={structure.structureId} className="hover:shadow-lg transition-all duration-300 border border-slate-200 overflow-hidden group">
@@ -98,6 +100,7 @@ export const FeeStructureCard = ({
                 size="sm" 
                 className="text-red-600 border-red-200 hover:bg-red-50"
                 onClick={() => onDelete(structure.structureId, structure.structureName)}
+                disabled={isDeleting}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
