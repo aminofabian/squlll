@@ -10,6 +10,8 @@ import { Loader2, Plus, RefreshCw, Grid3x3, List, Search, Filter, X } from 'luci
 import { FeeStructureCard } from '../FeeStructureCard'
 import { FeeStructureEmptyState } from '../FeeStructureEmptyState'
 import { cn } from '@/lib/utils'
+import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
+import { useQuery } from '@tanstack/react-query'
 
 interface FeeStructuresTabProps {
   isLoading: boolean
@@ -51,9 +53,55 @@ export const FeeStructuresTab = ({
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [academicYearFilter, setAcademicYearFilter] = useState<string>('all')
+  
+  // Check prerequisites
+  const { academicYears: allAcademicYears, loading: academicYearsLoading } = useAcademicYears()
+  
+  const { data: hasTerms, isLoading: checkingTerms } = useQuery({
+    queryKey: ['checkTermsExistence', allAcademicYears.map(ay => ay.id).join(',')],
+    queryFn: async () => {
+      if (allAcademicYears.length === 0) return false
+      
+      const termChecks = await Promise.all(
+        allAcademicYears.map(async (year) => {
+          try {
+            const response = await fetch('/api/graphql', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                query: `
+                  query GetTermsForAcademicYear($academicYearId: ID!) {
+                    termsByAcademicYear(academicYearId: $academicYearId) {
+                      id
+                    }
+                  }
+                `,
+                variables: { academicYearId: year.id }
+              }),
+            })
+
+            if (!response.ok) return false
+            const result = await response.json()
+            return result.data?.termsByAcademicYear?.length > 0
+          } catch {
+            return false
+          }
+        })
+      )
+      
+      return termChecks.some(hasTerms => hasTerms)
+    },
+    enabled: allAcademicYears.length > 0 && !academicYearsLoading
+  })
+
+  const hasAcademicYears = allAcademicYears.length > 0
+  const hasAnyTerms = hasTerms === true
+  const canCreateFeeStructure = hasAcademicYears && hasAnyTerms
 
   // Get unique academic years for filter
-  const academicYears = useMemo(() => {
+  const academicYearsForFilter = useMemo(() => {
     const years = new Set<string>()
     graphQLStructures.forEach(s => {
       if (s.academicYear) years.add(s.academicYear)
@@ -81,6 +129,9 @@ export const FeeStructuresTab = ({
       return matchesSearch && matchesStatus && matchesYear
     })
   }, [graphQLStructures, searchQuery, statusFilter, academicYearFilter])
+
+  // Use academicYearsForFilter for the filter dropdown
+  const academicYears = academicYearsForFilter
 
   // Show loading if actively loading OR if we haven't fetched yet
   if (isLoading || (!hasFetched && !error && graphQLStructures.length === 0)) {
@@ -190,7 +241,9 @@ export const FeeStructuresTab = ({
 
               <Button
                 onClick={onCreateNew}
-                className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-300 text-xs lg:text-sm px-3 lg:px-4"
+                disabled={!canCreateFeeStructure}
+                className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-300 text-xs lg:text-sm px-3 lg:px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!canCreateFeeStructure ? 'Please create an academic year and terms first' : 'Create new fee structure'}
               >
                 <Plus className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-1.5 lg:mr-2" />
                 <span className="hidden sm:inline">Create Structure</span>
