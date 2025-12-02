@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useAcademicYears, type AcademicYear } from '@/lib/hooks/useAcademicYears'
 import { CreateAcademicYearModal } from './CreateAcademicYearModal'
 import { EditAcademicYearDialog } from './EditAcademicYearDialog'
+import { CreateTermModal } from './CreateTermModal'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { useQuery } from '@tanstack/react-query'
@@ -63,8 +64,10 @@ function AcademicYearCard({
   onDelete, 
   formatDate 
 }: AcademicYearCardProps) {
+  const [showCreateTermModal, setShowCreateTermModal] = useState(false)
+  
   // Fetch terms when expanded
-  const { data: terms, isLoading: termsLoading, error: termsError } = useQuery<Term[]>({
+  const { data: terms, isLoading: termsLoading, error: termsError, refetch: refetchTerms } = useQuery<Term[]>({
     queryKey: ['termsByAcademicYear', year.id],
     queryFn: async () => {
       const response = await fetch('/api/graphql', {
@@ -118,17 +121,6 @@ function AcademicYearCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <button
-                onClick={onToggleExpand}
-                className="flex items-center gap-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded p-1 transition-colors"
-                aria-label={isExpanded ? 'Collapse terms' : 'Expand terms'}
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-slate-500" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-slate-500" />
-                )}
-              </button>
               <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100">
                 {year.name}
               </h3>
@@ -139,7 +131,7 @@ function AcademicYearCard({
                 </Badge>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-3 ml-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-3">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
                 <span>{formatDate(year.startDate)}</span>
@@ -150,6 +142,23 @@ function AcademicYearCard({
                 <span>{formatDate(year.endDate)}</span>
               </div>
             </div>
+            
+            {/* Expandable Button - More Prominent */}
+            <button
+              onClick={onToggleExpand}
+              className="flex items-center gap-2 px-3 py-2 rounded-md border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group w-full sm:w-auto"
+              aria-label={isExpanded ? 'Collapse terms' : 'View terms'}
+            >
+              <BookOpen className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">
+                {isExpanded ? 'Hide Terms' : 'View Terms'}
+              </span>
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-primary transition-transform" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
+              )}
+            </button>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button
@@ -174,11 +183,22 @@ function AcademicYearCard({
         {/* Expandable Terms Section */}
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 ml-6">
-            <div className="flex items-center gap-2 mb-3">
-              <BookOpen className="h-4 w-4 text-primary" />
-              <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
-                Terms
-              </h4>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-primary" />
+                <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                  Terms
+                </h4>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCreateTermModal(true)}
+                className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 text-xs h-7"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Create Term
+              </Button>
             </div>
 
             {termsLoading && (
@@ -239,13 +259,39 @@ function AcademicYearCard({
 
             {!termsLoading && !termsError && terms && terms.length === 0 && (
               <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                   No terms found for this academic year
                 </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreateTermModal(true)}
+                  className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Create First Term
+                </Button>
               </div>
             )}
           </div>
         )}
+
+        {/* Create Term Modal */}
+        <CreateTermModal
+          isOpen={showCreateTermModal}
+          onClose={() => setShowCreateTermModal(false)}
+          onSuccess={(newTerm) => {
+            toast.success(`Term "${newTerm.name}" created successfully!`)
+            refetchTerms()
+            setShowCreateTermModal(false)
+          }}
+          academicYear={{
+            id: year.id,
+            name: year.name,
+            startDate: year.startDate,
+            endDate: year.endDate
+          }}
+        />
       </CardContent>
     </Card>
   )
