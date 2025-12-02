@@ -458,7 +458,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     name: formData.name,
                     selectedGrades: formData.selectedGrades,
                     academicYear: formData.academicYear,
-                    terms: formData.terms.map(t => t.name).join(', ')
+                    terms: formData.terms?.map(t => t.name).join(', ') || ''
                 })
 
                 setShowSuccess(true)
@@ -519,6 +519,9 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             }
             
             // Build fee items for each term
+            if (!formData.terms || formData.terms.length === 0) {
+                throw new Error('No terms selected. Please select at least one term.')
+            }
             const termIds = formData.terms.map(t => t.id)
             const hasTermSpecificAmounts = formData.termBucketAmounts && Object.keys(formData.termBucketAmounts).length > 0
             
@@ -598,7 +601,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 
                 for (const term of formData.terms) {
                     const termAmounts = formData.termBucketAmounts?.[term.id] || {}
-                    const termItems: Array<{ feeBucketId: string; amount: number; isMandatory: boolean }> = []
+                    const termItems: Array<{ feeBucketId: string; amount: number; isMandatory: boolean; termIds: string[] }> = []
                     const usedBucketIds = new Set<string>()
                     
                     validBucketIds.forEach(bucketId => {
@@ -609,7 +612,8 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             termItems.push({
                                 feeBucketId: bucketId,
                                 amount: bucket.amount,
-                                isMandatory: bucket.isMandatory
+                                isMandatory: bucket.isMandatory,
+                                termIds: [term.id] // Each item needs termIds
                             })
                             usedBucketIds.add(bucketId)
                         }
@@ -633,7 +637,6 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     const createdStructure = await createFeeStructureWithItems({
                         name: termStructureName,
                         academicYearId: formData.academicYearId,
-                        termIds: [term.id], // Only this term
                         gradeLevelIds: gradeLevelIds,
                         items: termItems
                     })
@@ -654,12 +657,12 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     id: createdStructures[0].id,
                     name: formData.name,
                     academicYear: formData.academicYear,
-                    terms: formData.terms.map(t => t.name).join(', '),
+                    terms: formData.terms?.map(t => t.name).join(', ') || createdStructures[0].terms?.map((t: any) => t.name).join(', ') || '',
                     grades: formData.selectedGrades.join(', ')
                 })
             } else {
                 // All terms have the same amounts (or only one term) - create one structure for all terms
-                let allItems: Array<{ feeBucketId: string; amount: number; isMandatory: boolean }> = []
+                let allItems: Array<{ feeBucketId: string; amount: number; isMandatory: boolean; termIds: string[] }> = []
                 const usedBucketIds = new Set<string>()
                 
                 if (hasTermSpecificAmounts && formData.terms && formData.terms.length > 0) {
@@ -674,7 +677,8 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             allItems.push({
                                 feeBucketId: bucketId,
                                 amount: bucket.amount,
-                                isMandatory: bucket.isMandatory
+                                isMandatory: bucket.isMandatory,
+                                termIds: termIds // All terms for this item
                             })
                             usedBucketIds.add(bucketId)
                         }
@@ -689,7 +693,8 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                             allItems.push({
                                 feeBucketId: bucketId,
                                 amount: bucket.amount,
-                                isMandatory: bucket.isMandatory
+                                isMandatory: bucket.isMandatory,
+                                termIds: termIds // All terms for this item
                             })
                             usedBucketIds.add(bucketId)
                         }
@@ -710,7 +715,8 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     items: allItems.map(item => ({
                         feeBucketId: item.feeBucketId,
                         amount: item.amount,
-                        isMandatory: item.isMandatory
+                        isMandatory: item.isMandatory,
+                        termIds: item.termIds
                     }))
                 })
 
@@ -718,7 +724,6 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 const createdStructure = await createFeeStructureWithItems({
                     name: formData.name,
                     academicYearId: formData.academicYearId,
-                    termIds: termIds,
                     gradeLevelIds: gradeLevelIds,
                     items: allItems
                 })
@@ -732,7 +737,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     id: createdStructure.id,
                     name: createdStructure.name,
                     academicYear: formData.academicYear,
-                    terms: formData.terms.map(t => t.name).join(', '),
+                    terms: formData.terms?.map(t => t.name).join(', ') || createdStructure.terms?.map((t: any) => t.name).join(', ') || '',
                     grades: formData.selectedGrades.join(', ')
                 })
             }

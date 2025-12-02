@@ -856,6 +856,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         feeBucketId: string;
         amount: number;
         isMandatory: boolean;
+        termIds: string[];
       }>();
       
       // Collect all used bucket IDs from the form data for easy reference
@@ -921,7 +922,8 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
             feeBucketMap.set(bucket.id, {
               feeBucketId: bucket.id,
               amount: totalAmount,
-              isMandatory: !bucket.isOptional
+              isMandatory: !bucket.isOptional,
+              termIds: allTermIds // All terms for this item
             });
             console.log(`Added ${feeBucket.name} with amount ${totalAmount} to fee items`);
           }
@@ -956,7 +958,8 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
               feeBucketMap.set(bucketId, {
                 feeBucketId: bucketId,
                 amount: amount,
-                isMandatory: true // Existing buckets are mandatory by default
+                isMandatory: true, // Existing buckets are mandatory by default
+                termIds: allTermIds // All terms for this item
               });
               console.log(`Added existing bucket ${feeBucket.name} with amount ${amount} to fee items`);
             }
@@ -987,7 +990,6 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       const createdFeeStructure = await createFeeStructureWithItems({
         name: formData.name,
         academicYearId: selectedAcademicYear.id,
-        termIds: allTermIds, // Use all collected term IDs
         gradeLevelIds: selectedGrades,
         items: feeItems
       });

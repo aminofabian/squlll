@@ -69,12 +69,12 @@ export interface FeeStructureItemInput {
   feeBucketId: string;
   amount: number;
   isMandatory: boolean;
+  termIds: string[];
 }
 
 export interface CreateFeeStructureWithItemsInput {
   name: string;
   academicYearId: string;
-  termIds: string[];
   gradeLevelIds: string[];
   items: FeeStructureItemInput[];
 }

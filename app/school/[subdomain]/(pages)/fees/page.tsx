@@ -528,10 +528,17 @@ export default function FeesPage() {
     }
   }
 
-  const handleSaveStructure = async (formData: FeeStructureForm): Promise<string | null> => {
+  const handleSaveStructure = async (formData: FeeStructureForm | any): Promise<string | null> => {
     try {
       let result: string | null = null
-      if (selectedStructure) {
+      
+      // Check if structure was already created by the wizard (has id property)
+      if ((formData as any).id && !selectedStructure) {
+        // Structure was already created by createFeeStructureWithItems in the wizard
+        // Just refresh the list and return the ID
+        result = (formData as any).id
+        await fetchFeeStructures()
+      } else if (selectedStructure) {
         // For edit mode, use GraphQL to update the fee structure
         console.log('Updating fee structure with GraphQL:', selectedStructure.id);
 
@@ -555,11 +562,16 @@ export default function FeesPage() {
         // Refresh the list after update
         await fetchFeeStructures()
       } else {
-        // For create mode, use the local function
-        result = await createFeeStructure(formData)
-        
-        // Refresh the list after creation
-        await fetchFeeStructures()
+        // For create mode, use the local function (only if termStructures exists)
+        if ((formData as FeeStructureForm).termStructures) {
+          result = await createFeeStructure(formData as FeeStructureForm)
+          // Refresh the list after creation
+          await fetchFeeStructures()
+        } else {
+          // If no termStructures, assume it was already created
+          result = (formData as any).id || null
+          await fetchFeeStructures()
+        }
       }
 
       // Reset UI state
