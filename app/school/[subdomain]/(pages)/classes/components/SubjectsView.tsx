@@ -511,70 +511,82 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-2 border-primary/20">
-          <div className="w-full">
-            <table className="w-full table-fixed border-collapse">
-              <thead className="bg-primary/5 border-b-2 border-primary/20">
-                <tr>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[25%]">
+        <Card className="border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-b border-primary/20">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Subject Name
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[10%]">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Code
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[20%]">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Department
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[15%]">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-1 py-1.5 text-center text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[10%]">
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                {filteredSubjects.map((subject) => (
+              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-100 dark:divide-slate-700/50">
+                {filteredSubjects.map((subject, index) => (
                   <tr 
                     key={subject.id}
-                    className="hover:bg-primary/5 transition-colors cursor-pointer"
+                    className="group hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-all duration-150 cursor-pointer border-b border-slate-100 dark:border-slate-700/30 last:border-b-0"
                     onClick={() => setEditingSubject(subject)}
                   >
-                    <td className="px-1 py-1.5 break-words">
-                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 break-words">
-                        {subject.name}
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary transition-colors"></div>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">
+                          {subject.name}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-1 py-1.5 break-words">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">
+                    <td className="px-4 py-3.5">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700/50 text-xs font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                         {subject.code || '-'}
                       </span>
                     </td>
-                    <td className="px-1 py-1.5 break-words">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 break-words">
-                        {subject.department || '-'}
+                    <td className="px-4 py-3.5">
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {subject.department || <span className="text-slate-400 dark:text-slate-500 italic">Not assigned</span>}
                       </span>
                     </td>
-                    <td className="px-1 py-1.5">
-                      <div className="flex flex-wrap items-center gap-1">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
                         {subject.isActive ? (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-green-500/20 text-green-600 bg-green-500/5">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs px-2 py-0.5 border-green-500/30 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 font-medium"
+                          >
                             Active
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-500/20 text-red-600 bg-red-500/5">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs px-2 py-0.5 border-red-500/30 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 font-medium"
+                          >
                             Inactive
                           </Badge>
                         )}
                         {subject.isCompulsory && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-blue-500/20 text-blue-600 bg-blue-500/5">
-                            Comp
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs px-2 py-0.5 border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 font-medium"
+                          >
+                            Compulsory
                           </Badge>
                         )}
                       </div>
                     </td>
-                    <td className="px-1 py-1.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center justify-center gap-1.5">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -582,10 +594,10 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                             e.stopPropagation()
                             setEditingSubject(subject)
                           }}
-                          className="h-6 w-6 p-0 hover:bg-primary/10"
+                          className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary rounded-md transition-all"
                           title="Edit subject"
                         >
-                          <Edit className="h-3 w-3 text-slate-600 dark:text-slate-400" />
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -594,10 +606,10 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                             e.stopPropagation()
                             setSubjectToDelete(subject)
                           }}
-                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
+                          className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 rounded-md transition-all"
                           title="Delete subject"
                         >
-                          <Trash2 className="h-3 w-3 text-red-600 dark:text-red-400" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </td>
