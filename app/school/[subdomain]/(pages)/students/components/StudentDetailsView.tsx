@@ -40,8 +40,13 @@ import {
   RefreshCw,
   Loader2,
   AlertCircle,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 import SchoolReportCard from './ReportCard';
 import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary';
 import { StudentLedger } from './StudentLedger';
@@ -55,11 +60,20 @@ interface StudentDetailsViewProps {
 }
 
 export function StudentDetailsView({ studentId, onClose, schoolConfig }: StudentDetailsViewProps) {
+  const { toast } = useToast();
   const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { studentDetail, loading, error, refetch } = useStudentDetailSummary(studentId);
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
+  
+  // Password change form state
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<string | null>(null);
   
   // Student credentials hook
   const { credentials, loading: credentialsLoading, error: credentialsError, fetchCredentials } = useStudentCredentials(studentId);
@@ -87,6 +101,139 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Reset messages
+    setPasswordChangeError(null);
+    setPasswordChangeSuccess(null);
+    
+    // Validation
+    if (!oldPassword || !newPassword) {
+      setPasswordChangeError('Both old and new passwords are required');
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      setPasswordChangeError('New password must be at least 8 characters long');
+      return;
+    }
+    
+    setIsChangingPassword(true);
+    
+    try {
+      const mutation = `
+        mutation ChangeMyPassword($input: ChangePasswordsInput!) {
+          changeMyPassword(changePasswordsInput: $input) {
+            success
+            message
+          }
+        }
+      `;
+      
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: mutation,
+          variables: {
+            input: {
+              oldPassword: oldPassword.trim(),
+              newPassword: newPassword.trim(),
+            },
+          },
+        }),
+      });
+      
+      // Read response text first (can only be read once)
+      const responseText = await response.text();
+      
+      // Parse response as JSON
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        // If response is not JSON, it's a true HTTP error
+        toast({
+          variant: 'destructive',
+          title: 'Server Error',
+          description: responseText || `HTTP error! status: ${response.status}`,
+        });
+        setIsChangingPassword(false);
+        return;
+      }
+      
+      // Check for HTTP errors (non-200 status)
+      if (!response.ok) {
+        // Try to extract error message from GraphQL response or JSON
+        let errorMessage = `Server error (${response.status})`;
+        
+        if (result.errors && result.errors.length > 0) {
+          // GraphQL errors in error response - show in toast
+          errorMessage = result.errors[0].message || errorMessage;
+        } else if (result.message) {
+          errorMessage = result.message;
+        } else if (result.error) {
+          errorMessage = result.error;
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: 'Server Error',
+          description: errorMessage,
+        });
+        setIsChangingPassword(false);
+        return;
+      }
+      
+      // Check for GraphQL errors in successful HTTP response
+      if (result.errors && result.errors.length > 0) {
+        // Extract the specific error message from the first error
+        const errorMessage = result.errors[0].message || 'An error occurred while changing password';
+        // GraphQL errors are shown in the dialog, not toast
+        setPasswordChangeError(errorMessage);
+        setIsChangingPassword(false);
+        return;
+      }
+      
+      // Check if the mutation was successful
+      if (result.data?.changeMyPassword?.success) {
+        setPasswordChangeSuccess(result.data.changeMyPassword.message || 'Password changed successfully');
+        // Clear form
+        setOldPassword('');
+        setNewPassword('');
+        // Close dialog after 2 seconds
+        setTimeout(() => {
+          setShowChangePasswordDialog(false);
+          setPasswordChangeSuccess(null);
+        }, 2000);
+      } else {
+        // If data exists but success is false, use the message from the response
+        const errorMessage = result.data?.changeMyPassword?.message || 'Failed to change password';
+        setPasswordChangeError(errorMessage);
+      }
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      
+      // Check if it's an HTTP error that wasn't caught above
+      if (error.message && error.message.includes('HTTP error')) {
+        toast({
+          variant: 'destructive',
+          title: 'Server Error',
+          description: error.message,
+        });
+      } else {
+        // Other errors (network, etc.) - show in dialog
+        setPasswordChangeError(error.message || 'Failed to change password. Please try again.');
+      }
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -225,17 +372,36 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
                     Detailed personal information about {student.studentName}
                   </CardDescription>
                 </div>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={handleShowCredentials}
-                  className="font-mono border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 hover:border-[var(--color-primary)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md whitespace-nowrap"
-                >
-                  <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
-                    <Key className="h-4 w-4 text-[var(--color-primary)]" />
-                  </div>
-                  <span className="font-semibold">Login Credentials</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={handleShowCredentials}
+                    className="font-mono border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 hover:border-[var(--color-primary)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md whitespace-nowrap"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
+                      <Key className="h-4 w-4 text-[var(--color-primary)]" />
+                    </div>
+                    <span className="font-semibold">Login Credentials</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => {
+                      setShowChangePasswordDialog(true);
+                      setPasswordChangeError(null);
+                      setPasswordChangeSuccess(null);
+                      setOldPassword('');
+                      setNewPassword('');
+                    }}
+                    className="font-mono border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 hover:border-[var(--color-primary)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md whitespace-nowrap"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
+                      <Lock className="h-4 w-4 text-[var(--color-primary)]" />
+                    </div>
+                    <span className="font-semibold">Change Password</span>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-6">
@@ -750,6 +916,134 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+        <DialogContent className="border-2 border-[var(--color-border)] bg-white rounded-xl max-w-lg shadow-xl">
+          <DialogHeader className="pb-4 border-b-2 border-gray-200 bg-gray-50/50 rounded-t-xl -mx-6 -mt-6 px-6 pt-6 mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center border-2 border-[var(--color-primary)]/20">
+                <Lock className="h-5 w-5 text-[var(--color-primary)]" />
+              </div>
+              <DialogTitle className="font-mono font-bold text-xl tracking-wide text-[var(--color-text)]">
+                Change Password
+              </DialogTitle>
+            </div>
+            <DialogDescription className="font-mono text-sm text-[var(--color-textSecondary)] mt-2">
+              Change your password. All active sessions will be logged out for security.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleChangePassword} className="space-y-4 py-4">
+            {/* Error Message */}
+            {passwordChangeError && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <p className="text-sm font-mono text-red-600">{passwordChangeError}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Success Message */}
+            {passwordChangeSuccess && (
+              <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <p className="text-sm font-mono text-green-600">{passwordChangeSuccess}</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Old Password */}
+            <div className="space-y-2">
+              <Label htmlFor="oldPassword" className="font-mono text-sm font-semibold text-[var(--color-text)]">
+                Current Password
+              </Label>
+              <Input
+                id="oldPassword"
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                disabled={isChangingPassword}
+                className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)]"
+                placeholder="Enter your current password"
+                required
+              />
+            </div>
+            
+            {/* New Password */}
+            <div className="space-y-2">
+              <Label htmlFor="newPassword" className="font-mono text-sm font-semibold text-[var(--color-text)]">
+                New Password
+              </Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={isChangingPassword}
+                className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)]"
+                placeholder="Enter your new password (min. 8 characters)"
+                required
+                minLength={8}
+              />
+              <p className="text-xs font-mono text-[var(--color-textSecondary)]">
+                Password must be at least 8 characters long
+              </p>
+            </div>
+            
+            {/* Info Banner */}
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <p className="text-xs font-mono text-blue-700 leading-relaxed">
+                  After changing your password, all active sessions will be logged out and you'll need to sign in again with your new password.
+                </p>
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowChangePasswordDialog(false);
+                  setOldPassword('');
+                  setNewPassword('');
+                  setPasswordChangeError(null);
+                  setPasswordChangeSuccess(null);
+                }}
+                disabled={isChangingPassword}
+                className="font-mono border-2 border-[var(--color-border)] text-[var(--color-text)] hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isChangingPassword || !oldPassword || !newPassword}
+                className="font-mono bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Changing...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4" />
+                    Change Password
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 } 

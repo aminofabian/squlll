@@ -36,9 +36,10 @@ interface PendingInvitationsProps {
   error: string | null;
   onInvitationResent?: (invitationId: string) => void;
   onInvitationRevoked?: (invitationId: string) => void;
+  onTeacherActivated?: (invitationId: string) => void;
 }
 
-export function PendingInvitations({ invitations, isLoading, error, onInvitationResent, onInvitationRevoked }: PendingInvitationsProps) {
+export function PendingInvitations({ invitations, isLoading, error, onInvitationResent, onInvitationRevoked, onTeacherActivated }: PendingInvitationsProps) {
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
   const [activatingEmails, setActivatingEmails] = useState<Set<string>>(new Set());
@@ -260,14 +261,11 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
       }
       
       console.log('Calling activateTeacher mutation with teacherId:', sanitizedTeacherId);
-      console.log('TeacherId type:', typeof sanitizedTeacherId);
-      console.log('TeacherId length:', sanitizedTeacherId.length);
       
-      const mutationQuery = `
-        mutation {
-          activateTeacher(input: {
-            teacherId: "${sanitizedTeacherId}"
-          }) {
+      // Use variables format for better security and consistency
+      const mutation = `
+        mutation ActivateTeacher($input: ActivateTeacherInput!) {
+          activateTeacher(input: $input) {
             success
             message
             email
@@ -275,30 +273,23 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
         }
       `;
       
-      console.log('Mutation query:', mutationQuery);
-      console.log('Mutation query includes teacherId:', mutationQuery.includes('teacherId'));
-      console.log('Mutation query includes UUID:', mutationQuery.includes(sanitizedTeacherId));
-      
-      // Final validation: Ensure the mutation query contains the teacherId
-      if (!mutationQuery.includes('teacherId') || !mutationQuery.includes(sanitizedTeacherId)) {
-        console.error('Mutation query validation failed!');
-        console.error('Query:', mutationQuery);
-        console.error('Expected teacherId:', sanitizedTeacherId);
-        throw new Error('Failed to construct mutation query with teacherId');
-      }
-      
-      const requestBody = {
-        query: mutationQuery,
+      const variables = {
+        input: {
+          teacherId: sanitizedTeacherId,
+        },
       };
       
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      console.log('Mutation variables:', JSON.stringify(variables, null, 2));
       
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          query: mutation,
+          variables,
+        }),
       });
 
       if (!response.ok) {
@@ -335,9 +326,11 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
       console.log('Teacher activated successfully:', activateData);
       toast.success(activateData.message || `Teacher ${activateData.email} has been activated successfully. Credentials sent via email.`);
       
-      // Optionally refresh invitations or teachers list
-      // Trigger refresh callback with the invitation ID
-      if (onInvitationResent) {
+      // Refresh invitations and teachers list after activation
+      if (onTeacherActivated) {
+        onTeacherActivated(invitation.id);
+      } else if (onInvitationResent) {
+        // Fallback to onInvitationResent if onTeacherActivated is not provided
         onInvitationResent(invitation.id);
       }
     } catch (error) {

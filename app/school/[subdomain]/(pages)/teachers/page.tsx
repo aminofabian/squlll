@@ -615,6 +615,13 @@ function TeachersPage() {
                   fetchPendingInvitations(tenantId);
                 }
               }}
+              onTeacherActivated={(invitationId) => {
+                // Refetch both invitations and teachers after activation
+                if (tenantId) {
+                  fetchPendingInvitations(tenantId);
+                  fetchTeachersByTenant(tenantId).catch(console.error);
+                }
+              }}
             />
 
             {/* Teachers Table */}
