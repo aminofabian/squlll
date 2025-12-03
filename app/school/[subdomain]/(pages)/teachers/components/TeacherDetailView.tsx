@@ -144,16 +144,6 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
               }`}>
                 {teacher.isActive ? 'Active' : 'Inactive'}
               </Badge>
-              {teacher.role && (
-                <Badge variant="outline" className="capitalize font-mono border-[var(--color-primary)]/20 text-[var(--color-primary)]">
-                  {teacher.role}
-                </Badge>
-              )}
-              {teacher.tenantSubjects.length > 0 && (
-                <Badge variant="outline" className="capitalize font-mono border-[var(--color-primary)]/20 text-[var(--color-primary)]">
-                  {teacher.tenantSubjects.length} Subject{teacher.tenantSubjects.length !== 1 ? 's' : ''}
-                </Badge>
-              )}
             </div>
           </div>
         </div>
@@ -176,15 +166,19 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Personal Information */}
                 <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Personal Details</h3>
+                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
+                      <User className="h-3 w-3" />
+                      Personal Information
+                    </h3>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
                       <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Full Name</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{teacher.fullName || teacher.user.name}</div>
+                      <div className="font-mono text-sm text-[var(--color-text)] text-right">{teacher.fullName || teacher.user.name}</div>
                     </div>
                     {teacher.gender && (
                       <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
@@ -192,6 +186,28 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                         <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.gender.toLowerCase()}</div>
                       </div>
                     )}
+                    <div className="flex justify-between items-center py-2">
+                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Status</div>
+                      <Badge className={`font-mono text-xs capitalize ${
+                        teacher.isActive 
+                          ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' 
+                          : 'bg-[var(--color-textSecondary)]/10 text-[var(--color-textSecondary)] border-[var(--color-textSecondary)]/20'
+                      }`}>
+                        {teacher.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Information */}
+                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
+                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
+                      <Award className="h-3 w-3" />
+                      Professional Information
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
                     {teacher.department && (
                       <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
                         <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Department</div>
@@ -201,36 +217,36 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                     {teacher.role && (
                       <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
                         <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Role</div>
-                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.role}</div>
+                        <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.role}</div>
                       </div>
                     )}
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
+                    <div className="flex justify-between items-center py-2">
                       <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">School</div>
                       <div className="font-mono text-sm text-[var(--color-text)]">{teacher.tenant.name}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Status</div>
-                      <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.isActive ? 'Active' : 'Inactive'}</div>
                     </div>
                   </div>
                 </div>
                 
+                {/* Contact Information */}
                 <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Contact Information</h3>
+                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
+                      <Mail className="h-3 w-3" />
+                      Contact Information
+                    </h3>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start py-2 border-b border-[var(--color-border)]/20">
                       <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)] flex items-center gap-2">
                         <Mail className="h-4 w-4" />
                         Email
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.email || teacher.user.email}</div>
+                      <div className="flex items-center gap-2 max-w-[60%]">
+                        <div className="font-mono text-sm text-[var(--color-text)] text-right break-all">{teacher.email || teacher.user.email}</div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10"
+                          className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10 shrink-0"
                           onClick={() => navigator.clipboard.writeText(teacher.email || teacher.user.email)}
                         >
                           <Copy className="h-3 w-3" />
@@ -241,7 +257,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                       <div className="flex justify-between items-center py-2">
                         <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)] flex items-center gap-2">
                           <Phone className="h-4 w-4" />
-                          Phone Number
+                          Phone
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="font-mono text-sm text-[var(--color-text)]">{teacher.phoneNumber}</div>
@@ -254,6 +270,11 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                             <Copy className="h-3 w-3" />
                           </Button>
                         </div>
+                      </div>
+                    )}
+                    {!teacher.phoneNumber && (
+                      <div className="text-xs font-mono text-[var(--color-textSecondary)] italic py-2">
+                        No phone number provided
                       </div>
                     )}
                   </div>
