@@ -3,13 +3,17 @@
 import React, { useState, useMemo } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { ClassCard } from '../components/ClassCard'
 import { ClassCardSkeleton } from '../components/ClassCardSkeleton'
-import { X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { X, PanelLeftClose, PanelLeftOpen, BookOpen, GraduationCap } from 'lucide-react'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
 import CreateClassDrawer from '@/app/school/components/CreateClassDrawer'
+import { ClassesStats } from './components/ClassesStats'
+import { SubjectsView } from './components/SubjectsView'
+import { GradeDetailsView } from './components/GradeDetailsView'
 
 function EmptyState({ selectedGrade, searchTerm }: {
   selectedGrade?: { name: string; levelName: string; streamName?: string } | null,
@@ -46,6 +50,7 @@ function ClassesPage() {
   const [selectedStreamId, setSelectedStreamId] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
+  const [activeTab, setActiveTab] = useState<'classes' | 'subjects'>('classes')
 
   // Filter levels based on selections and search
   const filteredLevels = useMemo(() => {
@@ -107,7 +112,9 @@ function ClassesPage() {
         return {
           name: grade.name,
           levelName: level.name,
-          streamName: selectedStream?.name
+          streamName: selectedStream?.name,
+          grade: grade,
+          level: level
         };
       }
     }
@@ -209,80 +216,138 @@ function ClassesPage() {
                   </Button>
                 )}
                 
-                <CreateClassDrawer onClassCreated={() => {
-                  console.log('Class created successfully');
-                }} />
+                {activeTab === 'classes' && (
+                  <CreateClassDrawer onClassCreated={() => {
+                    console.log('Class created successfully');
+                  }} />
+                )}
+                
+                {activeTab === 'classes' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveTab('subjects')}
+                    className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5"
+                  >
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">View Subjects</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Active Filters */}
-          {!isLoading && config && (selectedGrade || searchTerm) && (
-            <div className="mb-6 p-4 border border-primary/20 bg-white dark:bg-slate-800 rounded-lg">
-              <div className="flex flex-wrap gap-3 items-center">
-                <span className="text-sm font-semibold text-primary">Active Filters:</span>
-                
-                {selectedGrade && (
-                  <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary px-3 py-1.5">
-                    <span>Grade: {selectedGrade.name} {selectedGrade.streamName && `(${selectedGrade.streamName})`} ({selectedGrade.levelName})</span>
-                    <X 
-                      className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" 
+          {/* Stats Section - Show on both tabs */}
+          <div className="mb-8">
+            <ClassesStats config={config} isLoading={isLoading} />
+          </div>
+
+          {/* Tabs Navigation */}
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'classes' | 'subjects')} className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 border-2 border-primary/20">
+              <TabsTrigger 
+                value="classes"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+              >
+                <GraduationCap className="h-4 w-4" />
+                <span className="font-medium">Classes & Grades</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="subjects"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span className="font-medium">Subjects</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Classes Tab Content */}
+            <TabsContent value="classes" className="space-y-6 mt-6">
+              {/* Active Filters */}
+              {!isLoading && config && (selectedGrade || searchTerm) && (
+                <div className="p-4 border border-primary/20 bg-white dark:bg-slate-800 rounded-lg">
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <span className="text-sm font-semibold text-primary">Active Filters:</span>
+                    
+                    {selectedGrade && (
+                      <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary px-3 py-1.5">
+                        <span>Grade: {selectedGrade.name} {selectedGrade.streamName && `(${selectedGrade.streamName})`} ({selectedGrade.levelName})</span>
+                        <X 
+                          className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" 
+                          onClick={() => {
+                            setSelectedGradeId('');
+                            setSelectedLevelId('');
+                            setSelectedStreamId('');
+                          }} 
+                        />
+                      </Badge>
+                    )}
+                    
+                    {searchTerm && (
+                      <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary px-3 py-1.5">
+                        <span>Search: "{searchTerm}"</span>
+                        <X className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
+                      </Badge>
+                    )}
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="ml-auto text-slate-600 dark:text-slate-400 hover:text-red-600 hover:border-red-500/20 hover:bg-red-50 dark:hover:bg-red-950/20 border-primary/20 transition-all duration-200" 
                       onClick={() => {
                         setSelectedGradeId('');
                         setSelectedLevelId('');
                         setSelectedStreamId('');
-                      }} 
+                        setSearchTerm('');
+                      }}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Grade Details View - Show when a grade is selected */}
+              {selectedGradeId && selectedGrade?.grade && (
+                <div className="mb-6">
+                  <GradeDetailsView
+                    grade={selectedGrade.grade}
+                    levelName={selectedGrade.levelName}
+                    selectedStreamId={selectedStreamId || undefined}
+                  />
+                </div>
+              )}
+
+              {/* Classes Content */}
+              <div className="space-y-6">
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <ClassCardSkeleton key={index} />
+                  ))
+                ) : filteredLevels.length > 0 ? (
+                  filteredLevels.map((level) => (
+                    <ClassCard 
+                      key={level.id} 
+                      level={level} 
+                      selectedGradeId={selectedGradeId}
+                      selectedStreamId={selectedStreamId}
+                      onStreamSelect={handleStreamSelect}
                     />
-                  </Badge>
-                )}
-                
-                {searchTerm && (
-                  <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary px-3 py-1.5">
-                    <span>Search: "{searchTerm}"</span>
-                    <X className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
-                  </Badge>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="ml-auto text-slate-600 dark:text-slate-400 hover:text-red-600 hover:border-red-500/20 hover:bg-red-50 dark:hover:bg-red-950/20 border-primary/20 transition-all duration-200" 
-                  onClick={() => {
-                    setSelectedGradeId('');
-                    setSelectedLevelId('');
-                    setSelectedStreamId('');
-                    setSearchTerm('');
-                  }}
-                >
-                  Clear All
-                </Button>
+                  ))
+                ) : config ? (
+                  <EmptyState 
+                    selectedGrade={selectedGrade}
+                    searchTerm={searchTerm} 
+                  />
+                ) : null}
               </div>
-            </div>
-          )}
-          
-          {/* Classes Content */}
-          <div className="space-y-6">
-            {isLoading ? (
-              Array.from({ length: 3 }).map((_, index) => (
-                <ClassCardSkeleton key={index} />
-              ))
-            ) : filteredLevels.length > 0 ? (
-              filteredLevels.map((level) => (
-                <ClassCard 
-                  key={level.id} 
-                  level={level} 
-                  selectedGradeId={selectedGradeId}
-                  selectedStreamId={selectedStreamId}
-                  onStreamSelect={handleStreamSelect}
-                />
-              ))
-            ) : config ? (
-              <EmptyState 
-                selectedGrade={selectedGrade}
-                searchTerm={searchTerm} 
-              />
-            ) : null}
-          </div>
+            </TabsContent>
+
+            {/* Subjects Tab Content */}
+            <TabsContent value="subjects" className="mt-6">
+              <SubjectsView />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
