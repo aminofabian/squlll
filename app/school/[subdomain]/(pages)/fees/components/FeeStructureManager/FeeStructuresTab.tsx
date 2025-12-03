@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { FeeStructure } from '../../types'
 import { ProcessedFeeStructure } from './types'
-import { Loader2, Plus, RefreshCw, Grid3x3, List, Search, Filter, X } from 'lucide-react'
+import { Loader2, Plus, RefreshCw, Search, Filter, X } from 'lucide-react'
 import { FeeStructureCard } from './FeeStructureCard'
 import { FeeStructureEmptyState } from '../FeeStructureEmptyState'
 import { cn } from '@/lib/utils'
@@ -51,7 +51,6 @@ export const FeeStructuresTab = ({
   isDeleting = false
 }: FeeStructuresTabProps) => {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [academicYearFilter, setAcademicYearFilter] = useState<string>('all')
@@ -201,36 +200,6 @@ export const FeeStructuresTab = ({
             </div>
 
             <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 p-1 bg-white/80 backdrop-blur-sm border-2 border-primary/10 shadow-sm">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "h-8 px-2 lg:px-3 transition-all",
-                    viewMode === 'grid' 
-                      ? 'bg-primary text-white shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  )}
-                >
-                  <Grid3x3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    "h-8 px-2 lg:px-3 transition-all",
-                    viewMode === 'list' 
-                      ? 'bg-primary text-white shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  )}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-
               <Button
                 onClick={() => fetchFeeStructures()}
                 variant="outline"
@@ -321,11 +290,7 @@ export const FeeStructuresTab = ({
 
         {/* Fee Structure Cards */}
         {filteredStructures.length > 0 ? (
-          <div className={cn(
-            viewMode === 'grid'
-              ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6"
-              : "space-y-4"
-          )}>
+          <div className="space-y-4">
             {filteredStructures.map((structure) => {
               const assignedGrades = getAssignedGrades(structure.structureId)
               const totalStudents = getTotalStudents(structure.structureId)
