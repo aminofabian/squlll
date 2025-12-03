@@ -21,7 +21,6 @@ import {
 import toast from "react-hot-toast";
 
 import { PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
-import { useSetTeacherStatus } from "@/lib/hooks/useTeachers";
 
 // Resend invitation response type
 type ResendInvitationResponse = {
@@ -43,7 +42,6 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
   const [activatingEmails, setActivatingEmails] = useState<Set<string>>(new Set());
-  const { setTeacherStatus } = useSetTeacherStatus();
 
   const resendInvitation = async (invitationId: string) => {
     setResendingIds(prev => new Set(prev).add(invitationId));
@@ -146,13 +144,29 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
 
   const getTeacherIdByEmail = async (email: string): Promise<string | null> => {
     try {
-      // Get the user ID from usersByTenant
-      const response = await fetch('/api/teachers', {
-        method: 'GET',
+      // NOTE: We need to query teachers because:
+      // 1. The invitation only provides email (not teacherId)
+      // 2. The activateTeacher mutation requires teacherId (UUID)
+      // 3. We must look up the teacher record to get the ID
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        body: JSON.stringify({
+          query: `
+            query GetTeachers {
+              getTeachers {
+                id
+                email
+                user {
+                  id
+                  email
+                }
+              }
+            }
+          `,
+        }),
       });
 
       if (!response.ok) {
@@ -160,37 +174,172 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
       }
 
       const result = await response.json();
-      const user = result.usersByTenant?.find((u: any) => u.email === email);
       
-      if (!user) {
-        throw new Error(`Teacher with email ${email} not found`);
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to fetch teachers');
       }
 
-      // Return the user ID - the mutation may accept this directly
-      // If it requires the teacher record ID, we'll need to add a query for that
-      return user.id;
+      const teachers = result.data?.getTeachers || [];
+      
+      // Log for debugging
+      console.log('Looking for teacher with email:', email);
+      console.log('Available teachers:', teachers.map((t: any) => ({
+        id: t.id,
+        email: t.email,
+        userEmail: t.user?.email
+      })));
+      
+      // Try to match by teacher.email first (direct field), then fall back to user.email
+      const teacher = teachers.find((t: any) => 
+        t.email === email || t.user?.email === email
+      );
+      
+      if (!teacher) {
+        // If we can't find by email but there's only one teacher, use it
+        // This handles the case where teacher exists but email isn't stored on the record yet
+        if (teachers.length === 1) {
+          console.log('No email match found, but only one teacher exists. Using that teacher ID:', teachers[0].id);
+          return teachers[0].id;
+        }
+        throw new Error(`Teacher with email ${email} not found. Found ${teachers.length} teacher(s) but none match the email.`);
+      }
+
+      // Return the teacher record ID (not user ID) - this is what activateTeacher mutation needs
+      const foundTeacherId = teacher.id;
+      
+      if (!foundTeacherId) {
+        console.error('Teacher found but has no ID:', teacher);
+        throw new Error('Teacher record found but missing ID field');
+      }
+      
+      console.log('Found teacher ID:', foundTeacherId);
+      return foundTeacherId;
     } catch (error) {
       console.error('Error getting teacher ID:', error);
       throw error;
     }
   };
 
-  const activateTeacher = async (email: string) => {
+  const activateTeacher = async (invitation: PendingInvitation) => {
+    const email = invitation.email;
     setActivatingEmails(prev => new Set(prev).add(email));
     
     try {
-      // Get the teacher ID from email
-      const teacherId = await getTeacherIdByEmail(email);
+      console.log('Activating teacher for invitation:', {
+        invitationId: invitation.id,
+        email: invitation.email,
+        status: invitation.status
+      });
       
+      // Step 1: Get the teacher ID from email
+      // NOTE: The invitation only provides email, not teacherId
+      // The activateTeacher mutation requires teacherId (UUID), so we must look it up
+      const teacherId = await getTeacherIdByEmail(invitation.email);
+      
+      // Step 2: Validate teacherId exists and is valid
       if (!teacherId) {
-        throw new Error(`Could not find teacher record for ${email}`);
+        throw new Error(`Could not find teacher record for ${email}. Please ensure the teacher has accepted the invitation.`);
       }
 
-      await setTeacherStatus(teacherId, true);
-      toast.success(`Teacher ${email} has been activated successfully`);
+      if (typeof teacherId !== 'string' || teacherId.trim() === '') {
+        console.error('Invalid teacherId:', teacherId);
+        throw new Error('Invalid teacher ID format. Received: ' + JSON.stringify(teacherId));
+      }
+      
+      // Basic UUID validation (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(teacherId.trim())) {
+        console.warn('Teacher ID does not match UUID format:', teacherId);
+        throw new Error(`Invalid teacher ID format: "${teacherId}". Expected UUID format.`);
+      }
+      
+      // Step 3: Ensure teacherId is properly escaped and not empty
+      const sanitizedTeacherId = teacherId.trim();
+      if (!sanitizedTeacherId) {
+        throw new Error('Teacher ID is empty after sanitization');
+      }
+      
+      console.log('Calling activateTeacher mutation with teacherId:', sanitizedTeacherId);
+      console.log('TeacherId type:', typeof sanitizedTeacherId);
+      console.log('TeacherId length:', sanitizedTeacherId.length);
+      
+      const mutationQuery = `
+        mutation {
+          activateTeacher(input: {
+            teacherId: "${sanitizedTeacherId}"
+          }) {
+            success
+            message
+            email
+          }
+        }
+      `;
+      
+      console.log('Mutation query:', mutationQuery);
+      console.log('Mutation query includes teacherId:', mutationQuery.includes('teacherId'));
+      console.log('Mutation query includes UUID:', mutationQuery.includes(sanitizedTeacherId));
+      
+      // Final validation: Ensure the mutation query contains the teacherId
+      if (!mutationQuery.includes('teacherId') || !mutationQuery.includes(sanitizedTeacherId)) {
+        console.error('Mutation query validation failed!');
+        console.error('Query:', mutationQuery);
+        console.error('Expected teacherId:', sanitizedTeacherId);
+        throw new Error('Failed to construct mutation query with teacherId');
+      }
+      
+      const requestBody = {
+        query: mutationQuery,
+      };
+      
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+      
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('HTTP Error:', response.status, errorText);
+        throw new Error(`Server error (${response.status}). Please try again or contact support.`);
+      }
+
+      const result = await response.json();
+      
+      console.log('ActivateTeacher mutation response:', JSON.stringify(result, null, 2));
+      
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors);
+        const error = result.errors[0];
+        const errorMessage = error?.extensions?.code === 'INTERNAL_SERVER_ERROR' 
+          ? 'Server error while activating teacher. The teacher may already be activated or there may be a system issue. Please try again or contact support.'
+          : error?.message || 'Failed to activate teacher';
+        throw new Error(errorMessage);
+      }
+
+      const activateData = result.data?.activateTeacher;
+      
+      if (!activateData) {
+        console.error('No activateTeacher data in response:', result);
+        throw new Error('No data returned from activateTeacher mutation. The server may be experiencing issues.');
+      }
+      
+      if (!activateData.success) {
+        console.error('Activation failed:', activateData);
+        throw new Error(activateData.message || 'Failed to activate teacher');
+      }
+
+      console.log('Teacher activated successfully:', activateData);
+      toast.success(activateData.message || `Teacher ${activateData.email} has been activated successfully. Credentials sent via email.`);
       
       // Optionally refresh invitations or teachers list
-      // The parent component can handle this via callbacks if needed
+      // Trigger refresh callback with the invitation ID
+      if (onInvitationResent) {
+        onInvitationResent(invitation.id);
+      }
     } catch (error) {
       console.error('Error activating teacher:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to activate teacher');
@@ -352,6 +501,20 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                           )}
                           {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => activateTeacher(invitation)}
+                          disabled={activatingEmails.has(invitation.email)}
+                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
+                        >
+                          {activatingEmails.has(invitation.email) ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-3 w-3" />
+                          )}
+                          {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
+                        </Button>
                       </div>
                     )}
                     {invitation.status === 'ACCEPTED' && (
@@ -359,7 +522,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => activateTeacher(invitation.email)}
+                          onClick={() => activateTeacher(invitation)}
                           disabled={activatingEmails.has(invitation.email)}
                           className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
                         >
@@ -533,13 +696,27 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                               )}
                               {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => activateTeacher(invitation)}
+                              disabled={activatingEmails.has(invitation.email)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
+                            >
+                              {activatingEmails.has(invitation.email) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                              {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
+                            </Button>
                           </>
                         )}
                         {invitation.status === 'ACCEPTED' && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => activateTeacher(invitation.email)}
+                            onClick={() => activateTeacher(invitation)}
                             disabled={activatingEmails.has(invitation.email)}
                             className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
                           >
@@ -782,6 +959,20 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                               )}
                               {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => activateTeacher(invitation)}
+                              disabled={activatingEmails.has(invitation.email)}
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
+                            >
+                              {activatingEmails.has(invitation.email) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                              {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
+                            </Button>
                           </div>
                         )}
                         {invitation.status === 'ACCEPTED' && (
@@ -789,7 +980,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => activateTeacher(invitation.email)}
+                              onClick={() => activateTeacher(invitation)}
                               disabled={activatingEmails.has(invitation.email)}
                               className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
                             >

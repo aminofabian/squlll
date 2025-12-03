@@ -16,6 +16,13 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   User, 
   Info, 
@@ -32,12 +39,14 @@ import {
   Copy,
   RefreshCw,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-react';
 import SchoolReportCard from './ReportCard';
 import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary';
 import { StudentLedger } from './StudentLedger';
 import { useStudentLedger } from '@/lib/hooks/use-student-ledger';
+import { useStudentCredentials } from '@/lib/hooks/useStudentCredentials';
 
 interface StudentDetailsViewProps {
   studentId: string;
@@ -47,8 +56,13 @@ interface StudentDetailsViewProps {
 
 export function StudentDetailsView({ studentId, onClose, schoolConfig }: StudentDetailsViewProps) {
   const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
+  const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const { studentDetail, loading, error, refetch } = useStudentDetailSummary(studentId);
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
+  
+  // Student credentials hook
+  const { credentials, loading: credentialsLoading, error: credentialsError, fetchCredentials } = useStudentCredentials(studentId);
   
   // Student ledger data
   const { ledgerData, loading: ledgerLoading, error: ledgerError } = useStudentLedger({
@@ -58,6 +72,23 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
       endDate: "2024-12-31"
     }
   });
+
+  const handleShowCredentials = async () => {
+    setShowCredentialsDialog(true);
+    if (!credentials) {
+      await fetchCredentials();
+    }
+  };
+
+  const handleCopy = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -187,10 +218,25 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
         <TabsContent value="details">
           <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
             <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Student Information</CardTitle>
-              <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Detailed personal information about {student.studentName}
-              </CardDescription>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Student Information</CardTitle>
+                  <CardDescription className="font-mono text-[var(--color-textSecondary)] mt-1">
+                    Detailed personal information about {student.studentName}
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="default"
+                  onClick={handleShowCredentials}
+                  className="font-mono border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 hover:border-[var(--color-primary)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md whitespace-nowrap"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
+                    <Key className="h-4 w-4 text-[var(--color-primary)]" />
+                  </div>
+                  <span className="font-semibold">Login Credentials</span>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -574,6 +620,136 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Credentials Dialog */}
+      <Dialog open={showCredentialsDialog} onOpenChange={setShowCredentialsDialog}>
+        <DialogContent className="border-2 border-[var(--color-border)] bg-white rounded-xl max-w-lg shadow-xl">
+          <DialogHeader className="pb-4 border-b-2 border-gray-200 bg-gray-50/50 rounded-t-xl -mx-6 -mt-6 px-6 pt-6 mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center border-2 border-[var(--color-primary)]/20">
+                <Key className="h-5 w-5 text-[var(--color-primary)]" />
+              </div>
+              <DialogTitle className="font-mono font-bold text-xl tracking-wide text-[var(--color-text)]">
+                Student Login Credentials
+              </DialogTitle>
+            </div>
+            <DialogDescription className="font-mono text-sm text-[var(--color-textSecondary)] mt-2">
+              Login details for <span className="font-semibold text-[var(--color-text)]">{student.studentName}</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          {credentialsLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
+              <p className="font-mono text-sm text-[var(--color-textSecondary)]">Loading credentials...</p>
+            </div>
+          ) : credentialsError ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-4">
+              <div className="w-16 h-16 rounded-full bg-[var(--color-error)]/10 flex items-center justify-center border-2 border-[var(--color-error)]/20">
+                <AlertCircle className="h-8 w-8 text-[var(--color-error)]" />
+              </div>
+              <p className="font-mono text-sm text-[var(--color-error)] text-center max-w-sm">{credentialsError}</p>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={fetchCredentials}
+                className="font-mono border-2 border-[var(--color-border)] text-[var(--color-text)] hover:bg-gray-50 hover:border-[var(--color-primary)]/40 transition-all"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          ) : credentials ? (
+            <div className="space-y-4 py-6">
+              {/* Name Card */}
+              <div className="border-2 border-[var(--color-border)] bg-gray-50 rounded-xl p-5 hover:border-[var(--color-primary)]/30 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-mono font-semibold text-xs text-[var(--color-textSecondary)] uppercase tracking-wider flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" />
+                    Full Name
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-[var(--color-primary)]/10 rounded-md transition-colors"
+                    onClick={() => handleCopy(credentials.name, 'name')}
+                  >
+                    {copiedField === 'name' ? (
+                      <Check className="h-4 w-4 text-[var(--color-success)]" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[var(--color-textSecondary)]" />
+                    )}
+                  </Button>
+                </div>
+                <div className="font-mono text-base font-semibold text-[var(--color-text)] break-all">{credentials.name}</div>
+              </div>
+
+              {/* Email Card */}
+              <div className="border-2 border-[var(--color-border)] bg-gray-50 rounded-xl p-5 hover:border-[var(--color-primary)]/30 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-mono font-semibold text-xs text-[var(--color-textSecondary)] uppercase tracking-wider flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5" />
+                    Email Address
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-[var(--color-primary)]/10 rounded-md transition-colors"
+                    onClick={() => handleCopy(credentials.email, 'email')}
+                  >
+                    {copiedField === 'email' ? (
+                      <Check className="h-4 w-4 text-[var(--color-success)]" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[var(--color-textSecondary)]" />
+                    )}
+                  </Button>
+                </div>
+                <div className="font-mono text-base font-semibold text-[var(--color-text)] break-all">{credentials.email}</div>
+              </div>
+
+              {/* Password Card - Highlighted */}
+              <div className="border-2 border-[var(--color-primary)]/40 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 shadow-md hover:border-[var(--color-primary)]/60 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-mono font-semibold text-xs text-[var(--color-primary)] uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-[var(--color-primary)]/20 flex items-center justify-center">
+                      <Key className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    </div>
+                    Password (Admission Number)
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 hover:bg-[var(--color-primary)]/20 rounded-md transition-colors"
+                    onClick={() => handleCopy(credentials.password, 'password')}
+                  >
+                    {copiedField === 'password' ? (
+                      <Check className="h-4 w-4 text-[var(--color-success)]" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-[var(--color-primary)]" />
+                    )}
+                  </Button>
+                </div>
+                <div className="font-mono text-2xl font-bold text-[var(--color-primary)] tracking-wider mb-2 select-all">
+                  {credentials.password}
+                </div>
+                <div className="flex items-start gap-2 mt-3 pt-3 border-t border-[var(--color-primary)]/20">
+                  <Info className="h-4 w-4 text-[var(--color-textSecondary)] mt-0.5 flex-shrink-0" />
+                  <p className="text-xs font-mono text-[var(--color-textSecondary)] leading-relaxed">
+                    This is the student's default login password. The password is their admission number and should be changed on first login.
+                  </p>
+                </div>
+              </div>
+
+              {/* Info Banner */}
+              <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <p className="text-xs font-mono text-[var(--color-textSecondary)] text-center">
+                  <span className="font-semibold text-[var(--color-info)]">Note:</span> Keep these credentials secure and share them only with authorized personnel.
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
