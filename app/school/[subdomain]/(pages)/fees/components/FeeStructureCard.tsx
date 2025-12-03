@@ -95,7 +95,7 @@ export const FeeStructureCard = ({
     }, [structure.termId])
 
     // Debug: Log the structure data
-    console.log(`🎯 FeeStructureCard - kes{structure.structureName}:`, {
+    console.log(`🎯 FeeStructureCard - ${structure.structureName}:`, {
         termId: structure.termId,
         terms: structure.terms,
         termFeesMapKeys: structure.termFeesMap ? Object.keys(structure.termFeesMap) : [],
@@ -119,21 +119,51 @@ export const FeeStructureCard = ({
 
     // Get buckets for the selected term - use useMemo to ensure proper recomputation
     const displayBuckets = useMemo(() => {
-        console.log(`  🔍 Computing displayBuckets for term: kes{selectedTermId}`)
+        console.log(`  🔍 Computing displayBuckets for term: ${selectedTermId}`)
 
         if (structure.termFeesMap && selectedTermId) {
             const buckets = structure.termFeesMap[selectedTermId]
-            console.log(`  📦 Found kes{buckets?.length || 0} buckets in termFeesMap for term kes{selectedTermId}`)
+            console.log(`  📦 Found ${buckets?.length || 0} buckets in termFeesMap for term ${selectedTermId}`)
             if (buckets && buckets.length > 0) {
                 return buckets
             }
         }
 
-        console.log(`  ⚠️ Falling back to default buckets (kes{structure.buckets?.length || 0})`)
+        console.log(`  ⚠️ Falling back to default buckets (${structure.buckets?.length || 0})`)
         return structure.buckets || []
     }, [structure.termFeesMap, structure.buckets, selectedTermId])
 
-    console.log(`  💰 Final display buckets:`, displayBuckets.map(b => `kes{b.name}: keskes{b.totalAmount}`))
+    // Get ALL unique buckets from ALL terms for comprehensive display
+    const allBucketsFromAllTerms = useMemo(() => {
+        if (!structure.termFeesMap || Object.keys(structure.termFeesMap).length === 0) {
+            return displayBuckets
+        }
+
+        // Collect all buckets from all terms, grouped by bucket ID
+        const bucketMap = new Map<string, any>()
+        
+        Object.entries(structure.termFeesMap).forEach(([termId, termBuckets]) => {
+            termBuckets.forEach((bucket: any) => {
+                const bucketKey = bucket.feeBucketId || bucket.id
+                const existing = bucketMap.get(bucketKey)
+                
+                if (existing) {
+                    // If bucket already exists, we keep the one from the selected term if available
+                    // Otherwise keep the first one
+                    if (termId === selectedTermId) {
+                        bucketMap.set(bucketKey, bucket)
+                    }
+                } else {
+                    bucketMap.set(bucketKey, bucket)
+                }
+            })
+        })
+        
+        return Array.from(bucketMap.values())
+    }, [structure.termFeesMap, selectedTermId, displayBuckets])
+
+    console.log(`  💰 Final display buckets:`, displayBuckets.map(b => `${b.name}: KES ${b.totalAmount}`))
+    console.log(`  📊 All buckets from all terms:`, allBucketsFromAllTerms.map(b => `${b.name}: KES ${b.totalAmount}`))
 
     // Calculate term total (currently selected term)
     const termTotal = displayBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
@@ -150,11 +180,11 @@ export const FeeStructureCard = ({
         // Sum all buckets from all terms
         const total = Object.entries(structure.termFeesMap).reduce((yearSum, [termId, termBuckets]) => {
             const termSum = termBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
-            console.log(`    📊 Term kes{termId}: keskes{termSum}`)
+            console.log(`    📊 Term ${termId}: KES ${termSum}`)
             return yearSum + termSum
         }, 0)
 
-        console.log(`  💵 Year Total: keskes{total}`)
+        console.log(`  💵 Year Total: KES ${total}`)
         return total
     }, [structure.termFeesMap, structure.terms.length, termTotal])
 
@@ -162,7 +192,7 @@ export const FeeStructureCard = ({
 
     // Handle term click to filter fees
     const handleTermClick = (termId: string) => {
-        console.log(`🔄 User clicked term: kes{termId}`)
+        console.log(`🔄 User clicked term: ${termId}`)
         setSelectedTermId(termId)
         setIsExpanded(false) // Collapse expanded view when switching terms
     }
@@ -195,7 +225,7 @@ export const FeeStructureCard = ({
             })
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: kes{response.status}`)
+                throw new Error(`HTTP error! status: ${response.status}`)
             }
 
             const result = await response.json()
@@ -406,32 +436,60 @@ export const FeeStructureCard = ({
 
                 {/* Totals - Enhanced Design */}
                 <div className="mb-3 px-3 py-2 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-l-2 border-primary/30">
-                    <div className="flex items-center gap-1.5">
-                        <div className="p-1 bg-primary/20 rounded">
-                            <Coins className="h-3 w-3 text-primary flex-shrink-0" />
-                        </div>
-                        <span className="text-xs font-bold text-primary whitespace-nowrap">
-                            <span className="text-[8px] font-normal opacity-70">KES</span> {termTotal.toLocaleString()}
-                        </span>
-                        {structure.terms.length > 1 && (
-                            <>
-                                <span className="text-[10px] text-slate-400 font-bold">•</span>
-                                <div className="p-1 bg-emerald-100 rounded">
-                                    <Building2 className="h-3 w-3 text-emerald-600 flex-shrink-0" />
-                                </div>
-                                <span className="text-xs font-bold text-emerald-700 whitespace-nowrap">
-                                    <span className="text-[8px] font-normal opacity-70">KES</span> {yearTotal.toLocaleString()}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <div className="p-1 bg-primary/20 rounded">
+                                <Coins className="h-3 w-3 text-primary flex-shrink-0" />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-medium text-slate-600 uppercase">
+                                    {structure.terms.length > 1 ? `${sortedTerms.find(t => t.id === selectedTermId)?.name || 'Selected Term'}:` : 'Total:'}
                                 </span>
-                            </>
+                                <span className="text-xs font-bold text-primary whitespace-nowrap">
+                                    <span className="text-[8px] font-normal opacity-70">KES</span> {termTotal.toLocaleString()}
+                                </span>
+                            </div>
+                            {structure.terms.length > 1 && (
+                                <>
+                                    <span className="text-[10px] text-slate-400 font-bold">•</span>
+                                    <div className="p-1 bg-emerald-100 rounded">
+                                        <Building2 className="h-3 w-3 text-emerald-600 flex-shrink-0" />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-medium text-slate-600 uppercase">Year Total:</span>
+                                        <span className="text-xs font-bold text-emerald-700 whitespace-nowrap">
+                                            <span className="text-[8px] font-normal opacity-70">KES</span> {yearTotal.toLocaleString()}
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        {structure.terms.length > 1 && structure.termFeesMap && Object.keys(structure.termFeesMap).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 text-[9px] text-slate-500 pt-1 border-t border-slate-200/50">
+                                {sortedTerms.map((term: any) => {
+                                    const termBuckets = structure.termFeesMap?.[term.id] || []
+                                    const termSum = termBuckets.reduce((sum: number, b: any) => sum + b.totalAmount, 0)
+                                    return (
+                                        <span key={term.id} className={cn(
+                                            "px-1.5 py-0.5 rounded",
+                                            selectedTermId === term.id ? "bg-primary/10 text-primary font-semibold" : "bg-slate-50"
+                                        )}>
+                                            {term.name}: KES {termSum.toLocaleString()}
+                                        </span>
+                                    )
+                                })}
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* Fee Components - One Per Row, No Dots */}
-                {displayBuckets.length > 0 && (
+                {(displayBuckets.length > 0 || allBucketsFromAllTerms.length > 0) && (
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Components</h4>
+                            <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                                {structure.terms.length > 1 ? `Components (${sortedTerms.find(t => t.id === selectedTermId)?.name || 'Selected Term'})` : 'Components'}
+                            </h4>
                             <Badge variant="secondary" className="text-[10px] bg-slate-100 text-slate-600 border-slate-200 px-1.5 py-0 font-normal">
                                 {displayBuckets.length}
                             </Badge>

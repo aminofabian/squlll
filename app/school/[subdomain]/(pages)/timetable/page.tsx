@@ -13,6 +13,7 @@ import { LessonEditDialog } from './components/LessonEditDialog';
 import { TimeslotEditDialog } from './components/TimeslotEditDialog';
 import { BreakEditDialog } from './components/BreakEditDialog';
 import { BulkScheduleDrawer } from './components/BulkScheduleDrawer';
+import { BulkLessonEntryDrawer } from './components/BulkLessonEntryDrawer';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -173,6 +174,7 @@ export default function SmartTimetableNew() {
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
   const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
+  const [bulkLessonEntryOpen, setBulkLessonEntryOpen] = useState(false);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   
@@ -339,6 +341,14 @@ export default function SmartTimetableNew() {
                 >
                   <span>⚙️</span>
                   <span>Create Time Slots</span>
+                </button>
+                <button
+                  onClick={() => setBulkLessonEntryOpen(true)}
+                  className="px-3 py-1.5 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center gap-1.5"
+                  disabled={!selectedGradeId}
+                >
+                  <span>📚</span>
+                  <span>Bulk Create Lessons</span>
                 </button>
               </div>
             </div>
@@ -768,6 +778,13 @@ export default function SmartTimetableNew() {
       <BulkScheduleDrawer 
         open={bulkScheduleOpen} 
         onClose={() => setBulkScheduleOpen(false)} 
+      />
+      
+      {/* Bulk Lesson Entry Drawer */}
+      <BulkLessonEntryDrawer
+        open={bulkLessonEntryOpen}
+        onClose={() => setBulkLessonEntryOpen(false)}
+        gradeId={selectedGradeId || undefined}
       />
       
       {/* Toast Notifications */}

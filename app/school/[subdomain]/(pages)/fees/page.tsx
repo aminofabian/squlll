@@ -182,7 +182,7 @@ export default function FeesPage() {
           return;
         }
 
-        // Create buckets from items
+        // Create buckets from items for THIS structure
         const buckets: any[] = [];
         if (structure.items && structure.items.length > 0) {
           const bucketMap = new Map();
@@ -205,14 +205,35 @@ export default function FeesPage() {
             }
           });
           buckets.push(...Array.from(bucketMap.values()));
-          console.log(`  ✅ Created ${buckets.length} buckets:`, buckets.map(b => `${b.name}: $${b.totalAmount}`));
+          console.log(`  ✅ Created ${buckets.length} buckets:`, buckets.map(b => `${b.name}: KES ${b.totalAmount}`));
         }
 
-        // If structure has multiple terms, apply the same buckets to all terms
-        // This handles cases where one fee structure applies to multiple terms
+        // Map buckets to each term in this structure
+        // If a term already has buckets, merge them (don't overwrite)
         structureTerms.forEach((term: any) => {
           console.log(`  📌 Mapping buckets to term: ${term.name} (${term.id})`);
-          termFeesMap.set(term.id, buckets);
+          const existingBuckets = termFeesMap.get(term.id) || [];
+          
+          // Merge buckets: if same bucket ID exists, combine amounts; otherwise add new bucket
+          const mergedBucketMap = new Map();
+          
+          // Add existing buckets
+          existingBuckets.forEach(bucket => {
+            mergedBucketMap.set(bucket.feeBucketId, { ...bucket });
+          });
+          
+          // Merge new buckets
+          buckets.forEach(bucket => {
+            const existing = mergedBucketMap.get(bucket.feeBucketId);
+            if (existing) {
+              existing.totalAmount += bucket.totalAmount;
+              existing.isOptional = existing.isOptional && bucket.isOptional;
+            } else {
+              mergedBucketMap.set(bucket.feeBucketId, { ...bucket });
+            }
+          });
+          
+          termFeesMap.set(term.id, Array.from(mergedBucketMap.values()));
         });
       });
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
 import type { EnrichedTimetableEntry } from '@/lib/types/timetable';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -31,6 +32,7 @@ interface LessonEditDialogProps {
 export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   const { subjects, teachers, entries, timeSlots, grades, updateEntry, addEntry, deleteEntry, loadEntries, selectedGradeId, selectedTermId } = useTimetableStore();
   const { selectedTerm } = useSelectedTerm();
+  const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   
@@ -93,7 +95,18 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
 
     try {
       if (lesson.isNew) {
-        // Create new entry via GraphQL
+        // Validate all required IDs are present
+        if (!lesson.gradeId || !formData.subjectId || !formData.teacherId || !lesson.timeSlotId) {
+          toast({
+            title: 'Error',
+            description: 'Missing required information. Please check all fields are selected.',
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Create new entry via GraphQL - using single entry mutation
         const mutation = `
           mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
             createTimetableEntry(input: $input) {
@@ -119,26 +132,17 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           }
         `;
 
-        // Validate all required IDs are present
-        if (!lesson.gradeId || !formData.subjectId || !formData.teacherId || !lesson.timeSlotId) {
-          toast({
-            title: 'Error',
-            description: 'Missing required information. Please check all fields are selected.',
-            variant: 'destructive',
-          });
-          setIsSaving(false);
-          return;
-        }
-
-        // Build input object - only include roomNumber if it has a value
-        // Make sure we're using the correct IDs from the lesson object
+        // Build input object - always include roomNumber (null if empty to match backend expectations)
         const input: any = {
           termId: termId,
-          gradeId: lesson.gradeId, // This should be the grade entity ID
-          subjectId: formData.subjectId, // This should be the subject entity ID
-          teacherId: formData.teacherId, // This should be the teacher entity ID (not user ID)
-          timeSlotId: lesson.timeSlotId, // This should be the timeSlot entity ID
+          gradeId: lesson.gradeId,
+          subjectId: formData.subjectId,
+          teacherId: formData.teacherId,
+          timeSlotId: lesson.timeSlotId,
           dayOfWeek: lesson.dayOfWeek,
+          roomNumber: formData.roomNumber && formData.roomNumber.trim() 
+            ? formData.roomNumber.trim() 
+            : null, // Explicitly set to null if empty
         };
 
         // Verify the IDs exist in the store
@@ -146,6 +150,65 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         const subject = subjects.find((s) => s.id === formData.subjectId);
         const teacher = teachers.find((t) => t.id === formData.teacherId);
         const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+
+        // Check if timeSlot has a valid UUID (not mock data like "slot-1")
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (timeSlot && !uuidRegex.test(timeSlot.id)) {
+          console.error('Time slot has invalid ID format (likely mock data):', timeSlot);
+          toast({
+            title: 'Time Slots Need Reloading',
+            description: 'Time slots appear to be using old cached data. Please reload the page to fetch fresh time slots from the backend.',
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Log available subjects for debugging
+        console.log('Available subjects in store:', subjects.map(s => ({ id: s.id, name: s.name })));
+        console.log('Selected subject:', subject);
+        console.log('Selected timeSlot:', timeSlot);
+
+        // Validate UUID format for all IDs (uuidRegex already declared above)
+        const invalidIds: string[] = [];
+        if (!uuidRegex.test(input.termId)) invalidIds.push(`termId: ${input.termId}`);
+        if (!uuidRegex.test(input.gradeId)) invalidIds.push(`gradeId: ${input.gradeId}`);
+        if (!uuidRegex.test(input.subjectId)) invalidIds.push(`subjectId: ${input.subjectId}`);
+        if (!uuidRegex.test(input.teacherId)) invalidIds.push(`teacherId: ${input.teacherId}`);
+        if (!uuidRegex.test(input.timeSlotId)) invalidIds.push(`timeSlotId: ${input.timeSlotId}`);
+
+        if (invalidIds.length > 0) {
+          console.error('Invalid UUID format detected:', invalidIds);
+          
+          // Special handling for timeSlotId - likely cached mock data
+          if (invalidIds.some(id => id.includes('timeSlotId'))) {
+            toast({
+              title: 'Time Slots Need Reloading',
+              description: 'Time slots appear to be using old data. Please reload the page or click "Create Time Slots" to refresh them.',
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Error',
+              description: `Invalid ID format: ${invalidIds.join(', ')}. Please reload the page.`,
+              variant: 'destructive',
+            });
+          }
+          setIsSaving(false);
+          return;
+        }
+
+        // Validate dayOfWeek is between 1-5
+        if (input.dayOfWeek < 1 || input.dayOfWeek > 5) {
+          console.error('Invalid dayOfWeek:', input.dayOfWeek);
+          toast({
+            title: 'Error',
+            description: `Invalid day of week: ${input.dayOfWeek}. Must be between 1 (Monday) and 5 (Friday).`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
 
         console.log('Creating entry with IDs:', {
           termId,
@@ -158,7 +221,11 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           timeSlotId: lesson.timeSlotId,
           timeSlotPeriod: timeSlot?.periodNumber,
           dayOfWeek: lesson.dayOfWeek,
+          roomNumber: input.roomNumber,
         });
+
+        // Log the exact input being sent
+        console.log('Exact input object being sent to backend:', JSON.stringify(input, null, 2));
 
         // Validate IDs exist
         if (!grade) {
@@ -202,16 +269,19 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
-        // Only include roomNumber if it's not empty
-        if (formData.roomNumber && formData.roomNumber.trim()) {
-          input.roomNumber = formData.roomNumber.trim();
-        }
-
         const variables = {
           input,
         };
 
+        const requestBody = {
+          query: mutation,
+          variables,
+        };
+
         console.log('Creating timetable entry with input:', input);
+        console.log('GraphQL mutation:', mutation);
+        console.log('GraphQL variables:', JSON.stringify(variables, null, 2));
+        console.log('Full request body:', JSON.stringify(requestBody, null, 2));
 
         const response = await fetch('/api/graphql', {
           method: 'POST',
@@ -219,36 +289,127 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({
-            query: mutation,
-            variables,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
-        if (!response.ok) {
+        // Parse JSON first - GraphQL returns errors in JSON format even with non-200 status
+        let result;
+        try {
+          result = await response.json();
+        } catch (parseError) {
+          // If JSON parsing fails, try to get text for debugging
           const errorText = await response.text();
-          console.error('HTTP error response:', errorText);
-          throw new Error(`HTTP error! status: ${response.status}`);
+          console.error('Failed to parse response as JSON:', errorText);
+          throw new Error(`Invalid response format: ${errorText.substring(0, 200)}`);
         }
 
-        const result = await response.json();
-        console.log('GraphQL response:', result);
+        console.log('GraphQL response:', JSON.stringify(result, null, 2));
 
-        if (result.errors) {
+        // Check for GraphQL errors first (these can occur even with 200 status)
+        if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
           console.error('GraphQL errors:', result.errors);
+          
+          // Extract detailed error information
           const errorMessages = result.errors.map((e: any) => {
-            // Include more details if available
-            if (e.extensions) {
-              return `${e.message} (${JSON.stringify(e.extensions)})`;
+            let message = e.message || 'Unknown error';
+            
+            // Handle validation errors with more detail
+            if (e.extensions?.code === 'VALIDATION_ERROR' || e.extensions?.code === 'BADREQUESTEXCEPTION') {
+              // Log the full error structure for debugging
+              console.error('=== VALIDATION ERROR DEBUG ===');
+              console.error('Full error object:', JSON.stringify(e, null, 2));
+              console.error('Error extensions:', JSON.stringify(e.extensions, null, 2));
+              console.error('Input that caused the error:', JSON.stringify(input, null, 2));
+              console.error('=== END VALIDATION ERROR DEBUG ===');
+              
+              // Try to extract more details from various possible error structures
+              let detailedMessage = message;
+              
+              // Check for validationErrors object
+              if (e.extensions.validationErrors) {
+                const validationDetails = Object.entries(e.extensions.validationErrors)
+                  .map(([field, errors]: [string, any]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                  .join('; ');
+                detailedMessage = `Validation failed: ${validationDetails}`;
+              } 
+              // Check for exception object with nested details
+              else if (e.extensions.exception) {
+                const exception = e.extensions.exception;
+                if (exception.response?.message) {
+                  detailedMessage = `Validation failed: ${Array.isArray(exception.response.message) 
+                    ? exception.response.message.join(', ') 
+                    : exception.response.message}`;
+                } else if (exception.message) {
+                  detailedMessage = `Validation failed: ${exception.message}`;
+                }
+              }
+              // Check for originalError
+              else if (e.extensions.originalError) {
+                const originalError = e.extensions.originalError;
+                if (originalError.message) {
+                  detailedMessage = `Validation failed: ${originalError.message}`;
+                }
+                if (originalError.response?.data?.message) {
+                  detailedMessage = `Validation failed: ${originalError.response.data.message}`;
+                }
+              }
+              // Check if the error message itself contains useful info
+              else if (message.includes('Invalid subjectId') || message.includes('Invalid subject')) {
+                detailedMessage = `Invalid subject selected. The subject may not be assigned to this grade. Please select a different subject.`;
+              } else if (message.includes('Invalid teacherId') || message.includes('Invalid teacher')) {
+                detailedMessage = `Invalid teacher selected. The teacher may not be assigned to teach this subject or grade.`;
+              } else if (message.includes('Invalid gradeId') || message.includes('Invalid grade')) {
+                detailedMessage = `Invalid grade selected. Please try selecting the grade again.`;
+              } else if (message.includes('conflict') || message.includes('Conflict') || message.includes('already scheduled')) {
+                detailedMessage = `Schedule conflict detected. The teacher or grade may already be scheduled at this time. Please choose a different time slot or teacher.`;
+              } else if (message.includes('not qualified') || message.includes('cannot teach')) {
+                detailedMessage = `The selected teacher is not assigned to teach this subject. Please select a different teacher or subject.`;
+              }
+              
+              // If we still have a generic message, provide helpful context
+              if (detailedMessage === message && message === 'Input validation failed') {
+                detailedMessage = `Validation failed. Possible causes: (1) Teacher already scheduled at this time, (2) Grade already has a lesson at this time, (3) Teacher not assigned to teach this subject, or (4) Subject not assigned to this grade. Check console logs for the exact input being sent.`;
+              }
+              
+              message = detailedMessage;
             }
-            return e.message;
-          }).join(', ');
-          throw new Error(`GraphQL errors: ${errorMessages}`);
+            
+            // Include field path if available
+            if (e.path && e.path.length > 0) {
+              message += ` (at ${e.path.join('.')})`;
+            }
+            
+            return message;
+          }).join('; ');
+          
+          throw new Error(errorMessages);
         }
 
-        if (!result.data || !result.data.createTimetableEntry) {
-          throw new Error('Invalid response format');
+        // Check HTTP status after parsing JSON (GraphQL errors are handled above)
+        if (!response.ok) {
+          console.error('HTTP error response:', result);
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
         }
+
+        // Enhanced error handling for invalid response
+        if (!result.data) {
+          console.error('No data in response:', result);
+          throw new Error('Invalid response format: No data field in response');
+        }
+
+        // Handle single entry response
+        if (!result.data || !result.data.createTimetableEntry) {
+          console.error('createTimetableEntry is null or undefined. Full response:', JSON.stringify(result, null, 2));
+          console.error('Response data keys:', Object.keys(result.data || {}));
+          
+          throw new Error(
+            `Invalid response format: createTimetableEntry is ${result.data?.createTimetableEntry}. ` +
+            `Response data: ${JSON.stringify(result.data)}`
+          );
+        }
+
+        const createdEntry = result.data.createTimetableEntry;
+        console.log('Successfully created entry:', createdEntry);
 
         // Reload entries to update the UI
         if (selectedGradeId && termId) {
@@ -451,17 +612,36 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded"
-                        style={{ backgroundColor: subject.color }}
-                      />
-                      {subject.name}
-                    </div>
-                  </SelectItem>
-                ))}
+                {(() => {
+                  // Get the grade info for this lesson
+                  const gradeInfo = getGradeById(lesson.gradeId);
+                  if (!gradeInfo) {
+                    return (
+                      <SelectItem value="none" disabled>
+                        No grade information available
+                      </SelectItem>
+                    );
+                  }
+
+                  // Get subjects for this grade's level
+                  const levelSubjects = getSubjectsByLevelId(gradeInfo.levelId);
+
+                  return levelSubjects.map((subject) => {
+                    // Subject from school-config doesn't have color, so we use a fallback
+                    const subjectColor = 'color' in subject ? (subject as { color?: string }).color : undefined;
+                    return (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded"
+                            style={{ backgroundColor: subjectColor || '#3B82F6' }}
+                          />
+                          {subject.name}
+                        </div>
+                      </SelectItem>
+                    );
+                  });
+                })()}
               </SelectContent>
             </Select>
           </div>

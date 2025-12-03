@@ -399,51 +399,82 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadSubjects: async (gradeId?: string) => {
         try {
-          // Get school config store
-          const schoolConfigStore = useSchoolConfigStore.getState();
-          const config = schoolConfigStore.config;
+          // Load subjects from backend GraphQL API (tenantSubjects) to get correct backend IDs
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: `
+                query GetTenantSubjects {
+                  tenantSubjects {
+                    id
+                    subjectType
+                    isCompulsory
+                    isActive
+                    subject {
+                      id
+                      name
+                      code
+                      category
+                      department
+                      shortName
+                    }
+                    customSubject {
+                      id
+                      name
+                      code
+                      category
+                      department
+                      shortName
+                    }
+                  }
+                }
+              `,
+            }),
+          });
 
-          if (!config) {
-            // If config is not loaded, try to fetch it first
-            console.warn('School config not loaded, subjects will be empty');
-            set((state) => ({
-              subjects: [],
-              lastUpdated: new Date().toISOString(),
-            }));
-            return;
+          if (!response.ok) {
+            throw new Error(`Failed to fetch subjects: ${response.statusText}`);
           }
 
-          let subjectsToLoad: any[] = [];
+          const result = await response.json();
 
-          if (gradeId) {
-            // Find the level that contains this grade
-            const gradeInfo = schoolConfigStore.getGradeById(gradeId);
-            if (gradeInfo) {
-              // Get subjects from the level that contains this grade
-              subjectsToLoad = schoolConfigStore.getSubjectsByLevelId(gradeInfo.levelId);
-            } else {
-              console.warn(`Grade ${gradeId} not found in school config`);
-            }
-          } else {
-            // Load all subjects from all levels
-            subjectsToLoad = schoolConfigStore.getAllSubjects();
+          if (result.errors) {
+            console.error('GraphQL errors loading subjects:', result.errors);
+            throw new Error(`GraphQL errors: ${result.errors.map((e: any) => e.message).join(', ')}`);
           }
 
-          // Convert to Subject format and remove duplicates by ID
-          const uniqueSubjects = new Map<string, any>();
-          subjectsToLoad.forEach((subject) => {
-            if (!uniqueSubjects.has(subject.id)) {
-              uniqueSubjects.set(subject.id, {
-                id: subject.id,
-                name: subject.name,
-                code: subject.code || subject.shortName,
-                color: undefined, // Can be set later if needed
-                department: subject.department || subject.category,
+          // Extract subjects from tenantSubjects - use subject.id or customSubject.id
+          const tenantSubjects = result.data?.tenantSubjects || [];
+          const subjectsMap = new Map<string, any>();
+
+          tenantSubjects.forEach((tenantSubject: any) => {
+            // Use the actual subject (either subject or customSubject)
+            const actualSubject = tenantSubject.subject || tenantSubject.customSubject;
+            if (actualSubject && actualSubject.id) {
+              // Use actualSubject.id (the subject's actual ID, not tenantSubject.id)
+              // The backend timetable entry expects the subject ID, not the tenantSubject assignment ID
+              const subjectId = actualSubject.id;
+              const subjectName = actualSubject.name;
+              
+              // Use subjectId as key to avoid duplicates
+              if (!subjectsMap.has(subjectId)) {
+                subjectsMap.set(subjectId, {
+                  id: subjectId,
+                  name: subjectName,
+                  code: actualSubject.code || actualSubject.shortName || '',
+                  color: undefined,
+                  department: actualSubject.department || actualSubject.category || '',
               });
+              }
             }
           });
 
-          const fetchedSubjects = Array.from(uniqueSubjects.values());
+          const fetchedSubjects = Array.from(subjectsMap.values());
+          console.log('Loaded subjects from backend:', fetchedSubjects.length, 'subjects');
 
           set((state) => ({
             subjects: fetchedSubjects,
@@ -451,7 +482,30 @@ export const useTimetableStore = create<TimetableStore>()(
           }));
         } catch (error) {
           console.error('Error loading subjects:', error);
-          throw error;
+          // Fallback to school config if backend fails
+          try {
+            const schoolConfigStore = useSchoolConfigStore.getState();
+            const config = schoolConfigStore.config;
+            if (config) {
+              const allSubjects = schoolConfigStore.getAllSubjects();
+              const fallbackSubjects = allSubjects.map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                code: s.code || s.shortName,
+                color: undefined,
+                department: s.department || s.category,
+              }));
+              console.warn('Using fallback subjects from school config:', fallbackSubjects.length);
+              set((state) => ({
+                subjects: fallbackSubjects,
+                lastUpdated: new Date().toISOString(),
+              }));
+            } else {
+              throw error; // Re-throw if no fallback available
+            }
+          } catch (fallbackError) {
+            throw error; // Re-throw original error
+          }
         }
       },
 

@@ -20,11 +20,27 @@ export async function POST(request: Request) {
     const token = cookieStore.get('accessToken')?.value;
     const tenantId = cookieStore.get('tenantId')?.value;
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('GraphQL API Route - Failed to parse request body:', parseError);
+      return NextResponse.json(
+        {
+          errors: [{
+            message: 'Invalid request body. Expected JSON.',
+            extensions: { code: 'INVALID_REQUEST' }
+          }]
+        },
+        { status: 400 }
+      );
+    }
+
     console.log('GraphQL API Route - Request body:', {
       query: body.query?.substring(0, 100) + '...',
       operationName: body.operationName,
-      hasTenantId: !!tenantId
+      hasTenantId: !!tenantId,
+      hasToken: !!token
     });
 
     // Add tenantId to variables if it exists and isn't already provided
@@ -38,17 +54,92 @@ export async function POST(request: Request) {
       console.log('Request includes fee structures query');
     }
 
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
-      body: JSON.stringify(body),
-    });
+    let response;
+    try {
+      response = await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (fetchError) {
+      console.error('GraphQL API Route - Fetch error:', {
+        error: fetchError,
+        message: fetchError instanceof Error ? fetchError.message : 'Unknown error',
+        stack: fetchError instanceof Error ? fetchError.stack : undefined,
+        endpoint: GRAPHQL_ENDPOINT
+      });
+      return NextResponse.json(
+        {
+          errors: [{
+            message: `Failed to connect to GraphQL endpoint: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`,
+            extensions: { 
+              code: 'NETWORK_ERROR',
+              endpoint: GRAPHQL_ENDPOINT
+            }
+          }]
+        },
+        { status: 503 }
+      );
+    }
 
-    const data = await response.json();
     console.log('GraphQL API Route - External API response status:', response.status);
+    console.log('GraphQL API Route - Response headers:', Object.fromEntries(response.headers.entries()));
+
+    let data;
+    try {
+      const responseText = await response.text();
+      console.log('GraphQL API Route - Raw response text (first 500 chars):', responseText.substring(0, 500));
+      
+      if (!responseText) {
+        console.error('GraphQL API Route - Empty response from external API');
+        return NextResponse.json(
+          {
+            errors: [{
+              message: 'Empty response from GraphQL endpoint',
+              extensions: { code: 'EMPTY_RESPONSE' }
+            }]
+          },
+          { status: 502 }
+        );
+      }
+
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('GraphQL API Route - Failed to parse JSON response:', {
+          error: jsonError,
+          responseText: responseText.substring(0, 1000),
+          contentType: response.headers.get('content-type')
+        });
+        return NextResponse.json(
+          {
+            errors: [{
+              message: 'Invalid JSON response from GraphQL endpoint',
+              extensions: { 
+                code: 'INVALID_JSON_RESPONSE',
+                responsePreview: responseText.substring(0, 200)
+              }
+            }]
+          },
+          { status: 502 }
+        );
+      }
+    } catch (readError) {
+      console.error('GraphQL API Route - Failed to read response:', readError);
+      return NextResponse.json(
+        {
+          errors: [{
+            message: `Failed to read response: ${readError instanceof Error ? readError.message : 'Unknown error'}`,
+            extensions: { code: 'RESPONSE_READ_ERROR' }
+          }]
+        },
+        { status: 502 }
+      );
+    }
+
     console.log('GraphQL API Route - Response data:', data);
 
     // Handle both standard GraphQL errors format and top-level error format
@@ -113,12 +204,21 @@ export async function POST(request: Request) {
     console.log('GraphQL API Route - Success response');
     return NextResponse.json(data);
   } catch (error) {
-    console.error('GraphQL API Route - Proxy error:', error);
+    console.error('GraphQL API Route - Unexpected proxy error:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : typeof error,
+      endpoint: GRAPHQL_ENDPOINT
+    });
     return NextResponse.json(
       {
         errors: [{
-          message: 'Failed to proxy GraphQL request',
-          extensions: { code: 'INTERNAL_SERVER_ERROR' }
+          message: `Failed to proxy GraphQL request: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          extensions: { 
+            code: 'INTERNAL_SERVER_ERROR',
+            originalError: error instanceof Error ? error.message : String(error)
+          }
         }]
       },
       { status: 500 }
