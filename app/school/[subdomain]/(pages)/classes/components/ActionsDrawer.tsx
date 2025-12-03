@@ -76,7 +76,7 @@ export function ActionsDrawer({
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={isOpen} onOpenChange={setIsOpen} direction="right">
       <DrawerTrigger asChild>
         <Button
           variant="outline"

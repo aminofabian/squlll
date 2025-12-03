@@ -4,6 +4,14 @@ import React, { useState, useMemo } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { ClassCard } from '../components/ClassCard'
@@ -54,6 +62,7 @@ function ClassesPage() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   const [activeTab, setActiveTab] = useState<'classes' | 'subjects'>('classes')
+  const [showSubjectsDrawer, setShowSubjectsDrawer] = useState(false)
   const [showAddStreamModal, setShowAddStreamModal] = useState(false)
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false)
   const [assignTeacherData, setAssignTeacherData] = useState<{
@@ -202,6 +211,32 @@ function ClassesPage() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          {/* Tabs Navigation - Moved to Top */}
+          <Tabs value={activeTab} onValueChange={(value) => {
+            const newTab = value as 'classes' | 'subjects'
+            setActiveTab(newTab)
+            if (newTab === 'subjects') {
+              setShowSubjectsDrawer(true)
+            }
+          }} className="mb-8">
+            <TabsList className="grid w-full max-w-md grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 border-2 border-primary/20">
+              <TabsTrigger 
+                value="classes"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+              >
+                <GraduationCap className="h-4 w-4" />
+                <span className="font-medium">Classes & Grades</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="subjects"
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span className="font-medium">Subjects</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -231,7 +266,10 @@ function ClassesPage() {
                   onCreateClass={() => {
                     console.log('Class created successfully');
                   }}
-                  onViewSubjects={() => setActiveTab('subjects')}
+                  onViewSubjects={() => {
+                    setActiveTab('subjects')
+                    setShowSubjectsDrawer(true)
+                  }}
                   selectedGrade={selectedGrade?.grade || null}
                   selectedStreamId={selectedStreamId || undefined}
                   selectedStreamName={selectedGrade?.streamName || undefined}
@@ -261,27 +299,9 @@ function ClassesPage() {
             </div>
           )}
 
-          {/* Tabs Navigation */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'classes' | 'subjects')} className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 border-2 border-primary/20">
-              <TabsTrigger 
-                value="classes"
-                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
-              >
-                <GraduationCap className="h-4 w-4" />
-                <span className="font-medium">Classes & Grades</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="subjects"
-                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
-              >
-                <BookOpen className="h-4 w-4" />
-                <span className="font-medium">Subjects</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Classes Tab Content */}
-            <TabsContent value="classes" className="space-y-6 mt-6">
+          {/* Classes Content */}
+          {activeTab === 'classes' && (
+            <div className="space-y-6">
               {/* Active Filters */}
               {!isLoading && config && (selectedGrade || searchTerm) && (
                 <div className="p-4 border border-primary/20 bg-white dark:bg-slate-800 rounded-lg">
@@ -360,13 +380,35 @@ function ClassesPage() {
                   />
                 ) : null}
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            {/* Subjects Tab Content */}
-            <TabsContent value="subjects" className="mt-6">
-              <SubjectsView selectedGradeId={selectedGradeId || null} />
-            </TabsContent>
-          </Tabs>
+          {/* Subjects Drawer */}
+          <Drawer 
+            open={showSubjectsDrawer} 
+            onOpenChange={(open) => {
+              setShowSubjectsDrawer(open)
+              if (!open) {
+                // Reset to classes tab when drawer closes
+                setActiveTab('classes')
+              }
+            }} 
+            direction="right"
+          >
+            <DrawerContent className="max-w-4xl">
+              <DrawerHeader className="border-b border-primary/20">
+                <DrawerTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  Subjects
+                </DrawerTitle>
+                <DrawerDescription className="text-slate-600 dark:text-slate-400">
+                  Manage and view all subjects{selectedGradeId ? ' for selected grade' : ''}
+                </DrawerDescription>
+              </DrawerHeader>
+              <div className="overflow-y-auto p-6">
+                <SubjectsView selectedGradeId={selectedGradeId || null} />
+              </div>
+            </DrawerContent>
+          </Drawer>
 
           {/* Modals */}
           {showAddStreamModal && selectedGrade?.grade && (

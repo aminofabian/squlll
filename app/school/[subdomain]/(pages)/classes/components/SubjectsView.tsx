@@ -24,11 +24,90 @@ interface SubjectsViewProps {
 }
 
 export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
-  const { config } = useSchoolConfigStore()
+  const { config, getAllGradeLevels } = useSchoolConfigStore()
   const { data: tenantSubjects = [], isLoading } = useTenantSubjects()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'elective' | 'active' | 'inactive'>('all')
   const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(null)
+  const [filterByGradeId, setFilterByGradeId] = useState<string | null>(selectedGradeId || null)
+  
+  // Get all grades sorted and abbreviated
+  const allGradesSorted = useMemo(() => {
+    const gradeLevels = getAllGradeLevels()
+    
+    // Helper to abbreviate grade names
+    const abbreviateGrade = (gradeName: string): string => {
+      const lower = gradeName.toLowerCase()
+      
+      // Pre-Primary
+      if (lower.includes('baby') || lower.includes('playgroup') || lower === 'pg') return 'PG'
+      if (lower.includes('pp1') || lower.includes('pre-primary 1')) return 'PP1'
+      if (lower.includes('pp2') || lower.includes('pre-primary 2')) return 'PP2'
+      
+      // Grade format: "Grade 1" -> "G1", "Grade 7" -> "G7"
+      const gradeMatch = gradeName.match(/grade\s*(\d+)/i)
+      if (gradeMatch) {
+        return `G${gradeMatch[1]}`
+      }
+      
+      // Form format: "Form 1" -> "F1", "Form 2" -> "F2"
+      const formMatch = gradeName.match(/form\s*(\d+)/i)
+      if (formMatch) {
+        return `F${formMatch[1]}`
+      }
+      
+      // If already short (like PP1, PP2), return as is
+      if (gradeName.length <= 4) return gradeName.toUpperCase()
+      
+      // Default: return first 3-4 characters
+      return gradeName.substring(0, 4).toUpperCase()
+    }
+
+    // Helper to get grade priority for sorting
+    const getGradePriority = (gradeName: string): number => {
+      const lower = gradeName.toLowerCase()
+      
+      // Pre-Primary
+      if (lower.includes('baby') || lower.includes('pg') || lower.includes('playgroup')) return 1
+      if (lower.includes('pp1') || lower.includes('pre-primary 1')) return 2
+      if (lower.includes('pp2') || lower.includes('pre-primary 2')) return 3
+      
+      // Primary
+      const gradeMatch = gradeName.match(/grade\s*(\d+)/i)
+      if (gradeMatch) {
+        const num = parseInt(gradeMatch[1])
+        if (num >= 1 && num <= 6) return 10 + num
+      }
+      
+      // Secondary (Grade 7+ or Forms)
+      if (gradeMatch) {
+        const num = parseInt(gradeMatch[1])
+        if (num >= 7) return 20 + num
+      }
+      
+      const formMatch = gradeName.match(/form\s*(\d+)/i)
+      if (formMatch) {
+        const num = parseInt(formMatch[1])
+        return 20 + num + 6 // Form 1 = Grade 7, etc.
+      }
+      
+      return 999
+    }
+
+    // Flatten and sort all grades
+    const allGrades = gradeLevels.flatMap(level => 
+      level.grades.map(grade => ({
+        id: grade.id,
+        name: grade.name,
+        abbreviated: abbreviateGrade(grade.name),
+        levelName: level.levelName,
+        levelId: level.levelId,
+        priority: getGradePriority(grade.name)
+      }))
+    ).sort((a, b) => a.priority - b.priority)
+
+    return allGrades
+  }, [getAllGradeLevels])
 
   // Transform and filter subjects
   const filteredSubjects = useMemo(() => {
@@ -41,11 +120,12 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
       shortName: ts.subject?.shortName || ts.customSubject?.shortName || '',
     }))
 
-    // Filter by grade if selected
-    if (selectedGradeId && config?.selectedLevels) {
+    // Filter by grade if selected (use filterByGradeId which can be set from tabs)
+    const gradeIdToFilter = filterByGradeId || selectedGradeId
+    if (gradeIdToFilter && config?.selectedLevels) {
       // Find the level that contains the selected grade
       const levelWithGrade = config.selectedLevels.find(level =>
-        level.gradeLevels?.some(grade => grade.id === selectedGradeId)
+        level.gradeLevels?.some(grade => grade.id === gradeIdToFilter)
       )
 
       if (levelWithGrade) {
@@ -99,7 +179,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
       if (a.subjectType !== 'core' && b.subjectType === 'core') return 1
       return a.name.localeCompare(b.name)
     })
-  }, [tenantSubjects, selectedGradeId, config, searchTerm, selectedFilter])
+  }, [tenantSubjects, filterByGradeId, selectedGradeId, config, searchTerm, selectedFilter])
 
   // Calculate stats from filtered subjects
   const stats = useMemo(() => {
@@ -138,19 +218,148 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
   }
 
   // Get grade name if grade is selected
+  const activeGradeId = filterByGradeId || selectedGradeId
   const selectedGradeName = useMemo(() => {
-    if (!selectedGradeId || !config?.selectedLevels) return null
+    if (!activeGradeId || !config?.selectedLevels) return null
     for (const level of config.selectedLevels) {
-      const grade = level.gradeLevels?.find(g => g.id === selectedGradeId)
+      const grade = level.gradeLevels?.find(g => g.id === activeGradeId)
       if (grade) return grade.name
     }
     return null
-  }, [selectedGradeId, config])
+  }, [activeGradeId, config])
 
   return (
     <div className="space-y-6">
+      {/* Compact Filters Container */}
+      <Card className="border-2 border-primary/20">
+        <CardContent className="p-3">
+          <div className="space-y-3">
+            {/* Search Bar - Top */}
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search subjects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 h-9 rounded-none border border-primary/20 text-sm"
+              />
+            </div>
+
+            {/* All Filters in Compact Layout */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* All Grades Button */}
+              <Button
+                variant={filterByGradeId === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterByGradeId(null)}
+                className="flex items-center gap-1.5 px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+              >
+                <BookOpen className="h-3 w-3" />
+                All
+              </Button>
+
+              {/* Grade Buttons - Compact */}
+              {allGradesSorted.map((grade) => (
+                <Button
+                  key={grade.id}
+                  variant={filterByGradeId === grade.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterByGradeId(grade.id)}
+                  className="px-2 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium min-w-[40px]"
+                  title={grade.name}
+                >
+                  {grade.abbreviated}
+                </Button>
+              ))}
+
+              {/* Divider */}
+              <div className="h-5 w-px bg-primary/20 mx-0.5" />
+
+              {/* Type Filter Buttons */}
+              <Button
+                variant={selectedFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('all')}
+                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+              >
+                All
+              </Button>
+              <Button
+                variant={selectedFilter === 'core' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('core')}
+                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+              >
+                Core
+              </Button>
+              <Button
+                variant={selectedFilter === 'elective' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('elective')}
+                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+              >
+                Elective
+              </Button>
+              <Button
+                variant={selectedFilter === 'active' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('active')}
+                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+              >
+                Active
+              </Button>
+              <Button
+                variant={selectedFilter === 'inactive' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedFilter('inactive')}
+                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+              >
+                Inactive
+              </Button>
+            </div>
+
+            {/* Active Filters - Compact */}
+            {(searchTerm || selectedFilter !== 'all' || filterByGradeId) && (
+              <div className="flex flex-wrap gap-1.5 items-center pt-1.5 border-t border-primary/10">
+                <span className="text-xs font-semibold text-primary">Active:</span>
+                {searchTerm && (
+                  <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary px-2 py-0.5 rounded-none text-xs h-5">
+                    <span>"{searchTerm}"</span>
+                    <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
+                  </Badge>
+                )}
+                {selectedFilter !== 'all' && (
+                  <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary px-2 py-0.5 rounded-none text-xs h-5">
+                    <span>{selectedFilter}</span>
+                    <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSelectedFilter('all')} />
+                  </Badge>
+                )}
+                {filterByGradeId && (
+                  <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary px-2 py-0.5 rounded-none text-xs h-5">
+                    <span>{allGradesSorted.find(g => g.id === filterByGradeId)?.abbreviated}</span>
+                    <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setFilterByGradeId(null)} />
+                  </Badge>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedFilter('all')
+                    setFilterByGradeId(null)
+                  }}
+                  className="text-xs h-5 px-2 py-0 hover:text-red-600 hover:border-red-500/20 rounded-none border border-primary/20"
+                >
+                  Clear
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Grade Filter Indicator */}
-      {selectedGradeId && selectedGradeName && (
+      {activeGradeId && selectedGradeName && (
         <Card className="border-2 border-primary/20 bg-primary/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -241,97 +450,6 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <Card className="border-2 border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search subjects by name, code, category, or department..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-primary/20"
-              />
-            </div>
-
-            {/* Filter Buttons */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('all')}
-                className="border-primary/20"
-              >
-                All
-              </Button>
-              <Button
-                variant={selectedFilter === 'core' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('core')}
-                className="border-primary/20"
-              >
-                Core
-              </Button>
-              <Button
-                variant={selectedFilter === 'elective' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('elective')}
-                className="border-primary/20"
-              >
-                Elective
-              </Button>
-              <Button
-                variant={selectedFilter === 'active' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('active')}
-                className="border-primary/20"
-              >
-                Active
-              </Button>
-              <Button
-                variant={selectedFilter === 'inactive' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('inactive')}
-                className="border-primary/20"
-              >
-                Inactive
-              </Button>
-            </div>
-          </div>
-
-          {/* Active Filters */}
-          {(searchTerm || selectedFilter !== 'all') && (
-            <div className="mt-4 flex flex-wrap gap-2 items-center">
-              <span className="text-sm font-semibold text-primary">Active Filters:</span>
-              {searchTerm && (
-                <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary px-3 py-1.5">
-                  <span>Search: "{searchTerm}"</span>
-                  <X className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
-                </Badge>
-              )}
-              {selectedFilter !== 'all' && (
-                <Badge variant="outline" className="flex gap-2 items-center border-primary/20 bg-primary/5 text-primary px-3 py-1.5">
-                  <span>Type: {selectedFilter}</span>
-                  <X className="h-4 w-4 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSelectedFilter('all')} />
-                </Badge>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchTerm('')
-                  setSelectedFilter('all')
-                }}
-                className="text-slate-600 dark:text-slate-400 hover:text-red-600 hover:border-red-500/20"
-              >
-                Clear All
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Subjects Grid */}
       {filteredSubjects.length === 0 ? (
@@ -436,9 +554,27 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
       {/* Edit Subject Dialog */}
       {editingSubject && (
         <EditSubjectDialog
-          subject={editingSubject}
-          open={!!editingSubject}
-          onOpenChange={(open) => !open && setEditingSubject(null)}
+          subject={{
+            id: editingSubject.id,
+            name: editingSubject.subject?.name || editingSubject.customSubject?.name || 'Unknown Subject',
+            code: editingSubject.subject?.code || editingSubject.customSubject?.code || '',
+            subjectType: editingSubject.subjectType,
+            category: editingSubject.subject?.category || editingSubject.customSubject?.category || null,
+            department: editingSubject.subject?.department || editingSubject.customSubject?.department || null,
+            shortName: editingSubject.subject?.shortName || editingSubject.customSubject?.shortName || null,
+            isCompulsory: editingSubject.isCompulsory,
+            totalMarks: editingSubject.totalMarks,
+            passingMarks: editingSubject.passingMarks,
+            creditHours: editingSubject.creditHours,
+            curriculum: editingSubject.curriculum.name
+          }}
+          isOpen={!!editingSubject}
+          onClose={() => setEditingSubject(null)}
+          onSave={(updatedSubject) => {
+            console.log('Subject updated:', updatedSubject)
+            setEditingSubject(null)
+          }}
+          tenantSubjectId={editingSubject.id}
         />
       )}
     </div>
