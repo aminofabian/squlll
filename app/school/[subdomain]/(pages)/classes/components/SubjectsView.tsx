@@ -516,28 +516,19 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
             <table className="w-full table-fixed border-collapse">
               <thead className="bg-primary/5 border-b-2 border-primary/20">
                 <tr>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[20%]">
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[25%]">
                     Subject Name
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[8%]">
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[10%]">
                     Code
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[8%]">
-                    Type
-                  </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[15%]">
-                    Category
-                  </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[15%]">
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[20%]">
                     Department
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[12%]">
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[15%]">
                     Status
                   </th>
-                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[7%]">
-                    Marks
-                  </th>
-                  <th className="px-1 py-1.5 text-center text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[5%]">
+                  <th className="px-1 py-1.5 text-center text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[10%]">
                     Actions
                   </th>
                 </tr>
@@ -557,22 +548,6 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                     <td className="px-1 py-1.5 break-words">
                       <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">
                         {subject.code || '-'}
-                      </span>
-                    </td>
-                    <td className="px-1 py-1.5">
-                      <Badge
-                        variant={subject.subjectType === 'core' ? 'default' : 'outline'}
-                        className={`text-[10px] px-1.5 py-0.5 ${subject.subjectType === 'core' 
-                          ? 'bg-primary text-white border-primary' 
-                          : 'border-primary/20 text-primary bg-primary/5'
-                        }`}
-                      >
-                        {subject.subjectType === 'core' ? 'Core' : 'Elective'}
-                      </Badge>
-                    </td>
-                    <td className="px-1 py-1.5 break-words">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 break-words">
-                        {subject.category || '-'}
                       </span>
                     </td>
                     <td className="px-1 py-1.5 break-words">
@@ -597,11 +572,6 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                           </Badge>
                         )}
                       </div>
-                    </td>
-                    <td className="px-1 py-1.5">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400">
-                        {subject.totalMarks ? `${subject.totalMarks}` : '-'}
-                      </span>
                     </td>
                     <td className="px-1 py-1.5 text-center">
                       <div className="flex items-center justify-center gap-1">

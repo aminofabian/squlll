@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Subject } from '@/lib/types/school-config'
 import { BookOpen, Clock, Code, FileText, GraduationCap, School, Star, Trophy, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface EditSubjectDialogProps {
   subject: Subject
@@ -27,6 +28,7 @@ interface EditSubjectDialogProps {
 export function EditSubjectDialog({ subject, isOpen, onClose, onSave, tenantSubjectId }: EditSubjectDialogProps) {
   const [editedSubject, setEditedSubject] = useState<Subject>({ ...subject })
   const [isLoading, setIsLoading] = useState(false)
+  const queryClient = useQueryClient()
 
   const handleSave = async () => {
     // If we have a tenantSubjectId, use the GraphQL mutation
@@ -48,43 +50,110 @@ export function EditSubjectDialog({ subject, isOpen, onClose, onSave, tenantSubj
     setIsLoading(true)
     
     try {
-      const response = await fetch('/api/school/update-custom-subject', {
+      // Build the input object with only the fields that are being updated
+      const input: any = {}
+      
+      if (editedSubject.name) {
+        input.name = editedSubject.name
+      }
+      if (editedSubject.totalMarks !== null && editedSubject.totalMarks !== undefined) {
+        input.totalMarks = editedSubject.totalMarks
+      }
+      if (editedSubject.isCompulsory !== null && editedSubject.isCompulsory !== undefined) {
+        input.isCompulsory = editedSubject.isCompulsory
+      }
+      if (editedSubject.passingMarks !== null && editedSubject.passingMarks !== undefined) {
+        input.passingMarks = editedSubject.passingMarks
+      }
+      if (editedSubject.creditHours !== null && editedSubject.creditHours !== undefined) {
+        input.creditHours = editedSubject.creditHours
+      }
+      if (editedSubject.code) {
+        input.code = editedSubject.code
+      }
+      if (editedSubject.category) {
+        input.category = editedSubject.category
+      }
+      if (editedSubject.department) {
+        input.department = editedSubject.department
+      }
+      if (editedSubject.shortName) {
+        input.shortName = editedSubject.shortName
+      }
+      if (editedSubject.subjectType) {
+        input.subjectType = editedSubject.subjectType
+      }
+
+      const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          tenantSubjectId,
-          input: {
-            name: editedSubject.name,
-            totalMarks: editedSubject.totalMarks,
-            isCompulsory: editedSubject.isCompulsory
+          query: `
+            mutation UpdateCustomSubject($tenantSubjectId: String!, $input: UpdateTenantSubjectInput!) {
+              updateCustomSubject(tenantSubjectId: $tenantSubjectId, input: $input) {
+                id
+                customSubject {
+                  id
+                  name
+                  code
+                  category
+                  department
+                  shortName
+                }
+                isCompulsory
+                totalMarks
+                passingMarks
+                creditHours
+                subjectType
+              }
+            }
+          `,
+          variables: {
+            tenantSubjectId,
+            input
           }
         })
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to update subject')
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      if (result.success) {
+      const result = await response.json()
+
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to update subject')
+      }
+
+      if (result.data?.updateCustomSubject) {
         toast.success('Subject updated successfully!')
         
         // Update the subject with the returned data
+        const updatedData = result.data.updateCustomSubject
         const updatedSubject = {
           ...editedSubject,
-          id: result.data.id,
-          name: result.data.customSubject.name,
-          totalMarks: result.data.totalMarks,
-          isCompulsory: result.data.isCompulsory
+          id: updatedData.id,
+          name: updatedData.customSubject?.name || editedSubject.name,
+          code: updatedData.customSubject?.code || editedSubject.code,
+          category: updatedData.customSubject?.category || editedSubject.category,
+          department: updatedData.customSubject?.department || editedSubject.department,
+          shortName: updatedData.customSubject?.shortName || editedSubject.shortName,
+          totalMarks: updatedData.totalMarks,
+          passingMarks: updatedData.passingMarks,
+          creditHours: updatedData.creditHours,
+          isCompulsory: updatedData.isCompulsory,
+          subjectType: updatedData.subjectType || editedSubject.subjectType
         }
+        
+        // Invalidate and refetch subjects
+        queryClient.invalidateQueries({ queryKey: ['tenantSubjects'] })
         
         onSave(updatedSubject)
         onClose()
       } else {
-        throw new Error('Update failed')
+        throw new Error('Update failed - no data returned')
       }
     } catch (error) {
       console.error('Error updating custom subject:', error)
