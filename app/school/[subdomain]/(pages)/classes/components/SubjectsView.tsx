@@ -17,8 +17,14 @@ import {
 } from 'lucide-react'
 import { useTenantSubjects, TenantSubject } from '@/lib/hooks/useTenantSubjects'
 import { EditSubjectDialog } from '../../components/EditSubjectDialog'
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 
-export function SubjectsView() {
+interface SubjectsViewProps {
+  selectedGradeId?: string | null
+}
+
+export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
+  const { config } = useSchoolConfigStore()
   const { data: tenantSubjects = [], isLoading } = useTenantSubjects()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'elective' | 'active' | 'inactive'>('all')
@@ -34,6 +40,36 @@ export function SubjectsView() {
       department: ts.subject?.department || ts.customSubject?.department || '',
       shortName: ts.subject?.shortName || ts.customSubject?.shortName || '',
     }))
+
+    // Filter by grade if selected
+    if (selectedGradeId && config?.selectedLevels) {
+      // Find the level that contains the selected grade
+      const levelWithGrade = config.selectedLevels.find(level =>
+        level.gradeLevels?.some(grade => grade.id === selectedGradeId)
+      )
+
+      if (levelWithGrade) {
+        // Match tenant subjects with level subjects by name or code
+        const levelSubjectNames = new Set(
+          levelWithGrade.subjects.map(s => s.name.toLowerCase().trim())
+        )
+        const levelSubjectCodes = new Set(
+          levelWithGrade.subjects.map(s => s.code?.toLowerCase().trim()).filter(Boolean)
+        )
+
+        subjects = subjects.filter(subject => {
+          const subjectName = subject.name.toLowerCase().trim()
+          const subjectCode = subject.code?.toLowerCase().trim()
+          
+          // Match by name or code
+          return levelSubjectNames.has(subjectName) || 
+                 (subjectCode && levelSubjectCodes.has(subjectCode))
+        })
+      } else {
+        // If grade not found, show no subjects
+        subjects = []
+      }
+    }
 
     // Filter by search term
     if (searchTerm) {
@@ -63,17 +99,18 @@ export function SubjectsView() {
       if (a.subjectType !== 'core' && b.subjectType === 'core') return 1
       return a.name.localeCompare(b.name)
     })
-  }, [tenantSubjects, searchTerm, selectedFilter])
+  }, [tenantSubjects, selectedGradeId, config, searchTerm, selectedFilter])
 
+  // Calculate stats from filtered subjects
   const stats = useMemo(() => {
-    const total = tenantSubjects.length
-    const core = tenantSubjects.filter(s => s.subjectType === 'core').length
-    const elective = tenantSubjects.filter(s => s.subjectType === 'elective').length
-    const active = tenantSubjects.filter(s => s.isActive).length
-    const inactive = tenantSubjects.filter(s => !s.isActive).length
+    const total = filteredSubjects.length
+    const core = filteredSubjects.filter(s => s.subjectType === 'core').length
+    const elective = filteredSubjects.filter(s => s.subjectType === 'elective').length
+    const active = filteredSubjects.filter(s => s.isActive).length
+    const inactive = filteredSubjects.filter(s => !s.isActive).length
 
     return { total, core, elective, active, inactive }
-  }, [tenantSubjects])
+  }, [filteredSubjects])
 
   if (isLoading) {
     return (
@@ -100,8 +137,37 @@ export function SubjectsView() {
     )
   }
 
+  // Get grade name if grade is selected
+  const selectedGradeName = useMemo(() => {
+    if (!selectedGradeId || !config?.selectedLevels) return null
+    for (const level of config.selectedLevels) {
+      const grade = level.gradeLevels?.find(g => g.id === selectedGradeId)
+      if (grade) return grade.name
+    }
+    return null
+  }, [selectedGradeId, config])
+
   return (
     <div className="space-y-6">
+      {/* Grade Filter Indicator */}
+      {selectedGradeId && selectedGradeName && (
+        <Card className="border-2 border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Showing subjects for {selectedGradeName}
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Only subjects assigned to this grade are displayed
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="border-2 border-primary/20 bg-primary/5">

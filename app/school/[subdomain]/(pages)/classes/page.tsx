@@ -14,6 +14,9 @@ import CreateClassDrawer from '@/app/school/components/CreateClassDrawer'
 import { ClassesStats } from './components/ClassesStats'
 import { SubjectsView } from './components/SubjectsView'
 import { GradeDetailsView } from './components/GradeDetailsView'
+import { ActionsBar } from './components/ActionsBar'
+import { AddStreamModal } from '../components/AddStreamModal'
+import { AssignTeacherModal } from '../components/AssignTeacherModal'
 
 function EmptyState({ selectedGrade, searchTerm }: {
   selectedGrade?: { name: string; levelName: string; streamName?: string } | null,
@@ -51,6 +54,14 @@ function ClassesPage() {
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   const [activeTab, setActiveTab] = useState<'classes' | 'subjects'>('classes')
+  const [showAddStreamModal, setShowAddStreamModal] = useState(false)
+  const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false)
+  const [assignTeacherData, setAssignTeacherData] = useState<{
+    streamId?: string
+    streamName?: string
+    gradeLevelId?: string
+    gradeName?: string
+  }>({})
 
   // Filter levels based on selections and search
   const filteredLevels = useMemo(() => {
@@ -216,31 +227,39 @@ function ClassesPage() {
                   </Button>
                 )}
                 
-                {activeTab === 'classes' && (
-                  <CreateClassDrawer onClassCreated={() => {
+                <ActionsBar
+                  onCreateClass={() => {
                     console.log('Class created successfully');
-                  }} />
-                )}
-                
-                {activeTab === 'classes' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActiveTab('subjects')}
-                    className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">View Subjects</span>
-                  </Button>
-                )}
+                  }}
+                  onViewSubjects={() => setActiveTab('subjects')}
+                  selectedGrade={selectedGrade?.grade || null}
+                  selectedStreamId={selectedStreamId || undefined}
+                  selectedStreamName={selectedGrade?.streamName || undefined}
+                  onAddStream={(gradeId) => {
+                    const grade = selectedGrade?.grade;
+                    if (grade) {
+                      setShowAddStreamModal(true);
+                    }
+                  }}
+                  onAssignTeacher={(gradeLevelId, gradeName) => {
+                    setAssignTeacherData({ gradeLevelId, gradeName });
+                    setShowAssignTeacherModal(true);
+                  }}
+                  onAssignStreamTeacher={(streamId, streamName) => {
+                    setAssignTeacherData({ streamId, streamName });
+                    setShowAssignTeacherModal(true);
+                  }}
+                />
               </div>
             </div>
           </div>
 
-          {/* Stats Section - Show on both tabs */}
-          <div className="mb-8">
-            <ClassesStats config={config} isLoading={isLoading} />
-          </div>
+          {/* Stats Section - Show overall stats when no grade selected, grade stats are in GradeDetailsView */}
+          {!selectedGradeId && (
+            <div className="mb-8">
+              <ClassesStats config={config} isLoading={isLoading} />
+            </div>
+          )}
 
           {/* Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'classes' | 'subjects')} className="space-y-6">
@@ -345,9 +364,38 @@ function ClassesPage() {
 
             {/* Subjects Tab Content */}
             <TabsContent value="subjects" className="mt-6">
-              <SubjectsView />
+              <SubjectsView selectedGradeId={selectedGradeId || null} />
             </TabsContent>
           </Tabs>
+
+          {/* Modals */}
+          {showAddStreamModal && selectedGrade?.grade && (
+            <AddStreamModal
+              isOpen={showAddStreamModal}
+              onClose={() => setShowAddStreamModal(false)}
+              onSuccess={() => {
+                setShowAddStreamModal(false);
+                // Refresh will happen automatically
+              }}
+              gradeId={selectedGrade.grade.id}
+              gradeName={selectedGrade.grade.name}
+            />
+          )}
+
+          {showAssignTeacherModal && (
+            <AssignTeacherModal
+              isOpen={showAssignTeacherModal}
+              onClose={() => setShowAssignTeacherModal(false)}
+              onSuccess={() => {
+                setShowAssignTeacherModal(false);
+                // Refresh will happen automatically
+              }}
+              streamId={assignTeacherData.streamId}
+              streamName={assignTeacherData.streamName}
+              gradeLevelId={assignTeacherData.gradeLevelId}
+              gradeName={assignTeacherData.gradeName}
+            />
+          )}
         </div>
       </div>
     </div>
