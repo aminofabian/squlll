@@ -13,11 +13,25 @@ import {
   X,
   BookMarked,
   FileText,
-  Layers
+  Layers,
+  Edit,
+  Trash2
 } from 'lucide-react'
 import { useTenantSubjects, TenantSubject } from '@/lib/hooks/useTenantSubjects'
 import { EditSubjectDialog } from '../../components/EditSubjectDialog'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 interface SubjectsViewProps {
   selectedGradeId?: string | null
@@ -26,10 +40,13 @@ interface SubjectsViewProps {
 export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
   const { config, getAllGradeLevels } = useSchoolConfigStore()
   const { data: tenantSubjects = [], isLoading } = useTenantSubjects()
+  const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'elective' | 'active' | 'inactive'>('all')
   const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(null)
   const [filterByGradeId, setFilterByGradeId] = useState<string | null>(selectedGradeId || null)
+  const [subjectToDelete, setSubjectToDelete] = useState<TenantSubject | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   // Get all grades sorted and abbreviated
   const allGradesSorted = useMemo(() => {
@@ -228,31 +245,78 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
     return null
   }, [activeGradeId, config])
 
+  // Handle delete subject
+  const handleDeleteSubject = async (subjectId: string) => {
+    setIsDeleting(true)
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation DeleteTenantSubject($tenantSubjectId: String!) {
+              deleteTenantSubject(tenantSubjectId: $tenantSubjectId)
+            }
+          `,
+          variables: {
+            tenantSubjectId: subjectId
+          }
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to delete subject')
+      }
+
+      if (result.data?.deleteTenantSubject) {
+        toast.success('Subject deleted successfully')
+        setSubjectToDelete(null)
+        // Invalidate and refetch subjects
+        queryClient.invalidateQueries({ queryKey: ['tenantSubjects'] })
+      } else {
+        throw new Error('Delete operation returned false')
+      }
+    } catch (error) {
+      console.error('Error deleting subject:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete subject')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Compact Filters Container */}
       <Card className="border-2 border-primary/20">
-        <CardContent className="p-3">
-          <div className="space-y-3">
+        <CardContent className="p-2">
+          <div className="space-y-2">
             {/* Search Bar - Top */}
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-slate-400" />
               <Input
                 placeholder="Search subjects..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-9 rounded-none border border-primary/20 text-sm"
+                className="pl-7 h-7 rounded-none border border-primary/20 text-xs"
               />
             </div>
 
             {/* All Filters in Compact Layout */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1">
               {/* All Grades Button */}
               <Button
                 variant={filterByGradeId === null ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilterByGradeId(null)}
-                className="flex items-center gap-1.5 px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+                className="flex items-center gap-1 px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
               >
                 <BookOpen className="h-3 w-3" />
                 All
@@ -265,7 +329,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                   variant={filterByGradeId === grade.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFilterByGradeId(grade.id)}
-                  className="px-2 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium min-w-[40px]"
+                  className="px-1.5 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium min-w-[35px]"
                   title={grade.name}
                 >
                   {grade.abbreviated}
@@ -273,14 +337,14 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
               ))}
 
               {/* Divider */}
-              <div className="h-5 w-px bg-primary/20 mx-0.5" />
+              <div className="h-4 w-px bg-primary/20 mx-0.5" />
 
               {/* Type Filter Buttons */}
               <Button
                 variant={selectedFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedFilter('all')}
-                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
               >
                 All
               </Button>
@@ -288,7 +352,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                 variant={selectedFilter === 'core' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedFilter('core')}
-                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
               >
                 Core
               </Button>
@@ -296,7 +360,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                 variant={selectedFilter === 'elective' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedFilter('elective')}
-                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
               >
                 Elective
               </Button>
@@ -304,7 +368,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                 variant={selectedFilter === 'active' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedFilter('active')}
-                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
               >
                 Active
               </Button>
@@ -312,7 +376,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                 variant={selectedFilter === 'inactive' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedFilter('inactive')}
-                className="px-2.5 py-1 h-7 rounded-none border border-primary/20 text-xs font-medium"
+                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
               >
                 Inactive
               </Button>
@@ -320,24 +384,24 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
 
             {/* Active Filters - Compact */}
             {(searchTerm || selectedFilter !== 'all' || filterByGradeId) && (
-              <div className="flex flex-wrap gap-1.5 items-center pt-1.5 border-t border-primary/10">
-                <span className="text-xs font-semibold text-primary">Active:</span>
+              <div className="flex flex-wrap gap-1 items-center pt-1 border-t border-primary/10">
+                <span className="text-[10px] font-semibold text-primary">Active:</span>
                 {searchTerm && (
-                  <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary px-2 py-0.5 rounded-none text-xs h-5">
+                  <Badge variant="outline" className="flex gap-0.5 items-center border-primary/20 bg-primary/5 text-primary px-1.5 py-0 rounded-none text-[10px] h-4">
                     <span>"{searchTerm}"</span>
-                    <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
+                    <X className="h-2.5 w-2.5 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
                   </Badge>
                 )}
                 {selectedFilter !== 'all' && (
-                  <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary px-2 py-0.5 rounded-none text-xs h-5">
+                  <Badge variant="outline" className="flex gap-0.5 items-center border-primary/20 bg-primary/5 text-primary px-1.5 py-0 rounded-none text-[10px] h-4">
                     <span>{selectedFilter}</span>
-                    <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSelectedFilter('all')} />
+                    <X className="h-2.5 w-2.5 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSelectedFilter('all')} />
                   </Badge>
                 )}
                 {filterByGradeId && (
-                  <Badge variant="outline" className="flex gap-1 items-center border-primary/20 bg-primary/5 text-primary px-2 py-0.5 rounded-none text-xs h-5">
+                  <Badge variant="outline" className="flex gap-0.5 items-center border-primary/20 bg-primary/5 text-primary px-1.5 py-0 rounded-none text-[10px] h-4">
                     <span>{allGradesSorted.find(g => g.id === filterByGradeId)?.abbreviated}</span>
-                    <X className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setFilterByGradeId(null)} />
+                    <X className="h-2.5 w-2.5 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setFilterByGradeId(null)} />
                   </Badge>
                 )}
                 <Button
@@ -348,7 +412,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                     setSelectedFilter('all')
                     setFilterByGradeId(null)
                   }}
-                  className="text-xs h-5 px-2 py-0 hover:text-red-600 hover:border-red-500/20 rounded-none border border-primary/20"
+                  className="text-[10px] h-4 px-1.5 py-0 hover:text-red-600 hover:border-red-500/20 rounded-none border border-primary/20"
                 >
                   Clear
                 </Button>
@@ -358,92 +422,74 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
         </CardContent>
       </Card>
 
-      {/* Grade Filter Indicator */}
-      {activeGradeId && selectedGradeName && (
-        <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Showing subjects for {selectedGradeName}
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Only subjects assigned to this grade are displayed
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
         <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 border-2 border-primary/20 rounded-lg p-2">
-                <BookOpen className="h-5 w-5 text-primary" />
+          <CardContent className="p-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary/10 border border-primary/20 rounded p-1">
+                <BookOpen className="h-3 w-3 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-mono text-primary uppercase tracking-wide">Total</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wide">Total</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 border-2 border-primary/20 rounded-lg p-2">
-                <BookMarked className="h-5 w-5 text-primary" />
+          <CardContent className="p-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary/10 border border-primary/20 rounded p-1">
+                <BookMarked className="h-3 w-3 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-mono text-primary uppercase tracking-wide">Core</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.core}</p>
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wide">Core</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.core}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 border-2 border-primary/20 rounded-lg p-2">
-                <FileText className="h-5 w-5 text-primary" />
+          <CardContent className="p-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-primary/10 border border-primary/20 rounded p-1">
+                <FileText className="h-3 w-3 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-mono text-primary uppercase tracking-wide">Elective</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.elective}</p>
+                <p className="text-[10px] font-mono text-primary uppercase tracking-wide">Elective</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.elective}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-green-500/20 bg-green-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-500/10 border-2 border-green-500/20 rounded-lg p-2">
-                <GraduationCap className="h-5 w-5 text-green-600" />
+          <CardContent className="p-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-green-500/10 border border-green-500/20 rounded p-1">
+                <GraduationCap className="h-3 w-3 text-green-600" />
               </div>
               <div>
-                <p className="text-xs font-mono text-green-600 uppercase tracking-wide">Active</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.active}</p>
+                <p className="text-[10px] font-mono text-green-600 uppercase tracking-wide">Active</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.active}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-red-500/20 bg-red-500/5">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-red-500/10 border-2 border-red-500/20 rounded-lg p-2">
-                <X className="h-5 w-5 text-red-600" />
+          <CardContent className="p-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-red-500/10 border border-red-500/20 rounded p-1">
+                <X className="h-3 w-3 text-red-600" />
               </div>
               <div>
-                <p className="text-xs font-mono text-red-600 uppercase tracking-wide">Inactive</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.inactive}</p>
+                <p className="text-[10px] font-mono text-red-600 uppercase tracking-wide">Inactive</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.inactive}</p>
               </div>
             </div>
           </CardContent>
@@ -451,7 +497,7 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
       </div>
 
 
-      {/* Subjects Grid */}
+      {/* Subjects Table */}
       {filteredSubjects.length === 0 ? (
         <Card className="border-2 border-primary/20 bg-primary/5">
           <CardContent className="p-12 text-center">
@@ -465,90 +511,132 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSubjects.map((subject) => (
-            <Card
-              key={subject.id}
-              className="border-2 border-primary/20 hover:border-primary/40 hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => setEditingSubject(subject)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">
-                      {subject.name}
-                    </CardTitle>
-                    {subject.code && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">
-                        {subject.code}
-                      </p>
-                    )}
-                  </div>
-                  <Badge
-                    variant={subject.subjectType === 'core' ? 'default' : 'outline'}
-                    className={subject.subjectType === 'core' 
-                      ? 'bg-primary text-white border-primary' 
-                      : 'border-primary/20 text-primary bg-primary/5'
-                    }
+        <Card className="border-2 border-primary/20">
+          <div className="w-full">
+            <table className="w-full table-fixed border-collapse">
+              <thead className="bg-primary/5 border-b-2 border-primary/20">
+                <tr>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[20%]">
+                    Subject Name
+                  </th>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[8%]">
+                    Code
+                  </th>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[8%]">
+                    Type
+                  </th>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[15%]">
+                    Category
+                  </th>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[15%]">
+                    Department
+                  </th>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[12%]">
+                    Status
+                  </th>
+                  <th className="px-1 py-1.5 text-left text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[7%]">
+                    Marks
+                  </th>
+                  <th className="px-1 py-1.5 text-center text-[10px] font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-[5%]">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+                {filteredSubjects.map((subject) => (
+                  <tr 
+                    key={subject.id}
+                    className="hover:bg-primary/5 transition-colors cursor-pointer"
+                    onClick={() => setEditingSubject(subject)}
                   >
-                    {subject.subjectType === 'core' ? 'Core' : 'Elective'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  {subject.curriculum && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Layers className="h-4 w-4 text-slate-400" />
-                      <span className="text-slate-600 dark:text-slate-400">
-                        {subject.curriculum.name}
+                    <td className="px-1 py-1.5 break-words">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 break-words">
+                        {subject.name}
+                      </div>
+                    </td>
+                    <td className="px-1 py-1.5 break-words">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">
+                        {subject.code || '-'}
                       </span>
-                    </div>
-                  )}
-                  {subject.category && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-slate-400" />
-                      <span className="text-slate-600 dark:text-slate-400">
-                        {subject.category}
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <Badge
+                        variant={subject.subjectType === 'core' ? 'default' : 'outline'}
+                        className={`text-[10px] px-1.5 py-0.5 ${subject.subjectType === 'core' 
+                          ? 'bg-primary text-white border-primary' 
+                          : 'border-primary/20 text-primary bg-primary/5'
+                        }`}
+                      >
+                        {subject.subjectType === 'core' ? 'Core' : 'Elective'}
+                      </Badge>
+                    </td>
+                    <td className="px-1 py-1.5 break-words">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 break-words">
+                        {subject.category || '-'}
                       </span>
-                    </div>
-                  )}
-                  {subject.department && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <GraduationCap className="h-4 w-4 text-slate-400" />
-                      <span className="text-slate-600 dark:text-slate-400">
-                        {subject.department}
+                    </td>
+                    <td className="px-1 py-1.5 break-words">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 break-words">
+                        {subject.department || '-'}
                       </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center gap-2">
-                      {subject.isCompulsory && (
-                        <Badge variant="outline" className="text-xs border-green-500/20 text-green-600 bg-green-500/5">
-                          Compulsory
-                        </Badge>
-                      )}
-                      {subject.isActive ? (
-                        <Badge variant="outline" className="text-xs border-green-500/20 text-green-600 bg-green-500/5">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-xs border-red-500/20 text-red-600 bg-red-500/5">
-                          Inactive
-                        </Badge>
-                      )}
-                    </div>
-                    {subject.totalMarks && (
-                      <span className="text-xs text-slate-500">
-                        {subject.totalMarks} marks
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {subject.isActive ? (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-green-500/20 text-green-600 bg-green-500/5">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-500/20 text-red-600 bg-red-500/5">
+                            Inactive
+                          </Badge>
+                        )}
+                        {subject.isCompulsory && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-blue-500/20 text-blue-600 bg-blue-500/5">
+                            Comp
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400">
+                        {subject.totalMarks ? `${subject.totalMarks}` : '-'}
                       </span>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    </td>
+                    <td className="px-1 py-1.5 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingSubject(subject)
+                          }}
+                          className="h-6 w-6 p-0 hover:bg-primary/10"
+                          title="Edit subject"
+                        >
+                          <Edit className="h-3 w-3 text-slate-600 dark:text-slate-400" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSubjectToDelete(subject)
+                          }}
+                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
+                          title="Delete subject"
+                        >
+                          <Trash2 className="h-3 w-3 text-red-600 dark:text-red-400" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
       {/* Edit Subject Dialog */}
@@ -577,6 +665,45 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
           tenantSubjectId={editingSubject.id}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!subjectToDelete} onOpenChange={(open) => !open && setSubjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Subject</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold">
+                {subjectToDelete?.subject?.name || subjectToDelete?.customSubject?.name || 'this subject'}
+              </span>?
+              <p className="mt-2 text-red-500">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (subjectToDelete) {
+                  handleDeleteSubject(subjectToDelete.id)
+                }
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Subject
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

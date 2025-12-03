@@ -398,10 +398,10 @@ function ClassesPage() {
             <DrawerContent className="max-w-4xl">
               <DrawerHeader className="border-b border-primary/20">
                 <DrawerTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Subjects
+                  Subjects{selectedGrade?.grade ? ` - ${selectedGrade.grade.name}` : ''}
                 </DrawerTitle>
                 <DrawerDescription className="text-slate-600 dark:text-slate-400">
-                  Manage and view all subjects{selectedGradeId ? ' for selected grade' : ''}
+                  Manage and view all subjects
                 </DrawerDescription>
               </DrawerHeader>
               <div className="overflow-y-auto p-6">
