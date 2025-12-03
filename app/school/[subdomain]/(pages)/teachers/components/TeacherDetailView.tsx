@@ -84,16 +84,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
           >
             ← Back to Teachers
           </Button>
-          <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-4">
-            <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-2">
-              <span className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">
-                Teacher Details
-              </span>
-            </div>
-            <h2 className="text-xl font-mono font-bold tracking-wide text-[var(--color-text)]">
-              {teacher.user.name}
-            </h2>
-          </div>
+        
         </div>
       )}
       
@@ -107,36 +98,57 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                 <User className="h-12 w-12 text-[var(--color-primary)]" />
               </div>
               
-              <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white bg-[var(--color-success)]" />
+              <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white ${
+                teacher.isActive ? 'bg-[var(--color-success)]' : 'bg-[var(--color-textSecondary)]'
+              }`} />
             </div>
           </div>
           
           {/* Teacher basic info */}
           <div className="flex flex-col justify-between">
             <div>
-              <h2 className="text-2xl font-mono font-bold tracking-wide text-[var(--color-text)]">{teacher.user.name}</h2>
+              <h2 className="text-2xl font-mono font-bold tracking-wide text-[var(--color-text)]">{teacher.fullName || teacher.user.name}</h2>
               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-[var(--color-textSecondary)] font-mono">
-                <div className="flex items-center gap-1">
-                  <Info className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                  <span>ID: {teacher.id}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <School className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                  <span>{teacher.tenant.name}</span>
-                </div>
+                {teacher.department && (
+                  <div className="flex items-center gap-1">
+                    <Award className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <span>{teacher.department}</span>
+                  </div>
+                )}
+                {teacher.role && (
+                  <div className="flex items-center gap-1">
+                    <User className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <span>{teacher.role}</span>
+                  </div>
+                )}
                 {teacher.tenantGradeLevels.length > 0 && (
                   <div className="flex items-center gap-1">
                     <GraduationCap className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                    <span>{teacher.tenantGradeLevels.map(g => g.name).join(', ')}</span>
+                    <span>{teacher.tenantGradeLevels.map(g => g.gradeLevel?.name || 'Unknown').join(', ')}</span>
+                  </div>
+                )}
+                {teacher.tenantSubjects.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <BookOpen className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <span>{teacher.tenantSubjects.length} Subject{teacher.tenantSubjects.length !== 1 ? 's' : ''}</span>
                   </div>
                 )}
               </div>
             </div>
             
             <div className="flex items-center gap-2 mt-4">
-              <Badge className="font-mono text-xs capitalize border-2 bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20">
-                Active
+              <Badge className={`font-mono text-xs capitalize border-2 ${
+                teacher.isActive 
+                  ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' 
+                  : 'bg-[var(--color-textSecondary)]/10 text-[var(--color-textSecondary)] border-[var(--color-textSecondary)]/20'
+              }`}>
+                {teacher.isActive ? 'Active' : 'Inactive'}
               </Badge>
+              {teacher.role && (
+                <Badge variant="outline" className="capitalize font-mono border-[var(--color-primary)]/20 text-[var(--color-primary)]">
+                  {teacher.role}
+                </Badge>
+              )}
               {teacher.tenantSubjects.length > 0 && (
                 <Badge variant="outline" className="capitalize font-mono border-[var(--color-primary)]/20 text-[var(--color-primary)]">
                   {teacher.tenantSubjects.length} Subject{teacher.tenantSubjects.length !== 1 ? 's' : ''}
@@ -160,7 +172,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
             <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
               <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Teacher Information</CardTitle>
               <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Detailed personal information about {teacher.user.name}
+                Detailed personal information about {teacher.fullName || teacher.user.name}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
@@ -172,19 +184,33 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
                       <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Full Name</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{teacher.user.name}</div>
+                      <div className="font-mono text-sm text-[var(--color-text)]">{teacher.fullName || teacher.user.name}</div>
                     </div>
+                    {teacher.gender && (
+                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
+                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Gender</div>
+                        <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.gender.toLowerCase()}</div>
+                      </div>
+                    )}
+                    {teacher.department && (
+                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
+                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Department</div>
+                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.department}</div>
+                      </div>
+                    )}
+                    {teacher.role && (
+                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
+                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Role</div>
+                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.role}</div>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Teacher ID</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{teacher.id}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Tenant</div>
+                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">School</div>
                       <div className="font-mono text-sm text-[var(--color-text)]">{teacher.tenant.name}</div>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Status</div>
-                      <div className="font-mono text-sm text-[var(--color-text)] capitalize">Active</div>
+                      <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.isActive ? 'Active' : 'Inactive'}</div>
                     </div>
                   </div>
                 </div>
@@ -200,21 +226,36 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                         Email
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.user.email}</div>
+                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.email || teacher.user.email}</div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10"
-                          onClick={() => navigator.clipboard.writeText(teacher.user.email)}
+                          onClick={() => navigator.clipboard.writeText(teacher.email || teacher.user.email)}
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center py-2">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">User ID</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{teacher.user.id}</div>
-                    </div>
+                    {teacher.phoneNumber && (
+                      <div className="flex justify-between items-center py-2">
+                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)] flex items-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          Phone Number
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-mono text-sm text-[var(--color-text)]">{teacher.phoneNumber}</div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10"
+                            onClick={() => navigator.clipboard.writeText(teacher.phoneNumber || '')}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -227,7 +268,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
             <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
               <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Academic Information</CardTitle>
               <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Subjects, grade levels, and streams assigned to {teacher.user.name}
+                Subjects, grade levels, and streams assigned to {teacher.fullName || teacher.user.name}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
@@ -263,7 +304,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                     <div className="flex flex-wrap gap-2">
                       {teacher.tenantGradeLevels.map((gradeLevel) => (
                         <Badge key={gradeLevel.id} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 font-mono text-xs">
-                          {gradeLevel.name}
+                          {gradeLevel.gradeLevel?.name || 'Unknown Grade Level'}
                         </Badge>
                       ))}
                     </div>
@@ -305,7 +346,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
             <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
               <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Class Teacher Assignments</CardTitle>
               <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Classes where {teacher.user.name} serves as class teacher
+                Classes where {teacher.fullName || teacher.user.name} serves as class teacher
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">

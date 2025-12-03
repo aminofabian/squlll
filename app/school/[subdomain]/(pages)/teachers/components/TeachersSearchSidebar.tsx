@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   PanelLeftClose,
-  User
+  User,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
+import { useGetTeachers } from '@/lib/hooks/useTeachers';
 
 // Teacher type definition (simplified for sidebar use)
 type Teacher = {
@@ -20,8 +23,6 @@ type Teacher = {
 };
 
 interface TeachersSearchSidebarProps {
-  teachers: Teacher[];
-  filteredTeachers: Teacher[];
   searchTerm: string;
   onSearchChange: (term: string) => void;
   selectedTeacherId: string | null;
@@ -32,8 +33,6 @@ interface TeachersSearchSidebarProps {
 }
 
 export function TeachersSearchSidebar({
-  teachers,
-  filteredTeachers,
   searchTerm,
   onSearchChange,
   selectedTeacherId,
@@ -42,6 +41,77 @@ export function TeachersSearchSidebar({
   onLoadMore,
   onCollapse
 }: TeachersSearchSidebarProps) {
+  // Fetch teachers using the getTeachers query
+  const { teachers: graphqlTeachers, isLoading, isError, error, refetch } = useGetTeachers();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('TeachersSearchSidebar - graphqlTeachers:', graphqlTeachers);
+    console.log('TeachersSearchSidebar - isLoading:', isLoading);
+    console.log('TeachersSearchSidebar - isError:', isError);
+    console.log('TeachersSearchSidebar - error:', error);
+  }, [graphqlTeachers, isLoading, isError, error]);
+
+  // Transform GraphQL teachers to Teacher format
+  const teachers: Teacher[] = useMemo(() => {
+    console.log('Transforming teachers, graphqlTeachers:', graphqlTeachers);
+    
+    if (!graphqlTeachers || !Array.isArray(graphqlTeachers)) {
+      console.log('No teachers data or not an array');
+      return [];
+    }
+
+    if (graphqlTeachers.length === 0) {
+      console.log('Teachers array is empty');
+      return [];
+    }
+
+    const transformed = graphqlTeachers.map((teacher: any) => {
+      // Get name from fullName, firstName/lastName, or user.name
+      const name = teacher.fullName || 
+                   (teacher.firstName && teacher.lastName ? `${teacher.firstName} ${teacher.lastName}` : '') ||
+                   teacher.user?.name || 
+                   'Unknown Teacher';
+
+      // Get department, default to "General" if not available
+      const department = teacher.department || 'General';
+
+      // Get subjects from tenantSubjects
+      const subjects = teacher.tenantSubjects?.map((subject: any) => subject.name) || [];
+
+      // Determine status based on isActive
+      const status: Teacher['status'] = teacher.isActive ? 'active' : 'former';
+
+      return {
+        id: teacher.id,
+        name,
+        department,
+        subjects,
+        status,
+      };
+    });
+
+    console.log('Transformed teachers:', transformed);
+    return transformed;
+  }, [graphqlTeachers]);
+
+  // Filter teachers based on search term
+  const filteredTeachers = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return teachers;
+    }
+
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return teachers.filter((teacher) => {
+      return (
+        teacher.name.toLowerCase().includes(lowerSearchTerm) ||
+        teacher.department.toLowerCase().includes(lowerSearchTerm) ||
+        teacher.subjects.some(subject => subject.toLowerCase().includes(lowerSearchTerm)) ||
+        teacher.id.toLowerCase().includes(lowerSearchTerm)
+      );
+    });
+  }, [teachers, searchTerm]);
+
   const handleClearSearch = () => {
     onSearchChange('');
   };
@@ -99,19 +169,51 @@ export function TeachersSearchSidebar({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">Teachers</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-              Showing {Math.min(displayedTeachersCount, filteredTeachers.length)} of {filteredTeachers.length} teachers
-            </p>
+            {isLoading ? (
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading teachers...
+              </p>
+            ) : (
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                Showing {Math.min(displayedTeachersCount, filteredTeachers.length)} of {filteredTeachers.length} teachers
+              </p>
+            )}
           </div>
           <Badge className="bg-primary/10 text-primary border border-primary/20 font-mono">
-            {filteredTeachers.length}
+            {isLoading ? '...' : filteredTeachers.length}
           </Badge>
         </div>
         
+        {/* Error State */}
+        {isError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <p className="text-sm font-mono text-red-600">
+                {error instanceof Error ? error.message : 'Failed to load teachers'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="w-full border-red-200 text-red-700 hover:bg-red-100 font-mono text-xs"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+        
         <div className="space-y-2 mb-4">
-          {filteredTeachers.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8 text-slate-600 dark:text-slate-400 font-medium flex flex-col items-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span>Loading teachers...</span>
+            </div>
+          ) : filteredTeachers.length === 0 ? (
             <div className="text-center py-8 text-slate-600 dark:text-slate-400 font-medium">
-              No teachers match your search criteria
+              {searchTerm ? 'No teachers match your search criteria' : 'No teachers found'}
             </div>
           ) : (
             filteredTeachers.slice(0, displayedTeachersCount).map((teacher) => (

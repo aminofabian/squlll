@@ -15,7 +15,9 @@ interface TenantSubject {
 
 interface TenantGradeLevel {
   id: string;
-  name: string;
+  gradeLevel: {
+    name: string;
+  };
 }
 
 interface TenantStream {
@@ -40,6 +42,15 @@ interface Tenant {
 
 interface TeacherDetail {
   id: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  gender?: string;
+  department?: string;
+  role?: string;
+  isActive?: boolean;
   user: TeacherUser;
   tenantSubjects: TenantSubject[];
   tenantGradeLevels: TenantGradeLevel[];
@@ -59,6 +70,14 @@ const GET_TEACHERS_QUERY = `
   query GetTeachers {
     getTeachers {
       id
+      fullName
+      firstName
+      lastName
+      email
+      phoneNumber
+      gender
+      department
+      role
       user {
         id
         name
@@ -70,7 +89,9 @@ const GET_TEACHERS_QUERY = `
       }
       tenantGradeLevels {
         id
-        name
+        gradeLevel {
+          name
+        }
       }
       tenantStreams {
         id
@@ -95,6 +116,15 @@ const GET_TEACHER_BY_ID_QUERY = `
   query GetTeacherById($teacherId: String!) {
     getTeacherById(teacherId: $teacherId) {
       id
+      fullName
+      firstName
+      lastName
+      email
+      phoneNumber
+      gender
+      department
+      role
+      isActive
       user {
         id
         name
@@ -106,7 +136,9 @@ const GET_TEACHER_BY_ID_QUERY = `
       }
       tenantGradeLevels {
         id
-        name
+        gradeLevel {
+          name
+        }
       }
       tenantStreams {
         id
@@ -139,39 +171,48 @@ export function useTeacherDetailSummary(userIdOrTeacherId: string): UseTeacherDe
     setError(null);
 
     try {
-      // First, try to get all teachers to find the teacher ID from user ID
-      const teachersResponse = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-        },
-        body: JSON.stringify({
-          query: GET_TEACHERS_QUERY,
-        }),
-      });
+      // Check if userIdOrTeacherId is a UUID (teacher ID format)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrTeacherId);
+      let teacherIdToUse = userIdOrTeacherId;
 
-      const teachersData = await teachersResponse.json();
+      // If not a UUID, it might be a user ID, so we need to find the teacher ID first
+      if (!isUUID) {
+        const teachersResponse = await fetch('/api/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            query: GET_TEACHERS_QUERY,
+          }),
+        });
 
-      if (teachersData.errors) {
-        throw new Error(teachersData.errors[0]?.message || 'GraphQL error');
+        const teachersData = await teachersResponse.json();
+
+        if (teachersData.errors) {
+          throw new Error(teachersData.errors[0]?.message || 'GraphQL error');
+        }
+
+        const allTeachers = teachersData.data?.getTeachers || [];
+        
+        // Find the teacher that matches either by user.id or teacher.id
+        const matchingTeacher = allTeachers.find((teacher: TeacherDetail) => 
+          teacher.user.id === userIdOrTeacherId || teacher.id === userIdOrTeacherId
+        );
+
+        if (!matchingTeacher) {
+          setError('Teacher not found');
+          setLoading(false);
+          return;
+        }
+
+        teacherIdToUse = matchingTeacher.id;
       }
 
-      const allTeachers = teachersData.data?.getTeachers || [];
-      
-      // Find the teacher that matches either by user.id or teacher.id
-      const matchingTeacher = allTeachers.find((teacher: TeacherDetail) => 
-        teacher.user.id === userIdOrTeacherId || teacher.id === userIdOrTeacherId
-      );
-
-      if (!matchingTeacher) {
-        setError('Teacher not found');
-        setLoading(false);
-        return;
-      }
-
-      // Use the teacher's ID to fetch full details
+      // Fetch full teacher details using getTeacherById
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
@@ -179,10 +220,11 @@ export function useTeacherDetailSummary(userIdOrTeacherId: string): UseTeacherDe
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
         },
+        credentials: 'include',
         body: JSON.stringify({
           query: GET_TEACHER_BY_ID_QUERY,
           variables: {
-            teacherId: matchingTeacher.id,
+            teacherId: teacherIdToUse,
           },
         }),
       });
@@ -190,22 +232,14 @@ export function useTeacherDetailSummary(userIdOrTeacherId: string): UseTeacherDe
       const data = await response.json();
 
       if (data.errors) {
-        // If getTeacherById fails, use the data we already have from getTeachers
-        if (matchingTeacher) {
-          setTeacherDetail(matchingTeacher);
-        } else {
-          throw new Error(data.errors[0]?.message || 'GraphQL error');
-        }
+        throw new Error(data.errors[0]?.message || 'GraphQL error');
+      }
+
+      const teacher = data.data?.getTeacherById;
+      if (teacher) {
+        setTeacherDetail(teacher);
       } else {
-        const teacher = data.data?.getTeacherById;
-        if (teacher) {
-          setTeacherDetail(teacher);
-        } else if (matchingTeacher) {
-          // Fallback to data from getTeachers
-          setTeacherDetail(matchingTeacher);
-        } else {
-          setError('Teacher not found');
-        }
+        setError('Teacher not found');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch teacher details');

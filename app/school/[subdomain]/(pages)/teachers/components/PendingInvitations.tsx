@@ -154,15 +154,49 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           query: `
             query GetTeachers {
               getTeachers {
                 id
+                fullName
+                firstName
+                lastName
                 email
+                phoneNumber
+                gender
+                department
+                role
                 user {
                   id
+                  name
                   email
+                }
+                tenantSubjects {
+                  id
+                  name
+                }
+                tenantGradeLevels {
+                  id
+                  gradeLevel {
+                    name
+                  }
+                }
+                tenantStreams {
+                  id
+                }
+                classTeacherAssignments {
+                  id
+                  gradeLevel {
+                    gradeLevel {
+                      name
+                    }
+                  }
+                }
+                tenant {
+                  id
+                  name
                 }
               }
             }
@@ -286,6 +320,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           query: mutation,
           variables,

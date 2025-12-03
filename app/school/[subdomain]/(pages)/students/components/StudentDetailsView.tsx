@@ -41,7 +41,9 @@ import {
   Loader2,
   AlertCircle,
   Check,
-  Lock
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,6 +73,8 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
   // Password change form state
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<string | null>(null);
@@ -208,6 +212,8 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
         // Clear form
         setOldPassword('');
         setNewPassword('');
+        setShowOldPassword(false);
+        setShowNewPassword(false);
         // Close dialog after 2 seconds
         setTimeout(() => {
           setShowChangePasswordDialog(false);
@@ -960,16 +966,33 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
               <Label htmlFor="oldPassword" className="font-mono text-sm font-semibold text-[var(--color-text)]">
                 Current Password
               </Label>
-              <Input
-                id="oldPassword"
-                type="password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                disabled={isChangingPassword}
-                className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)]"
-                placeholder="Enter your current password"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="oldPassword"
+                  type={showOldPassword ? "text" : "password"}
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)] pr-10"
+                  placeholder="Enter your current password"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowOldPassword(!showOldPassword)}
+                  disabled={isChangingPassword}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-[var(--color-primary)]/10"
+                  aria-label={showOldPassword ? "Hide password" : "Show password"}
+                >
+                  {showOldPassword ? (
+                    <EyeOff className="h-4 w-4 text-[var(--color-textSecondary)]" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-[var(--color-textSecondary)]" />
+                  )}
+                </Button>
+              </div>
             </div>
             
             {/* New Password */}
@@ -977,17 +1000,34 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
               <Label htmlFor="newPassword" className="font-mono text-sm font-semibold text-[var(--color-text)]">
                 New Password
               </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isChangingPassword}
-                className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)]"
-                placeholder="Enter your new password (min. 8 characters)"
-                required
-                minLength={8}
-              />
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)] pr-10"
+                  placeholder="Enter your new password (min. 8 characters)"
+                  required
+                  minLength={8}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  disabled={isChangingPassword}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-[var(--color-primary)]/10"
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4 text-[var(--color-textSecondary)]" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-[var(--color-textSecondary)]" />
+                  )}
+                </Button>
+              </div>
               <p className="text-xs font-mono text-[var(--color-textSecondary)]">
                 Password must be at least 8 characters long
               </p>
@@ -1012,6 +1052,8 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
                   setShowChangePasswordDialog(false);
                   setOldPassword('');
                   setNewPassword('');
+                  setShowOldPassword(false);
+                  setShowNewPassword(false);
                   setPasswordChangeError(null);
                   setPasswordChangeSuccess(null);
                 }}

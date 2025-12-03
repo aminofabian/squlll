@@ -6,6 +6,55 @@ interface TeachersResponse {
   usersByTenant: any[];
 }
 
+interface Teacher {
+  id: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  gender?: string;
+  department?: string;
+  role?: string;
+  isActive?: boolean;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  tenantSubjects: Array<{
+    id: string;
+    name: string;
+  }>;
+  tenantGradeLevels: Array<{
+    id: string;
+    gradeLevel: {
+      name: string;
+    };
+  }>;
+  tenantStreams: Array<{
+    id: string;
+  }>;
+  classTeacherAssignments: Array<{
+    id: string;
+    gradeLevel: {
+      gradeLevel: {
+        name: string;
+      };
+    };
+  }>;
+  tenant: {
+    id: string;
+    name: string;
+  };
+}
+
+interface GetTeachersResponse {
+  data: {
+    getTeachers: Teacher[];
+  };
+}
+
 const fetchTeachers = async (): Promise<TeachersResponse> => {
   const response = await fetch('/api/teachers');
   
@@ -112,6 +161,96 @@ export const useDeleteTeacher = () => {
   
   return {
     deleteTeacher,
+  };
+};
+
+// Hook to fetch teachers using GraphQL getTeachers query
+export const useGetTeachers = () => {
+  const query = useQuery({
+    queryKey: ['getTeachers'],
+    queryFn: async (): Promise<Teacher[]> => {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: `
+            query GetTeachers {
+              getTeachers {
+                id
+                fullName
+                firstName
+                lastName
+                email
+                phoneNumber
+                gender
+                department
+                role
+                isActive
+                user {
+                  id
+                  name
+                  email
+                }
+                tenantSubjects {
+                  id
+                  name
+                }
+                tenantGradeLevels {
+                  id
+                  gradeLevel {
+                    name
+                  }
+                }
+                tenantStreams {
+                  id
+                }
+                classTeacherAssignments {
+                  id
+                  gradeLevel {
+                    gradeLevel {
+                      name
+                    }
+                  }
+                }
+                tenant {
+                  id
+                  name
+                }
+              }
+            }
+          `,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'GraphQL error');
+      }
+
+      if (result.data?.getTeachers) {
+        return result.data.getTeachers;
+      }
+
+      throw new Error('Invalid response format');
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  return {
+    teachers: query.data || [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
   };
 };
 
