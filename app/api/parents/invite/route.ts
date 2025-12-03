@@ -263,21 +263,17 @@ export async function POST(request: Request) {
         }
 
         // Create the parent invitation (all methods require studentIds)
+        // Note: createParentDto only contains parent information, not student fields
+        // Student linking is handled via the studentIds parameter
+        // Note: tenantId is handled via the authentication token, not passed as a parameter
         inviteMutation = `
-          mutation InviteParent($tenantId: String!, $studentIds: [String!]!) {
+          mutation InviteParent($studentIds: [String!]!) {
             inviteParent(
               createParentDto: {
                 email: "${parentData.email || ''}"
                 name: "${parentData.name}"
                 phone: "${parentData.phone}"
-                linkingMethod: ${linkingMethod}
-                ${linkingMethod === 'SEARCH_BY_NAME' ? `studentName: "${student.name}"` : ''}
-                ${linkingMethod === 'SEARCH_BY_ADMISSION' ? `admissionNumber: "${student.admissionNumber}"` : ''}
-                ${linkingMethod === 'MANUAL_INPUT' ? `studentFullName: "${student.name}"` : ''}
-                ${linkingMethod === 'MANUAL_INPUT' ? `studentGrade: "${student.grade}"` : ''}
-                ${linkingMethod === 'MANUAL_INPUT' ? `studentPhone: "${student.phone || ''}"` : ''}
               }
-              tenantId: $tenantId
               studentIds: $studentIds
             ) {
               email
@@ -294,7 +290,6 @@ export async function POST(request: Request) {
         `;
         
         variables = {
-          tenantId,
           studentIds: [studentId]
         };
 
