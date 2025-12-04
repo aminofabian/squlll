@@ -6,7 +6,8 @@ import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { 
   useSelectedGradeTimetable, 
   useTimetableGrid,
-  useGradeStatistics 
+  useGradeStatistics,
+  useAdjustedTimeSlotsForAllDays
 } from './hooks/useTimetableData';
 import { useAllConflicts } from './hooks/useTimetableConflictsNew';
 import { LessonEditDialog } from './components/LessonEditDialog';
@@ -150,6 +151,13 @@ export default function SmartTimetableNew() {
   
   // Get conflicts (memoized!)
   const { total: conflictCount, teacher: teacherConflicts } = useAllConflicts();
+  
+  // Get adjusted timeslots for all days (factoring in breaks)
+  const adjustedTimeSlotsByDay = useAdjustedTimeSlotsForAllDays();
+  
+  // Use Monday's adjusted timeslots for the left column display
+  // (or base timeslots if no adjustments needed)
+  const displayTimeSlots = adjustedTimeSlotsByDay[1] || timeSlots;
 
   // Days array (memoized)
   const days = useMemo(
@@ -627,10 +635,11 @@ export default function SmartTimetableNew() {
                   </td>
                 </tr>
               ) : (
-                timeSlots.map((slot, slotIndex) => {
-                // Get breaks that come after this period
+                displayTimeSlots.map((slot, slotIndex) => {
+                // Get breaks that come after this period (for Monday, used as reference)
+                // Note: Breaks are day-specific, so we show Monday's breaks as reference
                 const breaksAfterThisPeriod = breaks.filter(
-                  (b) => b.afterPeriod === slot.periodNumber
+                  (b) => b.afterPeriod === slot.periodNumber && b.dayOfWeek === 1
                 );
 
                 // Alternate row colors for better readability
@@ -692,6 +701,14 @@ export default function SmartTimetableNew() {
                       {days.map((_, dayIndex) => {
                         const dayOfWeek = dayIndex + 1;
                         const entry = grid[dayOfWeek]?.[slot.id];
+                        
+                        // Get adjusted timeslot for this specific day
+                        const dayAdjustedSlots = adjustedTimeSlotsByDay[dayOfWeek] || displayTimeSlots;
+                        const dayAdjustedSlot = dayAdjustedSlots.find((s) => s.id === slot.id) || slot;
+                        
+                        // Compare against base timeslot (not Monday's adjusted)
+                        const baseSlot = timeSlots.find((s) => s.id === slot.id) || slot;
+                        const timeDiffers = dayAdjustedSlot.time !== baseSlot.time;
 
                         return (
                           <td key={dayIndex} className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-3 align-top">
@@ -699,7 +716,7 @@ export default function SmartTimetableNew() {
                               <div 
                                 className="group/lesson relative cursor-pointer bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                                 onClick={() => setEditingLesson(entry)}
-                                title="Click to edit"
+                                title={`Click to edit${timeDiffers ? ` • ${dayAdjustedSlot.time}` : ''}`}
                               >
                                 <div className="space-y-1.5">
                                   <div className="font-bold text-sm text-slate-900 dark:text-slate-100 leading-tight">
@@ -708,6 +725,11 @@ export default function SmartTimetableNew() {
                                   <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
                                     <span className="font-medium">{entry.teacher.name}</span>
                                   </div>
+                                  {timeDiffers && (
+                                    <div className="text-[10px] text-primary/70 dark:text-primary/50 font-medium">
+                                      {dayAdjustedSlot.time}
+                                    </div>
+                                  )}
                                   {entry.roomNumber && (
                                     <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-600">
                                       <span>📍</span>

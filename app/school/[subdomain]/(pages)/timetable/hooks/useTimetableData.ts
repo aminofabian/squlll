@@ -157,3 +157,27 @@ export function useTeacherSchedule(teacherId: string) {
   }, [teacherId, store.entries, selectors]);
 }
 
+/**
+ * Get adjusted timeslots for a specific day (factoring in breaks)
+ */
+export function useAdjustedTimeSlots(dayOfWeek: number) {
+  const store = useTimetableStore();
+  const selectors = useTimetableSelectors();
+
+  return useMemo(() => {
+    return selectors.getAdjustedTimeSlots(dayOfWeek);
+  }, [store.timeSlots, store.breaks, dayOfWeek, selectors]);
+}
+
+/**
+ * Get adjusted timeslots for all days
+ */
+export function useAdjustedTimeSlotsForAllDays() {
+  const store = useTimetableStore();
+  const selectors = useTimetableSelectors();
+
+  return useMemo(() => {
+    return selectors.getAdjustedTimeSlotsForAllDays();
+  }, [store.timeSlots, store.breaks, selectors]);
+}
+
