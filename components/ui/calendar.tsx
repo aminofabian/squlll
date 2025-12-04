@@ -3,16 +3,9 @@
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker, type CustomComponents } from "react-day-picker"
-import type { CSSProperties, ReactNode } from "react"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
-
-type StyledComponent = {
-  className?: string
-  style?: CSSProperties
-  children?: ReactNode
-}
 
 function Calendar({
   className,
@@ -22,12 +15,12 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   const customComponents: Partial<CustomComponents> = {
-    IconLeft: (iconProps: StyledComponent) => (
-      <ChevronLeft className={cn("size-4", iconProps.className)} {...iconProps} />
-    ),
-    IconRight: (iconProps: StyledComponent) => (
-      <ChevronRight className={cn("size-4", iconProps.className)} {...iconProps} />
-    ),
+    Chevron: ({ className, orientation, ...chevronProps }) => {
+      if (orientation === "left") {
+        return <ChevronLeft className={cn("size-4", className)} {...chevronProps} />
+      }
+      return <ChevronRight className={cn("size-4", className)} {...chevronProps} />
+    },
     ...components,
   }
 
