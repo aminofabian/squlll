@@ -60,7 +60,31 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           .map((entry) => entry.teacherId)
       );
 
-      const firstSubject = subjects[0];
+      // Get the grade from the store
+      const grade = grades.find((g) => g.id === lesson.gradeId);
+      
+      // Get the first available backend subject for this grade's level
+      const gradeInfo = getGradeById(lesson.gradeId);
+      let firstSubject = null;
+      
+      if (gradeInfo) {
+        const levelSubjects = getSubjectsByLevelId(gradeInfo.levelId);
+        const levelSubjectNames = new Set(
+          levelSubjects.map(s => s.name.toLowerCase().trim())
+        );
+        const levelSubjectCodes = new Set(
+          levelSubjects.map(s => s.code?.toLowerCase().trim()).filter(Boolean)
+        );
+
+        // Find first backend subject that matches the grade's level
+        firstSubject = subjects.find((backendSubject) => {
+          const subjectName = backendSubject.name.toLowerCase().trim();
+          const subjectCode = backendSubject.code?.toLowerCase().trim();
+          return levelSubjectNames.has(subjectName) || 
+                 (subjectCode && levelSubjectCodes.has(subjectCode));
+        });
+      }
+
       // Find a teacher who can teach this grade
       const firstAvailableTeacher = teachers.find((teacher) => {
         const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
@@ -86,6 +110,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
       toast({
         title: 'Error',
         description: 'No term selected. Please select a term first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Verify term has academicYear (backend needs this to derive academicYear)
+    if (!selectedTerm?.academicYear?.name) {
+      toast({
+        title: 'Error',
+        description: 'Selected term does not have an academic year. Please select a different term or contact support.',
         variant: 'destructive',
       });
       return;
@@ -132,24 +166,54 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           }
         `;
 
-        // Build input object - always include roomNumber (null if empty to match backend expectations)
+        // Build input object - GraphQL CreateTimetableEntryInput only accepts:
+        // termId, gradeId, subjectId, teacherId, timeSlotId, dayOfWeek, roomNumber (optional)
+        // The backend derives academicYear from termId internally
         const input: any = {
           termId: termId,
           gradeId: lesson.gradeId,
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
           timeSlotId: lesson.timeSlotId,
-          dayOfWeek: lesson.dayOfWeek,
-          roomNumber: formData.roomNumber && formData.roomNumber.trim() 
-            ? formData.roomNumber.trim() 
-            : null, // Explicitly set to null if empty
+          dayOfWeek: parseInt(String(lesson.dayOfWeek), 10), // Ensure it's an integer
         };
+
+        // Only add optional fields if they have values
+        if (formData.roomNumber && formData.roomNumber.trim()) {
+          input.roomNumber = formData.roomNumber.trim();
+        }
+
+        // Validate input structure before sending
+        console.log('Input validation check:', {
+          termId: typeof input.termId === 'string' && input.termId.length > 0,
+          gradeId: typeof input.gradeId === 'string' && input.gradeId.length > 0,
+          subjectId: typeof input.subjectId === 'string' && input.subjectId.length > 0,
+          teacherId: typeof input.teacherId === 'string' && input.teacherId.length > 0,
+          timeSlotId: typeof input.timeSlotId === 'string' && input.timeSlotId.length > 0,
+          dayOfWeek: Number.isInteger(input.dayOfWeek) && input.dayOfWeek >= 1 && input.dayOfWeek <= 5,
+          roomNumber: !input.roomNumber || typeof input.roomNumber === 'string',
+        });
 
         // Verify the IDs exist in the store
         const grade = grades.find((g) => g.id === lesson.gradeId);
         const subject = subjects.find((s) => s.id === formData.subjectId);
         const teacher = teachers.find((t) => t.id === formData.teacherId);
         const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+
+        // Log subject ID details for debugging
+        console.log('=== SUBJECT ID VALIDATION ===');
+        console.log('TenantSubject ID being sent (this is the assignment ID):', formData.subjectId);
+        console.log('Subject found in store:', subject);
+        console.log('Subject ID type:', typeof formData.subjectId);
+        console.log('Subject ID length:', formData.subjectId?.length);
+        console.log('Is valid UUID format:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formData.subjectId));
+        console.log('All tenantSubject IDs in store:', subjects.map(s => s.id));
+        console.log('=== END SUBJECT ID VALIDATION ===');
+
+        // Note: Subject validation is handled by:
+        // 1. The dropdown which filters subjects by grade level (name/code matching)
+        // 2. The backend which validates the tenantSubject.id is valid for the grade
+        // We don't need to validate here since we're comparing tenantSubject.id to subject.id which won't match
 
         // Check if timeSlot has a valid UUID (not mock data like "slot-1")
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -210,8 +274,11 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
-        console.log('Creating entry with IDs:', {
+        console.log('Creating entry with input:', {
+          input,
           termId,
+          selectedTerm: selectedTerm?.name,
+          academicYear: selectedTerm?.academicYear?.name,
           gradeId: lesson.gradeId,
           gradeName: grade?.name,
           subjectId: formData.subjectId,
@@ -221,7 +288,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           timeSlotId: lesson.timeSlotId,
           timeSlotPeriod: timeSlot?.periodNumber,
           dayOfWeek: lesson.dayOfWeek,
-          roomNumber: input.roomNumber,
         });
 
         // Log the exact input being sent
@@ -355,7 +421,37 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
               }
               // Check if the error message itself contains useful info
               else if (message.includes('Invalid subjectId') || message.includes('Invalid subject')) {
-                detailedMessage = `Invalid subject selected. The subject may not be assigned to this grade. Please select a different subject.`;
+                console.error('=== INVALID TENANT SUBJECT ID ERROR ===');
+                console.error('TenantSubject ID being sent (assignment ID):', formData.subjectId);
+                console.error('Subject from store:', subject);
+                console.error('Grade ID:', lesson.gradeId);
+                console.error('Grade from store:', grade);
+                console.error('All tenantSubject IDs in store:', subjects.map(s => ({ id: s.id, name: s.name })));
+                console.error('Grade level subjects:', grade ? (() => {
+                  const gradeInfo = getGradeById(grade.id);
+                  if (gradeInfo) {
+                    return getSubjectsByLevelId(gradeInfo.levelId).map(s => ({ id: s.id, name: s.name }));
+                  }
+                  return [];
+                })() : []);
+                console.error('=== END INVALID TENANT SUBJECT ID DEBUG ===');
+                
+                detailedMessage = `Invalid tenantSubject ID: ${formData.subjectId}. 
+                
+This is the subject assignment ID (tenantSubject.id), not the subject.id.
+
+Possible causes:
+• Subject assignment not found in the backend
+• TenantSubject doesn't exist in the database
+• TenantSubject ID format mismatch
+• Subject assignment not active for this tenant
+
+Please verify:
+✓ The subject is assigned to this grade/level for your tenant
+✓ The tenantSubject exists and is active
+✓ Try selecting a different subject
+
+Check the browser console for detailed debugging information.`;
               } else if (message.includes('Invalid teacherId') || message.includes('Invalid teacher')) {
                 detailedMessage = `Invalid teacher selected. The teacher may not be assigned to teach this subject or grade.`;
               } else if (message.includes('Invalid gradeId') || message.includes('Invalid grade')) {
@@ -368,7 +464,30 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
               
               // If we still have a generic message, provide helpful context
               if (detailedMessage === message && message === 'Input validation failed') {
-                detailedMessage = `Validation failed. Possible causes: (1) Teacher already scheduled at this time, (2) Grade already has a lesson at this time, (3) Teacher not assigned to teach this subject, or (4) Subject not assigned to this grade. Check console logs for the exact input being sent.`;
+                // Log the full error and input for debugging
+                console.error('=== VALIDATION ERROR - Full Details ===');
+                console.error('Error object:', JSON.stringify(e, null, 2));
+                console.error('Input sent:', JSON.stringify(input, null, 2));
+                console.error('Selected term:', selectedTerm);
+                console.error('Term has academicYear:', !!selectedTerm?.academicYear);
+                console.error('Academic year value:', selectedTerm?.academicYear?.name);
+                console.error('=== END VALIDATION ERROR DETAILS ===');
+                
+                detailedMessage = `Validation failed. This could be due to:
+1. Teacher already scheduled at this time slot
+2. Grade already has a lesson at this time slot  
+3. Teacher not assigned to teach this subject
+4. Subject not assigned to this grade
+5. Term ID not found or invalid
+6. One of the IDs (subject, teacher, grade, timeSlot) doesn't exist
+
+Please check:
+- The selected term has a valid academic year
+- The teacher is assigned to teach this subject
+- The subject is available for this grade
+- There are no scheduling conflicts
+
+Check the browser console for detailed input information.`;
               }
               
               message = detailedMessage;
@@ -623,18 +742,43 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
                     );
                   }
 
-                  // Get subjects for this grade's level
+                  // Get subjects for this grade's level from school config (for filtering)
                   const levelSubjects = getSubjectsByLevelId(gradeInfo.levelId);
+                  
+                  // Create a set of level subject names for matching
+                  const levelSubjectNames = new Set(
+                    levelSubjects.map(s => s.name.toLowerCase().trim())
+                  );
+                  const levelSubjectCodes = new Set(
+                    levelSubjects.map(s => s.code?.toLowerCase().trim()).filter(Boolean)
+                  );
 
-                  return levelSubjects.map((subject) => {
-                    // Subject from school-config doesn't have color, so we use a fallback
-                    const subjectColor = 'color' in subject ? (subject as { color?: string }).color : undefined;
+                  // Filter backend subjects to only include those that match the grade's level
+                  // Use backend subject IDs (from timetable store) but filter by name/code match
+                  const filteredBackendSubjects = subjects.filter((backendSubject) => {
+                    const subjectName = backendSubject.name.toLowerCase().trim();
+                    const subjectCode = backendSubject.code?.toLowerCase().trim();
+                    
+                    // Match by name or code
+                    return levelSubjectNames.has(subjectName) || 
+                           (subjectCode && levelSubjectCodes.has(subjectCode));
+                  });
+
+                  if (filteredBackendSubjects.length === 0) {
+                    return (
+                      <SelectItem value="none" disabled>
+                        No subjects available for this grade
+                      </SelectItem>
+                    );
+                  }
+
+                  return filteredBackendSubjects.map((subject) => {
                     return (
                       <SelectItem key={subject.id} value={subject.id}>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded"
-                            style={{ backgroundColor: subjectColor || '#3B82F6' }}
+                            style={{ backgroundColor: subject.color || '#3B82F6' }}
                           />
                           {subject.name}
                         </div>

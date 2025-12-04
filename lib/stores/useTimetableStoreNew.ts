@@ -447,34 +447,44 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${result.errors.map((e: any) => e.message).join(', ')}`);
           }
 
-          // Extract subjects from tenantSubjects - use subject.id or customSubject.id
+          // Extract subjects from tenantSubjects - use tenantSubject.id (the assignment ID)
           const tenantSubjects = result.data?.tenantSubjects || [];
           const subjectsMap = new Map<string, any>();
 
           tenantSubjects.forEach((tenantSubject: any) => {
-            // Use the actual subject (either subject or customSubject)
+            // Use the actual subject (either subject or customSubject) for name/code/etc.
             const actualSubject = tenantSubject.subject || tenantSubject.customSubject;
-            if (actualSubject && actualSubject.id) {
-              // Use actualSubject.id (the subject's actual ID, not tenantSubject.id)
-              // The backend timetable entry expects the subject ID, not the tenantSubject assignment ID
-              const subjectId = actualSubject.id;
+            if (actualSubject && actualSubject.name) {
+              // IMPORTANT: Use tenantSubject.id (the assignment ID), NOT subject.id
+              // The backend timetable entry expects the tenantSubject.id, not the subject.id
+              const tenantSubjectId = tenantSubject.id;
               const subjectName = actualSubject.name;
               
-              // Use subjectId as key to avoid duplicates
-              if (!subjectsMap.has(subjectId)) {
-                subjectsMap.set(subjectId, {
-                  id: subjectId,
+              // Use tenantSubjectId as key to avoid duplicates
+              if (!subjectsMap.has(tenantSubjectId)) {
+                subjectsMap.set(tenantSubjectId, {
+                  id: tenantSubjectId, // This is tenantSubject.id (the assignment ID)
                   name: subjectName,
                   code: actualSubject.code || actualSubject.shortName || '',
                   color: undefined,
                   department: actualSubject.department || actualSubject.category || '',
-              });
+                  // Store the underlying subject ID for reference if needed
+                  _subjectId: actualSubject.id,
+                });
               }
+            } else {
+              console.warn('TenantSubject missing subject or customSubject:', tenantSubject);
             }
           });
 
           const fetchedSubjects = Array.from(subjectsMap.values());
           console.log('Loaded subjects from backend:', fetchedSubjects.length, 'subjects');
+          console.log('Sample tenantSubject IDs (first 3):', fetchedSubjects.slice(0, 3).map(s => ({
+            tenantSubjectId: s.id, // This is the tenantSubject.id (assignment ID)
+            name: s.name,
+            code: s.code,
+            underlyingSubjectId: s._subjectId, // The actual subject.id for reference
+          })));
 
           set((state) => ({
             subjects: fetchedSubjects,
