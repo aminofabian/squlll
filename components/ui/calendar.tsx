@@ -14,6 +14,16 @@ function Calendar({
   components,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
+  const customComponents: Partial<CustomComponents> = {
+    IconLeft: ({ className, ...iconProps }) => (
+      <ChevronLeft className={cn("size-4", className)} {...iconProps} />
+    ),
+    IconRight: ({ className, ...iconProps }) => (
+      <ChevronRight className={cn("size-4", className)} {...iconProps} />
+    ),
+    ...components,
+  }
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -60,17 +70,7 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={
-        {
-          IconLeft: ({ className, ...iconProps }) => (
-            <ChevronLeft className={cn("size-4", className)} {...iconProps} />
-          ),
-          IconRight: ({ className, ...iconProps }) => (
-            <ChevronRight className={cn("size-4", className)} {...iconProps} />
-          ),
-          ...components,
-        } satisfies Partial<CustomComponents>
-      }
+      components={customComponents}
       {...props}
     />
   )
