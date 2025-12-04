@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker, type CustomComponents } from "react-day-picker"
+import { DayPicker, type CustomComponents, type StyledComponent } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -15,11 +15,11 @@ function Calendar({
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   const customComponents: Partial<CustomComponents> = {
-    IconLeft: ({ className, ...iconProps }) => (
-      <ChevronLeft className={cn("size-4", className)} {...iconProps} />
+    IconLeft: (iconProps: StyledComponent) => (
+      <ChevronLeft className={cn("size-4", iconProps.className)} {...iconProps} />
     ),
-    IconRight: ({ className, ...iconProps }) => (
-      <ChevronRight className={cn("size-4", className)} {...iconProps} />
+    IconRight: (iconProps: StyledComponent) => (
+      <ChevronRight className={cn("size-4", iconProps.className)} {...iconProps} />
     ),
     ...components,
   }
