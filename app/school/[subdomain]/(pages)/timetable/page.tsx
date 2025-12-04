@@ -31,6 +31,13 @@ import { Button } from '@/components/ui/button';
 import { PanelLeftClose, PanelLeftOpen, Clock, Edit2, Trash2, Plus } from 'lucide-react';
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 export default function SmartTimetableNew() {
   // Get selected term from context
@@ -189,9 +196,9 @@ export default function SmartTimetableNew() {
   const [showDeleteAllBreaksDialog, setShowDeleteAllBreaksDialog] = useState(false);
   const [isDeletingAllBreaks, setIsDeletingAllBreaks] = useState(false);
   
-  // State for showing all items
-  const [showAllTimeSlots, setShowAllTimeSlots] = useState(false);
-  const [showAllBreaks, setShowAllBreaks] = useState(false);
+  // State for drawers
+  const [periodsDrawerOpen, setPeriodsDrawerOpen] = useState(false);
+  const [breaksDrawerOpen, setBreaksDrawerOpen] = useState(false);
 
   // Get current grade name
   const currentGrade = useMemo(
@@ -463,7 +470,7 @@ export default function SmartTimetableNew() {
             </div>
           ) : (
             <div className="space-y-1.5">
-              {(showAllTimeSlots ? timeSlots : timeSlots.slice(0, 1)).map((slot) => (
+              {timeSlots.slice(0, 1).map((slot) => (
                 <div key={slot.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
                   <div className="flex items-center gap-2">
                     <Clock className="h-3.5 w-3.5 text-primary" />
@@ -483,10 +490,10 @@ export default function SmartTimetableNew() {
               ))}
               {timeSlots.length > 1 && (
                 <button
-                  onClick={() => setShowAllTimeSlots(!showAllTimeSlots)}
+                  onClick={() => setPeriodsDrawerOpen(true)}
                   className="text-xs text-primary hover:text-primary/80 font-medium w-full text-left py-1"
                 >
-                  {showAllTimeSlots ? '▲ Show Less' : `▼ View All ${timeSlots.length} Periods`}
+                  ▼ View All {timeSlots.length} Periods
                 </button>
               )}
             </div>
@@ -549,7 +556,7 @@ export default function SmartTimetableNew() {
             </div>
           ) : (
             <div className="space-y-1.5">
-              {(showAllBreaks ? breaks : breaks.slice(0, 1)).map((breakItem) => (
+              {breaks.slice(0, 1).map((breakItem) => (
                 <div key={breakItem.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{breakItem.icon}</span>
@@ -569,10 +576,10 @@ export default function SmartTimetableNew() {
               ))}
               {breaks.length > 1 && (
                 <button
-                  onClick={() => setShowAllBreaks(!showAllBreaks)}
+                  onClick={() => setBreaksDrawerOpen(true)}
                   className="text-xs text-primary hover:text-primary/80 font-medium w-full text-left py-1"
                 >
-                  {showAllBreaks ? '▲ Show Less' : `▼ View All ${breaks.length} Breaks`}
+                  ▼ View All {breaks.length} Breaks
                 </button>
               )}
             </div>
@@ -868,6 +875,116 @@ export default function SmartTimetableNew() {
         onClose={() => setBulkLessonEntryOpen(false)}
         gradeId={selectedGradeId || undefined}
       />
+      
+      {/* All Periods Drawer */}
+      <Sheet open={periodsDrawerOpen} onOpenChange={setPeriodsDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              <span>All Class Periods</span>
+            </SheetTitle>
+            <SheetDescription>
+              View and manage all {timeSlots.length} class period{timeSlots.length !== 1 ? 's' : ''}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+            {timeSlots.map((slot) => (
+              <div key={slot.id} className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-primary">Period {slot.periodNumber}</span>
+                        <span className="text-slate-700 dark:text-slate-300 text-sm">{slot.time}</span>
+                      </div>
+                      {slot.startTime && slot.endTime && (
+                        <div className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                          {slot.startTime} - {slot.endTime}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setPeriodsDrawerOpen(false);
+                        setEditingTimeslot(slot);
+                      }}
+                      className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                      title="Edit timeslot"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPeriodsDrawerOpen(false);
+                        setTimeslotToDelete(slot);
+                      }}
+                      className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                      title="Delete timeslot"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* All Breaks Drawer */}
+      <Sheet open={breaksDrawerOpen} onOpenChange={setBreaksDrawerOpen}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <span className="text-lg">☕</span>
+              <span>All Break Times</span>
+            </SheetTitle>
+            <SheetDescription>
+              View and manage all {breaks.length} break{breaks.length !== 1 ? 's' : ''}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+            {breaks.map((breakItem) => (
+              <div key={breakItem.id} className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-lg">
+                      <span>{breakItem.icon}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-primary">{breakItem.name}</span>
+                        <span className="text-slate-600 dark:text-slate-300 text-sm">
+                          {breakItem.durationMinutes} min
+                        </span>
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                        After Period {breakItem.afterPeriod} • {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setBreaksDrawerOpen(false);
+                      setEditingBreak(breakItem);
+                    }}
+                    className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                    title="Edit break"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
       
       {/* Toast Notifications */}
       <Toaster />
