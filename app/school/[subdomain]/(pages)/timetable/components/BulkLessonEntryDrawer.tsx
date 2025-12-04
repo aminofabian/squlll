@@ -442,17 +442,20 @@ export function BulkLessonEntryDrawer({
                                   <SelectValue placeholder="Select subject" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {availableSubjects.map((subject) => (
-                                    <SelectItem key={subject.id} value={subject.id}>
-                                      <div className="flex items-center gap-2">
-                                        <div
-                                          className="w-2 h-2 rounded-full"
-                                          style={{ backgroundColor: subject.color || '#3B82F6' }}
-                                        />
-                                        {subject.name}
-                                      </div>
-                                    </SelectItem>
-                                  ))}
+                                  {availableSubjects.map((subject) => {
+                                    const subjectColor = 'color' in subject && typeof subject.color === 'string' ? subject.color : '#3B82F6';
+                                    return (
+                                      <SelectItem key={subject.id} value={subject.id}>
+                                        <div className="flex items-center gap-2">
+                                          <div
+                                            className="w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: subjectColor }}
+                                          />
+                                          {subject.name}
+                                        </div>
+                                      </SelectItem>
+                                    );
+                                  })}
                                 </SelectContent>
                               </Select>
                             </div>

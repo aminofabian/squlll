@@ -773,12 +773,13 @@ Check the browser console for detailed input information.`;
                   }
 
                   return filteredBackendSubjects.map((subject) => {
+                    const subjectColor = 'color' in subject && typeof subject.color === 'string' ? subject.color : '#3B82F6';
                     return (
                       <SelectItem key={subject.id} value={subject.id}>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded"
-                            style={{ backgroundColor: subject.color || '#3B82F6' }}
+                            style={{ backgroundColor: subjectColor }}
                           />
                           {subject.name}
                         </div>
