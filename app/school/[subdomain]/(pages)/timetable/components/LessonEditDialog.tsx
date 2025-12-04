@@ -30,7 +30,7 @@ interface LessonEditDialogProps {
 }
 
 export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
-  const { subjects, teachers, entries, timeSlots, grades, updateEntry, addEntry, deleteEntry, loadEntries, selectedGradeId, selectedTermId } = useTimetableStore();
+  const { subjects, teachers, entries, timeSlots, grades, addEntry, deleteEntry, loadEntries, selectedGradeId, selectedTermId } = useTimetableStore();
   const { selectedTerm } = useSelectedTerm();
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
   const { toast } = useToast();
@@ -542,13 +542,152 @@ Check the browser console for detailed input information.`;
 
         onClose();
       } else {
-        // Update existing entry - for now, use local update
-        // TODO: Implement update mutation when backend supports it
-        updateEntry(lesson.id, {
-          subjectId: formData.subjectId,
+        // Update existing entry via GraphQL mutation
+        if (!lesson.id) {
+          toast({
+            title: 'Error',
+            description: 'Entry ID is missing. Cannot update entry.',
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        // Validate required fields
+        if (!formData.subjectId || !formData.teacherId) {
+          toast({
+            title: 'Error',
+            description: 'Subject and Teacher are required fields.',
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        const mutation = `
+          mutation UpdateEntry($input: UpdateTimetableEntryInput!) {
+            updateTimetableEntry(input: $input) {
+              id
+              dayOfWeek
+              roomNumber
+              grade {
+                name
+              }
+              subject {
+                name
+              }
+              teacher {
+                user {
+                  name
+                }
+              }
+              timeSlot {
+                periodNumber
+                displayTime
+              }
+            }
+          }
+        `;
+
+        const input = {
+          id: lesson.id,
           teacherId: formData.teacherId,
-          roomNumber: formData.roomNumber || undefined,
+          subjectId: formData.subjectId,
+          roomNumber: formData.roomNumber || null,
+        };
+
+        const variables = {
+          input,
+        };
+
+        const requestBody = {
+          query: mutation,
+          variables,
+        };
+
+        console.log('Updating timetable entry with input:', input);
+        console.log('GraphQL mutation:', mutation);
+        console.log('GraphQL variables:', JSON.stringify(variables, null, 2));
+
+        const response = await fetch('/api/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(requestBody),
         });
+
+        // Parse JSON first - GraphQL returns errors in JSON format even with non-200 status
+        let result;
+        try {
+          result = await response.json();
+        } catch (parseError) {
+          const errorText = await response.text();
+          console.error('Failed to parse response as JSON:', errorText);
+          throw new Error(`Invalid response format: ${errorText.substring(0, 200)}`);
+        }
+
+        console.log('GraphQL response:', JSON.stringify(result, null, 2));
+
+        // Check for GraphQL errors first
+        if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+          console.error('GraphQL errors:', result.errors);
+          
+          const errorMessages = result.errors.map((e: any) => {
+            let message = e.message || 'Unknown error';
+            
+            // Handle validation errors with more detail
+            if (e.extensions?.code === 'VALIDATION_ERROR' || e.extensions?.code === 'BADREQUESTEXCEPTION') {
+              if (e.extensions.validationErrors) {
+                const validationDetails = Object.entries(e.extensions.validationErrors)
+                  .map(([field, errors]: [string, any]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+                  .join('; ');
+                message = `Validation failed: ${validationDetails}`;
+              } else if (e.extensions.exception?.response?.message) {
+                message = `Validation failed: ${Array.isArray(e.extensions.exception.response.message) 
+                  ? e.extensions.exception.response.message.join(', ') 
+                  : e.extensions.exception.response.message}`;
+              }
+            }
+            
+            if (e.path && e.path.length > 0) {
+              message += ` (at ${e.path.join('.')})`;
+            }
+            
+            return message;
+          }).join('; ');
+          
+          throw new Error(errorMessages);
+        }
+
+        // Check HTTP status
+        if (!response.ok) {
+          console.error('HTTP error response:', result);
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+
+        // Check for valid response data
+        if (!result.data) {
+          console.error('No data in response:', result);
+          throw new Error('Invalid response format: No data field in response');
+        }
+
+        if (!result.data.updateTimetableEntry) {
+          console.error('updateTimetableEntry is null or undefined. Full response:', JSON.stringify(result, null, 2));
+          throw new Error(
+            `Invalid response format: updateTimetableEntry is ${result.data?.updateTimetableEntry}. ` +
+            `Response data: ${JSON.stringify(result.data)}`
+          );
+        }
+
+        const updatedEntry = result.data.updateTimetableEntry;
+        console.log('Successfully updated entry:', updatedEntry);
+
+        // Reload entries to update the UI
+        if (selectedGradeId && termId) {
+          await loadEntries(termId, selectedGradeId);
+        }
 
         toast({
           title: 'Success',
