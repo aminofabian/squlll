@@ -313,15 +313,20 @@ export default function SmartTimetableNew() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto p-3">
-          {/* Header - Compact */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-2">
+          {/* Header */}
+          <div className="mb-4">
+            {/* Title and Actions Row */}
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <h1 className="text-xl font-bold">Smart Timetable</h1>
-                <span className="text-xs text-gray-500">•</span>
-                <p className="text-xs text-gray-600">
-                  {currentGrade?.name || 'Choose a grade to view schedule'}
-                </p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Smart Timetable</h1>
+                {currentGrade?.name && (
+                  <>
+                    <span className="text-slate-400">•</span>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                      {currentGrade.name}
+                    </p>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {isSidebarMinimized && (
@@ -337,14 +342,14 @@ export default function SmartTimetableNew() {
                 )}
                 <button
                   onClick={() => setBulkScheduleOpen(true)}
-                  className="px-3 py-1.5 text-xs bg-primary text-white hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 text-xs bg-primary text-white hover:bg-primary/90 rounded transition-colors flex items-center gap-1.5 font-medium"
                 >
                   <span>⚙️</span>
                   <span>Create Time Slots</span>
                 </button>
                 <button
                   onClick={() => setBulkLessonEntryOpen(true)}
-                  className="px-3 py-1.5 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 text-xs bg-primary/80 text-white hover:bg-primary/70 rounded transition-colors flex items-center gap-1.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!selectedGradeId}
                 >
                   <span>📚</span>
@@ -352,46 +357,56 @@ export default function SmartTimetableNew() {
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Grade Selector - Inline with Stats (Fallback for mobile or when sidebar is minimized) */}
-          <div className="mb-2 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">View Schedule For:</label>
-              <select
-                value={selectedGradeId || ''}
-                onChange={(e) => handleGradeChange(e.target.value)}
-                className="px-2 py-1 text-sm border-2 border-primary/10 bg-white text-slate-900 font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-              >
-                <option value="">Select a grade...</option>
-                {grades.map((grade) => (
-                  <option key={grade.id} value={grade.id}>
-                    {grade.displayName || grade.name}
-                  </option>
-                ))}
-              </select>
+            {/* Grade Selector and Stats Row */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  View Schedule For:
+                </label>
+                <select
+                  value={selectedGradeId || ''}
+                  onChange={(e) => handleGradeChange(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-primary/20 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                >
+                  <option value="">Select a grade...</option>
+                  {grades.map((grade) => (
+                    <option key={grade.id} value={grade.id}>
+                      {grade.displayName || grade.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Statistics */}
+              <div className="flex items-center gap-2 flex-1">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded">
+                  <span className="text-sm font-bold text-primary">{stats.totalLessons}</span>
+                  <span className="text-xs text-primary/80">Scheduled</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded">
+                  <span className="text-sm font-bold text-primary">{stats.completionPercentage}%</span>
+                  <span className="text-xs text-primary/80">Complete</span>
+                </div>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 border rounded ${
+                  conflictCount > 0 
+                    ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800' 
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                }`}>
+                  <span className={`text-sm font-bold ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                    {conflictCount}
+                  </span>
+                  <span className={`text-xs ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                    Issues
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded">
+                  <span className="text-sm font-bold text-primary">{Object.keys(stats.subjectDistribution).length}</span>
+                  <span className="text-xs text-primary/80">Subjects</span>
+                </div>
+              </div>
             </div>
-
-        {/* Statistics - Compact Inline */}
-        <div className="flex items-center gap-3 flex-1">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-primary/5 border border-primary/10">
-            <span className="text-xs font-bold text-primary">{stats.totalLessons}</span>
-            <span className="text-[10px] text-primary">Scheduled</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 border border-green-200">
-            <span className="text-xs font-bold text-green-600">{stats.completionPercentage}%</span>
-            <span className="text-[10px] text-green-600">Complete</span>
-          </div>
-          <div className={`flex items-center gap-1.5 px-2 py-1 border ${conflictCount > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-            <span className={`text-xs font-bold ${conflictCount > 0 ? 'text-red-600' : 'text-gray-600'}`}>{conflictCount}</span>
-            <span className={`text-[10px] ${conflictCount > 0 ? 'text-red-600' : 'text-gray-600'}`}>Issues</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 border border-purple-200">
-            <span className="text-xs font-bold text-purple-600">{Object.keys(stats.subjectDistribution).length}</span>
-            <span className="text-[10px] text-purple-600">Subjects</span>
-          </div>
-        </div>
-      </div>
 
       {/* Conflict Warnings - Compact */}
       {showConflicts && conflictCount > 0 && (
@@ -412,13 +427,13 @@ export default function SmartTimetableNew() {
       {/* Time Slots & Breaks - Compact Side by Side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
         {/* Time Slots Section */}
-        <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-l-2 border-primary p-2 shadow-sm">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm">⏰</span>
-              <h3 className="font-semibold text-primary text-xs">Class Periods</h3>
+        <div className="bg-primary/5 dark:bg-primary/10 border-l-2 border-primary rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-primary text-sm">Class Periods</h3>
               {!loadingTimeSlots && timeSlots.length > 0 && (
-                <span className="text-[10px] bg-primary/20 text-primary px-1 py-0.5 font-medium">
+                <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
                   {timeSlots.length} period{timeSlots.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -426,22 +441,22 @@ export default function SmartTimetableNew() {
             {!loadingTimeSlots && timeSlots.length > 0 && (
               <button
                 onClick={() => setShowDeleteAllDialog(true)}
-                className="text-[10px] text-red-600 hover:text-red-800 transition-colors"
+                className="text-red-600 hover:text-red-800 transition-colors"
                 title="Delete all periods"
               >
-                🗑️
+                <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>
           {loadingTimeSlots ? (
-            <p className="text-[10px] text-primary/70">Loading periods...</p>
+            <p className="text-xs text-primary/70">Loading periods...</p>
           ) : timeSlots.length === 0 ? (
             <div className="space-y-1.5">
-              <p className="text-[10px] text-primary font-medium mb-1">No class periods set up yet</p>
-              <p className="text-[9px] text-primary/70 mb-2">Start by creating your daily schedule periods</p>
+              <p className="text-xs text-primary font-medium">No class periods set up yet</p>
+              <p className="text-[10px] text-primary/70">Start by creating your daily schedule periods</p>
               <button
                 onClick={() => setBulkScheduleOpen(true)}
-                className="w-full text-[10px] bg-primary text-white px-2 py-1.5 font-medium hover:bg-primary/90 transition-colors"
+                className="w-full text-xs bg-primary text-white px-2 py-1.5 font-medium hover:bg-primary/90 rounded transition-colors"
               >
                 ➕ Create Periods Now
               </button>
@@ -449,23 +464,19 @@ export default function SmartTimetableNew() {
           ) : (
             <div className="space-y-1.5">
               {(showAllTimeSlots ? timeSlots : timeSlots.slice(0, 1)).map((slot) => (
-                <div key={slot.id} className="group bg-white dark:bg-slate-800 rounded-lg p-2.5 border border-primary/20 dark:border-primary/30 shadow-sm hover:shadow-md transition-all">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1">
-                      <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary/20 dark:bg-primary/30">
-                        <Clock className="h-3.5 w-3.5 text-primary" />
+                <div key={slot.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-primary text-xs">Period {slot.periodNumber}</span>
+                        <span className="text-slate-700 dark:text-slate-300 text-xs">{slot.time}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-primary dark:text-primary-foreground text-xs">Period {slot.periodNumber}</span>
-                          <span className="text-slate-700 dark:text-slate-300 text-xs font-medium">{slot.time}</span>
+                      {slot.startTime && slot.endTime && (
+                        <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
+                          {slot.startTime} - {slot.endTime}
                         </div>
-                        {slot.startTime && slot.endTime && (
-                          <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
-                            {slot.startTime} - {slot.endTime}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -473,7 +484,7 @@ export default function SmartTimetableNew() {
               {timeSlots.length > 1 && (
                 <button
                   onClick={() => setShowAllTimeSlots(!showAllTimeSlots)}
-                  className="text-[10px] text-primary dark:text-primary-foreground hover:text-primary/80 dark:hover:text-primary-foreground/80 font-medium w-full text-left py-1.5 px-2 rounded hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
+                  className="text-xs text-primary hover:text-primary/80 font-medium w-full text-left py-1"
                 >
                   {showAllTimeSlots ? '▲ Show Less' : `▼ View All ${timeSlots.length} Periods`}
                 </button>
@@ -483,13 +494,13 @@ export default function SmartTimetableNew() {
         </div>
 
         {/* Breaks Section */}
-        <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-l-2 border-orange-500 p-2 shadow-sm">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1.5">
+        <div className="bg-primary/5 dark:bg-primary/10 border-l-2 border-primary rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
               <span className="text-sm">☕</span>
-              <h3 className="font-semibold text-orange-900 text-xs">Break Times</h3>
+              <h3 className="font-semibold text-primary text-sm">Break Times</h3>
               {breaks.length > 0 && (
-                <span className="text-[10px] bg-orange-200 text-orange-800 px-1 py-0.5 font-medium">
+                <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
                   {breaks.length} break{breaks.length !== 1 ? 's' : ''}
                 </span>
               )}
@@ -498,10 +509,10 @@ export default function SmartTimetableNew() {
               {breaks.length > 0 && (
                 <button
                   onClick={() => setShowDeleteAllBreaksDialog(true)}
-                  className="text-[10px] text-red-600 hover:text-red-800 transition-colors"
+                  className="text-red-600 hover:text-red-800 transition-colors"
                   title="Delete all breaks"
                 >
-                  🗑️
+                  <Trash2 className="h-4 w-4" />
                 </button>
               )}
               <button
@@ -512,17 +523,17 @@ export default function SmartTimetableNew() {
                     dayOfWeek: 1,
                   });
                 }}
-                className="text-[10px] text-orange-700 hover:text-orange-900 transition-colors"
+                className="text-primary hover:text-primary/80 transition-colors"
                 title="Add break time"
               >
-                ➕
+                <Plus className="h-4 w-4" />
               </button>
             </div>
           </div>
           {breaks.length === 0 ? (
-            <div className="space-y-1">
-              <p className="text-[10px] text-orange-600 font-medium">No break times scheduled</p>
-              <p className="text-[9px] text-orange-500">Add lunch and short breaks between periods</p>
+            <div className="space-y-1.5">
+              <p className="text-xs text-primary font-medium">No break times scheduled</p>
+              <p className="text-[10px] text-primary/70">Add lunch and short breaks between periods</p>
               <button
                 onClick={() => {
                   setEditingBreak({
@@ -531,33 +542,35 @@ export default function SmartTimetableNew() {
                     dayOfWeek: 1,
                   });
                 }}
-                className="w-full text-[10px] bg-orange-500 text-white px-2 py-1.5 font-medium hover:bg-orange-600 transition-colors mt-1"
+                className="w-full text-xs bg-primary text-white px-2 py-1.5 font-medium hover:bg-primary/90 rounded transition-colors"
               >
                 ➕ Add Break Time
               </button>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {(showAllBreaks ? breaks : breaks.slice(0, 1)).map((breakItem) => (
-                <div key={breakItem.id} className="bg-white/80 backdrop-blur-sm p-1 border border-orange-200/50 text-[10px]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span>{breakItem.icon}</span>
-                      <span className="font-medium text-orange-900">{breakItem.name}</span>
+                <div key={breakItem.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{breakItem.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-primary text-xs">{breakItem.name}</span>
+                        <span className="text-slate-600 dark:text-slate-300 text-[10px]">
+                          {breakItem.durationMinutes} min
+                        </span>
+                      </div>
+                      <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
+                        After P{breakItem.afterPeriod} • {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
+                      </div>
                     </div>
-                    <div className="text-gray-600 text-[9px]">
-                      After P{breakItem.afterPeriod} • {breakItem.durationMinutes} min
-                    </div>
-                  </div>
-                  <div className="text-gray-500 text-[9px] mt-0.5">
-                    {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
                   </div>
                 </div>
               ))}
               {breaks.length > 1 && (
                 <button
                   onClick={() => setShowAllBreaks(!showAllBreaks)}
-                  className="text-[10px] text-orange-600 hover:text-orange-800 font-medium w-full text-left"
+                  className="text-xs text-primary hover:text-primary/80 font-medium w-full text-left py-1"
                 >
                   {showAllBreaks ? '▲ Show Less' : `▼ View All ${breaks.length} Breaks`}
                 </button>
