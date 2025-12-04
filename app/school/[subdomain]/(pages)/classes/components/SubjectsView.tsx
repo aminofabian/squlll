@@ -294,114 +294,168 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
 
   return (
     <div className="space-y-6">
-      {/* Compact Filters Container */}
-      <Card className="border-2 border-primary/20">
-        <CardContent className="p-2">
-          <div className="space-y-2">
-            {/* Search Bar - Top */}
+      {/* Professional Filters Container */}
+      <Card className="border border-slate-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-800">
+        <CardContent className="p-3">
+          <div className="space-y-3">
+            {/* Search Bar - Prominent */}
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-slate-400" />
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
               <Input
-                placeholder="Search subjects..."
+                placeholder="Search subjects by name, code, or department..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-7 h-7 rounded-none border border-primary/20 text-xs"
+                className="pl-9 h-9 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
 
-            {/* All Filters in Compact Layout */}
-            <div className="flex flex-wrap items-center gap-1">
-              {/* All Grades Button */}
-              <Button
-                variant={filterByGradeId === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterByGradeId(null)}
-                className="flex items-center gap-1 px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
-              >
-                <BookOpen className="h-3 w-3" />
-                All
-              </Button>
-
-              {/* Grade Buttons - Compact */}
-              {allGradesSorted.map((grade) => (
+            {/* Grade Filters Section */}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 <Button
-                  key={grade.id}
-                  variant={filterByGradeId === grade.id ? "default" : "outline"}
+                  variant={filterByGradeId === null ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setFilterByGradeId(grade.id)}
-                  className="px-1.5 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium min-w-[35px]"
-                  title={grade.name}
+                  onClick={() => setFilterByGradeId(null)}
+                  className={`flex items-center gap-1 px-2.5 py-1 h-7 text-xs font-medium transition-all ${
+                    filterByGradeId === null
+                      ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
                 >
-                  {grade.abbreviated}
+                  <BookOpen className="h-3 w-3" />
+                  All Grades
                 </Button>
-              ))}
-
-              {/* Divider */}
-              <div className="h-4 w-px bg-primary/20 mx-0.5" />
-
-              {/* Type Filter Buttons */}
-              <Button
-                variant={selectedFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('all')}
-                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
-              >
-                All
-              </Button>
-              <Button
-                variant={selectedFilter === 'core' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('core')}
-                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
-              >
-                Core
-              </Button>
-              <Button
-                variant={selectedFilter === 'elective' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('elective')}
-                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
-              >
-                Elective
-              </Button>
-              <Button
-                variant={selectedFilter === 'active' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('active')}
-                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
-              >
-                Active
-              </Button>
-              <Button
-                variant={selectedFilter === 'inactive' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedFilter('inactive')}
-                className="px-2 py-0.5 h-6 rounded-none border border-primary/20 text-[10px] font-medium"
-              >
-                Inactive
-              </Button>
+                {allGradesSorted.map((grade) => (
+                  <Button
+                    key={grade.id}
+                    variant={filterByGradeId === grade.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterByGradeId(grade.id)}
+                    className={`px-2.5 py-1 h-7 text-xs font-medium min-w-[40px] transition-all ${
+                      filterByGradeId === grade.id
+                        ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
+                        : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                    }`}
+                    title={grade.name}
+                  >
+                    {grade.abbreviated}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            {/* Active Filters - Compact */}
+            {/* Type & Status Filters Section */}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-1.5">
+                <Button
+                  variant={selectedFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFilter('all')}
+                  className={`px-2.5 py-1 h-7 text-xs font-medium transition-all ${
+                    selectedFilter === 'all'
+                      ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  All Types
+                </Button>
+                <Button
+                  variant={selectedFilter === 'core' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFilter('core')}
+                  className={`px-2.5 py-1 h-7 text-xs font-medium transition-all ${
+                    selectedFilter === 'core'
+                      ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Core
+                </Button>
+                <Button
+                  variant={selectedFilter === 'elective' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFilter('elective')}
+                  className={`px-2.5 py-1 h-7 text-xs font-medium transition-all ${
+                    selectedFilter === 'elective'
+                      ? 'bg-primary text-white shadow-sm hover:bg-primary/90'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Elective
+                </Button>
+                <Button
+                  variant={selectedFilter === 'active' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFilter('active')}
+                  className={`px-2.5 py-1 h-7 text-xs font-medium transition-all ${
+                    selectedFilter === 'active'
+                      ? 'bg-green-600 text-white shadow-sm hover:bg-green-700 border-green-600'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Active
+                </Button>
+                <Button
+                  variant={selectedFilter === 'inactive' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFilter('inactive')}
+                  className={`px-2.5 py-1 h-7 text-xs font-medium transition-all ${
+                    selectedFilter === 'inactive'
+                      ? 'bg-red-600 text-white shadow-sm hover:bg-red-700 border-red-600'
+                      : 'border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  Inactive
+                </Button>
+              </div>
+            </div>
+
+            {/* Active Filters Display */}
             {(searchTerm || selectedFilter !== 'all' || filterByGradeId) && (
-              <div className="flex flex-wrap gap-1 items-center pt-1 border-t border-primary/10">
-                <span className="text-[10px] font-semibold text-primary">Active:</span>
+              <div className="flex flex-wrap gap-1.5 items-center pt-2 border-t border-slate-200 dark:border-slate-700">
                 {searchTerm && (
-                  <Badge variant="outline" className="flex gap-0.5 items-center border-primary/20 bg-primary/5 text-primary px-1.5 py-0 rounded-none text-[10px] h-4">
+                  <Badge 
+                    variant="outline" 
+                    className="flex gap-1 items-center border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium h-6"
+                  >
+                    <Search className="h-2.5 w-2.5" />
                     <span>"{searchTerm}"</span>
-                    <X className="h-2.5 w-2.5 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSearchTerm('')} />
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="ml-0.5 hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
                   </Badge>
                 )}
                 {selectedFilter !== 'all' && (
-                  <Badge variant="outline" className="flex gap-0.5 items-center border-primary/20 bg-primary/5 text-primary px-1.5 py-0 rounded-none text-[10px] h-4">
-                    <span>{selectedFilter}</span>
-                    <X className="h-2.5 w-2.5 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setSelectedFilter('all')} />
+                  <Badge 
+                    variant="outline" 
+                    className="flex gap-1 items-center border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium h-6"
+                  >
+                    <Filter className="h-2.5 w-2.5" />
+                    <span className="capitalize">{selectedFilter}</span>
+                    <button
+                      onClick={() => setSelectedFilter('all')}
+                      className="ml-0.5 hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
                   </Badge>
                 )}
                 {filterByGradeId && (
-                  <Badge variant="outline" className="flex gap-0.5 items-center border-primary/20 bg-primary/5 text-primary px-1.5 py-0 rounded-none text-[10px] h-4">
-                    <span>{allGradesSorted.find(g => g.id === filterByGradeId)?.abbreviated}</span>
-                    <X className="h-2.5 w-2.5 cursor-pointer hover:text-red-500 transition-colors" onClick={() => setFilterByGradeId(null)} />
+                  <Badge 
+                    variant="outline" 
+                    className="flex gap-1 items-center border-primary/30 bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium h-6"
+                  >
+                    <GraduationCap className="h-2.5 w-2.5" />
+                    <span>{allGradesSorted.find(g => g.id === filterByGradeId)?.name || allGradesSorted.find(g => g.id === filterByGradeId)?.abbreviated}</span>
+                    <button
+                      onClick={() => setFilterByGradeId(null)}
+                      className="ml-0.5 hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
                   </Badge>
                 )}
                 <Button
@@ -412,9 +466,10 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
                     setSelectedFilter('all')
                     setFilterByGradeId(null)
                   }}
-                  className="text-[10px] h-4 px-1.5 py-0 hover:text-red-600 hover:border-red-500/20 rounded-none border border-primary/20"
+                  className="h-6 px-2 text-xs font-medium border-slate-300 dark:border-slate-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-700 transition-all"
                 >
-                  Clear
+                  <X className="h-2.5 w-2.5 mr-1" />
+                  Clear All
                 </Button>
               </div>
             )}
@@ -424,72 +479,72 @@ export function SubjectsView({ selectedGradeId }: SubjectsViewProps = {}) {
 
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
-        <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary/10 border border-primary/20 rounded p-1">
-                <BookOpen className="h-3 w-3 text-primary" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-1.5">
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="p-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="bg-primary/10 border border-primary/20 rounded p-0.5">
+                <BookOpen className="h-2.5 w-2.5 text-primary" />
               </div>
               <div>
-                <p className="text-[10px] font-mono text-primary uppercase tracking-wide">Total</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
+                <p className="text-[9px] font-mono text-primary uppercase tracking-wide">Total</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary/10 border border-primary/20 rounded p-1">
-                <BookMarked className="h-3 w-3 text-primary" />
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="p-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="bg-primary/10 border border-primary/20 rounded p-0.5">
+                <BookMarked className="h-2.5 w-2.5 text-primary" />
               </div>
               <div>
-                <p className="text-[10px] font-mono text-primary uppercase tracking-wide">Core</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.core}</p>
+                <p className="text-[9px] font-mono text-primary uppercase tracking-wide">Core</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{stats.core}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardContent className="p-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-primary/10 border border-primary/20 rounded p-1">
-                <FileText className="h-3 w-3 text-primary" />
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="p-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="bg-primary/10 border border-primary/20 rounded p-0.5">
+                <FileText className="h-2.5 w-2.5 text-primary" />
               </div>
               <div>
-                <p className="text-[10px] font-mono text-primary uppercase tracking-wide">Elective</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.elective}</p>
+                <p className="text-[9px] font-mono text-primary uppercase tracking-wide">Elective</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{stats.elective}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-green-500/20 bg-green-500/5">
-          <CardContent className="p-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-green-500/10 border border-green-500/20 rounded p-1">
-                <GraduationCap className="h-3 w-3 text-green-600" />
+        <Card className="border border-green-500/20 bg-green-500/5">
+          <CardContent className="p-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="bg-green-500/10 border border-green-500/20 rounded p-0.5">
+                <GraduationCap className="h-2.5 w-2.5 text-green-600" />
               </div>
               <div>
-                <p className="text-[10px] font-mono text-green-600 uppercase tracking-wide">Active</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.active}</p>
+                <p className="text-[9px] font-mono text-green-600 uppercase tracking-wide">Active</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{stats.active}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-red-500/20 bg-red-500/5">
-          <CardContent className="p-2">
-            <div className="flex items-center gap-2">
-              <div className="bg-red-500/10 border border-red-500/20 rounded p-1">
-                <X className="h-3 w-3 text-red-600" />
+        <Card className="border border-red-500/20 bg-red-500/5">
+          <CardContent className="p-1.5">
+            <div className="flex items-center gap-1.5">
+              <div className="bg-red-500/10 border border-red-500/20 rounded p-0.5">
+                <X className="h-2.5 w-2.5 text-red-600" />
               </div>
               <div>
-                <p className="text-[10px] font-mono text-red-600 uppercase tracking-wide">Inactive</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stats.inactive}</p>
+                <p className="text-[9px] font-mono text-red-600 uppercase tracking-wide">Inactive</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{stats.inactive}</p>
               </div>
             </div>
           </CardContent>

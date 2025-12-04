@@ -230,6 +230,41 @@ export function SchoolSearchFilter({
     );
   }, [allGrades, searchTerm]);
 
+  // Group grades into three categories
+  const groupedGrades = useMemo(() => {
+    const preschool: Array<GradeLevel & { levelId: string }> = [];
+    const primary: Array<GradeLevel & { levelId: string }> = [];
+    const form: Array<GradeLevel & { levelId: string }> = [];
+
+    filteredGrades.forEach(grade => {
+      const sortOrder = getGradeSortOrder(grade.name);
+      const abbreviated = abbreviateGrade(grade.name);
+      
+      // Preschool: PG, PP1, PP2 (sort order 1-3)
+      if (sortOrder >= 1 && sortOrder <= 3) {
+        preschool.push(grade);
+      }
+      // Primary: G1-G6 (sort order 5-10, which is 4+1 to 4+6)
+      else if (sortOrder >= 5 && sortOrder <= 10) {
+        primary.push(grade);
+      }
+      // Form: F1-F6 (G7-G12, sort order 11-16, which is 4+7 to 4+12)
+      else if (sortOrder >= 11 && sortOrder <= 16) {
+        form.push(grade);
+      }
+      // Handle edge cases - check abbreviated name as fallback
+      else if (abbreviated.startsWith('PG') || abbreviated.startsWith('PP')) {
+        preschool.push(grade);
+      } else if (abbreviated.startsWith('G') && /^G[1-6]$/.test(abbreviated)) {
+        primary.push(grade);
+      } else if (abbreviated.startsWith('F') && /^F[1-6]$/.test(abbreviated)) {
+        form.push(grade);
+      }
+    });
+
+    return { preschool, primary, form };
+  }, [filteredGrades]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     if (onSearch) {
@@ -479,19 +514,19 @@ export function SchoolSearchFilter({
       <ScrollArea className="flex-1 px-4">
         <div className="space-y-6 py-4">
           {isLoading ? (
-            <div className="flex flex-wrap gap-2 py-2">
+            <div className="grid grid-cols-2 gap-2 py-2">
               {/* Grades Grid Skeleton */}
               {[...Array(12)].map((_, j) => (
                 <motion.div 
                   key={j} 
-                  className={`h-8 ${j % 3 === 0 ? 'w-20' : 'w-16'} border border-primary/20 rounded-md bg-muted-foreground/5`}
+                  className="h-8 w-full border border-primary/20 rounded-md bg-muted-foreground/5"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.2, delay: j * 0.03 }}
                 >
-                  <div className="flex items-center h-full px-3">
+                  <div className="flex items-center justify-center h-full px-3">
                     <div className="h-3.5 w-3.5 rounded-full bg-muted-foreground/10 animate-pulse" />
-                    <div className="h-2 flex-1 bg-muted-foreground/10 rounded ml-1.5 animate-pulse" />
+                    <div className="h-2 w-12 bg-muted-foreground/10 rounded ml-1.5 animate-pulse" />
                   </div>
                 </motion.div>
               ))}
@@ -501,123 +536,163 @@ export function SchoolSearchFilter({
               <p className="text-muted-foreground">No grades found</p>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 py-2">
-              {filteredGrades.map((grade) => (
-                <div key={grade.id} className="flex flex-col gap-1.5">
-                  <Button
-                    variant={selectedGradeId === grade.id ? "default" : "outline"}
-                    className={cn(
-                      "h-8 px-3 transition-all duration-300 group text-xs relative",
-                      selectedGradeId === grade.id 
-                        ? "bg-primary text-white hover:text-white shadow-sm"
-                        : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
-                    )}
-                    onClick={() => handleGradeClick(grade.id, grade.levelId)}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <div className={cn(
-                        "flex items-center justify-center h-4 w-4 rounded-full transition-colors",
-                        selectedGradeId === grade.id 
-                          ? "bg-white/20" 
-                          : "bg-muted group-hover:bg-primary/10"
-                      )}>
-                        <GraduationCap className={cn(
-                          "h-2.5 w-2.5 shrink-0",
-                          selectedGradeId === grade.id 
-                            ? "text-white" 
-                            : "text-muted-foreground group-hover:text-primary"
-                        )} />
+            <div className="space-y-6 py-2">
+              {/* Helper function to render a grade group */}
+              {(() => {
+                const renderGradeGroup = (
+                  grades: Array<GradeLevel & { levelId: string }>,
+                  groupTitle: string
+                ) => {
+                  if (grades.length === 0) return null;
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Group Header */}
+                      <div className="flex items-center gap-2 px-1">
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                        <h4 className="text-xs font-semibold text-primary/80 uppercase tracking-wider px-2">
+                          {groupTitle}
+                        </h4>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                       </div>
-                      <span className="font-medium">
-                        {abbreviateGrade(grade.name)}
-                      </span>
-                      {grade.streams?.length > 0 && (
-                        <div className="flex items-center">
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              "ml-1 text-[9px] h-4 px-1.5 shrink-0 transition-all duration-300",
-                              selectedGradeId === grade.id
-                                ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
-                                : "border-dashed hover:border-primary/50"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleGradeClick(grade.id, grade.levelId);
-                            }}
-                          >
-                            <GitBranch className="mr-0.5 h-2 w-2 shrink-0" />
-                            {grade.streams.length}
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                    {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="absolute -right-1 -top-1 h-2 w-2 bg-secondary rounded-full" 
-                      />
-                    )}
-                  </Button>
-                  
-                  {/* Streams section */}
-                  {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex flex-wrap gap-1.5 pl-1 overflow-visible"
-                    >
-                      {grade.streams.map((stream) => {
-                        const isSelected = selectedStreamId === stream.id;
-                        
-                        return (
-                          <Button
-                            key={stream.id}
-                            variant="outline"
-                            size="sm"
-                            className={cn(
-                              "h-6 py-0 px-2.5 text-[10px] relative group overflow-hidden transition-all duration-300",
-                              isSelected 
-                                ? "bg-white dark:bg-slate-800 border border-primary shadow-sm" 
-                                : "hover:bg-primary/5 dark:hover:bg-primary/10 border border-dashed hover:border-primary/40"
-                            )}
-                            onClick={() => handleStreamClick(stream.id, grade.id, grade.levelId)}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <div className={cn(
-                                "flex items-center justify-center h-3.5 w-3.5 rounded-full transition-colors",
-                                isSelected
-                                  ? "bg-primary" 
-                                  : "bg-muted group-hover:bg-primary/10"
-                              )}>
-                                <GitBranch className={cn(
-                                  "h-2 w-2 shrink-0",
-                                  isSelected ? "text-white" : "text-muted-foreground group-hover:text-primary"
-                                )} />
+                      
+                      {/* Grades Grid */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {grades.map((grade) => (
+                          <div key={grade.id} className="flex flex-col gap-1.5">
+                            <Button
+                              variant={selectedGradeId === grade.id ? "default" : "outline"}
+                              className={cn(
+                                "h-8 px-3 transition-all duration-300 group text-xs relative w-full",
+                                selectedGradeId === grade.id 
+                                  ? "bg-primary text-white hover:text-white shadow-sm"
+                                  : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                              )}
+                              onClick={() => handleGradeClick(grade.id, grade.levelId)}
+                            >
+                              <div className="flex items-center gap-1.5 justify-center w-full">
+                                <div className={cn(
+                                  "flex items-center justify-center h-4 w-4 rounded-full transition-colors",
+                                  selectedGradeId === grade.id 
+                                    ? "bg-white/20" 
+                                    : "bg-muted group-hover:bg-primary/10"
+                                )}>
+                                  <GraduationCap className={cn(
+                                    "h-2.5 w-2.5 shrink-0",
+                                    selectedGradeId === grade.id 
+                                      ? "text-white" 
+                                      : "text-muted-foreground group-hover:text-primary"
+                                  )} />
+                                </div>
+                                <span className="font-medium">
+                                  {abbreviateGrade(grade.name)}
+                                </span>
+                                {grade.streams?.length > 0 && (
+                                  <div className="flex items-center">
+                                    <Badge 
+                                      variant="outline" 
+                                      className={cn(
+                                        "ml-1 text-[9px] h-4 px-1.5 shrink-0 transition-all duration-300",
+                                        selectedGradeId === grade.id
+                                          ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
+                                          : "border-dashed hover:border-primary/50"
+                                      )}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleGradeClick(grade.id, grade.levelId);
+                                      }}
+                                    >
+                                      <GitBranch className="mr-0.5 h-2 w-2 shrink-0" />
+                                      {grade.streams.length}
+                                    </Badge>
+                                  </div>
+                                )}
                               </div>
-                              <span className={cn(
-                                "font-medium",
-                                isSelected && "text-primary"
-                              )}>{stream.name}</span>
-                            </div>
+                              {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
+                                <motion.div 
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  className="absolute -right-1 -top-1 h-2 w-2 bg-secondary rounded-full" 
+                                />
+                              )}
+                            </Button>
                             
-                            {isSelected && (
+                            {/* Streams section */}
+                            {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
                               <motion.div 
-                                initial={{ width: 0 }}
-                                animate={{ width: '100%' }}
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.2 }}
-                                className="absolute bottom-0 left-0 h-0.5 bg-primary" 
-                              />
+                                className="grid grid-cols-2 gap-1.5 pl-1 overflow-visible"
+                              >
+                                {grade.streams.map((stream) => {
+                                  const isSelected = selectedStreamId === stream.id;
+                                  
+                                  return (
+                                    <Button
+                                      key={stream.id}
+                                      variant="outline"
+                                      size="sm"
+                                      className={cn(
+                                        "h-6 py-0 px-2.5 text-[10px] relative group overflow-hidden transition-all duration-300 w-full",
+                                        isSelected 
+                                          ? "bg-white dark:bg-slate-800 border border-primary shadow-sm" 
+                                          : "hover:bg-primary/5 dark:hover:bg-primary/10 border border-dashed hover:border-primary/40"
+                                      )}
+                                      onClick={() => handleStreamClick(stream.id, grade.id, grade.levelId)}
+                                    >
+                                      <div className="flex items-center gap-1.5 justify-center w-full">
+                                        <div className={cn(
+                                          "flex items-center justify-center h-3.5 w-3.5 rounded-full transition-colors",
+                                          isSelected
+                                            ? "bg-primary" 
+                                            : "bg-muted group-hover:bg-primary/10"
+                                        )}>
+                                          <GitBranch className={cn(
+                                            "h-2 w-2 shrink-0",
+                                            isSelected ? "text-white" : "text-muted-foreground group-hover:text-primary"
+                                          )} />
+                                        </div>
+                                        <span className={cn(
+                                          "font-medium truncate",
+                                          isSelected && "text-primary"
+                                        )}>{stream.name}</span>
+                                      </div>
+                                      
+                                      {isSelected && (
+                                        <motion.div 
+                                          initial={{ width: 0 }}
+                                          animate={{ width: '100%' }}
+                                          transition={{ duration: 0.2 }}
+                                          className="absolute bottom-0 left-0 h-0.5 bg-primary" 
+                                        />
+                                      )}
+                                    </Button>
+                                  );
+                                })}
+                              </motion.div>
                             )}
-                          </Button>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </div>
-              ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                };
+
+                return (
+                  <>
+                    {renderGradeGroup(groupedGrades.preschool, 'Preschool')}
+                    {groupedGrades.preschool.length > 0 && groupedGrades.primary.length > 0 && (
+                      <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
+                    )}
+                    {renderGradeGroup(groupedGrades.primary, 'Primary')}
+                    {groupedGrades.primary.length > 0 && groupedGrades.form.length > 0 && (
+                      <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
+                    )}
+                    {renderGradeGroup(groupedGrades.form, 'Form')}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

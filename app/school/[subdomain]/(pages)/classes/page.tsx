@@ -395,16 +395,30 @@ function ClassesPage() {
             }} 
             direction="right"
           >
-            <DrawerContent className="max-w-4xl">
-              <DrawerHeader className="border-b border-primary/20">
-                <DrawerTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Subjects{selectedGrade?.grade ? ` - ${selectedGrade.grade.name}` : ''}
-                </DrawerTitle>
-                <DrawerDescription className="text-slate-600 dark:text-slate-400">
-                  Manage and view all subjects
-                </DrawerDescription>
+            <DrawerContent className="max-w-4xl h-[95vh] flex flex-col">
+              <DrawerHeader className="px-4 py-3 border-b border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DrawerTitle className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-primary" />
+                      Subjects Management
+                    </DrawerTitle>
+                    <DrawerDescription className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      View and manage all subjects across grades
+                    </DrawerDescription>
+                  </div>
+                  <DrawerClose asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </DrawerClose>
+                </div>
               </DrawerHeader>
-              <div className="overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900">
                 <SubjectsView selectedGradeId={selectedGradeId || null} />
               </div>
             </DrawerContent>
