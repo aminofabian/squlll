@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
 import { Button } from '@/components/ui/button';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Clock, Edit2, Trash2, Plus } from 'lucide-react';
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 
@@ -447,22 +447,33 @@ export default function SmartTimetableNew() {
               </button>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {(showAllTimeSlots ? timeSlots : timeSlots.slice(0, 1)).map((slot) => (
-                <div key={slot.id} className="bg-white/80 backdrop-blur-sm p-1 border border-primary/20 text-[10px]">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-primary">Period {slot.periodNumber}</span>
-                      <span className="text-gray-700">{slot.time}</span>
+                <div key={slot.id} className="group bg-white dark:bg-slate-800 rounded-lg p-2.5 border border-primary/20 dark:border-primary/30 shadow-sm hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary/20 dark:bg-primary/30">
+                        <Clock className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-primary dark:text-primary-foreground text-xs">Period {slot.periodNumber}</span>
+                          <span className="text-slate-700 dark:text-slate-300 text-xs font-medium">{slot.time}</span>
+                        </div>
+                        {slot.startTime && slot.endTime && (
+                          <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
+                            {slot.startTime} - {slot.endTime}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <span className="text-gray-500 text-[9px]">{slot.startTime}-{slot.endTime}</span>
                   </div>
                 </div>
               ))}
               {timeSlots.length > 1 && (
                 <button
                   onClick={() => setShowAllTimeSlots(!showAllTimeSlots)}
-                  className="text-[10px] text-primary hover:text-primary-dark font-medium w-full text-left"
+                  className="text-[10px] text-primary dark:text-primary-foreground hover:text-primary/80 dark:hover:text-primary-foreground/80 font-medium w-full text-left py-1.5 px-2 rounded hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
                 >
                   {showAllTimeSlots ? '▲ Show Less' : `▼ View All ${timeSlots.length} Periods`}
                 </button>
@@ -557,120 +568,173 @@ export default function SmartTimetableNew() {
       </div>
 
       {/* Timetable Grid */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-3 text-left font-semibold">Time</th>
-              {days.map((day, index) => (
-                <th key={index} className="border p-3 text-left font-semibold">
-                  {day}
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 border-b-2 border-slate-200 dark:border-slate-600">
+                <th className="border-r border-slate-200 dark:border-slate-600 p-4 text-left font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <span>Time</span>
+                  </div>
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loadingTimeSlots ? (
-              <tr>
-                <td colSpan={6} className="border p-8 text-center text-gray-500">
-                  Loading time slots...
-                </td>
+                {days.map((day, index) => (
+                  <th key={index} className="border-r border-slate-200 dark:border-slate-600 last:border-r-0 p-4 text-left font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">
+                    {day}
+                  </th>
+                ))}
               </tr>
-            ) : timeSlots.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="border p-8 text-center text-gray-500">
-                  No time slots available. Click "Bulk Schedule Setup" to create time slots.
-                </td>
-              </tr>
-            ) : (
-              timeSlots.map((slot, slotIndex) => {
-              // Get breaks that come after this period
-              const breaksAfterThisPeriod = breaks.filter(
-                (b) => b.afterPeriod === slot.periodNumber
-              );
+            </thead>
+            <tbody>
+              {loadingTimeSlots ? (
+                <tr>
+                  <td colSpan={6} className="border-b border-slate-200 dark:border-slate-700 p-12 text-center text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm">Loading time slots...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : timeSlots.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="border-b border-slate-200 dark:border-slate-700 p-12 text-center text-slate-500 dark:text-slate-400">
+                    <div className="flex flex-col items-center gap-3">
+                      <Clock className="h-12 w-12 text-slate-300 dark:text-slate-600" />
+                      <p className="text-sm font-medium">No time slots available</p>
+                      <p className="text-xs text-slate-400">Click "Create Time Slots" to get started</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                timeSlots.map((slot, slotIndex) => {
+                // Get breaks that come after this period
+                const breaksAfterThisPeriod = breaks.filter(
+                  (b) => b.afterPeriod === slot.periodNumber
+                );
 
-              return (
-                <React.Fragment key={slot.id}>
-                  {/* Regular lesson row */}
-                  <tr className="hover:bg-gray-50">
-                    <td className="border p-3 font-medium text-sm">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div>{slot.time}</div>
-                          <div className="text-xs text-gray-500">Period {slot.periodNumber}</div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditingTimeslot(slot)}
-                            className="text-primary hover:text-primary-dark text-xs"
-                            title="Edit timeslot"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => setTimeslotToDelete(slot)}
-                            className="text-red-600 hover:text-red-800 text-xs"
-                            title="Delete timeslot"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                    {days.map((_, dayIndex) => {
-                      const dayOfWeek = dayIndex + 1;
-                      const entry = grid[dayOfWeek]?.[slot.id];
+                // Alternate row colors for better readability
+                const isEven = slotIndex % 2 === 0;
 
-                      return (
-                        <td key={dayIndex} className="border p-3">
-                          {entry ? (
-                            <div 
-                              className="space-y-1 cursor-pointer hover:bg-primary/5 p-2 transition-colors"
-                              onClick={() => setEditingLesson(entry)}
-                              title="Click to edit"
-                            >
-                              <div className="font-semibold text-sm">
-                                {entry.subject.name}
+                return (
+                  <React.Fragment key={slot.id}>
+                    {/* Regular lesson row */}
+                    <tr className={`group transition-colors ${
+                      isEven 
+                        ? 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750' 
+                        : 'bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    }`}>
+                      <td className="border-r border-b border-slate-200 dark:border-slate-700 p-0">
+                        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:via-primary/10 border-r-2 border-primary/20 dark:border-primary/30 p-4 min-w-[140px]">
+                          <div className="flex flex-col gap-2">
+                            {/* Time Display */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20 dark:bg-primary/30">
+                                <Clock className="h-4 w-4 text-primary dark:text-primary-foreground" />
                               </div>
-                              <div className="text-xs text-gray-600">
-                                {entry.teacher.name}
-                              </div>
-                              {entry.roomNumber && (
-                                <div className="text-xs text-gray-500">
-                                  {entry.roomNumber}
+                              <div className="flex-1">
+                                <div className="font-bold text-base text-slate-900 dark:text-slate-100 tracking-tight">
+                                  {slot.time}
                                 </div>
-                              )}
+                                <div className="text-xs font-semibold text-primary dark:text-primary-foreground mt-0.5">
+                                  Period {slot.periodNumber}
+                                </div>
+                              </div>
                             </div>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setEditingLesson({
-                                  gradeId: selectedGradeId,
-                                  dayOfWeek,
-                                  timeSlotId: slot.id,
-                                  isNew: true,
-                                });
-                              }}
-                              className="text-xs text-primary hover:text-primary-dark italic w-full text-left"
-                            >
-                              + Click to schedule a lesson
-                            </button>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
+                            
+                            {/* Time Range */}
+                            {slot.startTime && slot.endTime && (
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium pl-10">
+                                {slot.startTime} - {slot.endTime}
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1.5 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => setEditingTimeslot(slot)}
+                                className="flex items-center justify-center w-7 h-7 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm"
+                                title="Edit timeslot"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={() => setTimeslotToDelete(slot)}
+                                className="flex items-center justify-center w-7 h-7 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm"
+                                title="Delete timeslot"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      {days.map((_, dayIndex) => {
+                        const dayOfWeek = dayIndex + 1;
+                        const entry = grid[dayOfWeek]?.[slot.id];
+
+                        return (
+                          <td key={dayIndex} className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-3 align-top">
+                            {entry ? (
+                              <div 
+                                className="group/lesson relative cursor-pointer bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+                                onClick={() => setEditingLesson(entry)}
+                                title="Click to edit"
+                              >
+                                <div className="space-y-1.5">
+                                  <div className="font-bold text-sm text-slate-900 dark:text-slate-100 leading-tight">
+                                    {entry.subject.name}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                                    <span className="font-medium">{entry.teacher.name}</span>
+                                  </div>
+                                  {entry.roomNumber && (
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-600">
+                                      <span>📍</span>
+                                      <span>Room {entry.roomNumber}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="absolute top-2 right-2 opacity-0 group-hover/lesson:opacity-100 transition-opacity">
+                                  <Edit2 className="h-3.5 w-3.5 text-primary" />
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditingLesson({
+                                    gradeId: selectedGradeId,
+                                    dayOfWeek,
+                                    timeSlotId: slot.id,
+                                    isNew: true,
+                                  });
+                                }}
+                                className="w-full h-full min-h-[80px] flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary-foreground border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary dark:hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group/empty"
+                                title="Click to schedule a lesson"
+                              >
+                                <Plus className="h-4 w-4 opacity-50 group-hover/empty:opacity-100 transition-opacity" />
+                                <span className="font-medium">Add Lesson</span>
+                              </button>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
 
                   {/* Break rows (if any after this period) */}
                   {breaksAfterThisPeriod.length > 0 && (
-                    <tr className="bg-orange-50 border-y-2 border-orange-200 hover:bg-orange-100 transition-colors">
-                      <td className="border p-3 font-medium text-sm">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span>{breaksAfterThisPeriod[0].icon}</span>
-                            <div>
-                              <div className="font-semibold">{breaksAfterThisPeriod[0].name}</div>
-                              <div className="text-xs text-gray-600">
+                    <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
+                      <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
+                        <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-4 min-w-[140px]">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-200 dark:bg-orange-900 text-lg">
+                              {breaksAfterThisPeriod[0].icon}
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-bold text-sm text-orange-900 dark:text-orange-200">
+                                {breaksAfterThisPeriod[0].name}
+                              </div>
+                              <div className="text-xs font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
                                 {breaksAfterThisPeriod[0].durationMinutes} min
                               </div>
                             </div>
@@ -682,15 +746,18 @@ export default function SmartTimetableNew() {
                           (b) => b.dayOfWeek === dayIndex + 1
                         );
                         return (
-                          <td key={dayIndex} className="border p-3 text-center text-sm text-gray-600">
+                          <td key={dayIndex} className="border-r border-b border-orange-200 dark:border-orange-800 last:border-r-0 p-3 text-center align-middle">
                             {dayBreak ? (
                               <div 
-                                className="flex items-center justify-center gap-2 cursor-pointer hover:bg-orange-200 p-2 rounded transition-colors"
+                                className="flex items-center justify-center gap-2 cursor-pointer bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-3 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group/break"
                                 onClick={() => setEditingBreak(dayBreak)}
                                 title="Click to edit break"
                               >
-                                <span>{dayBreak.icon}</span>
-                                <span>{dayBreak.durationMinutes}min</span>
+                                <span className="text-lg">{dayBreak.icon}</span>
+                                <span className="text-sm font-semibold text-orange-900 dark:text-orange-200">
+                                  {dayBreak.durationMinutes}min
+                                </span>
+                                <Edit2 className="h-3 w-3 text-orange-600 dark:text-orange-400 opacity-0 group-hover/break:opacity-100 transition-opacity" />
                               </div>
                             ) : (
                               <button
@@ -701,10 +768,11 @@ export default function SmartTimetableNew() {
                                     dayOfWeek: dayIndex + 1,
                                   });
                                 }}
-                                className="text-xs text-primary hover:text-primary-dark italic"
+                                className="w-full h-full min-h-[60px] flex items-center justify-center gap-2 text-xs text-orange-500 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 border-2 border-dashed border-orange-200 dark:border-orange-800 rounded-lg hover:border-orange-400 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all"
                                 title="Add break for this day"
                               >
-                                + Add
+                                <Plus className="h-4 w-4" />
+                                <span className="font-medium">Add Break</span>
                               </button>
                             )}
                           </td>
@@ -718,6 +786,7 @@ export default function SmartTimetableNew() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Subject Distribution */}
