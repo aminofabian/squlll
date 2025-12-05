@@ -6,8 +6,7 @@ import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { 
   useSelectedGradeTimetable, 
   useTimetableGrid,
-  useGradeStatistics,
-  useAdjustedTimeSlotsForAllDays
+  useGradeStatistics
 } from './hooks/useTimetableData';
 import { useAllConflicts } from './hooks/useTimetableConflictsNew';
 import { LessonEditDialog } from './components/LessonEditDialog';
@@ -151,13 +150,6 @@ export default function SmartTimetableNew() {
   
   // Get conflicts (memoized!)
   const { total: conflictCount, teacher: teacherConflicts } = useAllConflicts();
-  
-  // Get adjusted timeslots for all days (factoring in breaks)
-  const adjustedTimeSlotsByDay = useAdjustedTimeSlotsForAllDays();
-  
-  // Use Monday's adjusted timeslots for the left column display
-  // (or base timeslots if no adjustments needed)
-  const displayTimeSlots = adjustedTimeSlotsByDay[1] || timeSlots;
 
   // Days array (memoized)
   const days = useMemo(
@@ -635,7 +627,7 @@ export default function SmartTimetableNew() {
                   </td>
                 </tr>
               ) : (
-                displayTimeSlots.map((slot, slotIndex) => {
+                timeSlots.map((slot, slotIndex) => {
                 // Get breaks that come after this period (for Monday, used as reference)
                 // Note: Breaks are day-specific, so we show Monday's breaks as reference
                 const breaksAfterThisPeriod = breaks.filter(
@@ -701,14 +693,6 @@ export default function SmartTimetableNew() {
                       {days.map((_, dayIndex) => {
                         const dayOfWeek = dayIndex + 1;
                         const entry = grid[dayOfWeek]?.[slot.id];
-                        
-                        // Get adjusted timeslot for this specific day
-                        const dayAdjustedSlots = adjustedTimeSlotsByDay[dayOfWeek] || displayTimeSlots;
-                        const dayAdjustedSlot = dayAdjustedSlots.find((s) => s.id === slot.id) || slot;
-                        
-                        // Compare against base timeslot (not Monday's adjusted)
-                        const baseSlot = timeSlots.find((s) => s.id === slot.id) || slot;
-                        const timeDiffers = dayAdjustedSlot.time !== baseSlot.time;
 
                         return (
                           <td key={dayIndex} className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-3 align-top">
@@ -716,7 +700,7 @@ export default function SmartTimetableNew() {
                               <div 
                                 className="group/lesson relative cursor-pointer bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                                 onClick={() => setEditingLesson(entry)}
-                                title={`Click to edit${timeDiffers ? ` • ${dayAdjustedSlot.time}` : ''}`}
+                                title="Click to edit"
                               >
                                 <div className="space-y-1.5">
                                   <div className="font-bold text-sm text-slate-900 dark:text-slate-100 leading-tight">

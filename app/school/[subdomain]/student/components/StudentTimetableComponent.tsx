@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   CheckCircle2, 
   Timer, 
@@ -15,12 +15,15 @@ import {
   ChevronDown,
   ArrowLeft,
   Play,
-  Pause
+  Pause,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useTimetableStore, type CellData } from '@/lib/stores/useTimetableStore';
+import { useCurrentStudent } from '@/lib/hooks/useCurrentStudent';
+import { useStudentTimetable } from '@/lib/hooks/useStudentTimetable';
+import { useActiveTerm } from '@/lib/hooks/useActiveTerm';
 
 // Type definitions
 interface StudentLesson {
@@ -56,7 +59,13 @@ interface StudentStats {
 }
 
 interface StudentTimetableData {
-  schedule: Record<string, (StudentLesson | null)[]>;
+  schedule: {
+    MONDAY: (StudentLesson | null)[];
+    TUESDAY: (StudentLesson | null)[];
+    WEDNESDAY: (StudentLesson | null)[];
+    THURSDAY: (StudentLesson | null)[];
+    FRIDAY: (StudentLesson | null)[];
+  };
   periods: string[];
   stats: StudentStats;
 }
@@ -66,53 +75,73 @@ interface StudentTimetableComponentProps {
 }
 
 const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) => {
-  // Use shared store
+  // Get current student and their grade
+  const { student, loading: studentLoading, error: studentError } = useCurrentStudent();
+  
+  // Get active term (doesn't require TermProvider)
+  const { activeTerm, loading: termLoading, error: termError } = useActiveTerm();
+  
+  // Fetch timetable for student's grade
   const { 
-    mainTimetable, 
-    updateMainTimetable,
-    loadMockData,
-    forceReloadMockData
-  } = useTimetableStore();
+    timetable: completeTimetable, 
+    loading: timetableLoading, 
+    error: timetableError,
+    refetch: refetchTimetable
+  } = useStudentTimetable(activeTerm?.id || null, student?.gradeId || null);
 
   // State management
   const [currentTime, setCurrentTime] = useState(new Date());
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedGrade, setSelectedGrade] = useState('Grade 1');
-  const [showGradeDropdown, setShowGradeDropdown] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showNextLesson, setShowNextLesson] = useState(false);
-  const [timetableData, setTimetableData] = useState<StudentTimetableData>({
-    schedule: {
-      "MONDAY": Array(11).fill(null),
-      "TUESDAY": Array(11).fill(null),
-      "WEDNESDAY": Array(11).fill(null),
-      "THURSDAY": Array(11).fill(null),
-      "FRIDAY": Array(11).fill(null)
-    },
-    periods: mainTimetable.timeSlots.map(slot => slot.time),
-    stats: {
-      totalLessons: 0,
-      completedLessons: 0,
-      upcomingLessons: 0,
-      totalSubjects: 0,
-      subjectDistribution: {},
-      dayDistribution: {},
-      teacherDistribution: {}
-    }
-  });
 
   const weekDays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
-  const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
+  
+  // Map dayOfWeek (1-5) to day names
+  const dayOfWeekToName: Record<number, string> = {
+    1: "MONDAY",
+    2: "TUESDAY",
+    3: "WEDNESDAY",
+    4: "THURSDAY",
+    5: "FRIDAY"
+  };
 
-  // Filter timetable data by selected grade
-  const filterTimetableByGrade = (grade: string) => {
-    const filteredSchedule: Record<string, (StudentLesson | null)[]> = {
-      "MONDAY": Array(11).fill(null),
-      "TUESDAY": Array(11).fill(null),
-      "WEDNESDAY": Array(11).fill(null),
-      "THURSDAY": Array(11).fill(null),
-      "FRIDAY": Array(11).fill(null)
+  // Transform GraphQL timetable data to component format
+  const timetableData = useMemo(() => {
+    if (!completeTimetable) {
+      return {
+        schedule: {
+          MONDAY: Array(11).fill(null),
+          TUESDAY: Array(11).fill(null),
+          WEDNESDAY: Array(11).fill(null),
+          THURSDAY: Array(11).fill(null),
+          FRIDAY: Array(11).fill(null)
+        },
+        periods: [],
+        stats: {
+          totalLessons: 0,
+          completedLessons: 0,
+          upcomingLessons: 0,
+          totalSubjects: 0,
+          subjectDistribution: {},
+          dayDistribution: {},
+          teacherDistribution: {}
+        }
+      };
+    }
+
+    // Sort time slots by period number
+    const sortedTimeSlots = [...completeTimetable.timeSlots].sort((a, b) => a.periodNumber - b.periodNumber);
+    const periods = sortedTimeSlots.map(slot => slot.displayTime);
+    
+    // Create schedule structure
+    const schedule: StudentTimetableData['schedule'] = {
+      MONDAY: Array(sortedTimeSlots.length).fill(null),
+      TUESDAY: Array(sortedTimeSlots.length).fill(null),
+      WEDNESDAY: Array(sortedTimeSlots.length).fill(null),
+      THURSDAY: Array(sortedTimeSlots.length).fill(null),
+      FRIDAY: Array(sortedTimeSlots.length).fill(null)
     };
 
     const subjectDistribution: Record<string, number> = {};
@@ -123,52 +152,69 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     let completedCount = 0;
     let upcomingCount = 0;
 
-    // Filter main timetable data for the selected grade
-    Object.entries(mainTimetable.subjects).forEach(([cellKey, cellData]) => {
-      const [cellGrade, dayIndex, timeId] = cellKey.split('-');
-      
-      if (cellGrade === grade && cellData) {
-        const dayName = weekDays[parseInt(dayIndex) - 1];
-        const periodIndex = parseInt(timeId);
-        
-        if (dayName && periodIndex >= 0 && periodIndex < 11) {
-          const lesson: StudentLesson = {
-            id: `${dayName.toLowerCase()}-${periodIndex + 1}`,
-            subject: cellData.subject,
-            teacher: cellData.teacher || '',
-            room: `Room ${Math.floor(Math.random() * 20) + 1}`,
-            day: dayName,
-            period: periodIndex + 1,
-            isBreak: cellData.isBreak || false,
-            breakType: cellData.breakType || undefined,
-            completed: completedLessons.includes(`${dayName.toLowerCase()}-${periodIndex + 1}`)
-          };
+    // Process cells and map them to the schedule
+    completeTimetable.cells.forEach((cell) => {
+      const dayName = dayOfWeekToName[cell.dayOfWeek];
+      if (!dayName) return;
 
-          filteredSchedule[dayName][periodIndex] = lesson;
-          
-          if (!cellData.isBreak) {
-            totalLessons++;
-            
-            subjectDistribution[cellData.subject] = (subjectDistribution[cellData.subject] || 0) + 1;
-            dayDistribution[dayName] = (dayDistribution[dayName] || 0) + 1;
-            
-            if (cellData.teacher) {
-              teacherDistribution[cellData.teacher] = (teacherDistribution[cellData.teacher] || 0) + 1;
-            }
-            
-            if (lesson.completed) {
-              completedCount++;
-            } else {
-              upcomingCount++;
-            }
-          }
+      // Type guard to ensure dayName is a valid key
+      const dayKey = dayName as keyof StudentTimetableData['schedule'];
+      if (!dayKey) return;
+
+      // Find the index of this period in the sorted time slots
+      const periodIndex = sortedTimeSlots.findIndex(slot => slot.periodNumber === cell.periodNumber);
+      if (periodIndex === -1) return;
+
+      if (cell.isBreak && cell.breakData) {
+        // Handle break
+        const breakType = cell.breakData.type.toLowerCase();
+        const lesson: StudentLesson = {
+          id: `${dayName.toLowerCase()}-${cell.periodNumber}`,
+          subject: cell.breakData.name,
+          teacher: '',
+          room: '',
+          day: dayName,
+          period: cell.periodNumber,
+          isBreak: true,
+          breakType: breakType === 'lunch' ? 'lunch' : breakType === 'recess' ? 'recess' : 'break',
+          completed: false
+        };
+        schedule[dayKey][periodIndex] = lesson;
+      } else if (cell.entryData) {
+        // Handle regular lesson
+        const lesson: StudentLesson = {
+          id: cell.entryData.id,
+          subject: cell.entryData.subject.name,
+          teacher: cell.entryData.teacher?.user?.name || 'TBA',
+          room: cell.entryData.roomNumber,
+          day: dayName,
+          period: cell.periodNumber,
+          isBreak: false,
+          completed: completedLessons.includes(cell.entryData.id)
+        };
+        
+        schedule[dayKey][periodIndex] = lesson;
+        
+        // Update stats
+        totalLessons++;
+        subjectDistribution[lesson.subject] = (subjectDistribution[lesson.subject] || 0) + 1;
+        dayDistribution[dayName] = (dayDistribution[dayName] || 0) + 1;
+        
+        if (lesson.teacher && lesson.teacher !== 'TBA') {
+          teacherDistribution[lesson.teacher] = (teacherDistribution[lesson.teacher] || 0) + 1;
+        }
+        
+        if (lesson.completed) {
+          completedCount++;
+        } else {
+          upcomingCount++;
         }
       }
     });
 
     return {
-      schedule: filteredSchedule,
-      periods: mainTimetable.timeSlots.map(slot => slot.time),
+      schedule,
+      periods,
       stats: {
         totalLessons,
         completedLessons: completedCount,
@@ -179,18 +225,7 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
         teacherDistribution
       }
     };
-  };
-
-  // Force reload mock data when component mounts
-  useEffect(() => {
-    forceReloadMockData();
-  }, [forceReloadMockData]);
-
-  // Sync with store changes and filter by selected grade
-  useEffect(() => {
-    const filteredData = filterTimetableByGrade(selectedGrade);
-    setTimetableData(filteredData);
-  }, [mainTimetable, selectedGrade, completedLessons]);
+  }, [completeTimetable, completedLessons]);
 
   // Update current time every minute
   useEffect(() => {
@@ -267,7 +302,8 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
       return null;
     }
     
-    const lesson = timetableData.schedule[currentDay]?.[currentPeriod];
+    const dayKey = currentDay as keyof StudentTimetableData['schedule'];
+    const lesson = timetableData.schedule[dayKey]?.[currentPeriod];
     return lesson || null;
   };
 
@@ -294,7 +330,8 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
       return { status: 'weekend', message: 'Weekend - No classes' };
     }
     
-    const currentLesson = timetableData.schedule[currentDay]?.[currentPeriod];
+    const dayKey = currentDay as keyof StudentTimetableData['schedule'];
+    const currentLesson = timetableData.schedule[dayKey]?.[currentPeriod];
     
     if (!currentLesson) {
       return { status: 'free', message: 'Free period' };
@@ -322,8 +359,9 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     if (currentPeriod === -1) return null;
 
     // Check remaining periods today
+    const dayKey = currentDay as keyof StudentTimetableData['schedule'];
     for (let periodIndex = currentPeriod + 1; periodIndex < timetableData.periods.length; periodIndex++) {
-      const lesson = timetableData.schedule[currentDay]?.[periodIndex];
+      const lesson = timetableData.schedule[dayKey]?.[periodIndex];
       if (lesson && !lesson.isBreak) {
         const periodTime = parseTimeSlot(timetableData.periods[periodIndex]);
         const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
@@ -346,8 +384,9 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
     if (dayIndex !== -1) {
       for (let nextDayIndex = dayIndex + 1; nextDayIndex < weekDays.length; nextDayIndex++) {
         const nextDay = weekDays[nextDayIndex];
+        const nextDayKey = nextDay as keyof StudentTimetableData['schedule'];
         for (let periodIndex = 0; periodIndex < timetableData.periods.length; periodIndex++) {
-          const lesson = timetableData.schedule[nextDay]?.[periodIndex];
+          const lesson = timetableData.schedule[nextDayKey]?.[periodIndex];
           if (lesson && !lesson.isBreak) {
             const periodTime = parseTimeSlot(timetableData.periods[periodIndex]);
             const currentTimeInMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
@@ -452,8 +491,7 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      forceReloadMockData();
+      await refetchTimetable();
     } finally {
       setIsSyncing(false);
     }
@@ -464,6 +502,86 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
   const nextLesson = getNextLesson();
   const remainingMinutes = getRemainingMinutes();
   const currentStatus = getCurrentLessonStatus();
+
+  // Loading state
+  if (studentLoading || termLoading || timetableLoading) {
+    return (
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center space-y-4">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary" />
+            <p className="text-gray-600">Loading timetable...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (studentError || termError || timetableError) {
+    return (
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 text-gray-600"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        </div>
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <div>
+                <h3 className="font-semibold text-red-900">Error Loading Timetable</h3>
+                <p className="text-sm text-red-700 mt-1">
+                  {studentError || termError || timetableError}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // No student or grade
+  if (!student || !student.gradeId) {
+    return (
+      <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 text-gray-600"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        </div>
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              <div>
+                <h3 className="font-semibold text-yellow-900">No Grade Assigned</h3>
+                <p className="text-sm text-yellow-700 mt-1">
+                  Please contact your administrator to assign a grade to your account.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const gradeName = typeof student.grade === 'string' 
+    ? student.grade 
+    : student.grade?.name || completeTimetable?.gradeName || 'Your Grade';
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -483,40 +601,9 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
               Academic Schedule
             </h1>
             <p className="text-gray-600 font-medium">
-              {selectedGrade} • Weekly Timetable
+              {gradeName} • Weekly Timetable
             </p>
           </div>
-        </div>
-        
-        {/* Grade Selector */}
-        <div className="relative">
-          <button
-            onClick={() => setShowGradeDropdown(!showGradeDropdown)}
-            className="flex items-center gap-3 bg-white border border-gray-300 text-gray-700 px-4 py-2 hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            <Users className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">{selectedGrade}</span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          </button>
-          
-          {showGradeDropdown && (
-            <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 shadow-xl z-50 min-w-[200px]">
-              {grades.map((grade) => (
-                <div
-                  key={grade}
-                  onClick={() => {
-                    setSelectedGrade(grade);
-                    setShowGradeDropdown(false);
-                  }}
-                  className={`px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedGrade === grade ? 'bg-primary text-white' : 'text-gray-700'
-                  }`}
-                >
-                  <span className="font-medium">{grade}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -772,7 +859,8 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
                       </div>
                     </td>
                     {weekDays.map((day) => {
-                      const lesson = timetableData.schedule[day][periodIndex];
+                      const dayKey = day as keyof StudentTimetableData['schedule'];
+                      const lesson = timetableData.schedule[dayKey][periodIndex];
                       const isCurrentLesson = day === getCurrentDay() && periodIndex === getCurrentPeriod();
                       return (
                         <td key={day} className="p-3 border-r border-gray-100 last:border-r-0">
@@ -833,20 +921,12 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
       <div className="flex items-center justify-between pt-6 border-t border-gray-200">
         <div className="flex items-center gap-3">
           <Button 
-            variant="outline"
-            onClick={forceReloadMockData}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Load Mock Data
-          </Button>
-          <Button 
             onClick={handleSync} 
             disabled={isSyncing}
             className="bg-primary hover:bg-primary-dark text-white"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync Timetable'}
+            {isSyncing ? 'Syncing...' : 'Refresh Timetable'}
           </Button>
         </div>
 
@@ -857,7 +937,7 @@ const StudentTimetableComponent = ({ onBack }: StudentTimetableComponentProps) =
             Timetable Synced
           </Badge>
           <span className="text-sm text-gray-500">
-            Last updated: {new Date().toLocaleTimeString()}
+            {activeTerm ? `Term: ${activeTerm.name}` : 'No term available'}
           </span>
         </div>
       </div>

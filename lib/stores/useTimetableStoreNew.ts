@@ -13,7 +13,6 @@ import type {
   Break,
 } from '../types/timetable';
 import { useSchoolConfigStore } from './useSchoolConfigStore';
-import { calculateAdjustedTimeSlots, calculateAdjustedTimeSlotsForAllDays } from '../utils/timetable-adjustments';
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -1232,16 +1231,6 @@ export const useTimetableSelectors = () => {
         timeSlot: timeSlot || { id: entry.timeSlotId, periodNumber: 0, time: 'Unknown', startTime: '', endTime: '', color: '' } as any,
         grade: grade || { id: entry.gradeId, name: 'Unknown Grade', level: 0 } as any,
       };
-    },
-
-    // Get adjusted timeslots for a specific day (factoring in breaks)
-    getAdjustedTimeSlots: (dayOfWeek: number) => {
-      return calculateAdjustedTimeSlots(store.timeSlots, store.breaks, dayOfWeek);
-    },
-
-    // Get adjusted timeslots for all days
-    getAdjustedTimeSlotsForAllDays: () => {
-      return calculateAdjustedTimeSlotsForAllDays(store.timeSlots, store.breaks);
     },
   };
 };
