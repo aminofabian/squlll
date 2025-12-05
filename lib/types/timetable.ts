@@ -13,7 +13,7 @@ export interface TimeSlot {
 export interface Break {
   id: string;
   name: string;           // "Morning Break"
-  type: 'short_break' | 'lunch' | 'assembly';
+  type: 'short_break' | 'long_break' | 'lunch' | 'afternoon_break' | 'games' | 'assembly' | 'recess' | 'snack';
   dayOfWeek: number;      // 1-5 (Monday-Friday)
   afterPeriod: number;    // Break comes after this period
   startTime?: string;     // "10:00"
