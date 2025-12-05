@@ -32,7 +32,9 @@ Store Status:
   const handleReloadTimeSlots = async () => {
     try {
       console.log('Reloading time slots from backend...');
-      await store.loadTimeSlots();
+      // Try to get termId from store state
+      const termId = store.selectedTermId;
+      await store.loadTimeSlots(termId || undefined);
       alert('Time slots reloaded from backend!');
     } catch (error) {
       console.error('Failed to reload time slots:', error);

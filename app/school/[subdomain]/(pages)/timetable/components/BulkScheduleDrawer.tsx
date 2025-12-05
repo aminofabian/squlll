@@ -724,31 +724,31 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="right" className="w-[700px] overflow-y-auto p-0">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b">
-          <SheetTitle className="text-xl">Bulk Schedule Setup</SheetTitle>
-          <SheetDescription>
+        <SheetHeader className="bg-white dark:bg-slate-900 px-6 pt-6 pb-4 border-b border-slate-300 dark:border-slate-600">
+          <SheetTitle className="text-xl font-bold text-primary">Bulk Schedule Setup</SheetTitle>
+          <SheetDescription className="text-sm text-slate-600 dark:text-slate-400">
             Configure your entire timetable structure step by step
           </SheetDescription>
         </SheetHeader>
 
         {/* Step Indicator */}
-        <div className="px-6 pt-4 pb-2 border-b">
+        <div className="px-6 pt-4 pb-2 border-b border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center flex-1">
                 <div className="flex flex-col items-center flex-1">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                    className={`w-8 h-8 flex items-center justify-center text-sm font-semibold transition-colors ${
                       currentStep === step
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-primary text-white'
                         : currentStep > step
                           ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 text-gray-600'
+                          : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                     }`}
                   >
                     {currentStep > step ? '✓' : step}
                   </div>
-                  <span className="text-xs mt-1 text-center text-muted-foreground">
+                  <span className="text-xs mt-1 text-center text-slate-600 dark:text-slate-400">
                     {step === 1 && 'Setup'}
                     {step === 2 && editMode === 'edit' ? 'Edit' : 'Review'}
                     {step === 3 && 'Save'}
@@ -757,7 +757,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 {step < 3 && (
                   <div
                     className={`h-0.5 flex-1 mx-2 ${
-                      currentStep > step ? 'bg-green-500' : 'bg-gray-200'
+                      currentStep > step ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'
                     }`}
                   />
                 )}
@@ -766,7 +766,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           </div>
         </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 bg-slate-50 dark:bg-slate-900">
             {/* Step 1: Template Selection */}
             {currentStep === 1 && (
           <div className="space-y-4">
@@ -784,10 +784,10 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     <button
                       type="button"
                       onClick={() => applyTemplate('standard')}
-                      className={`group relative overflow-visible rounded-lg border-2 p-2.5 text-left transition-all duration-200 active:scale-95 ${
+                      className={`group relative overflow-visible rounded border-2 p-2.5 text-left transition-all duration-200 active:scale-95 ${
                         selectedTemplate === 'standard'
                           ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
-                          : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
+                          : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md'
                       }`}
                       title={getTemplateDescription('standard')}
                     >
@@ -2029,9 +2029,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           )}
         </div>
 
-        <SheetFooter className="gap-2 px-6 py-4 border-t bg-background flex-row justify-between">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={isCreating}>
+        <SheetFooter className="gap-3 px-6 py-4 border-t border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex-row justify-between">
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onClose} disabled={isCreating} className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium h-10 rounded">
               Cancel
             </Button>
             
@@ -2052,13 +2052,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   }
                 }}
                 disabled={isCreating}
+                className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium h-10 rounded"
               >
                 Back
               </Button>
             )}
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {currentStep === 1 ? (
               <Button
                 onClick={() => {
@@ -2081,6 +2082,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   setCurrentStep(editMode === 'create' ? 3 : 2);
                 }}
                 disabled={isCreating || !preview}
+                className="bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
               >
                 Continue
               </Button>
@@ -2093,6 +2095,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   setCurrentStep(3);
                 }}
                 disabled={isCreating}
+                className="bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
               >
                 Continue to Review
               </Button>
@@ -2100,6 +2103,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               <Button
                 onClick={handleApply}
                 disabled={isCreating || !preview}
+                className="bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
               >
                 {isCreating 
                   ? 'Creating...' 
@@ -2115,11 +2119,11 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       {/* Full Timetable Preview Modal */}
       <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
         <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-hidden p-0">
-          <DialogHeader className="px-6 pt-5 pb-3 border-b">
+          <DialogHeader className="bg-white dark:bg-slate-900 px-6 pt-5 pb-3 border-b border-slate-300 dark:border-slate-600">
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle className="text-lg font-semibold">Schedule Preview</DialogTitle>
-                <DialogDescription className="mt-1 text-sm">
+                <DialogTitle className="text-lg font-bold text-primary">Schedule Preview</DialogTitle>
+                <DialogDescription className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                   {selectedTemplate && `${getTemplateDisplayName(selectedTemplate)} template`}
                 </DialogDescription>
               </div>
@@ -2129,21 +2133,21 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           {preview && (
             <div className="flex flex-col h-[calc(95vh-100px)]">
               {/* Summary Stats */}
-              <div className="px-6 py-3 border-b bg-muted/50">
+              <div className="px-6 py-3 border-b border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground">Start:</span>
-                    <span className="font-medium">{formatTime12Hour(formData.startTime)}</span>
-                    <span className="text-muted-foreground">End:</span>
-                    <span className="font-medium">{formatTime12Hour(preview.endTime)}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Start:</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{formatTime12Hour(formData.startTime)}</span>
+                    <span className="text-slate-600 dark:text-slate-400">End:</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{formatTime12Hour(preview.endTime)}</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-muted-foreground">Periods:</span>
-                    <span className="font-medium">{preview.timeSlots.length}</span>
-                    <span className="text-muted-foreground">Breaks:</span>
-                    <span className="font-medium">{breaks.filter((b) => b.enabled).length}</span>
-                    <span className="text-muted-foreground">Duration:</span>
-                    <span className="font-medium">
+                    <span className="text-slate-600 dark:text-slate-400">Periods:</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{preview.timeSlots.length}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Breaks:</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{breaks.filter((b) => b.enabled).length}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Duration:</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">
                       {Math.floor(totalDuration() / 60)}h {totalDuration() % 60}m
                     </span>
                   </div>
@@ -2151,7 +2155,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               </div>
 
               {/* Full Timetable - Box Design */}
-              <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4 bg-slate-50 dark:bg-slate-900">
                 <div className="grid grid-cols-1 gap-2">
                   {timelinePreview.map((item, idx) => {
                     const isBreak = item.type === 'break';
@@ -2162,17 +2166,17 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                         key={idx}
                         className={`border p-3 ${
                           isBreak 
-                            ? 'bg-primary/5 border-primary/20' 
-                            : 'bg-white border-gray-200'
+                            ? 'bg-primary/5 border-primary/30' 
+                            : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600'
                         }`}
                       >
                         <div className="flex items-center gap-4">
                           {/* Time */}
                           <div className="flex-shrink-0 w-20">
-                            <div className="font-mono text-xs text-muted-foreground">
+                            <div className="font-mono text-xs text-slate-600 dark:text-slate-400">
                               {formatTime12Hour(item.startTime)}
                             </div>
-                            <div className="font-mono text-[10px] text-muted-foreground">
+                            <div className="font-mono text-[10px] text-slate-500 dark:text-slate-500">
                               {formatTime12Hour(item.endTime)}
                             </div>
                           </div>
@@ -2183,20 +2187,20 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                               <>
                                 <span className="text-lg">{item.break?.icon}</span>
                                 <div className="flex-1">
-                                  <div className="text-sm font-medium text-primary/70">{item.break?.name}</div>
-                                  <div className="text-xs text-muted-foreground capitalize">
+                                  <div className="text-sm font-semibold text-primary">{item.break?.name}</div>
+                                  <div className="text-xs text-slate-600 dark:text-slate-400 capitalize">
                                     {breakType?.replace('_', ' ')} • {item.break?.durationMinutes}min
                                   </div>
                                 </div>
                               </>
                             ) : (
                               <>
-                                <div className="w-7 h-7 bg-muted flex items-center justify-center">
-                                  <span className="text-xs font-semibold">{item.period}</span>
+                                <div className="w-7 h-7 bg-slate-100 dark:bg-slate-700 flex items-center justify-center border border-slate-300 dark:border-slate-600">
+                                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{item.period}</span>
                                 </div>
                                 <div className="flex-1">
-                                  <div className="text-sm font-medium">Period {item.period}</div>
-                                  <div className="text-xs text-muted-foreground">
+                                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">Period {item.period}</div>
+                                  <div className="text-xs text-slate-600 dark:text-slate-400">
                                     {formData.lessonDuration}min
                                   </div>
                                 </div>

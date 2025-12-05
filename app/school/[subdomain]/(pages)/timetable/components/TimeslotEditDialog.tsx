@@ -209,23 +209,23 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
   return (
     <Dialog open={!!timeslot} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">
+        <DialogHeader className="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-600">
+          <DialogTitle className="text-xl font-bold text-primary">
             Edit Period {timeslot.periodNumber}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        <div className="space-y-5 py-6 px-6 bg-slate-50 dark:bg-slate-900">
           {/* Error Display */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded-md text-sm">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-2 text-sm">
               {error}
             </div>
           )}
 
           {/* Primary: Display Time - Simple and Clear */}
-          <div className="space-y-2">
-            <Label htmlFor="displayTime" className="text-sm font-medium">
+          <div className="space-y-1.5">
+            <Label htmlFor="displayTime" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Time Range
             </Label>
             <Input
@@ -257,26 +257,26 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
                 }
               }}
               disabled={loading}
-              className="h-11 text-base font-medium"
+              className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
               placeholder="8:00 AM – 8:45 AM"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-slate-500">
               Enter time range in format: "8:00 AM – 8:45 AM"
             </p>
           </div>
 
           {/* Secondary: Time Details - Collapsible/Expandable Info */}
           <details className="group">
-            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors list-none">
+            <summary className="cursor-pointer text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors list-none">
               <span className="flex items-center gap-2">
                 <span>Advanced: Edit Start & End Times</span>
                 <span className="text-xs">▼</span>
               </span>
             </summary>
-            <div className="mt-3 space-y-3 pt-3 border-t">
+            <div className="mt-3 space-y-3 pt-3 border-t border-slate-200 dark:border-slate-700">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="startTime" className="text-xs font-medium text-muted-foreground">
+                <div className="space-y-1.5">
+                  <Label htmlFor="startTime" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Start Time
                   </Label>
                   <Input
@@ -285,11 +285,11 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
                     value={formData.startTime}
                     onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
                     disabled={loading}
-                    className="h-9 text-sm"
+                    className="h-10 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endTime" className="text-xs font-medium text-muted-foreground">
+                <div className="space-y-1.5">
+                  <Label htmlFor="endTime" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     End Time
                   </Label>
                   <Input
@@ -298,7 +298,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
                     value={formData.endTime}
                     onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
                     disabled={loading}
-                    className="h-9 text-sm"
+                    className="h-10 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -306,17 +306,17 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           </details>
 
           {/* Summary Info - Clean and Minimal */}
-          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-md text-sm">
-            <span className="text-muted-foreground">Duration</span>
+          <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-sm">
+            <span className="text-slate-600 dark:text-slate-400">Duration</span>
             <span className={`font-semibold ${
-              isValidDuration ? 'text-foreground' : 'text-destructive'
+              isValidDuration ? 'text-slate-900 dark:text-slate-100' : 'text-red-600 dark:text-red-400'
             }`}>
               {isValidDuration ? `${duration} min` : 'Invalid'}
             </span>
           </div>
 
           {/* Warning - Subtle */}
-          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-md border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
             <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
             <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
               This change will affect all lessons scheduled in this time slot across all grades.
@@ -324,14 +324,14 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1 sm:flex-initial">
+        <DialogFooter className="bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-600 gap-3 px-6 py-4">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium h-10 rounded">
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={!isValidDuration || loading || !formData.startTime || !formData.endTime}
-            className="flex-1 sm:flex-initial"
+            className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
           >
             {loading ? 'Saving...' : 'Save'}
           </Button>

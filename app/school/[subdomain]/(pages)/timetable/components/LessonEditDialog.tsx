@@ -791,41 +791,41 @@ Check the browser console for detailed input information.`;
   return (
     <Drawer open={!!lesson} onOpenChange={onClose} direction="right">
       <DrawerContent className="max-w-md flex flex-col h-full">
-        <DrawerHeader className="flex-shrink-0">
-          <DrawerTitle>
+        <DrawerHeader className="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-600 flex-shrink-0">
+          <DrawerTitle className="text-xl font-bold text-primary">
             {isNew ? 'Add New Lesson' : 'Edit Lesson'}
           </DrawerTitle>
           {/* Timeslot and Grade Info */}
-          <div className="mt-3 space-y-2 pt-3 border-t">
+          <div className="mt-3 space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">
             {timeSlot && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Time Slot:</span>
-                <span className="font-medium text-blue-700">
+                <span className="text-slate-600 dark:text-slate-400">Time Slot:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
                   Period {timeSlot.periodNumber} • {timeSlot.time}
                 </span>
               </div>
             )}
             {grade && (
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Grade:</span>
-                <span className="font-medium text-purple-700">
+                <span className="text-slate-600 dark:text-slate-400">Grade:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {grade.displayName || grade.name}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Day:</span>
-              <span className="font-medium">
+              <span className="text-slate-600 dark:text-slate-400">Day:</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][lesson.dayOfWeek - 1]}
               </span>
             </div>
           </div>
         </DrawerHeader>
 
-        <div className="space-y-4 px-4 pb-4 overflow-y-auto flex-1">
+        <div className="space-y-4 px-6 py-6 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900">
           {/* Subject Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="subject" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Subject</Label>
             <Select
               value={formData.subjectId}
               onValueChange={(value) => {
@@ -866,7 +866,7 @@ Check the browser console for detailed input information.`;
                 }
               }}
             >
-              <SelectTrigger id="subject">
+              <SelectTrigger id="subject" className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10">
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
@@ -931,11 +931,11 @@ Check the browser console for detailed input information.`;
           </div>
 
           {/* Teacher Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="teacher">
+          <div className="space-y-1.5">
+            <Label htmlFor="teacher" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Teacher
               {availableTeachers.length > 0 && busyButQualifiedTeachers.length > 0 && (
-                <span className="ml-2 text-xs text-gray-500">
+                <span className="ml-2 text-xs text-slate-500 font-normal">
                   ({availableTeachers.length} available, {busyButQualifiedTeachers.length} busy)
                 </span>
               )}
@@ -944,7 +944,7 @@ Check the browser console for detailed input information.`;
               value={formData.teacherId}
               onValueChange={(value) => setFormData({ ...formData, teacherId: value })}
             >
-              <SelectTrigger id="teacher">
+              <SelectTrigger id="teacher" className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10">
                 <SelectValue placeholder="Select teacher" />
               </SelectTrigger>
               <SelectContent>
@@ -970,11 +970,11 @@ Check the browser console for detailed input information.`;
               <div className="text-xs text-red-600 space-y-1">
                 <p>⚠️ No teachers available at this time</p>
                 {busyButQualifiedTeachers.length > 0 ? (
-                  <p className="text-gray-600">
+                  <p className="text-slate-600 dark:text-slate-400">
                     {busyButQualifiedTeachers.length} qualified teacher(s) already scheduled at this timeslot
                   </p>
                 ) : (
-                  <p className="text-gray-600">
+                  <p className="text-slate-600 dark:text-slate-400">
                     No teachers assigned to {grade?.name || 'this grade'}
                   </p>
                 )}
@@ -983,9 +983,9 @@ Check the browser console for detailed input information.`;
 
             {/* Show list of busy teachers if any */}
             {busyButQualifiedTeachers.length > 0 && availableTeachers.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 p-2 rounded text-xs">
-                <p className="font-medium text-yellow-800 mb-1">Currently busy:</p>
-                <ul className="text-yellow-700 space-y-0.5">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-2 text-xs">
+                <p className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">Currently busy:</p>
+                <ul className="text-yellow-700 dark:text-yellow-300 space-y-0.5">
                   {busyButQualifiedTeachers.map((teacher) => (
                     <li key={teacher.id}>• {teacher.name}</li>
                   ))}
@@ -995,32 +995,34 @@ Check the browser console for detailed input information.`;
           </div>
 
           {/* Room Number */}
-          <div className="space-y-2">
-            <Label htmlFor="room">Room Number (Optional)</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="room" className="text-sm font-semibold text-slate-700 dark:text-slate-300">Room Number (Optional)</Label>
             <Input
               id="room"
               value={formData.roomNumber}
               onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
               placeholder="e.g. Room 101"
+              className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10"
             />
           </div>
 
         </div>
 
-        <DrawerFooter className="gap-2">
-          <div className="flex items-center justify-between w-full">
+        <DrawerFooter className="bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-600 px-6 py-4 gap-3">
+          <div className="flex items-center justify-between w-full gap-3">
             {!isNew && (
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium h-10 border border-red-700 rounded">
                 Delete
               </Button>
             )}
-            <div className={`flex gap-2 ${!isNew ? 'ml-auto' : 'ml-auto'}`}>
-              <Button variant="outline" onClick={onClose}>
+            <div className={`flex gap-3 ${!isNew ? 'flex-1 justify-end' : 'w-full'}`}>
+              <Button variant="outline" onClick={onClose} disabled={isSaving} className="flex-1 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium h-10 rounded">
                 Cancel
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={!formData.subjectId || !formData.teacherId || isSaving}
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
               >
                 {isSaving ? 'Saving...' : isNew ? 'Add Lesson' : 'Save Changes'}
               </Button>

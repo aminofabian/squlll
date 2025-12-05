@@ -72,8 +72,11 @@ export default function SmartTimetableNew() {
   // Load time slots, grades, subjects, and teachers from backend on mount
   useEffect(() => {
     setLoadingTimeSlots(true);
+    // Use term from context if available, otherwise use selectedTermId from store
+    const termId = selectedTerm?.id || selectedTermId;
+    
     Promise.all([
-      loadTimeSlots(),
+      loadTimeSlots(termId || undefined), // Pass termId if available
       loadGrades(),
       loadSubjects(), // Load all subjects initially
       loadTeachers(), // Load all teachers
@@ -83,11 +86,19 @@ export default function SmartTimetableNew() {
       })
       .catch((error) => {
         console.error('Failed to load data:', error);
+        // Don't show error toast for missing term - it's expected on first load
+        if (error.message && !error.message.includes('No term selected')) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load some data. Please try again.',
+            variant: 'destructive',
+          });
+        }
       })
       .finally(() => {
         setLoadingTimeSlots(false);
       });
-  }, [loadTimeSlots, loadGrades, loadSubjects, loadTeachers]);
+  }, [loadTimeSlots, loadGrades, loadSubjects, loadTeachers, selectedTerm?.id, selectedTermId]);
 
   // Reload subjects when grade selection changes
   useEffect(() => {
@@ -219,7 +230,8 @@ export default function SmartTimetableNew() {
       });
       setTimeslotToDelete(null);
       // Reload timeslots to ensure UI is in sync
-      await loadTimeSlots();
+      const termId = selectedTerm?.id || selectedTermId;
+      await loadTimeSlots(termId || undefined);
     } catch (error) {
       console.error('Error deleting timeslot:', error);
       toast({
@@ -243,7 +255,8 @@ export default function SmartTimetableNew() {
       });
       setShowDeleteAllDialog(false);
       // Reload timeslots to ensure UI is in sync
-      await loadTimeSlots();
+      const termId = selectedTerm?.id || selectedTermId;
+      await loadTimeSlots(termId || undefined);
     } catch (error) {
       console.error('Error deleting all timeslots:', error);
       toast({
@@ -709,11 +722,6 @@ export default function SmartTimetableNew() {
                                   <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
                                     <span className="font-medium">{entry.teacher.name}</span>
                                   </div>
-                                  {timeDiffers && (
-                                    <div className="text-[10px] text-primary/70 dark:text-primary/50 font-medium">
-                                      {dayAdjustedSlot.time}
-                                    </div>
-                                  )}
                                   {entry.roomNumber && (
                                     <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-600">
                                       <span>📍</span>

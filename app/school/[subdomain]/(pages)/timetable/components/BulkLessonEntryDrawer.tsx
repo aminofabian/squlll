@@ -254,38 +254,38 @@ export function BulkLessonEntryDrawer({
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
-        <SheetHeader className="pb-4 border-b">
-          <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+        <SheetHeader className="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-600 pb-4">
+          <SheetTitle className="text-xl font-bold text-primary flex items-center gap-2">
             <BookOpen className="h-6 w-6 text-primary" />
             Bulk Create Lessons
           </SheetTitle>
-          <SheetDescription className="text-base mt-2">
+          <SheetDescription className="text-sm mt-2 text-slate-600 dark:text-slate-400">
             Create multiple lessons at once for a specific day and grade. Fill in the details for each lesson below.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6 mt-6">
+        <div className="space-y-6 mt-6 px-6 pb-6 bg-slate-50 dark:bg-slate-900">
           {/* Configuration Section */}
-          <Card className="border-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Card className="border border-slate-300 dark:border-slate-600">
+            <CardHeader className="pb-3 bg-white dark:bg-slate-800 border-b border-slate-300 dark:border-slate-600">
+              <CardTitle className="text-base font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
                 <Calendar className="h-4 w-4 text-primary" />
                 Schedule Configuration
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-white dark:bg-slate-800">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Grade Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="grade" className="text-sm font-medium flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
+                <div className="space-y-1.5">
+                  <Label htmlFor="grade" className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-slate-500" />
                     Grade *
                   </Label>
                   <Select
                     value={selectedGradeIdState}
                     onValueChange={setSelectedGradeIdState}
                   >
-                    <SelectTrigger id="grade" className="h-10">
+                    <SelectTrigger id="grade" className="h-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary">
                       <SelectValue placeholder="Select a grade" />
                     </SelectTrigger>
                     <SelectContent>
@@ -299,16 +299,16 @@ export function BulkLessonEntryDrawer({
                 </div>
 
                 {/* Day Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="day" className="text-sm font-medium flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                <div className="space-y-1.5">
+                  <Label htmlFor="day" className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-500" />
                     Day of Week *
                   </Label>
                   <Select
                     value={selectedDay.toString()}
                     onValueChange={(value) => setSelectedDay(parseInt(value))}
                   >
-                    <SelectTrigger id="day" className="h-10">
+                    <SelectTrigger id="day" className="h-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -342,7 +342,7 @@ export function BulkLessonEntryDrawer({
                   variant="outline"
                   size="sm"
                   onClick={addEntry}
-                  className="gap-2 border-primary/20 hover:bg-primary/5"
+                  className="gap-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
                 >
                   <Plus className="h-4 w-4" />
                   Add Lesson
@@ -351,12 +351,12 @@ export function BulkLessonEntryDrawer({
             </CardHeader>
             <CardContent>
               {entries.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/30">
-                  <BookOpen className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                <div className="text-center py-12 border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800">
+                  <BookOpen className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
                     No lessons added yet
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-slate-500">
                     Click "Add Lesson" to get started
                   </p>
                 </div>
@@ -370,12 +370,12 @@ export function BulkLessonEntryDrawer({
                     return (
                       <Card
                         key={entry.id}
-                        className="border-2 hover:border-primary/30 transition-colors bg-gradient-to-br from-background to-muted/20"
+                        className="border border-slate-300 dark:border-slate-600 hover:border-primary/40 transition-colors bg-white dark:bg-slate-800"
                       >
-                        <CardHeader className="pb-3">
+                        <CardHeader className="pb-3 bg-slate-50 dark:bg-slate-700 border-b border-slate-300 dark:border-slate-600">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                              <div className="flex items-center justify-center w-8 h-8 bg-primary/10 text-primary font-semibold text-sm">
                                 {index + 1}
                               </div>
                               <div>
@@ -393,7 +393,7 @@ export function BulkLessonEntryDrawer({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeEntry(entry.id)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 w-8 p-0 rounded"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -411,7 +411,7 @@ export function BulkLessonEntryDrawer({
                                 value={entry.timeSlotId || undefined}
                                 onValueChange={(value) => updateEntry(entry.id, { timeSlotId: value })}
                               >
-                                <SelectTrigger id={`timeSlot-${entry.id}`} className="h-9">
+                                <SelectTrigger id={`timeSlot-${entry.id}`} className="h-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary">
                                   <SelectValue placeholder="Select time slot">
                                     {entry.timeSlotId && (() => {
                                       const selectedSlot = timeSlots.find(s => s.id === entry.timeSlotId);
@@ -438,7 +438,7 @@ export function BulkLessonEntryDrawer({
                                 value={entry.subjectId}
                                 onValueChange={(value) => updateEntry(entry.id, { subjectId: value })}
                               >
-                                <SelectTrigger id={`subject-${entry.id}`} className="h-9">
+                                <SelectTrigger id={`subject-${entry.id}`} className="h-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary">
                                   <SelectValue placeholder="Select subject" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -469,7 +469,7 @@ export function BulkLessonEntryDrawer({
                                 value={entry.teacherId}
                                 onValueChange={(value) => updateEntry(entry.id, { teacherId: value })}
                               >
-                                <SelectTrigger id={`teacher-${entry.id}`} className="h-9">
+                                <SelectTrigger id={`teacher-${entry.id}`} className="h-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary">
                                   <SelectValue placeholder="Select teacher" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -493,7 +493,7 @@ export function BulkLessonEntryDrawer({
                                 value={entry.roomNumber}
                                 onChange={(e) => updateEntry(entry.id, { roomNumber: e.target.value })}
                                 placeholder="e.g. Room 4"
-                                className="h-9"
+                                className="h-10 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary"
                               />
                             </div>
                           </div>
@@ -508,10 +508,10 @@ export function BulkLessonEntryDrawer({
 
           {/* Summary */}
           {entries.length > 0 && (
-            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-              <CardContent className="pt-6">
+            <Card className="border border-primary/30 bg-primary/5 dark:bg-primary/10">
+              <CardContent className="pt-6 bg-white dark:bg-slate-800">
                 <div className="flex items-start gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary flex-shrink-0">
+                  <div className="flex items-center justify-center w-10 h-10 bg-primary/20 text-primary flex-shrink-0">
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
@@ -540,21 +540,19 @@ export function BulkLessonEntryDrawer({
           )}
         </div>
 
-        <Separator className="my-6" />
-        
-        <SheetFooter className="gap-3">
+        <SheetFooter className="bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-600 px-6 py-4 gap-3">
           <Button 
             variant="outline" 
             onClick={onClose} 
             disabled={isSaving}
-            className="min-w-[100px]"
+            className="flex-1 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium h-10 rounded min-w-[100px]"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving || entries.length === 0 || !selectedGradeIdState || !termId}
-            className="min-w-[160px] bg-primary hover:bg-primary/90"
+            className="min-w-[160px] bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
           >
             {isSaving ? (
               <>

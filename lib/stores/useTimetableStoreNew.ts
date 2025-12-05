@@ -25,7 +25,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   // GraphQL time slot actions
   createTimeSlots: (timeSlots: TimeSlotInput[]) => Promise<void>;
   createTimeSlot: (timeSlot: TimeSlotInput) => Promise<void>;
-  loadTimeSlots: () => Promise<void>;
+  loadTimeSlots: (termId?: string) => Promise<void>;
   deleteTimeSlot: (id: string) => Promise<void>;
   deleteAllTimeSlots: () => Promise<void>;
   
@@ -188,14 +188,14 @@ export const useTimetableStore = create<TimetableStore>()(
         return get().createTimeSlots([timeSlot]);
       },
 
-      loadTimeSlots: async () => {
+      loadTimeSlots: async (termIdParam?: string) => {
         try {
-          // Get termId from state or context
+          // Get termId from parameter, state, or throw error
           const state = get();
-          const termId = state.selectedTermId;
+          const termId = termIdParam || state.selectedTermId;
           
           if (!termId) {
-            throw new Error('No term selected. Please select a term first.');
+            throw new Error('No term selected. Please select a term first or pass termId as a parameter to loadTimeSlots().');
           }
 
           // Use getWholeSchoolTimetable to get time slots (same as loadEntries)
