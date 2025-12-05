@@ -25,6 +25,7 @@ import { useParams } from 'next/navigation'
 
 interface FeeStructureCardProps {
   structure: ProcessedFeeStructure
+  index?: number
   onEdit: (feeStructure: FeeStructure) => void
   onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
@@ -35,6 +36,7 @@ interface FeeStructureCardProps {
 
 export const FeeStructureCard = ({
   structure,
+  index,
   onEdit,
   onAssignToGrade,
   onGenerateInvoices,
@@ -170,47 +172,66 @@ export const FeeStructureCard = ({
   }
 
   return (
-    <Card className="hover:shadow-sm transition-all border border-slate-200 rounded-lg overflow-hidden">
-      <CardHeader className="pb-2 px-3 pt-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            <CardTitle className="text-sm font-semibold text-slate-900 truncate">
-              {structure.structureName}
-            </CardTitle>
-            {structure.isActive && (
-              <Badge variant="default" className="bg-green-500 text-white text-[9px] px-1.5 py-0 h-4 leading-none">Active</Badge>
-            )}
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-              <Calendar className="h-3 w-3" />
-              <span>{structure.academicYear}</span>
+    <Card className="hover:shadow-md transition-all border border-slate-200 rounded-lg overflow-hidden bg-white">
+      <CardHeader className="pb-2.5 px-3.5 pt-3 border-b border-slate-100">
+        {/* Header Row 1: Title and Actions */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              {index !== undefined && (
+                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-primary">{index}</span>
+                </div>
+              )}
+              <CardTitle className="text-sm font-semibold text-slate-900 truncate">
+                {structure.structureName}
+              </CardTitle>
+              {structure.isActive && (
+                <Badge variant="default" className="bg-primary text-white text-[9px] px-1.5 py-0.5 h-4 leading-none flex-shrink-0">
+                  Active
+                </Badge>
+              )}
             </div>
-            {structure.gradeLevels && structure.gradeLevels.length > 0 && (
-              <div className="flex items-center gap-1">
-                {structure.gradeLevels.slice(0, 2).map(grade => (
-                  <Badge key={grade.id} variant="outline" className="text-[9px] px-1 py-0 h-4 leading-none border-slate-300">
-                    {grade.shortName || grade.gradeLevel?.name || grade.name}
-                  </Badge>
-                ))}
-                {structure.gradeLevels.length > 2 && (
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 leading-none border-slate-300">
-                    +{structure.gradeLevels.length - 2}
-                  </Badge>
-                )}
+            {/* Header Row 2: Metadata */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1 text-[10px] text-slate-600">
+                <Calendar className="h-3 w-3 text-primary/70" />
+                <span className="font-medium">{structure.academicYear}</span>
               </div>
-            )}
+              {structure.gradeLevels && structure.gradeLevels.length > 0 && (
+                <div className="flex items-center gap-1 flex-wrap">
+                  {structure.gradeLevels.slice(0, 3).map(grade => (
+                    <Badge key={grade.id} variant="outline" className="text-[9px] px-1.5 py-0 h-4 leading-none border-slate-300 text-slate-700">
+                      {grade.shortName || grade.gradeLevel?.name || grade.name}
+                    </Badge>
+                  ))}
+                  {structure.gradeLevels.length > 3 && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 leading-none border-slate-300 text-slate-700">
+                      +{structure.gradeLevels.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex gap-0.5">
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-slate-100" onClick={() => onEdit({
-              id: structure.structureId,
-              name: structure.structureName,
-              isActive: structure.isActive,
-              academicYear: structure.academicYear,
-              grade: '',
-              boardingType: 'day',
-              createdDate: '',
-              lastModified: '',
-              termStructures: []
-            })}>
+          {/* Action Buttons */}
+          <div className="flex gap-1 flex-shrink-0">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary" 
+              onClick={() => onEdit({
+                id: structure.structureId,
+                name: structure.structureName,
+                isActive: structure.isActive,
+                academicYear: structure.academicYear,
+                grade: '',
+                boardingType: 'day',
+                createdDate: '',
+                lastModified: '',
+                termStructures: []
+              })}
+            >
               <Edit className="h-3.5 w-3.5" />
             </Button>
             {onDelete && (
@@ -227,19 +248,20 @@ export const FeeStructureCard = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0 px-3 pb-2.5 space-y-2">
-        {/* Terms Selection - Compact */}
+      
+      <CardContent className="px-3.5 py-3 space-y-3">
+        {/* Terms Selection */}
         {sortedTerms.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {sortedTerms.map((term: { id: string; name: string }) => (
               <button
                 key={term.id}
                 onClick={() => setSelectedTermId(term.id)}
                 className={cn(
-                  "px-1.5 py-0.5 text-[9px] font-medium uppercase border rounded transition-colors",
+                  "px-2 py-1 text-[9px] font-semibold uppercase border rounded-md transition-all",
                   selectedTermId === term.id
-                    ? "bg-primary text-white border-primary"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
                 )}
               >
                 {term.name}
@@ -248,37 +270,45 @@ export const FeeStructureCard = ({
           </div>
         )}
 
-        {/* Totals - Compact Single Row */}
-        <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded border border-slate-200">
-          <div className="flex items-center gap-1">
-            <Coins className="h-3 w-3 text-primary" />
-            <span className="text-[10px] text-slate-600 font-medium">
-              {structure.terms.length > 1 ? sortedTerms.find(t => t.id === selectedTermId)?.name : 'Total'}:
-            </span>
-            <span className="text-xs font-bold text-slate-900">
-              KES {termTotal.toLocaleString()}
-            </span>
+        {/* Totals Section - Better Organized */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-md border border-slate-200">
+            <Coins className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[9px] text-slate-600 font-medium leading-tight">
+                {structure.terms.length > 1 ? sortedTerms.find(t => t.id === selectedTermId)?.name || 'Term' : 'Total'}
+              </div>
+              <div className="text-xs font-bold text-slate-900 leading-tight">
+                KES {termTotal.toLocaleString()}
+              </div>
+            </div>
           </div>
           {structure.terms.length > 1 && (
-            <>
-              <span className="text-slate-300 text-xs">•</span>
-              <div className="flex items-center gap-1">
-                <Building2 className="h-3 w-3 text-emerald-600" />
-                <span className="text-[10px] text-slate-600 font-medium">Year:</span>
-                <span className="text-xs font-bold text-emerald-700">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-md border border-primary/20">
+              <Building2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[9px] text-primary/80 font-medium leading-tight">Year Total</div>
+                <div className="text-xs font-bold text-primary leading-tight">
                   KES {yearTotal.toLocaleString()}
-                </span>
+                </div>
               </div>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Buckets - Compact List */}
+        {/* Buckets - Organized Grid Layout */}
         {displayBuckets.length > 0 ? (
-          <div className="space-y-0.5 max-h-32 overflow-y-auto">
+          <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
             {displayBuckets.map((bucket, idx) => (
-              <div key={bucket.id || idx} className="group flex items-center justify-between gap-2 px-1.5 py-1 bg-white border border-slate-200 rounded text-xs hover:border-primary/30 hover:bg-primary/5 transition-colors">
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <div 
+                key={bucket.id || idx} 
+                className="group flex items-center justify-between gap-3 px-2.5 py-1.5 bg-white border border-slate-200 rounded-md hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className={cn(
+                    "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                    bucket.isOptional ? "bg-amber-400" : "bg-primary"
+                  )} />
                   <span className={cn(
                     "text-[10px] font-medium truncate",
                     bucket.isOptional ? "text-slate-500" : "text-slate-900"
@@ -286,19 +316,19 @@ export const FeeStructureCard = ({
                     {bucket.name}
                   </span>
                   {bucket.isOptional && (
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 leading-none border-amber-200 text-amber-600 bg-amber-50">
+                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 leading-none border-amber-200 text-amber-600 bg-amber-50 flex-shrink-0">
                       OPT
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold text-slate-900 whitespace-nowrap">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[10px] font-bold text-slate-900 whitespace-nowrap">
                     KES {bucket.totalAmount.toLocaleString()}
                   </span>
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="h-4 w-4 p-0 hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-5 w-5 p-0 hover:bg-primary/20 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"
                     onClick={() => onUpdateFeeItem(
                       bucket.firstItemId || bucket.id,
                       bucket.totalAmount,
@@ -308,22 +338,24 @@ export const FeeStructureCard = ({
                       bucket.feeBucketId
                     )}
                   >
-                    <Edit className="h-2.5 w-2.5" />
+                    <Edit className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-[10px] text-slate-400 text-center py-1">No fee items</p>
+          <div className="text-center py-3 border border-dashed border-slate-200 rounded-md bg-slate-50/50">
+            <p className="text-[10px] text-slate-400">No fee items</p>
+          </div>
         )}
 
-        {/* Actions - Compact Row */}
-        <div className="flex gap-1.5 pt-1.5 border-t border-slate-200">
+        {/* Actions - Better Spaced */}
+        <div className="flex gap-2 pt-2 border-t border-slate-200">
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1 text-[10px] h-7 px-2"
+            className="flex-1 text-[10px] h-8 font-medium border-slate-300 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
             onClick={() => onAssignToGrade(
               structure.structureId, 
               structure.structureName, 
@@ -332,26 +364,26 @@ export const FeeStructureCard = ({
               selectedTermId
             )}
           >
-            <Users className="h-3 w-3 mr-1" />
+            <Users className="h-3.5 w-3.5 mr-1.5" />
             Assign
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
-            className="flex-1 text-[10px] h-7 px-2"
+            className="flex-1 text-[10px] h-8 font-medium border-slate-300 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
             onClick={() => onGenerateInvoices(structure.structureId, sortedTerms.find(t => t.id === selectedTermId)?.name || structure.termName)}
           >
-            <FileText className="h-3 w-3 mr-1" />
+            <FileText className="h-3.5 w-3.5 mr-1.5" />
             Invoices
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
-            className="h-7 w-7 p-0"
+            className="h-8 w-8 p-0 border-slate-300 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
             onClick={() => setShowPDFPreview(true)}
             title="Preview PDF"
           >
-            <Eye className="h-3 w-3" />
+            <Eye className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardContent>

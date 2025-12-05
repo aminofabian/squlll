@@ -279,7 +279,7 @@ export const FeeStructuresTab = ({
         {/* Fee Structure Cards - Compact Grid */}
         {filteredStructures.length > 0 ? (
           <div className="space-y-2">
-            {filteredStructures.map((structure) => {
+            {filteredStructures.map((structure, index) => {
               const assignedGrades = getAssignedGrades(structure.structureId)
               const totalStudents = getTotalStudents(structure.structureId)
 
@@ -287,6 +287,7 @@ export const FeeStructuresTab = ({
                 <FeeStructureCard
                   key={structure.structureId}
                   structure={structure}
+                  index={index + 1}
                   onEdit={() => {
                     onEdit({
                       id: structure.structureId,
