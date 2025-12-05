@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Timer } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import { CheckCircle2, Timer, Clock } from 'lucide-react';
 import {
   TeacherTimetableHeader,
   CurrentLessonBanner,
@@ -11,6 +12,7 @@ import {
   TeacherTimetableControls
 } from './components';
 import { useTimetableStore, type TeacherLesson } from '@/lib/stores/useTimetableStore';
+import { useTeacherTimetable } from '../hooks/useTeacherTimetable';
 
 // Type definitions
 interface TimeBlock {
@@ -41,11 +43,35 @@ interface TeacherTimetableData {
   breaks: Record<string, TimeBlock[]>;
   lunch: Record<string, TimeBlock[]>;
   periods: string[];
+  timeSlots: Array<{
+    id: string;
+    periodNumber: number;
+    displayTime: string;
+    startTime: string;
+    endTime: string;
+    color: string | null;
+  }>;
+  breaksList: Array<{
+    id: string;
+    name: string;
+    type: string;
+    dayOfWeek: number;
+    afterPeriod: number;
+    durationMinutes: number;
+    icon: string;
+    color: string | null;
+  }>;
   stats: TeacherStats;
 }
 
 const TeacherTimetable = () => {
-  // Use shared store
+  const params = useParams();
+  const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
+  
+  // Fetch timetable data from GraphQL
+  const { data: graphqlTimetableData, loading, error, refetch } = useTeacherTimetable(subdomain);
+
+  // Use shared store (keeping for compatibility with existing components)
   const { 
     teacherTimetable, 
     mainTimetable,
@@ -61,28 +87,203 @@ const TeacherTimetable = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(''); // Will be set to first available teacher
   const [timetableData, setTimetableData] = useState<TeacherTimetableData>({
-    schedule: teacherTimetable.schedule,
+    schedule: {
+      "MONDAY": Array(11).fill(null),
+      "TUESDAY": Array(11).fill(null),
+      "WEDNESDAY": Array(11).fill(null),
+      "THURSDAY": Array(11).fill(null),
+      "FRIDAY": Array(11).fill(null)
+    },
     breaks: {
-      Monday: [{ start: "10:30", end: "10:45", period: 2.5 }],
-      Tuesday: [{ start: "10:30", end: "10:45", period: 2.5 }],
-      Wednesday: [{ start: "10:30", end: "10:45", period: 2.5 }],
-      Thursday: [{ start: "10:30", end: "10:45", period: 2.5 }],
-      Friday: [{ start: "10:30", end: "10:45", period: 2.5 }]
+      Monday: [],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: []
     },
     lunch: {
-      Monday: [{ start: "12:30", end: "13:15", period: 4.5 }],
-      Tuesday: [{ start: "12:30", end: "13:15", period: 4.5 }],
-      Wednesday: [{ start: "12:30", end: "13:15", period: 4.5 }],
-      Thursday: [{ start: "12:30", end: "13:15", period: 4.5 }],
-      Friday: [{ start: "12:30", end: "13:15", period: 4.5 }]
+      Monday: [],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: []
     },
-    periods: teacherTimetable.periods,
-    stats: teacherTimetable.stats
+    periods: [],
+    timeSlots: [],
+    breaksList: [],
+    stats: {
+      totalClasses: 0,
+      gradeDistribution: {},
+      totalStudents: 0,
+      classesPerDay: {
+        "MONDAY": 0,
+        "TUESDAY": 0,
+        "WEDNESDAY": 0,
+        "THURSDAY": 0,
+        "FRIDAY": 0
+      }
+    }
   });
 
   const weekDays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+  const dayNames = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 
-  // Filter timetable data by selected teacher
+  // Transform GraphQL data into the format expected by components
+  const transformedTimetableData = useMemo(() => {
+    if (!graphqlTimetableData) {
+      return {
+        schedule: {
+          "MONDAY": Array(11).fill(null),
+          "TUESDAY": Array(11).fill(null),
+          "WEDNESDAY": Array(11).fill(null),
+          "THURSDAY": Array(11).fill(null),
+          "FRIDAY": Array(11).fill(null)
+        },
+        breaks: {
+          Monday: [],
+          Tuesday: [],
+          Wednesday: [],
+          Thursday: [],
+          Friday: []
+        },
+        lunch: {
+          Monday: [],
+          Tuesday: [],
+          Wednesday: [],
+          Thursday: [],
+          Friday: []
+        },
+        periods: [],
+        timeSlots: [],
+        breaksList: [],
+        stats: {
+          totalClasses: 0,
+          gradeDistribution: {},
+          totalStudents: 0,
+          classesPerDay: {
+            "MONDAY": 0,
+            "TUESDAY": 0,
+            "WEDNESDAY": 0,
+            "THURSDAY": 0,
+            "FRIDAY": 0
+          }
+        }
+      };
+    }
+
+    // Initialize schedule with nulls
+    const timeSlotsCount = graphqlTimetableData.timeSlots?.length || 11; // Default to 11 if no time slots
+    const schedule: Record<string, (TeacherLesson | null)[]> = {
+      "MONDAY": Array(timeSlotsCount).fill(null),
+      "TUESDAY": Array(timeSlotsCount).fill(null),
+      "WEDNESDAY": Array(timeSlotsCount).fill(null),
+      "THURSDAY": Array(timeSlotsCount).fill(null),
+      "FRIDAY": Array(timeSlotsCount).fill(null)
+    };
+
+    // Initialize breaks and lunch
+    const breaks: Record<string, TimeBlock[]> = {
+      Monday: [],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: []
+    };
+    const lunch: Record<string, TimeBlock[]> = {
+      Monday: [],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: []
+    };
+
+    // Process breaks
+    const timeSlots = graphqlTimetableData.timeSlots || [];
+    (graphqlTimetableData.breaks || []).forEach(breakItem => {
+      const dayName = dayNames[breakItem.dayOfWeek];
+      if (dayName && weekDays.includes(dayName)) {
+        const timeSlot = timeSlots.find(ts => ts.periodNumber === breakItem.afterPeriod);
+        if (timeSlot) {
+          const breakBlock: TimeBlock = {
+            start: timeSlot.startTime,
+            end: timeSlot.endTime,
+            period: breakItem.afterPeriod
+          };
+          
+          if (breakItem.type === 'LUNCH') {
+            lunch[dayName].push(breakBlock);
+          } else {
+            breaks[dayName].push(breakBlock);
+          }
+        }
+      }
+    });
+
+    // Process entries
+    const gradeDistribution: Record<string, number> = {};
+    const classesPerDay: Record<string, number> = {
+      "MONDAY": 0,
+      "TUESDAY": 0,
+      "WEDNESDAY": 0,
+      "THURSDAY": 0,
+      "FRIDAY": 0
+    };
+    let totalClasses = 0;
+
+    // Sort time slots to ensure consistent indexing
+    const sortedTimeSlots = [...timeSlots].sort((a, b) => a.periodNumber - b.periodNumber);
+    
+    (graphqlTimetableData.entries || []).forEach(entry => {
+      const dayName = dayNames[entry.dayOfWeek];
+      if (dayName && weekDays.includes(dayName)) {
+        // Find the index of this time slot in the sorted array
+        const periodIndex = sortedTimeSlots.findIndex(ts => ts.id === entry.timeSlot.id);
+        if (periodIndex >= 0 && periodIndex < schedule[dayName].length) {
+          const lesson: TeacherLesson = {
+            id: entry.id,
+            subject: entry.subject.name,
+            room: entry.roomNumber || 'TBA',
+            class: entry.grade.name,
+            grade: entry.grade.name,
+            stream: '',
+            day: dayName,
+            period: entry.timeSlot.periodNumber,
+            totalStudents: 0, // Not available in GraphQL response
+            completed: false
+          };
+
+          schedule[dayName][periodIndex] = lesson;
+          classesPerDay[dayName]++;
+          totalClasses++;
+          gradeDistribution[entry.grade.name] = (gradeDistribution[entry.grade.name] || 0) + 1;
+        }
+      }
+    });
+
+    // Create periods array from time slots (reuse the timeSlots variable from above)
+    const periods = timeSlots.length > 0
+      ? timeSlots
+          .sort((a, b) => a.periodNumber - b.periodNumber)
+          .map(ts => ts.displayTime)
+      : [];
+
+    return {
+      schedule,
+      breaks,
+      lunch,
+      periods,
+      timeSlots: timeSlots,
+      breaksList: graphqlTimetableData.breaks || [],
+      stats: {
+        totalClasses,
+        gradeDistribution,
+        totalStudents: 0, // Not available in GraphQL response
+        classesPerDay
+      }
+    };
+  }, [graphqlTimetableData]);
+
+  // Filter timetable data by selected teacher (keeping for backward compatibility)
   const filterTimetableByTeacher = (teacherName: string) => {
     const filteredSchedule: Record<string, (TeacherLesson | null)[]> = {
       "MONDAY": Array(11).fill(null),
@@ -176,37 +377,29 @@ const TeacherTimetable = () => {
     };
   };
 
-  // Set default teacher when component mounts and force reload data
+  // Update timetable data when GraphQL data changes
   useEffect(() => {
-    // Force reload mock data to ensure latest changes are reflected
-    forceReloadMockData();
-    
-    const availableTeachers = Object.keys(mainTimetable.teachers);
-    console.log('Available teachers:', availableTeachers);
-    if (availableTeachers.length > 0 && !selectedTeacher) {
-      setSelectedTeacher(availableTeachers[0]);
-      console.log('Set default teacher to:', availableTeachers[0]);
+    if (transformedTimetableData) {
+      console.log('Setting timetable data:', {
+        timeSlotsCount: transformedTimetableData.timeSlots.length,
+        timeSlots: transformedTimetableData.timeSlots,
+        breaksCount: transformedTimetableData.breaksList.length
+      });
+      setTimetableData(transformedTimetableData);
     }
-  }, [mainTimetable.teachers, selectedTeacher, forceReloadMockData]);
+  }, [transformedTimetableData]);
 
-  // Sync with store changes and filter by selected teacher
+  // Debug: Log when graphqlTimetableData changes
   useEffect(() => {
-    if (selectedTeacher) {
-      console.log('Teacher timetable data updated:', teacherTimetable);
-      console.log('Main timetable subjects count:', Object.keys(mainTimetable.subjects).length);
-      console.log('Breaks in main timetable:', Object.entries(mainTimetable.subjects).filter(([key, data]) => data?.isBreak).length);
-      
-      const filteredData = filterTimetableByTeacher(selectedTeacher);
-      console.log('Filtered data for teacher:', selectedTeacher, filteredData);
-      
-      setTimetableData(prev => ({
-        ...prev,
-        schedule: filteredData.schedule,
-        periods: filteredData.periods,
-        stats: filteredData.stats
-      }));
+    if (graphqlTimetableData) {
+      console.log('GraphQL timetable data received:', {
+        timeSlotsCount: graphqlTimetableData.timeSlots?.length || 0,
+        timeSlots: graphqlTimetableData.timeSlots,
+        entriesCount: graphqlTimetableData.entries?.length || 0,
+        breaksCount: graphqlTimetableData.breaks?.length || 0
+      });
     }
-  }, [teacherTimetable, mainTimetable, selectedTeacher]);
+  }, [graphqlTimetableData]);
 
   // Update current time every minute
   useEffect(() => {
@@ -236,23 +429,26 @@ const TeacherTimetable = () => {
   };
 
   const getCurrentPeriod = () => {
+    if (!graphqlTimetableData?.timeSlots || graphqlTimetableData.timeSlots.length === 0) {
+      return null;
+    }
+
     const currentHour = currentTime.getHours();
     const currentMinute = currentTime.getMinutes();
     const currentTimeMinutes = currentHour * 60 + currentMinute;
 
-    const periodTimes = [
-      { start: parseTime("8:00"), end: parseTime("8:45") },
-      { start: parseTime("8:50"), end: parseTime("9:35") },
-      { start: parseTime("9:40"), end: parseTime("10:25") },
-      { start: parseTime("10:45"), end: parseTime("11:30") },
-      { start: parseTime("11:35"), end: parseTime("12:20") },
-      { start: parseTime("13:15"), end: parseTime("14:00") },
-      { start: parseTime("14:05"), end: parseTime("14:50") }
-    ];
+    // Use actual time slots from GraphQL data
+    const sortedTimeSlots = [...graphqlTimetableData.timeSlots].sort((a, b) => a.periodNumber - b.periodNumber);
+    
+    for (let i = 0; i < sortedTimeSlots.length; i++) {
+      const slot = sortedTimeSlots[i];
+      const [startHours, startMinutes] = slot.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = slot.endTime.split(':').map(Number);
+      const startMinutesTotal = startHours * 60 + startMinutes;
+      const endMinutesTotal = endHours * 60 + endMinutes;
 
-    for (let i = 0; i < periodTimes.length; i++) {
-      if (currentTimeMinutes >= periodTimes[i].start && currentTimeMinutes <= periodTimes[i].end) {
-        return i + 1;
+      if (currentTimeMinutes >= startMinutesTotal && currentTimeMinutes <= endMinutesTotal) {
+        return slot.periodNumber;
       }
     }
     return null;
@@ -274,14 +470,27 @@ const TeacherTimetable = () => {
     const daySchedule = timetableData.schedule[currentDay];
     if (!daySchedule) return null;
 
+    // Create a map of period number to array index
+    const sortedTimeSlots = graphqlTimetableData 
+      ? [...graphqlTimetableData.timeSlots].sort((a, b) => a.periodNumber - b.periodNumber)
+      : [];
+    const periodToIndex = new Map<number, number>();
+    sortedTimeSlots.forEach((slot, index) => {
+      periodToIndex.set(slot.periodNumber, index);
+    });
+
     let nextLessonIndex = -1;
     let nextDay = false;
+    let nextPeriodNumber = 0;
 
     if (currentPeriod) {
-      // Find next lesson today
-      for (let i = currentPeriod; i < daySchedule.length; i++) {
+      // Find the current period's index
+      const currentPeriodIndex = periodToIndex.get(currentPeriod) ?? -1;
+      // Find next lesson today starting from current period
+      for (let i = currentPeriodIndex + 1; i < daySchedule.length; i++) {
         if (daySchedule[i]) {
           nextLessonIndex = i;
+          nextPeriodNumber = sortedTimeSlots[i]?.periodNumber ?? i + 1;
           break;
         }
       }
@@ -290,6 +499,7 @@ const TeacherTimetable = () => {
       for (let i = 0; i < daySchedule.length; i++) {
         if (daySchedule[i]) {
           nextLessonIndex = i;
+          nextPeriodNumber = sortedTimeSlots[i]?.periodNumber ?? i + 1;
           break;
         }
       }
@@ -306,6 +516,7 @@ const TeacherTimetable = () => {
             if (tomorrowSchedule[i]) {
               nextLessonIndex = i;
               nextDay = true;
+              nextPeriodNumber = sortedTimeSlots[i]?.periodNumber ?? i + 1;
               break;
             }
           }
@@ -321,26 +532,24 @@ const TeacherTimetable = () => {
 
     if (!lesson) return null;
 
-    const periodTimes = [
-      { start: parseTime("8:00"), end: parseTime("8:45") },
-      { start: parseTime("8:50"), end: parseTime("9:35") },
-      { start: parseTime("9:40"), end: parseTime("10:25") },
-      { start: parseTime("10:45"), end: parseTime("11:30") },
-      { start: parseTime("11:35"), end: parseTime("12:20") },
-      { start: parseTime("13:15"), end: parseTime("14:00") },
-      { start: parseTime("14:05"), end: parseTime("14:50") }
-    ];
-
+    // Get time slot for the next lesson
+    const nextTimeSlot = sortedTimeSlots[nextLessonIndex];
+    
     const currentTimeMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-    const lessonStartTime = periodTimes[nextLessonIndex]?.start || 0;
-    const minutesUntil = lessonStartTime - currentTimeMinutes;
+    let minutesUntil = 0;
+    
+    if (nextTimeSlot) {
+      const [startHours, startMinutes] = nextTimeSlot.startTime.split(':').map(Number);
+      const lessonStartTime = startHours * 60 + startMinutes;
+      minutesUntil = lessonStartTime - currentTimeMinutes;
+    }
 
     return {
       lesson,
       startsIn: minutesUntil,
-      time: timetableData.periods[nextLessonIndex] || `Period ${nextLessonIndex + 1}`,
+      time: timetableData.periods[nextLessonIndex] || `Period ${nextPeriodNumber}`,
       nextDay,
-      period: timetableData.periods[nextLessonIndex] || `Period ${nextLessonIndex + 1}`,
+      period: timetableData.periods[nextLessonIndex] || `Period ${nextPeriodNumber}`,
       periodIndex: nextLessonIndex,
       minutesUntil
     };
@@ -357,28 +566,30 @@ const TeacherTimetable = () => {
     const daySchedule = timetableData.schedule[currentDay];
     if (!daySchedule) return null;
 
-    return daySchedule[currentPeriod - 1] || null;
+    // Map period number to array index
+    const sortedTimeSlots = graphqlTimetableData 
+      ? [...graphqlTimetableData.timeSlots].sort((a, b) => a.periodNumber - b.periodNumber)
+      : [];
+    const periodIndex = sortedTimeSlots.findIndex(ts => ts.periodNumber === currentPeriod);
+    
+    if (periodIndex === -1) return null;
+    return daySchedule[periodIndex] || null;
   };
 
   const getRemainingMinutes = () => {
     const currentPeriod = getCurrentPeriod();
-    if (!currentPeriod) return 0;
+    if (!currentPeriod || !graphqlTimetableData?.timeSlots) return 0;
 
     const currentHour = currentTime.getHours();
     const currentMinute = currentTime.getMinutes();
     const currentTimeMinutes = currentHour * 60 + currentMinute;
 
-    const periodTimes = [
-      { start: parseTime("8:00"), end: parseTime("8:45") },
-      { start: parseTime("8:50"), end: parseTime("9:35") },
-      { start: parseTime("9:40"), end: parseTime("10:25") },
-      { start: parseTime("10:45"), end: parseTime("11:30") },
-      { start: parseTime("11:35"), end: parseTime("12:20") },
-      { start: parseTime("13:15"), end: parseTime("14:00") },
-      { start: parseTime("14:05"), end: parseTime("14:50") }
-    ];
+    // Find the time slot for the current period
+    const currentTimeSlot = graphqlTimetableData.timeSlots.find(ts => ts.periodNumber === currentPeriod);
+    if (!currentTimeSlot) return 0;
 
-    const periodEnd = periodTimes[currentPeriod - 1]?.end || 0;
+    const [endHours, endMinutes] = currentTimeSlot.endTime.split(':').map(Number);
+    const periodEnd = endHours * 60 + endMinutes;
     return Math.max(0, periodEnd - currentTimeMinutes);
   };
 
@@ -451,14 +662,7 @@ const TeacherTimetable = () => {
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await syncTeacherTimetable();
-      // Update local state after sync
-      setTimetableData(prev => ({
-        ...prev,
-        schedule: teacherTimetable.schedule,
-        periods: teacherTimetable.periods,
-        stats: teacherTimetable.stats
-      }));
+      await refetch();
     } catch (error) {
       console.error('Error syncing timetable:', error);
     } finally {
@@ -659,6 +863,50 @@ const TeacherTimetable = () => {
   const nextLesson = getNextLesson();
   const remainingMinutes = getRemainingMinutes();
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading timetable...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    const isNoTermError = error === 'No term selected';
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className={`${isNoTermError ? 'text-amber-600' : 'text-red-600'} mb-4`}>
+            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">
+            {isNoTermError ? 'No Term Selected' : 'Error Loading Timetable'}
+          </h2>
+          <p className="text-slate-600 mb-4">
+            {isNoTermError 
+              ? 'Please select a term from the dropdown to view your timetable.'
+              : error}
+          </p>
+          {!isNoTermError && (
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              Try Again
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="container py-8 mx-auto max-w-7xl px-4">
@@ -684,6 +932,50 @@ const TeacherTimetable = () => {
           currentLesson={currentLesson} 
           remainingMinutes={remainingMinutes} 
         />
+
+        {/* Time Slots Display Section */}
+        <div className="mb-6 bg-primary/5 dark:bg-primary/10 border-l-2 border-primary rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-primary text-sm">Class Periods</h3>
+              {timetableData.timeSlots.length > 0 && (
+                <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
+                  {timetableData.timeSlots.length} period{timetableData.timeSlots.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </div>
+          {timetableData.timeSlots.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-xs text-primary/70">No time slots available</p>
+              <p className="text-[10px] text-primary/50 mt-1">Time slots will appear here once loaded</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              {timetableData.timeSlots
+                .sort((a, b) => a.periodNumber - b.periodNumber)
+                .map((slot) => (
+                  <div key={slot.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-primary" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-primary text-xs">Period {slot.periodNumber}</span>
+                          <span className="text-slate-700 dark:text-slate-300 text-xs">{slot.displayTime}</span>
+                        </div>
+                        {slot.startTime && slot.endTime && (
+                          <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
+                            {slot.startTime} - {slot.endTime}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
         
         <TeacherTimetableGrid
           schedule={timetableData.schedule}
@@ -692,6 +984,9 @@ const TeacherTimetable = () => {
           completedLessons={completedLessons}
           getLessonStyles={getLessonStyles}
           renderLessonIndicators={renderLessonIndicators}
+          timeSlots={timetableData.timeSlots}
+          breaks={timetableData.breaksList}
+          dayNames={dayNames}
         />
 
         <NextLessonPanel 

@@ -191,9 +191,42 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadTimeSlots: async () => {
         try {
-          const response = await fetch('/api/school/time-slot', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+          // Get termId from state or context
+          const state = get();
+          const termId = state.selectedTermId;
+          
+          if (!termId) {
+            throw new Error('No term selected. Please select a term first.');
+          }
+
+          // Use getWholeSchoolTimetable to get time slots (same as loadEntries)
+          const query = `
+            query GetWholeSchoolTimetable($termId: String!) {
+              getWholeSchoolTimetable(termId: $termId) {
+                timeSlots {
+                  id
+                  periodNumber
+                  displayTime
+                  startTime
+                  endTime
+                  color
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query,
+              variables: { termId },
+            }),
           });
 
           if (!response.ok) {
@@ -208,36 +241,33 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          if (!result.data || !result.data.getTimeSlots) {
-            throw new Error('Invalid response format: missing getTimeSlots data');
+          if (!result.data || !result.data.getWholeSchoolTimetable) {
+            throw new Error('Invalid response format: missing getWholeSchoolTimetable data');
           }
 
           // Convert response to TimeSlot format and update store
-          const fetchedTimeSlots = result.data.getTimeSlots.map((slot: any) => {
-            // Handle time format: backend returns "HH:MM:SS", we need "HH:MM"
-            const formatTime = (timeStr: string) => {
-              if (!timeStr) return '';
-              // If already in HH:MM format, return as is
-              if (timeStr.length === 5) return timeStr;
-              // If in HH:MM:SS format, remove seconds
-              if (timeStr.length === 8) return timeStr.substring(0, 5);
-              return timeStr;
-            };
+          const formatTime = (timeStr: string) => {
+            if (!timeStr) return '';
+            if (timeStr.length === 5) return timeStr;
+            if (timeStr.length === 8) return timeStr.substring(0, 5);
+            return timeStr;
+          };
 
-            return {
-              id: slot.id,
-              periodNumber: slot.periodNumber,
-              time: slot.displayTime || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
-              startTime: formatTime(slot.startTime),
-              endTime: formatTime(slot.endTime),
-              color: slot.color || 'border-l-primary'
-            };
-          });
+          const fetchedTimeSlots = (result.data.getWholeSchoolTimetable.timeSlots || []).map((slot: any) => ({
+            id: slot.id,
+            periodNumber: slot.periodNumber,
+            time: slot.displayTime || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
+            startTime: formatTime(slot.startTime),
+            endTime: formatTime(slot.endTime),
+            color: slot.color || 'border-l-primary'
+          }));
 
           set((state) => ({
             timeSlots: fetchedTimeSlots,
             lastUpdated: new Date().toISOString(),
           }));
+
+          console.log(`Loaded ${fetchedTimeSlots.length} time slots using getWholeSchoolTimetable`);
         } catch (error) {
           console.error('Error loading time slots:', error);
           throw error;
@@ -632,33 +662,59 @@ export const useTimetableStore = create<TimetableStore>()(
           console.log('Loading timetable entries for term:', termId, 'grade:', gradeId);
           
           const query = `
-            query GetGradeTimetable($termId: String!, $gradeId: String!) {
-              getGradeTimetableEntries(termId: $termId, gradeId: $gradeId) {
-                id
-                dayOfWeek
-                roomNumber
-                grade {
-                  id
-                  name
-                }
-                subject {
-                  id
-                  name
-                }
-                teacher {
-                  id
-                  user {
-                    id
-                    name
-                  }
-                }
-                timeSlot {
+            query GetWholeSchoolTimetable($termId: String!) {
+              getWholeSchoolTimetable(termId: $termId) {
+                timeSlots {
                   id
                   periodNumber
                   displayTime
                   startTime
                   endTime
                   color
+                }
+                entries {
+                  id
+                  gradeId
+                  subjectId
+                  teacherId
+                  timeSlotId
+                  dayOfWeek
+                  roomNumber
+                  grade {
+                    id
+                    name
+                    gradeLevel {
+                      name
+                    }
+                  }
+                  subject {
+                    id
+                    name
+                  }
+                  teacher {
+                    id
+                    fullName
+                    firstName
+                    lastName
+                    email
+                    phoneNumber
+                    gender
+                    department
+                    role
+                    isActive
+                    user {
+                      id
+                      name
+                    }
+                  }
+                  timeSlot {
+                    id
+                    periodNumber
+                    displayTime
+                    startTime
+                    endTime
+                    color
+                  }
                 }
               }
             }
@@ -676,7 +732,6 @@ export const useTimetableStore = create<TimetableStore>()(
               query,
               variables: {
                 termId,
-                gradeId,
               },
             }),
           });
@@ -704,12 +759,44 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          if (!result.data || !result.data.getGradeTimetableEntries) {
+          if (!result.data || !result.data.getWholeSchoolTimetable) {
             console.error('Invalid response format:', result);
-            throw new Error('Invalid response format: missing getGradeTimetableEntries data');
+            throw new Error('Invalid response format: missing getWholeSchoolTimetable data');
           }
 
-          const entriesData = result.data.getGradeTimetableEntries;
+          const timetableData = result.data.getWholeSchoolTimetable;
+          
+          // Extract and store time slots if available
+          if (timetableData.timeSlots && timetableData.timeSlots.length > 0) {
+            const formatTime = (timeStr: string) => {
+              if (!timeStr) return '';
+              if (timeStr.length === 5) return timeStr;
+              if (timeStr.length === 8) return timeStr.substring(0, 5);
+              return timeStr;
+            };
+
+            const fetchedTimeSlots = timetableData.timeSlots.map((slot: any) => ({
+              id: slot.id,
+              periodNumber: slot.periodNumber,
+              time: slot.displayTime || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
+              startTime: formatTime(slot.startTime),
+              endTime: formatTime(slot.endTime),
+              color: slot.color || 'border-l-primary'
+            }));
+
+            set((state) => ({
+              timeSlots: fetchedTimeSlots,
+              lastUpdated: new Date().toISOString(),
+            }));
+
+            console.log(`Loaded ${fetchedTimeSlots.length} time slots from getWholeSchoolTimetable`);
+          }
+
+          // Filter entries by gradeId
+          const allEntries = timetableData.entries || [];
+          const entriesData = allEntries.filter((entry: any) => entry.gradeId === gradeId);
+          
+          console.log(`Filtered ${entriesData.length} entries for grade ${gradeId} from ${allEntries.length} total entries`);
           console.log(`Fetched ${entriesData.length} timetable entries from API`);
 
           // Get current state to match teachers by name if needed
@@ -719,42 +806,21 @@ export const useTimetableStore = create<TimetableStore>()(
           // Convert response to TimetableEntry format
           const fetchedEntries: TimetableEntry[] = entriesData
             .map((entry: any) => {
-              // Find teacher by ID first (most reliable)
-              let teacherId: string | null = null;
+              // Use teacherId directly from entry (new structure provides it)
+              // Fallback to teacher.id if teacherId is not available
+              const teacherId = entry.teacherId || entry.teacher?.id;
               
-              if (entry.teacher?.id) {
-                // Try to find teacher by ID in the loaded teachers
-                const teacherById = allTeachers.find((t) => t.id === entry.teacher.id);
-                if (teacherById) {
-                  teacherId = teacherById.id;
-                } else {
-                  // If teacher ID exists but not in our loaded teachers, use it directly
-                  // This handles cases where teacher exists in DB but wasn't loaded yet
-                  teacherId = entry.teacher.id;
-                  console.warn(`Teacher ${entry.teacher.id} not found in loaded teachers, using ID directly`);
-                }
-              }
-              
-              // Fallback: try to find by name if user exists
-              if (!teacherId && entry.teacher?.user?.name) {
-                const teacherByName = allTeachers.find((t) => t.name === entry.teacher.user.name);
-                if (teacherByName) {
-                  teacherId = teacherByName.id;
-                }
-              }
-
-              // If still no teacher found and teacher.user is null, skip this entry
               if (!teacherId) {
-                console.warn(`Skipping entry ${entry.id} - no valid teacher found. Teacher data:`, entry.teacher);
+                console.warn(`Skipping entry ${entry.id} - no valid teacher ID found. Teacher data:`, entry.teacher);
                 return null;
               }
 
               return {
                 id: entry.id,
-                gradeId: entry.grade.id,
-                subjectId: entry.subject.id,
+                gradeId: entry.gradeId || entry.grade?.id,
+                subjectId: entry.subjectId || entry.subject?.id,
                 teacherId: teacherId,
-                timeSlotId: entry.timeSlot.id,
+                timeSlotId: entry.timeSlotId || entry.timeSlot?.id,
                 dayOfWeek: entry.dayOfWeek,
                 roomNumber: entry.roomNumber || undefined,
                 isDoublePeriod: false, // Default, can be updated if API provides this

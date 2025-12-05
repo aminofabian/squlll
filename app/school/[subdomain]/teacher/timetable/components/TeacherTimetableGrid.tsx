@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Timer, Users, MapPin } from 'lucide-react';
+import { Clock, CheckCircle2, Timer } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 interface TeacherLesson {
@@ -15,6 +15,24 @@ interface TeacherLesson {
   completed?: boolean;
 }
 
+interface TimeSlot {
+  id: string;
+  periodNumber: number;
+  displayTime: string;
+  startTime: string;
+  endTime: string;
+}
+
+interface TimetableBreak {
+  id: string;
+  name: string;
+  type: string;
+  dayOfWeek: number;
+  afterPeriod: number;
+  durationMinutes: number;
+  icon: string;
+}
+
 interface TeacherTimetableGridProps {
   schedule: Record<string, (TeacherLesson | null)[]>;
   periods: string[];
@@ -22,6 +40,9 @@ interface TeacherTimetableGridProps {
   completedLessons: string[];
   getLessonStyles: (lesson: TeacherLesson | null, periodIndex: number, day: string) => string;
   renderLessonIndicators: (lesson: TeacherLesson, periodIndex: number, day: string) => React.ReactNode;
+  timeSlots: TimeSlot[];
+  breaks: TimetableBreak[];
+  dayNames: string[];
 }
 
 const TeacherTimetableGrid: React.FC<TeacherTimetableGridProps> = ({
@@ -30,131 +51,215 @@ const TeacherTimetableGrid: React.FC<TeacherTimetableGridProps> = ({
   weekDays,
   completedLessons,
   getLessonStyles,
-  renderLessonIndicators
+  renderLessonIndicators,
+  timeSlots,
+  breaks,
+  dayNames
 }) => {
+  // Sort time slots by period number
+  const sortedTimeSlots = [...timeSlots].sort((a, b) => a.periodNumber - b.periodNumber);
+  
+  // Map day names to day indices (MONDAY = 1, TUESDAY = 2, etc.)
+  const dayNameToIndex: Record<string, number> = {
+    'MONDAY': 1,
+    'TUESDAY': 2,
+    'WEDNESDAY': 3,
+    'THURSDAY': 4,
+    'FRIDAY': 5,
+  };
+
+  // Create a map of timeSlot ID to period index for quick lookup
+  const timeSlotToIndex = new Map<string, number>();
+  sortedTimeSlots.forEach((slot, index) => {
+    timeSlotToIndex.set(slot.id, index);
+  });
+
+  // Helper to get lesson for a specific day and time slot
+  const getLessonForDayAndSlot = (day: string, slotId: string): TeacherLesson | null => {
+    const periodIndex = timeSlotToIndex.get(slotId);
+    if (periodIndex === undefined) return null;
+    return schedule[day]?.[periodIndex] || null;
+  };
+
   return (
-    <>
-      <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-        <div className="w-0.5 h-4 bg-slate-400 rounded-full"></div>
-        Weekly Schedule
-      </h2>
-      
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-        <div className="grid" style={{ gridTemplateColumns: `180px repeat(${periods.length}, 1fr)` }}>
-          {/* Empty top-left corner */}
-          <div className="p-3 bg-slate-50 border-r border-b border-slate-200"></div>
-          
-          {/* Period Headers */}
-          {periods.map((period, periodIndex) => (
-            <div key={`header-${periodIndex}`} className="p-3 text-center bg-slate-50 border-r border-b border-slate-200">
-              <div className="text-xs font-medium text-slate-700 mb-1">{period}</div>
-              <div className="text-[10px] text-slate-500 font-mono">P{periodIndex + 1}</div>
-            </div>
-          ))}
-          
-          {/* Day Rows */}
-          {weekDays.map(day => (
-            <React.Fragment key={`day-${day}`}>
-              {/* Day Column Header */}
-              <div className="p-3 font-medium text-slate-700 bg-slate-50 border-r border-slate-200 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-xs font-semibold text-slate-800">{day}</div>
-                  <div className="text-[10px] text-slate-500 mt-0.5 font-mono">
-                    {schedule[day]?.filter(lesson => lesson !== null).length || 0}
-                  </div>
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 border-b-2 border-slate-200 dark:border-slate-600">
+              <th className="border-r border-slate-200 dark:border-slate-600 p-4 text-left font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>Time</span>
                 </div>
-              </div>
-              
-              {/* Lesson Cells for this Day */}
-              {periods.map((period, periodIndex) => {
-                const lesson = schedule[day]?.[periodIndex];
-                return (
-                  <div 
-                    key={`${day}-${periodIndex}`}
-                    className={cn(
-                      "p-2 border-r border-b border-slate-200 relative min-h-[80px] flex flex-col justify-center",
-                      getLessonStyles(lesson, periodIndex, day)
-                    )}
-                  >
-                    {lesson ? (
-                      <div className="text-center space-y-1.5">
-                        {/* Subject */}
-                        <div className="font-semibold text-xs text-slate-900 leading-tight line-clamp-2">
-                          {lesson.subject}
-                        </div>
-                        
-                        {/* Class Info */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-center gap-1">
-                            <Users className="w-2.5 h-2.5 text-slate-500" />
-                            <span className="text-[10px] font-medium text-slate-600">{lesson.class}</span>
-                          </div>
-                          <div className="flex items-center justify-center gap-1">
-                            <MapPin className="w-2.5 h-2.5 text-slate-500" />
-                            <span className="text-[10px] text-slate-500">{lesson.room}</span>
-                          </div>
-                          {lesson.totalStudents && (
-                            <div className="text-[9px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-sm inline-block">
-                              {lesson.totalStudents}
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Indicators */}
-                        <div className="flex items-center justify-center gap-0.5">
-                          {renderLessonIndicators(lesson, periodIndex, day)}
-                        </div>
-                        
-                        {/* Completed Check */}
-                        {completedLessons.includes(lesson.id) && (
-                          <div className="absolute top-1 right-1">
-                            <div className="h-4 w-4 bg-white rounded-full shadow-sm flex items-center justify-center border border-slate-200">
-                              <CheckCircle2 className="h-2.5 w-2.5 text-slate-600" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center text-slate-300 text-[10px] flex items-center justify-center h-full">
-                        <div className="flex flex-col items-center gap-0.5">
-                          <div className="w-4 h-4 bg-slate-100 rounded-sm flex items-center justify-center">
-                            <Timer className="w-2 h-2" />
-                          </div>
-                          <span className="font-mono">Free</span>
-                        </div>
-                      </div>
-                    )}
+              </th>
+              {weekDays.map((day, index) => (
+                <th key={index} className="border-r border-slate-200 dark:border-slate-600 last:border-r-0 p-4 text-left font-bold text-slate-700 dark:text-slate-200 text-sm uppercase tracking-wide">
+                  {day}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedTimeSlots.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="border-b border-slate-200 dark:border-slate-700 p-12 text-center text-slate-500 dark:text-slate-400">
+                  <div className="flex flex-col items-center gap-3">
+                    <Clock className="h-12 w-12 text-slate-300 dark:text-slate-600" />
+                    <p className="text-sm font-medium">No time slots available</p>
                   </div>
+                </td>
+              </tr>
+            ) : (
+              sortedTimeSlots.map((slot, slotIndex) => {
+                // Get breaks that come after this period (for Monday as reference)
+                const breaksAfterThisPeriod = breaks.filter(
+                  (b) => b.afterPeriod === slot.periodNumber && b.dayOfWeek === 1
                 );
-              })}
-            </React.Fragment>
-          ))}
-        </div>
+
+                // Alternate row colors for better readability
+                const isEven = slotIndex % 2 === 0;
+
+                return (
+                  <React.Fragment key={slot.id}>
+                    {/* Regular lesson row */}
+                    <tr className={cn(
+                      "group transition-colors",
+                      isEven 
+                        ? 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750' 
+                        : 'bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-750'
+                    )}>
+                      <td className="border-r border-b border-slate-200 dark:border-slate-700 p-0">
+                        <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:via-primary/10 border-r-2 border-primary/20 dark:border-primary/30 p-4 min-w-[140px]">
+                          <div className="flex flex-col gap-2">
+                            {/* Time Display */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20 dark:bg-primary/30">
+                                <Clock className="h-4 w-4 text-primary dark:text-primary-foreground" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-bold text-base text-slate-900 dark:text-slate-100 tracking-tight">
+                                  {slot.displayTime}
+                                </div>
+                                <div className="text-xs font-semibold text-primary dark:text-primary-foreground mt-0.5">
+                                  Period {slot.periodNumber}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Time Range */}
+                            {slot.startTime && slot.endTime && (
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium pl-10">
+                                {slot.startTime} - {slot.endTime}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      {weekDays.map((day, dayIndex) => {
+                        const lesson = getLessonForDayAndSlot(day, slot.id);
+                        const dayOfWeek = dayNameToIndex[day] || dayIndex + 1;
+                        
+                        return (
+                          <td key={dayIndex} className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-3 align-top">
+                            {lesson ? (
+                              <div 
+                                className={cn(
+                                  "group/lesson relative bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 hover:shadow-md hover:scale-[1.02] transition-all duration-200",
+                                  completedLessons.includes(lesson.id) && "opacity-75"
+                                )}
+                              >
+                                <div className="space-y-1.5">
+                                  <div className="font-bold text-sm text-slate-900 dark:text-slate-100 leading-tight">
+                                    {lesson.subject}
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                                    <span className="font-medium">{lesson.class}</span>
+                                  </div>
+                                  {lesson.room && (
+                                    <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1.5 pt-1.5 border-t border-slate-200 dark:border-slate-600">
+                                      <span>📍</span>
+                                      <span>Room {lesson.room}</span>
+                                    </div>
+                                  )}
+                                  {lesson.totalStudents && (
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                      {lesson.totalStudents} students
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Indicators */}
+                                <div className="absolute top-2 right-2 flex items-center gap-1">
+                                  {renderLessonIndicators(lesson, slotIndex, day)}
+                                  {completedLessons.includes(lesson.id) && (
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-full h-full min-h-[80px] flex items-center justify-center text-xs text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                                <span className="font-medium">Free</span>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+
+                    {/* Break rows (if any after this period) */}
+                    {breaksAfterThisPeriod.length > 0 && (
+                      <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
+                        <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
+                          <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-4 min-w-[140px]">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-200 dark:bg-orange-900 text-lg">
+                                {breaksAfterThisPeriod[0].icon}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-bold text-sm text-orange-900 dark:text-orange-200">
+                                  {breaksAfterThisPeriod[0].name}
+                                </div>
+                                <div className="text-xs font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+                                  {breaksAfterThisPeriod[0].durationMinutes} min
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        {weekDays.map((day, dayIndex) => {
+                          const dayOfWeek = dayNameToIndex[day] || dayIndex + 1;
+                          const dayBreak = breaksAfterThisPeriod.find(
+                            (b) => b.dayOfWeek === dayOfWeek
+                          );
+                          return (
+                            <td key={dayIndex} className="border-r border-b border-orange-200 dark:border-orange-800 last:border-r-0 p-3 text-center align-middle">
+                              {dayBreak ? (
+                                <div className="flex items-center justify-center gap-2 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                                  <span className="text-lg">{dayBreak.icon}</span>
+                                  <span className="text-sm font-semibold text-orange-900 dark:text-orange-200">
+                                    {dayBreak.durationMinutes}min
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="w-full h-full min-h-[60px] flex items-center justify-center text-xs text-orange-400 dark:text-orange-500 border-2 border-dashed border-orange-200 dark:border-orange-800 rounded-lg">
+                                  <span className="font-medium">No Break</span>
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
-      
-      {/* Legend */}
-      <div className="mt-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-slate-100 border border-slate-300 rounded-sm"></div>
-            <span className="text-slate-600">Current Lesson</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-slate-200 border border-slate-400 rounded-sm"></div>
-            <span className="text-slate-600">Next Lesson</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-slate-50 border border-slate-200 rounded-sm"></div>
-            <span className="text-slate-600">Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-slate-100 border border-slate-300 rounded-sm"></div>
-            <span className="text-slate-600">Free Period</span>
-          </div>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 
-export default TeacherTimetableGrid; 
+export default TeacherTimetableGrid;

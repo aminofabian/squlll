@@ -39,6 +39,25 @@ interface TeacherTimetableControlsProps {
   isSyncing: boolean;
 }
 
+// Component to avoid hydration mismatch with time
+const LastUpdatedTime: React.FC = () => {
+  const [time, setTime] = useState<string>('');
+
+  useEffect(() => {
+    setTime(new Date().toLocaleTimeString());
+    const interval = setInterval(() => {
+      setTime(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span className="text-xs text-slate-500">
+      Last updated: {time || '--:--:--'}
+    </span>
+  );
+};
+
 const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
   teacherName,
   availableTeachers,
@@ -393,11 +412,15 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
                   </div>
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-slate-600">Smallest Class:</span>
-                    <span className="font-semibold text-slate-900">{averageClassSize - 3} students</span>
+                    <span className="font-semibold text-slate-900">
+                      {Math.max(0, averageClassSize - 3)} students
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm mt-2">
                     <span className="text-slate-600">Total Classes:</span>
-                    <span className="font-semibold text-slate-900">{Math.round(totalStudents / averageClassSize)}</span>
+                    <span className="font-semibold text-slate-900">
+                      {averageClassSize > 0 ? Math.round(totalStudents / averageClassSize) : 0}
+                    </span>
                   </div>
                   <div className="mt-3 p-2 bg-info/5 rounded-lg">
                     <div className="flex items-center gap-2 text-xs text-info">
@@ -440,9 +463,7 @@ const TeacherTimetableControls: React.FC<TeacherTimetableControlsProps> = ({
             <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
             Timetable Synced
           </Badge>
-          <span className="text-xs text-slate-500">
-            Last updated: {new Date().toLocaleTimeString()}
-          </span>
+          <LastUpdatedTime />
         </div>
       </div>
     </div>
