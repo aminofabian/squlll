@@ -251,46 +251,188 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   const deleteTimeSlot = (periodNumber: number) => {
     if (!preview) return;
     
-    // Remove the period from preview
-    const updatedTimeSlots = preview.timeSlots.filter((slot) => slot.periodNumber !== periodNumber);
-    
-    // Renumber remaining periods
-    const renumberedTimeSlots = updatedTimeSlots.map((slot, index) => ({
-      ...slot,
-      periodNumber: index + 1,
-      id: `slot-${index + 1}`,
-    }));
+    // Calculate new number of periods
+    const newNumberOfPeriods = Math.max(1, formData.numberOfPeriods - 1);
     
     // Remove breaks that are after the deleted period, and adjust break afterPeriod values
     const updatedBreaks = breaks
       .filter((b) => b.afterPeriod !== periodNumber)
       .map((b) => {
         if (b.afterPeriod > periodNumber) {
-          return { ...b, afterPeriod: b.afterPeriod - 1 };
+          return { ...b, afterPeriod: Math.max(0, b.afterPeriod - 1) };
         }
         return b;
       });
     
+    // Update breaks first
     setBreaks(updatedBreaks);
-    setFormData({
-      ...formData,
-      numberOfPeriods: renumberedTimeSlots.length,
-    });
     
-    // Regenerate preview with updated data
-    setTimeout(() => {
-      generatePreview();
-    }, 0);
+    // Update form data with new number of periods
+    const updatedFormData = {
+      ...formData,
+      numberOfPeriods: newNumberOfPeriods,
+    };
+    setFormData(updatedFormData);
+    
+    // Regenerate preview with updated data - use the updated values directly
+    const { startTime, lessonDuration } = updatedFormData;
+    const timeSlots: TimeSlot[] = [];
+    const generatedBreaks: Break[] = [];
+    
+    let currentTime = startTime;
+    
+    // Handle assembly/breaks at the start (afterPeriod: 0)
+    const breaksAtStart = updatedBreaks.filter((b) => b.enabled && b.afterPeriod === 0);
+    for (const breakAtStart of breaksAtStart) {
+      for (let day = 1; day <= 5; day++) {
+        let breakType: 'short_break' | 'lunch' | 'assembly' = 'short_break';
+        if (breakAtStart.type === 'lunch') breakType = 'lunch';
+        else if (breakAtStart.type === 'assembly') breakType = 'assembly';
+        
+        generatedBreaks.push({
+          id: `break-0-${breakAtStart.name}-${day}`,
+          name: breakAtStart.name,
+          type: breakType,
+          dayOfWeek: day,
+          afterPeriod: 0,
+          startTime: currentTime,
+          endTime: addMinutes(currentTime, breakAtStart.durationMinutes),
+          durationMinutes: breakAtStart.durationMinutes,
+          icon: breakAtStart.icon,
+          color: getBreakTypeColor(breakAtStart.type),
+        });
+      }
+      currentTime = addMinutes(currentTime, breakAtStart.durationMinutes);
+    }
+    
+    for (let i = 0; i < newNumberOfPeriods; i++) {
+      const periodNumber = i + 1;
+      const periodStart = currentTime;
+      const periodEnd = addMinutes(currentTime, lessonDuration);
+      
+      timeSlots.push({
+        id: `slot-${periodNumber}`,
+        periodNumber,
+        time: `${formatTime12Hour(periodStart)} – ${formatTime12Hour(periodEnd)}`,
+        startTime: periodStart,
+        endTime: periodEnd,
+        color: 'border-l-primary',
+      });
+      
+      currentTime = periodEnd;
+      
+      const breaksAfter = updatedBreaks.filter((b) => b.enabled && b.afterPeriod === periodNumber);
+      for (const breakAfter of breaksAfter) {
+        let breakType: 'short_break' | 'lunch' | 'assembly' = 'short_break';
+        if (breakAfter.type === 'lunch') breakType = 'lunch';
+        else if (breakAfter.type === 'assembly') breakType = 'assembly';
+        
+        for (let day = 1; day <= 5; day++) {
+          generatedBreaks.push({
+            id: `break-${periodNumber}-${breakAfter.name}-${day}`,
+            name: breakAfter.name,
+            type: breakType,
+            dayOfWeek: day,
+            afterPeriod: periodNumber,
+            startTime: currentTime,
+            endTime: addMinutes(currentTime, breakAfter.durationMinutes),
+            durationMinutes: breakAfter.durationMinutes,
+            icon: breakAfter.icon,
+            color: getBreakTypeColor(breakAfter.type),
+          });
+        }
+        currentTime = addMinutes(currentTime, breakAfter.durationMinutes);
+      }
+    }
+    
+    setPreview({
+      timeSlots,
+      breaks: generatedBreaks,
+      endTime: currentTime,
+    });
   };
 
   // Delete a break
   const deleteBreak = (breakName: string, afterPeriod: number) => {
-    setBreaks(breaks.filter((b) => !(b.name === breakName && b.afterPeriod === afterPeriod)));
+    const updatedBreaks = breaks.filter((b) => !(b.name === breakName && b.afterPeriod === afterPeriod));
+    setBreaks(updatedBreaks);
     
-    // Regenerate preview
-    setTimeout(() => {
-      generatePreview();
-    }, 0);
+    // Regenerate preview immediately with updated breaks
+    const { startTime, lessonDuration, numberOfPeriods } = formData;
+    const timeSlots: TimeSlot[] = [];
+    const generatedBreaks: Break[] = [];
+    
+    let currentTime = startTime;
+    
+    // Handle assembly/breaks at the start (afterPeriod: 0)
+    const breaksAtStart = updatedBreaks.filter((b) => b.enabled && b.afterPeriod === 0);
+    for (const breakAtStart of breaksAtStart) {
+      for (let day = 1; day <= 5; day++) {
+        let breakType: 'short_break' | 'lunch' | 'assembly' = 'short_break';
+        if (breakAtStart.type === 'lunch') breakType = 'lunch';
+        else if (breakAtStart.type === 'assembly') breakType = 'assembly';
+        
+        generatedBreaks.push({
+          id: `break-0-${breakAtStart.name}-${day}`,
+          name: breakAtStart.name,
+          type: breakType,
+          dayOfWeek: day,
+          afterPeriod: 0,
+          startTime: currentTime,
+          endTime: addMinutes(currentTime, breakAtStart.durationMinutes),
+          durationMinutes: breakAtStart.durationMinutes,
+          icon: breakAtStart.icon,
+          color: getBreakTypeColor(breakAtStart.type),
+        });
+      }
+      currentTime = addMinutes(currentTime, breakAtStart.durationMinutes);
+    }
+    
+    for (let i = 0; i < numberOfPeriods; i++) {
+      const periodNumber = i + 1;
+      const periodStart = currentTime;
+      const periodEnd = addMinutes(currentTime, lessonDuration);
+      
+      timeSlots.push({
+        id: `slot-${periodNumber}`,
+        periodNumber,
+        time: `${formatTime12Hour(periodStart)} – ${formatTime12Hour(periodEnd)}`,
+        startTime: periodStart,
+        endTime: periodEnd,
+        color: 'border-l-primary',
+      });
+      
+      currentTime = periodEnd;
+      
+      const breaksAfter = updatedBreaks.filter((b) => b.enabled && b.afterPeriod === periodNumber);
+      for (const breakAfter of breaksAfter) {
+        let breakType: 'short_break' | 'lunch' | 'assembly' = 'short_break';
+        if (breakAfter.type === 'lunch') breakType = 'lunch';
+        else if (breakAfter.type === 'assembly') breakType = 'assembly';
+        
+        for (let day = 1; day <= 5; day++) {
+          generatedBreaks.push({
+            id: `break-${periodNumber}-${breakAfter.name}-${day}`,
+            name: breakAfter.name,
+            type: breakType,
+            dayOfWeek: day,
+            afterPeriod: periodNumber,
+            startTime: currentTime,
+            endTime: addMinutes(currentTime, breakAfter.durationMinutes),
+            durationMinutes: breakAfter.durationMinutes,
+            icon: breakAfter.icon,
+            color: getBreakTypeColor(breakAfter.type),
+          });
+        }
+        currentTime = addMinutes(currentTime, breakAfter.durationMinutes);
+      }
+    }
+    
+    setPreview({
+      timeSlots,
+      breaks: generatedBreaks,
+      endTime: currentTime,
+    });
   };
 
   // Apply the schedule
@@ -1352,8 +1494,23 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                                         max="120"
                                         value={customBreak.durationMinutes}
                                         onChange={(e) => {
-                                          const value = parseInt(e.target.value);
-                                          updateCustomBreak(index, { durationMinutes: isNaN(value) ? 15 : Math.max(5, value) });
+                                          const value = e.target.value;
+                                          if (value === '') {
+                                            updateCustomBreak(index, { durationMinutes: 0 });
+                                          } else {
+                                            const numValue = parseInt(value, 10);
+                                            if (!isNaN(numValue)) {
+                                              updateCustomBreak(index, {
+                                                durationMinutes: Math.max(5, Math.min(120, numValue)),
+                                              });
+                                            }
+                                          }
+                                        }}
+                                        onBlur={(e) => {
+                                          const value = parseInt(e.target.value, 10);
+                                          if (isNaN(value) || value < 5) {
+                                            updateCustomBreak(index, { durationMinutes: 15 });
+                                          }
                                         }}
                                         className="h-8 text-xs"
                                       />
@@ -1418,9 +1575,26 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 min="30"
                 max="90"
                 value={formData.lessonDuration}
-                onChange={(e) =>
-                  setFormData({ ...formData, lessonDuration: parseInt(e.target.value) || 45 })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    setFormData({ ...formData, lessonDuration: 0 });
+                  } else {
+                    const numValue = parseInt(value, 10);
+                    if (!isNaN(numValue)) {
+                      setFormData({
+                        ...formData,
+                        lessonDuration: Math.max(30, Math.min(90, numValue)),
+                      });
+                    }
+                  }
+                }}
+                onBlur={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                  if (isNaN(value) || value < 30) {
+                    setFormData({ ...formData, lessonDuration: 45 });
+                  }
+                }}
                         className="h-9"
               />
             </div>
@@ -1734,11 +1908,27 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                               min="5"
                               max="120"
                               value={breakConfig.durationMinutes}
-                              onChange={(e) =>
-                                updateBreak(index, {
-                                  durationMinutes: parseInt(e.target.value) || 15,
-                                })
-                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                  // Allow empty value during editing
+                                  updateBreak(index, { durationMinutes: 0 });
+                                } else {
+                                  const numValue = parseInt(value, 10);
+                                  if (!isNaN(numValue)) {
+                                    updateBreak(index, {
+                                      durationMinutes: Math.max(5, Math.min(120, numValue)),
+                                    });
+                                  }
+                                }
+                              }}
+                              onBlur={(e) => {
+                                // Ensure minimum value on blur if empty or invalid
+                                const value = parseInt(e.target.value, 10);
+                                if (isNaN(value) || value < 5) {
+                                  updateBreak(index, { durationMinutes: 15 });
+                                }
+                              }}
                                   className="h-7 text-xs"
                             />
                           </div>

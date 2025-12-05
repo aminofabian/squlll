@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { FeeStructure } from '../../types'
 import { ProcessedFeeStructure } from './types'
-import { Loader2, Plus, RefreshCw, Search, Filter, X } from 'lucide-react'
+import { Loader2, Plus, RefreshCw, Search, X } from 'lucide-react'
 import { FeeStructureCard } from './FeeStructureCard'
 import { FeeStructureEmptyState } from '../FeeStructureEmptyState'
 import { cn } from '@/lib/utils'
@@ -187,70 +187,34 @@ export const FeeStructuresTab = ({
   // Show real data if available
   if (graphQLStructures && graphQLStructures.length > 0) {
     return (
-      <div className="space-y-6">
-        {/* Header Section */}
-        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent p-4 lg:p-6 border-2 border-primary/10">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-1 truncate">Fee Structures</h2>
-              <p className="text-sm text-slate-600">
-                {filteredStructures.length} of {graphQLStructures.length} structure{graphQLStructures.length !== 1 ? 's' : ''} 
-                {filteredStructures.length !== graphQLStructures.length && ' (filtered)'}
-              </p>
-            </div>
+      <div className="space-y-3">
+        {/* Compact Header with Filters and Actions */}
+        <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-2.5 lg:items-center">
+            {/* Left: Search and Filters */}
+            <div className="flex-1 flex flex-col sm:flex-row gap-2.5 min-w-0">
+              {/* Search */}
+              <div className="flex-1 relative min-w-0">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search structures..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-8 h-8 text-xs border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors z-10"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
 
-            <div className="flex items-center gap-2 lg:gap-3 flex-wrap">
-              <Button
-                onClick={() => fetchFeeStructures()}
-                variant="outline"
-                size="sm"
-                className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all text-xs lg:text-sm"
-              >
-                <RefreshCw className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-1.5 lg:mr-2" />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-
-              <Button
-                onClick={onCreateNew}
-                disabled={!canCreateFeeStructure}
-                className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all duration-300 text-xs lg:text-sm px-3 lg:px-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={!canCreateFeeStructure ? 'Please create an academic year and terms first' : 'Create new fee structure'}
-              >
-                <Plus className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-1.5 lg:mr-2" />
-                <span className="hidden sm:inline">Create Structure</span>
-                <span className="sm:hidden">Create</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters Section */}
-        <div className="bg-white border-2 border-primary/10 p-3 lg:p-4 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
-            {/* Search */}
-            <div className="flex-1 relative min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
-              <Input
-                type="text"
-                placeholder="Search by name or academic year..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 h-10 border-slate-300 focus:border-primary focus:ring-primary focus-visible:ring-primary bg-white w-full"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors z-10"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Filter className="h-4 w-4 text-slate-500 flex-shrink-0" />
-              <div className="flex gap-1.5 lg:gap-2 flex-wrap">
+              {/* Status Filter - Compact Pills */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 {(['all', 'active', 'inactive'] as const).map((status) => (
                   <Button
                     key={status}
@@ -258,39 +222,63 @@ export const FeeStructuresTab = ({
                     size="sm"
                     onClick={() => setStatusFilter(status)}
                     className={cn(
-                      "capitalize transition-all text-xs",
+                      "h-8 px-2.5 text-[10px] font-medium capitalize transition-all",
                       statusFilter === status 
-                        ? 'bg-primary text-white' 
-                        : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                        ? 'bg-primary text-white shadow-sm' 
+                        : 'border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400'
                     )}
                   >
-                    {status}
+                    {status === 'all' ? 'All' : status}
                   </Button>
                 ))}
               </div>
-            </div>
 
-            {/* Academic Year Filter */}
-            {academicYears.length > 0 && (
-              <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Academic Year Filter - Compact Dropdown */}
+              {academicYears.length > 0 && (
                 <select
                   value={academicYearFilter}
                   onChange={(e) => setAcademicYearFilter(e.target.value)}
-                  className="h-10 px-3 border-2 border-primary/10 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all min-w-[120px]"
+                  className="h-8 px-2.5 text-[10px] border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary rounded-md transition-all min-w-[100px]"
                 >
                   <option value="all">All Years</option>
                   {academicYears.map(year => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
+              )}
+            </div>
+
+            {/* Right: Actions and Count */}
+            <div className="flex items-center gap-2 flex-shrink-0 border-l border-slate-200 pl-2.5 lg:pl-3">
+              <div className="hidden sm:block text-[10px] text-slate-500 font-medium whitespace-nowrap">
+                {filteredStructures.length}/{graphQLStructures.length}
               </div>
-            )}
+              <Button
+                onClick={() => fetchFeeStructures()}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                title="Refresh"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                onClick={onCreateNew}
+                disabled={!canCreateFeeStructure}
+                size="sm"
+                className="h-8 px-2.5 text-[10px] font-medium bg-primary hover:bg-primary/90 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!canCreateFeeStructure ? 'Please create an academic year and terms first' : 'Create new fee structure'}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                New
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Fee Structure Cards */}
+        {/* Fee Structure Cards - Compact Grid */}
         {filteredStructures.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {filteredStructures.map((structure) => {
               const assignedGrades = getAssignedGrades(structure.structureId)
               const totalStudents = getTotalStudents(structure.structureId)
@@ -328,13 +316,13 @@ export const FeeStructuresTab = ({
             })}
           </div>
         ) : (
-          <div className="bg-white border-2 border-dashed border-primary/20 p-12 text-center">
+          <div className="bg-white border border-dashed border-slate-300 rounded-lg p-8 text-center">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-slate-400" />
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                <Search className="h-6 w-6 text-slate-400" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">No structures found</h3>
-              <p className="text-sm text-slate-600 mb-4">
+              <h3 className="text-sm font-semibold text-slate-900 mb-1">No structures found</h3>
+              <p className="text-xs text-slate-600 mb-3">
                 Try adjusting your search or filter criteria
               </p>
               {(searchQuery || statusFilter !== 'all' || academicYearFilter !== 'all') && (
@@ -346,9 +334,9 @@ export const FeeStructuresTab = ({
                     setStatusFilter('all')
                     setAcademicYearFilter('all')
                   }}
-                  className="border-slate-300 text-slate-700"
+                  className="h-8 text-xs border-slate-300 text-slate-700"
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="h-3 w-3 mr-1.5" />
                   Clear filters
                 </Button>
               )}

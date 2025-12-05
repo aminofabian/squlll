@@ -251,7 +251,7 @@ export const FeeStructureManager = ({
       {/* Tab Navigation */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList>
-          <TabsTrigger value="structures">Fee Structures</TabsTrigger>
+          <TabsTrigger value="structures">Fee Structures...</TabsTrigger>
           <TabsTrigger value="grades">Grade Assignments</TabsTrigger>
           <TabsTrigger value="invoices">Invoice Generation</TabsTrigger>
         </TabsList>
