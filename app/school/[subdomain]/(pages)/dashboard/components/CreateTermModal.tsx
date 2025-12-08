@@ -1,21 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle
+} from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
-import { Loader2, Calendar, Plus, BookOpen } from 'lucide-react'
+import { Loader2, Calendar, Plus, BookOpen, Sparkles, X, CheckCircle2, Zap } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import moeTerms2026 from '@/lib/data/ke-moe-terms-2026.json'
 
 interface CreateTermModalProps {
   isOpen: boolean
@@ -35,8 +37,22 @@ interface TermFormData {
   endDate: string
 }
 
+type MoeTermEntry = {
+  name: string
+  type: string
+  openingDate: string
+  closingDate: string
+  duration: string
+}
+
+const moeTermPresets: MoeTermEntry[] = (moeTerms2026.entries || []).filter(
+  (entry: MoeTermEntry) => entry.type === 'term'
+)
+
 export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: CreateTermModalProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingAll, setIsCreatingAll] = useState(false)
+  const [createdTerms, setCreatedTerms] = useState<string[]>([])
   const [formData, setFormData] = useState<TermFormData>({
     name: '',
     startDate: academicYear.startDate.split('T')[0], // Use academic year start date as default
@@ -129,7 +145,7 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
   }
 
   const handleClose = () => {
-    if (!isLoading) {
+    if (!isLoading && !isCreatingAll) {
       onClose()
       // Reset form when closing
       setFormData({
@@ -137,6 +153,7 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
         startDate: academicYear.startDate.split('T')[0],
         endDate: ''
       })
+      setCreatedTerms([])
     }
   }
 
@@ -155,141 +172,327 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
 
   const duration = getTermDuration()
 
+  const handleUsePreset = (entry: MoeTermEntry) => {
+    setFormData({
+      name: entry.name,
+      startDate: entry.openingDate,
+      endDate: entry.closingDate
+    })
+    toast.success(`Prefilled with ${entry.name} (${entry.duration})`)
+  }
+
+  const createSingleTerm = async (entry: MoeTermEntry): Promise<any> => {
+    const response = await fetch('/api/school/create-term', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: {
+          name: entry.name.trim(),
+          startDate: entry.openingDate,
+          endDate: entry.closingDate,
+          academicYearId: academicYear.id
+        }
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || `Failed to create ${entry.name}`)
+    }
+
+    return result
+  }
+
+  const handleCreateAllTerms = async () => {
+    if (moeTermPresets.length === 0) {
+      toast.error('No terms available to create')
+      return
+    }
+
+    setIsCreatingAll(true)
+    setCreatedTerms([])
+    const results: any[] = []
+    const errors: string[] = []
+
+    try {
+      for (const entry of moeTermPresets) {
+        try {
+          const result = await createSingleTerm(entry)
+          results.push(result)
+          setCreatedTerms(prev => [...prev, entry.name])
+          toast.success(`Created ${entry.name}`)
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : `Failed to create ${entry.name}`
+          errors.push(errorMessage)
+          console.error(`Error creating ${entry.name}:`, error)
+        }
+      }
+
+      if (results.length > 0) {
+        toast.success(`Successfully created ${results.length} out of ${moeTermPresets.length} terms!`)
+        
+        // Call success callback for each created term
+        if (onSuccess) {
+          results.forEach(result => onSuccess(result))
+        }
+      }
+
+      if (errors.length > 0) {
+        toast.error(`${errors.length} term(s) failed to create. Check console for details.`)
+      }
+
+      // Close drawer if all terms were created successfully
+      if (errors.length === 0 && results.length === moeTermPresets.length) {
+        setTimeout(() => {
+          handleClose()
+        }, 1500)
+      }
+    } catch (error) {
+      console.error('Error creating terms:', error)
+      toast.error('An error occurred while creating terms')
+    } finally {
+      setIsCreatingAll(false)
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            Create Term
-          </DialogTitle>
-          <DialogDescription>
-            Create a new term for the academic year "{academicYear.name}". Terms help organize your school calendar and academic activities.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Academic Year Context */}
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="pt-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-primary">{academicYear.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(academicYear.startDate).toLocaleDateString()} - {new Date(academicYear.endDate).toLocaleDateString()}
-                  </div>
-                </div>
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  Academic Year
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Term Name */}
-          <div className="space-y-2">
-            <Label htmlFor="termName">Term Name</Label>
-            <Input
-              id="termName"
-              placeholder="e.g., Fall 2024, Term 1, First Semester"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              disabled={isLoading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Enter a descriptive name for this term
-            </p>
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose()
+        }
+      }}
+      direction="right"
+    >
+      <DrawerContent className="max-w-2xl h-[95vh] flex flex-col">
+        <DrawerHeader className="px-4 py-3 border-b border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <DrawerTitle className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Create Term
+              </DrawerTitle>
+              <DrawerDescription className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Create a new term for the academic year "{academicYear.name}". Terms help organize your school calendar and academic activities.
+              </DrawerDescription>
+            </div>
+            <DrawerClose asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DrawerClose>
           </div>
+        </DrawerHeader>
+        
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900">
 
-          {/* Date Range */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Term Period</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="termStartDate">Start Date</Label>
-                  <Input
-                    id="termStartDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    disabled={isLoading}
-                    min={academicYear.startDate.split('T')[0]}
-                    max={academicYear.endDate.split('T')[0]}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="termEndDate">End Date</Label>
-                  <Input
-                    id="termEndDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    disabled={isLoading}
-                    min={formData.startDate || academicYear.startDate.split('T')[0]}
-                    max={academicYear.endDate.split('T')[0]}
-                  />
-                </div>
-              </div>
-              
-              {/* Date constraints info */}
-              <div className="text-xs text-muted-foreground bg-slate-50 dark:bg-slate-800 p-2 rounded">
-                <strong>Note:</strong> Term dates must be within the academic year period
-                ({new Date(academicYear.startDate).toLocaleDateString()} - {new Date(academicYear.endDate).toLocaleDateString()})
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Preview */}
-          {formData.name && formData.startDate && formData.endDate && duration && (
-            <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+          <div className="space-y-4">
+            {/* Academic Year Context */}
+            <Card className="bg-primary/5 border-primary/20">
               <CardContent className="pt-4">
-                <div className="text-sm">
-                  <div className="font-medium text-green-800 dark:text-green-200 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Term Preview
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-primary">{academicYear.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(academicYear.startDate).toLocaleDateString()} - {new Date(academicYear.endDate).toLocaleDateString()}
+                    </div>
                   </div>
-                  <div className="mt-2 space-y-1 text-green-700 dark:text-green-300">
-                    <div><strong>Name:</strong> {formData.name}</div>
-                    <div><strong>Period:</strong> {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}</div>
-                    <div><strong>Duration:</strong> {duration.days} days ({duration.weeks} weeks)</div>
-                  </div>
+                  <Badge variant="secondary" className="bg-primary/10 text-primary">
+                    Academic Year
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
-          )}
+
+            {/* Term Name */}
+            <div className="space-y-2">
+              <Label htmlFor="termName">Term Name</Label>
+              <Input
+                id="termName"
+                placeholder="e.g., Fall 2024, Term 1, First Semester"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter a descriptive name for this term
+              </p>
+            </div>
+
+            {!!moeTermPresets.length && (
+              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      Autofill from Kenya MoE 2026
+                    </div>
+                    <Button
+                      onClick={handleCreateAllTerms}
+                      disabled={isLoading || isCreatingAll}
+                      className="h-8 px-3 text-xs bg-primary hover:bg-primary/90 text-white shadow-sm"
+                    >
+                      {isCreatingAll ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-3 w-3 mr-1.5" />
+                          Create All Terms
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {moeTermPresets.map((entry) => {
+                      const isCreated = createdTerms.includes(entry.name)
+                      return (
+                        <Button
+                          key={entry.name}
+                          variant="outline"
+                          onClick={() => handleUsePreset(entry)}
+                          disabled={isLoading || isCreatingAll}
+                          className={`
+                            w-full h-auto py-3 px-4 justify-start text-left 
+                            transition-all duration-200 cursor-pointer
+                            hover:bg-primary/10 hover:border-primary/60 hover:shadow-md
+                            active:scale-[0.98] active:shadow-sm
+                            ${isCreated ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700' : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600'}
+                            ${isLoading || isCreatingAll ? 'opacity-60 cursor-not-allowed' : 'opacity-100'}
+                          `}
+                        >
+                          <div className="flex items-start justify-between w-full gap-2">
+                            <div className="flex flex-col items-start w-full gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                                  {entry.name}
+                                </span>
+                                {isCreated && (
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                )}
+                              </div>
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {entry.openingDate} → {entry.closingDate}
+                              </span>
+                              <span className="text-xs text-primary font-medium">
+                                {entry.duration}
+                              </span>
+                            </div>
+                          </div>
+                        </Button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
+                    Click individual terms to prefill, or use "Create All Terms" to create all three at once.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Date Range */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Term Period</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="termStartDate">Start Date</Label>
+                    <Input
+                      id="termStartDate"
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      disabled={isLoading}
+                      min={academicYear.startDate.split('T')[0]}
+                      max={academicYear.endDate.split('T')[0]}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="termEndDate">End Date</Label>
+                    <Input
+                      id="termEndDate"
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      disabled={isLoading}
+                      min={formData.startDate || academicYear.startDate.split('T')[0]}
+                      max={academicYear.endDate.split('T')[0]}
+                    />
+                  </div>
+                </div>
+                
+                {/* Date constraints info */}
+                <div className="text-xs text-muted-foreground bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                  <strong>Note:</strong> Term dates must be within the academic year period
+                  ({new Date(academicYear.startDate).toLocaleDateString()} - {new Date(academicYear.endDate).toLocaleDateString()})
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            {formData.name && formData.startDate && formData.endDate && duration && (
+              <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                <CardContent className="pt-4">
+                  <div className="text-sm">
+                    <div className="font-medium text-green-800 dark:text-green-200 flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Term Preview
+                    </div>
+                    <div className="mt-2 space-y-1 text-green-700 dark:text-green-300">
+                      <div><strong>Name:</strong> {formData.name}</div>
+                      <div><strong>Period:</strong> {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}</div>
+                      <div><strong>Duration:</strong> {duration.days} days ({duration.weeks} weeks)</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="bg-primary hover:bg-primary/90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Term
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="px-4 py-3 border-t border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+          <div className="flex gap-3 w-full sm:w-auto sm:ml-auto">
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading || isCreatingAll}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading || isCreatingAll}
+              className="flex-1 sm:flex-none bg-primary hover:bg-primary/90"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Term
+                </>
+              )}
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   )
 }
 

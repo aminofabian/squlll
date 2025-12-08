@@ -1,0 +1,91 @@
+{
+  "year": 2026,
+  "source": "Kenya Ministry of Education published term dates",
+  "entries": [
+    {
+      "name": "Term I",
+      "type": "term",
+      "openingDate": "2026-01-06",
+      "closingDate": "2026-04-02",
+      "duration": "13 weeks"
+    },
+    {
+      "name": "Half term",
+      "type": "mid_term_break",
+      "openingDate": "2026-02-25",
+      "closingDate": "2026-03-01",
+      "duration": "5 days"
+    },
+    {
+      "name": "April Holiday",
+      "type": "holiday",
+      "openingDate": "2026-04-07",
+      "closingDate": "2026-04-24",
+      "duration": "3 weeks"
+    },
+    {
+      "name": "Term II",
+      "type": "term",
+      "openingDate": "2026-04-27",
+      "closingDate": "2026-07-31",
+      "duration": "14 weeks"
+    },
+    {
+      "name": "Half term",
+      "type": "mid_term_break",
+      "openingDate": "2026-06-24",
+      "closingDate": "2026-06-28",
+      "duration": "5 days"
+    },
+    {
+      "name": "August Holiday",
+      "type": "holiday",
+      "openingDate": "2026-08-03",
+      "closingDate": "2026-08-21",
+      "duration": "3 weeks"
+    },
+    {
+      "name": "Term III",
+      "type": "term",
+      "openingDate": "2026-08-24",
+      "closingDate": "2026-10-23",
+      "duration": "9 weeks"
+    },
+    {
+      "name": "KPSEA",
+      "type": "exam",
+      "openingDate": "2026-10-26",
+      "closingDate": "2026-10-29",
+      "duration": "4 days"
+    },
+    {
+      "name": "KILEA",
+      "type": "exam",
+      "openingDate": "2026-10-26",
+      "closingDate": "2026-10-30",
+      "duration": "5 days"
+    },
+    {
+      "name": "KJSEA & KPLEA",
+      "type": "exam",
+      "openingDate": "2026-10-26",
+      "closingDate": "2026-11-05",
+      "duration": "7 days"
+    },
+    {
+      "name": "KCSE",
+      "type": "exam",
+      "openingDate": "2026-11-02",
+      "closingDate": "2026-11-20",
+      "duration": "3 weeks"
+    },
+    {
+      "name": "December Holiday",
+      "type": "holiday",
+      "openingDate": "2026-10-26",
+      "closingDate": "2027-01-01",
+      "duration": "10 weeks"
+    }
+  ]
+}
+
