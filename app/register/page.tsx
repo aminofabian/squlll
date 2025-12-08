@@ -195,13 +195,8 @@ export default function SignupPage() {
     setSuccess(null)
 
     const mutation = `
-      mutation {
-        createUser(signupInput: {
-          email: "${data.email}"
-          password: "${data.password}"
-          name: "${data.name}"
-          schoolName: "${data.schoolName}"
-        }) {
+      mutation CreateUser($input: SignupInput!) {
+        createUser(signupInput: $input) {
           user {
             id
             email
@@ -221,99 +216,100 @@ export default function SignupPage() {
       }
     `
 
-    try {
-      // Ensure we have the correct API URL
-      const apiUrl = 'https://skool.zelisline.com/graphql'
-      console.log('Using API URL:', apiUrl)
+    const variables = {
+      input: {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        schoolName: data.schoolName,
+      },
+    }
 
-      const requestBody = JSON.stringify({ query: mutation })
-      console.log('Request body:', requestBody)
+    try {
+      // Use the local GraphQL proxy to avoid CORS issues in production
+      const apiUrl = "/api/graphql"
+      console.log("Using API URL:", apiUrl)
 
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: requestBody,
+        body: JSON.stringify({ query: mutation, variables }),
       })
 
-      console.log('Response status:', response.status)
-      console.log('Response headers:', {
-        type: response.headers.get('content-type'),
-        ...Object.fromEntries([...response.headers])
+      console.log("Response status:", response.status)
+      console.log("Response headers:", {
+        type: response.headers.get("content-type"),
+        ...Object.fromEntries([...response.headers]),
       })
 
-      // Log raw response for debugging
       const rawResponse = await response.text()
-      console.log('Raw response:', rawResponse)
+      console.log("Raw response:", rawResponse)
 
-      // Check if we actually got a response
       if (!rawResponse) {
-        throw new Error('Empty response from server')
+        throw new Error("Empty response from server")
       }
 
-      // Try to clean the response if it has any BOM or whitespace
-      const cleanResponse = rawResponse.trim().replace(/^\uFEFF/, '')
-      console.log('Cleaned response:', cleanResponse)
+      const cleanResponse = rawResponse.trim().replace(/^\uFEFF/, "")
+      console.log("Cleaned response:", cleanResponse)
 
       let result
       try {
         result = JSON.parse(cleanResponse)
       } catch (parseError) {
-        console.error('JSON Parse Error:', parseError)
-        console.error('Response that failed to parse:', {
+        console.error("JSON Parse Error:", parseError)
+        console.error("Response that failed to parse:", {
           raw: rawResponse,
           cleaned: cleanResponse,
           length: cleanResponse.length,
-          firstChar: cleanResponse.charCodeAt(0)
+          firstChar: cleanResponse.charCodeAt(0),
         })
         throw new Error(`Server returned invalid JSON. Raw response: ${rawResponse.substring(0, 100)}...`)
       }
 
+      if (!response.ok) {
+        const message = result?.errors?.[0]?.message ?? `Signup failed (${response.status})`
+        throw new Error(message)
+      }
+
       if (result.errors) {
-        throw new Error(result.errors[0].message || 'Signup failed')
+        throw new Error(result.errors[0].message || "Signup failed")
       }
 
       setSuccess(result.data.createUser)
-      
-      // Tokens will be passed as URL parameters and stored in cookies on subdomain
-      // No need to store in localStorage here
 
-      // Redirect to dashboard after successful signup
       setTimeout(() => {
         const userData = result.data.createUser
         const subdomain = userData.subdomainUrl
-        const isProd = process.env.NODE_ENV === 'production'
-        const baseUrl = isProd ? 'https://' : 'http://'
-        const domain = isProd ? 'squl.co.ke' : 'localhost:3000'
-        
-        // Extract just the subdomain part
-        const subdomainPrefix = subdomain.split('.')[0]
-        
-        // Encode user data to pass in URL parameters
+        const isProd = process.env.NODE_ENV === "production"
+        const baseUrl = isProd ? "https://" : "http://"
+        const domain = isProd ? "squl.co.ke" : "localhost:3000"
+
+        const subdomainPrefix = subdomain.split(".")[0]
+
         const params = new URLSearchParams({
           userId: userData.user.id,
           email: userData.user.email,
-          schoolUrl: userData.user.schoolUrl || '',
+          schoolUrl: userData.user.schoolUrl || "",
           subdomainUrl: userData.subdomainUrl,
           tenantId: userData.tenant.id,
           tenantName: userData.tenant.name,
           tenantSubdomain: userData.tenant.subdomain,
           accessToken: userData.tokens.accessToken,
           refreshToken: userData.tokens.refreshToken,
-          newRegistration: 'true'  // Flag to indicate this is a new registration
+          newRegistration: "true",  // Flag to indicate this is a new registration
         }).toString()
-        
+
         const setupUrl = `${baseUrl}${subdomainPrefix}.${domain}/setup?${params}`
-        
-        console.log('Redirecting to setup page:', setupUrl)
+
+        console.log("Redirecting to setup page:", setupUrl)
         window.location.href = setupUrl
       }, 3000)
-
     } catch (error) {
-      console.error('Registration error:', error)
-      setError(error instanceof Error ? error.message : 'An error occurred during signup')
+      console.error("Registration error:", error)
+      setError(error instanceof Error ? error.message : "An error occurred during signup")
     } finally {
       setIsLoading(false)
     }
