@@ -10,6 +10,7 @@ export interface TimeSlot {
   color: string;          // "border-l-primary" (for UI)
   dayOfWeek?: number;     // 1-7 if tied to a day template
   label?: string;         // Optional label for the period
+  dayTemplateId?: string; // ID of the day template this period belongs to
 }
 
 export interface Break {

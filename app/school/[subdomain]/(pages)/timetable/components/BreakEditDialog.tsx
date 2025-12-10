@@ -157,13 +157,13 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
       try {
         // Resolve dayTemplateId from loaded periods or fallback
         const resolveDayTemplateId = async () => {
-          const slotWithTemplate = timeSlots.find((s: any) => s.dayTemplateId);
-          if (slotWithTemplate) return slotWithTemplate.dayTemplateId as string;
+          const slotWithTemplate = timeSlots.find((s) => s.dayTemplateId);
+          if (slotWithTemplate?.dayTemplateId) return slotWithTemplate.dayTemplateId;
           // Attempt reload
           await loadDayTemplatePeriods();
-          const refreshed = useTimetableStore.getState().timeSlots as any[];
-          const refreshedSlot = refreshed.find((s: any) => s.dayTemplateId);
-          return refreshedSlot?.dayTemplateId as string | undefined;
+          const refreshed = useTimetableStore.getState().timeSlots;
+          const refreshedSlot = refreshed.find((s) => s.dayTemplateId);
+          return refreshedSlot?.dayTemplateId;
         };
 
         const dayTemplateId = await resolveDayTemplateId();

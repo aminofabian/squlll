@@ -47,8 +47,8 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   
   // GraphQL timetable entry actions
   loadEntries: (termId: string, gradeId: string) => Promise<void>;
-  deleteEntriesForTerm: (termId: string) => Promise<void>;
-  deleteTimetableForTerm: (termId: string) => Promise<void>;
+  deleteEntriesForTerm: (termId: string) => Promise<string | undefined>;
+  deleteTimetableForTerm: (termId: string) => Promise<string | undefined>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;

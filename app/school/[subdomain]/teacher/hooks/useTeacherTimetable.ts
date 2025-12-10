@@ -41,6 +41,8 @@ export interface TimetableEntry {
   timeSlotId: string
   dayOfWeek: number
   roomNumber: string | null
+  isDoublePeriod?: boolean
+  notes?: string
   grade: {
     id: string
     name: string
@@ -399,9 +401,38 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
                 teacherId,
                 timeSlotId: period.id,
                 dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
-                roomNumber: entry.room?.name || undefined,
+                roomNumber: entry.room?.name || null,
                 isDoublePeriod: false,
                 notes: undefined,
+                grade: {
+                  id: entryGradeId,
+                  name: entry.gradeLevel?.name || gradeBlock.gradeLevel?.name || '',
+                  gradeLevel: {
+                    name: entry.gradeLevel?.name || gradeBlock.gradeLevel?.name || '',
+                  },
+                },
+                subject: {
+                  id: subjectId,
+                  name: entry.subject?.name || '',
+                },
+                teacher: {
+                  id: teacherId,
+                  fullName: entry.teacher?.name || null,
+                  firstName: null,
+                  lastName: null,
+                  email: entry.teacher?.email || null,
+                  phoneNumber: null,
+                  gender: null,
+                  department: null,
+                  role: null,
+                  isActive: null,
+                  user: entry.teacher?.name ? { name: entry.teacher.name } : null,
+                },
+                timeSlot: {
+                  id: period.id,
+                  periodNumber: period.periodNumber,
+                  displayTime: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
+                },
               })
             }
           })
@@ -412,9 +443,8 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
 
       console.log('Fetched whole school timetable:', {
         timeSlotsCount: formattedTimeSlots.length,
-        entriesCount: timetableData.entries?.length || 0,
-        breaksCount: timetableData.breaks?.length || 0,
-        gradesCount: timetableData.grades?.length || 0
+        entriesCount: entries.length,
+        gradesCount: timetableByGrade.length
       })
 
       const finalData = {
