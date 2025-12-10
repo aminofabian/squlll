@@ -17,6 +17,7 @@ import { BulkScheduleDrawer } from './components/BulkScheduleDrawer';
 import { BulkLessonEntryDrawer } from './components/BulkLessonEntryDrawer';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -922,8 +923,98 @@ export default function SmartTimetableNew() {
                                           </div>
                                         )}
                                       </div>
-                                      <div className="absolute top-2 right-2 opacity-0 group-hover/lesson:opacity-100 transition-opacity">
-                                        <Edit2 className="h-3.5 w-3.5 text-primary" />
+                                      <div className="absolute top-2 right-2 opacity-0 group-hover/lesson:opacity-100 transition-opacity flex items-center gap-1.5">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingLesson(entry);
+                                          }}
+                                          className="p-1 hover:bg-primary/10 rounded transition-colors"
+                                          title="Edit lesson"
+                                        >
+                                          <Edit2 className="h-3.5 w-3.5 text-primary" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const deleteEntry = async () => {
+                                              try {
+                                                const mutation = `
+                                                  mutation DeleteEntry {
+                                                    deleteTimetableEntry(id: "${entry.id}")
+                                                  }
+                                                `;
+                                                const response = await fetch('/api/graphql', {
+                                                  method: 'POST',
+                                                  headers: {
+                                                    'Content-Type': 'application/json',
+                                                  },
+                                                  credentials: 'include',
+                                                  body: JSON.stringify({
+                                                    query: mutation,
+                                                  }),
+                                                });
+                                                const result = await response.json();
+                                                if (result.errors) {
+                                                  throw new Error(result.errors[0]?.message || 'Failed to delete entry');
+                                                }
+                                                if (result.data?.deleteTimetableEntry === true) {
+                                                  // Reload entries to update UI
+                                                  const termId = selectedTerm?.id || selectedTermId;
+                                                  if (selectedGradeId && termId) {
+                                                    await loadEntries(termId, selectedGradeId);
+                                                  }
+                                                  toast({
+                                                    title: 'Success',
+                                                    description: 'Lesson deleted successfully',
+                                                  });
+                                                } else {
+                                                  throw new Error('Delete failed');
+                                                }
+                                              } catch (error) {
+                                                console.error('Error deleting entry:', error);
+                                                toast({
+                                                  title: 'Error',
+                                                  description: error instanceof Error ? error.message : 'Failed to delete lesson',
+                                                  variant: 'destructive',
+                                                });
+                                              }
+                                            };
+
+                                            const confirmationToast = toast({
+                                              title: 'Delete Lesson',
+                                              description: 'Are you sure you want to delete this lesson? This action cannot be undone.',
+                                              variant: 'destructive',
+                                              action: (
+                                                <div className="flex gap-2">
+                                                  <ToastAction
+                                                    altText="Cancel"
+                                                    onClick={() => {
+                                                      confirmationToast.dismiss();
+                                                    }}
+                                                    className="bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300"
+                                                  >
+                                                    Cancel
+                                                  </ToastAction>
+                                                  <ToastAction
+                                                    altText="Delete"
+                                                    onClick={() => {
+                                                      confirmationToast.dismiss();
+                                                      deleteEntry();
+                                                    }}
+                                                    className="bg-red-600 hover:bg-red-700 text-white border-red-700"
+                                                  >
+                                                    Delete
+                                                  </ToastAction>
+                                                </div>
+                                              ),
+                                            });
+                                          }}
+                                          className="p-1 hover:bg-red-500/10 rounded transition-colors"
+                                          title="Delete lesson"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                                        </button>
                                       </div>
                                     </div>
                                   ) : (

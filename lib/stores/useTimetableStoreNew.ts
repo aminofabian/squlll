@@ -1696,8 +1696,8 @@ export const useTimetableStore = create<TimetableStore>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         // Only persist data, not UI state
+        // Breaks are not cached - always loaded fresh from backend
         timeSlots: state.timeSlots,
-        breaks: state.breaks,
         subjects: state.subjects,
         teachers: state.teachers,
         grades: state.grades,
@@ -1708,7 +1708,8 @@ export const useTimetableStore = create<TimetableStore>()(
         // After rehydration, check if we need to preserve fresh entries
         if (state) {
           console.log('Store rehydrated. Entries count:', state.entries.length);
-          // Don't clear entries on rehydration - let loadEntries handle it
+          // Clear breaks on rehydration - they should always be loaded fresh from backend
+          state.breaks = [];
         }
       },
     }

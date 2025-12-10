@@ -171,32 +171,19 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           throw new Error('No day template found. Please load a day template first.');
         }
 
-        // Add new break(s) via API
-        if (applyToAllDays) {
-          // Create break for all days (use createAllBreaksForTemplate)
-          const breaksToCreate = DAYS.map((day) => ({
-            name: formData.name,
-            type: formData.type,
-            dayTemplateId,
-            afterPeriod: formData.afterPeriod,
-            durationMinutes: validDuration,
-            icon: formData.icon,
-            color: formData.color,
-            applyToAllDays: true,
-          }));
-          await createAllBreaksForTemplate(breaksToCreate);
-        } else {
-          // Create break for single day
-          await createAllBreaksForTemplate([{
-            name: formData.name,
-            type: formData.type,
-            dayTemplateId,
-            afterPeriod: formData.afterPeriod,
-            durationMinutes: validDuration,
-            icon: formData.icon,
-            color: formData.color,
-          }]);
-        }
+        // Add new break via API
+        // When applyToAllDays is true, create a single break with applyToAllDays: true
+        // The backend will handle applying it to all day templates
+        await createAllBreaksForTemplate([{
+          name: formData.name,
+          type: formData.type,
+          dayTemplateId,
+          afterPeriod: formData.afterPeriod,
+          durationMinutes: validDuration,
+          icon: formData.icon,
+          color: formData.color,
+          applyToAllDays: applyToAllDays, // true = applies to all days, false/undefined = single day
+        }]);
         onClose();
       } catch (error) {
         console.error('Error creating break:', error);
