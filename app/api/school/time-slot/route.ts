@@ -13,6 +13,78 @@ enum GraphQLErrorType {
   SERVER_ERROR = 'server_error'
 }
 
+type DayTemplateInput = {
+  dayOfWeek: number;
+  startTime: string;
+  periodCount: number;
+  defaultPeriodDuration: number;
+  gradeLevelIds: string[];
+};
+
+function isDayTemplatePayload(payload: unknown): payload is DayTemplateInput | DayTemplateInput[] {
+  const sample = Array.isArray(payload) ? payload[0] : payload;
+  if (!sample || typeof sample !== 'object') return false;
+  const candidate = sample as Record<string, unknown>;
+  return (
+    typeof candidate.dayOfWeek === 'number' &&
+    typeof candidate.startTime === 'string' &&
+    typeof candidate.periodCount === 'number' &&
+    typeof candidate.defaultPeriodDuration === 'number' &&
+    Array.isArray(candidate.gradeLevelIds)
+  );
+}
+
+function escapeString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function buildDayTemplateMutation(templates: DayTemplateInput[]): string {
+  // For a single template, use the native field name to match expected shape:
+  // { data: { createDayTemplate: { id, startTime } } }
+  if (templates.length === 1) {
+    const [template] = templates;
+    const gradeIds = template.gradeLevelIds.map((id) => `"${escapeString(id)}"`).join(', ');
+    return `
+      mutation CreateDayTemplate {
+        createDayTemplate(input: {
+          dayOfWeek: ${template.dayOfWeek}
+          startTime: "${escapeString(template.startTime)}"
+          periodCount: ${template.periodCount}
+          defaultPeriodDuration: ${template.defaultPeriodDuration}
+          gradeLevelIds: [${gradeIds}]
+        }) {
+          id
+          startTime
+        }
+      }
+    `;
+  }
+
+  const mutationBody = templates
+    .map((template, index) => {
+      const gradeIds = template.gradeLevelIds.map((id) => `"${escapeString(id)}"`).join(', ');
+      return `
+        template${index + 1}: createDayTemplate(input: {
+          dayOfWeek: ${template.dayOfWeek}
+          startTime: "${escapeString(template.startTime)}"
+          periodCount: ${template.periodCount}
+          defaultPeriodDuration: ${template.defaultPeriodDuration}
+          gradeLevelIds: [${gradeIds}]
+        }) {
+          id
+          startTime
+        }
+      `;
+    })
+    .join('\n');
+
+  return `
+    mutation CreateDayTemplate {
+      ${mutationBody}
+    }
+  `;
+}
+
 // Helper functions for GraphQL error detection
 function classifyGraphQLError(error: any): { type: GraphQLErrorType; userMessage: string } {
   const message = error.message || '';
@@ -174,7 +246,7 @@ export async function POST(request: Request) {
   const requestUrl = new URL(request.url);
   const GRAPHQL_ENDPOINT = `${requestUrl.origin}/api/graphql`;
   try {
-    const timeSlotData = await request.json();
+    const requestBody = await request.json();
 
     // Get the token from cookies
     const cookieStore = await cookies();
@@ -200,6 +272,73 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    // If the payload matches the new template shape, use createDayTemplate instead of time slots
+    if (isDayTemplatePayload(requestBody)) {
+      const templates = Array.isArray(requestBody) ? requestBody : [requestBody];
+      const fullMutation = buildDayTemplateMutation(templates);
+
+      console.log('Create DayTemplate Debug:', {
+        templates,
+        tenantId,
+        fullMutation,
+      });
+
+      const result = await handleGraphQLCall(async () => {
+        const cookieHeader = request.headers.get('cookie');
+
+        return await fetch(GRAPHQL_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(cookieHeader && { Cookie: cookieHeader }),
+          },
+          body: JSON.stringify({
+            query: fullMutation,
+          }),
+        });
+      });
+
+      if (result.errors) {
+        console.error('GraphQL errors (createDayTemplate):', result.errors);
+
+        const firstError = result.errors[0];
+        const errorClassification = classifyGraphQLError(firstError);
+
+        if (errorClassification.type === GraphQLErrorType.SCHEMA_NOT_IMPLEMENTED) {
+          return NextResponse.json({
+            success: true,
+            message: errorClassification.userMessage,
+            featureNotAvailable: true,
+            data: result.data || {},
+          });
+        }
+
+        if (errorClassification.type === GraphQLErrorType.AUTH_ERROR) {
+          return NextResponse.json(
+            {
+              error: errorClassification.userMessage,
+              type: errorClassification.type,
+              details: result.errors,
+            },
+            { status: 401 }
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error: errorClassification.userMessage,
+            type: errorClassification.type,
+            details: result.errors,
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ data: result.data });
+    }
+
+    const timeSlotData = requestBody;
 
     // Handle bulk time slot creation or single time slot creation
     const isBulkCreation = Array.isArray(timeSlotData);

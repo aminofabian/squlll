@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
-import { Loader2, Calendar } from 'lucide-react'
+import { Loader2, Calendar, Sparkles } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { type AcademicYear } from '@/lib/hooks/useAcademicYears'
+import moeTerms2026 from '@/lib/data/ke-moe-terms-2026.json'
 
 interface EditAcademicYearDialogProps {
   academicYear: AcademicYear
@@ -159,6 +160,53 @@ export function EditAcademicYearDialog({
     }
   }
 
+  // Get MoE academic year data - using year from JSON
+  const getMoeAcademicYearData = () => {
+    const entries = moeTerms2026.entries || []
+    if (entries.length === 0) return null
+
+    // Find the earliest start date and latest end date
+    const allDates = entries.map((entry: any) => ({
+      start: entry.openingDate,
+      end: entry.closingDate
+    }))
+
+    const earliestStart = allDates.reduce((earliest: string, current: any) => 
+      current.start < earliest ? current.start : earliest, allDates[0].start)
+    
+    const latestEnd = allDates.reduce((latest: string, current: any) => 
+      current.end > latest ? current.end : latest, allDates[0].end)
+
+    // Extract year from the JSON (year only)
+    const year = moeTerms2026.year || 2026
+    const academicYearName = `${year}-${year + 1}`
+
+    return {
+      name: academicYearName,
+      startDate: earliestStart,
+      endDate: latestEnd,
+      year
+    }
+  }
+
+  const handleUseMoeData = () => {
+    const moeData = getMoeAcademicYearData()
+    if (!moeData) {
+      toast.error('Unable to load MoE data')
+      return
+    }
+
+    setFormData({
+      name: moeData.name,
+      startDate: moeData.startDate,
+      endDate: moeData.endDate
+    })
+    toast.success(`Prefilled with Kenya MoE ${moeData.year} academic year data`)
+  }
+
+  // Get the year from JSON for button display
+  const moeYear = moeTerms2026.year || 2026
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
@@ -176,7 +224,21 @@ export function EditAcademicYearDialog({
           {/* Single-row inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-3 sm:gap-4 items-end">
             <div className="space-y-2 sm:col-span-3 sm:max-w-none">
-              <Label htmlFor="edit-name">Academic Year Name</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="edit-name">Academic Year Name</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUseMoeData}
+                  disabled={isLoading}
+                  className="h-7 px-3 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium shadow-sm hover:shadow transition-all"
+                  title={`Use Kenya Ministry of Education ${moeYear} academic year dates`}
+                >
+                  <Sparkles className="h-3 w-3 mr-1.5" />
+                  Use MoE {moeYear}
+                </Button>
+              </div>
               <Input
                 id="edit-name"
                 placeholder="e.g., 2024-2025"

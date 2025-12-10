@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Clock, Coffee, UtensilsCrossed, Megaphone, Sparkles, X } from 'lucide-react';
+import { Trash2, Plus, Clock, Coffee, UtensilsCrossed, Megaphone, Sparkles, X, Users } from 'lucide-react';
 import type { TimeSlot, Break } from '@/lib/types/timetable';
 
 interface BulkScheduleDrawerProps {
@@ -49,7 +49,7 @@ interface BreakConfig {
 }
 
 export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
-  const { bulkSetSchedule, createTimeSlots } = useTimetableStore();
+  const { bulkSetSchedule, createDayTemplates, selectedGradeId, grades } = useTimetableStore();
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -58,6 +58,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     numberOfPeriods: 10,
     applyToAllDays: true,
   });
+  const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([]);
 
   const [breaks, setBreaks] = useState<BreakConfig[]>([
     {
@@ -117,6 +118,15 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     { afterPeriod: 8, type: 'games', durationMinutes: 40 },
   ]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    // Default to the currently selected grade when opening, but don't overwrite user multi-select
+    if (selectedGradeId && selectedGradeIds.length === 0) {
+      setSelectedGradeIds([selectedGradeId]);
+    }
+  }, [open, selectedGradeId, selectedGradeIds.length]);
+
   // Helper: Add minutes to time string
   const addMinutes = (timeStr: string, minutes: number): string => {
     const [hours, mins] = timeStr.split(':').map(Number);
@@ -158,6 +168,15 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       default:
         return 'bg-blue-500';
     }
+  };
+
+  const handleGradeToggle = (gradeId: string, checked: boolean | 'indeterminate') => {
+    setSelectedGradeIds((prev) => {
+      if (checked === true) {
+        return Array.from(new Set([...prev, gradeId]));
+      }
+      return prev.filter((id) => id !== gradeId);
+    });
   };
 
   // Generate preview
@@ -438,49 +457,55 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   // Apply the schedule
   const handleApply = async () => {
     if (!preview) return;
-    
-      setIsCreating(true);
-    
-    // Show info toast about replacement
+
+    if (selectedGradeIds.length === 0) {
+      toast({
+        title: 'Select at least one grade',
+        description: 'Choose one or more grades to apply this day template.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsCreating(true);
+
     toast({
-      title: 'Replacing schedule...',
-      description: 'Your current schedule will be replaced with the new one.',
+      title: 'Saving day templates...',
+      description: 'Creating daily templates and replacing the current schedule locally.',
       variant: 'default',
     });
-    
-      try {
-        // Convert TimeSlot[] to TimeSlotInput[] for API
-        const timeSlotInputs = preview.timeSlots.map((slot) => ({
-          periodNumber: slot.periodNumber,
-          displayTime: slot.time,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          color: slot.color || '#3B82F6',
-        }));
 
-        // Create time slots via API
-        await createTimeSlots(timeSlotInputs);
-        
-        // Update local store with breaks
-        bulkSetSchedule(preview.timeSlots, preview.breaks);
+    try {
+      const daysToCreate = formData.applyToAllDays ? [1, 2, 3, 4, 5] : [1];
+      const templates = daysToCreate.map((day) => ({
+        dayOfWeek: day,
+        startTime: formData.startTime,
+        periodCount: formData.numberOfPeriods,
+        defaultPeriodDuration: formData.lessonDuration,
+        gradeLevelIds: selectedGradeIds,
+      }));
 
-        // Show success toast
-        toast({
-        title: 'Schedule updated successfully!',
-          description: `Created ${preview.timeSlots.length} time slot${preview.timeSlots.length !== 1 ? 's' : ''} and ${preview.breaks.length} break${preview.breaks.length !== 1 ? 's' : ''}.`,
+      await createDayTemplates(templates);
+
+      // Update local store with breaks to keep UI in sync
+      bulkSetSchedule(preview.timeSlots, preview.breaks);
+
+      toast({
+        title: 'Day templates created',
+        description: `Created ${templates.length} template${templates.length !== 1 ? 's' : ''} for ${selectedGradeIds.length} grade${selectedGradeIds.length !== 1 ? 's' : ''}.`,
         variant: 'default',
-        });
+      });
 
-        onClose();
-      } catch (error) {
-        console.error('Error creating time slots:', error);
-        toast({
-          title: 'Failed to create time slots',
-          description: error instanceof Error ? error.message : 'An error occurred while creating time slots.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsCreating(false);
+      onClose();
+    } catch (error) {
+      console.error('Error creating day templates:', error);
+      toast({
+        title: 'Failed to create day templates',
+        description: error instanceof Error ? error.message : 'An error occurred while creating day templates.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -912,6 +937,41 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
             {/* Step 1: Template Selection */}
             {currentStep === 1 && (
           <div className="space-y-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    Select Grade Levels
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {grades.length === 0 ? (
+                    <div className="text-sm text-slate-500">No grades loaded yet.</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {grades.map((grade) => {
+                        const isSelected = selectedGradeIds.includes(grade.id);
+                        return (
+                          <label
+                            key={grade.id}
+                            className={`flex items-center gap-2 rounded border px-3 py-2 text-sm cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-slate-300 hover:border-primary/60 text-slate-700'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
+                            />
+                            <span>{grade.displayName || grade.name || 'Grade'}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
               {/* Quick Templates */}
               <Card>
                 <CardHeader className="pb-2">

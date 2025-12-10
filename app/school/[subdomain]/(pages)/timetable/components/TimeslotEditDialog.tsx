@@ -25,12 +25,14 @@ interface TimeslotEditDialogProps {
 export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProps) {
   const { updateTimeSlot: updateStoreTimeSlot } = useTimetableStore();
   const { updateTimeSlot } = useTimeSlots();
+  const { updateDayTemplatePeriod } = useTimetableStore();
 
   const [formData, setFormData] = useState({
     startTime: '',
     endTime: '',
     duration: 0,
     displayTime: '',
+    label: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +110,7 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
         endTime: timeslot.endTime,
         duration: initialDuration || 0,
         displayTime,
+        label: timeslot.label || '',
       });
       setError(null);
     }
@@ -161,38 +164,35 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
         startTime: formData.startTime,
         endTime: formData.endTime,
         time: newDisplayTime,
+        label: formData.label || undefined,
       });
 
-      // Call GraphQL update mutation (if available)
+      // Prefer new day template period mutation; fallback to legacy timeslot mutation
       try {
-        const result = await updateTimeSlot({
-          id: timeslot.id,
-          periodNumber: timeslot.periodNumber,
-          displayTime: newDisplayTime,
+        await updateDayTemplatePeriod(timeslot.id, {
           startTime: formData.startTime,
           endTime: formData.endTime,
-          color: timeslot.color || 'border-l-primary'
+          label: formData.label || undefined,
         });
-
-        console.log('Successfully updated time slot:', result);
       } catch (mutationError) {
-        // Check if the error is because the mutation isn't implemented yet
-        const errorMessage = mutationError instanceof Error ? mutationError.message : String(mutationError);
-        const isMutationNotImplemented = errorMessage.includes('Unknown type "UpdateTimeSlotInput"') ||
-                                         errorMessage.includes('Cannot query field "updateTimeSlot"');
-
-        if (isMutationNotImplemented) {
-          // If mutation isn't implemented, keep local changes but show a warning
-          console.warn('Time slot update mutation not available on server, keeping local changes only');
-          // Don't revert local changes since the mutation simply doesn't exist yet
-        } else {
-          // For other errors, revert local changes
+        try {
+          const result = await updateTimeSlot({
+            id: timeslot.id,
+            periodNumber: timeslot.periodNumber,
+            displayTime: newDisplayTime,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            color: timeslot.color || 'border-l-primary',
+          });
+          console.log('Fallback updateTimeSlot success:', result);
+        } catch (legacyError) {
           updateStoreTimeSlot(timeslot.id, {
             startTime: timeslot.startTime,
             endTime: timeslot.endTime,
             time: timeslot.time,
+            label: timeslot.label,
           });
-          throw mutationError;
+          throw legacyError;
         }
       }
 
@@ -279,6 +279,23 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
               <span>💡</span>
               <span>Enter time range in format: "8:00 AM – 8:45 AM"</span>
             </p>
+          </div>
+
+          {/* Label (optional) */}
+          <div className="space-y-1.5">
+            <Label htmlFor="label" className="text-sm text-slate-700 dark:text-slate-300 font-medium flex items-center gap-2">
+              <span>Label</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">(optional)</span>
+            </Label>
+            <Input
+              id="label"
+              type="text"
+              value={formData.label}
+              onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
+              placeholder="e.g., Double Period"
+              disabled={loading}
+              className="h-10 text-base font-medium bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary text-slate-900 dark:text-slate-100"
+            />
           </div>
 
           {/* Secondary: Time Details - Collapsible/Expandable Info */}

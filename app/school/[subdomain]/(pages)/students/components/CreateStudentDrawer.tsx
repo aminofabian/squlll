@@ -77,12 +77,13 @@ const studentFormSchema = z.object({
   student_email: z.string().email().optional().or(z.literal("")),
   guardian_name: z.string().min(2, "Guardian name must be at least 2 characters"),
   guardian_phone: z.string()
-    .min(10, { message: 'Guardian phone must be at least 10 characters' })
     .refine((value) => {
-      // Allow Kenyan numbers (+254...) and international numbers
-      const phoneRegex = /^\+254[0-9]{9}$|^\+[1-9][0-9]{1,14}$/;
+      // Must be exactly +254 followed by 9 digits OR +2540 followed by 9 digits
+      // Pattern 1: +254712675412 (13 characters total)
+      // Pattern 2: +2540712675412 (14 characters total)
+      const phoneRegex = /^\+254[0-9]{9}$|^\+2540[0-9]{9}$/;
       return phoneRegex.test(value);
-    }, { message: 'Please enter a valid phone number (e.g., +254700000000)' }),
+    }, { message: 'Phone number must be exactly +254XXXXXXXXX (9 digits) or +2540XXXXXXXXX (9 digits after 0)' }),
   guardian_email: z.string().email().optional().or(z.literal("")),
   home_address: z.string().optional(),
 })
@@ -216,6 +217,19 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
     // If empty or just +, default to +254
     else if (!cleaned || cleaned === '+') {
       cleaned = '+254';
+    }
+    
+    // Enforce exact length: +254XXXXXXXXX (13 chars) or +2540XXXXXXXXX (14 chars)
+    if (cleaned.startsWith('+2540')) {
+      // Limit to 14 characters total (+2540 + 9 digits)
+      if (cleaned.length > 14) {
+        cleaned = cleaned.substring(0, 14);
+      }
+    } else if (cleaned.startsWith('+254')) {
+      // Limit to 13 characters total (+254 + 9 digits)
+      if (cleaned.length > 13) {
+        cleaned = cleaned.substring(0, 13);
+      }
     }
     
     return cleaned;
@@ -353,30 +367,22 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
           {gradesLoading ? 'Loading Grades...' : 'Add New Student'}
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="h-full w-full md:w-1/2 bg-slate-50 dark:bg-slate-900" data-vaul-drawer-direction="right">
-        <DrawerHeader className="border-b-2 border-primary/20 pb-6">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-              <span className="text-xs font-mono uppercase tracking-wide text-primary">
-                Student Registration
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/10 border-2 border-primary/20 rounded-xl p-3">
-                <GraduationCap className="h-6 w-6 text-primary" />
-              </div>
-              <DrawerTitle className="text-2xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
-                New Student
+      <DrawerContent className="h-full w-full md:w-1/2 bg-white dark:bg-slate-900 flex flex-col" data-vaul-drawer-direction="right">
+        <DrawerHeader className="border-b border-slate-200 dark:border-slate-700 pb-4 pt-5 px-6 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <DrawerTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Add New Student
               </DrawerTitle>
+              <DrawerDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Fill in the details below to register a student
+              </DrawerDescription>
             </div>
-            <DrawerDescription className="text-center text-sm text-slate-600 dark:text-slate-400 font-medium max-w-md">
-              Complete the form below to register a new student in the school system
-            </DrawerDescription>
           </div>
         </DrawerHeader>
-        <div className="px-6 py-4 overflow-y-auto relative">
+        <div className="flex-1 overflow-y-auto px-6 py-5 relative">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
               {/* Loading Overlay */}
               {createStudentMutation.isPending && (
@@ -387,10 +393,9 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                   </div>
                 </div>
               )}
-              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
-                  <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
-                    <User className="h-3 w-3 mr-2" />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
                     Personal Information
                   </h3>
                 </div>
@@ -400,12 +405,12 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Full Name *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Full Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Student's full name" {...field} className="font-mono" />
+                          <Input placeholder="Enter student's full name" {...field} className="h-10" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -414,12 +419,12 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="admission_number"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Admission Number *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Admission Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., KPS/2023/001" {...field} className="font-mono" />
+                          <Input placeholder="e.g., KPS/2023/001" {...field} className="h-10" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -428,30 +433,30 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="student_email"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1 font-mono text-sm">
-                          <Mail className="h-3.5 w-3.5 text-primary" />
-                          Student Email (Optional)
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Student Email
+                          <span className="text-slate-400 font-normal ml-1">(optional)</span>
                         </FormLabel>
                         <FormControl>
                           <div className="flex gap-2">
-                            <Input placeholder="student@example.com" {...field} className="font-mono flex-1" />
+                            <Input placeholder="student@example.com" {...field} className="flex-1 h-10" />
                             <Button
                               type="button"
                               variant="outline"
                               size="icon"
                               onClick={generateEmailFromName}
                               disabled={createStudentMutation.isPending}
-                              className="shrink-0 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40"
+                              className="shrink-0 h-10 w-10"
                               title="Generate email from name"
                             >
                               <Wand2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Click the <Wand2 className="inline h-3 w-3 mx-1" /> icon to generate: <span className="font-mono text-primary">{getPreviewEmail()}</span>
+                          Or click the magic wand to auto-generate
                         </p>
                       </FormItem>
                     )}
@@ -461,14 +466,14 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="gender"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Gender *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Gender *</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger className="font-mono">
+                            <SelectTrigger className="h-10">
                               <SelectValue placeholder="Select gender" />
                             </SelectTrigger>
                           </FormControl>
@@ -477,74 +482,10 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                             <SelectItem value="female">Female</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Age *</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="font-mono" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                                    <FormField
-                    control={form.control}
-                    name="grade"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Grade *</FormLabel>
-                                                <Select 
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
-                              <SelectValue placeholder="Select grade" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-white dark:bg-slate-800 border-primary/20 shadow-lg">
-                            {sortedTenantGrades.map(tenantGrade => {
-                              const gradeStreams = tenantGrade.tenantStreams.map(ts => ts.stream)
-                              return (
-                                <SelectItem 
-                                  key={tenantGrade.id} 
-                                  value={tenantGrade.id}
-                                  className="hover:bg-primary/5 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer"
-                                >
-                                  <div className="flex items-center justify-between w-full py-1">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-2 h-2 rounded-full bg-primary/30"></div>
-                                      <span className="font-medium text-slate-700 dark:text-slate-300">{tenantGrade.gradeLevel.name}</span>
-                                    </div>
-                                    {gradeStreams.length > 0 && (
-                                      <Badge 
-                                        variant="secondary" 
-                                        className="ml-2 text-xs bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-colors"
-                                      >
-                                        {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </SelectItem>
-                              )
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-
 
                   <FormField
                     control={form.control}
@@ -567,15 +508,30 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                       const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
                       const [selectedYear, setSelectedYear] = React.useState(currentYear);
                       
-                      // Update form field whenever all three are selected
+                      // Calculate age when date of birth changes
                       React.useEffect(() => {
                         if (selectedDay && selectedMonth && selectedYear) {
                           const paddedDay = selectedDay.padStart(2, '0');
                           const paddedMonth = selectedMonth.padStart(2, '0');
                           const dateString = `${selectedYear}-${paddedMonth}-${paddedDay}`;
                           field.onChange(dateString);
+                          
+                          // Auto-calculate age
+                          const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                          const today = new Date();
+                          let years = today.getFullYear() - birthDate.getFullYear();
+                          const monthDiff = today.getMonth() - birthDate.getMonth();
+                          const dayDiff = today.getDate() - birthDate.getDate();
+                          
+                          // Adjust if the birthday hasn't occurred this year
+                          if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                            years--;
+                          }
+                          
+                          // Update age field
+                          form.setValue('age', years);
                         }
-                      }, [selectedDay, selectedMonth, selectedYear, field]);
+                      }, [selectedDay, selectedMonth, selectedYear, field.onChange, form]);
                       
                       // Ensure empty strings are treated as undefined for Select components
                       const dayValue = selectedDay || undefined;
@@ -591,170 +547,154 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                       const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
                       
                       return (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 font-mono text-sm">
-                            <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                            Date of Birth *
-                            {(selectedDay && selectedMonth && selectedYear) && (
-                              <div className="flex items-center gap-2 ml-auto">
-                                <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-mono text-primary flex items-center gap-1.5">
-                                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-                                  {`${selectedDay}/${selectedMonth.padStart(2, '0')}/${selectedYear}`}
-                                </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                                  {(() => {
-                                    const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                    return `${monthNames[parseInt(selectedMonth)]} ${selectedYear}`;
-                                  })()}
-                                </div>
-                              </div>
-                            )}
-                          </FormLabel>
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Date of Birth *</FormLabel>
                           <FormControl>
                             <div className="grid grid-cols-3 gap-2">
                               {/* Day */}
-                              <div>
-                                <Select 
-                                  value={dayValue} 
-                                  onValueChange={setSelectedDay}
-                                >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                    <SelectValue placeholder="Day" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60">
-                                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
-                                      <SelectItem key={day} value={day.toString()}>
-                                        {day}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
-                                  Day
-                                </div>
-                              </div>
+                              <Select 
+                                value={dayValue} 
+                                onValueChange={setSelectedDay}
+                              >
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Day" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                                    <SelectItem key={day} value={day.toString()}>
+                                      {day}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               
                               {/* Month */}
-                              <div>
-                                <Select 
-                                  value={monthValue} 
-                                  onValueChange={setSelectedMonth}
-                                >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                    <SelectValue placeholder="Month" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="1">January</SelectItem>
-                                    <SelectItem value="2">February</SelectItem>
-                                    <SelectItem value="3">March</SelectItem>
-                                    <SelectItem value="4">April</SelectItem>
-                                    <SelectItem value="5">May</SelectItem>
-                                    <SelectItem value="6">June</SelectItem>
-                                    <SelectItem value="7">July</SelectItem>
-                                    <SelectItem value="8">August</SelectItem>
-                                    <SelectItem value="9">September</SelectItem>
-                                    <SelectItem value="10">October</SelectItem>
-                                    <SelectItem value="11">November</SelectItem>
-                                    <SelectItem value="12">December</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
-                                  Month
-                                </div>
-                              </div>
+                              <Select 
+                                value={monthValue} 
+                                onValueChange={setSelectedMonth}
+                              >
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Month" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">January</SelectItem>
+                                  <SelectItem value="2">February</SelectItem>
+                                  <SelectItem value="3">March</SelectItem>
+                                  <SelectItem value="4">April</SelectItem>
+                                  <SelectItem value="5">May</SelectItem>
+                                  <SelectItem value="6">June</SelectItem>
+                                  <SelectItem value="7">July</SelectItem>
+                                  <SelectItem value="8">August</SelectItem>
+                                  <SelectItem value="9">September</SelectItem>
+                                  <SelectItem value="10">October</SelectItem>
+                                  <SelectItem value="11">November</SelectItem>
+                                  <SelectItem value="12">December</SelectItem>
+                                </SelectContent>
+                              </Select>
                               
                               {/* Year */}
-                              <div>
-                                <Select 
-                                  value={yearValue} 
-                                  onValueChange={setSelectedYear}
-                                >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                    <SelectValue placeholder="Year" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60">
-                                    {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
-                                      <SelectItem key={year} value={year.toString()}>
-                                        {year}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
-                                  Year
-                                </div>
-                              </div>
+                              <Select 
+                                value={yearValue} 
+                                onValueChange={setSelectedYear}
+                              >
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
+                                    <SelectItem key={year} value={year.toString()}>
+                                      {year}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </FormControl>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              💡 Students should be between 3 and 25 years old
-                            </div>
-                            {(selectedDay && selectedMonth && selectedYear) && (
-                              <div className="flex items-center gap-2">
-                                <div className="px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md text-xs font-medium text-green-700 dark:text-green-300">
-                                  {(() => {
-                                    const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
-                                    const today = new Date();
-                                    
-                                    // Calculate exact age in years, months, and days
-                                    let years = today.getFullYear() - birthDate.getFullYear();
-                                    let months = today.getMonth() - birthDate.getMonth();
-                                    let days = today.getDate() - birthDate.getDate();
-                                    
-                                    // Adjust if the birthday hasn't occurred this year
-                                    if (months < 0 || (months === 0 && days < 0)) {
-                                      years--;
-                                      months += 12;
-                                    }
-                                    
-                                    // Adjust if the day hasn't occurred this month
-                                    if (days < 0) {
-                                      months--;
-                                      const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                                      days += lastMonth.getDate();
-                                    }
-                                    
-                                    // Format the age display
-                                    if (years > 0) {
-                                      if (months > 0) {
-                                        return `${years}y ${months}m old`;
-                                      } else {
-                                        return `${years} years old`;
-                                      }
-                                    } else if (months > 0) {
-                                      return `${months} months old`;
-                                    } else {
-                                      return `${days} days old`;
-                                    }
-                                  })()}
-                                </div>
-                                <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                                  {(() => {
-                                    const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
-                                    const today = new Date();
-                                    
-                                    // Calculate exact age for eligibility check
-                                    let years = today.getFullYear() - birthDate.getFullYear();
-                                    let months = today.getMonth() - birthDate.getMonth();
-                                    let days = today.getDate() - birthDate.getDate();
-                                    
-                                    if (months < 0 || (months === 0 && days < 0)) {
-                                      years--;
-                                    }
-                                    
-                                    return (years >= 3 && years <= 25) ? '✅ Valid' : '❌ Invalid age';
-                                  })()}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <FormMessage />
+                          {(selectedDay && selectedMonth && selectedYear) && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Age: {(() => {
+                                const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
+                                const today = new Date();
+                                let years = today.getFullYear() - birthDate.getFullYear();
+                                const monthDiff = today.getMonth() - birthDate.getMonth();
+                                const dayDiff = today.getDate() - birthDate.getDate();
+                                if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                                  years--;
+                                }
+                                return `${years} years old`;
+                              })()}
+                            </p>
+                          )}
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       );
                     }}
                   />
-                  
+
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Age *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            className="h-10 bg-slate-50 dark:bg-slate-800" 
+                            readOnly
+                            disabled
+                          />
+                        </FormControl>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Automatically calculated from date of birth</p>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="grade"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2 md:col-span-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Grade *</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder="Select grade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sortedTenantGrades.map(tenantGrade => {
+                              const gradeStreams = tenantGrade.tenantStreams.map(ts => ts.stream)
+                              return (
+                                <SelectItem 
+                                  key={tenantGrade.id} 
+                                  value={tenantGrade.id}
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>{tenantGrade.gradeLevel.name}</span>
+                                    {gradeStreams.length > 0 && (
+                                      <Badge 
+                                        variant="secondary" 
+                                        className="ml-2 text-xs"
+                                      >
+                                        {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="admission_date"
@@ -800,146 +740,70 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                       const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
                       
                       return (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2 font-mono text-sm">
-                            <Clock className="h-3.5 w-3.5 text-primary" />
-                            Admission Date *
-                            {(selectedDay && selectedMonth && selectedYear) && (
-                              <div className="flex items-center gap-2 ml-auto">
-                                <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full text-xs font-mono text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
-                                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                                  {`${selectedDay}/${selectedMonth.padStart(2, '0')}/${selectedYear}`}
-                                </div>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                                  {(() => {
-                                    const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                    return `${monthNames[parseInt(selectedMonth)]} ${selectedYear}`;
-                                  })()}
-                                </div>
-                              </div>
-                            )}
-                          </FormLabel>
+                        <FormItem className="space-y-2 md:col-span-2">
+                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Admission Date *</FormLabel>
                           <FormControl>
                             <div className="grid grid-cols-3 gap-2">
                               {/* Day */}
-                              <div>
-                                <Select 
-                                  value={dayValue} 
-                                  onValueChange={setSelectedDay}
-                                >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                    <SelectValue placeholder="Day" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60">
-                                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
-                                      <SelectItem key={day} value={day.toString()}>
-                                        {day}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
-                                  Day
-                                </div>
-                              </div>
+                              <Select 
+                                value={dayValue} 
+                                onValueChange={setSelectedDay}
+                              >
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Day" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                                    <SelectItem key={day} value={day.toString()}>
+                                      {day}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               
                               {/* Month */}
-                              <div>
-                                <Select 
-                                  value={monthValue} 
-                                  onValueChange={setSelectedMonth}
-                                >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                    <SelectValue placeholder="Month" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="1">January</SelectItem>
-                                    <SelectItem value="2">February</SelectItem>
-                                    <SelectItem value="3">March</SelectItem>
-                                    <SelectItem value="4">April</SelectItem>
-                                    <SelectItem value="5">May</SelectItem>
-                                    <SelectItem value="6">June</SelectItem>
-                                    <SelectItem value="7">July</SelectItem>
-                                    <SelectItem value="8">August</SelectItem>
-                                    <SelectItem value="9">September</SelectItem>
-                                    <SelectItem value="10">October</SelectItem>
-                                    <SelectItem value="11">November</SelectItem>
-                                    <SelectItem value="12">December</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
-                                  Month
-                                </div>
-                              </div>
+                              <Select 
+                                value={monthValue} 
+                                onValueChange={setSelectedMonth}
+                              >
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Month" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">January</SelectItem>
+                                  <SelectItem value="2">February</SelectItem>
+                                  <SelectItem value="3">March</SelectItem>
+                                  <SelectItem value="4">April</SelectItem>
+                                  <SelectItem value="5">May</SelectItem>
+                                  <SelectItem value="6">June</SelectItem>
+                                  <SelectItem value="7">July</SelectItem>
+                                  <SelectItem value="8">August</SelectItem>
+                                  <SelectItem value="9">September</SelectItem>
+                                  <SelectItem value="10">October</SelectItem>
+                                  <SelectItem value="11">November</SelectItem>
+                                  <SelectItem value="12">December</SelectItem>
+                                </SelectContent>
+                              </Select>
                               
                               {/* Year */}
-                              <div>
-                                <Select 
-                                  value={yearValue} 
-                                  onValueChange={setSelectedYear}
-                                >
-                                  <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/20">
-                                    <SelectValue placeholder="Year" />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-60">
-                                    {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
-                                      <SelectItem key={year} value={year.toString()}>
-                                        {year}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 text-center">
-                                  Year
-                                </div>
-                              </div>
+                              <Select 
+                                value={yearValue} 
+                                onValueChange={setSelectedYear}
+                              >
+                                <SelectTrigger className="h-10">
+                                  <SelectValue placeholder="Year" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-60">
+                                  {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
+                                    <SelectItem key={year} value={year.toString()}>
+                                      {year}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </FormControl>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              📅 Select the date when the student was admitted to the school
-                            </div>
-                            {(selectedDay && selectedMonth && selectedYear) && (
-                              <div className="flex items-center gap-2">
-                                <div className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-xs font-medium text-blue-700 dark:text-blue-300">
-                                  {(() => {
-                                    const admissionDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
-                                    const today = new Date();
-                                    
-                                    if (admissionDate > today) {
-                                      return "Future admission";
-                                    } else {
-                                      const diffTime = Math.abs(today.getTime() - admissionDate.getTime());
-                                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                      
-                                      if (diffDays < 30) {
-                                        return `${diffDays} days ago`;
-                                      } else if (diffDays < 365) {
-                                        const months = Math.floor(diffDays / 30);
-                                        return `${months} month${months > 1 ? 's' : ''} ago`;
-                                      } else {
-                                        const years = Math.floor(diffDays / 365);
-                                        return `${years} year${years > 1 ? 's' : ''} ago`;
-                                      }
-                                    }
-                                  })()}
-                                </div>
-                                <div className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                                  {(() => {
-                                    const admissionDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
-                                    const today = new Date();
-                                    
-                                    if (admissionDate > today) {
-                                      return '📋 Planned';
-                                    } else {
-                                      return '✅ Admitted';
-                                    }
-                                  })()}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <FormMessage />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       );
                     }}
@@ -947,24 +811,23 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                 </div>
               </div>
               
-              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-                <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
-                  <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
-                    <Users className="h-3 w-3 mr-2" />
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
                     Guardian Information
                   </h3>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="guardian_name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Guardian Name *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Guardian Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Primary guardian's name" {...field} className="font-mono" />
+                          <Input placeholder="Enter guardian's full name" {...field} className="h-10" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -973,8 +836,8 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="guardian_phone"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Guardian Phone *</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Guardian Phone *</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="+254700000000" 
@@ -983,13 +846,13 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                               const formatted = formatPhoneNumber(e.target.value);
                               field.onChange(formatted);
                             }}
-                            className="font-mono" 
+                            className="h-10" 
                           />
                         </FormControl>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Kenya numbers start with +254. If you enter 0, it will be automatically converted.
-                        </div>
-                        <FormMessage />
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Format: +254XXXXXXXXX or +2540XXXXXXXXX
+                        </p>
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -998,12 +861,15 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="guardian_email"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Guardian Email (Optional)</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Guardian Email
+                          <span className="text-slate-400 font-normal ml-1">(optional)</span>
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="guardian@example.com" {...field} className="font-mono" />
+                          <Input placeholder="guardian@example.com" {...field} className="h-10" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -1012,47 +878,47 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                     control={form.control}
                     name="home_address"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-mono text-sm">Home Address (Optional)</FormLabel>
+                      <FormItem className="space-y-2 md:col-span-2">
+                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Home Address
+                          <span className="text-slate-400 font-normal ml-1">(optional)</span>
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Physical address" {...field} className="font-mono" />
+                          <Input placeholder="Enter physical address" {...field} className="h-10" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 </div>
               </div>
               
-              <div className="border-2 border-primary/20 bg-primary/10 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
-                      <Info className="h-3 w-3 mr-2" />
-                      Portal Access
-                    </h3>
-                  </div>
-                  <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs">Auto-Generated</Badge>
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Portal Access
+                  </h3>
+                  <Badge variant="secondary" className="text-xs">Auto-generated</Badge>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-4 leading-relaxed">
-                  Login credentials will be automatically generated and sent to the guardian's email once the student is registered.
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                  Login credentials will be automatically generated and sent to the guardian's email
                 </p>
-                <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3">
+                <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-3">
                   <div className="flex items-center gap-2">
-                    <Verified className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-mono text-slate-700 dark:text-slate-300">Student Portal</span>
+                    <Verified className="h-4 w-4 text-slate-500" />
+                    <span className="text-sm text-slate-700 dark:text-slate-300">Student Portal</span>
                   </div>
-                  <span className="text-xs font-mono bg-primary/20 text-primary px-2 py-1 rounded border border-primary/30">
-          portal.kenyaschools.edu5
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    portal.kenyaschools.edu5
                   </span>
                 </div>
               </div>
 
-              <DrawerFooter className="border-t-2 border-primary/20 pt-6 space-y-3">
+              <DrawerFooter className="border-t border-slate-200 dark:border-slate-700 pt-4 pb-4 px-6 flex-shrink-0 gap-3">
                 <Button 
                   type="submit" 
                   disabled={createStudentMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 text-white gap-2 font-mono transition-colors disabled:opacity-50"
+                  className="bg-primary hover:bg-primary/90 text-white gap-2 h-10 transition-colors disabled:opacity-50 flex-1"
                 >
                   {createStudentMutation.isPending ? (
                     <>
@@ -1062,7 +928,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                   ) : (
                     <>
                       <UserPlus className="h-4 w-4" />
-                      Register New Student
+                      Register Student
                     </>
                   )}
                 </Button>
@@ -1070,7 +936,7 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
                   variant="outline" 
                   onClick={() => setIsDrawerOpen(false)}
                   disabled={createStudentMutation.isPending}
-                  className="border-primary/20 text-slate-600 dark:text-slate-400 hover:bg-primary/5 hover:border-primary/40 font-mono transition-colors disabled:opacity-50"
+                  className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 h-10 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </Button>

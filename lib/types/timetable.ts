@@ -8,6 +8,8 @@ export interface TimeSlot {
   startTime: string;      // "08:00"
   endTime: string;        // "08:45"
   color: string;          // "border-l-primary" (for UI)
+  dayOfWeek?: number;     // 1-7 if tied to a day template
+  label?: string;         // Optional label for the period
 }
 
 export interface Break {

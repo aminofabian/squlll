@@ -1,22 +1,32 @@
 'use client'
 
 import { useState } from 'react'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger
+} from "@/components/ui/drawer"
 import { 
   Dialog, 
   DialogContent, 
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
+  DialogTitle 
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
-import { Loader2, Calendar, Plus, BookOpen, ArrowRight } from 'lucide-react'
+import { Loader2, Calendar, Plus, BookOpen, ArrowRight, Sparkles, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateTermModal } from './CreateTermModal'
+import moeTerms2026 from '@/lib/data/ke-moe-terms-2026.json'
 
 interface CreateAcademicYearModalProps {
   onSuccess?: (year: any) => void
@@ -151,6 +161,53 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
     setCreatedAcademicYear(null)
   }
 
+  // Get MoE academic year data - using year from JSON
+  const getMoeAcademicYearData = () => {
+    const entries = moeTerms2026.entries || []
+    if (entries.length === 0) return null
+
+    // Find the earliest start date and latest end date
+    const allDates = entries.map((entry: any) => ({
+      start: entry.openingDate,
+      end: entry.closingDate
+    }))
+
+    const earliestStart = allDates.reduce((earliest: string, current: any) => 
+      current.start < earliest ? current.start : earliest, allDates[0].start)
+    
+    const latestEnd = allDates.reduce((latest: string, current: any) => 
+      current.end > latest ? current.end : latest, allDates[0].end)
+
+    // Extract year from the JSON (year only - just the year, not year-year+1)
+    const year = moeTerms2026.year || 2026
+    const academicYearName = String(year) // Just the year as string
+
+    return {
+      name: academicYearName,
+      startDate: earliestStart,
+      endDate: latestEnd,
+      year
+    }
+  }
+
+  const handleUseMoeData = () => {
+    const moeData = getMoeAcademicYearData()
+    if (!moeData) {
+      toast.error('Unable to load MoE data')
+      return
+    }
+
+    setFormData({
+      name: moeData.name,
+      startDate: moeData.startDate,
+      endDate: moeData.endDate
+    })
+    toast.success(`Prefilled with Kenya MoE ${moeData.year} academic year data`)
+  }
+
+  // Get the year from JSON for button display and placeholder
+  const moeYear = moeTerms2026.year || 2026
+
   const defaultTrigger = (
     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
       <Plus className="h-4 w-4 mr-2 text-white" />
@@ -161,106 +218,138 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
+      <Drawer open={isOpen} onOpenChange={setIsOpen} direction="right">
+        <DrawerTrigger asChild>
           {trigger || defaultTrigger}
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex flex-row items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            Create Academic Year
-          </DialogTitle>
-          <DialogDescription>
-            Create a new academic year for your school. This will help organize terms, classes, and academic activities.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {/* Single-row inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-3 sm:gap-4 items-end">
-            <div className="space-y-2 sm:col-span-3 sm:max-w-none">
-              <Label htmlFor="name">Academic Year Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g., 2024-2025"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter the academic year in the format "YYYY-YYYY"
-              </p>
+        </DrawerTrigger>
+        <DrawerContent className="max-w-2xl h-[95vh] flex flex-col">
+          <DrawerHeader className="px-4 py-3 border-b border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <DrawerTitle className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Create Academic Year
+                </DrawerTitle>
+                <DrawerDescription className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Create a new academic year for your school. This will help organize terms, classes, and academic activities.
+                </DrawerDescription>
+              </div>
+              <DrawerClose asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DrawerClose>
             </div>
+          </DrawerHeader>
 
-            <div className="space-y-2 sm:max-w-xs">
-              <Label htmlFor="startDate" className="whitespace-nowrap">Start Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900">
+            <div className="space-y-4">
+              {/* Academic Year Name */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="name">Academic Year Name</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUseMoeData}
+                    disabled={isLoading}
+                    className="h-7 px-3 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium shadow-sm hover:shadow transition-all"
+                    title={`Use Kenya Ministry of Education ${moeYear} academic year dates`}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1.5" />
+                    Use MoE {moeYear}
+                  </Button>
+                </div>
+                <Input
+                  id="name"
+                  placeholder={String(moeYear)}
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the academic year (e.g., {moeYear})
+                </p>
+              </div>
 
-            <div className="space-y-2 sm:max-w-xs">
-              <Label htmlFor="endDate" className="whitespace-nowrap">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => handleInputChange('endDate', e.target.value)}
-                disabled={isLoading}
-              />
+              {/* Date Range */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Preview */}
+              {formData.name && formData.startDate && formData.endDate && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="pt-4">
+                    <div className="text-sm">
+                      <div className="font-medium text-primary">Preview:</div>
+                      <div className="mt-1 space-y-1 text-muted-foreground">
+                        <div>Name: {formData.name}</div>
+                        <div>Period: {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}</div>
+                        <div>Duration: {Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 60 * 60 * 24))} days</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 
-          {/* Preview */}
-          {formData.name && formData.startDate && formData.endDate && (
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="pt-4">
-                <div className="text-sm">
-                  <div className="font-medium text-primary">Preview:</div>
-                  <div className="mt-1 space-y-1 text-muted-foreground">
-                    <div>Name: {formData.name}</div>
-                    <div>Period: {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}</div>
-                    <div>Duration: {Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 60 * 60 * 24))} days</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="bg-primary hover:bg-primary/90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Academic Year
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <DrawerFooter className="px-4 py-3 border-t border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+            <div className="flex gap-3 w-full sm:w-auto sm:ml-auto">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading}
+                className="flex-1 sm:flex-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="flex-1 sm:flex-none bg-primary hover:bg-primary/90"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Academic Year
+                  </>
+                )}
+              </Button>
+            </div>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
 
       {/* Success Dialog with Term Creation Prompt */}
       {showSuccessDialog && createdAcademicYear && (

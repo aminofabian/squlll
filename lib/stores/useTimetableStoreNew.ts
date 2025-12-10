@@ -25,7 +25,14 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   // GraphQL time slot actions
   createTimeSlots: (timeSlots: TimeSlotInput[]) => Promise<void>;
   createTimeSlot: (timeSlot: TimeSlotInput) => Promise<void>;
+  createDayTemplates: (templates: DayTemplateInput[]) => Promise<void>;
+  createDayTemplate: (template: DayTemplateInput) => Promise<void>;
+  addPeriodsToDayTemplate: (dayTemplateId: string, extraPeriods: number) => Promise<any[]>;
+  updateDayTemplatePeriod: (periodId: string, input: { startTime?: string; endTime?: string; label?: string }) => Promise<void>;
+  resetDayTemplatePeriods: (input: { dayTemplateId: string; startTime?: string; periodCount?: number; periodDuration?: number }) => Promise<void>;
   loadTimeSlots: (termId?: string) => Promise<void>;
+  loadDayTemplatePeriods: (dayTemplateId?: string) => Promise<void>;
+  loadDayTemplates: () => Promise<any[]>;
   deleteTimeSlot: (id: string) => Promise<void>;
   deleteAllTimeSlots: () => Promise<void>;
   
@@ -44,6 +51,16 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
   createBreaks: (breaks: Omit<Break, 'id'>[]) => Promise<void>;
+  createAllBreaksForTemplate: (breaks: Array<{
+    dayTemplateId: string;
+    name: string;
+    type: string;
+    afterPeriod: number;
+    durationMinutes: number;
+    icon?: string;
+    color?: string;
+    applyToAllDays?: boolean;
+  }>) => Promise<void>;
   loadBreaks: () => Promise<void>;
   updateBreak: (id: string, updates: Partial<Break>) => void;
   deleteBreak: (id: string) => void;
@@ -62,6 +79,14 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   toggleConflicts: () => void;
   toggleSummary: () => void;
 }
+
+type DayTemplateInput = {
+  dayOfWeek: number;
+  startTime: string;
+  periodCount: number;
+  defaultPeriodDuration: number;
+  gradeLevelIds: string[];
+};
 
 // Helper to generate simple IDs
 let entryCounter = 1000;
@@ -188,28 +213,48 @@ export const useTimetableStore = create<TimetableStore>()(
         return get().createTimeSlots([timeSlot]);
       },
 
-      loadTimeSlots: async (termIdParam?: string) => {
+      createDayTemplates: async (templates: DayTemplateInput[]) => {
         try {
-          // Get termId from parameter, state, or throw error
-          const state = get();
-          const termId = termIdParam || state.selectedTermId;
-          
-          if (!termId) {
-            throw new Error('No term selected. Please select a term first or pass termId as a parameter to loadTimeSlots().');
+          const response = await fetch('/api/school/time-slot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(templates),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
           }
 
-          // Use getWholeSchoolTimetable to get time slots (same as loadEntries)
-          const query = `
-            query GetWholeSchoolTimetable($termId: String!) {
-              getWholeSchoolTimetable(termId: $termId) {
-                timeSlots {
-                  id
-                  periodNumber
-                  displayTime
-                  startTime
-                  endTime
-                  color
-                }
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data) {
+            throw new Error('Invalid response format: missing data');
+          }
+        } catch (error) {
+          console.error('Error creating day templates:', error);
+          throw error;
+        }
+      },
+
+      createDayTemplate: async (template: DayTemplateInput) => {
+        return get().createDayTemplates([template]);
+      },
+
+      addPeriodsToDayTemplate: async (dayTemplateId: string, extraPeriods: number) => {
+        try {
+          const mutation = `
+            mutation AddPeriodsToDayTemplate($dayTemplateId: String!, $extraPeriods: Int!) {
+              addPeriodsToDayTemplate(dayTemplateId: $dayTemplateId, extraPeriods: $extraPeriods) {
+                id
+                periodNumber
+                startTime
+                endTime
               }
             }
           `;
@@ -223,8 +268,8 @@ export const useTimetableStore = create<TimetableStore>()(
             },
             credentials: 'include',
             body: JSON.stringify({
-              query,
-              variables: { termId },
+              query: mutation,
+              variables: { dayTemplateId, extraPeriods },
             }),
           });
 
@@ -240,11 +285,186 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          if (!result.data || !result.data.getWholeSchoolTimetable) {
-            throw new Error('Invalid response format: missing getWholeSchoolTimetable data');
+          if (!result.data || !result.data.addPeriodsToDayTemplate) {
+            throw new Error('Invalid response format: missing addPeriodsToDayTemplate data');
           }
 
-          // Convert response to TimeSlot format and update store
+          // Refresh periods to pull in dayOfWeek mapping
+          await get().loadDayTemplatePeriods();
+
+          return result.data.addPeriodsToDayTemplate;
+        } catch (error) {
+          console.error('Error adding periods to day template:', error);
+          throw error;
+        }
+      },
+
+      updateDayTemplatePeriod: async (periodId: string, input: { startTime?: string; endTime?: string; label?: string }) => {
+        try {
+          const mutation = `
+            mutation UpdateDayTemplatePeriod($periodId: String!, $input: UpdateDayTemplatePeriodInput!) {
+              updateDayTemplatePeriod(periodId: $periodId, input: $input) {
+                id
+                periodNumber
+                startTime
+                endTime
+                label
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
+              variables: { periodId, input },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.updateDayTemplatePeriod) {
+            throw new Error('Invalid response format: missing updateDayTemplatePeriod data');
+          }
+
+          // Refresh periods to include latest changes
+          await get().loadDayTemplatePeriods();
+        } catch (error) {
+          console.error('Error updating day template period:', error);
+          throw error;
+        }
+      },
+
+      resetDayTemplatePeriods: async (input: { dayTemplateId: string; startTime?: string; periodCount?: number; periodDuration?: number }) => {
+        try {
+          const mutation = `
+            mutation ResetDayTemplatePeriods($input: ResetDayTemplatePeriodsInput!) {
+              resetDayTemplatePeriods(input: $input) {
+                id
+                periodNumber
+                startTime
+                endTime
+                label
+                tenantId
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
+              variables: { input },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.resetDayTemplatePeriods) {
+            throw new Error('Invalid response format: missing resetDayTemplatePeriods data');
+          }
+
+          // Refresh periods to reflect new schedule
+          await get().loadDayTemplatePeriods();
+        } catch (error) {
+          console.error('Error resetting day template periods:', error);
+          throw error;
+        }
+      },
+
+      loadDayTemplatePeriods: async (dayTemplateIdParam?: string) => {
+        try {
+          // Fetch templates first to map dayTemplateId -> dayOfWeek
+          const templates = await get().loadDayTemplates();
+          const templateDayMap = new Map<string, number>();
+          templates.forEach((t: any) => {
+            if (t?.id && typeof t.dayOfWeek === 'number') {
+              templateDayMap.set(t.id, t.dayOfWeek);
+            }
+          });
+
+          const targetTemplateId = dayTemplateIdParam || templates?.[0]?.id;
+          if (!targetTemplateId) {
+            throw new Error('No day template available to load periods.');
+          }
+
+          const query = `
+            query GetDayTemplatePeriods($dayTemplateId: String!) {
+              getAllDayTemplatePeriods1(dayTemplateId: $dayTemplateId) {
+                id
+                periodNumber
+                startTime
+                endTime
+                label
+                dayTemplateId
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ query, variables: { dayTemplateId: targetTemplateId } }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          const periodsData =
+            result.data?.getAllDayTemplatePeriods1 ||
+            result.data?.getAllDayTemplatePeriods ||
+            null;
+
+          if (!periodsData) {
+            throw new Error('Invalid response format: missing day template periods data');
+          }
+
           const formatTime = (timeStr: string) => {
             if (!timeStr) return '';
             if (timeStr.length === 5) return timeStr;
@@ -252,21 +472,86 @@ export const useTimetableStore = create<TimetableStore>()(
             return timeStr;
           };
 
-          const fetchedTimeSlots = (result.data.getWholeSchoolTimetable.timeSlots || []).map((slot: any) => ({
-            id: slot.id,
-            periodNumber: slot.periodNumber,
-            time: slot.displayTime || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
-            startTime: formatTime(slot.startTime),
-            endTime: formatTime(slot.endTime),
-            color: slot.color || 'border-l-primary'
+          const periods = periodsData;
+          const mappedSlots: TimeSlot[] = periods.map((p: any) => ({
+            id: p.id,
+            periodNumber: p.periodNumber,
+            time: `${formatTime(p.startTime)} - ${formatTime(p.endTime)}`,
+            startTime: formatTime(p.startTime),
+            endTime: formatTime(p.endTime),
+            color: 'border-l-primary',
+            dayOfWeek: templateDayMap.get(p.dayTemplateId),
+            label: p.label,
+            dayTemplateId: p.dayTemplateId,
           }));
 
           set((state) => ({
-            timeSlots: fetchedTimeSlots,
+            timeSlots: mappedSlots,
             lastUpdated: new Date().toISOString(),
           }));
+        } catch (error) {
+          console.error('Error loading day template periods:', error);
+          throw error;
+        }
+      },
 
-          console.log(`Loaded ${fetchedTimeSlots.length} time slots using getWholeSchoolTimetable`);
+      loadDayTemplates: async () => {
+        try {
+          const query = `
+            query GetAllDayTemplates {
+              getAllDayTemplates {
+                id
+                dayOfWeek
+                tenantId
+                breaks {
+                  id
+                  durationMinutes
+                  applyToAllDays
+                  afterPeriod
+                  type
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ query }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.getAllDayTemplates) {
+            throw new Error('Invalid response format: missing getAllDayTemplates data');
+          }
+
+          return result.data.getAllDayTemplates;
+        } catch (error) {
+          console.error('Error loading day templates:', error);
+          throw error;
+        }
+      },
+
+      loadTimeSlots: async (termIdParam?: string) => {
+        try {
+          // Deprecated per new template/period flow: use day template periods instead
+          await get().loadDayTemplatePeriods();
         } catch (error) {
           console.error('Error loading time slots:', error);
           throw error;
@@ -939,6 +1224,66 @@ export const useTimetableStore = create<TimetableStore>()(
           }));
         } catch (error) {
           console.error('Error creating breaks:', error);
+          throw error;
+        }
+      },
+
+      createAllBreaksForTemplate: async (breaksInput) => {
+        try {
+          const response = await fetch('/api/school/break', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(breaksInput),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data) {
+            throw new Error('Invalid response format: missing data');
+          }
+
+          const newBreaks: Break[] = Object.values(result.data).map((breakItem: any) => {
+            const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
+            const typeMap: Record<string, Break['type']> = {
+              'SHORT_BREAK': 'short_break',
+              'LUNCH': 'lunch',
+              'ASSEMBLY': 'assembly',
+              'LONG_BREAK': 'long_break',
+              'TEA_BREAK': 'afternoon_break',
+              'RECESS': 'recess',
+              'SNACK_BREAK': 'snack',
+              'GAMES_BREAK': 'games',
+            };
+            const mappedType = typeMap[breakItem.type] || 'short_break';
+
+            return {
+              id: breakItem.id,
+              name: breakItem.name,
+              type: mappedType as Break['type'],
+              dayOfWeek,
+              afterPeriod: breakItem.afterPeriod,
+              durationMinutes: breakItem.durationMinutes,
+              icon: breakItem.icon || '☕',
+              color: breakItem.color || 'bg-blue-500',
+            } as Break;
+          });
+
+          set((state) => ({
+            breaks: [...state.breaks, ...newBreaks],
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error('Error creating all breaks:', error);
           throw error;
         }
       },

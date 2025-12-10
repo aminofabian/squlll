@@ -5,10 +5,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Loader2, Calendar, CalendarDays, CheckCircle, ChevronRight, School, BookOpen, ArrowRight, CalendarIcon, Clock, AlertCircle, Info } from "lucide-react"
+import { Plus, Loader2, Calendar, CalendarDays, CheckCircle, ChevronRight, School, BookOpen, ArrowRight, CalendarIcon, Clock, AlertCircle, Info, Sparkles } from "lucide-react"
+import moeTerms2026 from '@/lib/data/ke-moe-terms-2026.json'
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { toast } from 'sonner'
 
 interface Term {
   name: string
@@ -132,6 +134,66 @@ export const CreateAcademicYearModal = ({
     return { type: 'success', message: `${diffDays} days` }
   }
   
+  // Get MoE academic year data - using year from JSON
+  const getMoeAcademicYearData = () => {
+    const entries = moeTerms2026.entries || []
+    if (entries.length === 0) return null
+
+    // Get all term entries
+    const termEntries = entries.filter((entry: any) => entry.type === 'term')
+    if (termEntries.length === 0) return null
+
+    // Find the earliest start date and latest end date
+    const allDates = entries.map((entry: any) => ({
+      start: entry.openingDate,
+      end: entry.closingDate
+    }))
+
+    const earliestStart = allDates.reduce((earliest: string, current: any) => 
+      current.start < earliest ? current.start : earliest, allDates[0].start)
+    
+    const latestEnd = allDates.reduce((latest: string, current: any) => 
+      current.end > latest ? current.end : latest, allDates[0].end)
+
+    // Extract year from the JSON (year only)
+    const year = moeTerms2026.year || 2026
+    const academicYearName = `${year}-${year + 1}`
+
+    // Map term entries to Term format
+    const moeTerms: Term[] = termEntries.map((entry: any) => ({
+      name: entry.name,
+      startDate: entry.openingDate,
+      endDate: entry.closingDate
+    }))
+
+    return {
+      name: academicYearName,
+      startDate: earliestStart,
+      endDate: latestEnd,
+      terms: moeTerms,
+      year
+    }
+  }
+
+  const handleUseMoeData = () => {
+    const moeData = getMoeAcademicYearData()
+    if (!moeData) {
+      setError('Unable to load MoE data')
+      toast.error('Unable to load Ministry of Education data')
+      return
+    }
+
+    setAcademicYearName(moeData.name)
+    setAcademicYearStartDate(moeData.startDate)
+    setAcademicYearEndDate(moeData.endDate)
+    setTerms(moeData.terms)
+    setError(null)
+    toast.success(`Prefilled with Kenya MoE ${moeData.year} academic year data (${moeData.terms.length} terms)`)
+  }
+
+  // Get the year from JSON for button display
+  const moeYear = moeTerms2026.year || 2026
+
   const getTermSuggestions = (academicYearStartDate: string, academicYearEndDate: string) => {
     if (!academicYearStartDate || !academicYearEndDate) return []
     
@@ -552,7 +614,7 @@ export const CreateAcademicYearModal = ({
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     {(() => {
                       const currentYear = new Date().getFullYear()
                       const suggestions = [
@@ -580,6 +642,17 @@ export const CreateAcademicYearModal = ({
                         </Button>
                       ))
                     })()}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium shadow-sm hover:shadow transition-all"
+                      onClick={handleUseMoeData}
+                      title={`Use Kenya Ministry of Education ${moeYear} academic year dates`}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1.5" />
+                      Use MoE {moeYear}
+                    </Button>
                   </div>
                 </div>
                 

@@ -26,6 +26,60 @@ export function useSelectedGradeTimetable() {
 }
 
 /**
+ * Get period slots grouped by day with helper functions
+ * This supports day-specific periods where different days may have different time slots
+ */
+export function usePeriodSlots() {
+  const store = useTimetableStore();
+
+  return useMemo(() => {
+    // Group slots by day: { 1: [slot1, slot2], 2: [...], ... }
+    const slotsByDay: Record<number, typeof store.timeSlots> = {};
+    store.timeSlots.forEach((slot) => {
+      const day = slot.dayOfWeek ?? 1; // Default to Monday if no dayOfWeek
+      if (!slotsByDay[day]) slotsByDay[day] = [];
+      slotsByDay[day].push(slot);
+    });
+
+    // Sort slots within each day by period number
+    Object.values(slotsByDay).forEach((slots) => {
+      slots.sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0));
+    });
+
+    // Compute union of all period numbers across all days
+    const periodSet = new Set<number>();
+    store.timeSlots.forEach((slot) => {
+      if (typeof slot.periodNumber === 'number') {
+        periodSet.add(slot.periodNumber);
+      }
+    });
+    const periodNumbers = Array.from(periodSet).sort((a, b) => a - b);
+
+    // Helper: get slot for a specific day and period
+    const getSlotFor = (dayIndex: number, period: number) => {
+      const daySlots = slotsByDay[dayIndex + 1] || [];
+      return daySlots.find((s) => s.periodNumber === period);
+    };
+
+    // Helper: get first available slot for a period (for time column display)
+    const getBaseSlotForPeriod = (period: number) => {
+      for (let d = 0; d < 5; d++) {
+        const slot = getSlotFor(d, period);
+        if (slot) return slot;
+      }
+      return undefined;
+    };
+
+    return {
+      slotsByDay,
+      periodNumbers,
+      getSlotFor,
+      getBaseSlotForPeriod,
+    };
+  }, [store.timeSlots]);
+}
+
+/**
  * Get timetable organized by day and period
  */
 export function useTimetableGrid(gradeId: string | null) {
@@ -40,9 +94,12 @@ export function useTimetableGrid(gradeId: string | null) {
     // Initialize grid: { "1": { "slot-1": null, "slot-2": null }, "2": {...}, ... }
     for (let day = 1; day <= 5; day++) {
       grid[day] = {};
-      store.timeSlots.forEach((slot) => {
-        grid[day][slot.id] = null;
-      });
+      // Only add slots that apply to this day (or have no dayOfWeek = apply to all)
+      store.timeSlots
+        .filter((slot) => !slot.dayOfWeek || slot.dayOfWeek === day)
+        .forEach((slot) => {
+          grid[day][slot.id] = null;
+        });
     }
 
     // Fill grid with entries
@@ -50,7 +107,9 @@ export function useTimetableGrid(gradeId: string | null) {
       .filter((entry) => entry.gradeId === gradeId)
       .forEach((entry) => {
         const enriched = selectors.enrichEntry(entry);
-        grid[entry.dayOfWeek][entry.timeSlotId] = enriched;
+        if (grid[entry.dayOfWeek]) {
+          grid[entry.dayOfWeek][entry.timeSlotId] = enriched;
+        }
       });
 
     return grid;
@@ -114,7 +173,7 @@ export function useGradeStatistics(gradeId: string | null) {
     }
 
     const gradeEntries = store.entries.filter((e) => e.gradeId === gradeId);
-    
+
     const subjectDistribution: Record<string, number> = {};
     const teacherWorkload: Record<string, number> = {};
 
