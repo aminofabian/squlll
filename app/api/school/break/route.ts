@@ -161,7 +161,14 @@ function mapBreakTypeToGraphQL(type: string): string {
     'short_break': 'SHORT_BREAK',
     'lunch': 'LUNCH',
     'assembly': 'ASSEMBLY',
+    'long_break': 'LONG_BREAK',
+    'afternoon_break': 'TEA_BREAK',
+    'recess': 'RECESS',
+    'snack': 'SNACK_BREAK',
+    'games': 'GAMES_BREAK',
   };
+  // Accept already uppercase enum values too
+  if (Object.values(typeMap).includes(type)) return type;
   return typeMap[type] || 'SHORT_BREAK';
 }
 
@@ -203,28 +210,31 @@ export async function POST(request: Request) {
     const mutation = breaks.map((breakItem, index) => {
       const alias = `break${index + 1}`;
       const graphQLType = mapBreakTypeToGraphQL(breakItem.type);
-      // GraphQL dayOfWeek: 0 = Monday, 1 = Tuesday, etc. (0-indexed)
-      // Frontend dayOfWeek: 1 = Monday, 2 = Tuesday, etc. (1-indexed)
-      const dayOfWeek = breakItem.dayOfWeek - 1;
+      const hasDayOfWeek = typeof breakItem.dayOfWeek === 'number';
+      const dayOfWeek = hasDayOfWeek ? breakItem.dayOfWeek - 1 : undefined;
       
       return `
       ${alias}: createTimetableBreak(input: {
         name: "${breakItem.name}"
         type: ${graphQLType}
-        dayOfWeek: ${dayOfWeek}
+        ${breakItem.dayTemplateId ? `dayTemplateId: "${breakItem.dayTemplateId}"` : ''}
+        ${hasDayOfWeek ? `dayOfWeek: ${dayOfWeek}` : ''}
         afterPeriod: ${breakItem.afterPeriod}
         durationMinutes: ${breakItem.durationMinutes}
         icon: "${breakItem.icon || '☕'}"
         ${breakItem.color ? `color: "${breakItem.color}"` : ''}
+        ${typeof breakItem.applyToAllDays === 'boolean' ? `applyToAllDays: ${breakItem.applyToAllDays}` : ''}
       }) {
         id
         name
         type
+        dayTemplateId
         dayOfWeek
         afterPeriod
         durationMinutes
         icon
         color
+        applyToAllDays
       }
     `;
     }).join('\n');

@@ -1253,7 +1253,7 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           const newBreaks: Break[] = Object.values(result.data).map((breakItem: any) => {
-            const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
+            const dayOfWeek = typeof breakItem.dayOfWeek === 'number' ? (breakItem.dayOfWeek + 1) : 1;
             const typeMap: Record<string, Break['type']> = {
               'SHORT_BREAK': 'short_break',
               'LUNCH': 'lunch',
@@ -1275,6 +1275,7 @@ export const useTimetableStore = create<TimetableStore>()(
               durationMinutes: breakItem.durationMinutes,
               icon: breakItem.icon || '☕',
               color: breakItem.color || 'bg-blue-500',
+              applyToAllDays: breakItem.applyToAllDays,
             } as Break;
           });
 

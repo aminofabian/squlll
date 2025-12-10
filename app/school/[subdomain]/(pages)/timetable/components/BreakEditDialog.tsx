@@ -63,7 +63,15 @@ const DAYS = [
 ];
 
 export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
-  const { timeSlots, updateBreak, addBreak, deleteBreak, createBreaks } = useTimetableStore();
+  const {
+    timeSlots,
+    updateBreak,
+    addBreak,
+    deleteBreak,
+    createBreaks,
+    createAllBreaksForTemplate,
+    loadDayTemplatePeriods,
+  } = useTimetableStore();
   const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -80,6 +88,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
   const [durationInput, setDurationInput] = useState('15');
   const [applyToAllDays, setApplyToAllDays] = useState(false);
   const [showMoreEmojis, setShowMoreEmojis] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (breakData && !breakData.isNew) {
@@ -138,6 +147,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
   const handleSave = async () => {
     if (!breakData) return;
 
+    setError(null);
     // Ensure duration is valid before saving
     const finalDuration = parseInt(durationInput, 10) || 15;
     const validDuration = Math.max(5, Math.min(120, finalDuration));
@@ -145,25 +155,42 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
     if (breakData.isNew) {
       setIsSaving(true);
       try {
+        // Resolve dayTemplateId from loaded periods or fallback
+        const resolveDayTemplateId = async () => {
+          const slotWithTemplate = timeSlots.find((s: any) => s.dayTemplateId);
+          if (slotWithTemplate) return slotWithTemplate.dayTemplateId as string;
+          // Attempt reload
+          await loadDayTemplatePeriods();
+          const refreshed = useTimetableStore.getState().timeSlots as any[];
+          const refreshedSlot = refreshed.find((s: any) => s.dayTemplateId);
+          return refreshedSlot?.dayTemplateId as string | undefined;
+        };
+
+        const dayTemplateId = await resolveDayTemplateId();
+        if (!dayTemplateId) {
+          throw new Error('No day template found. Please load a day template first.');
+        }
+
         // Add new break(s) via API
         if (applyToAllDays) {
-          // Create break for all days
+          // Create break for all days (use createAllBreaksForTemplate)
           const breaksToCreate = DAYS.map((day) => ({
             name: formData.name,
             type: formData.type,
-            dayOfWeek: day.value,
+            dayTemplateId,
             afterPeriod: formData.afterPeriod,
             durationMinutes: validDuration,
             icon: formData.icon,
             color: formData.color,
+            applyToAllDays: true,
           }));
-          await createBreaks(breaksToCreate);
+          await createAllBreaksForTemplate(breaksToCreate);
         } else {
           // Create break for single day
-          await createBreaks([{
+          await createAllBreaksForTemplate([{
             name: formData.name,
             type: formData.type,
-            dayOfWeek: formData.dayOfWeek,
+            dayTemplateId,
             afterPeriod: formData.afterPeriod,
             durationMinutes: validDuration,
             icon: formData.icon,
@@ -173,6 +200,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         onClose();
       } catch (error) {
         console.error('Error creating break:', error);
+        setError(error instanceof Error ? error.message : 'Failed to create break');
         // Fallback to local storage if API fails
         if (applyToAllDays) {
           DAYS.forEach((day) => {
@@ -262,6 +290,11 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5 bg-slate-50 dark:bg-slate-900">
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">
+              {error}
+            </div>
+          )}
           {/* Break Type and Break Name - One Row on Large */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Break Type */}
