@@ -83,48 +83,89 @@ export interface SchoolTimetableResponse {
     totalOccupiedSlots: number
     totalFreeSlots: number
     generatedAt: string
+    timetableByGrade: Array<{
+      gradeLevel: {
+        id: string
+        name: string
+        shortName: string | null
+      }
+      stream: {
+        id: string
+        name: string
+      } | null
+      totalPeriods: number
+      occupiedPeriods: number
+      freePeriods: number
+      days: Array<{
+        dayTemplate: {
+          id: string
+          dayOfWeek: number
+          dayName: string
+          startTime: string
+          endTime: string
+          periodCount: number
+        }
+        periods: Array<{
+          period: {
+            id: string
+            periodNumber: number
+            startTime: string
+            endTime: string
+            label: string | null
+          }
+          entry: {
+            id: string
+            subject: { id: string; name: string }
+            teacher: { id: string; name: string; email: string }
+            gradeLevel: { id: string; name: string }
+            stream: { id: string } | null
+            room: { id: string; name: string } | null
+          } | null
+          isBreak: boolean
+          breakInfo: {
+            id: string
+            name: string
+            type: string
+            durationMinutes: number
+            icon: string | null
+            color: string | null
+          } | null
+        }>
+        gradeLevels: Array<{ id: string; name: string; shortName: string | null }>
+        streams: Array<{ id: string; name: string }>
+        totalPeriods: number
+        occupiedPeriods: number
+        freePeriods: number
+      }>
+    }>
     schedule: Array<{
       dayTemplate: {
         id: string
         dayOfWeek: number
+        dayName: string
         startTime: string
-        periodCount: number
-        defaultPeriodDuration: number
+        endTime: string
       }
+      gradeLevels: Array<{ id: string; name: string }>
+      streams: Array<{ id: string; name: string }>
       periods: Array<{
         period: {
-          id: string
           periodNumber: number
           startTime: string
           endTime: string
-          label: string | null
         }
         entry: {
-          id: string
-          subject: { id: string; name: string }
-          teacher: { id: string; user: { name: string; email: string } | null }
-          room: { id: string; name: string } | null
+          subject: { name: string }
+          teacher: { name: string }
+          room: { name: string } | null
         } | null
         isBreak: boolean
         breakInfo: {
-          id: string
           name: string
           type: string
           durationMinutes: number
-          icon?: string | null
-          color?: string | null
         } | null
       }>
-      breaks: Array<{
-        id: string
-        name: string
-        type: string
-        afterPeriod: number
-        durationMinutes: number
-      }>
-      totalPeriods: number
-      occupiedPeriods: number
-      freePeriods: number
     }>
   }
 }
@@ -152,48 +193,108 @@ const GET_SCHOOL_TIMETABLE_QUERY = `
       totalOccupiedSlots
       totalFreeSlots
       generatedAt
+      timetableByGrade {
+        gradeLevel {
+          id
+          name
+          shortName
+        }
+        stream {
+          id
+          name
+        }
+        days {
+          dayTemplate {
+            id
+            dayOfWeek
+            dayName
+            startTime
+            endTime
+            periodCount
+          }
+          periods {
+            period {
+              id
+              periodNumber
+              startTime
+              endTime
+              label
+            }
+            entry {
+              id
+              subject {
+                id
+                name
+              }
+              teacher {
+                id
+                name
+                email
+              }
+              gradeLevel {
+                id
+                name
+              }
+              stream {
+                id
+              }
+              room {
+                id
+                name
+              }
+            }
+            isBreak
+            breakInfo {
+              id
+              name
+              type
+              durationMinutes
+              icon
+              color
+            }
+          }
+        }
+      }
       schedule {
         dayTemplate {
           id
           dayOfWeek
+          dayName
           startTime
-          periodCount
-          defaultPeriodDuration
+          endTime
+        }
+        gradeLevels {
+          id
+          name
+        }
+        streams {
+          id
+          name
         }
         periods {
           period {
-        id
-        periodNumber
-        startTime
-        endTime
-            label
+            periodNumber
+            startTime
+            endTime
           }
           entry {
-            id
-            subject { id name }
-            teacher { id user { name email } }
-            room { id name }
-      }
+            subject {
+              name
+            }
+            teacher {
+              name
+            }
+            room {
+              name
+            }
+          }
           isBreak
           breakInfo {
-        id
-        name
-        type
-        durationMinutes
-        icon
-        color
-      }
+            name
+            type
+            durationMinutes
+          }
         }
-        breaks {
-          id
-          name
-          type
-          afterPeriod
-          durationMinutes
-        }
-        totalPeriods
-        occupiedPeriods
-        freePeriods
       }
     }
   }
@@ -257,42 +358,53 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
       }
 
       const timetableData = timetableResult.getSchoolTimetable
-      const schedule = timetableData.schedule || []
+      const timetableByGrade = timetableData.timetableByGrade || []
 
       const timeSlotMap = new Map<string, TimeSlot>()
       const entries: TimetableEntry[] = []
 
-      schedule.forEach((dayItem: any) => {
-        const dayOfWeek = dayItem.dayTemplate?.dayOfWeek
-        ;(dayItem.periods || []).forEach((p: any) => {
-          const period = p?.period
-          if (period?.id && !timeSlotMap.has(period.id)) {
-            timeSlotMap.set(period.id, {
-              id: period.id,
-              periodNumber: period.periodNumber,
-              displayTime: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
-              startTime: formatTime(period.startTime),
-              endTime: formatTime(period.endTime),
-              color: null,
-            })
-          }
+      // Process all grade levels to find entries for the teacher
+      timetableByGrade.forEach((gradeBlock: any) => {
+        if (!gradeBlock.days || !Array.isArray(gradeBlock.days)) return
 
-          if (p?.entry && period?.id) {
-            const subjectId = p.entry.subject?.id
-            const teacherId = p.entry.teacher?.id
-            if (!subjectId || !teacherId) return
-            entries.push({
-              id: p.entry.id,
-              gradeId: '', // not provided in new response
-              subjectId,
-              teacherId,
-              timeSlotId: period.id,
-              dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
-              roomNumber: p.entry.room?.name || undefined,
-              isDoublePeriod: false,
-              notes: undefined,
-            })
-          }
+        gradeBlock.days.forEach((dayItem: any) => {
+          const dayOfWeek = dayItem.dayTemplate?.dayOfWeek
+          ;(dayItem.periods || []).forEach((p: any) => {
+            const period = p?.period
+            if (period?.id && !timeSlotMap.has(period.id)) {
+              timeSlotMap.set(period.id, {
+                id: period.id,
+                periodNumber: period.periodNumber,
+                displayTime: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
+                startTime: formatTime(period.startTime),
+                endTime: formatTime(period.endTime),
+                color: null,
+              })
+            }
+
+            if (p?.entry && period?.id) {
+              const entry = p.entry
+              const subjectId = entry.subject?.id
+              const teacherId = entry.teacher?.id
+              if (!subjectId || !teacherId) return
+              
+              // Use the entry's actual gradeLevel.id (not the grade block's)
+              // This ensures accuracy even if backend groups entries incorrectly
+              const entryGradeId = entry.gradeLevel?.id || gradeBlock.gradeLevel?.id || ''
+              
+              entries.push({
+                id: entry.id,
+                gradeId: entryGradeId,
+                subjectId,
+                teacherId,
+                timeSlotId: period.id,
+                dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
+                roomNumber: entry.room?.name || undefined,
+                isDoublePeriod: false,
+                notes: undefined,
+              })
+            }
+          })
         })
       })
 

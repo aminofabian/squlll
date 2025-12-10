@@ -989,9 +989,26 @@ export const useTimetableStore = create<TimetableStore>()(
                       }
                       entry {
                         id
-                        subject { id name }
-                        teacher { id name email }
-                        room { id name }
+                        subject {
+                          id
+                          name
+                        }
+                        teacher {
+                          id
+                          name
+                          email
+                        }
+                        gradeLevel {
+                          id
+                          name
+                        }
+                        stream {
+                          id
+                        }
+                        room {
+                          id
+                          name
+                        }
                       }
                       isBreak
                       breakInfo {
@@ -1116,14 +1133,27 @@ export const useTimetableStore = create<TimetableStore>()(
           // Resolve the canonical gradeId we will attach to entries
           const resolvedGradeId = gradeBlock?.gradeLevel?.id || gradeId;
 
+          if (!gradeBlock) {
+            console.warn('No grade block found for grade:', gradeId);
+            set((state) => ({
+              entries: state.entries.filter((e) => e.gradeId !== resolvedGradeId),
+              lastUpdated: new Date().toISOString(),
+            }));
+            return;
+          }
+
           const timeSlotMap = new Map<string, TimeSlot>();
           const fetchedEntries: TimetableEntry[] = [];
 
-          if (gradeBlock && Array.isArray(gradeBlock.days)) {
+          // Collect time slots from the selected grade block (they're shared across grades anyway)
+          // Process only the selected grade block for entries (more efficient)
+          if (Array.isArray(gradeBlock.days)) {
             gradeBlock.days.forEach((dayItem: any) => {
               const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
               (dayItem.periods || []).forEach((p: any) => {
                 const period = p?.period;
+                
+                // Collect time slots
                 if (period?.id && !timeSlotMap.has(period.id)) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
@@ -1137,8 +1167,23 @@ export const useTimetableStore = create<TimetableStore>()(
                   });
                 }
 
+                // Process entries from this grade block
                 if (p?.entry && period?.id) {
                   const entry = p.entry;
+                  const entryGradeLevelId = entry.gradeLevel?.id;
+                  
+                  // Defensive check: Verify entry actually belongs to this grade
+                  // (In case backend groups entries incorrectly)
+                  if (entryGradeLevelId && entryGradeLevelId !== resolvedGradeId) {
+                    console.warn('Entry has mismatched gradeLevel, skipping:', {
+                      entryId: entry.id,
+                      entryGradeLevelId,
+                      expectedGradeId: resolvedGradeId,
+                      subject: entry.subject?.name,
+                    });
+                    return; // Skip entries that don't belong to this grade
+                  }
+
                   const subjectId = entry.subject?.id;
                   const teacherId = entry.teacher?.id;
                   const timeSlotId = period.id;
@@ -1146,6 +1191,7 @@ export const useTimetableStore = create<TimetableStore>()(
                     console.warn('Skipping entry due to missing subject/teacher', entry);
                     return;
                   }
+                  
                   fetchedEntries.push({
                     id: entry.id,
                     gradeId: resolvedGradeId,
@@ -1160,8 +1206,6 @@ export const useTimetableStore = create<TimetableStore>()(
                 }
               });
             });
-          } else {
-            console.warn('No timetableByGrade data available for grade', gradeId);
           }
 
           const fetchedTimeSlots = Array.from(timeSlotMap.values());
