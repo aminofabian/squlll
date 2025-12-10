@@ -405,18 +405,27 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((slot) => (
-                    <SelectItem 
-                      key={slot.id} 
-                      value={slot.periodNumber.toString()}
-                      className="cursor-pointer focus:bg-primary/10"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">Period {slot.periodNumber}</span>
-                        <span className="text-xs text-slate-500">({slot.time})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {(() => {
+                    // Get unique period numbers (avoid duplicates from multiple day templates)
+                    const uniquePeriods = Array.from(
+                      new Map(
+                        timeSlots.map((slot) => [slot.periodNumber, slot])
+                      ).values()
+                    ).sort((a, b) => a.periodNumber - b.periodNumber);
+
+                    return uniquePeriods.map((slot) => (
+                      <SelectItem 
+                        key={slot.periodNumber} 
+                        value={slot.periodNumber.toString()}
+                        className="cursor-pointer focus:bg-primary/10"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">Period {slot.periodNumber}</span>
+                          <span className="text-xs text-slate-500">({slot.time})</span>
+                        </div>
+                      </SelectItem>
+                    ));
+                  })()}
                 </SelectContent>
               </Select>
             </div>
