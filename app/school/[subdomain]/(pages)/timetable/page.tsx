@@ -69,6 +69,7 @@ export default function SmartTimetableNew() {
     createBreaks,
     deleteAllBreaks,
     deleteEntriesForTerm,
+    deleteTimetableForTerm,
   } = useTimetableStore();
 
   // Toast for notifications
@@ -297,6 +298,36 @@ export default function SmartTimetableNew() {
     }
   }, [deleteEntriesForTerm, selectedTerm?.id, selectedTermId, toast]);
 
+  const handleDeleteTimetableForTerm = useCallback(async () => {
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId) {
+      toast({
+        title: 'No Term Selected',
+        description: 'Select a term before deleting its timetable.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsDeletingTimetable(true);
+      const message = await deleteTimetableForTerm(termId);
+      toast({
+        title: 'Timetable deleted',
+        description: message || 'Complete timetable for this term was deleted.',
+      });
+    } catch (error) {
+      console.error('Failed to delete timetable for term:', error);
+      toast({
+        title: 'Failed to delete timetable',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingTimetable(false);
+    }
+  }, [deleteTimetableForTerm, selectedTerm?.id, selectedTermId, toast]);
+
   // State for editing
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
@@ -313,6 +344,7 @@ export default function SmartTimetableNew() {
   const [addPeriodsTemplateId, setAddPeriodsTemplateId] = useState<string>('');
   const [addPeriodsCount, setAddPeriodsCount] = useState<string>('1');
   const [isDeletingTermEntries, setIsDeletingTermEntries] = useState(false);
+  const [isDeletingTimetable, setIsDeletingTimetable] = useState(false);
 
   // Fetch school config for the search filter
   const { isLoading: isLoadingConfig } = useSchoolConfig();
@@ -478,6 +510,17 @@ export default function SmartTimetableNew() {
                     <span className="hidden sm:inline">Grades</span>
                   </Button>
                 )}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteTimetableForTerm}
+                  disabled={isDeletingTimetable || !(selectedTerm?.id || selectedTermId)}
+                  className="flex items-center gap-1.5"
+                  title="Delete the entire timetable (entries, periods, breaks) for the selected term"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {isDeletingTimetable ? 'Deleting timetable…' : 'Delete Timetable'}
+                </Button>
                 <Button
                   variant="destructive"
                   size="sm"

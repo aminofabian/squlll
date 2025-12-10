@@ -48,6 +48,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   // GraphQL timetable entry actions
   loadEntries: (termId: string, gradeId: string) => Promise<void>;
   deleteEntriesForTerm: (termId: string) => Promise<void>;
+  deleteTimetableForTerm: (termId: string) => Promise<void>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
@@ -1253,6 +1254,56 @@ export const useTimetableStore = create<TimetableStore>()(
           return result.data?.deleteTimetableEntriesForTerm as string | undefined;
         } catch (error) {
           console.error('Error deleting timetable entries for term:', error);
+          throw error;
+        }
+      },
+
+      deleteTimetableForTerm: async (termId: string) => {
+        try {
+          if (!termId) {
+            throw new Error('No term selected. Please select a term to delete its timetable.');
+          }
+
+          const mutation = `
+            mutation DeleteTimetableForTerm($termId: String!) {
+              deleteTimetableForTerm(termId: $termId)
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ query: mutation, variables: { termId } }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          // Clear timetable data locally
+          set(() => ({
+            entries: [],
+            timeSlots: [],
+            breaks: [],
+            lastUpdated: new Date().toISOString(),
+          }));
+
+          return result.data?.deleteTimetableForTerm as string | undefined;
+        } catch (error) {
+          console.error('Error deleting timetable for term:', error);
           throw error;
         }
       },
