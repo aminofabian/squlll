@@ -150,9 +150,18 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         `;
 
         // Build input object - GraphQL CreateTimetableEntryInput accepts:
-        // dayTemplatePeriodId, subjectId, teacherId, gradeLevelId, streamId (nullable), roomName, termId
+        // dayTemplatePeriodId (required), subjectId, teacherId, gradeLevelId, streamId (nullable), roomName, termId
         // Note: dayTemplatePeriodId maps to our timeSlotId (loaded from day templates)
-        const input: any = {
+        // IMPORTANT: Do NOT include gradeId, timeSlotId, dayOfWeek - these are not part of the schema
+        const input: {
+          dayTemplatePeriodId: string;
+          subjectId: string;
+          teacherId: string;
+          gradeLevelId: string;
+          streamId: string | null;
+          termId: string;
+          roomName?: string;
+        } = {
           dayTemplatePeriodId: lesson.timeSlotId,
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
@@ -531,7 +540,7 @@ Check the browser console for detailed input information.`;
           id: lesson.id,
           teacherId: formData.teacherId,
           subjectId: formData.subjectId,
-          roomNumber: formData.roomNumber || null,
+          roomName: formData.roomNumber || null,
         };
 
         const variables = {
