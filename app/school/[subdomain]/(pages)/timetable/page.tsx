@@ -986,13 +986,13 @@ export default function SmartTimetableNew() {
                                               description: 'Are you sure you want to delete this lesson? This action cannot be undone.',
                                               variant: 'destructive',
                                               action: (
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 mt-2">
                                                   <ToastAction
                                                     altText="Cancel"
                                                     onClick={() => {
                                                       confirmationToast.dismiss();
                                                     }}
-                                                    className="bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300"
+                                                    className="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 border-primary/20 hover:border-primary/40"
                                                   >
                                                     Cancel
                                                   </ToastAction>
@@ -1002,7 +1002,7 @@ export default function SmartTimetableNew() {
                                                       confirmationToast.dismiss();
                                                       deleteEntry();
                                                     }}
-                                                    className="bg-red-600 hover:bg-red-700 text-white border-red-700"
+                                                    className="bg-primary hover:bg-primary/90 text-white border-primary"
                                                   >
                                                     Delete
                                                   </ToastAction>
