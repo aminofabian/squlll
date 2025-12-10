@@ -47,6 +47,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   
   // GraphQL timetable entry actions
   loadEntries: (termId: string, gradeId: string) => Promise<void>;
+  deleteEntriesForTerm: (termId: string) => Promise<void>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
@@ -946,58 +947,95 @@ export const useTimetableStore = create<TimetableStore>()(
           console.log('Loading timetable entries for term:', termId, 'grade:', gradeId);
           
           const query = `
-            query GetWholeSchoolTimetable($termId: String!) {
-              getWholeSchoolTimetable(termId: $termId) {
-                timeSlots {
-                  id
-                  periodNumber
-                  displayTime
-                  startTime
-                  endTime
-                  color
-                }
-                entries {
-                  id
-                  gradeId
-                  subjectId
-                  teacherId
-                  timeSlotId
-                  dayOfWeek
-                  roomNumber
-                  grade {
+            query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
+              getSchoolTimetable(input: $input) {
+                termId
+                termName
+                totalDays
+                totalPeriods
+                totalOccupiedSlots
+                totalFreeSlots
+                generatedAt
+                timetableByGrade {
+                  gradeLevel {
                     id
                     name
-                    gradeLevel {
-                      name
-                    }
+                    shortName
                   }
-                  subject {
+                  stream {
                     id
                     name
                   }
-                  teacher {
-                    id
-                    fullName
-                    firstName
-                    lastName
-                    email
-                    phoneNumber
-                    gender
-                    department
-                    role
-                    isActive
-                    user {
+                  totalPeriods
+                  occupiedPeriods
+                  freePeriods
+                  days {
+                    dayTemplate {
                       id
-                      name
+                      dayOfWeek
+                      dayName
+                      startTime
+                      endTime
+                      periodCount
                     }
+                    periods {
+                      period {
+                        id
+                        periodNumber
+                        startTime
+                        endTime
+                        label
+                      }
+                      entry {
+                        id
+                        subject { id name }
+                        teacher { id name email }
+                        room { id name }
+                      }
+                      isBreak
+                      breakInfo {
+                        id
+                        name
+                        type
+                        durationMinutes
+                        icon
+                        color
+                      }
+                    }
+                    gradeLevels { id name shortName }
+                    streams { id name }
+                    totalPeriods
+                    occupiedPeriods
+                    freePeriods
                   }
-                  timeSlot {
+                }
+                schedule {
+                  dayTemplate {
                     id
-                    periodNumber
-                    displayTime
+                    dayOfWeek
+                    dayName
                     startTime
                     endTime
-                    color
+                  }
+                  gradeLevels { id name }
+                  streams { id name }
+                  periods {
+                    period {
+                      periodNumber
+                      startTime
+                      endTime
+                    }
+                    entry {
+                      subject { name }
+                      teacher { name }
+                      room { name }
+                    }
+                    isBreak
+                    breakInfo {
+                      name
+                      type
+                      durationMinutes
+                    }
                   }
                 }
               }
@@ -1015,7 +1053,7 @@ export const useTimetableStore = create<TimetableStore>()(
             body: JSON.stringify({
               query,
               variables: {
-                termId,
+                input: { termId },
               },
             }),
           });
@@ -1043,83 +1081,101 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          if (!result.data || !result.data.getWholeSchoolTimetable) {
+          if (!result.data || !result.data.getSchoolTimetable) {
             console.error('Invalid response format:', result);
-            throw new Error('Invalid response format: missing getWholeSchoolTimetable data');
+            throw new Error('Invalid response format: missing getSchoolTimetable data');
           }
 
-          const timetableData = result.data.getWholeSchoolTimetable;
-          
-          // Extract and store time slots if available
-          if (timetableData.timeSlots && timetableData.timeSlots.length > 0) {
-            const formatTime = (timeStr: string) => {
-              if (!timeStr) return '';
-              if (timeStr.length === 5) return timeStr;
-              if (timeStr.length === 8) return timeStr.substring(0, 5);
-              return timeStr;
-            };
+          const timetableData = result.data.getSchoolTimetable;
+          const timetableByGrade = timetableData.timetableByGrade || [];
 
-            const fetchedTimeSlots = timetableData.timeSlots.map((slot: any) => ({
-              id: slot.id,
-              periodNumber: slot.periodNumber,
-              time: slot.displayTime || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
-              startTime: formatTime(slot.startTime),
-              endTime: formatTime(slot.endTime),
-              color: slot.color || 'border-l-primary'
-            }));
+          const formatTime = (timeStr: string) => {
+            if (!timeStr) return '';
+            if (timeStr.length === 5) return timeStr;
+            if (timeStr.length === 8) return timeStr.substring(0, 5);
+            return timeStr;
+          };
 
-            set((state) => ({
-              timeSlots: fetchedTimeSlots,
-              lastUpdated: new Date().toISOString(),
-            }));
+          // Pick the grade block matching the selected grade (id first, then name/shortName)
+          const gradeIdLower = (gradeId || '').toLowerCase();
+          const gradeBlock =
+            timetableByGrade.find((g: any) => {
+              const id = g.gradeLevel?.id;
+              const name = g.gradeLevel?.name?.toLowerCase();
+              const shortName = g.gradeLevel?.shortName?.toLowerCase();
+              return (
+                (!!id && id === gradeId) ||
+                (!!name && name === gradeIdLower) ||
+                (!!shortName && shortName === gradeIdLower)
+              );
+            }) ||
+            timetableByGrade[0] ||
+            null;
 
-            console.log(`Loaded ${fetchedTimeSlots.length} time slots from getWholeSchoolTimetable`);
+          // Resolve the canonical gradeId we will attach to entries
+          const resolvedGradeId = gradeBlock?.gradeLevel?.id || gradeId;
+
+          const timeSlotMap = new Map<string, TimeSlot>();
+          const fetchedEntries: TimetableEntry[] = [];
+
+          if (gradeBlock && Array.isArray(gradeBlock.days)) {
+            gradeBlock.days.forEach((dayItem: any) => {
+              const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+              (dayItem.periods || []).forEach((p: any) => {
+                const period = p?.period;
+                if (period?.id && !timeSlotMap.has(period.id)) {
+                  timeSlotMap.set(period.id, {
+                    id: period.id,
+                    periodNumber: period.periodNumber,
+                    time: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
+                    startTime: formatTime(period.startTime),
+                    endTime: formatTime(period.endTime),
+                    color: 'border-l-primary',
+                    dayOfWeek: dayOfWeek,
+                    label: period.label,
+                  });
+                }
+
+                if (p?.entry && period?.id) {
+                  const entry = p.entry;
+                  const subjectId = entry.subject?.id;
+                  const teacherId = entry.teacher?.id;
+                  const timeSlotId = period.id;
+                  if (!subjectId || !teacherId) {
+                    console.warn('Skipping entry due to missing subject/teacher', entry);
+                    return;
+                  }
+                  fetchedEntries.push({
+                    id: entry.id,
+                    gradeId: resolvedGradeId,
+                    subjectId,
+                    teacherId,
+                    timeSlotId,
+                    dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
+                    roomNumber: entry.room?.name || undefined,
+                    isDoublePeriod: false,
+                    notes: undefined,
+                  });
+                }
+              });
+            });
+          } else {
+            console.warn('No timetableByGrade data available for grade', gradeId);
           }
 
-          // Filter entries by gradeId
-          const allEntries = timetableData.entries || [];
-          const entriesData = allEntries.filter((entry: any) => entry.gradeId === gradeId);
-          
-          console.log(`Filtered ${entriesData.length} entries for grade ${gradeId} from ${allEntries.length} total entries`);
-          console.log(`Fetched ${entriesData.length} timetable entries from API`);
+          const fetchedTimeSlots = Array.from(timeSlotMap.values());
+          set((state) => ({
+            timeSlots: fetchedTimeSlots,
+            lastUpdated: new Date().toISOString(),
+          }));
+          console.log(`Loaded ${fetchedTimeSlots.length} time slots from timetableByGrade`);
 
-          // Get current state to match teachers by name if needed
-          const state = get();
-          const { teachers: allTeachers } = state;
-
-          // Convert response to TimetableEntry format
-          const fetchedEntries: TimetableEntry[] = entriesData
-            .map((entry: any) => {
-              // Use teacherId directly from entry (new structure provides it)
-              // Fallback to teacher.id if teacherId is not available
-              const teacherId = entry.teacherId || entry.teacher?.id;
-              
-              if (!teacherId) {
-                console.warn(`Skipping entry ${entry.id} - no valid teacher ID found. Teacher data:`, entry.teacher);
-                return null;
-              }
-
-              return {
-                id: entry.id,
-                gradeId: entry.gradeId || entry.grade?.id,
-                subjectId: entry.subjectId || entry.subject?.id,
-                teacherId: teacherId,
-                timeSlotId: entry.timeSlotId || entry.timeSlot?.id,
-                dayOfWeek: entry.dayOfWeek,
-                roomNumber: entry.roomNumber || undefined,
-                isDoublePeriod: false, // Default, can be updated if API provides this
-                notes: undefined, // Default, can be updated if API provides this
-              };
-            })
-            .filter((entry: TimetableEntry | null): entry is TimetableEntry => entry !== null);
-
-          console.log(`Processed ${fetchedEntries.length} timetable entries (filtered from ${entriesData.length} total)`);
-
+          console.log(`Processed ${fetchedEntries.length} timetable entries from timetableByGrade`);
           // Update store with entries for this grade
           // Remove existing entries for this grade and add new ones
           set((state) => {
             const existingEntries = state.entries || [];
-            const otherGradeEntries = existingEntries.filter((e) => e.gradeId !== gradeId);
+            const otherGradeEntries = existingEntries.filter((e) => e.gradeId !== resolvedGradeId);
             const newEntries = [...otherGradeEntries, ...fetchedEntries];
             
             console.log('Updating store entries:', {
@@ -1149,6 +1205,54 @@ export const useTimetableStore = create<TimetableStore>()(
         } catch (error) {
           console.error('Error loading timetable entries:', error);
           // Don't clear entries on error - keep existing ones
+          throw error;
+        }
+      },
+
+      deleteEntriesForTerm: async (termId: string) => {
+        try {
+          if (!termId) {
+            throw new Error('No term selected. Please select a term to delete its entries.');
+          }
+
+          const mutation = `
+            mutation DeleteTimetableEntriesForTerm($termId: String!) {
+              deleteTimetableEntriesForTerm(termId: $termId)
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ query: mutation, variables: { termId } }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          // Mutation returns a string message; we just clear entries locally
+          set(() => ({
+            entries: [],
+            lastUpdated: new Date().toISOString(),
+          }));
+
+          return result.data?.deleteTimetableEntriesForTerm as string | undefined;
+        } catch (error) {
+          console.error('Error deleting timetable entries for term:', error);
           throw error;
         }
       },

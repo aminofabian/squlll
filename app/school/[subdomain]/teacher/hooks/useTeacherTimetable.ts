@@ -74,91 +74,127 @@ export interface TimetableEntry {
   }
 }
 
-export interface WholeSchoolTimetableResponse {
-  getWholeSchoolTimetable: {
-    timeSlots: TimeSlot[]
-    breaks: TimetableBreak[]
-    entries: TimetableEntry[]
-    grades: TimetableGrade[]
-    lastUpdated: string
+export interface SchoolTimetableResponse {
+  getSchoolTimetable: {
+    termId: string
+    termName: string
+    totalDays: number
+    totalPeriods: number
+    totalOccupiedSlots: number
+    totalFreeSlots: number
+    generatedAt: string
+    schedule: Array<{
+      dayTemplate: {
+        id: string
+        dayOfWeek: number
+        startTime: string
+        periodCount: number
+        defaultPeriodDuration: number
+      }
+      periods: Array<{
+        period: {
+          id: string
+          periodNumber: number
+          startTime: string
+          endTime: string
+          label: string | null
+        }
+        entry: {
+          id: string
+          subject: { id: string; name: string }
+          teacher: { id: string; user: { name: string; email: string } | null }
+          room: { id: string; name: string } | null
+        } | null
+        isBreak: boolean
+        breakInfo: {
+          id: string
+          name: string
+          type: string
+          durationMinutes: number
+          icon?: string | null
+          color?: string | null
+        } | null
+      }>
+      breaks: Array<{
+        id: string
+        name: string
+        type: string
+        afterPeriod: number
+        durationMinutes: number
+      }>
+      totalPeriods: number
+      occupiedPeriods: number
+      freePeriods: number
+    }>
   }
 }
 
 export interface UseTeacherTimetableResult {
-  data: WholeSchoolTimetableResponse['getWholeSchoolTimetable'] | null
+  data: {
+    timeSlots: TimeSlot[]
+    entries: TimetableEntry[]
+    breaks: TimetableBreak[]
+    grades: TimetableGrade[]
+    lastUpdated: string
+  } | null
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
 }
 
-const GET_WHOLE_SCHOOL_TIMETABLE_QUERY = `
-  query GetWholeSchoolTimetable($termId: ID!) {
-    getWholeSchoolTimetable(termId: $termId) {
-      timeSlots {
+const GET_SCHOOL_TIMETABLE_QUERY = `
+  query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
+    getSchoolTimetable(input: $input) {
+      termId
+      termName
+      totalDays
+      totalPeriods
+      totalOccupiedSlots
+      totalFreeSlots
+      generatedAt
+      schedule {
+        dayTemplate {
+          id
+          dayOfWeek
+          startTime
+          periodCount
+          defaultPeriodDuration
+        }
+        periods {
+          period {
         id
         periodNumber
-        displayTime
         startTime
         endTime
-        color
+            label
+          }
+          entry {
+            id
+            subject { id name }
+            teacher { id user { name email } }
+            room { id name }
       }
-      breaks {
+          isBreak
+          breakInfo {
         id
         name
         type
-        dayOfWeek
-        afterPeriod
         durationMinutes
         icon
         color
       }
-      entries {
-        id
-        gradeId
-        subjectId
-        teacherId
-        timeSlotId
-        dayOfWeek
-        roomNumber
-        grade {
+        }
+        breaks {
           id
           name
-          gradeLevel {
-            name
-          }
+          type
+          afterPeriod
+          durationMinutes
         }
-        subject {
-          id
-          name
-        }
-        teacher {
-          id
-          fullName
-          firstName
-          lastName
-          email
-          phoneNumber
-          gender
-          department
-          role
-          isActive
-          user {
-            name
-          }
-        }
-        timeSlot {
-          id
-          periodNumber
-          displayTime
-        }
+        totalPeriods
+        occupiedPeriods
+        freePeriods
       }
-      grades {
-        id
-        name
-        displayName
-        level
-      }
-      lastUpdated
     }
   }
 `
@@ -166,7 +202,7 @@ const GET_WHOLE_SCHOOL_TIMETABLE_QUERY = `
 export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResult {
   const { selectedTerm } = useSelectedTerm()
   const { teacher } = useTeacherData()
-  const [rawData, setRawData] = useState<WholeSchoolTimetableResponse['getWholeSchoolTimetable'] | null>(null)
+  const [rawData, setRawData] = useState<UseTeacherTimetableResult['data']>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -205,13 +241,12 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
 
     try {
       // Fetch whole school timetable data
-      const timetableResult = await graphqlFetch<WholeSchoolTimetableResponse>(
-        GET_WHOLE_SCHOOL_TIMETABLE_QUERY,
-        { termId: selectedTerm.id },
+      const timetableResult = await graphqlFetch<SchoolTimetableResponse>(
+        GET_SCHOOL_TIMETABLE_QUERY,
+        { input: { termId: selectedTerm.id } },
         subdomain
       )
 
-      // Format time helper (same as admin store)
       const formatTime = (timeStr: string) => {
         if (!timeStr) return ''
         // If already in HH:MM format, return as is
@@ -221,17 +256,47 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
         return timeStr
       }
 
-      const timetableData = timetableResult.getWholeSchoolTimetable
+      const timetableData = timetableResult.getSchoolTimetable
+      const schedule = timetableData.schedule || []
 
-      // Format time slots to ensure consistent format
-      const formattedTimeSlots = (timetableData.timeSlots || []).map((slot: any) => ({
-        id: slot.id,
-        periodNumber: slot.periodNumber,
-        displayTime: slot.displayTime || `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`,
-        startTime: formatTime(slot.startTime),
-        endTime: formatTime(slot.endTime),
-        color: slot.color || null
-      }))
+      const timeSlotMap = new Map<string, TimeSlot>()
+      const entries: TimetableEntry[] = []
+
+      schedule.forEach((dayItem: any) => {
+        const dayOfWeek = dayItem.dayTemplate?.dayOfWeek
+        ;(dayItem.periods || []).forEach((p: any) => {
+          const period = p?.period
+          if (period?.id && !timeSlotMap.has(period.id)) {
+            timeSlotMap.set(period.id, {
+              id: period.id,
+              periodNumber: period.periodNumber,
+              displayTime: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
+              startTime: formatTime(period.startTime),
+              endTime: formatTime(period.endTime),
+              color: null,
+            })
+          }
+
+          if (p?.entry && period?.id) {
+            const subjectId = p.entry.subject?.id
+            const teacherId = p.entry.teacher?.id
+            if (!subjectId || !teacherId) return
+            entries.push({
+              id: p.entry.id,
+              gradeId: '', // not provided in new response
+              subjectId,
+              teacherId,
+              timeSlotId: period.id,
+              dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
+              roomNumber: p.entry.room?.name || undefined,
+              isDoublePeriod: false,
+              notes: undefined,
+            })
+          }
+        })
+      })
+
+      const formattedTimeSlots = Array.from(timeSlotMap.values())
 
       console.log('Fetched whole school timetable:', {
         timeSlotsCount: formattedTimeSlots.length,
@@ -242,7 +307,11 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
 
       const finalData = {
         ...timetableData,
-        timeSlots: formattedTimeSlots
+        timeSlots: formattedTimeSlots,
+        entries,
+        breaks: [],
+        grades: [],
+        lastUpdated: timetableData.generatedAt || new Date().toISOString(),
       }
 
       setRawData(finalData)

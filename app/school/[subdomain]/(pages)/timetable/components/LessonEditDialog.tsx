@@ -145,57 +145,35 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
             createTimetableEntry(input: $input) {
               id
-              dayOfWeek
-              roomNumber
-              grade {
-                name
-              }
-              subject {
-                name
-              }
-              teacher {
-                user {
-                  name
-                }
-              }
-              timeSlot {
-                periodNumber
-                displayTime
-              }
             }
           }
         `;
 
-        // Build input object - GraphQL CreateTimetableEntryInput only accepts:
-        // termId, gradeId, subjectId, teacherId, timeSlotId, dayOfWeek, roomNumber (optional)
-        // The backend derives academicYear from termId internally
+        // Build input object - GraphQL CreateTimetableEntryInput accepts:
+        // termId, subjectId, teacherId, dayTemplatePeriodId, roomName (optional)
+        // Note: dayTemplatePeriodId maps to our timeSlotId (loaded from day templates)
         const input: any = {
           termId: termId,
-          gradeId: lesson.gradeId,
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
-          timeSlotId: lesson.timeSlotId,
-          dayOfWeek: parseInt(String(lesson.dayOfWeek), 10), // Ensure it's an integer
+          dayTemplatePeriodId: lesson.timeSlotId,
         };
 
         // Only add optional fields if they have values
         if (formData.roomNumber && formData.roomNumber.trim()) {
-          input.roomNumber = formData.roomNumber.trim();
+          input.roomName = formData.roomNumber.trim();
         }
 
         // Validate input structure before sending
         console.log('Input validation check:', {
           termId: typeof input.termId === 'string' && input.termId.length > 0,
-          gradeId: typeof input.gradeId === 'string' && input.gradeId.length > 0,
           subjectId: typeof input.subjectId === 'string' && input.subjectId.length > 0,
           teacherId: typeof input.teacherId === 'string' && input.teacherId.length > 0,
-          timeSlotId: typeof input.timeSlotId === 'string' && input.timeSlotId.length > 0,
-          dayOfWeek: Number.isInteger(input.dayOfWeek) && input.dayOfWeek >= 1 && input.dayOfWeek <= 5,
-          roomNumber: !input.roomNumber || typeof input.roomNumber === 'string',
+          dayTemplatePeriodId: typeof input.dayTemplatePeriodId === 'string' && input.dayTemplatePeriodId.length > 0,
+          roomName: !input.roomName || typeof input.roomName === 'string',
         });
 
         // Verify the IDs exist in the store
-        const grade = grades.find((g) => g.id === lesson.gradeId);
         const subject = subjects.find((s) => s.id === formData.subjectId);
         const teacher = teachers.find((t) => t.id === formData.teacherId);
         const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
@@ -236,16 +214,15 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         // Validate UUID format for all IDs (uuidRegex already declared above)
         const invalidIds: string[] = [];
         if (!uuidRegex.test(input.termId)) invalidIds.push(`termId: ${input.termId}`);
-        if (!uuidRegex.test(input.gradeId)) invalidIds.push(`gradeId: ${input.gradeId}`);
         if (!uuidRegex.test(input.subjectId)) invalidIds.push(`subjectId: ${input.subjectId}`);
         if (!uuidRegex.test(input.teacherId)) invalidIds.push(`teacherId: ${input.teacherId}`);
-        if (!uuidRegex.test(input.timeSlotId)) invalidIds.push(`timeSlotId: ${input.timeSlotId}`);
+        if (!uuidRegex.test(input.dayTemplatePeriodId)) invalidIds.push(`dayTemplatePeriodId: ${input.dayTemplatePeriodId}`);
 
         if (invalidIds.length > 0) {
           console.error('Invalid UUID format detected:', invalidIds);
           
           // Special handling for timeSlotId - likely cached mock data
-          if (invalidIds.some(id => id.includes('timeSlotId'))) {
+          if (invalidIds.some(id => id.includes('dayTemplatePeriodId') || id.includes('timeSlotId'))) {
             toast({
               title: 'Time Slots Need Reloading',
               description: 'Time slots appear to be using old data. Please reload the page or click "Create Time Slots" to refresh them.',
@@ -262,30 +239,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
-        // Validate dayOfWeek is between 1-5
-        if (input.dayOfWeek < 1 || input.dayOfWeek > 5) {
-          console.error('Invalid dayOfWeek:', input.dayOfWeek);
-          toast({
-            title: 'Error',
-            description: `Invalid day of week: ${input.dayOfWeek}. Must be between 1 (Monday) and 5 (Friday).`,
-            variant: 'destructive',
-          });
-          setIsSaving(false);
-          return;
-        }
-
         console.log('Creating entry with input:', {
           input,
           termId,
           selectedTerm: selectedTerm?.name,
           academicYear: selectedTerm?.academicYear?.name,
-          gradeId: lesson.gradeId,
-          gradeName: grade?.name,
           subjectId: formData.subjectId,
           subjectName: subject?.name,
           teacherId: formData.teacherId,
           teacherName: teacher?.name,
-          timeSlotId: lesson.timeSlotId,
+          dayTemplatePeriodId: lesson.timeSlotId,
           timeSlotPeriod: timeSlot?.periodNumber,
           dayOfWeek: lesson.dayOfWeek,
         });
@@ -294,16 +257,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         console.log('Exact input object being sent to backend:', JSON.stringify(input, null, 2));
 
         // Validate IDs exist
-        if (!grade) {
-          console.error('Grade not found:', lesson.gradeId);
-          toast({
-            title: 'Error',
-            description: `Grade ID ${lesson.gradeId} not found in store`,
-            variant: 'destructive',
-          });
-          setIsSaving(false);
-          return;
-        }
         if (!subject) {
           console.error('Subject not found:', formData.subjectId);
           toast({
@@ -568,23 +521,6 @@ Check the browser console for detailed input information.`;
           mutation UpdateEntry($input: UpdateTimetableEntryInput!) {
             updateTimetableEntry(input: $input) {
               id
-              dayOfWeek
-              roomNumber
-              grade {
-                name
-              }
-              subject {
-                name
-              }
-              teacher {
-                user {
-                  name
-                }
-              }
-              timeSlot {
-                periodNumber
-                displayTime
-              }
             }
           }
         `;
@@ -793,7 +729,7 @@ Check the browser console for detailed input information.`;
       <DrawerContent className="max-w-md flex flex-col h-full">
         <DrawerHeader className="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-600 flex-shrink-0">
           <DrawerTitle className="text-xl font-bold text-primary">
-            {isNew ? 'Add New Lesson' : 'Edit Lesson'}
+            {isNew ? '' : 'Edit Lesson'}
           </DrawerTitle>
           {/* Timeslot and Grade Info */}
           <div className="mt-3 space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">

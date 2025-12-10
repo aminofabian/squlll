@@ -68,6 +68,7 @@ export default function SmartTimetableNew() {
     addPeriodsToDayTemplate,
     createBreaks,
     deleteAllBreaks,
+    deleteEntriesForTerm,
   } = useTimetableStore();
 
   // Toast for notifications
@@ -266,6 +267,36 @@ export default function SmartTimetableNew() {
     [setSelectedGrade]
   );
 
+  const handleDeleteEntriesForTerm = useCallback(async () => {
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId) {
+      toast({
+        title: 'No Term Selected',
+        description: 'Select a term before deleting its entries.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsDeletingTermEntries(true);
+      const message = await deleteEntriesForTerm(termId);
+      toast({
+        title: 'Entries deleted',
+        description: message || 'Deleted all timetable entries for this term.',
+      });
+    } catch (error) {
+      console.error('Failed to delete term entries:', error);
+      toast({
+        title: 'Failed to delete entries',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingTermEntries(false);
+    }
+  }, [deleteEntriesForTerm, selectedTerm?.id, selectedTermId, toast]);
+
   // State for editing
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
@@ -278,9 +309,10 @@ export default function SmartTimetableNew() {
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [dayTemplates, setDayTemplates] = useState<any[]>([]);
-const [addPeriodsDrawerOpen, setAddPeriodsDrawerOpen] = useState(false);
-const [addPeriodsTemplateId, setAddPeriodsTemplateId] = useState<string>('');
-const [addPeriodsCount, setAddPeriodsCount] = useState<string>('1');
+  const [addPeriodsDrawerOpen, setAddPeriodsDrawerOpen] = useState(false);
+  const [addPeriodsTemplateId, setAddPeriodsTemplateId] = useState<string>('');
+  const [addPeriodsCount, setAddPeriodsCount] = useState<string>('1');
+  const [isDeletingTermEntries, setIsDeletingTermEntries] = useState(false);
 
   // Fetch school config for the search filter
   const { isLoading: isLoadingConfig } = useSchoolConfig();
@@ -446,6 +478,16 @@ const [addPeriodsCount, setAddPeriodsCount] = useState<string>('1');
                     <span className="hidden sm:inline">Grades</span>
                   </Button>
                 )}
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteEntriesForTerm}
+                  disabled={isDeletingTermEntries || !(selectedTerm?.id || selectedTermId)}
+                  className="flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {isDeletingTermEntries ? 'Deleting…' : 'Delete Term Entries'}
+                </Button>
                 <button
                   onClick={() => setBulkScheduleOpen(true)}
                   className="px-3 py-1.5 text-xs bg-primary text-white hover:bg-primary/90 rounded transition-colors flex items-center gap-1.5 font-medium"
