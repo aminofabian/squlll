@@ -256,7 +256,7 @@ export default function SmartTimetableNew() {
   const grid = useTimetableGrid(selectedGradeId);
 
   // Get period slots grouped by day with helpers
-  const { periodNumbers, getSlotFor, getBaseSlotForPeriod } = usePeriodSlots();
+  const { periodNumbers, getSlotFor } = usePeriodSlots();
 
   // Get statistics (memoized!)
   const stats = useGradeStatistics(selectedGradeId);
@@ -322,6 +322,9 @@ export default function SmartTimetableNew() {
         title: 'Entries deleted',
         description: message || 'Deleted all timetable entries for this term.',
       });
+      setShowDeleteAllEntriesDialog(false);
+      // Reload data
+      await reloadTimetableData();
     } catch (error) {
       console.error('Failed to delete term entries:', error);
       toast({
@@ -332,7 +335,7 @@ export default function SmartTimetableNew() {
     } finally {
       setIsDeletingTermEntries(false);
     }
-  }, [deleteEntriesForTerm, selectedTerm?.id, selectedTermId, toast]);
+  }, [deleteEntriesForTerm, selectedTerm?.id, selectedTermId, toast, reloadTimetableData]);
 
   const handleDeleteTimetableForTerm = useCallback(async () => {
     const termId = selectedTerm?.id || selectedTermId;
@@ -352,6 +355,9 @@ export default function SmartTimetableNew() {
         title: 'Timetable deleted',
         description: message || 'Complete timetable for this term was deleted.',
       });
+      setShowDeleteTimetableDialog(false);
+      // Reload data
+      await reloadTimetableData();
     } catch (error) {
       console.error('Failed to delete timetable for term:', error);
       toast({
@@ -362,7 +368,7 @@ export default function SmartTimetableNew() {
     } finally {
       setIsDeletingTimetable(false);
     }
-  }, [deleteTimetableForTerm, selectedTerm?.id, selectedTermId, toast]);
+  }, [deleteTimetableForTerm, selectedTerm?.id, selectedTermId, toast, reloadTimetableData]);
 
   // State for editing
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
@@ -396,6 +402,10 @@ export default function SmartTimetableNew() {
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [showDeleteAllBreaksDialog, setShowDeleteAllBreaksDialog] = useState(false);
   const [isDeletingAllBreaks, setIsDeletingAllBreaks] = useState(false);
+  const [breakToDelete, setBreakToDelete] = useState<Break | null>(null);
+  const [isDeletingBreak, setIsDeletingBreak] = useState(false);
+  const [showDeleteTimetableDialog, setShowDeleteTimetableDialog] = useState(false);
+  const [showDeleteAllEntriesDialog, setShowDeleteAllEntriesDialog] = useState(false);
 
   // State for drawers
   const [periodsDrawerOpen, setPeriodsDrawerOpen] = useState(false);
@@ -563,60 +573,110 @@ export default function SmartTimetableNew() {
     });
   }, [selectedGradeId, toast]);
 
-  // Handle delete single break
-  const handleDeleteBreak = useCallback(async (breakItem: Break) => {
-    // Check if break is orphaned (no day template association)
-    if (!breakItem.dayTemplateId) {
+  // Handle delete breaks by type - opens confirmation dialog
+  const handleDeleteBreak = useCallback((breakItem: Break) => {
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId) {
       toast({
-        title: 'Cannot Delete Orphaned Break',
-        description: 'This break is not associated with a day template. Run: node test-break-deletion.js to identify and fix orphaned breaks.',
+        title: 'No term selected',
+        description: 'Please select a term before deleting breaks.',
         variant: 'destructive',
       });
       return;
     }
+    setBreakToDelete(breakItem);
+  }, [selectedTerm?.id, selectedTermId, toast]);
 
-    const confirmMessage = breakItem.applyToAllDays
-      ? `Delete break "${breakItem.name}" from all days? This action cannot be undone.`
-      : `Delete break "${breakItem.name}"? This action cannot be undone.`;
+  // Actually delete breaks by type
+  const confirmDeleteBreak = useCallback(async () => {
+    if (!breakToDelete) return;
 
-    if (!confirm(confirmMessage)) {
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId) {
+      toast({
+        title: 'No term selected',
+        description: 'Please select a term before deleting breaks.',
+        variant: 'destructive',
+      });
+      setBreakToDelete(null);
       return;
     }
 
+    // Map frontend break type to GraphQL enum format
+    const typeMapping: Record<string, string> = {
+      'short_break': 'SHORT_BREAK',
+      'long_break': 'LONG_BREAK',
+      'lunch': 'LUNCH',
+      'afternoon_break': 'TEA_BREAK', // or 'AFTERNOON_BREAK' depending on backend
+      'games': 'GAMES_BREAK',
+      'assembly': 'ASSEMBLY',
+      'recess': 'RECESS',
+      'snack': 'SNACK_BREAK',
+    };
+    
+    // Convert break type from frontend format to GraphQL enum
+    const breakType = typeMapping[breakToDelete.type] || breakToDelete.type.toUpperCase();
+
+    setIsDeletingBreak(true);
     try {
-      await deleteBreak(breakItem.id);
-      // Reload timetable data to reflect changes
-      await reloadTimetableData();
-      toast({
-        title: 'Break deleted',
-        description: `"${breakItem.name}" has been successfully deleted.`,
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation DeleteBreaksByType($input: DeleteBreaksByTypeInput!) {
+              deleteBreaksByType(input: $input) {
+                success
+                breakType
+                deletedBreaksCount
+                recalculatedDaysCount
+                message
+                completedAt
+              }
+            }
+          `,
+          variables: {
+            input: {
+              termId: termId,
+              breakType: breakType,
+              confirmDeletion: true,
+            },
+          },
+        }),
       });
-    } catch (error) {
-      console.error('Error deleting break:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-      
-      // Check for specific error types
-      if (errorMessage.includes('not associated with a day template')) {
-        toast({
-          title: 'Cannot Delete Orphaned Break',
-          description: 'This break is not properly linked to a day template. Please check the documentation.',
-          variant: 'destructive',
-        });
-      } else if (errorMessage.includes('Server error') || errorMessage.includes('INTERNAL_SERVER_ERROR')) {
-        toast({
-          title: 'Server Error',
-          description: 'Failed to delete break due to a server error. This may be caused by database constraints or related records. Please check the server logs or contact support.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Failed to delete break',
-          description: errorMessage,
-          variant: 'destructive',
-        });
+
+      const result = await response.json();
+
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to delete breaks');
       }
+
+      const data = result.data?.deleteBreaksByType;
+      if (data?.success) {
+        toast({
+          title: 'Breaks deleted',
+          description: data.message || `Successfully deleted ${data.deletedBreaksCount} ${data.breakType} break${data.deletedBreaksCount !== 1 ? 's' : ''} and recalculated ${data.recalculatedDaysCount} day template${data.recalculatedDaysCount !== 1 ? 's' : ''}.`,
+        });
+        // Reload timetable data to reflect changes
+        await reloadTimetableData();
+        setBreakToDelete(null);
+      } else {
+        throw new Error(data?.message || 'Failed to delete breaks');
+      }
+    } catch (error) {
+      console.error('Error deleting breaks:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      toast({
+        title: 'Failed to delete breaks',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeletingBreak(false);
     }
-  }, [deleteBreak, toast, reloadTimetableData]);
+  }, [breakToDelete, selectedTerm?.id, selectedTermId, toast, reloadTimetableData]);
 
   // Show onboarding if needed
   if (needsOnboarding) {
@@ -794,6 +854,33 @@ export default function SmartTimetableNew() {
                 >
                   <Clock className="h-3.5 w-3.5" />
                   <span>{templatesLoading ? 'Loading…' : 'Manage Schedule'}</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowDeleteAllDialog(true)}
+                  className="rounded-none h-8 flex items-center gap-1.5 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete All Periods</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowDeleteAllEntriesDialog(true)}
+                  className="rounded-none h-8 flex items-center gap-1.5 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete All Lessons</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowDeleteTimetableDialog(true)}
+                  className="rounded-none h-8 flex items-center gap-1.5 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Timetable</span>
                 </Button>
               </div>
             </div>
@@ -975,10 +1062,16 @@ export default function SmartTimetableNew() {
                         <span className="text-sm">{breakItem.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-foreground text-xs">{breakItem.name}</span>
-                            <span className="text-muted-foreground text-[10px]">
-                              {breakItem.durationMinutes} min
-                            </span>
+                            <span className="font-semibold text-foreground text-xs uppercase">{breakItem.name}</span>
+                            {breakItem.startTime && breakItem.endTime ? (
+                              <span className="text-muted-foreground text-[10px]">
+                                {breakItem.startTime} - {breakItem.endTime}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-[10px]">
+                                {breakItem.durationMinutes} min
+                              </span>
+                            )}
                           </div>
                           <div className="text-muted-foreground text-[9px] mt-0.5">
                             After P{breakItem.afterPeriod} • {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
@@ -1049,19 +1142,25 @@ export default function SmartTimetableNew() {
                         return (
                           <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
                             <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
-                              <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-4 min-w-[140px]">
-                                <div className="flex items-center gap-2.5">
-                                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-200 dark:bg-orange-900 text-lg">
+                              <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-2 min-w-[140px]">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-orange-200 dark:bg-orange-900 text-base">
                                     {breaksBeforePeriod1[0].icon}
                                   </div>
                                   <div className="flex-1">
-                                    <div className="font-bold text-sm text-orange-900 dark:text-orange-200">
+                                    <div className="font-bold text-[10px] text-orange-900 dark:text-orange-200 uppercase leading-tight">
                                       {breaksBeforePeriod1[0].name}
                                     </div>
-                                    <div className="text-xs font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
-                                      Before Period 1
-                                    </div>
-                                    <div className="text-xs font-semibold text-orange-700 dark:text-orange-300">
+                                    {breaksBeforePeriod1[0].startTime && breaksBeforePeriod1[0].endTime ? (
+                                      <div className="text-[9px] font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+                                        {breaksBeforePeriod1[0].startTime} - {breaksBeforePeriod1[0].endTime}
+                                      </div>
+                                    ) : (
+                                      <div className="text-[9px] font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+                                        Before Period 1
+                                      </div>
+                                    )}
+                                    <div className="text-[9px] font-semibold text-orange-700 dark:text-orange-300">
                                       {breaksBeforePeriod1[0].durationMinutes} min
                                     </div>
                                   </div>
@@ -1076,14 +1175,25 @@ export default function SmartTimetableNew() {
                                 <td key={dayIndex} className="border-r border-b border-orange-200 dark:border-orange-800 last:border-r-0 p-3 text-center align-middle">
                                   {dayBreak ? (
                                     <div
-                                      className="flex items-center justify-center gap-2 cursor-pointer bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-3 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group/break"
+                                      className="flex items-center justify-center gap-1 cursor-pointer bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-1.5 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group/break"
                                       onClick={() => setEditingBreak(dayBreak)}
                                       title="Click to edit break"
                                     >
-                                      <span className="text-lg">{dayBreak.icon}</span>
-                                      <span className="text-sm font-semibold text-orange-900 dark:text-orange-200">
-                                        {dayBreak.durationMinutes}min
-                                      </span>
+                                      <div className="flex flex-col items-center gap-0.5">
+                                        <span className="text-base">{dayBreak.icon}</span>
+                                        <span className="text-[10px] font-bold text-orange-900 dark:text-orange-200 uppercase leading-tight">
+                                          {dayBreak.name}
+                                        </span>
+                                        {dayBreak.startTime && dayBreak.endTime ? (
+                                          <span className="text-[9px] font-semibold text-orange-700 dark:text-orange-300">
+                                            {dayBreak.startTime} - {dayBreak.endTime}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[9px] font-semibold text-orange-700 dark:text-orange-300">
+                                            {dayBreak.durationMinutes}min
+                                          </span>
+                                        )}
+                                      </div>
                                       <Edit2 className="h-3 w-3 text-orange-600 dark:text-orange-400 opacity-0 group-hover/break:opacity-100 transition-opacity" />
                                     </div>
                                   ) : (
@@ -1111,8 +1221,8 @@ export default function SmartTimetableNew() {
 
                       {/* Period rows */}
                       {periodNumbers.map((period, periodIndex) => {
-                      // Get the base slot for this period (first available across days)
-                      const baseSlot = getBaseSlotForPeriod(period);
+                      // Use Monday (day 0) as the weekly template for time display
+                      const baseSlot = getSlotFor(0, period);
                       if (!baseSlot) return null;
 
                       // Get breaks that come after this period
@@ -1319,18 +1429,24 @@ export default function SmartTimetableNew() {
                           {breaksAfterThisPeriod.length > 0 && (
                             <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
                               <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
-                                <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-4 min-w-[140px]">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-200 dark:bg-orange-900 text-lg">
+                                <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-2 min-w-[140px]">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-orange-200 dark:bg-orange-900 text-base">
                                       {breaksAfterThisPeriod[0].icon}
                                     </div>
                                     <div className="flex-1">
-                                      <div className="font-bold text-sm text-orange-900 dark:text-orange-200">
+                                      <div className="font-bold text-[10px] text-orange-900 dark:text-orange-200 uppercase leading-tight">
                                         {breaksAfterThisPeriod[0].name}
                                       </div>
-                                      <div className="text-xs font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
-                                        {breaksAfterThisPeriod[0].durationMinutes} min
-                                      </div>
+                                      {breaksAfterThisPeriod[0].startTime && breaksAfterThisPeriod[0].endTime ? (
+                                        <div className="text-[9px] font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+                                          {breaksAfterThisPeriod[0].startTime} - {breaksAfterThisPeriod[0].endTime}
+                                        </div>
+                                      ) : (
+                                        <div className="text-[9px] font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+                                          {breaksAfterThisPeriod[0].durationMinutes} min
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1343,14 +1459,25 @@ export default function SmartTimetableNew() {
                                   <td key={dayIndex} className="border-r border-b border-orange-200 dark:border-orange-800 last:border-r-0 p-3 text-center align-middle">
                                     {dayBreak ? (
                                       <div
-                                        className="flex items-center justify-center gap-2 cursor-pointer bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-3 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group/break"
+                                        className="flex items-center justify-center gap-1 cursor-pointer bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-1.5 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group/break"
                                         onClick={() => setEditingBreak(dayBreak)}
                                         title="Click to edit break"
                                       >
-                                        <span className="text-lg">{dayBreak.icon}</span>
-                                        <span className="text-sm font-semibold text-orange-900 dark:text-orange-200">
-                                          {dayBreak.durationMinutes}min
-                                        </span>
+                                        <div className="flex flex-col items-center gap-0.5">
+                                          <span className="text-base">{dayBreak.icon}</span>
+                                          <span className="text-[10px] font-bold text-orange-900 dark:text-orange-200 uppercase leading-tight">
+                                            {dayBreak.name}
+                                          </span>
+                                          {dayBreak.startTime && dayBreak.endTime ? (
+                                            <span className="text-[9px] font-semibold text-orange-700 dark:text-orange-300">
+                                              {dayBreak.startTime} - {dayBreak.endTime}
+                                            </span>
+                                          ) : (
+                                            <span className="text-[9px] font-semibold text-orange-700 dark:text-orange-300">
+                                              {dayBreak.durationMinutes}min
+                                            </span>
+                                          )}
+                                        </div>
                                         <Edit2 className="h-3 w-3 text-orange-600 dark:text-orange-400 opacity-0 group-hover/break:opacity-100 transition-opacity" />
                                       </div>
                                     ) : (
@@ -1618,7 +1745,10 @@ export default function SmartTimetableNew() {
           {/* Bulk Breaks Drawer */}
           <BulkBreaksDrawer
             open={bulkBreaksOpen}
-            onClose={() => setBulkBreaksOpen(false)}
+            onClose={async () => {
+              await reloadTimetableData();
+              setBulkBreaksOpen(false);
+            }}
           />
 
           {/* Bulk Lesson Entry Drawer */}
@@ -1715,10 +1845,16 @@ export default function SmartTimetableNew() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-primary">{breakItem.name}</span>
-                            <span className="text-slate-600 dark:text-slate-300 text-sm">
-                              {breakItem.durationMinutes} min
-                            </span>
+                            <span className="font-semibold text-primary uppercase">{breakItem.name}</span>
+                            {breakItem.startTime && breakItem.endTime ? (
+                              <span className="text-slate-600 dark:text-slate-300 text-sm">
+                                {breakItem.startTime} - {breakItem.endTime}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600 dark:text-slate-300 text-sm">
+                                {breakItem.durationMinutes} min
+                              </span>
+                            )}
                           </div>
                           <div className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
                             After Period {breakItem.afterPeriod} • {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
@@ -1786,11 +1922,14 @@ export default function SmartTimetableNew() {
           <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete All Time Slots</AlertDialogTitle>
+                <AlertDialogTitle>Delete All Periods</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete <span className="font-semibold">all {timeSlots.length} time slot{timeSlots.length !== 1 ? 's' : ''}</span>?
+                  Are you sure you want to delete <span className="font-semibold">all {timeSlots.length} period{timeSlots.length !== 1 ? 's' : ''}</span> (time slots)?
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    This will remove all period time slots from the timetable structure.
+                  </p>
+                  <p className="mt-2 text-red-500 font-semibold">⚠️ All lessons scheduled in these periods will also be removed.</p>
                   <p className="mt-2 text-red-500 font-semibold">This action cannot be undone.</p>
-                  <p className="mt-2 text-red-500">All lessons scheduled in these timeslots will also be removed.</p>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -1803,10 +1942,10 @@ export default function SmartTimetableNew() {
                   {isDeletingAll ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Deleting All...
+                      Deleting...
                     </>
                   ) : (
-                    'Delete All Time Slots'
+                    'Delete All Periods'
                   )}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -1840,6 +1979,136 @@ export default function SmartTimetableNew() {
                     </>
                   ) : (
                     'Delete All Breaks'
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Delete Break by Type Confirmation Dialog */}
+          <AlertDialog open={!!breakToDelete} onOpenChange={(open) => !open && setBreakToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Breaks by Type</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {breakToDelete && (() => {
+                    const typeMapping: Record<string, string> = {
+                      'short_break': 'SHORT_BREAK',
+                      'long_break': 'LONG_BREAK',
+                      'lunch': 'LUNCH',
+                      'afternoon_break': 'TEA_BREAK',
+                      'games': 'GAMES_BREAK',
+                      'assembly': 'ASSEMBLY',
+                      'recess': 'RECESS',
+                      'snack': 'SNACK_BREAK',
+                    };
+                    const breakType = typeMapping[breakToDelete.type] || breakToDelete.type.toUpperCase();
+                    return (
+                      <>
+                        {breakToDelete.applyToAllDays ? (
+                          <p>
+                            Are you sure you want to delete <span className="font-semibold">all "{breakToDelete.name}" breaks ({breakType})</span> from all days?
+                          </p>
+                        ) : (
+                          <p>
+                            Are you sure you want to delete <span className="font-semibold">all "{breakToDelete.name}" breaks ({breakType})</span> for this term?
+                          </p>
+                        )}
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          This will delete all breaks of this type for the term and automatically recalculate the affected day templates.
+                        </p>
+                        <p className="mt-2 text-red-500 font-semibold">This action cannot be undone.</p>
+                      </>
+                    );
+                  })()}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeletingBreak}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={confirmDeleteBreak}
+                  disabled={isDeletingBreak}
+                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                >
+                  {isDeletingBreak ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Breaks'
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Delete All Entries Confirmation Dialog */}
+          <AlertDialog open={showDeleteAllEntriesDialog} onOpenChange={setShowDeleteAllEntriesDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete All Lessons</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete <span className="font-semibold">all lesson entries</span> for the current term?
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    This will remove all scheduled lessons but keep your time slots, breaks, and timetable structure intact.
+                  </p>
+                  <p className="mt-2 text-red-500 font-semibold">This action cannot be undone.</p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeletingTermEntries}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteEntriesForTerm}
+                  disabled={isDeletingTermEntries}
+                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                >
+                  {isDeletingTermEntries ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete All Lessons'
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Delete Entire Timetable Confirmation Dialog */}
+          <AlertDialog open={showDeleteTimetableDialog} onOpenChange={setShowDeleteTimetableDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Entire Timetable</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete the <span className="font-semibold">entire timetable</span> for the current term?
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    This will permanently delete:
+                  </p>
+                  <ul className="mt-2 text-sm text-muted-foreground list-disc list-inside space-y-1">
+                    <li>All lesson entries</li>
+                    <li>All time slots and periods</li>
+                    <li>All breaks</li>
+                    <li>The complete timetable structure</li>
+                  </ul>
+                  <p className="mt-3 text-red-500 font-semibold">⚠️ This action cannot be undone!</p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeletingTimetable}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteTimetableForTerm}
+                  disabled={isDeletingTimetable}
+                  className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                >
+                  {isDeletingTimetable ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Entire Timetable'
                   )}
                 </AlertDialogAction>
               </AlertDialogFooter>

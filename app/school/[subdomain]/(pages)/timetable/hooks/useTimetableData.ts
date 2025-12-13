@@ -46,10 +46,10 @@ export function usePeriodSlots() {
       slots.sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0));
     });
 
-    // Compute union of all period numbers across all days
+    // Compute union of all period numbers across all days (excluding period 0)
     const periodSet = new Set<number>();
     store.timeSlots.forEach((slot) => {
-      if (typeof slot.periodNumber === 'number') {
+      if (typeof slot.periodNumber === 'number' && slot.periodNumber > 0) {
         periodSet.add(slot.periodNumber);
       }
     });
