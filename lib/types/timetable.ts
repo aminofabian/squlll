@@ -24,6 +24,8 @@ export interface Break {
   durationMinutes: number;
   icon?: string;          // "☕" (optional)
   color?: string;         // "bg-orange-500" (optional)
+  dayTemplateId?: string | null; // ID of the day template this break belongs to
+  applyToAllDays?: boolean; // Whether this break applies to all days
 }
 
 export interface Subject {

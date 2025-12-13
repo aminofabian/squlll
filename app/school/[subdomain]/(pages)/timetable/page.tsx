@@ -3,6 +3,7 @@
 
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
+import type { Break } from '@/lib/types/timetable';
 import {
   useSelectedGradeTimetable,
   useTimetableGrid,
@@ -64,8 +65,11 @@ export default function SmartTimetableNew() {
     loadSubjects,
     loadTeachers,
     loadEntries,
+    loadSchoolTimetable,
+    loadBreaks,
     deleteTimeSlot,
     deleteAllTimeSlots,
+    deleteBreak,
     addPeriodsToDayTemplate,
     createBreaks,
     deleteAllBreaks,
@@ -83,13 +87,15 @@ export default function SmartTimetableNew() {
     const termId = selectedTerm?.id || selectedTermId;
 
     Promise.all([
-      loadTimeSlots(termId || undefined), // Pass termId if available
       loadGrades(),
       loadSubjects(), // Load all subjects initially
       loadTeachers(), // Load all teachers
+      loadBreaks(), // Load breaks from GetAllDayTemplateBreaks query (no caching)
+      // Load complete timetable if term is available (includes time slots and entries)
+      termId ? loadSchoolTimetable(termId) : Promise.resolve(),
     ])
       .then(() => {
-        console.log('Time slots, grades, subjects, and teachers loaded successfully');
+        console.log('Grades, subjects, teachers, breaks, and timetable loaded successfully');
       })
       .catch((error) => {
         console.error('Failed to load data:', error);
@@ -105,7 +111,7 @@ export default function SmartTimetableNew() {
       .finally(() => {
         setLoadingTimeSlots(false);
       });
-  }, [loadTimeSlots, loadGrades, loadSubjects, loadTeachers, selectedTerm?.id, selectedTermId]);
+  }, [loadGrades, loadSubjects, loadTeachers, loadBreaks, loadSchoolTimetable, selectedTerm?.id, selectedTermId, toast]);
 
   // Reload subjects when grade selection changes
   useEffect(() => {
@@ -268,6 +274,21 @@ export default function SmartTimetableNew() {
     },
     [setSelectedGrade]
   );
+
+  // Reload timetable data (breaks, time slots, and entries)
+  const reloadTimetableData = useCallback(async () => {
+    try {
+      const termId = selectedTerm?.id || selectedTermId;
+      await Promise.all([
+        loadBreaks(),
+        loadDayTemplatePeriods(),
+        termId && selectedGradeId ? loadEntries(termId, selectedGradeId) : Promise.resolve(),
+      ]);
+      console.log('Timetable data reloaded successfully');
+    } catch (error) {
+      console.error('Failed to reload timetable data:', error);
+    }
+  }, [loadBreaks, loadDayTemplatePeriods, loadEntries, selectedTerm?.id, selectedTermId, selectedGradeId]);
 
   const handleDeleteEntriesForTerm = useCallback(async () => {
     const termId = selectedTerm?.id || selectedTermId;
@@ -441,6 +462,35 @@ export default function SmartTimetableNew() {
       setIsDeletingAllBreaks(false);
     }
   }, [deleteAllBreaks, toast, breaks.length]);
+
+  // Handle delete single break
+  const handleDeleteBreak = useCallback(async (breakItem: Break) => {
+    const confirmMessage = breakItem.applyToAllDays
+      ? `Delete break "${breakItem.name}" from all days? This action cannot be undone.`
+      : `Delete break "${breakItem.name}"? This action cannot be undone.`;
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      await deleteBreak(breakItem.id);
+      // Reload timetable data to reflect changes
+      await reloadTimetableData();
+      toast({
+        title: 'Break deleted',
+        description: `"${breakItem.name}" has been successfully deleted.`,
+      });
+    } catch (error) {
+      console.error('Error deleting break:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+      toast({
+        title: 'Failed to delete break',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  }, [deleteBreak, toast, reloadTimetableData]);
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
@@ -829,15 +879,85 @@ export default function SmartTimetableNew() {
                       </td>
                     </tr>
                   ) : (
-                    periodNumbers.map((period, periodIndex) => {
+                    <>
+                      {/* Breaks before Period 1 (afterPeriod === 0) */}
+                      {(() => {
+                        const breaksBeforePeriod1 = breaks.filter((b) => b.afterPeriod === 0);
+                        if (breaksBeforePeriod1.length === 0) return null;
+
+                        return (
+                          <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
+                            <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
+                              <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-4 min-w-[140px]">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-200 dark:bg-orange-900 text-lg">
+                                    {breaksBeforePeriod1[0].icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-bold text-sm text-orange-900 dark:text-orange-200">
+                                      {breaksBeforePeriod1[0].name}
+                                    </div>
+                                    <div className="text-xs font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+                                      Before Period 1
+                                    </div>
+                                    <div className="text-xs font-semibold text-orange-700 dark:text-orange-300">
+                                      {breaksBeforePeriod1[0].durationMinutes} min
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            {days.map((day, dayIndex) => {
+                              const dayBreak = breaksBeforePeriod1.find(
+                                (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1
+                              );
+                              return (
+                                <td key={dayIndex} className="border-r border-b border-orange-200 dark:border-orange-800 last:border-r-0 p-3 text-center align-middle">
+                                  {dayBreak ? (
+                                    <div
+                                      className="flex items-center justify-center gap-2 cursor-pointer bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 rounded-lg p-3 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:shadow-md hover:scale-[1.02] transition-all duration-200 group/break"
+                                      onClick={() => setEditingBreak(dayBreak)}
+                                      title="Click to edit break"
+                                    >
+                                      <span className="text-lg">{dayBreak.icon}</span>
+                                      <span className="text-sm font-semibold text-orange-900 dark:text-orange-200">
+                                        {dayBreak.durationMinutes}min
+                                      </span>
+                                      <Edit2 className="h-3 w-3 text-orange-600 dark:text-orange-400 opacity-0 group-hover/break:opacity-100 transition-opacity" />
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setEditingBreak({
+                                          isNew: true,
+                                          afterPeriod: 0,
+                                          dayOfWeek: dayIndex + 1,
+                                        });
+                                      }}
+                                      className="w-full h-full min-h-[60px] flex items-center justify-center gap-2 text-xs text-orange-500 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 border-2 border-dashed border-orange-200 dark:border-orange-800 rounded-lg hover:border-orange-400 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all"
+                                      title="Add break for this day"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                      <span className="font-medium">Add Break</span>
+                                    </button>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })()}
+
+                      {/* Period rows */}
+                      {periodNumbers.map((period, periodIndex) => {
                       // Get the base slot for this period (first available across days)
                       const baseSlot = getBaseSlotForPeriod(period);
                       if (!baseSlot) return null;
 
-                      // Get breaks that come after this period (for Monday, used as reference)
-                      // Note: Breaks are day-specific, so we show Monday's breaks as reference
+                      // Get breaks that come after this period
+                      // Include both day-specific and "apply to all days" breaks
                       const breaksAfterThisPeriod = breaks.filter(
-                        (b) => b.afterPeriod === period && b.dayOfWeek === 1
+                        (b) => b.afterPeriod === period
                       );
 
                       // Alternate row colors for better readability
@@ -1063,7 +1183,7 @@ export default function SmartTimetableNew() {
                               </td>
                               {days.map((day, dayIndex) => {
                                 const dayBreak = breaksAfterThisPeriod.find(
-                                  (b) => b.dayOfWeek === dayIndex + 1
+                                  (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1
                                 );
                                 return (
                                   <td key={dayIndex} className="border-r border-b border-orange-200 dark:border-orange-800 last:border-r-0 p-3 text-center align-middle">
@@ -1102,7 +1222,8 @@ export default function SmartTimetableNew() {
                           )}
                         </React.Fragment>
                       );
-                    })
+                    })}
+                    </>
                   )}
                 </tbody>
               </table>
@@ -1151,15 +1272,24 @@ export default function SmartTimetableNew() {
           {/* Edit Dialogs */}
           <LessonEditDialog
             lesson={editingLesson}
-            onClose={() => setEditingLesson(null)}
+            onClose={() => {
+              setEditingLesson(null);
+              reloadTimetableData();
+            }}
           />
           <TimeslotEditDialog
             timeslot={editingTimeslot}
-            onClose={() => setEditingTimeslot(null)}
+            onClose={() => {
+              setEditingTimeslot(null);
+              reloadTimetableData();
+            }}
           />
           <BreakEditDialog
             breakData={editingBreak}
-            onClose={() => setEditingBreak(null)}
+            onClose={() => {
+              setEditingBreak(null);
+              reloadTimetableData();
+            }}
           />
 
       {/* Day Templates Drawer */}
@@ -1373,7 +1503,7 @@ export default function SmartTimetableNew() {
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
                   <span className="text-lg">☕</span>
-                  <span>All Break Times</span>
+                  <span></span>
                 </SheetTitle>
                 <SheetDescription>
                   View and manage all {breaks.length} break{breaks.length !== 1 ? 's' : ''}
@@ -1399,16 +1529,25 @@ export default function SmartTimetableNew() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          setBreaksDrawerOpen(false);
-                          setEditingBreak(breakItem);
-                        }}
-                        className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
-                        title="Edit break"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setBreaksDrawerOpen(false);
+                            setEditingBreak(breakItem);
+                          }}
+                          className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                          title="Edit break"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBreak(breakItem)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                          title="Delete break"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

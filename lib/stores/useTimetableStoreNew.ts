@@ -27,6 +27,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   createTimeSlot: (timeSlot: TimeSlotInput) => Promise<void>;
   createDayTemplates: (templates: DayTemplateInput[]) => Promise<void>;
   createDayTemplate: (template: DayTemplateInput) => Promise<void>;
+  createWeekTemplate: (input: CreateWeekTemplateInput) => Promise<any>;
   addPeriodsToDayTemplate: (dayTemplateId: string, extraPeriods: number) => Promise<any[]>;
   updateDayTemplatePeriod: (periodId: string, input: { startTime?: string; endTime?: string; label?: string }) => Promise<void>;
   resetDayTemplatePeriods: (input: { dayTemplateId: string; startTime?: string; periodCount?: number; periodDuration?: number }) => Promise<void>;
@@ -49,6 +50,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   loadEntries: (termId: string, gradeId: string) => Promise<void>;
   deleteEntriesForTerm: (termId: string) => Promise<string | undefined>;
   deleteTimetableForTerm: (termId: string) => Promise<string | undefined>;
+  loadSchoolTimetable: (termId: string) => Promise<any>;
   
   // Break actions
   addBreak: (breakData: Omit<Break, 'id'>) => Break;
@@ -65,7 +67,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   }>) => Promise<void>;
   loadBreaks: () => Promise<void>;
   updateBreak: (id: string, updates: Partial<Break>) => void;
-  deleteBreak: (id: string) => void;
+  deleteBreak: (id: string) => Promise<void>;
   deleteAllBreaks: () => Promise<void>;
   
   // Bulk actions
@@ -88,6 +90,17 @@ type DayTemplateInput = {
   periodCount: number;
   defaultPeriodDuration: number;
   gradeLevelIds: string[];
+};
+
+type CreateWeekTemplateInput = {
+  name: string;
+  startTime: string;
+  periodCount: number;
+  periodDuration: number;
+  numberOfDays: number;
+  gradeLevelIds: string[];
+  streamIds?: string[];
+  replaceExisting?: boolean;
 };
 
 // Helper to generate simple IDs
@@ -246,6 +259,65 @@ export const useTimetableStore = create<TimetableStore>()(
 
       createDayTemplate: async (template: DayTemplateInput) => {
         return get().createDayTemplates([template]);
+      },
+
+      createWeekTemplate: async (input: CreateWeekTemplateInput) => {
+        try {
+          const mutation = `
+            mutation CreateWeekTemplate($input: CreateWeekTemplateInput!) {
+              createWeekTemplate(input: $input) {
+                id
+                name
+                dayTemplates {
+                  id
+                  dayOfWeek
+                  startTime
+                  periods {
+                    id
+                    periodNumber
+                    startTime
+                    endTime
+                  }
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
+              variables: { input },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.createWeekTemplate) {
+            throw new Error('Invalid response format: missing createWeekTemplate data');
+          }
+
+          return result.data.createWeekTemplate;
+        } catch (error) {
+          console.error('Error creating week template:', error);
+          throw error;
+        }
       },
 
       addPeriodsToDayTemplate: async (dayTemplateId: string, extraPeriods: number) => {
@@ -1153,8 +1225,13 @@ export const useTimetableStore = create<TimetableStore>()(
               (dayItem.periods || []).forEach((p: any) => {
                 const period = p?.period;
                 
-                // Collect time slots
-                if (period?.id && !timeSlotMap.has(period.id)) {
+                // Skip breaks - they shouldn't be in time slots
+                if (p?.isBreak) {
+                  return;
+                }
+                
+                // Collect time slots (only non-break periods)
+                if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
                     periodNumber: period.periodNumber,
@@ -1167,8 +1244,8 @@ export const useTimetableStore = create<TimetableStore>()(
                   });
                 }
 
-                // Process entries from this grade block
-                if (p?.entry && period?.id) {
+                // Process entries from this grade block (only non-break periods)
+                if (p?.entry && period?.id && !p?.isBreak) {
                   const entry = p.entry;
                   const entryGradeLevelId = entry.gradeLevel?.id;
                   
@@ -1250,6 +1327,237 @@ export const useTimetableStore = create<TimetableStore>()(
         } catch (error) {
           console.error('Error loading timetable entries:', error);
           // Don't clear entries on error - keep existing ones
+          throw error;
+        }
+      },
+
+      loadSchoolTimetable: async (termId: string) => {
+        try {
+          console.log('Loading complete school timetable for term:', termId);
+          
+          const query = `
+            query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
+              getSchoolTimetable(input: $input) {
+                termId
+                termName
+                totalDays
+                totalPeriods
+                totalOccupiedSlots
+                totalFreeSlots
+                generatedAt
+                timetableByGrade {
+                  gradeLevel {
+                    id
+                    name
+                    shortName
+                  }
+                  stream {
+                    id
+                    name
+                  }
+                  totalPeriods
+                  occupiedPeriods
+                  freePeriods
+                  days {
+                    dayTemplate {
+                      id
+                      dayOfWeek
+                      dayName
+                      startTime
+                      endTime
+                      periodCount
+                    }
+                    periods {
+                      period {
+                        id
+                        periodNumber
+                        startTime
+                        endTime
+                        label
+                      }
+                      entry {
+                        id
+                        subject {
+                          id
+                          name
+                        }
+                        teacher {
+                          id
+                          name
+                          email
+                        }
+                        gradeLevel {
+                          id
+                          name
+                        }
+                        stream {
+                          id
+                        }
+                        room {
+                          id
+                          name
+                        }
+                      }
+                      isBreak
+                      breakInfo {
+                        id
+                        name
+                        type
+                        durationMinutes
+                        icon
+                        color
+                      }
+                    }
+                    gradeLevels { id name shortName }
+                    streams { id name }
+                    totalPeriods
+                    occupiedPeriods
+                    freePeriods
+                  }
+                }
+                schedule {
+                  dayTemplate {
+                    id
+                    dayOfWeek
+                    dayName
+                    startTime
+                    endTime
+                  }
+                  gradeLevels { id name }
+                  streams { id name }
+                  periods {
+                    period {
+                      periodNumber
+                      startTime
+                      endTime
+                    }
+                    entry {
+                      subject { name }
+                      teacher { name }
+                      room { name }
+                    }
+                    isBreak
+                    breakInfo {
+                      name
+                      type
+                      durationMinutes
+                      icon
+                      color
+                    }
+                  }
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query,
+              variables: {
+                input: { termId },
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.getSchoolTimetable) {
+            throw new Error('Invalid response format: missing getSchoolTimetable data');
+          }
+
+          const timetableData = result.data.getSchoolTimetable;
+          
+          // Transform and store time slots with breaks
+          const formatTime = (timeStr: string) => {
+            if (!timeStr) return '';
+            if (timeStr.length === 5) return timeStr;
+            if (timeStr.length === 8) return timeStr.substring(0, 5);
+            return timeStr;
+          };
+
+          const timeSlotMap = new Map<string, TimeSlot>();
+          const allEntries: TimetableEntry[] = [];
+
+          // Process all grades
+          (timetableData.timetableByGrade || []).forEach((gradeBlock: any) => {
+            const gradeId = gradeBlock.gradeLevel?.id;
+            
+            (gradeBlock.days || []).forEach((dayItem: any) => {
+              const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+              
+              (dayItem.periods || []).forEach((p: any) => {
+                const period = p?.period;
+                
+                // Skip breaks - they are loaded separately via loadBreaks() from GetAllDayTemplateBreaks query
+                if (p?.isBreak) {
+                  return;
+                }
+                
+                // Only collect time slots for non-break periods
+                if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
+                  timeSlotMap.set(period.id, {
+                    id: period.id,
+                    periodNumber: period.periodNumber,
+                    time: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
+                    startTime: formatTime(period.startTime),
+                    endTime: formatTime(period.endTime),
+                    color: 'border-l-primary',
+                    dayOfWeek: dayOfWeek,
+                    label: period.label,
+                  });
+                }
+
+                // Collect entries (only for non-break periods with actual entries)
+                if (p?.entry && period?.id && gradeId && !p?.isBreak) {
+                  const entry = p.entry;
+                  allEntries.push({
+                    id: entry.id,
+                    subjectId: entry.subject?.id || '',
+                    teacherId: entry.teacher?.id || '',
+                    timeSlotId: period.id,
+                    gradeId: gradeId,
+                    dayOfWeek: dayOfWeek,
+                    roomNumber: entry.room?.name,
+                  });
+                }
+              });
+            });
+          });
+
+          // Update store with time slots and entries (breaks are loaded separately via loadBreaks())
+          set((state) => ({
+            timeSlots: Array.from(timeSlotMap.values()),
+            entries: allEntries,
+            lastUpdated: new Date().toISOString(),
+            // Preserve existing breaks - they are loaded via loadBreaks() from GetAllDayTemplateBreaks query
+            breaks: state.breaks,
+          }));
+
+          console.log('School timetable loaded:', {
+            timeSlots: timeSlotMap.size,
+            entries: allEntries.length,
+          });
+
+          return timetableData;
+        } catch (error) {
+          console.error('Error loading school timetable:', error);
           throw error;
         }
       },
@@ -1490,9 +1798,34 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadBreaks: async () => {
         try {
-          const response = await fetch('/api/school/break', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+          const query = `
+            query GetAllDayTemplateBreaks {
+              getAllDayTemplateBreaks {
+                id
+                name
+                type
+                afterPeriod
+                durationMinutes
+                icon
+                color
+                applyToAllDays
+                dayTemplateId
+                dayTemplate {
+                  id
+                  dayOfWeek
+                  startTime
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ query }),
           });
 
           if (!response.ok) {
@@ -1507,22 +1840,27 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          if (!result.data || !result.data.getTimetableBreaks) {
-            throw new Error('Invalid response format: missing getTimetableBreaks data');
+          if (!result.data || !result.data.getAllDayTemplateBreaks) {
+            throw new Error('Invalid response format: missing getAllDayTemplateBreaks data');
           }
 
           // Convert response to Break format and update store
-          const fetchedBreaks = result.data.getTimetableBreaks.map((breakItem: any) => {
-            // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
-            const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
+          const fetchedBreaks = result.data.getAllDayTemplateBreaks.map((breakItem: any) => {
+            // Get dayOfWeek from dayTemplate if available, otherwise use 1 as default
+            const dayOfWeek = breakItem.dayTemplate?.dayOfWeek || 1;
             
             // Map GraphQL enum to frontend type
             const typeMap: Record<string, string> = {
               'SHORT_BREAK': 'short_break',
+              'LONG_BREAK': 'long_break',
               'LUNCH': 'lunch',
               'ASSEMBLY': 'assembly',
+              'RECESS': 'recess',
+              'SNACK_BREAK': 'snack',
+              'TEA_BREAK': 'afternoon_break',
+              'GAMES': 'games',
             };
-            const breakType = typeMap[breakItem.type] || 'short_break';
+            const breakType = typeMap[breakItem.type] || breakItem.type.toLowerCase();
             
             return {
               id: breakItem.id,
@@ -1532,7 +1870,9 @@ export const useTimetableStore = create<TimetableStore>()(
               afterPeriod: breakItem.afterPeriod,
               durationMinutes: breakItem.durationMinutes,
               icon: breakItem.icon || '☕',
-              color: breakItem.color || 'bg-blue-500',
+              color: breakItem.color || '#3B82F6',
+              dayTemplateId: breakItem.dayTemplateId || null,
+              applyToAllDays: breakItem.applyToAllDays || false,
             };
           });
 
@@ -1540,6 +1880,8 @@ export const useTimetableStore = create<TimetableStore>()(
             breaks: fetchedBreaks,
             lastUpdated: new Date().toISOString(),
           }));
+
+          console.log('Loaded breaks:', fetchedBreaks.length);
         } catch (error) {
           console.error('Error loading breaks:', error);
           throw error;
@@ -1555,11 +1897,56 @@ export const useTimetableStore = create<TimetableStore>()(
         }));
       },
 
-      deleteBreak: (id: string) => {
-        set((state) => ({
-          breaks: state.breaks.filter((breakItem) => breakItem.id !== id),
-          lastUpdated: new Date().toISOString(),
-        }));
+      deleteBreak: async (id: string) => {
+        try {
+          const mutation = `
+            mutation DeleteDayTemplateBreak($id: ID!) {
+              deleteDayTemplateBreak(id: $id) {
+                success
+                message
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
+              variables: { id },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data?.deleteDayTemplateBreak?.success) {
+            throw new Error(result.data?.deleteDayTemplateBreak?.message || 'Failed to delete break');
+          }
+
+          // Remove break from store
+          set((state) => ({
+            breaks: state.breaks.filter((breakItem) => breakItem.id !== id),
+            lastUpdated: new Date().toISOString(),
+          }));
+
+          console.log('Break deleted:', result.data.deleteDayTemplateBreak.message);
+        } catch (error) {
+          console.error('Error deleting break:', error);
+          throw error;
+        }
       },
 
       deleteAllBreaks: async () => {
@@ -1581,21 +1968,20 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          // Check if deletion was successful
-          if (result.data?.deleteAllTimetableBreaks !== true && result.data?.deleteAllTimetableBreaks !== false) {
-            // If the mutation isn't implemented, still remove from local store
+          // Check if deletion was successful or if feature is not available
+          if (result.success || result.data?.deleteAllTimetableBreaks) {
+            // Clear all breaks from store
+            set((state) => ({
+              breaks: [],
+              lastUpdated: new Date().toISOString(),
+            }));
+            
             if (result.featureNotAvailable) {
-              console.warn('Delete all breaks mutation not available on server, removing from local store only');
-            } else {
-              throw new Error('Invalid response format: deleteAllTimetableBreaks result missing');
+              console.warn('Delete all breaks mutation not fully implemented on server, cleared from local store');
             }
+          } else {
+            throw new Error(result.message || 'Failed to delete all breaks');
           }
-
-          // Clear all breaks from store
-          set((state) => ({
-            breaks: [],
-            lastUpdated: new Date().toISOString(),
-          }));
         } catch (error) {
           console.error('Error deleting all breaks:', error);
           throw error;
