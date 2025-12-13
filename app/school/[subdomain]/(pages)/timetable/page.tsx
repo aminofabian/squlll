@@ -532,6 +532,7 @@ export default function SmartTimetableNew() {
   // Handle create lessons - check if grade is selected first
   const handleCreateLessons = useCallback(() => {
     if (!selectedGradeId) {
+      console.log('No grade selected, showing toast');
       toast({
         title: 'Grade Required',
         description: 'Please select a grade first before creating lessons.',
@@ -540,6 +541,26 @@ export default function SmartTimetableNew() {
       return;
     }
     setBulkLessonEntryOpen(true);
+  }, [selectedGradeId, toast]);
+
+  // Handle add lesson - check if grade is selected first
+  const handleAddLesson = useCallback((dayOfWeek: number, timeSlotId: string, daySlotId?: string) => {
+    if (!selectedGradeId) {
+      toast({
+        title: 'Grade Required',
+        description: 'Please select a grade first before adding lessons.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Use day-specific slot if available, otherwise base slot
+    const targetSlotId = daySlotId || timeSlotId;
+    setEditingLesson({
+      gradeId: selectedGradeId,
+      dayOfWeek,
+      timeSlotId: targetSlotId,
+      isNew: true,
+    });
   }, [selectedGradeId, toast]);
 
   // Handle delete single break
@@ -645,8 +666,16 @@ export default function SmartTimetableNew() {
           trigger={
             <button
               ref={academicYearTriggerRef}
-              style={{ display: 'none' }}
-              aria-hidden="true"
+              style={{ 
+                position: 'absolute',
+                width: 0,
+                height: 0,
+                opacity: 0,
+                pointerEvents: 'none',
+                overflow: 'hidden'
+              }}
+              tabIndex={-1}
+              aria-label="Hidden trigger for academic year drawer"
             />
           }
         />
@@ -1272,14 +1301,7 @@ export default function SmartTimetableNew() {
                                   ) : (
                                     <button
                                       onClick={() => {
-                                        // Use day-specific slot if available, otherwise base slot
-                                        const targetSlotId = daySlot?.id || baseSlot.id;
-                                        setEditingLesson({
-                                          gradeId: selectedGradeId,
-                                          dayOfWeek,
-                                          timeSlotId: targetSlotId,
-                                          isNew: true,
-                                        });
+                                        handleAddLesson(dayOfWeek, baseSlot.id, daySlot?.id);
                                       }}
                                       className="w-full h-full min-h-[80px] flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary-foreground border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary dark:hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group/empty"
                                       title="Click to schedule a lesson"
@@ -1730,9 +1752,6 @@ export default function SmartTimetableNew() {
             </SheetContent>
           </Sheet>
 
-          {/* Toast Notifications */}
-          <Toaster />
-
           {/* Delete Confirmation Dialog */}
           <AlertDialog open={!!timeslotToDelete} onOpenChange={(open) => !open && setTimeslotToDelete(null)}>
             <AlertDialogContent>
@@ -1828,6 +1847,9 @@ export default function SmartTimetableNew() {
           </AlertDialog>
         </div>
       </div>
+      
+      {/* Toast Notifications - Outside containers for proper z-index */}
+      <Toaster />
     </div>
   );
 }

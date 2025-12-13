@@ -11,6 +11,7 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerDescription,
   DrawerFooter,
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
@@ -740,8 +741,13 @@ Check the browser console for detailed input information.`;
       <DrawerContent className="max-w-md flex flex-col h-full">
         <DrawerHeader className="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-600 flex-shrink-0">
           <DrawerTitle className="text-xl font-bold text-primary">
-            {isNew ? '' : 'Edit Lesson'}
+            {isNew ? 'Add New Lesson' : 'Edit Lesson'}
           </DrawerTitle>
+          <DrawerDescription>
+            {isNew 
+              ? 'Add a new lesson to the timetable for this time slot and day.'
+              : 'Edit the lesson details including subject, teacher, and room number.'}
+          </DrawerDescription>
           {/* Timeslot and Grade Info */}
           <div className="mt-3 space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">
             {timeSlot && (

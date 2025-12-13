@@ -8,6 +8,7 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerDescription,
   DrawerFooter,
   DrawerClose,
 } from '@/components/ui/drawer';
@@ -317,10 +318,17 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
       <DrawerContent className="w-full sm:w-[500px] h-full flex flex-col">
         <DrawerHeader className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
-            <DrawerTitle className="text-xl font-bold flex items-center gap-3">
-              <span className="text-2xl">{formData.icon}</span>
-              <span>{isNew ? 'Add Break' : 'Edit Break'}</span>
-            </DrawerTitle>
+            <div className="flex-1">
+              <DrawerTitle className="text-xl font-bold flex items-center gap-3">
+                <span className="text-2xl">{formData.icon}</span>
+                <span>{isNew ? 'Add Break' : 'Edit Break'}</span>
+              </DrawerTitle>
+              <DrawerDescription className="mt-2">
+                {isNew 
+                  ? 'Add a new break time to the timetable schedule.'
+                  : 'Edit the break details including type, duration, and timing.'}
+              </DrawerDescription>
+            </div>
             <DrawerClose asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <X className="h-5 w-5" />
