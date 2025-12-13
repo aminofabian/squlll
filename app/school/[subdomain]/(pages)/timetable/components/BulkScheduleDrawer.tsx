@@ -16,8 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Users, Clock, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface Term {
   id: string;
@@ -328,195 +327,165 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       }}
     >
       <SheetContent side="right" className="w-[600px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-xl font-bold text-primary">Create Week Template</SheetTitle>
-          <SheetDescription className="text-sm text-slate-600 dark:text-slate-400">
+        <SheetHeader className="border-b pb-4 px-4">
+          <SheetTitle className="text-lg font-semibold">Create Week Template</SheetTitle>
+          <SheetDescription className="text-xs text-muted-foreground">
             Set up your school week structure with periods and timing
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                Step 1 · Template Name
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="text-xs text-slate-500">
-                  Give this week template a name (you can reuse it across grades).
-                </div>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Standard School Week"
-                  className="w-full"
-                />
+        <div className="mt-4 space-y-5 px-4">
+          {/* Step 1 */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center bg-primary/10 text-xs font-semibold text-primary">
+                1
+              </span>
+              <Label className="text-sm font-medium text-foreground">Template Name</Label>
+            </div>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="e.g., Standard School Week"
+              className="w-full rounded-none"
+            />
+          </div>
+
+          {/* Step 2 */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center bg-primary/10 text-xs font-semibold text-primary">
+                2
+              </span>
+              <Label className="text-sm font-medium text-foreground">Select Term</Label>
+            </div>
+            {termsLoading ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Loading terms...
               </div>
-            </CardContent>
-          </Card>
+            ) : !currentAcademicYear ? (
+              <div className="text-xs text-muted-foreground">No academic year available.</div>
+            ) : !terms || terms.length === 0 ? (
+              <div className="text-xs text-muted-foreground">No terms available.</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {terms.map((term) => {
+                  const isSelected = term.id === selectedTermId;
+                  const dateRange = formatDateRange(term.startDate, term.endDate);
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                Step 2 · Select Term
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {termsLoading ? (
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading terms...
-                </div>
-              ) : !currentAcademicYear ? (
-                <div className="text-sm text-slate-500">No academic year available.</div>
-              ) : !terms || terms.length === 0 ? (
-                <div className="text-sm text-slate-500">No terms available for this academic year.</div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-xs text-slate-500">
-                    Click a term to apply this template. The selected term will be used when you
-                    create the week template.
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {terms.map((term) => {
-                      const isSelected = term.id === selectedTermId;
-                      const dateRange = formatDateRange(term.startDate, term.endDate);
-
-                      return (
-                        <Button
-                          key={term.id}
-                          type="button"
-                          variant={isSelected ? 'default' : 'outline'}
-                          onClick={() => setSelectedTerm(term.id)}
-                          className="h-auto w-full justify-between gap-3 px-3 py-3"
-                        >
-                          <div className="min-w-0 text-left">
-                            <div className="flex items-center gap-2">
-                              <span className="truncate font-medium">{term.name}</span>
-                              {term.isActive ? (
-                                <span
-                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                    isSelected
-                                      ? 'bg-white/20 text-white'
-                                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                                  }`}
-                                >
-                                  Active
-                                </span>
-                              ) : null}
-                            </div>
-                            {dateRange ? (
-                              <div
-                                className={`mt-1 text-xs ${
-                                  isSelected
-                                    ? 'text-white/80'
-                                    : 'text-slate-500 dark:text-slate-400'
-                                }`}
-                              >
-                                {dateRange}
-                              </div>
-                            ) : null}
-                          </div>
-                          <div
-                            className={`shrink-0 text-xs font-medium ${
-                              isSelected ? 'text-white/90' : 'text-slate-600 dark:text-slate-300'
+                  return (
+                    <Button
+                      key={term.id}
+                      type="button"
+                      variant={isSelected ? 'default' : 'outline'}
+                      onClick={() => setSelectedTerm(term.id)}
+                      className="h-auto w-full flex-col items-start gap-0.5 px-3 py-2 rounded-none"
+                    >
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <span className="truncate text-xs font-medium">{term.name}</span>
+                        {term.isActive && (
+                          <span
+                            className={`px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                              isSelected
+                                ? 'bg-white/20 text-white'
+                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                             }`}
                           >
-                            {isSelected ? 'Selected' : 'Select'}
-                          </div>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between gap-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  Select Grade Levels
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSelectAllGrades}
-                    disabled={grades.length === 0}
-                  >
-                    Select all
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleClearGrades}
-                    disabled={selectedGradeIds.length === 0}
-                  >
-                    Clear
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {grades.length === 0 ? (
-                <div className="text-sm text-slate-500">No grades available.</div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>
-                      Selected <span className="font-medium">{selectedGradeIds.length}</span> of{' '}
-                      <span className="font-medium">{grades.length}</span>
-                    </span>
-                    <span>Tip: use Select all if this template applies broadly.</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {grades.map((grade) => {
-                      const isSelected = selectedGradeIds.includes(grade.id);
-                      return (
-                        <label
-                          key={grade.id}
-                          className={`flex items-center gap-2 rounded border px-3 py-2 text-sm cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-slate-300 hover:border-primary/60 text-slate-700 dark:text-slate-200'
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      {dateRange && (
+                        <span
+                          className={`text-[10px] ${
+                            isSelected ? 'text-white/70' : 'text-muted-foreground'
                           }`}
                         >
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
-                          />
-                          <span className="whitespace-nowrap">
-                            {grade.displayName || grade.name || 'Grade'}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                          {dateRange}
+                        </span>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                Step 3 · Time Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startTime" className="text-sm font-medium">
+          {/* Grades (inline with Step 2) */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-sm font-medium text-foreground">
+                Grade Levels{' '}
+                <span className="text-xs font-normal text-muted-foreground">
+                  ({selectedGradeIds.length} selected)
+                </span>
+              </Label>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleSelectAllGrades}
+                  disabled={grades.length === 0}
+                  className="h-7 px-2 text-xs rounded-none"
+                >
+                  Select all
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleClearGrades}
+                  disabled={selectedGradeIds.length === 0}
+                  className="h-7 px-2 text-xs rounded-none"
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+            {grades.length === 0 ? (
+              <div className="text-xs text-muted-foreground">No grades available.</div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {grades.map((grade) => {
+                  const isSelected = selectedGradeIds.includes(grade.id);
+                  return (
+                    <label
+                      key={grade.id}
+                      className={`flex items-center gap-1.5 border px-2.5 py-1.5 text-xs cursor-pointer transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-input hover:border-primary/60 text-foreground'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
+                        className="h-3.5 w-3.5"
+                      />
+                      <span className="whitespace-nowrap">
+                        {grade.displayName || grade.name || 'Grade'}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Step 3 */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center bg-primary/10 text-xs font-semibold text-primary">
+                3
+              </span>
+              <Label className="text-sm font-medium text-foreground">Time Configuration</Label>
+            </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="startTime" className="text-xs font-medium text-muted-foreground">
                     Start Time
                   </Label>
                   <Input
@@ -524,12 +493,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     type="time"
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="mt-1"
+                    className="h-9 rounded-none"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="periodDuration" className="text-sm font-medium">
-                    Period Duration (minutes)
+                <div className="space-y-1">
+                  <Label htmlFor="periodDuration" className="text-xs font-medium text-muted-foreground">
+                    Period (min)
                   </Label>
                   <Input
                     id="periodDuration"
@@ -538,15 +507,15 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     max="90"
                     value={formData.periodDuration}
                     onChange={(e) => setFormData({ ...formData, periodDuration: e.target.value })}
-                    className="mt-1"
+                    className="h-9 rounded-none"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="periodCount" className="text-sm font-medium">
-                    Periods per Day
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="periodCount" className="text-xs font-medium text-muted-foreground">
+                    Periods/Day
                   </Label>
                   <Input
                     id="periodCount"
@@ -555,12 +524,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     max="12"
                     value={formData.periodCount}
                     onChange={(e) => setFormData({ ...formData, periodCount: e.target.value })}
-                    className="mt-1"
+                    className="h-9 rounded-none"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="numberOfDays" className="text-sm font-medium">
-                    Days per Week
+                <div className="space-y-1">
+                  <Label htmlFor="numberOfDays" className="text-xs font-medium text-muted-foreground">
+                    Days/Week
                   </Label>
                   <Input
                     id="numberOfDays"
@@ -569,12 +538,13 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     max="7"
                     value={formData.numberOfDays}
                     onChange={(e) => setFormData({ ...formData, numberOfDays: e.target.value })}
-                    className="mt-1"
+                    className="h-9 rounded-none"
                   />
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              {/* Preview */}
+              <div className="border bg-muted/50 p-2.5">
                 {(() => {
                   const periodCount = parsePositiveInt(formData.periodCount);
                   const periodDuration = parsePositiveInt(formData.periodDuration);
@@ -582,53 +552,56 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     periodCount && periodDuration ? periodCount * periodDuration : null;
 
                   return (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">School day:</span>
-                    <span className="font-medium">
-                      {formData.startTime} - {calculateEndTime()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Total periods:</span>
-                    <span className="font-medium">
-                      {periodCount ? `${periodCount} periods/day` : '—'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Total time:</span>
-                    <span className="font-medium">{totalMinutes ? `${totalMinutes} minutes` : '—'}</span>
-                  </div>
-                </div>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">School day</span>
+                        <span className="font-medium">
+                          {formData.startTime} – {calculateEndTime()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total periods</span>
+                        <span className="font-medium">
+                          {periodCount ? `${periodCount} periods` : '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total time</span>
+                        <span className="font-medium">{totalMinutes ? `${totalMinutes} min` : '—'}</span>
+                      </div>
+                    </div>
                   );
                 })()}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isCreating}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isCreating || !selectedTermId || selectedGradeIds.length === 0}
-              className="flex-1"
-            >
-              {isCreating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Week Template'
-              )}
-            </Button>
+          {/* Actions */}
+          <div className="border-t pt-4 mt-6">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                disabled={isCreating}
+                className="flex-1 h-9 rounded-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isCreating || !selectedTermId || selectedGradeIds.length === 0}
+                className="flex-1 h-9 rounded-none"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Template'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
