@@ -16,6 +16,7 @@ import { TimeslotEditDialog } from './components/TimeslotEditDialog';
 import { BreakEditDialog } from './components/BreakEditDialog';
 import { BulkScheduleDrawer } from './components/BulkScheduleDrawer';
 import { BulkLessonEntryDrawer } from './components/BulkLessonEntryDrawer';
+import { WeekTemplateManager } from './components/WeekTemplateManager';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/components/ui/use-toast';
 import { ToastAction } from '@/components/ui/toast';
@@ -362,6 +363,7 @@ export default function SmartTimetableNew() {
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [dayTemplates, setDayTemplates] = useState<any[]>([]);
+  const [templateViewType, setTemplateViewType] = useState<'day' | 'week'>('day');
   const [addPeriodsDrawerOpen, setAddPeriodsDrawerOpen] = useState(false);
   const [addPeriodsTemplateId, setAddPeriodsTemplateId] = useState<string>('');
   const [addPeriodsCount, setAddPeriodsCount] = useState<string>('1');
@@ -465,6 +467,16 @@ export default function SmartTimetableNew() {
 
   // Handle delete single break
   const handleDeleteBreak = useCallback(async (breakItem: Break) => {
+    // Check if break is orphaned (no day template association)
+    if (!breakItem.dayTemplateId) {
+      toast({
+        title: 'Cannot Delete Orphaned Break',
+        description: 'This break is not associated with a day template. Run: node test-break-deletion.js to identify and fix orphaned breaks.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const confirmMessage = breakItem.applyToAllDays
       ? `Delete break "${breakItem.name}" from all days? This action cannot be undone.`
       : `Delete break "${breakItem.name}"? This action cannot be undone.`;
@@ -484,11 +496,27 @@ export default function SmartTimetableNew() {
     } catch (error) {
       console.error('Error deleting break:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-      toast({
-        title: 'Failed to delete break',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      
+      // Check for specific error types
+      if (errorMessage.includes('not associated with a day template')) {
+        toast({
+          title: 'Cannot Delete Orphaned Break',
+          description: 'This break is not properly linked to a day template. Please check the documentation.',
+          variant: 'destructive',
+        });
+      } else if (errorMessage.includes('Server error') || errorMessage.includes('INTERNAL_SERVER_ERROR')) {
+        toast({
+          title: 'Server Error',
+          description: 'Failed to delete break due to a server error. This may be caused by database constraints or related records. Please check the server logs or contact support.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Failed to delete break',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
     }
   }, [deleteBreak, toast, reloadTimetableData]);
 
@@ -684,9 +712,9 @@ export default function SmartTimetableNew() {
                     onClick={handleOpenTemplates}
                     disabled={templatesLoading}
                     className="text-primary hover:text-primary/80 transition-colors text-xs border border-primary px-2 py-1 rounded disabled:opacity-50"
-                    title="View day templates"
+                    title="View and manage day and week templates"
                   >
-                    {templatesLoading ? 'Loading…' : 'Day Templates'}
+                    {templatesLoading ? 'Loading…' : 'Templates'}
                   </button>
                   <button
                     onClick={handleAddPeriods}
@@ -1292,57 +1320,89 @@ export default function SmartTimetableNew() {
             }}
           />
 
-      {/* Day Templates Drawer */}
+      {/* Templates Drawer (Day or Week) */}
       <Sheet open={templatesDrawerOpen} onOpenChange={setTemplatesDrawerOpen}>
-        <SheetContent className="w-full sm:max-w-lg">
+        <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 text-primary">
               <Calendar className="h-5 w-5" />
-              Day Templates
+              Templates
             </SheetTitle>
             <SheetDescription>
-              View your day templates and their breaks.
+              View and manage your day and week templates.
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-4 space-y-3">
-            {templatesLoading ? (
-              <div className="text-sm text-slate-500">Loading templates…</div>
-            ) : dayTemplates.length === 0 ? (
-              <div className="text-sm text-slate-500">No templates found.</div>
-            ) : (
-              dayTemplates.map((t) => {
-                const dayName = days[t.dayOfWeek - 1] || `Day ${t.dayOfWeek}`;
-                const breakSummary =
-                  t.breaks && t.breaks.length
-                    ? t.breaks
-                        .map(
-                          (b: any) =>
-                            `${b.type ?? 'break'} · ${b.durationMinutes}m${
-                              b.afterPeriod ? ` after P${b.afterPeriod}` : ''
-                            }${b.applyToAllDays ? ' · all days' : ''}`
-                        )
-                        .join(' | ')
-                    : 'No breaks';
 
-                return (
-                  <div
-                    key={t.id}
-                    className="border border-primary/30 bg-primary/5 rounded-lg p-3 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold text-primary">
-                        {dayName}
-                      </div>
-                      <div className="text-[11px] text-primary/70">Template</div>
-                    </div>
-                    <div className="text-xs text-slate-600 mt-1 break-words">
-                      {breakSummary}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+          {/* Toggle between Day and Week Templates */}
+          <div className="mt-4 mb-4">
+            <div className="inline-flex rounded-lg border border-slate-200 p-1 bg-slate-50">
+              <button
+                onClick={() => setTemplateViewType('day')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  templateViewType === 'day'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Day Templates
+              </button>
+              <button
+                onClick={() => setTemplateViewType('week')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  templateViewType === 'week'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Week Templates
+              </button>
+            </div>
           </div>
+
+          {/* Content based on view type */}
+          {templateViewType === 'day' ? (
+            <div className="space-y-3">
+              {templatesLoading ? (
+                <div className="text-sm text-slate-500">Loading templates…</div>
+              ) : dayTemplates.length === 0 ? (
+                <div className="text-sm text-slate-500">No templates found.</div>
+              ) : (
+                dayTemplates.map((t) => {
+                  const dayName = days[t.dayOfWeek - 1] || `Day ${t.dayOfWeek}`;
+                  const breakSummary =
+                    t.breaks && t.breaks.length
+                      ? t.breaks
+                          .map(
+                            (b: any) =>
+                              `${b.type ?? 'break'} · ${b.durationMinutes}m${
+                                b.afterPeriod ? ` after P${b.afterPeriod}` : ''
+                              }${b.applyToAllDays ? ' · all days' : ''}`
+                          )
+                          .join(' | ')
+                      : 'No breaks';
+
+                  return (
+                    <div
+                      key={t.id}
+                      className="border border-primary/30 bg-primary/5 rounded-lg p-3 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold text-primary">
+                          {dayName}
+                        </div>
+                        <div className="text-[11px] text-primary/70">Template</div>
+                      </div>
+                      <div className="text-xs text-slate-600 mt-1 break-words">
+                        {breakSummary}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          ) : (
+            <WeekTemplateManager />
+          )}
         </SheetContent>
       </Sheet>
 
@@ -1510,8 +1570,12 @@ export default function SmartTimetableNew() {
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {breaks.map((breakItem) => (
-                  <div key={breakItem.id} className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-primary/20">
+                {breaks.map((breakItem) => {
+                  return (
+                  <div 
+                    key={breakItem.id} 
+                    className="rounded-lg p-3 border bg-white dark:bg-slate-800 border-primary/20"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3 flex-1">
                         <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-lg">
@@ -1550,7 +1614,8 @@ export default function SmartTimetableNew() {
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </SheetContent>
           </Sheet>

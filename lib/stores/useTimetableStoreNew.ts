@@ -28,6 +28,9 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   createDayTemplates: (templates: DayTemplateInput[]) => Promise<void>;
   createDayTemplate: (template: DayTemplateInput) => Promise<void>;
   createWeekTemplate: (input: CreateWeekTemplateInput) => Promise<any>;
+  loadWeekTemplates: (includeDetails?: boolean) => Promise<any[]>;
+  updateWeekTemplate: (input: { id: string; defaultStartTime?: string }) => Promise<any>;
+  rebuildWeekTemplatePeriods: (input: { id: string; startTime: string; periodCount: number; periodDuration: number; force?: boolean }) => Promise<any>;
   addPeriodsToDayTemplate: (dayTemplateId: string, extraPeriods: number) => Promise<any[]>;
   updateDayTemplatePeriod: (periodId: string, input: { startTime?: string; endTime?: string; label?: string }) => Promise<void>;
   resetDayTemplatePeriods: (input: { dayTemplateId: string; startTime?: string; periodCount?: number; periodDuration?: number }) => Promise<void>;
@@ -316,6 +319,215 @@ export const useTimetableStore = create<TimetableStore>()(
           return result.data.createWeekTemplate;
         } catch (error) {
           console.error('Error creating week template:', error);
+          throw error;
+        }
+      },
+
+      loadWeekTemplates: async (includeDetails = false) => {
+        try {
+          console.log('Loading week templates with includeDetails:', includeDetails);
+          
+          const query = `
+            query GetWeekTemplates($input: GetWeekTemplatesInput!) {
+              getWeekTemplates(input: $input) {
+                id
+                name
+                numberOfDays
+                termId
+                ${includeDetails ? `
+                dayTemplates {
+                  id
+                  dayOfWeek
+                  startTime
+                  periodCount
+                  gradeLevels {
+                    id
+                    name
+                  }
+                  streams {
+                    id
+                    stream {
+                      name
+                    }
+                  }
+                  periods {
+                    id
+                    periodNumber
+                    startTime
+                    endTime
+                  }
+                }
+                ` : ''}
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query,
+              variables: { input: { includeDetails } },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.getWeekTemplates) {
+            throw new Error('Invalid response format: missing getWeekTemplates data');
+          }
+
+          return result.data.getWeekTemplates;
+        } catch (error) {
+          console.error('Error loading week templates:', error);
+          throw error;
+        }
+      },
+
+      updateWeekTemplate: async (input: { id: string; defaultStartTime?: string }) => {
+        try {
+          const mutation = `
+            mutation UpdateWeekTemplate($input: UpdateWeekTemplateInput!) {
+              updateWeekTemplate(input: $input) {
+                id
+                defaultStartTime
+                dayTemplates {
+                  id
+                  dayOfWeek
+                  startTime
+                  periods {
+                    periodNumber
+                    startTime
+                    endTime
+                  }
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
+              variables: { input },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.updateWeekTemplate) {
+            throw new Error('Invalid response format: missing updateWeekTemplate data');
+          }
+
+          return result.data.updateWeekTemplate;
+        } catch (error) {
+          console.error('Error updating week template:', error);
+          throw error;
+        }
+      },
+
+      rebuildWeekTemplatePeriods: async (input: { 
+        id: string; 
+        startTime: string; 
+        periodCount: number; 
+        periodDuration: number; 
+        force?: boolean;
+      }) => {
+        try {
+          const mutation = `
+            mutation RebuildWeekTemplatePeriods(
+              $id: String!
+              $startTime: String!
+              $periodCount: Int!
+              $periodDuration: Int!
+              $force: Boolean
+            ) {
+              rebuildWeekTemplatePeriods(
+                id: $id
+                startTime: $startTime
+                periodCount: $periodCount
+                periodDuration: $periodDuration
+                force: $force
+              ) {
+                id
+                defaultPeriodCount
+                dayTemplates {
+                  id
+                  periods {
+                    id
+                    periodNumber
+                    startTime
+                    endTime
+                  }
+                }
+              }
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
+              variables: input,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data || !result.data.rebuildWeekTemplatePeriods) {
+            throw new Error('Invalid response format: missing rebuildWeekTemplatePeriods data');
+          }
+
+          return result.data.rebuildWeekTemplatePeriods;
+        } catch (error) {
+          console.error('Error rebuilding week template periods:', error);
           throw error;
         }
       },
@@ -1899,6 +2111,29 @@ export const useTimetableStore = create<TimetableStore>()(
 
       deleteBreak: async (id: string) => {
         try {
+          // First check if the break exists and has a day template association
+          const state = get();
+          const breakToDelete = state.breaks.find(b => b.id === id);
+          
+          console.log('Attempting to delete break:', {
+            id,
+            breakFound: !!breakToDelete,
+            breakDetails: breakToDelete ? {
+              name: breakToDelete.name,
+              dayTemplateId: breakToDelete.dayTemplateId,
+              dayOfWeek: breakToDelete.dayOfWeek,
+              afterPeriod: breakToDelete.afterPeriod,
+            } : null,
+          });
+          
+          if (!breakToDelete) {
+            throw new Error('Break not found in store');
+          }
+          
+          if (!breakToDelete.dayTemplateId) {
+            throw new Error('Cannot delete break: Break is not associated with a day template. This break may be orphaned and needs to be fixed or deleted from the database directly.');
+          }
+
           const mutation = `
             mutation DeleteDayTemplateBreak($id: ID!) {
               deleteDayTemplateBreak(id: $id) {
@@ -1908,15 +2143,85 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
+          console.log('Sending delete mutation for break ID:', id);
+
           const response = await fetch('/api/graphql', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
             },
             credentials: 'include',
             body: JSON.stringify({
               query: mutation,
               variables: { id },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('HTTP error response:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+          }
+
+          const result = await response.json();
+          console.log('Delete break response:', result);
+
+          if (result.errors) {
+            const errors = result.errors.map((e: any) => ({
+              message: e.message,
+              code: e.extensions?.code,
+              path: e.path,
+            }));
+            console.error('GraphQL errors:', errors);
+            
+            // Handle specific error types
+            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            if (errorMessages.includes('INTERNAL_SERVER_ERROR')) {
+              throw new Error('Server error while deleting break. This may be due to database constraints or related records. Check server logs for details.');
+            }
+            
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          if (!result.data?.deleteDayTemplateBreak?.success) {
+            const errorMsg = result.data?.deleteDayTemplateBreak?.message || 'Failed to delete break';
+            console.error('Deletion failed:', errorMsg);
+            throw new Error(errorMsg);
+          }
+
+          // Remove break from store
+          set((state) => ({
+            breaks: state.breaks.filter((breakItem) => breakItem.id !== id),
+            lastUpdated: new Date().toISOString(),
+          }));
+
+          console.log('Break deleted successfully:', result.data.deleteDayTemplateBreak.message);
+        } catch (error) {
+          console.error('Error deleting break:', error);
+          throw error;
+        }
+      },
+
+      deleteAllBreaks: async () => {
+        try {
+          const mutation = `
+            mutation DeleteAllTimetableBreaks {
+              deleteAllTimetableBreaks
+            }
+          `;
+
+          const response = await fetch('/api/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              query: mutation,
             }),
           });
 
@@ -1932,55 +2237,17 @@ export const useTimetableStore = create<TimetableStore>()(
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
-          if (!result.data?.deleteDayTemplateBreak?.success) {
-            throw new Error(result.data?.deleteDayTemplateBreak?.message || 'Failed to delete break');
-          }
-
-          // Remove break from store
-          set((state) => ({
-            breaks: state.breaks.filter((breakItem) => breakItem.id !== id),
-            lastUpdated: new Date().toISOString(),
-          }));
-
-          console.log('Break deleted:', result.data.deleteDayTemplateBreak.message);
-        } catch (error) {
-          console.error('Error deleting break:', error);
-          throw error;
-        }
-      },
-
-      deleteAllBreaks: async () => {
-        try {
-          const response = await fetch('/api/school/break?all=true', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
-          }
-
-          const result = await response.json();
-
-          if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
-            throw new Error(`GraphQL errors: ${errorMessages}`);
-          }
-
-          // Check if deletion was successful or if feature is not available
-          if (result.success || result.data?.deleteAllTimetableBreaks) {
+          // Check if deletion was successful
+          if (result.data?.deleteAllTimetableBreaks) {
             // Clear all breaks from store
             set((state) => ({
               breaks: [],
               lastUpdated: new Date().toISOString(),
             }));
             
-            if (result.featureNotAvailable) {
-              console.warn('Delete all breaks mutation not fully implemented on server, cleared from local store');
-            }
+            console.log('All breaks deleted successfully');
           } else {
-            throw new Error(result.message || 'Failed to delete all breaks');
+            throw new Error('Failed to delete all breaks');
           }
         } catch (error) {
           console.error('Error deleting all breaks:', error);

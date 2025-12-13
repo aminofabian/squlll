@@ -16,13 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Users, Clock, Loader2 } from 'lucide-react';
 
@@ -47,6 +40,28 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   const { toast } = useToast();
   const { getActiveAcademicYear } = useCurrentAcademicYear();
   const currentAcademicYear = getActiveAcademicYear();
+
+  const parsePositiveInt = (value: string): number | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const num = Number(trimmed);
+    if (!Number.isFinite(num)) return null;
+    const int = Math.trunc(num);
+    if (int <= 0) return null;
+    return int;
+  };
+
+  const formatDateRange = (startDate: string, endDate: string) => {
+    const formatter = new Intl.DateTimeFormat(undefined, { day: '2-digit', month: 'short' });
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return '';
+    }
+
+    return `${formatter.format(start)} – ${formatter.format(end)}`;
+  };
 
   // Query terms for the current academic year
   const { data: terms, isLoading: termsLoading } = useQuery<Term[]>({
@@ -107,9 +122,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   const [formData, setFormData] = useState({
     name: 'Standard School Week',
     startTime: '08:00',
-    periodDuration: 40,
-    periodCount: 8,
-    numberOfDays: 5,
+    periodDuration: '40',
+    periodCount: '8',
+    numberOfDays: '5',
   });
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -119,9 +134,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       setFormData({
         name: 'Standard School Week',
         startTime: '08:00',
-        periodDuration: 40,
-        periodCount: 8,
-        numberOfDays: 5,
+        periodDuration: '40',
+        periodCount: '8',
+        numberOfDays: '5',
       });
       if (selectedGradeId) {
         setSelectedGradeIds([selectedGradeId]);
@@ -140,6 +155,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     });
   };
 
+  const handleSelectAllGrades = () => {
+    setSelectedGradeIds(grades.map((g) => g.id));
+  };
+
+  const handleClearGrades = () => {
+    setSelectedGradeIds([]);
+  };
+
   const handleSubmit = async () => {
     if (!selectedTermId) {
       toast({
@@ -154,6 +177,46 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       toast({
         title: 'Select at least one grade',
         description: 'Choose one or more grades to apply this week template.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const periodCount = parsePositiveInt(formData.periodCount);
+    const periodDuration = parsePositiveInt(formData.periodDuration);
+    const numberOfDays = parsePositiveInt(formData.numberOfDays);
+
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Template name is required',
+        description: 'Please enter a name for this week template.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!periodCount || periodCount < 1 || periodCount > 20) {
+      toast({
+        title: 'Invalid periods per day',
+        description: 'Please enter a valid number of periods per day.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!periodDuration || periodDuration < 1 || periodDuration > 240) {
+      toast({
+        title: 'Invalid period duration',
+        description: 'Please enter a valid period duration (in minutes).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!numberOfDays || numberOfDays < 1 || numberOfDays > 7) {
+      toast({
+        title: 'Invalid days per week',
+        description: 'Please enter a valid number of days per week (1–7).',
         variant: 'destructive',
       });
       return;
@@ -196,9 +259,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
             input: {
               name: formData.name,
               startTime: formData.startTime,
-              periodCount: formData.periodCount,
-              periodDuration: formData.periodDuration,
-              numberOfDays: formData.numberOfDays,
+              periodCount,
+              periodDuration,
+              numberOfDays,
               termId: selectedTermId,
               gradeLevelIds: selectedGradeIds,
               streamIds: [],
@@ -246,15 +309,24 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   };
 
   const calculateEndTime = () => {
+    const periodCount = parsePositiveInt(formData.periodCount);
+    const periodDuration = parsePositiveInt(formData.periodDuration);
+    if (!periodCount || !periodDuration) return '--:--';
+
     const [hours, mins] = formData.startTime.split(':').map(Number);
-    const totalMinutes = hours * 60 + mins + (formData.periodCount * formData.periodDuration);
+    const totalMinutes = hours * 60 + mins + periodCount * periodDuration;
     const endHours = Math.floor(totalMinutes / 60) % 24;
     const endMins = totalMinutes % 60;
     return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
   };
 
   return (
-    <Sheet open={open} onOpenChange={onClose}>
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
       <SheetContent side="right" className="w-[600px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-xl font-bold text-primary">Create Week Template</SheetTitle>
@@ -268,7 +340,29 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                Select Term
+                Step 1 · Template Name
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="text-xs text-slate-500">
+                  Give this week template a name (you can reuse it across grades).
+                </div>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Standard School Week"
+                  className="w-full"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                Step 2 · Select Term
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -282,73 +376,131 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               ) : !terms || terms.length === 0 ? (
                 <div className="text-sm text-slate-500">No terms available for this academic year.</div>
               ) : (
-                <Select
-                  value={selectedTermId || ''}
-                  onValueChange={(value) => setSelectedTerm(value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a term" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {terms.map((term) => (
-                      <SelectItem key={term.id} value={term.id}>
-                        {term.name} {term.isActive && '(Active)'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-3">
+                  <div className="text-xs text-slate-500">
+                    Click a term to apply this template. The selected term will be used when you
+                    create the week template.
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {terms.map((term) => {
+                      const isSelected = term.id === selectedTermId;
+                      const dateRange = formatDateRange(term.startDate, term.endDate);
+
+                      return (
+                        <Button
+                          key={term.id}
+                          type="button"
+                          variant={isSelected ? 'default' : 'outline'}
+                          onClick={() => setSelectedTerm(term.id)}
+                          className="h-auto w-full justify-between gap-3 px-3 py-3"
+                        >
+                          <div className="min-w-0 text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate font-medium">{term.name}</span>
+                              {term.isActive ? (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                    isSelected
+                                      ? 'bg-white/20 text-white'
+                                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+                                  }`}
+                                >
+                                  Active
+                                </span>
+                              ) : null}
+                            </div>
+                            {dateRange ? (
+                              <div
+                                className={`mt-1 text-xs ${
+                                  isSelected
+                                    ? 'text-white/80'
+                                    : 'text-slate-500 dark:text-slate-400'
+                                }`}
+                              >
+                                {dateRange}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div
+                            className={`shrink-0 text-xs font-medium ${
+                              isSelected ? 'text-white/90' : 'text-slate-600 dark:text-slate-300'
+                            }`}
+                          >
+                            {isSelected ? 'Selected' : 'Select'}
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                Template Name
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Standard School Week"
-                className="w-full"
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                Select Grade Levels
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Select Grade Levels
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSelectAllGrades}
+                    disabled={grades.length === 0}
+                  >
+                    Select all
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleClearGrades}
+                    disabled={selectedGradeIds.length === 0}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {grades.length === 0 ? (
                 <div className="text-sm text-slate-500">No grades available.</div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {grades.map((grade) => {
-                    const isSelected = selectedGradeIds.includes(grade.id);
-                    return (
-                      <label
-                        key={grade.id}
-                        className={`flex items-center gap-2 rounded border px-3 py-2 text-sm cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-slate-300 hover:border-primary/60 text-slate-700'
-                        }`}
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
-                        />
-                        <span>{grade.displayName || grade.name || 'Grade'}</span>
-                      </label>
-                    );
-                  })}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>
+                      Selected <span className="font-medium">{selectedGradeIds.length}</span> of{' '}
+                      <span className="font-medium">{grades.length}</span>
+                    </span>
+                    <span>Tip: use Select all if this template applies broadly.</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {grades.map((grade) => {
+                      const isSelected = selectedGradeIds.includes(grade.id);
+                      return (
+                        <label
+                          key={grade.id}
+                          className={`flex items-center gap-2 rounded border px-3 py-2 text-sm cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-slate-300 hover:border-primary/60 text-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
+                          />
+                          <span className="whitespace-nowrap">
+                            {grade.displayName || grade.name || 'Grade'}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -358,7 +510,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                Time Configuration
+                Step 3 · Time Configuration
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -385,9 +537,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     min="30"
                     max="90"
                     value={formData.periodDuration}
-                    onChange={(e) =>
-                      setFormData({ ...formData, periodDuration: parseInt(e.target.value) || 40 })
-                    }
+                    onChange={(e) => setFormData({ ...formData, periodDuration: e.target.value })}
                     className="mt-1"
                   />
                 </div>
@@ -404,9 +554,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     min="4"
                     max="12"
                     value={formData.periodCount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, periodCount: parseInt(e.target.value) || 8 })
-                    }
+                    onChange={(e) => setFormData({ ...formData, periodCount: e.target.value })}
                     className="mt-1"
                   />
                 </div>
@@ -420,15 +568,20 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                     min="1"
                     max="7"
                     value={formData.numberOfDays}
-                    onChange={(e) =>
-                      setFormData({ ...formData, numberOfDays: parseInt(e.target.value) || 5 })
-                    }
+                    onChange={(e) => setFormData({ ...formData, numberOfDays: e.target.value })}
                     className="mt-1"
                   />
                 </div>
               </div>
 
               <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                {(() => {
+                  const periodCount = parsePositiveInt(formData.periodCount);
+                  const periodDuration = parsePositiveInt(formData.periodDuration);
+                  const totalMinutes =
+                    periodCount && periodDuration ? periodCount * periodDuration : null;
+
+                  return (
                 <div className="text-sm space-y-1">
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">School day:</span>
@@ -438,15 +591,17 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">Total periods:</span>
-                    <span className="font-medium">{formData.periodCount} periods/day</span>
+                    <span className="font-medium">
+                      {periodCount ? `${periodCount} periods/day` : '—'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-600 dark:text-slate-400">Total time:</span>
-                    <span className="font-medium">
-                      {formData.periodCount * formData.periodDuration} minutes
-                    </span>
+                    <span className="font-medium">{totalMinutes ? `${totalMinutes} minutes` : '—'}</span>
                   </div>
                 </div>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
