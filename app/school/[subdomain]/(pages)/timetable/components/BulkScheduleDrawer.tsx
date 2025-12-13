@@ -327,14 +327,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       }}
     >
       <SheetContent side="right" className="w-[600px] overflow-y-auto">
-        <SheetHeader className="border-b pb-4 px-4">
+        <SheetHeader className="border-b pb-4 px-8">
           <SheetTitle className="text-lg font-semibold">Create Week Template</SheetTitle>
           <SheetDescription className="text-xs text-muted-foreground">
             Set up your school week structure with periods and timing
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 space-y-5 px-4">
+        <div className="mt-4 space-y-5 px-8">
           {/* Step 1 */}
           <div className="space-y-2.5">
             <div className="flex items-center gap-2">
@@ -550,14 +550,17 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   const periodDuration = parsePositiveInt(formData.periodDuration);
                   const totalMinutes =
                     periodCount && periodDuration ? periodCount * periodDuration : null;
+                  const lastLessonEndTime = calculateEndTime();
 
                   return (
                     <div className="space-y-1 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">School day</span>
-                        <span className="font-medium">
-                          {formData.startTime} – {calculateEndTime()}
-                        </span>
+                        <span className="text-muted-foreground">School day starts</span>
+                        <span className="font-medium">{formData.startTime}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Last lesson ends</span>
+                        <span className="font-medium">{lastLessonEndTime}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Total periods</span>

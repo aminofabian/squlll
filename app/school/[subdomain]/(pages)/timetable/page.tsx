@@ -15,6 +15,7 @@ import { LessonEditDialog } from './components/LessonEditDialog';
 import { TimeslotEditDialog } from './components/TimeslotEditDialog';
 import { BreakEditDialog } from './components/BreakEditDialog';
 import { BulkScheduleDrawer } from './components/BulkScheduleDrawer';
+import { BulkBreaksDrawer } from './components/BulkBreaksDrawer';
 import { BulkLessonEntryDrawer } from './components/BulkLessonEntryDrawer';
 import { WeekTemplateManager } from './components/WeekTemplateManager';
 import { Toaster } from '@/components/ui/toaster';
@@ -31,8 +32,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
+import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears';
 import { Button } from '@/components/ui/button';
-import { PanelLeftClose, PanelLeftOpen, Clock, Edit2, Trash2, Plus, Calendar } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Clock, Edit2, Trash2, Plus, Calendar, BookOpen, Coffee } from 'lucide-react';
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 import {
@@ -42,10 +44,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { TimetableOnboarding } from './components/TimetableOnboarding';
+import { CreateAcademicYearModal } from '@/app/school/[subdomain]/(pages)/dashboard/components/CreateAcademicYearModal';
+import { CreateTermModal } from '@/app/school/[subdomain]/(pages)/dashboard/components/CreateTermModal';
 
 export default function SmartTimetableNew() {
   // Get selected term from context
   const { selectedTerm } = useSelectedTerm();
+  // Get academic years
+  const { academicYears, loading: academicYearsLoading, refetch: refetchAcademicYears } = useCurrentAcademicYear();
   // Get store data and actions
   const {
     grades,
@@ -80,6 +87,12 @@ export default function SmartTimetableNew() {
 
   // Toast for notifications
   const { toast } = useToast();
+
+  // Check if onboarding is needed
+  const hasAcademicYear = academicYears.length > 0;
+  const hasTerm = !!selectedTerm;
+  const hasWeekTemplate = timeSlots.length > 0;
+  const needsOnboarding = !academicYearsLoading && (!hasAcademicYear || !hasTerm || !hasWeekTemplate);
 
   // Load time slots, grades, subjects, and teachers from backend on mount
   useEffect(() => {
@@ -356,7 +369,10 @@ export default function SmartTimetableNew() {
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
   const [bulkScheduleOpen, setBulkScheduleOpen] = useState(false);
+  const [bulkBreaksOpen, setBulkBreaksOpen] = useState(false);
   const [bulkLessonEntryOpen, setBulkLessonEntryOpen] = useState(false);
+  const [createTermModalOpen, setCreateTermModalOpen] = useState(false);
+  const academicYearTriggerRef = useRef<HTMLButtonElement>(null);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState(true);
   const [addingPeriods, setAddingPeriods] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
@@ -443,16 +459,64 @@ export default function SmartTimetableNew() {
     }
   }, [deleteAllTimeSlots, loadTimeSlots, toast, timeSlots.length]);
 
-  // Handle delete all breaks
+  // Handle delete all breaks by term
   const handleDeleteAllBreaks = useCallback(async () => {
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId) {
+      toast({
+        title: 'No term selected',
+        description: 'Please select a term before deleting breaks.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsDeletingAllBreaks(true);
     try {
-      await deleteAllBreaks();
-      toast({
-        title: 'All breaks deleted',
-        description: `All ${breaks.length} break${breaks.length !== 1 ? 's' : ''} have been successfully deleted.`,
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation DeleteAllBreaksByTerm($input: DeleteBreaksByTermInput!) {
+              deleteAllBreaksByTerm(input: $input) {
+                success
+                deletedBreaksCount
+                recalculatedDaysCount
+                message
+                completedAt
+              }
+            }
+          `,
+          variables: {
+            input: {
+              termId: termId,
+              confirmDeletion: true,
+            },
+          },
+        }),
       });
-      setShowDeleteAllBreaksDialog(false);
+
+      const result = await response.json();
+
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'Failed to delete breaks');
+      }
+
+      const data = result.data?.deleteAllBreaksByTerm;
+      if (data?.success) {
+        toast({
+          title: 'All breaks deleted',
+          description: data.message || `Successfully deleted ${data.deletedBreaksCount} break${data.deletedBreaksCount !== 1 ? 's' : ''} and recalculated ${data.recalculatedDaysCount} day template${data.recalculatedDaysCount !== 1 ? 's' : ''}.`,
+        });
+        // Reload breaks and timetable data
+        await reloadTimetableData();
+        setShowDeleteAllBreaksDialog(false);
+      } else {
+        throw new Error(data?.message || 'Failed to delete breaks');
+      }
     } catch (error) {
       console.error('Error deleting all breaks:', error);
       toast({
@@ -463,7 +527,20 @@ export default function SmartTimetableNew() {
     } finally {
       setIsDeletingAllBreaks(false);
     }
-  }, [deleteAllBreaks, toast, breaks.length]);
+  }, [selectedTerm?.id, selectedTermId, toast, reloadTimetableData]);
+
+  // Handle create lessons - check if grade is selected first
+  const handleCreateLessons = useCallback(() => {
+    if (!selectedGradeId) {
+      toast({
+        title: 'Grade Required',
+        description: 'Please select a grade first before creating lessons.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setBulkLessonEntryOpen(true);
+  }, [selectedGradeId, toast]);
 
   // Handle delete single break
   const handleDeleteBreak = useCallback(async (breakItem: Break) => {
@@ -519,6 +596,88 @@ export default function SmartTimetableNew() {
       }
     }
   }, [deleteBreak, toast, reloadTimetableData]);
+
+  // Show onboarding if needed
+  if (needsOnboarding) {
+    return (
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <TimetableOnboarding
+            onCreateWeekTemplate={() => setBulkScheduleOpen(true)}
+            onCreateBreaks={() => setBulkBreaksOpen(true)}
+            onCreateLessons={handleCreateLessons}
+            onOpenAcademicYearDrawer={() => academicYearTriggerRef.current?.click()}
+            onOpenCreateTermDrawer={() => setCreateTermModalOpen(true)}
+          />
+        </div>
+
+        {/* Drawers still available during onboarding */}
+        <BulkScheduleDrawer
+          open={bulkScheduleOpen}
+          onClose={() => {
+            reloadTimetableData();
+            setBulkScheduleOpen(false);
+          }}
+        />
+        <BulkBreaksDrawer
+          open={bulkBreaksOpen}
+          onClose={() => {
+            reloadTimetableData();
+            setBulkBreaksOpen(false);
+          }}
+        />
+        <BulkLessonEntryDrawer
+          open={bulkLessonEntryOpen}
+          onClose={() => {
+            reloadTimetableData();
+            setBulkLessonEntryOpen(false);
+          }}
+        />
+        {/* Academic Year Drawer - Hidden trigger controlled by ref */}
+        <CreateAcademicYearModal
+          onSuccess={() => {
+            refetchAcademicYears();
+            toast({
+              title: 'Success',
+              description: 'Academic year created successfully',
+            });
+          }}
+          trigger={
+            <button
+              ref={academicYearTriggerRef}
+              style={{ display: 'none' }}
+              aria-hidden="true"
+            />
+          }
+        />
+        
+        {/* Create Term Modal */}
+        {academicYears.length > 0 && (
+          <CreateTermModal
+            isOpen={createTermModalOpen}
+            onClose={() => setCreateTermModalOpen(false)}
+            onSuccess={() => {
+              toast({
+                title: 'Success',
+                description: 'Term created successfully',
+              });
+              setCreateTermModalOpen(false);
+              // Reload the page to refresh all data
+              window.location.reload();
+            }}
+            academicYear={{
+              id: academicYears[0].id,
+              name: academicYears[0].name,
+              startDate: academicYears[0].startDate,
+              endDate: academicYears[0].endDate,
+            }}
+          />
+        )}
+        
+        <Toaster />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
@@ -583,48 +742,30 @@ export default function SmartTimetableNew() {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsSidebarMinimized(false)}
-                    className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5"
+                    className="border-primary/20 bg-white dark:bg-slate-800 text-primary hover:bg-primary/5 rounded-none"
                   >
                     <PanelLeftOpen className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">Grades</span>
                   </Button>
                 )}
                 <Button
-                  variant="destructive"
                   size="sm"
-                  onClick={handleDeleteTimetableForTerm}
-                  disabled={isDeletingTimetable || !(selectedTerm?.id || selectedTermId)}
-                  className="flex items-center gap-1.5"
-                  title="Delete the entire timetable (entries, periods, breaks) for the selected term"
+                  onClick={handleCreateLessons}
+                  className="rounded-none h-8 flex items-center gap-1.5"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  {isDeletingTimetable ? 'Deleting timetable…' : 'Delete Timetable'}
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>Create Lessons</span>
                 </Button>
                 <Button
-                  variant="destructive"
                   size="sm"
-                  onClick={handleDeleteEntriesForTerm}
-                  disabled={isDeletingTermEntries || !(selectedTerm?.id || selectedTermId)}
-                  className="flex items-center gap-1.5"
+                  variant="outline"
+                  onClick={handleOpenTemplates}
+                  disabled={templatesLoading}
+                  className="rounded-none h-8 flex items-center gap-1.5"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  {isDeletingTermEntries ? 'Deleting…' : 'Delete Term Entries'}
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{templatesLoading ? 'Loading…' : 'Manage Schedule'}</span>
                 </Button>
-                <button
-                  onClick={() => setBulkScheduleOpen(true)}
-                  className="px-3 py-1.5 text-xs bg-primary text-white hover:bg-primary/90 rounded transition-colors flex items-center gap-1.5 font-medium"
-                >
-                  <span>⚙️</span>
-                  <span>Create Time Slots</span>
-                </button>
-                <button
-                  onClick={() => setBulkLessonEntryOpen(true)}
-                  className="px-3 py-1.5 text-xs bg-primary/80 text-white hover:bg-primary/70 rounded transition-colors flex items-center gap-1.5 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!selectedGradeId}
-                >
-                  <span>📚</span>
-                  <span>Bulk Create Lessons</span>
-                </button>
               </div>
             </div>
 
@@ -693,74 +834,36 @@ export default function SmartTimetableNew() {
             </div>
           )}
 
-          {/* Time Slots & Breaks - Compact Side by Side */}
+          {/* Schedule Summary - Simplified */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
             {/* Time Slots Section */}
-            <div className="bg-primary/5 dark:bg-primary/10 border-l-2 border-primary rounded-lg p-3">
+            <div className="bg-background border p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold text-primary text-sm">Class Periods</h3>
+                  <h3 className="font-semibold text-foreground text-sm">Class Periods</h3>
                   {!loadingTimeSlots && timeSlots.length > 0 && (
-                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 font-medium">
                       {timeSlots.length} period{timeSlots.length !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleOpenTemplates}
-                    disabled={templatesLoading}
-                    className="text-primary hover:text-primary/80 transition-colors text-xs border border-primary px-2 py-1 rounded disabled:opacity-50"
-                    title="View and manage day and week templates"
-                  >
-                    {templatesLoading ? 'Loading…' : 'Templates'}
-                  </button>
-                  <button
-                    onClick={handleAddPeriods}
-                    disabled={addingPeriods || loadingTimeSlots}
-                    className="text-primary hover:text-primary/80 transition-colors text-xs border border-primary px-2 py-1 rounded disabled:opacity-50"
-                    title="Add extra periods to a day template"
-                  >
-                    {addingPeriods ? 'Adding…' : 'Add Periods'}
-                  </button>
-                  {!loadingTimeSlots && timeSlots.length > 0 && (
-                    <button
-                      onClick={() => setShowDeleteAllDialog(true)}
-                      className="text-red-600 hover:text-red-800 transition-colors"
-                      title="Delete all periods"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
               </div>
               {loadingTimeSlots ? (
-                <p className="text-xs text-primary/70">Loading periods...</p>
-              ) : timeSlots.length === 0 ? (
-                <div className="space-y-1.5">
-                  <p className="text-xs text-primary font-medium">No class periods set up yet</p>
-                  <p className="text-[10px] text-primary/70">Start by creating your daily schedule periods</p>
-                  <button
-                    onClick={() => setBulkScheduleOpen(true)}
-                    className="w-full text-xs bg-primary text-white px-2 py-1.5 font-medium hover:bg-primary/90 rounded transition-colors"
-                  >
-                    ➕ Create Periods Now
-                  </button>
-                </div>
+                <p className="text-xs text-muted-foreground">Loading periods...</p>
               ) : (
                 <div className="space-y-1.5">
                   {timeSlots.slice(0, 1).map((slot) => (
-                    <div key={slot.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
+                    <div key={slot.id} className="bg-muted/40 p-2 border">
                       <div className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5 text-primary" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-primary text-xs">Period {slot.periodNumber}</span>
-                            <span className="text-slate-700 dark:text-slate-300 text-xs">{slot.time}</span>
+                            <span className="font-semibold text-foreground text-xs">Period {slot.periodNumber}</span>
+                            <span className="text-muted-foreground text-xs">{slot.time}</span>
                           </div>
                           {slot.startTime && slot.endTime && (
-                            <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
+                            <div className="text-muted-foreground text-[9px] mt-0.5">
                               {slot.startTime} - {slot.endTime}
                             </div>
                           )}
@@ -781,73 +884,74 @@ export default function SmartTimetableNew() {
             </div>
 
             {/* Breaks Section */}
-            <div className="bg-primary/5 dark:bg-primary/10 border-l-2 border-primary rounded-lg p-3">
+            <div className="bg-background border p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm">☕</span>
-                  <h3 className="font-semibold text-primary text-sm">Break Times</h3>
+                  <h3 className="font-semibold text-foreground text-sm">Break Times</h3>
                   {breaks.length > 0 && (
-                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 font-medium">
                       {breaks.length} break{breaks.length !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
-                  {breaks.length > 0 && (
-                    <button
-                      onClick={() => setShowDeleteAllBreaksDialog(true)}
-                      className="text-red-600 hover:text-red-800 transition-colors"
-                      title="Delete all breaks"
+                <div className="flex items-center gap-2">
+                  {timeSlots.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkBreaksOpen(true)}
+                      disabled={timeSlots.length === 0}
+                      className="h-7 px-2 text-xs rounded-none"
+                      title="Create bulk breaks"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      <Coffee className="h-3.5 w-3.5 mr-1" />
+                      Create Breaks
+                    </Button>
                   )}
-                  <button
-                    onClick={() => {
-                      setEditingBreak({
-                        isNew: true,
-                        afterPeriod: 3,
-                        dayOfWeek: 1,
-                      });
-                    }}
-                    className="text-primary hover:text-primary/80 transition-colors"
-                    title="Add break time"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                  {breaks.length > 0 && (selectedTerm?.id || selectedTermId) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDeleteAllBreaksDialog(true)}
+                      disabled={isDeletingAllBreaks}
+                      className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-none"
+                      title="Delete all breaks for this term"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      Delete All
+                    </Button>
+                  )}
                 </div>
               </div>
               {breaks.length === 0 ? (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-primary font-medium">No break times scheduled</p>
-                  <p className="text-[10px] text-primary/70">Add lunch and short breaks between periods</p>
-                  <button
-                    onClick={() => {
-                      setEditingBreak({
-                        isNew: true,
-                        afterPeriod: 3,
-                        dayOfWeek: 1,
-                      });
-                    }}
-                    className="w-full text-xs bg-primary text-white px-2 py-1.5 font-medium hover:bg-primary/90 rounded transition-colors"
-                  >
-                    ➕ Add Break Time
-                  </button>
+                  <p className="text-xs text-muted-foreground">No breaks configured</p>
+                  {timeSlots.length > 0 && (
+                    <Button
+                      size="sm"
+                      onClick={() => setBulkBreaksOpen(true)}
+                      className="h-8 w-full text-xs rounded-none"
+                    >
+                      <Coffee className="h-3.5 w-3.5 mr-1" />
+                      Create Breaks
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-1.5">
                   {breaks.slice(0, 1).map((breakItem) => (
-                    <div key={breakItem.id} className="bg-white dark:bg-slate-800 rounded p-2 border border-primary/20">
+                    <div key={breakItem.id} className="bg-muted/40 p-2 border">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">{breakItem.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-primary text-xs">{breakItem.name}</span>
-                            <span className="text-slate-600 dark:text-slate-300 text-[10px]">
+                            <span className="font-semibold text-foreground text-xs">{breakItem.name}</span>
+                            <span className="text-muted-foreground text-[10px]">
                               {breakItem.durationMinutes} min
                             </span>
                           </div>
-                          <div className="text-slate-500 dark:text-slate-400 text-[9px] mt-0.5">
+                          <div className="text-muted-foreground text-[9px] mt-0.5">
                             After P{breakItem.afterPeriod} • {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
                           </div>
                         </div>
@@ -1489,6 +1593,12 @@ export default function SmartTimetableNew() {
             onClose={() => setBulkScheduleOpen(false)}
           />
 
+          {/* Bulk Breaks Drawer */}
+          <BulkBreaksDrawer
+            open={bulkBreaksOpen}
+            onClose={() => setBulkBreaksOpen(false)}
+          />
+
           {/* Bulk Lesson Entry Drawer */}
           <BulkLessonEntryDrawer
             open={bulkLessonEntryOpen}
@@ -1690,7 +1800,10 @@ export default function SmartTimetableNew() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete All Breaks</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete <span className="font-semibold">all {breaks.length} break{breaks.length !== 1 ? 's' : ''}</span>?
+                  Are you sure you want to delete <span className="font-semibold">all {breaks.length} break{breaks.length !== 1 ? 's' : ''}</span> for this term?
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    This will delete all breaks (both those that apply to all days and day-specific breaks) and automatically recalculate the affected day templates.
+                  </p>
                   <p className="mt-2 text-red-500 font-semibold">This action cannot be undone.</p>
                 </AlertDialogDescription>
               </AlertDialogHeader>
