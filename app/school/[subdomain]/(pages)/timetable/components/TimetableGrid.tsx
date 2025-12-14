@@ -164,13 +164,8 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   ];
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobileView(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    // Always use mobile/timeline view on all devices
+    setIsMobileView(true);
   }, []);
 
   const getBreakInfo = (subject: string): Break | null => {
@@ -544,26 +539,26 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
     );
   }
 
-  // Desktop Layout - Keep existing design
+  // Desktop Layout - Responsive design
   return (
     <div className="bg-white shadow-xl overflow-hidden border border-gray-200">
       {/* Desktop: Horizontal scroll container for smaller screens */}
       <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
+        <div className="min-w-[800px] lg:min-w-0 lg:w-full">
           {/* Day Headers */}
           <div className="grid grid-cols-6 gap-0">
-            <div className="bg-primary p-2 md:p-4 flex items-center justify-center">
-              <Clock className="w-4 h-4 md:w-6 md:h-6 text-white" />
+            <div className="bg-primary p-2 lg:p-3 xl:p-4 flex items-center justify-center">
+              <Clock className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-white" />
             </div>
             
             {days.map((day, index) => (
               <div
                 key={index}
-                className={`${day.color} text-white p-2 md:p-4 text-center font-semibold text-sm md:text-lg transform -skew-x-12`}
+                className={`${day.color} text-white p-2 lg:p-3 xl:p-4 text-center font-semibold text-xs lg:text-sm xl:text-lg transform -skew-x-12`}
               >
                 <div className="transform skew-x-12">
-                  <span className="hidden md:inline">{day.name}</span>
-                  <span className="md:hidden">{day.name.slice(0, 3)}</span>
+                  <span className="hidden lg:inline">{day.name}</span>
+                  <span className="lg:hidden">{day.name.slice(0, 3)}</span>
                 </div>
               </div>
             ))}
@@ -582,7 +577,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                 data-time-slot-id={baseSlot.id}
               >
                 <div 
-                  className={`p-2 md:p-4 border-l-4 ${baseSlot.color} flex items-center cursor-pointer hover:bg-gray-100 transition-colors relative group ${
+                  className={`p-2 lg:p-3 xl:p-4 border-l-4 ${baseSlot.color} flex items-center cursor-pointer hover:bg-gray-100 transition-colors relative group ${
                     index === periodNumbers.length - 1 && showTimeSlotSuccess ? 'bg-green-50/50' : 'bg-gray-50'
                   }`}
                   onClick={() => onTimeSlotClick(baseSlot.id)}
@@ -595,7 +590,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         value={timeSlotEditValue}
                         onChange={(e) => onTimeSlotEditChange(e.target.value)}
                         onKeyDown={onTimeSlotKeyPress}
-                        className="flex-1 border-2 border-primary px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
+                        className="flex-1 border-2 border-primary px-2 lg:px-3 xl:px-3 py-1 lg:py-2 text-xs lg:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
                         placeholder="Enter time..."
                         autoFocus
                       />
@@ -606,7 +601,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         }}
                         className="p-1 text-green-600 hover:text-green-800"
                       >
-                        <Save className="w-3 h-3 md:w-4 md:h-4" />
+                        <Save className="w-3 h-3 lg:w-4 lg:h-4" />
                       </button>
                       <button
                         onClick={(e) => {
@@ -615,12 +610,12 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         }}
                         className="p-1 text-gray-600 hover:text-gray-800"
                       >
-                        <X className="w-3 h-3 md:w-4 md:h-4" />
+                        <X className="w-3 h-3 lg:w-4 lg:h-4" />
                       </button>
                     </div>
                   ) : (
                     <>
-                      <div className="text-xs md:text-sm font-medium text-gray-700 flex-1">
+                      <div className="text-xs lg:text-sm font-medium text-gray-700 flex-1">
                         {baseSlot.time}
                       </div>
                       <div className="absolute right-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -633,9 +628,9 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                           title="Reset periods"
                           disabled={!onResetTimeSlot}
                         >
-                          <Timer className="w-3 h-3 md:w-4 md:h-4" />
+                          <Timer className="w-3 h-3 lg:w-4 lg:h-4" />
                         </button>
-                        <Edit3 className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                        <Edit3 className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400" />
                       </div>
                     </>
                   )}
@@ -654,25 +649,25 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                   return (
                     <div
                       key={dayIndex}
-                      className={`border-r border-gray-200 last:border-r-0 min-h-[80px] md:min-h-[100px] relative group ${
+                      className={`border-r border-gray-200 last:border-r-0 min-h-[60px] lg:min-h-[80px] xl:min-h-[100px] relative group ${
                         hasConflict ? 'bg-red-50 border-red-200' : ''
                       } ${isBreak ? 'bg-gradient-to-br from-gray-50 to-gray-100' : ''}`}
                     >
                       {isEditing ? (
-                        <div className="p-2 md:p-3 h-full">
+                        <div className="p-2 lg:p-3 h-full">
                           <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => onInputChange(e.target.value)}
                             onKeyDown={onKeyPress}
-                            className="w-full border-2 border-primary px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 mb-2 bg-white text-gray-800"
+                            className="w-full border-2 border-primary px-2 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 mb-2 bg-white text-gray-800"
                             placeholder="Subject name or break..."
                             autoFocus
                           />
                           <select
                             value={selectedTeacher}
                             onChange={(e) => onTeacherChange(e.target.value)}
-                            className="w-full border-2 border-primary px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
+                            className="w-full border-2 border-primary px-2 lg:px-3 py-1 lg:py-2 text-xs lg:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-gray-800"
                           >
                             <option value="">Select Teacher</option>
                             {Object.entries(teachers).map(([name, teacher]) => (
@@ -698,17 +693,17 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         </div>
                       ) : (
                         <div
-                          className="p-2 md:p-3 h-full cursor-pointer hover:bg-gray-50 transition-colors duration-200 flex flex-col justify-center relative"
+                          className="p-2 lg:p-3 h-full cursor-pointer hover:bg-gray-50 transition-colors duration-200 flex flex-col justify-center relative"
                           onClick={() => slot && onCellClick(slot.id, dayIndex)}
                         >
                           {cellData ? (
                             <div className="text-center">
                               {isBreak ? (
                                 <div className="flex flex-col items-center">
-                                  <div className={`text-base md:text-lg mb-1 ${breakInfo?.color.replace('bg-', 'text-')}`}>
+                                  <div className={`text-sm lg:text-base xl:text-lg mb-1 ${breakInfo?.color.replace('bg-', 'text-')}`}>
                                     {breakInfo?.icon || '☕'}
                                   </div>
-                                  <div className="text-xs md:text-sm font-medium text-gray-700 mb-1">
+                                  <div className="text-xs lg:text-sm font-medium text-gray-700 mb-1">
                                     {cellData.subject}
                                   </div>
                                   <div className={`text-xs px-2 py-1 ${breakInfo?.color} text-white border`}>
@@ -717,7 +712,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                 </div>
                               ) : (
                                 <>
-                                  <div className="text-xs md:text-sm font-medium text-gray-800 mb-1">
+                                  <div className="text-xs lg:text-sm font-medium text-gray-800 mb-1">
                                     {cellData.subject}
                                   </div>
                                   {teacher && (
@@ -729,14 +724,14 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                               )}
                               {hasConflict && (
                                 <div className="absolute top-1 right-1">
-                                  <AlertTriangle className="w-3 h-3 md:w-4 md:h-4 text-red-500" />
+                                  <AlertTriangle className="w-3 h-3 lg:w-4 lg:h-4 text-red-500" />
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <div className="text-center text-gray-400 text-xs md:text-sm">
-                              <div className="hidden md:block">Click to add class</div>
-                              <div className="md:hidden">Tap to add</div>
+                            <div className="text-center text-gray-400 text-xs lg:text-sm">
+                              <div className="hidden lg:block">Click to add class</div>
+                              <div className="lg:hidden">Tap to add</div>
                             </div>
                           )}
                           
@@ -774,7 +769,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                           )}
                           
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <Edit3 className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                            <Edit3 className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400" />
                           </div>
                         </div>
                       )}
@@ -787,20 +782,20 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
 
           {/* Add Time Slot Row */}
           <div className="grid grid-cols-6 gap-0 border-t-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-            <div className="p-2 md:p-4 border-l-4 border-l-primary/50 flex items-center relative group">
+            <div className="p-2 lg:p-3 xl:p-4 border-l-4 border-l-primary/50 flex items-center relative group">
               <div 
-                className="flex items-center justify-center w-full cursor-pointer hover:bg-primary/10 transition-all duration-200 p-2 md:p-4 border-2 border-dashed border-primary/30 hover:border-primary/50 group"
+                className="flex items-center justify-center w-full cursor-pointer hover:bg-primary/10 transition-all duration-200 p-2 lg:p-3 xl:p-4 border-2 border-dashed border-primary/30 hover:border-primary/50 group"
                 onClick={onStartAddTimeSlot}
               >
-                <div className="flex flex-col items-center gap-1 md:gap-2">
-                  <div className="p-2 md:p-3 bg-primary/10 group-hover:bg-primary/20 transition-colors border border-primary/20">
-                    <Plus className="w-4 h-4 md:w-6 md:h-6 text-primary" />
+                <div className="flex flex-col items-center gap-1 lg:gap-2">
+                  <div className="p-2 lg:p-3 bg-primary/10 group-hover:bg-primary/20 transition-colors border border-primary/20">
+                    <Plus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-primary" />
                   </div>
                   <div className="text-center">
-                    <div className="text-xs md:text-sm font-medium text-primary group-hover:text-primary-dark transition-colors">
+                    <div className="text-xs lg:text-sm font-medium text-primary group-hover:text-primary-dark transition-colors">
                       Add Time Slot
                     </div>
-                    <div className="text-xs text-gray-500 mt-1 hidden md:block">
+                    <div className="text-xs text-gray-500 mt-1 hidden lg:block">
                       Click to add new period
                     </div>
                   </div>
@@ -811,7 +806,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
             {days.map((day, dayIndex) => (
               <div
                 key={dayIndex}
-                className="border-r border-gray-200 last:border-r-0 min-h-[60px] md:min-h-[80px] bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center relative group"
+                className="border-r border-gray-200 last:border-r-0 min-h-[50px] lg:min-h-[60px] xl:min-h-[80px] bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center relative group"
               >
                 <div className="text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <div className="text-xs text-gray-400">New slot</div>

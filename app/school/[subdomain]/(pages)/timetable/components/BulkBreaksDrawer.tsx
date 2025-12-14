@@ -179,9 +179,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
       const mutations = breakEntries.map((entry, index) => {
         const alias = `break${index + 1}`;
         const breakType = BREAK_TYPES.find(t => t.value === entry.type);
-        const breakName = entry.afterPeriod === 0 
-          ? `${breakType?.label} (Before Period 0)` 
-          : `${breakType?.label} (After Period ${entry.afterPeriod})`;
+        const breakName = breakType?.label || entry.type;
         const duration = parsePositiveInt(entry.durationMinutes);
         
         return `

@@ -274,6 +274,12 @@ export default function SmartTimetableNew() {
   // Get breaks from store
   const breaks = useTimetableStore((state) => state.breaks);
 
+  // Helper function to strip period information from break names
+  const getCleanBreakName = useCallback((name: string): string => {
+    // Remove patterns like "(Before Period X)" or "(After Period X)"
+    return name.replace(/\s*\([^)]*(?:Before|After).*?Period[^)]*\)/gi, '').trim();
+  }, []);
+
   // Handle grade selection
   const handleGradeChange = useCallback(
     (gradeId: string) => {
@@ -1091,7 +1097,7 @@ export default function SmartTimetableNew() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="font-bold text-[9px] text-orange-900 dark:text-orange-200 uppercase leading-tight truncate">
-                                        {breaksBeforeAnyPeriod[0].name}
+                                        {getCleanBreakName(breaksBeforeAnyPeriod[0].name)}
                                       </div>
                                       <div className="flex items-center gap-1 flex-wrap">
                                         {breaksBeforeAnyPeriod[0].startTime && breaksBeforeAnyPeriod[0].endTime ? (
@@ -1126,7 +1132,7 @@ export default function SmartTimetableNew() {
                                         <div className="flex flex-col items-center gap-0">
                                           <span className="text-sm">{dayBreak.icon}</span>
                                           <span className="text-[9px] font-bold text-orange-900 dark:text-orange-200 uppercase leading-tight">
-                                            {dayBreak.name}
+                                            {getCleanBreakName(dayBreak.name)}
                                           </span>
                                           {dayBreak.startTime && dayBreak.endTime ? (
                                             <span className="text-[8px] font-semibold text-orange-700 dark:text-orange-300">
@@ -1384,7 +1390,7 @@ export default function SmartTimetableNew() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="font-bold text-[9px] text-orange-900 dark:text-orange-200 uppercase leading-tight truncate">
-                                        {breaksAfterThisPeriod[0].name}
+                                        {getCleanBreakName(breaksAfterThisPeriod[0].name)}
                                       </div>
                                       <div className="flex items-center gap-1 flex-wrap">
                                         {breaksAfterThisPeriod[0].startTime && breaksAfterThisPeriod[0].endTime ? (
@@ -1416,7 +1422,7 @@ export default function SmartTimetableNew() {
                                         <div className="flex flex-col items-center gap-0">
                                           <span className="text-sm">{dayBreak.icon}</span>
                                           <span className="text-[9px] font-bold text-orange-900 dark:text-orange-200 uppercase leading-tight">
-                                            {dayBreak.name}
+                                            {getCleanBreakName(dayBreak.name)}
                                           </span>
                                           {dayBreak.startTime && dayBreak.endTime ? (
                                             <span className="text-[8px] font-semibold text-orange-700 dark:text-orange-300">
@@ -1578,8 +1584,8 @@ export default function SmartTimetableNew() {
                           .map(
                             (b: any) =>
                               `${b.type ?? 'break'} · ${b.durationMinutes}m${
-                                b.afterPeriod ? ` after P${b.afterPeriod}` : ''
-                              }${b.applyToAllDays ? ' · all days' : ''}`
+                                b.applyToAllDays ? ' · all days' : ''
+                              }`
                           )
                           .join(' | ')
                       : 'No breaks';
@@ -1795,7 +1801,7 @@ export default function SmartTimetableNew() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-primary uppercase">{breakItem.name}</span>
+                            <span className="font-semibold text-primary uppercase">{getCleanBreakName(breakItem.name)}</span>
                             {breakItem.startTime && breakItem.endTime ? (
                               <span className="text-slate-600 dark:text-slate-300 text-sm">
                                 {breakItem.startTime} - {breakItem.endTime}
@@ -1807,7 +1813,7 @@ export default function SmartTimetableNew() {
                             )}
                           </div>
                           <div className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
-                            After Period {breakItem.afterPeriod} • {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
+                            {days[breakItem.dayOfWeek - 1] || 'Unknown day'}
                           </div>
                         </div>
                       </div>
