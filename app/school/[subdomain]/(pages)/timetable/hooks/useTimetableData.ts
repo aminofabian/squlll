@@ -46,14 +46,19 @@ export function usePeriodSlots() {
       slots.sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0));
     });
 
-    // Compute union of all period numbers across all days (excluding period 0)
+    // Compute union of all period numbers across all days (including period 0)
     const periodSet = new Set<number>();
     store.timeSlots.forEach((slot) => {
-      if (typeof slot.periodNumber === 'number' && slot.periodNumber > 0) {
+      if (typeof slot.periodNumber === 'number') {
         periodSet.add(slot.periodNumber);
       }
     });
     const periodNumbers = Array.from(periodSet).sort((a, b) => a - b);
+    
+    // DEBUG: Log what periods we actually have
+    console.log('🔍 DEBUG - Period Numbers Found:', periodNumbers);
+    console.log('🔍 DEBUG - Total Time Slots:', store.timeSlots.length);
+    console.log('🔍 DEBUG - Time Slots Sample:', store.timeSlots.slice(0, 5));
 
     // Helper: get slot for a specific day and period
     const getSlotFor = (dayIndex: number, period: number) => {

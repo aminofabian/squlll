@@ -10,6 +10,6 @@ export { LessonSummaryPanel } from './LessonSummaryPanel';
 export { TimeSlotManager } from './TimeSlotManager';
 export { BreakManager } from './BreakManager';
 export { TimeSlotModal } from './TimeSlotModal';
-export { TimetableFilter } from './TimetableFilter';
+export { TimetableFilter } from './TimetableFilter'; 
 export { BulkBreaksDrawer } from './BulkBreaksDrawer';
 export { TimetableOnboarding } from './TimetableOnboarding'; 

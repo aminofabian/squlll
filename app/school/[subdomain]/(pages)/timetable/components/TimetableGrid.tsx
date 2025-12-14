@@ -139,7 +139,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
   const periodNumbers = React.useMemo(() => {
     const set = new Set<number>();
     timeSlots.forEach((slot) => {
-      if (typeof slot.periodNumber === 'number' && slot.periodNumber > 0) set.add(slot.periodNumber);
+      if (typeof slot.periodNumber === 'number') set.add(slot.periodNumber);
     });
     return Array.from(set).sort((a, b) => a - b);
   }, [timeSlots]);

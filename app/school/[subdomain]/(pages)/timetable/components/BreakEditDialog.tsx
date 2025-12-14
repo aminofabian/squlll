@@ -319,10 +319,10 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         <DrawerHeader className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <DrawerTitle className="text-xl font-bold flex items-center gap-3">
-                <span className="text-2xl">{formData.icon}</span>
-                <span>{isNew ? 'Add Break' : 'Edit Break'}</span>
-              </DrawerTitle>
+            <DrawerTitle className="text-xl font-bold flex items-center gap-3">
+              <span className="text-2xl">{formData.icon}</span>
+              <span>{isNew ? 'Add Break' : 'Edit Break'}</span>
+            </DrawerTitle>
               <DrawerDescription className="mt-2">
                 {isNew 
                   ? 'Add a new break time to the timetable schedule.'
@@ -396,7 +396,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Before Period 1 (Start of day)</SelectItem>
+                <SelectItem value="0">Before Period 0 (Start of day)</SelectItem>
                 {Array.from(
                   new Map(timeSlots.map((slot) => [slot.periodNumber, slot])).values()
                 )

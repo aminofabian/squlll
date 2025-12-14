@@ -56,9 +56,9 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoadingPeriods, setIsLoadingPeriods] = useState(false);
 
-  // Get unique periods from timeSlots, and add "Before Period 1" option (0)
+  // Get unique periods from timeSlots, and add "Before Period 0" option (0)
   const availablePeriods = [
-    0, // Before Period 1
+    0, // Before Period 0 (start of day)
     ...Array.from(
       new Set(timeSlots.map((slot) => slot.periodNumber).filter((p) => p != null))
     ).sort((a, b) => a - b)
@@ -180,7 +180,7 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
         const alias = `break${index + 1}`;
         const breakType = BREAK_TYPES.find(t => t.value === entry.type);
         const breakName = entry.afterPeriod === 0 
-          ? `${breakType?.label} (Before Period 1)` 
+          ? `${breakType?.label} (Before Period 0)` 
           : `${breakType?.label} (After Period ${entry.afterPeriod})`;
         const duration = parsePositiveInt(entry.durationMinutes);
         
@@ -365,13 +365,13 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
                               >
                                 <SelectTrigger className="h-8 text-xs rounded-none">
                                   <SelectValue>
-                                    {entry.afterPeriod === 0 ? 'Before Period 1' : `After Period ${entry.afterPeriod}`}
+                                    {entry.afterPeriod === 0 ? 'Before Period 0' : `After Period ${entry.afterPeriod}`}
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   {availablePeriods.map((period) => (
                                     <SelectItem key={period} value={period.toString()}>
-                                      {period === 0 ? 'Before Period 1' : `After Period ${period}`}
+                                      {period === 0 ? 'Before Period 0' : `After Period ${period}`}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

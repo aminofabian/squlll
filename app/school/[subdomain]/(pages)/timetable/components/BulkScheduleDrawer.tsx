@@ -359,14 +359,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               </span>
               <Label className="text-sm font-medium text-foreground">Select Term</Label>
             </div>
-            {termsLoading ? (
+              {termsLoading ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Loading terms...
-              </div>
-            ) : !currentAcademicYear ? (
+                  Loading terms...
+                </div>
+              ) : !currentAcademicYear ? (
               <div className="text-xs text-muted-foreground">No academic year available.</div>
-            ) : !terms || terms.length === 0 ? (
+              ) : !terms || terms.length === 0 ? (
               <div className="text-xs text-muted-foreground">No terms available.</div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
@@ -404,7 +404,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                         >
                           {dateRange}
                         </span>
-                      )}
+              )}
                     </Button>
                   );
                 })}
@@ -444,34 +444,34 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 </Button>
               </div>
             </div>
-            {grades.length === 0 ? (
+              {grades.length === 0 ? (
               <div className="text-xs text-muted-foreground">No grades available.</div>
-            ) : (
+              ) : (
               <div className="flex flex-wrap gap-1.5">
-                {grades.map((grade) => {
-                  const isSelected = selectedGradeIds.includes(grade.id);
-                  return (
-                    <label
-                      key={grade.id}
+                  {grades.map((grade) => {
+                    const isSelected = selectedGradeIds.includes(grade.id);
+                    return (
+                      <label
+                        key={grade.id}
                       className={`flex items-center gap-1.5 border px-2.5 py-1.5 text-xs cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 text-primary'
+                          isSelected
+                            ? 'border-primary bg-primary/10 text-primary'
                           : 'border-input hover:border-primary/60 text-foreground'
-                      }`}
-                    >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
+                        }`}
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
                         className="h-3.5 w-3.5"
-                      />
+                        />
                       <span className="whitespace-nowrap">
                         {grade.displayName || grade.name || 'Grade'}
                       </span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
           </div>
 
           {/* Step 3 */}
@@ -554,25 +554,25 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
                   return (
                     <div className="space-y-1 text-xs">
-                      <div className="flex justify-between">
+                  <div className="flex justify-between">
                         <span className="text-muted-foreground">School day starts</span>
                         <span className="font-medium">{formData.startTime}</span>
-                      </div>
-                      <div className="flex justify-between">
+                  </div>
+                  <div className="flex justify-between">
                         <span className="text-muted-foreground">Last lesson ends</span>
                         <span className="font-medium">{lastLessonEndTime}</span>
-                      </div>
-                      <div className="flex justify-between">
+                  </div>
+                  <div className="flex justify-between">
                         <span className="text-muted-foreground">Total periods</span>
-                        <span className="font-medium">
+                    <span className="font-medium">
                           {periodCount ? `${periodCount} periods` : '—'}
-                        </span>
-                      </div>
+                    </span>
+                  </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Total time</span>
                         <span className="font-medium">{totalMinutes ? `${totalMinutes} min` : '—'}</span>
                       </div>
-                    </div>
+                </div>
                   );
                 })()}
               </div>
@@ -582,28 +582,28 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           {/* Actions */}
           <div className="border-t pt-4 mt-6">
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                disabled={isCreating}
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isCreating}
                 className="flex-1 h-9 rounded-none"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isCreating || !selectedTermId || selectedGradeIds.length === 0}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isCreating || !selectedTermId || selectedGradeIds.length === 0}
                 className="flex-1 h-9 rounded-none"
-              >
-                {isCreating ? (
-                  <>
+            >
+              {isCreating ? (
+                <>
                     <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
+                  Creating...
+                </>
+              ) : (
                   'Create Template'
-                )}
-              </Button>
+              )}
+            </Button>
             </div>
           </div>
         </div>

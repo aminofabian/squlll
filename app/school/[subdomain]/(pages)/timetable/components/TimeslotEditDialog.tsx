@@ -215,10 +215,10 @@ export function TimeslotEditDialog({ timeslot, onClose }: TimeslotEditDialogProp
         <DrawerHeader className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b-2 border-primary/20 px-6 py-5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <DrawerTitle className="text-2xl font-bold text-primary flex items-center gap-3">
-                <span className="text-3xl">⏰</span>
-                <span>Edit Period {timeslot.periodNumber}</span>
-              </DrawerTitle>
+            <DrawerTitle className="text-2xl font-bold text-primary flex items-center gap-3">
+              <span className="text-3xl">⏰</span>
+              <span>Edit Period {timeslot.periodNumber}</span>
+            </DrawerTitle>
               <DrawerDescription className="mt-2">
                 Update the time slot details including start time, end time, and duration.
               </DrawerDescription>
