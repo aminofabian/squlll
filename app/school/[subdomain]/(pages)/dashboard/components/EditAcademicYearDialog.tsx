@@ -1,19 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-} from "@/components/ui/dialog"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle
+} from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
-import { Loader2, Calendar, Sparkles } from 'lucide-react'
+import { Loader2, Calendar, Sparkles, X } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { type AcademicYear } from '@/lib/hooks/useAcademicYears'
 import moeTerms2026 from '@/lib/data/ke-moe-terms-2026.json'
@@ -192,7 +193,7 @@ export function EditAcademicYearDialog({
   const handleUseMoeData = () => {
     const moeData = getMoeAcademicYearData()
     if (!moeData) {
-      toast.error('Unable to load MoE data')
+      toast.error('Unable to load official school calendar data from the Ministry of Education')
       return
     }
 
@@ -201,44 +202,74 @@ export function EditAcademicYearDialog({
       startDate: moeData.startDate,
       endDate: moeData.endDate
     })
-    toast.success(`Prefilled with Kenya MoE ${moeData.year} academic year data`)
+    toast.success(`Calendar updated! Using official ${moeData.year} school calendar from the Ministry of Education`)
   }
 
   // Get the year from JSON for button display
   const moeYear = moeTerms2026.year || 2026
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex flex-row items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            Edit Academic Year
-          </DialogTitle>
-          <DialogDescription>
-            Update the academic year information below.
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer open={isOpen} onOpenChange={handleClose} direction="right">
+      <DrawerContent className="max-w-2xl h-[95vh] flex flex-col">
+        <DrawerHeader className="px-4 py-3 border-b border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <DrawerTitle className="text-xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Edit Academic Year
+              </DrawerTitle>
+              <DrawerDescription className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Update the academic year information below.
+              </DrawerDescription>
+            </div>
+            <DrawerClose asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DrawerClose>
+          </div>
+        </DrawerHeader>
 
-        <div className="space-y-4">
-          {/* Single-row inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-3 sm:gap-4 items-end">
-            <div className="space-y-2 sm:col-span-3 sm:max-w-none">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="edit-name">Academic Year Name</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleUseMoeData}
-                  disabled={isLoading}
-                  className="h-7 px-3 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium shadow-sm hover:shadow transition-all"
-                  title={`Use Kenya Ministry of Education ${moeYear} academic year dates`}
-                >
-                  <Sparkles className="h-3 w-3 mr-1.5" />
-                  Use MoE {moeYear}
-                </Button>
-              </div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900">
+          <div className="space-y-4">
+            {/* Official Calendar Quick Fill Banner */}
+            <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/30 shadow-sm">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">
+                        Quick Update: Official School Calendar
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Click here to automatically update with the official {moeYear} school calendar dates as released by the Kenya Ministry of Education
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleUseMoeData}
+                    disabled={isLoading}
+                    className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white/90 shadow-md hover:shadow-lg transition-all"
+                    title={`Click to automatically fill in the official ${moeYear} school calendar dates as released by the Kenya Ministry of Education`}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2 opacity-80" />
+                    <span className="text-white/90">Click Here to Auto-Update</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Academic Year Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Academic Year Name</Label>
               <Input
                 id="edit-name"
                 placeholder="e.g., 2024-2025"
@@ -251,71 +282,76 @@ export function EditAcademicYearDialog({
               </p>
             </div>
 
-            <div className="space-y-2 sm:max-w-xs">
-              <Label htmlFor="edit-startDate" className="whitespace-nowrap">Start Date</Label>
-              <Input
-                id="edit-startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                disabled={isLoading}
-              />
+            {/* Date Range */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-startDate">Start Date</Label>
+                <Input
+                  id="edit-startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-endDate">End Date</Label>
+                <Input
+                  id="edit-endDate"
+                  type="date"
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2 sm:max-w-xs">
-              <Label htmlFor="edit-endDate" className="whitespace-nowrap">End Date</Label>
-              <Input
-                id="edit-endDate"
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => handleInputChange('endDate', e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-
-          {/* Preview */}
-          {formData.name && formData.startDate && formData.endDate && (
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="pt-4">
-                <div className="text-sm">
-                  <div className="font-medium text-primary">Preview:</div>
-                  <div className="mt-1 space-y-1 text-muted-foreground">
-                    <div>Name: {formData.name}</div>
-                    <div>Period: {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}</div>
-                    <div>Duration: {Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 60 * 60 * 24))} days</div>
+            {/* Preview */}
+            {formData.name && formData.startDate && formData.endDate && (
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="pt-4">
+                  <div className="text-sm">
+                    <div className="font-medium text-primary">Preview:</div>
+                    <div className="mt-1 space-y-1 text-muted-foreground">
+                      <div>Name: {formData.name}</div>
+                      <div>Period: {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}</div>
+                      <div>Duration: {Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 60 * 60 * 24))} days</div>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="bg-primary hover:bg-primary/90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              'Update Academic Year'
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <DrawerFooter className="px-4 py-3 border-t border-primary/20 bg-white dark:bg-slate-900 flex-shrink-0">
+          <div className="flex gap-3 w-full sm:w-auto sm:ml-auto">
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+              className="flex-1 sm:flex-none"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="flex-1 sm:flex-none bg-primary hover:bg-primary/90"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Academic Year'
+              )}
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   )
 }
 
