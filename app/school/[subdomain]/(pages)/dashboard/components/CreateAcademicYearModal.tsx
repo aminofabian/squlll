@@ -248,23 +248,40 @@ export function CreateAcademicYearModal({ onSuccess, trigger }: CreateAcademicYe
 
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-900">
             <div className="space-y-4">
+              {/* Official Calendar Quick Fill Banner */}
+              <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 shadow-sm">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">
+                          Quick Setup Available
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Click here to automatically fill in the official {moeYear} school calendar dates as released by the Kenya Ministry of Education
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={handleUseMoeData}
+                      disabled={isLoading}
+                      className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white/90 shadow-md hover:shadow-lg transition-all"
+                      title={`Click to automatically fill in the official ${moeYear} school calendar dates as released by the Kenya Ministry of Education`}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2 opacity-80" />
+                      <span className="text-white/90">Use Official {moeYear} Calendar</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Academic Year Name */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="name">Academic Year Name</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleUseMoeData}
-                    disabled={isLoading}
-                    className="h-7 px-3 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium shadow-sm hover:shadow transition-all"
-                    title={`Click to automatically fill in the official ${moeYear} school calendar dates as released by the Kenya Ministry of Education`}
-                  >
-                    <Sparkles className="h-3 w-3 mr-1.5" />
-                    Use Official {moeYear} Calendar
-                  </Button>
-                </div>
+                <Label htmlFor="name">Academic Year Name</Label>
                 <Input
                   id="name"
                   placeholder={String(moeYear)}
