@@ -467,7 +467,7 @@ export const useTimetableStore = create<TimetableStore>()(
         try {
           const mutation = `
             mutation RebuildWeekTemplatePeriods(
-              $id: String!
+              $id: ID!
               $startTime: String!
               $periodCount: Int!
               $periodDuration: Int!
