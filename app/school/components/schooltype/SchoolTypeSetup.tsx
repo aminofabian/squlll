@@ -942,6 +942,28 @@ export const SchoolTypeSetup = () => {
     .hide-scrollbar::-webkit-scrollbar {
       display: none;
     }
+    @keyframes slide-bounce {
+      0%, 100% {
+        transform: translateX(0) translateY(-50%);
+      }
+      50% {
+        transform: translateX(4px) translateY(-50%);
+      }
+    }
+    @keyframes slide-bounce-vertical {
+      0%, 100% {
+        transform: translateY(0) translateX(-50%);
+      }
+      50% {
+        transform: translateY(-4px) translateX(-50%);
+      }
+    }
+    .animate-slide-bounce {
+      animation: slide-bounce 1.5s ease-in-out infinite;
+    }
+    .animate-slide-bounce-vertical {
+      animation: slide-bounce-vertical 1.5s ease-in-out infinite;
+    }
   `;
 
   useEffect(() => {

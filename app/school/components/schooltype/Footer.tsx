@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { Check, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Check, ChevronRight, ArrowUp } from 'lucide-react'
 
 interface FooterProps {
   canProceed: boolean
@@ -18,9 +18,34 @@ export const Footer: React.FC<FooterProps> = ({
   getSelectedLevelsCount,
   selectedType
 }) => {
+  const [showHint, setShowHint] = useState(false)
+  const [hintDismissed, setHintDismissed] = useState(false)
+
+  useEffect(() => {
+    if (canProceed && !hintDismissed) {
+      setShowHint(true)
+      const timer = setTimeout(() => {
+        setShowHint(false)
+        setHintDismissed(true)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [canProceed, hintDismissed])
+
+  const shouldShowArrow = showHint && canProceed && !isLoading
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200/60 shadow-lg z-20">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-3 py-2 gap-2">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-3 py-2 gap-2 relative">
+        {/* Animated Arrow Hint */}
+        {shouldShowArrow && (
+          <div className="absolute -top-8 left-1/2 sm:left-auto sm:right-4 -translate-x-1/2 sm:translate-x-0 z-10 pointer-events-none">
+            <div className="flex flex-col items-center gap-1 animate-slide-bounce-vertical">
+              <ArrowUp className="w-4 h-4 text-[#246a59] animate-pulse drop-shadow-sm" />
+              <span className="text-[9px] font-semibold text-[#246a59] whitespace-nowrap bg-white/95 px-2 py-1 rounded border border-[#246a59]/20 shadow-sm">Click to continue</span>
+            </div>
+          </div>
+        )}
         <div className="flex items-center w-full sm:w-auto justify-center sm:justify-start">
           <div className="text-[10px] text-gray-500">
             {canProceed ? 
@@ -33,11 +58,19 @@ export const Footer: React.FC<FooterProps> = ({
           </div>
         </div>
         <button
-          onClick={handleContinue}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            handleContinue()
+            setShowHint(false)
+            setHintDismissed(true)
+          }}
+          onMouseDown={(e) => e.preventDefault()}
           disabled={!canProceed || isLoading}
-          className={`w-full sm:w-auto px-5 py-1.5 relative overflow-hidden transition-all duration-150 rounded-md text-xs font-semibold cursor-pointer active:scale-95 ${
+          className={`w-full sm:w-auto px-4 py-1.5 relative overflow-visible transition-all duration-150 rounded-md text-xs font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#246a59]/50 focus:ring-offset-1 z-0 ${
             canProceed && !isLoading
-              ? 'bg-gradient-to-r from-[#246a59] to-[#1a4d42] hover:from-[#246a59]/90 hover:to-[#1a4d42]/90 text-white shadow-md hover:shadow-lg active:scale-95'
+              ? `bg-gradient-to-r from-[#246a59] to-[#1a4d42] hover:from-[#246a59]/90 hover:to-[#1a4d42]/90 text-white shadow-md hover:shadow-lg hover:ring-2 hover:ring-[#246a59]/30 active:from-[#246a59]/95 active:to-[#1a4d42]/95 ${shouldShowArrow ? 'animate-pulse ring-2 ring-[#246a59]/40' : ''}`
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
         >
@@ -50,10 +83,13 @@ export const Footer: React.FC<FooterProps> = ({
             ) : (
               <>
                 <span>Continue</span>
-                <ChevronRight className="w-3 h-3" />
+                <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </>
             )}
           </div>
+          {canProceed && !isLoading && (
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+          )}
         </button>
       </div>
     </div>

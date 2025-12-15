@@ -10,8 +10,7 @@ interface ClassCardProps {
 export const ClassCard: React.FC<ClassCardProps> = ({ cls }) => {
   return (
     <div
-      className="relative overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
+      className="relative overflow-hidden pointer-events-none"
     >
       <div className="relative p-1.5 bg-gray-50/60 border rounded border-gray-200/60
         transition-all duration-150">

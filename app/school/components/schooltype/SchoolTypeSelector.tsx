@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { SchoolType } from './types'
-import { Check } from 'lucide-react'
+import { Check, ArrowRight } from 'lucide-react'
 
 interface SchoolTypeSelectorProps {
   schoolTypes: SchoolType[]
@@ -17,31 +17,68 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
   handleTypeSelect,
   getSelectedLevelsCount
 }) => {
+  const [showHint, setShowHint] = useState(true)
+  const [hintDismissed, setHintDismissed] = useState(false)
+
+  useEffect(() => {
+    if (selectedType) {
+      setShowHint(false)
+    }
+  }, [selectedType])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowHint(false)
+      setHintDismissed(true)
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const shouldShowArrow = showHint && !hintDismissed && !selectedType
+
   return (
     <div className="w-full lg:w-64 lg:flex-shrink-0">
-      <div className="lg:sticky lg:top-4 space-y-1 p-2 bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-lg shadow-sm">
+      <div className="lg:sticky lg:top-4 space-y-1 p-2 bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-lg shadow-sm relative">
         <div className="mb-1.5 px-0.5">
           <h3 className="text-sm font-semibold text-gray-900">School Type</h3>
           <p className="text-[10px] text-gray-500 hidden lg:block mt-0.5">Select curriculum</p>
         </div>
         
         {/* Mobile View - Compact Grid */}
-        <div className="lg:hidden">
+        <div className="lg:hidden relative">
+          {/* Animated Arrow Hint */}
+          {shouldShowArrow && (
+            <div className="absolute -right-8 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+              <div className="flex flex-col items-center gap-1 animate-slide-bounce">
+                <ArrowRight className="w-5 h-5 text-[#246a59] animate-pulse drop-shadow-sm" />
+                <span className="text-[9px] font-semibold text-[#246a59] whitespace-nowrap bg-white/95 px-1.5 py-0.5 rounded border border-[#246a59]/20 shadow-sm">Click to select</span>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-1.5">
-            {schoolTypes.map((type) => {
+            {schoolTypes.map((type, index) => {
               const Icon = type.icon
               const isSelected = selectedType === type.id
               const selectedLevelCount = getSelectedLevelsCount(type.id)
+              const showPulse = shouldShowArrow && index === 0
 
               return (
                 <button
                   key={type.id}
-                  onClick={() => handleTypeSelect(type.id)}
-                  className={`group relative flex flex-col items-center justify-center aspect-square rounded-lg transition-all duration-150 overflow-hidden border-2 cursor-pointer active:scale-95
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleTypeSelect(type.id)
+                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  className={`group relative flex flex-col items-center justify-center aspect-square rounded-lg transition-all duration-150 overflow-visible border-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#246a59]/50 focus:ring-offset-1 z-0
                     ${isSelected
-                      ? 'bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-white shadow-md border-[#246a59]'
-                      : 'bg-white hover:bg-[#246a59]/5 text-gray-700 shadow-sm border-gray-200 hover:border-[#246a59] hover:shadow-md active:scale-95'
-                    }`}
+                      ? 'bg-gradient-to-br from-[#246a59] to-[#1a4d42] text-white shadow-lg border-[#246a59] ring-2 ring-[#246a59]/30'
+                      : 'bg-white hover:bg-[#246a59]/8 text-gray-700 shadow-sm border-gray-200 hover:border-[#246a59] hover:shadow-md hover:ring-1 hover:ring-[#246a59]/20 active:bg-[#246a59]/12'
+                    }
+                    ${showPulse ? 'animate-pulse ring-2 ring-[#246a59]/40' : ''}
+                  `}
                 >
                   {/* Selection indicator */}
                   {isSelected && (
@@ -51,19 +88,19 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                   )}
                   
                   {/* Icon container */}
-                  <div className={`relative mb-1 p-2 rounded-md transition-all duration-150 ${
+                  <div className={`relative mb-0.5 p-1.5 rounded-md transition-all duration-150 ${
                     isSelected 
-                      ? 'bg-white/20' 
-                      : 'bg-gray-50 group-hover:bg-[#246a59]/10'
+                      ? 'bg-white/25' 
+                      : 'bg-gray-50 group-hover:bg-[#246a59]/15 group-hover:scale-105'
                   }`}>
-                    <Icon className={`w-4 h-4 transition-colors ${
+                    <Icon className={`w-3.5 h-3.5 transition-colors ${
                       isSelected ? 'text-white' : 'text-gray-600 group-hover:text-[#246a59]'
                     }`} />
                   </div>
                   
                   {/* Title */}
-                  <span className={`text-[10px] font-semibold text-center px-1.5 leading-tight ${
-                    isSelected ? 'text-white' : 'text-gray-700'
+                  <span className={`text-[10px] font-bold text-center px-1 leading-tight ${
+                    isSelected ? 'text-white' : 'text-gray-700 group-hover:text-[#246a59]'
                   }`}>
                     {type.title.split(' ')[0]}
                   </span>
@@ -94,21 +131,39 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
         </div>
         
         {/* Desktop View - Compact List */}
-        <div className="hidden lg:grid lg:grid-cols-1 gap-1">
-          {schoolTypes.map((type) => {
+        <div className="hidden lg:grid lg:grid-cols-1 gap-1 relative">
+          {/* Animated Arrow Hint */}
+          {shouldShowArrow && (
+            <div className="absolute -right-6 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+              <div className="flex flex-col items-center gap-1 animate-slide-bounce">
+                <ArrowRight className="w-4 h-4 text-[#246a59] animate-pulse drop-shadow-sm" />
+                <span className="text-[9px] font-semibold text-[#246a59] whitespace-nowrap bg-white/95 px-1.5 py-0.5 rounded border border-[#246a59]/20 shadow-sm">Click here</span>
+              </div>
+            </div>
+          )}
+          {schoolTypes.map((type, index) => {
             const Icon = type.icon
             const isSelected = selectedType === type.id
             const selectedLevelCount = getSelectedLevelsCount(type.id)
+            const showPulse = shouldShowArrow && index === 0
 
             return (
               <button
                 key={type.id}
-                onClick={() => handleTypeSelect(type.id)}
-                className={`group relative w-full px-2 py-1.5 border-2 transition-all duration-150 rounded-md overflow-hidden cursor-pointer active:scale-[0.98]
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleTypeSelect(type.id)
+                }}
+                onMouseDown={(e) => e.preventDefault()}
+                className={`group relative w-full px-2 py-1.5 border-2 transition-all duration-150 rounded-md overflow-visible cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#246a59]/50 focus:ring-offset-1 z-0
                   ${isSelected
-                    ? 'border-[#246a59] bg-gradient-to-r from-[#246a59]/10 to-[#246a59]/5 shadow-sm'
-                    : 'border-gray-200 bg-white hover:border-[#246a59] hover:bg-[#246a59]/5 hover:shadow-sm active:scale-[0.98]'
-                  }`}
+                    ? 'border-[#246a59] bg-gradient-to-r from-[#246a59]/12 to-[#246a59]/6 shadow-sm ring-1 ring-[#246a59]/20'
+                    : 'border-gray-200 bg-white hover:border-[#246a59] hover:bg-[#246a59]/8 hover:shadow-sm hover:ring-1 hover:ring-[#246a59]/15 active:bg-[#246a59]/12'
+                  }
+                  ${showPulse ? 'animate-pulse ring-2 ring-[#246a59]/40' : ''}
+                `}
               >
                 {/* Selection indicator bar */}
                 {isSelected && (
@@ -120,8 +175,8 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                   <div className="flex-shrink-0 relative">
                     <div className={`p-1 rounded transition-all duration-150 ${
                       isSelected 
-                        ? 'bg-[#246a59]/15' 
-                        : 'bg-gray-50 group-hover:bg-[#246a59]/10'
+                        ? 'bg-[#246a59]/18' 
+                        : 'bg-gray-50 group-hover:bg-[#246a59]/12 group-hover:scale-105'
                     }`}>
                       <Icon className={`w-3.5 h-3.5 transition-colors ${
                         isSelected 
