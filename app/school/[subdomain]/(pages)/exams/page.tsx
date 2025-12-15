@@ -24,18 +24,15 @@ import {
   Target,
   TrendingUp,
   GraduationCap,
-  Filter,
   ArrowLeft,
   User,
   School,
-  Clock,
-  Star,
   ChevronDown,
   ChevronRight,
   Award,
   CheckCircle
 } from "lucide-react"
-import { mockExams, mockStudentResults, subjects } from "@/lib/data/mockExams"
+import { mockStudentResults, subjects } from "@/lib/data/mockExams"
 import { Exam, StudentExamResult } from "@/types/exam"
 import { format } from "date-fns"
 import { CreateExamDrawer } from "./components/CreateExamDrawer"
@@ -69,8 +66,8 @@ function StudentPerformanceView({ studentId }: { studentId: string }) {
   // Calculate subject-wise performance
   const subjectPerformance = subjects.map(subject => {
     const subjectResults = studentResults.filter(result => {
-      const exam = mockExams.find(e => e.id === result.examId)
-      return exam?.subject.id === subject.id
+      // Note: Exam data should come from API/store
+      return false
     })
     
     const avgScore = subjectResults.length > 0 
@@ -330,7 +327,17 @@ function ExamSessionsList({ studentResults }: { studentResults: StudentExamResul
 
   // Group results by exam session (examType + term + academicYear)
   const examSessions = useMemo(() => {
-    const sessionsMap = new Map<string, {
+    // Note: Exam data should come from API/store
+    // For now, return empty array since we removed mock data
+    // studentResults.forEach(result => {
+    //   const exam = exams.find(e => e.id === result.examId)
+    //   if (!exam) return
+    //   const sessionKey = `${exam.examType}-${exam.term}-${exam.academicYear}`
+    //   ...
+    // })
+
+    // Return empty array since we removed mock exam data
+    return [] as Array<{
       sessionKey: string;
       sessionName: string;
       examType: string;
@@ -342,52 +349,7 @@ function ExamSessionsList({ studentResults }: { studentResults: StudentExamResul
       averageScore: number;
       overallPosition: number;
       status: 'completed' | 'in-progress' | 'upcoming';
-    }>()
-
-    studentResults.forEach(result => {
-      const exam = mockExams.find(e => e.id === result.examId)
-      if (!exam) return
-
-      const sessionKey = `${exam.examType}-${exam.term}-${exam.academicYear}`
-      
-      if (!sessionsMap.has(sessionKey)) {
-        sessionsMap.set(sessionKey, {
-          sessionKey,
-          sessionName: `${exam.term} ${exam.examType} Exams`,
-          examType: exam.examType,
-          term: exam.term,
-          academicYear: exam.academicYear,
-          dateRange: { 
-            start: new Date(exam.dateAdministered), 
-            end: new Date(exam.dateAdministered) 
-          },
-          results: [],
-          totalSubjects: 0,
-          averageScore: 0,
-          overallPosition: 0,
-          status: 'completed'
-        })
-      }
-
-      const session = sessionsMap.get(sessionKey)!
-      session.results.push({ ...result, exam })
-      
-      // Update date range
-      const examDate = new Date(exam.dateAdministered)
-      if (examDate < session.dateRange.start) session.dateRange.start = examDate
-      if (examDate > session.dateRange.end) session.dateRange.end = examDate
-    })
-
-    // Calculate session statistics
-    sessionsMap.forEach(session => {
-      session.totalSubjects = session.results.length
-      session.averageScore = session.results.reduce((sum, r) => sum + r.percentage, 0) / session.results.length
-      session.overallPosition = Math.round(session.results.reduce((sum, r) => sum + r.positionInClass, 0) / session.results.length)
-    })
-
-    return Array.from(sessionsMap.values()).sort((a, b) => 
-      new Date(b.dateRange.start).getTime() - new Date(a.dateRange.start).getTime()
-    )
+    }>
   }, [studentResults])
 
   const toggleSession = (sessionKey: string) => {
@@ -686,7 +648,9 @@ export default function ExamsPage() {
 
   // Filter exams based on current selection
   const filteredExams = useMemo(() => {
-    return mockExams.filter(exam => {
+    // Note: Exam data should come from API/store
+    const exams: Exam[] = []
+    return exams.filter(exam => {
       // Filter by grade if selected
       let matchesGrade = true
       if (selectedGradeInfo) {
@@ -788,126 +752,12 @@ export default function ExamsPage() {
         {/* Exams Overview - Only show when not viewing student details */}
         {viewMode === 'overview' && (
           <>
-            {/* Class Selection */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
-                    <School className="h-4 w-4" />
-                    Class Selection
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls} value={cls}>
-                          {cls}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
-                    <Calendar className="h-4 w-4" />
-                    Academic Term
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select value={selectedTerm} onValueChange={setSelectedTerm}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select term" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {terms.map((term) => (
-                        <SelectItem key={term} value={term}>
-                          {term}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
-                    <Clock className="h-4 w-4" />
-                    Academic Year
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
-                    <Star className="h-4 w-4" />
-                    Current Selection
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="font-bold text-lg text-gray-900 mb-1">{selectedClass}</div>
-                    <div className="text-sm text-gray-600">{selectedTerm} {selectedYear}</div>
-                    <div className="text-xs text-gray-500 mt-2 bg-gray-50 px-2 py-1 rounded">
-                      {filteredExams.length} exam{filteredExams.length !== 1 ? 's' : ''} found
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border border-gray-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-gray-700">
-                    <Filter className="h-4 w-4" />
-                    Quick Filter
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Select value={examTypeFilter} onValueChange={setExamTypeFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="CAT">CAT</SelectItem>
-                      <SelectItem value="Midterm">Midterm</SelectItem>
-                      <SelectItem value="End Term">End Term</SelectItem>
-                      <SelectItem value="Mock">Mock</SelectItem>
-                      <SelectItem value="KCSE Trial">KCSE Trial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Exams Table */}
             <Card className="border border-gray-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5" />
-                  Exams for {selectedClass} - {selectedTerm} {selectedYear}
+                  Exams
                 </CardTitle>
               </CardHeader>
               <CardContent>
