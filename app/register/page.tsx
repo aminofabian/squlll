@@ -190,6 +190,11 @@ export default function SignupPage() {
   }
 
   async function onSubmit(data: SignupFormValues) {
+    // Prevent double submission
+    if (isLoading) {
+      return;
+    }
+    
     setIsLoading(true)
     setError(null)
     setSuccess(null)
@@ -228,7 +233,10 @@ export default function SignupPage() {
     try {
       // Use the local GraphQL proxy to avoid CORS issues in production
       const apiUrl = "/api/graphql"
-      console.log("Using API URL:", apiUrl)
+
+      // Create abort controller for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -237,36 +245,41 @@ export default function SignupPage() {
           Accept: "application/json",
         },
         body: JSON.stringify({ query: mutation, variables }),
+        signal: controller.signal,
+      }).then((res) => {
+        clearTimeout(timeoutId);
+        return res;
+      }).catch((fetchError) => {
+        clearTimeout(timeoutId);
+        // Handle network errors (connection refused, timeout, etc.)
+        if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
+          throw new Error("Network error: Unable to connect to server. Please check your internet connection.");
+        }
+        if (fetchError.name === 'AbortError') {
+          throw new Error("Request timeout: The server took too long to respond. Please try again.");
+        }
+        throw new Error(`Network error: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
       })
 
-      console.log("Response status:", response.status)
-      console.log("Response headers:", {
-        type: response.headers.get("content-type"),
-        ...Object.fromEntries([...response.headers]),
-      })
+      // Check if response is ok before processing
+      if (!response.ok && response.status >= 500) {
+        throw new Error(`Server error (${response.status}): Please try again later.`);
+      }
 
       const rawResponse = await response.text()
-      console.log("Raw response:", rawResponse)
 
       if (!rawResponse) {
         throw new Error("Empty response from server")
       }
 
       const cleanResponse = rawResponse.trim().replace(/^\uFEFF/, "")
-      console.log("Cleaned response:", cleanResponse)
 
       let result
       try {
         result = JSON.parse(cleanResponse)
       } catch (parseError) {
-        console.error("JSON Parse Error:", parseError)
-        console.error("Response that failed to parse:", {
-          raw: rawResponse,
-          cleaned: cleanResponse,
-          length: cleanResponse.length,
-          firstChar: cleanResponse.charCodeAt(0),
-        })
-        throw new Error(`Server returned invalid JSON. Raw response: ${rawResponse.substring(0, 100)}...`)
+        // In production, provide a user-friendly error message
+        throw new Error("Server returned an invalid response. Please try again or contact support if the problem persists.")
       }
 
       if (!response.ok) {
@@ -304,14 +317,22 @@ export default function SignupPage() {
 
         const setupUrl = `${baseUrl}${subdomainPrefix}.${domain}/setup?${params}`
 
-        console.log("Redirecting to setup page:", setupUrl)
-        window.location.href = setupUrl
+        // Use window.location.replace to avoid back button issues
+        window.location.replace(setupUrl)
       }, 3000)
     } catch (error) {
-      console.error("Registration error:", error)
-      setError(error instanceof Error ? error.message : "An error occurred during signup")
+      // Provide user-friendly error messages
+      let errorMessage = "An error occurred during signup. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      setError(errorMessage);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -661,7 +682,20 @@ export default function SignupPage() {
           {/* Main content area */}
           <div className="flex-1 p-6 lg:p-8">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+              <form 
+                onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                  // Handle validation errors
+                  if (errors.name || errors.email || errors.password) {
+                    setError('Please complete your personal information correctly.');
+                    setCurrentStep(0);
+                  } else if (errors.schoolName) {
+                    setError('Please enter a valid school name (at least 2 characters).');
+                  } else {
+                    setError('Please check the form for errors.');
+                  }
+                })} 
+                className="space-y-6 max-w-2xl"
+              >
                 {error && (
                   <Alert variant="destructive" className="animate-in fade-in-50 slide-in-from-top-2 border-l-4 border-l-red-500
                     relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-red-500/5 before:via-red-500/2 before:to-transparent">
@@ -894,25 +928,11 @@ export default function SignupPage() {
                   )}
                   
                   <Button
-                    type="button"
-                    onClick={async () => {
-                      if (currentStep === steps.length - 1) {
-                        // Explicitly trigger form submission
-                        const isValid = await form.trigger();
-                        console.log('Form validation result:', isValid, form.formState.errors);
-                        if (isValid) {
-                          form.handleSubmit(onSubmit)();
-                        } else {
-                          // Check if errors are from previous step fields
-                          const errors = form.formState.errors;
-                          if (errors.name || errors.email || errors.password) {
-                            setError('Please go back and complete your personal information correctly.');
-                            setCurrentStep(0);
-                          } else if (errors.schoolName) {
-                            setError('Please enter a valid school name (at least 2 characters).');
-                          }
-                        }
-                      } else {
+                    type={currentStep === steps.length - 1 ? "submit" : "button"}
+                    onClick={async (e) => {
+                      // Prevent default form submission for non-final steps
+                      if (currentStep !== steps.length - 1) {
+                        e.preventDefault();
                         // Validate current step before proceeding
                         const fieldsToValidate = currentStep === 0 
                           ? ['name', 'email', 'password'] as const
@@ -922,6 +942,7 @@ export default function SignupPage() {
                           nextStep();
                         }
                       }
+                      // For final step, let the form's onSubmit handle it naturally
                     }}
                     className={inputStyles.nextButton}
                     disabled={isLoading}
