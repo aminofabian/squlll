@@ -18,7 +18,8 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 import { DashboardSearchSidebar } from './components/DashboardSearchSidebar'
 import { CreateAcademicYearModal } from './components/CreateAcademicYearModal'
 import { ViewAcademicYearsDrawer } from './components/ViewAcademicYearsDrawer'
-import { TermsManager } from './components/TermsManager'
+import { CreateTermModal } from './components/CreateTermModal'
+import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears'
 
 export default function SchoolDashboard() {
   const params = useParams()
@@ -33,6 +34,11 @@ export default function SchoolDashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [showStats, setShowStats] = useState(false)
+  const [showCreateTermModal, setShowCreateTermModal] = useState(false)
+  
+  // Get current academic year for Create Term button
+  const { getActiveAcademicYear } = useCurrentAcademicYear()
+  const currentAcademicYear = getActiveAcademicYear()
   
   // Check school configuration
   const { data: config, isLoading, error } = useSchoolConfig()
@@ -427,6 +433,19 @@ export default function SchoolDashboard() {
               }
             />
             
+            {/* Create Term button */}
+            {currentAcademicYear && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCreateTermModal(true)}
+                className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Term
+              </Button>
+            )}
+            
             {/* Sidebar toggle button */}
             <Button
               variant="outline"
@@ -788,13 +807,22 @@ export default function SchoolDashboard() {
               </div>
             </div>
 
-            {/* Terms Management */}
-            <TermsManager 
-              className="md:col-span-2 xl:col-span-1"
-            />
           </div>
         </div>
       </div>
+      
+      {/* Create Term Modal */}
+      {currentAcademicYear && (
+        <CreateTermModal
+          isOpen={showCreateTermModal}
+          onClose={() => setShowCreateTermModal(false)}
+          onSuccess={() => {
+            setShowCreateTermModal(false)
+            // Optionally refresh data or show success message
+          }}
+          academicYear={currentAcademicYear}
+        />
+      )}
     </div>
   )
 } 

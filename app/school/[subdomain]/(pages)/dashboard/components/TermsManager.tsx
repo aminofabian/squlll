@@ -208,58 +208,9 @@ export function TermsManager({ academicYearId, className }: TermsManagerProps) {
     )
   }
 
-  // No terms found for the academic year
+  // No terms found for the academic year - return null to hide the component
   if (!termsData || termsData.length === 0) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            Terms Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Terms Found</h3>
-            <p className="text-muted-foreground mb-4">
-              Create terms for your academic year to organize your school calendar and activities.
-            </p>
-            <div className="space-y-3">
-              {selectedAcademicYear ? (
-                <Button 
-                  onClick={() => setShowCreateTermModal(true)}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Term
-                </Button>
-              ) : (
-                <CreateAcademicYearModal 
-                  onSuccess={handleAcademicYearCreated}
-                  trigger={
-                    <Button className="bg-primary hover:bg-primary/90">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Academic Year & Terms
-                    </Button>
-                  }
-                />
-              )}
-            </div>
-          </div>
-        </CardContent>
-        
-        {/* Create Term Modal */}
-        {selectedAcademicYear && (
-          <CreateTermModal
-            isOpen={showCreateTermModal}
-            onClose={() => setShowCreateTermModal(false)}
-            onSuccess={handleTermCreated}
-            academicYear={selectedAcademicYear}
-          />
-        )}
-      </Card>
-    )
+    return null
   }
 
   // Display terms
