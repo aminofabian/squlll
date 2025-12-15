@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-// Use internal GraphQL proxy route instead of external endpoint
-const GRAPHQL_ENDPOINT = 'http://localhost:3004/api/graphql';
+// Use external GraphQL endpoint for production compatibility
+const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql';
 
 // GraphQL Error Classification
 enum GraphQLErrorType {
@@ -151,8 +151,6 @@ async function handleGraphQLCall(apiCall: () => Promise<Response>): Promise<any>
 }
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url);
-  const GRAPHQL_ENDPOINT = `${requestUrl.origin}/api/graphql`;
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
@@ -162,7 +160,6 @@ export async function GET(request: Request) {
       hasAccessToken: !!token,
       tokenLength: token?.length || 0,
       hasTenantId: !!tenantId,
-      requestUrl: request.url,
       graphqlEndpoint: GRAPHQL_ENDPOINT,
     });
 
@@ -221,13 +218,11 @@ export async function GET(request: Request) {
     });
 
     const result = await handleGraphQLCall(async () => {
-      const cookieHeader = request.headers.get('cookie');
-
       return await fetch(GRAPHQL_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(cookieHeader && { 'Cookie': cookieHeader }),
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           query
