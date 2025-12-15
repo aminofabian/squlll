@@ -426,9 +426,10 @@ export default function SchoolDashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
+                  className="h-8 px-3 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
                 >
-                  Academic Year
+                  <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-primary/80 group-hover:text-primary transition-colors" />
+                  <span className="text-xs font-medium tracking-tight">Academic Year</span>
                 </Button>
               }
             />
@@ -439,10 +440,10 @@ export default function SchoolDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowCreateTermModal(true)}
-                className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
+                className="h-8 px-3 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Term
+                <Plus className="h-3.5 w-3.5 mr-1.5 text-primary/80 group-hover:text-primary transition-colors" />
+                <span className="text-xs font-medium tracking-tight">Create Term</span>
               </Button>
             )}
             
