@@ -173,12 +173,6 @@ export default function SignupPage() {
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
-      // When moving to the school step, ensure school fields are clear
-      if (currentStep === 0) {
-        // Manually clear these fields when advancing to ensure no auto-population occurs
-        form.setValue("schoolName", "")
-        form.setValue("schoolUrl", "")
-      }
       setCurrentStep(prev => prev + 1)
     }
   }
@@ -343,223 +337,6 @@ export default function SignupPage() {
     { test: (pass: string) => /[0-9]/.test(pass), text: "One number" },
   ]
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className={inputStyles.formItem}>
-                  <FormLabel className={inputStyles.label}>Full Name</FormLabel>
-                  <FormControl>
-                    <div className={inputStyles.container}>
-                      <Input 
-                        placeholder="Enter your full name"
-                        className={inputStyles.base}
-                        disabled={isLoading}
-                        {...field}
-                      />
-                      <User className={inputStyles.icon} />
-                    </div>
-                  </FormControl>
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className={inputStyles.formItem}>
-                  <FormLabel className={inputStyles.label}>Email Address</FormLabel>
-                  <FormControl>
-                    <div className={inputStyles.container}>
-                      <Input 
-                        type="email"
-                        placeholder="Enter your email address"
-                        className={inputStyles.base}
-                        disabled={isLoading}
-                        {...field}
-                      />
-                      <Mail className={inputStyles.icon} />
-                    </div>
-                  </FormControl>
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                  <FormLabel className={inputStyles.label}>Password</FormLabel>
-                  <FormControl>
-                    <div className={inputStyles.container}>
-                      <Input 
-                        type="password"
-                        placeholder="Create a secure password"
-                        className={inputStyles.base}
-                        disabled={isLoading}
-                        onFocus={() => setPasswordFocused(true)}
-                        {...field}
-                        onBlur={() => {
-                          field.onBlur();
-                          setPasswordFocused(false);
-                        }}
-                      />
-                      <KeyRound className={inputStyles.icon} />
-                    </div>
-                  </FormControl>
-                  {passwordFocused && (
-                    <div className="mt-3 p-3 bg-gray-50/80 backdrop-blur-sm rounded-lg space-y-2 animate-in fade-in-50 slide-in-from-top-5 border border-gray-100">
-                      {passwordRequirements.map((req, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <div className={cn(
-                            "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200",
-                            req.test(field.value) 
-                              ? "bg-[#246a59] scale-110" 
-                              : "bg-gray-200"
-                          )}>
-                            {req.test(field.value) && (
-                              <CheckCircle2 className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className={cn(
-                            "text-sm transition-colors duration-200",
-                            req.test(field.value) ? "text-[#246a59]" : "text-gray-500"
-                          )}>
-                            {req.text}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
-            />
-          </>
-        );
-      case 1:
-        return (
-          <>
-            <FormField
-              control={form.control}
-              name="schoolName"
-              render={({ field }) => {
-                // Force empty value when first displaying this step
-                if (currentStep === 1 && field.value === name) {
-                  setTimeout(() => form.setValue("schoolName", ""), 0);
-                }
-                
-                return (
-                  <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                    <FormLabel className={inputStyles.label}>School Name</FormLabel>
-                    <FormControl>
-                      <div className={inputStyles.container}>
-                        <Input 
-                          placeholder="Enter your school name"
-                          className={inputStyles.base}
-                          disabled={isLoading}
-                          // Use controlled component approach to prevent auto-population
-                          {...field}
-                          ref={(input) => {
-                            // Clear the input when it's first rendered in step 1
-                            if (input && currentStep === 1 && 
-                                (field.value === name || field.value.includes(email))) {
-                              form.setValue("schoolName", "");
-                            }
-                          }}
-                        />
-                        <Building2 className={inputStyles.icon} />
-                      </div>
-                    </FormControl>
-                    <FormMessage className={inputStyles.error} />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField
-              control={form.control}
-              name="schoolUrl"
-              render={({ field }) => (
-                <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                  <FormLabel className={inputStyles.label}>
-                    <div className="flex items-center justify-between">
-                      <span>School URL</span>
-                      {isUrlEdited && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setIsUrlEdited(false);
-                            const event = new Event('input', { bubbles: true });
-                            const schoolNameInput = document.querySelector('input[name="schoolName"]');
-                            schoolNameInput?.dispatchEvent(event);
-                          }}
-                          className="h-7 text-xs font-normal text-gray-500 hover:text-[#246a59] hover:bg-[#246a59]/5"
-                        >
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                          Reset to auto-generated
-                        </Button>
-                      )}
-                    </div>
-                  </FormLabel>
-                  <FormControl>
-                    <div className="relative group">
-                      <div className="flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-200 focus-within:ring-2 focus-within:ring-[#246a59] transition-all duration-200">
-                        <span className="flex select-none items-center px-3 rounded-l-lg border-0 bg-gray-50 text-gray-500 text-sm sm:text-base">
-                          https://
-                        </span>
-                        <div className="relative flex-1">
-                          <Input 
-                            placeholder="your-school"
-                            className="block w-full rounded-none border-0 py-3 pl-3 pr-[105px] text-gray-900 ring-0 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                            disabled={isLoading}
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e);
-                              setIsUrlEdited(true);
-                            }}
-                          />
-                          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                            .squl.co.ke
-                          </span>
-                        </div>
-                        <div className="relative -ml-px">
-                          <div className="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-gray-200 via-gray-200 to-transparent"></div>
-                          <div className="flex items-center px-3 rounded-r-lg border-0 bg-gray-50">
-                            <Globe2 className="w-5 h-5 text-gray-400" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </FormControl>
-                  <div className="mt-2.5 flex items-start space-x-2">
-                    <Info className="w-4 h-4 mt-0.5 text-gray-400" />
-                    <p className="text-sm text-gray-500 leading-tight">
-                      This will be your school's unique URL. Auto-generated from school name for convenience.
-                    </p>
-                  </div>
-                  <FormMessage className={inputStyles.error} />
-                </FormItem>
-              )}
-            />
-          </>
-        );
-      default:
-        return null;
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#edf2f7] flex items-center justify-center p-4 relative">
       {/* Background decoration elements */}
@@ -683,19 +460,43 @@ export default function SignupPage() {
           <div className="flex-1 p-6 lg:p-8">
             <Form {...form}>
               <form 
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault(); // Explicitly prevent default form submission
-                  form.handleSubmit(onSubmit, (errors) => {
-                    // Handle validation errors
+                  
+                  // Only proceed if we're on the final step
+                  if (currentStep !== steps.length - 1) {
+                    return;
+                  }
+                  
+                  // Get current form values to check if fields are filled
+                  const values = form.getValues();
+                  
+                  // Manually validate all fields before submission
+                  const isValid = await form.trigger();
+                  
+                  if (!isValid) {
+                    const errors = form.formState.errors;
+                    // Check which fields have errors and show appropriate message
                     if (errors.name || errors.email || errors.password) {
-                      setError('Please complete your personal information correctly.');
-                      setCurrentStep(0);
+                      // Check if these fields are actually empty vs validation error
+                      if (!values.name || !values.email || !values.password) {
+                        setError('Please complete your personal information correctly.');
+                        setCurrentStep(0);
+                      } else {
+                        // Fields have values but failed validation (e.g., password too weak)
+                        setError(errors.name?.message || errors.email?.message || errors.password?.message || 'Please check your personal information.');
+                        setCurrentStep(0);
+                      }
                     } else if (errors.schoolName) {
                       setError('Please enter a valid school name (at least 2 characters).');
                     } else {
                       setError('Please check the form for errors.');
                     }
-                  })(e);
+                    return;
+                  }
+                  
+                  // All valid, proceed with submission
+                  onSubmit(values);
                 }} 
                 className="space-y-6 max-w-2xl"
               >
@@ -720,198 +521,203 @@ export default function SignupPage() {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {currentStep === 0 ? (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem className={inputStyles.formItem}>
-                            <FormLabel className={inputStyles.label}>Full Name</FormLabel>
-                            <FormControl>
-                              <div className={inputStyles.container}>
-                                <Input 
-                                  placeholder="Enter your full name"
-                                  className={inputStyles.base}
-                                  disabled={isLoading}
-                                  {...field}
-                                />
-                                <User className={inputStyles.icon} />
-                              </div>
-                            </FormControl>
-                            <FormMessage className={inputStyles.error} />
-                          </FormItem>
-                        )}
-                      />
+                  {/* Step 0: Personal Information - Keep in DOM but hide when not active */}
+                  <div className={cn("contents", currentStep !== 0 && "hidden")}>
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className={inputStyles.formItem}>
+                          <FormLabel className={inputStyles.label}>Full Name</FormLabel>
+                          <FormControl>
+                            <div className={inputStyles.container}>
+                              <Input 
+                                placeholder="Enter your full name"
+                                className={inputStyles.base}
+                                disabled={isLoading}
+                                autoComplete="name"
+                                {...field}
+                              />
+                              <User className={inputStyles.icon} />
+                            </div>
+                          </FormControl>
+                          <FormMessage className={inputStyles.error} />
+                        </FormItem>
+                      )}
+                    />
 
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem className={inputStyles.formItem}>
-                            <FormLabel className={inputStyles.label}>Email Address</FormLabel>
-                            <FormControl>
-                              <div className={inputStyles.container}>
-                                <Input 
-                                  type="email"
-                                  placeholder="Enter your email address"
-                                  className={inputStyles.base}
-                                  disabled={isLoading}
-                                  {...field}
-                                />
-                                <Mail className={inputStyles.icon} />
-                              </div>
-                            </FormControl>
-                            <FormMessage className={inputStyles.error} />
-                          </FormItem>
-                        )}
-                      />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className={inputStyles.formItem}>
+                          <FormLabel className={inputStyles.label}>Email Address</FormLabel>
+                          <FormControl>
+                            <div className={inputStyles.container}>
+                              <Input 
+                                type="email"
+                                placeholder="Enter your email address"
+                                className={inputStyles.base}
+                                disabled={isLoading}
+                                autoComplete="email"
+                                {...field}
+                              />
+                              <Mail className={inputStyles.icon} />
+                            </div>
+                          </FormControl>
+                          <FormMessage className={inputStyles.error} />
+                        </FormItem>
+                      )}
+                    />
 
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                            <FormLabel className={inputStyles.label}>Password</FormLabel>
-                            <FormControl>
-                              <div className={inputStyles.container}>
-                                <Input 
-                                  type="password"
-                                  placeholder="Create a secure password"
-                                  className={inputStyles.base}
-                                  disabled={isLoading}
-                                  onFocus={() => setPasswordFocused(true)}
-                                  {...field}
-                                  onBlur={() => {
-                                    field.onBlur();
-                                    setPasswordFocused(false);
-                                  }}
-                                />
-                                <KeyRound className={inputStyles.icon} />
-                              </div>
-                            </FormControl>
-                            {passwordFocused && (
-                              <div className="mt-3 p-3 bg-gray-50/80 backdrop-blur-sm rounded-lg space-y-2 animate-in fade-in-50 slide-in-from-top-5 border border-gray-100">
-                                {passwordRequirements.map((req, index) => (
-                                  <div key={index} className="flex items-center space-x-2">
-                                    <div className={cn(
-                                      "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200",
-                                      req.test(field.value) 
-                                        ? "bg-[#246a59] scale-110" 
-                                        : "bg-gray-200"
-                                    )}>
-                                      {req.test(field.value) && (
-                                        <CheckCircle2 className="w-3 h-3 text-white" />
-                                      )}
-                                    </div>
-                                    <span className={cn(
-                                      "text-sm transition-colors duration-200",
-                                      req.test(field.value) ? "text-[#246a59]" : "text-gray-500"
-                                    )}>
-                                      {req.text}
-                                    </span>
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
+                          <FormLabel className={inputStyles.label}>Password</FormLabel>
+                          <FormControl>
+                            <div className={inputStyles.container}>
+                              <Input 
+                                type="password"
+                                placeholder="Create a secure password"
+                                className={inputStyles.base}
+                                disabled={isLoading}
+                                autoComplete="new-password"
+                                onFocus={() => setPasswordFocused(true)}
+                                {...field}
+                                onBlur={() => {
+                                  field.onBlur();
+                                  setPasswordFocused(false);
+                                }}
+                              />
+                              <KeyRound className={inputStyles.icon} />
+                            </div>
+                          </FormControl>
+                          {passwordFocused && (
+                            <div className="mt-3 p-3 bg-gray-50/80 backdrop-blur-sm rounded-lg space-y-2 animate-in fade-in-50 slide-in-from-top-5 border border-gray-100">
+                              {passwordRequirements.map((req, index) => (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <div className={cn(
+                                    "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200",
+                                    req.test(field.value) 
+                                      ? "bg-[#246a59] scale-110" 
+                                      : "bg-gray-200"
+                                  )}>
+                                    {req.test(field.value) && (
+                                      <CheckCircle2 className="w-3 h-3 text-white" />
+                                    )}
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                            <FormMessage className={inputStyles.error} />
-                          </FormItem>
-                        )}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="schoolName"
-                        render={({ field }) => (
-                          <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                            <FormLabel className={inputStyles.label}>School Name</FormLabel>
-                            <FormControl>
-                              <div className={inputStyles.container}>
-                                <Input 
-                                  placeholder="Enter your school name"
-                                  className={inputStyles.base}
-                                  disabled={isLoading}
-                                  {...field}
-                                />
-                                <Building2 className={inputStyles.icon} />
-                              </div>
-                            </FormControl>
-                            <FormMessage className={inputStyles.error} />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="schoolUrl"
-                        render={({ field }) => (
-                          <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                            <FormLabel className={inputStyles.label}>
-                              <div className="flex items-center justify-between">
-                                <span>School URL</span>
-                                {isUrlEdited && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setIsUrlEdited(false);
-                                      const event = new Event('input', { bubbles: true });
-                                      const schoolNameInput = document.querySelector('input[name="schoolName"]');
-                                      schoolNameInput?.dispatchEvent(event);
-                                    }}
-                                    className="h-7 text-xs font-normal text-gray-500 hover:text-[#246a59] hover:bg-[#246a59]/5"
-                                  >
-                                    <RefreshCw className="w-3 h-3 mr-1" />
-                                    Reset to auto-generated
-                                  </Button>
-                                )}
-                              </div>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="relative group">
-                                <div className="flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-200 focus-within:ring-2 focus-within:ring-[#246a59] transition-all duration-200">
-                                  <span className="flex select-none items-center px-3 rounded-l-lg border-0 bg-gray-50 text-gray-500 text-sm sm:text-base">
-                                    https://
+                                  <span className={cn(
+                                    "text-sm transition-colors duration-200",
+                                    req.test(field.value) ? "text-[#246a59]" : "text-gray-500"
+                                  )}>
+                                    {req.text}
                                   </span>
-                                  <div className="relative flex-1">
-                                    <Input 
-                                      placeholder="your-school"
-                                      className="block w-full rounded-none border-0 py-3 pl-3 pr-[105px] text-gray-900 ring-0 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                                      disabled={isLoading}
-                                      {...field}
-                                      onChange={(e) => {
-                                        field.onChange(e);
-                                        setIsUrlEdited(true);
-                                      }}
-                                    />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                                      .squl.co.ke
-                                    </span>
-                                  </div>
-                                  <div className="relative -ml-px">
-                                    <div className="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-gray-200 via-gray-200 to-transparent"></div>
-                                    <div className="flex items-center px-3 rounded-r-lg border-0 bg-gray-50">
-                                      <Globe2 className="w-5 h-5 text-gray-400" />
-                                    </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <FormMessage className={inputStyles.error} />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Step 1: School Details - Keep in DOM but hide when not active */}
+                  <div className={cn("contents", currentStep !== 1 && "hidden")}>
+                    <FormField
+                      control={form.control}
+                      name="schoolName"
+                      render={({ field }) => (
+                        <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
+                          <FormLabel className={inputStyles.label}>School Name</FormLabel>
+                          <FormControl>
+                            <div className={inputStyles.container}>
+                              <Input 
+                                placeholder="Enter your school name"
+                                className={inputStyles.base}
+                                disabled={isLoading}
+                                autoComplete="organization"
+                                {...field}
+                              />
+                              <Building2 className={inputStyles.icon} />
+                            </div>
+                          </FormControl>
+                          <FormMessage className={inputStyles.error} />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="schoolUrl"
+                      render={({ field }) => (
+                        <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
+                          <FormLabel className={inputStyles.label}>
+                            <div className="flex items-center justify-between">
+                              <span>School URL</span>
+                              {isUrlEdited && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setIsUrlEdited(false);
+                                    const event = new Event('input', { bubbles: true });
+                                    const schoolNameInput = document.querySelector('input[name="schoolName"]');
+                                    schoolNameInput?.dispatchEvent(event);
+                                  }}
+                                  className="h-7 text-xs font-normal text-gray-500 hover:text-[#246a59] hover:bg-[#246a59]/5"
+                                >
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Reset to auto-generated
+                                </Button>
+                              )}
+                            </div>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative group">
+                              <div className="flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-200 focus-within:ring-2 focus-within:ring-[#246a59] transition-all duration-200">
+                                <span className="flex select-none items-center px-3 rounded-l-lg border-0 bg-gray-50 text-gray-500 text-sm sm:text-base">
+                                  https://
+                                </span>
+                                <div className="relative flex-1">
+                                  <Input 
+                                    placeholder="your-school"
+                                    className="block w-full rounded-none border-0 py-3 pl-3 pr-[105px] text-gray-900 ring-0 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                                    disabled={isLoading}
+                                    autoComplete="off"
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(e);
+                                      setIsUrlEdited(true);
+                                    }}
+                                  />
+                                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                                    .squl.co.ke
+                                  </span>
+                                </div>
+                                <div className="relative -ml-px">
+                                  <div className="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-gray-200 via-gray-200 to-transparent"></div>
+                                  <div className="flex items-center px-3 rounded-r-lg border-0 bg-gray-50">
+                                    <Globe2 className="w-5 h-5 text-gray-400" />
                                   </div>
                                 </div>
                               </div>
-                            </FormControl>
-                            <div className="mt-2.5 flex items-start space-x-2">
-                              <Info className="w-4 h-4 mt-0.5 text-gray-400" />
-                              <p className="text-sm text-gray-500 leading-tight">
-                                This will be your school's unique URL. Auto-generated from school name for convenience.
-                              </p>
                             </div>
-                            <FormMessage className={inputStyles.error} />
-                          </FormItem>
-                        )}
-                      />
-                    </>
-                  )}
+                          </FormControl>
+                          <div className="mt-2.5 flex items-start space-x-2">
+                            <Info className="w-4 h-4 mt-0.5 text-gray-400" />
+                            <p className="text-sm text-gray-500 leading-tight">
+                              This will be your school's unique URL. Auto-generated from school name for convenience.
+                            </p>
+                          </div>
+                          <FormMessage className={inputStyles.error} />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-6">
