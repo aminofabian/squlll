@@ -1398,24 +1398,8 @@ export const useTimetableStore = create<TimetableStore>()(
             return timeStr;
           };
 
-          // Pick the grade block matching the selected grade (id first, then name/shortName)
-          const gradeIdLower = (gradeId || '').toLowerCase();
-          const gradeBlock =
-            timetableByGrade.find((g: any) => {
-              const id = g.gradeLevel?.id;
-              const name = g.gradeLevel?.name?.toLowerCase();
-              const shortName = g.gradeLevel?.shortName?.toLowerCase();
-              return (
-                (!!id && id === gradeId) ||
-                (!!name && name === gradeIdLower) ||
-                (!!shortName && shortName === gradeIdLower)
-              );
-            }) ||
-            timetableByGrade[0] ||
-            null;
-
-          if (!gradeBlock) {
-            console.warn('No grade block found for grade:', gradeId);
+          if (timetableByGrade.length === 0) {
+            console.warn('No grade blocks found in timetable');
             set((state) => ({
               entries: state.entries.filter((e) => e.gradeId !== gradeId),
               lastUpdated: new Date().toISOString(),
@@ -1425,10 +1409,13 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const timeSlotMap = new Map<string, TimeSlot>();
           const fetchedEntries: TimetableEntry[] = [];
+          const seenEntryIds = new Set<string>();
 
-          // Collect time slots from the selected grade block (they're shared across grades anyway)
-          // Process only the selected grade block for entries (more efficient)
-          if (Array.isArray(gradeBlock.days)) {
+          // Search ALL grade blocks for entries matching the requested grade
+          // Entries can appear in any grade block with their own gradeLevel.id
+          timetableByGrade.forEach((gradeBlock: any) => {
+            if (!Array.isArray(gradeBlock.days)) return;
+            
             gradeBlock.days.forEach((dayItem: any) => {
               const dayTemplate = dayItem.dayTemplate;
               const dayOfWeek = dayTemplate?.dayOfWeek;
@@ -1442,7 +1429,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   return;
                 }
                 
-                // Collect time slots (only non-break periods)
+                // Collect time slots (only non-break periods) - shared across grades
                 if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
@@ -1457,18 +1444,22 @@ export const useTimetableStore = create<TimetableStore>()(
                   });
                 }
 
-                // Process entries from this grade block (only non-break periods)
+                // Process entries - check if they belong to the requested grade
                 if (p?.entry && period?.id && !p?.isBreak) {
                   const entry = p.entry;
                   // Use the entry's own gradeLevel.id - entries know which grade they belong to
                   const entryGradeLevelId = entry.gradeLevel?.id;
                   
                   // Only include entries that match the requested grade
-                  // The backend returns all entries across the timetable, but we filter by grade
                   if (!entryGradeLevelId || entryGradeLevelId !== gradeId) {
-                    // Skip entries that don't belong to the requested grade
                     return;
                   }
+
+                  // Avoid duplicates (same entry might appear in multiple blocks)
+                  if (seenEntryIds.has(entry.id)) {
+                    return;
+                  }
+                  seenEntryIds.add(entry.id);
 
                   const subjectId = entry.subject?.id;
                   const teacherId = entry.teacher?.id;
@@ -1480,7 +1471,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   
                   fetchedEntries.push({
                     id: entry.id,
-                    gradeId: entryGradeLevelId, // Use entry's own gradeLevel.id
+                    gradeId: entryGradeLevelId,
                     subjectId,
                     teacherId,
                     timeSlotId,
@@ -1492,7 +1483,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 }
               });
             });
-          }
+          });
 
           const fetchedTimeSlots = Array.from(timeSlotMap.values());
           set((state) => ({

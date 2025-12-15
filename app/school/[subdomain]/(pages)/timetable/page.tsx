@@ -325,15 +325,10 @@ export default function SmartTimetableNew() {
         return;
       }
 
-      // Reload full school timetable first (includes time slots and all entries)
+      // Reload full school timetable (includes time slots and all entries for all grades)
+      // Then reload breaks separately (they come from a different query)
       await loadSchoolTimetable(termId);
-      
-      // Then reload additional data
-      await Promise.all([
-        loadBreaks(),
-        loadDayTemplatePeriods(),
-        selectedGradeId ? loadEntries(termId, selectedGradeId) : Promise.resolve(),
-      ]);
+      await loadBreaks();
       
       console.log('Timetable data reloaded successfully');
     } catch (error) {
@@ -344,7 +339,7 @@ export default function SmartTimetableNew() {
         variant: 'default',
       });
     }
-  }, [loadBreaks, loadDayTemplatePeriods, loadEntries, loadSchoolTimetable, selectedTerm?.id, selectedTermId, selectedGradeId, toast]);
+  }, [loadBreaks, loadSchoolTimetable, selectedTerm?.id, selectedTermId, toast]);
 
   const handleDeleteEntriesForTerm = useCallback(async () => {
     const termId = selectedTerm?.id || selectedTermId;
