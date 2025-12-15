@@ -894,8 +894,35 @@ export default function SignupPage() {
                   )}
                   
                   <Button
-                    type={currentStep === steps.length - 1 ? "submit" : "button"}
-                    onClick={currentStep === steps.length - 1 ? undefined : nextStep}
+                    type="button"
+                    onClick={async () => {
+                      if (currentStep === steps.length - 1) {
+                        // Explicitly trigger form submission
+                        const isValid = await form.trigger();
+                        console.log('Form validation result:', isValid, form.formState.errors);
+                        if (isValid) {
+                          form.handleSubmit(onSubmit)();
+                        } else {
+                          // Check if errors are from previous step fields
+                          const errors = form.formState.errors;
+                          if (errors.name || errors.email || errors.password) {
+                            setError('Please go back and complete your personal information correctly.');
+                            setCurrentStep(0);
+                          } else if (errors.schoolName) {
+                            setError('Please enter a valid school name (at least 2 characters).');
+                          }
+                        }
+                      } else {
+                        // Validate current step before proceeding
+                        const fieldsToValidate = currentStep === 0 
+                          ? ['name', 'email', 'password'] as const
+                          : ['schoolName'] as const;
+                        const isValid = await form.trigger(fieldsToValidate);
+                        if (isValid) {
+                          nextStep();
+                        }
+                      }
+                    }}
                     className={inputStyles.nextButton}
                     disabled={isLoading}
                   >
