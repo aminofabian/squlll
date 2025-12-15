@@ -178,7 +178,7 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
       startDate: entry.openingDate,
       endDate: entry.closingDate
     })
-    toast.success(`Prefilled with ${entry.name} (${entry.duration})`)
+    toast.success(`Calendar updated! Using official ${entry.name} dates (${entry.duration}) from the Ministry of Education`)
   }
 
   const createSingleTerm = async (entry: MoeTermEntry): Promise<any> => {
@@ -312,33 +312,27 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
               </CardContent>
             </Card>
 
-            {/* Term Name */}
-            <div className="space-y-2">
-              <Label htmlFor="termName">Term Name</Label>
-              <Input
-                id="termName"
-                placeholder="e.g., Fall 2024, Term 1, First Semester"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                disabled={isLoading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter a descriptive name for this term
-              </p>
-            </div>
-
+            {/* Official Calendar Terms - Prominent at Top */}
             {!!moeTermPresets.length && (
-              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
-                <CardContent className="pt-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      Autofill from Kenya MoE 2026
+              <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/30 shadow-md">
+                <CardContent className="pt-4 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">
+                          Quick Setup: Official School Calendar
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Use official term dates from the Kenya Ministry of Education 2026 calendar. Click a term below to fill the form, or create all terms at once.
+                      </p>
                     </div>
                     <Button
                       onClick={handleCreateAllTerms}
                       disabled={isLoading || isCreatingAll}
-                      className="h-8 px-3 text-xs bg-primary hover:bg-primary/90 text-white shadow-sm"
+                      className="flex-shrink-0 h-8 px-3 text-xs bg-primary hover:bg-primary/90 text-white/90 shadow-md hover:shadow-lg transition-all"
+                      title="Click here to automatically create all terms from the official Ministry of Education calendar"
                     >
                       {isCreatingAll ? (
                         <>
@@ -347,8 +341,8 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
                         </>
                       ) : (
                         <>
-                          <Zap className="h-3 w-3 mr-1.5" />
-                          Create All Terms
+                          <Zap className="h-3 w-3 mr-1.5 opacity-80" />
+                          <span className="text-white/90">Click Here to Auto-Create All</span>
                         </>
                       )}
                     </Button>
@@ -362,6 +356,7 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
                           variant="outline"
                           onClick={() => handleUsePreset(entry)}
                           disabled={isLoading || isCreatingAll}
+                          title={`Click here to automatically fill in ${entry.name} dates from the official Ministry of Education calendar`}
                           className={`
                             w-full h-auto py-3 px-4 justify-start text-left 
                             transition-all duration-200 cursor-pointer
@@ -393,19 +388,44 @@ export function CreateTermModal({ isOpen, onClose, onSuccess, academicYear }: Cr
                       )
                     })}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
-                    Click individual terms to prefill, or use "Create All Terms" to create all three at once.
-                  </p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Date Range */}
-            <Card>
+            {/* Divider - OR Section */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-slate-50 dark:bg-slate-900 px-2 text-slate-500 dark:text-slate-400">
+                  Or Create Custom Term
+                </span>
+              </div>
+            </div>
+
+            {/* Manual Entry Section */}
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Term Period</CardTitle>
+                <CardTitle className="text-sm">Create Custom Term</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Term Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="termName">Term Name</Label>
+                  <Input
+                    id="termName"
+                    placeholder="e.g., Fall 2024, Term 1, First Semester"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter a descriptive name for this term
+                  </p>
+                </div>
+
+                {/* Date Range */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="termStartDate">Start Date</Label>
