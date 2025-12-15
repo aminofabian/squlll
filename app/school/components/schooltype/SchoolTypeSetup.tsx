@@ -281,20 +281,24 @@ export const SchoolTypeSetup = () => {
     }
   }, [pendingToast])
 
-  // Store access token in localStorage as fallback
+  // Store auth data from URL parameters in cookies and localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const accessToken = urlParams.get('accessToken')
+      const authData = getAuthDataFromURL();
       
-      if (accessToken) {
+      if (authData && authData.accessToken) {
+        // Store in localStorage as fallback
         try {
-          // Store in localStorage as fallback
-          localStorage.setItem('accessToken', accessToken)
-          console.log('🔍 Debug - Stored access token in localStorage as fallback')
+          localStorage.setItem('accessToken', authData.accessToken);
+          console.log('🔍 Debug - Stored access token in localStorage as fallback');
         } catch (error) {
-          console.warn('Failed to store access token in localStorage:', error)
+          console.warn('Failed to store access token in localStorage:', error);
         }
+        
+        // Store in cookies via API endpoint for HTTP-only cookies
+        storeAuthDataInCookies(authData).catch(error => {
+          console.warn('Failed to store auth data in cookies:', error);
+        });
       }
     }
   }, [])
@@ -606,6 +610,46 @@ export const SchoolTypeSetup = () => {
     setIsLoading(true);
     const selectedLevelsList = Array.from(selectedLevels[selectedType]);
     
+    // Check for access token before attempting configuration
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      console.error('No access token found. Cannot proceed with configuration.');
+      toast.error(
+        <div className="space-y-2 p-2">
+          <div className="font-semibold text-slate-900 dark:text-slate-100">
+            Authentication Required
+          </div>
+          <div className="text-sm text-slate-600 dark:text-slate-400">
+            Please log in to configure your school levels.
+          </div>
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => {
+                toast.dismiss();
+                const returnUrl = encodeURIComponent(window.location.href);
+                router.push(`/login?returnUrl=${returnUrl}`);
+              }}
+              className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>,
+        { 
+          duration: 10000,
+          style: {
+            maxWidth: '420px',
+            background: 'white',
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          }
+        }
+      );
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       // Smart level mapping with fallback support
       const attemptConfiguration = async (levelNames: string[], attemptNumber: number = 1): Promise<any> => {
@@ -635,8 +679,53 @@ export const SchoolTypeSetup = () => {
 
         const responseData = await response.json();
         
-        if (!response.ok && responseData.error && !responseData.error.includes('SCHOOL_ALREADY_CONFIGURED')) {
-          throw new Error(`Attempt ${attemptNumber} failed: ${responseData.error}`);
+        console.log(`🔍 Debug - Response for attempt ${attemptNumber}:`, {
+          status: response.status,
+          ok: response.ok,
+          error: responseData.error,
+          errors: responseData.errors,
+          data: responseData.data
+        });
+        
+        // Handle authentication errors separately - don't retry with different mappings
+        if (response.status === 401) {
+          const authError = new Error('Authentication required. Please log in again.');
+          (authError as any).isAuthError = true;
+          throw authError;
+        }
+        
+        // Handle permission errors separately
+        if (response.status === 403) {
+          const permError = new Error('Permission denied. You may not have admin rights to configure school levels.');
+          (permError as any).isAuthError = true;
+          throw permError;
+        }
+        
+        // Handle school already configured - don't throw, return it
+        if (responseData.error === 'SCHOOL_ALREADY_CONFIGURED') {
+          return { response, responseData };
+        }
+        
+        // For other errors, throw with details
+        if (!response.ok) {
+          // Extract detailed error message
+          let errorMessage = responseData.error || responseData.message || 'Unknown error';
+          
+          // If there are GraphQL errors, include them
+          if (responseData.errors && Array.isArray(responseData.errors)) {
+            const graphqlErrors = responseData.errors.map((err: any) => err.message || err).join('; ');
+            errorMessage = `${errorMessage}. GraphQL errors: ${graphqlErrors}`;
+          }
+          
+          // If there are error details, include them
+          if (responseData.details) {
+            errorMessage = `${errorMessage}. Details: ${JSON.stringify(responseData.details)}`;
+          }
+          
+          const error = new Error(`Attempt ${attemptNumber} failed: ${errorMessage}`);
+          (error as any).responseData = responseData;
+          (error as any).status = response.status;
+          throw error;
         }
         
         return { response, responseData };
@@ -666,10 +755,15 @@ export const SchoolTypeSetup = () => {
         configResult = await attemptConfiguration(mappedLevelNames, 1);
         successful = true;
         console.log('✅ Primary mapping succeeded!');
-      } catch (primaryError) {
+      } catch (primaryError: any) {
         console.warn('⚠️ Primary mapping failed:', primaryError);
         
-        // Try fallback mappings for CBC system
+        // Don't retry with fallback mappings if it's an authentication error
+        if (primaryError.isAuthError) {
+          throw primaryError;
+        }
+        
+        // Try fallback mappings for CBC system (only for mapping/validation errors)
         if (selectedType === 'cbc' && fallbackLevelMapping.cbc) {
           for (let attempt = 0; attempt < 4; attempt++) {
             try {
@@ -683,10 +777,16 @@ export const SchoolTypeSetup = () => {
               successful = true;
               console.log(`✅ Fallback attempt ${attempt + 1} succeeded!`);
               break;
-            } catch (fallbackError) {
+            } catch (fallbackError: any) {
               console.warn(`⚠️ Fallback attempt ${attempt + 1} failed:`, fallbackError);
+              
+              // Don't continue retrying if it's an auth error
+              if (fallbackError.isAuthError) {
+                throw fallbackError;
+              }
+              
               if (attempt === 3) {
-                throw new Error(`All configuration attempts failed. Last error: ${fallbackError}`);
+                throw new Error(`All configuration attempts failed. Last error: ${fallbackError.message || fallbackError}`);
               }
             }
           }
@@ -768,12 +868,52 @@ export const SchoolTypeSetup = () => {
           router.push(`/classes`);
         }, 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error configuring school levels:', error);
-      toast.error(
-        `Failed to configure school levels. ${error instanceof Error ? error.message : 'Please try again.'}`,
-        { duration: 5000 }
-      );
+      
+      // Handle authentication errors with specific messaging
+      if (error.isAuthError) {
+        toast.error(
+          <div className="space-y-2 p-2">
+            <div className="font-semibold text-slate-900 dark:text-slate-100">
+              Authentication Required
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">
+              {error.message || 'Please log in again to continue.'}
+            </div>
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => {
+                  toast.dismiss();
+                  // Redirect to login with return URL
+                  const returnUrl = encodeURIComponent(window.location.href);
+                  router.push(`/login?returnUrl=${returnUrl}`);
+                }}
+                className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>,
+          { 
+            duration: 10000,
+            style: {
+              maxWidth: '420px',
+              background: 'white',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            }
+          }
+        );
+      } else {
+        // Handle other errors
+        const errorMessage = error instanceof Error ? error.message : 'Please try again.';
+        toast.error(
+          `Failed to configure school levels. ${errorMessage}`,
+          { duration: 5000 }
+        );
+      }
     } finally {
       setIsLoading(false);
     }
