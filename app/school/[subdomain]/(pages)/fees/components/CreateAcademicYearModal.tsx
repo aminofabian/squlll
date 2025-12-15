@@ -178,8 +178,8 @@ export const CreateAcademicYearModal = ({
   const handleUseMoeData = () => {
     const moeData = getMoeAcademicYearData()
     if (!moeData) {
-      setError('Unable to load MoE data')
-      toast.error('Unable to load Ministry of Education data')
+      setError('Unable to load official school calendar data')
+      toast.error('Unable to load official school calendar data from the Ministry of Education')
       return
     }
 
@@ -188,7 +188,7 @@ export const CreateAcademicYearModal = ({
     setAcademicYearEndDate(moeData.endDate)
     setTerms(moeData.terms)
     setError(null)
-    toast.success(`Prefilled with Kenya MoE ${moeData.year} academic year data (${moeData.terms.length} terms)`)
+    toast.success(`Calendar updated! Using official ${moeData.year} school calendar from the Ministry of Education (${moeData.terms.length} terms)`)
   }
 
   // Get the year from JSON for button display
@@ -648,10 +648,10 @@ export const CreateAcademicYearModal = ({
                       size="sm"
                       className="h-8 px-3 text-xs bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary/50 text-primary font-medium shadow-sm hover:shadow transition-all"
                       onClick={handleUseMoeData}
-                      title={`Use Kenya Ministry of Education ${moeYear} academic year dates`}
+                      title={`Click to automatically fill in the official ${moeYear} school calendar dates as released by the Kenya Ministry of Education`}
                     >
                       <Sparkles className="h-3 w-3 mr-1.5" />
-                      Use MoE {moeYear}
+                      Use Official {moeYear} Calendar
                     </Button>
                   </div>
                 </div>
