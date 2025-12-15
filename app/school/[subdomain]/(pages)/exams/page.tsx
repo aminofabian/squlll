@@ -40,6 +40,7 @@ import { Exam, StudentExamResult } from "@/types/exam"
 import { format } from "date-fns"
 import { CreateExamDrawer } from "./components/CreateExamDrawer"
 import { ReportCardTemplateModal } from "./components/ReportCardTemplateModal"
+import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 
 // Student Performance View Component
 function StudentPerformanceView({ studentId }: { studentId: string }) {
@@ -645,6 +646,8 @@ export default function ExamsPage() {
   const [examTypeFilter, setExamTypeFilter] = useState<string>('all')
   const [subjectFilter, setSubjectFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedGradeId, setSelectedGradeId] = useState<string>()
+  const [selectedLevelId, setSelectedLevelId] = useState<string>()
 
   const classes = [
     "Form 1A", "Form 1B", "Form 1C",
@@ -656,9 +659,48 @@ export default function ExamsPage() {
   const terms = ["Term 1", "Term 2", "Term 3"]
   const years = ["2023", "2024", "2025"]
 
+  // Get school config for grade filtering
+  const { config: schoolConfig } = useSchoolConfigStore()
+
+  // Get selected grade name for filtering
+  const selectedGradeInfo = useMemo(() => {
+    if (!selectedGradeId || !schoolConfig?.selectedLevels) return null
+    
+    for (const level of schoolConfig.selectedLevels) {
+      const grade = level.gradeLevels?.find(g => g.id === selectedGradeId)
+      if (grade) {
+        return {
+          name: grade.name.toLowerCase(),
+          displayName: grade.name
+        }
+      }
+    }
+    return null
+  }, [selectedGradeId, schoolConfig])
+
+  // Helper to extract grade from class name (e.g., "Form 2A" -> "Form 2" or "Form 2")
+  const extractGradeFromClass = (className: string): string => {
+    // Remove stream suffix (A, B, C, etc.) and get the base grade
+    return className.replace(/\s+[A-Z]$/, '').toLowerCase().trim()
+  }
+
   // Filter exams based on current selection
   const filteredExams = useMemo(() => {
     return mockExams.filter(exam => {
+      // Filter by grade if selected
+      let matchesGrade = true
+      if (selectedGradeInfo) {
+        const examGrade = extractGradeFromClass(exam.class)
+        const selectedGradeLower = selectedGradeInfo.name.toLowerCase()
+        
+        // Match if the exam class contains the grade name or vice versa
+        // Handle cases like "Form 2" matching "Form 2A", "Form 2B", etc.
+        matchesGrade = examGrade.includes(selectedGradeLower) || 
+                      selectedGradeLower.includes(examGrade) ||
+                      exam.class.toLowerCase().includes(selectedGradeLower) ||
+                      selectedGradeLower.includes(exam.class.toLowerCase().split(' ')[0]?.toLowerCase() || '')
+      }
+      
       const matchesClass = exam.class === selectedClass && 
                           exam.term === selectedTerm && 
                           exam.academicYear === selectedYear
@@ -666,20 +708,20 @@ export default function ExamsPage() {
       const matchesSubject = subjectFilter === 'all' || exam.subject.name === subjectFilter  
       const matchesStatus = statusFilter === 'all' || exam.status === statusFilter
       
-      return matchesClass && matchesType && matchesSubject && matchesStatus
+      return matchesGrade && matchesClass && matchesType && matchesSubject && matchesStatus
     })
-  }, [selectedClass, selectedTerm, selectedYear, examTypeFilter, subjectFilter, statusFilter])
+  }, [selectedClass, selectedTerm, selectedYear, examTypeFilter, subjectFilter, statusFilter, selectedGradeInfo])
+
+  const handleGradeSelect = (gradeId: string, levelId: string) => {
+    setSelectedGradeId(gradeId)
+    setSelectedLevelId(levelId)
+  }
 
   return (
     <DashboardLayout
       searchFilter={<ExamsFilterSidebar 
-        searchTerm={studentSearchTerm}
-        onSearchChange={setStudentSearchTerm}
-        onStudentSelect={(studentId) => {
-          setSelectedStudentId(studentId)
-          setViewMode('student')
-        }}
-        selectedStudentId={selectedStudentId}
+        selectedGradeId={selectedGradeId}
+        onGradeSelect={handleGradeSelect}
       />}
     >
       <div className="space-y-6">
