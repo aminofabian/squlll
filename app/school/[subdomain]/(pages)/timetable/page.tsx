@@ -1019,53 +1019,80 @@ export default function SmartTimetableNew() {
                 </div>
               </div>
 
-              {/* Statistics */}
-              <div className="flex items-center gap-2 flex-1">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
-                  <span className="text-sm font-bold text-primary">{stats.totalLessons}</span>
-                  <span className="text-xs text-primary/80">Scheduled</span>
+              {/* Statistics - Only show when grade is selected */}
+              {selectedGradeId && (
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
+                    <span className="text-sm font-bold text-primary">{stats.totalLessons}</span>
+                    <span className="text-xs text-primary/80">Scheduled</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
+                    <span className="text-sm font-bold text-primary">{stats.completionPercentage}%</span>
+                    <span className="text-xs text-primary/80">Complete</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-none ${conflictCount > 0
+                    ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+                    }`}>
+                    <span className={`text-sm font-bold ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                      {conflictCount}
+                    </span>
+                    <span className={`text-xs ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                      Issues
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
+                    <span className="text-sm font-bold text-primary">{Object.keys(stats.subjectDistribution).length}</span>
+                    <span className="text-xs text-primary/80">Subjects</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
-                  <span className="text-sm font-bold text-primary">{stats.completionPercentage}%</span>
-                  <span className="text-xs text-primary/80">Complete</span>
-                </div>
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-none ${conflictCount > 0
-                  ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
-                  : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
-                  }`}>
-                  <span className={`text-sm font-bold ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
-                    {conflictCount}
-                  </span>
-                  <span className={`text-xs ${conflictCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>
-                    Issues
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
-                  <span className="text-sm font-bold text-primary">{Object.keys(stats.subjectDistribution).length}</span>
-                  <span className="text-xs text-primary/80">Subjects</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Conflict Warnings - Compact */}
-          {showConflicts && conflictCount > 0 && (
-            <div className="bg-red-50 border-2 border-red-200 p-2 mb-2">
-              <h3 className="text-xs font-semibold text-red-900 mb-1">
-                ⚠️ {conflictCount} Scheduling Issue{conflictCount !== 1 ? 's' : ''} Found
-              </h3>
-              <div className="space-y-0.5">
-                {teacherConflicts.slice(0, 2).map((conflict, index) => (
-                  <div key={index} className="text-[10px] text-red-800">
-                    <strong>{conflict.teacher?.name}</strong> has {conflict.entries.length} overlapping class{conflict.entries.length !== 1 ? 'es' : ''}
+          {/* Show nothing until a grade is selected */}
+          {!selectedGradeId ? (
+            <div className="flex items-center justify-center min-h-[500px]">
+              <div className="text-center max-w-md mx-auto px-4">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 bg-primary/5 dark:bg-primary/10 rounded-full animate-pulse"></div>
                   </div>
-                ))}
+                  <Calendar className="h-20 w-20 text-primary/40 dark:text-primary/30 mx-auto relative z-10" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                  Select a Grade
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Please select a grade from the dropdown above to view and manage its timetable schedule.
+                </p>
+                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    Choose a grade level to see lessons, breaks, and schedule details
+                  </p>
+                </div>
               </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Conflict Warnings - Compact */}
+              {showConflicts && conflictCount > 0 && (
+                <div className="bg-red-50 border-2 border-red-200 p-2 mb-2">
+                  <h3 className="text-xs font-semibold text-red-900 mb-1">
+                    ⚠️ {conflictCount} Scheduling Issue{conflictCount !== 1 ? 's' : ''} Found
+                  </h3>
+                  <div className="space-y-0.5">
+                    {teacherConflicts.slice(0, 2).map((conflict, index) => (
+                      <div key={index} className="text-[10px] text-red-800">
+                        <strong>{conflict.teacher?.name}</strong> has {conflict.entries.length} overlapping class{conflict.entries.length !== 1 ? 'es' : ''}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
 
-          {/* Timetable Grid */}
+              {/* Timetable Grid */}
           <div className="bg-white dark:bg-slate-800 rounded-none shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -1531,6 +1558,8 @@ export default function SmartTimetableNew() {
               {showConflicts ? 'Hide' : 'Show'} Conflicts
             </button>
           </div>
+            </>
+          )}
 
           {/* Edit Dialogs */}
           <LessonEditDialog
