@@ -52,11 +52,13 @@ export interface Grade {
   name: string;           // "Grade 7"
   level: number;          // 7 (for sorting)
   displayName?: string;   // "F1" (optional display override)
+  tenantGradeLevelId?: string; // Original tenant grade level ID for reference
 }
 
 export interface TimetableEntry {
   id: string;             // UUID
   gradeId: string;        // Reference to Grade
+  gradeName?: string;     // Grade name for matching (e.g., "Grade 10")
   subjectId: string;      // Reference to Subject
   teacherId: string;      // Reference to Teacher
   timeSlotId: string;     // Reference to TimeSlot

@@ -16,9 +16,36 @@ export function useSelectedGradeTimetable() {
   return useMemo(() => {
     if (!store.selectedGradeId) return [];
 
-    const entries = store.entries.filter(
-      (entry) => entry.gradeId === store.selectedGradeId
-    );
+    // Find selected grade info for name-based matching
+    const selectedGrade = store.grades.find(g => g.id === store.selectedGradeId);
+    const selectedGradeName = selectedGrade?.name?.toLowerCase();
+
+    // Debug: log what we're filtering
+    const allGradeIds = [...new Set(store.entries.map(e => e.gradeId))];
+    const allGradeNames = [...new Set(store.entries.map(e => e.gradeName).filter(Boolean))];
+    console.log('useSelectedGradeTimetable filtering:', {
+      selectedGradeId: store.selectedGradeId,
+      selectedGradeName,
+      totalEntries: store.entries.length,
+      uniqueGradeIdsInEntries: allGradeIds,
+      uniqueGradeNamesInEntries: allGradeNames,
+      storeGrades: store.grades.map(g => ({ id: g.id, name: g.name })),
+    });
+
+    // Match entries by ID first, then try name-based matching using entry's gradeName
+    const entries = store.entries.filter((entry) => {
+      // Direct ID match
+      if (entry.gradeId === store.selectedGradeId) return true;
+      
+      // Name-based match using entry's stored gradeName
+      if (selectedGradeName && entry.gradeName) {
+        if (entry.gradeName.toLowerCase() === selectedGradeName) return true;
+      }
+      
+      return false;
+    });
+
+    console.log('Filtered entries count:', entries.length);
 
     // Enrich with full data
     return entries.map((entry) => selectors.enrichEntry(entry));

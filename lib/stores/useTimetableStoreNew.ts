@@ -971,6 +971,7 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           // Convert response to Grade format and update store
+          // IMPORTANT: Use gradeLevel.id as the grade ID to match entry.gradeLevel.id from timetable entries
           const fetchedGrades = result.data.gradeLevelsForSchoolType
             .filter((item: any) => item.isActive) // Only include active grades
             .map((item: any) => {
@@ -980,13 +981,20 @@ export const useTimetableStore = create<TimetableStore>()(
               const level = levelMatch ? parseInt(levelMatch[0], 10) : item.sortOrder || 0;
 
               return {
-                id: item.id,
+                // Use gradeLevel.id to match entries which use entry.gradeLevel.id
+                id: item.gradeLevel?.id || item.id,
+                tenantGradeLevelId: item.id, // Keep tenant ID for reference
                 name: name,
                 level: level,
                 displayName: item.shortName || name,
               };
             })
             .sort((a: any, b: any) => a.level - b.level); // Sort by level
+
+          console.log('Grades loaded:', {
+            count: fetchedGrades.length,
+            grades: fetchedGrades.map((g: any) => ({ id: g.id, name: g.name, displayName: g.displayName, tenantGradeLevelId: g.tenantGradeLevelId })),
+          });
 
           set((state) => ({
             grades: fetchedGrades,
@@ -1449,6 +1457,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   const entry = p.entry;
                   // Use the entry's own gradeLevel.id - entries know which grade they belong to
                   const entryGradeLevelId = entry.gradeLevel?.id;
+                  const entryGradeLevelName = entry.gradeLevel?.name;
                   
                   // Only include entries that match the requested grade
                   if (!entryGradeLevelId || entryGradeLevelId !== gradeId) {
@@ -1472,6 +1481,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   fetchedEntries.push({
                     id: entry.id,
                     gradeId: entryGradeLevelId,
+                    gradeName: entryGradeLevelName,
                     subjectId,
                     teacherId,
                     timeSlotId,
@@ -1732,6 +1742,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   const entry = p.entry;
                   // Use the entry's own gradeLevel.id - entries know which grade they belong to
                   const entryGradeLevelId = entry.gradeLevel?.id;
+                  const entryGradeLevelName = entry.gradeLevel?.name;
                   
                   if (!entryGradeLevelId) {
                     console.warn('Skipping entry with missing gradeLevel:', entry.id);
@@ -1744,6 +1755,7 @@ export const useTimetableStore = create<TimetableStore>()(
                     teacherId: entry.teacher?.id || '',
                     timeSlotId: period.id,
                     gradeId: entryGradeLevelId, // Use entry's own gradeLevel.id
+                    gradeName: entryGradeLevelName, // Store grade name for matching
                     dayOfWeek: dayOfWeek || 1, // Default to Monday if missing
                     roomNumber: entry.room?.name || undefined,
                   });
@@ -1764,6 +1776,8 @@ export const useTimetableStore = create<TimetableStore>()(
           console.log('School timetable loaded:', {
             timeSlots: timeSlotMap.size,
             entries: allEntries.length,
+            entryGradeIds: [...new Set(allEntries.map(e => e.gradeId))],
+            sampleEntries: allEntries.slice(0, 3).map(e => ({ id: e.id, gradeId: e.gradeId, dayOfWeek: e.dayOfWeek })),
           });
 
           return timetableData;

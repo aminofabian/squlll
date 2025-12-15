@@ -103,13 +103,13 @@ const inputStyles = {
   nextButton: `px-6 py-2 bg-[#246a59] text-white hover:bg-[#246a59]/90 transition-all duration-300
     relative overflow-hidden group
     before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:to-transparent before:opacity-0
-    before:transition-opacity before:duration-300 hover:before:opacity-100
+    before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none
     after:absolute after:inset-0 after:border after:border-[#246a59] after:translate-x-[2px] after:translate-y-[2px]
-    after:transition-transform after:duration-300 hover:after:translate-x-1 hover:after:translate-y-1`,
+    after:transition-transform after:duration-300 hover:after:translate-x-1 hover:after:translate-y-1 after:pointer-events-none`,
   prevButton: `px-6 py-2 border border-[#246a59]/20 text-[#246a59] hover:bg-[#246a59]/5 transition-all duration-300
     relative overflow-hidden group
     before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#246a59]/5 before:to-transparent before:opacity-0
-    before:transition-opacity before:duration-300 hover:before:opacity-100`
+    before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none`
 }
 
 export default function SignupPage() {
