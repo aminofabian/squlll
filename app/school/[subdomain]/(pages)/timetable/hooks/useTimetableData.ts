@@ -135,6 +135,9 @@ export function useTimetableGrid(gradeId: string | null) {
       .forEach((entry) => {
         const enriched = selectors.enrichEntry(entry);
         if (grid[entry.dayOfWeek]) {
+          // Store entry by timeSlotId (even if slot wasn't initialized for this day)
+          // This handles cases where entries might have timeSlotIds that don't match
+          // day-specific slots (e.g., cycled lessons)
           grid[entry.dayOfWeek][entry.timeSlotId] = enriched;
         }
       });

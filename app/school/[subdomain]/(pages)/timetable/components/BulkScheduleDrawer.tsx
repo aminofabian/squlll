@@ -244,6 +244,26 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
         }
       `;
 
+      // Map selected grade IDs to tenant grade level IDs
+      // The backend expects tenant grade level IDs, not gradeLevel.id
+      const tenantGradeLevelIds = selectedGradeIds
+        .map((gradeId) => {
+          const grade = grades.find((g) => g.id === gradeId);
+          // Use tenantGradeLevelId if available, otherwise fall back to id
+          return (grade as any)?.tenantGradeLevelId || gradeId;
+        })
+        .filter((id): id is string => !!id);
+
+      if (tenantGradeLevelIds.length === 0) {
+        toast({
+          title: 'Invalid grade selection',
+          description: 'Could not resolve tenant grade level IDs for selected grades.',
+          variant: 'destructive',
+        });
+        setIsCreating(false);
+        return;
+      }
+
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
@@ -262,7 +282,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               periodDuration,
               numberOfDays,
               termId: selectedTermId,
-              gradeLevelIds: selectedGradeIds,
+              gradeLevelIds: tenantGradeLevelIds,
               streamIds: [],
               replaceExisting: false,
             },

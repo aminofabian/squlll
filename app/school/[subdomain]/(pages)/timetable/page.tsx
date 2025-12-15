@@ -1097,9 +1097,20 @@ export default function SmartTimetableNew() {
                   Please select a grade from the dropdown above to view and manage its timetable schedule.
                 </p>
                 <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
-                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-4">
                     Choose a grade level to see lessons, breaks, and schedule details
                   </p>
+                  {/* Show create breaks button if no breaks exist */}
+                  {breaks.length === 0 && (
+                    <Button
+                      onClick={() => setBulkBreaksOpen(true)}
+                      disabled={timeSlots.length === 0}
+                      className="w-full h-9 rounded-none"
+                    >
+                      <Coffee className="h-3.5 w-3.5 mr-2" />
+                      Create Breaks
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1327,7 +1338,28 @@ export default function SmartTimetableNew() {
                               const dayOfWeek = dayIndex + 1;
                               // Get the day-specific slot for this period
                               const daySlot = getSlotFor(dayIndex, period);
-                              const entry = daySlot ? grid[dayOfWeek]?.[daySlot.id] : null;
+                              
+                              // First try to find entry by exact timeSlotId match
+                              let entry = daySlot ? grid[dayOfWeek]?.[daySlot.id] : null;
+                              
+                              // If no entry found, check for entries with the same period number on this day
+                              // This handles cycled lessons where each day might have a different timeSlotId
+                              // but the same period number
+                              if (!entry && daySlot && grid[dayOfWeek]) {
+                                // Get all entries for this day
+                                const entriesForDay = Object.entries(grid[dayOfWeek])
+                                  .filter(([_, entryValue]) => entryValue !== null)
+                                  .map(([_, entryValue]) => entryValue);
+                                
+                                // Find entry with matching period number
+                                entry = entriesForDay.find((e: any) => {
+                                  if (!e || !e.timeSlotId) return false;
+                                  // Find the timeSlot for this entry
+                                  const entryTimeSlot = timeSlots.find(ts => ts.id === e.timeSlotId);
+                                  // Match if period numbers are the same
+                                  return entryTimeSlot?.periodNumber === period;
+                                }) || null;
+                              }
 
                               return (
                                 <td key={dayIndex} className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-1.5 align-top">
