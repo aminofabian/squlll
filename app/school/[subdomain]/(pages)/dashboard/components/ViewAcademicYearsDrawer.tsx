@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Calendar, Plus, BookOpen, CheckCircle2, Edit2, Trash2, ChevronDown, ChevronRight, Star } from 'lucide-react'
+import { Loader2, Calendar, Plus, BookOpen, CheckCircle2, Edit2, Trash2, ChevronDown, ChevronRight, Star, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { useAcademicYears, type AcademicYear } from '@/lib/hooks/useAcademicYears'
 import { CreateAcademicYearModal } from './CreateAcademicYearModal'
@@ -120,10 +120,10 @@ function AcademicYearCard({
 
   return (
     <Card 
-      className={`transition-all hover:shadow-md ${
+      className={`transition-all hover:shadow-lg hover:scale-[1.01] ${
         year.isActive 
-          ? 'bg-primary/5 border-primary/30 border-2' 
-          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+          ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/40 border-2 shadow-sm' 
+          : 'bg-white dark:bg-slate-800 border-primary/20 dark:border-primary/30 hover:border-primary/30'
       }`}
     >
       <CardContent className="pt-4">
@@ -134,7 +134,7 @@ function AcademicYearCard({
                 {year.name}
               </h3>
               {year.isActive && (
-                <Badge className="bg-green-500 hover:bg-green-600 text-white border-0">
+                <Badge className="bg-primary hover:bg-primary/90 text-white border-0 shadow-sm">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Active
                 </Badge>
@@ -155,15 +155,15 @@ function AcademicYearCard({
             {/* Expandable Button - More Prominent */}
             <button
               onClick={onToggleExpand}
-              className="flex items-center gap-2 px-3 py-2 rounded-md border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group w-full sm:w-auto"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group w-full sm:w-auto"
               aria-label={isExpanded ? 'Collapse terms' : 'View terms'}
             >
-              <BookOpen className="h-4 w-4 text-primary" />
+              <BookOpen className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium text-primary">
                 {isExpanded ? 'Hide Terms' : 'View Terms'}
               </span>
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-primary transition-transform" />
+                <ChevronDown className="h-4 w-4 text-primary transition-transform group-hover:rotate-180" />
               ) : (
                 <ChevronRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
               )}
@@ -174,7 +174,7 @@ function AcademicYearCard({
               variant="outline"
               size="sm"
               onClick={onEdit}
-              className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+              className="h-8 w-8 p-0 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all duration-200"
             >
               <Edit2 className="h-4 w-4" />
             </Button>
@@ -182,7 +182,7 @@ function AcademicYearCard({
               variant="outline"
               size="sm"
               onClick={onDelete}
-              className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+              className="h-8 w-8 p-0 border-red-300/50 bg-red-50/50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 hover:border-red-400 transition-all duration-200"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -191,10 +191,12 @@ function AcademicYearCard({
 
         {/* Expandable Terms Section */}
         {isExpanded && (
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 ml-6">
+          <div className="mt-4 pt-4 border-t-2 border-primary/20 ml-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-primary" />
+                <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                </div>
                 <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100">
                   Terms
                 </h4>
@@ -203,9 +205,9 @@ function AcademicYearCard({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowCreateTermModal(true)}
-                className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 text-xs h-7"
+                className="h-7 px-3 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 text-xs group"
               >
-                <Plus className="h-3 w-3 mr-1" />
+                <Plus className="h-3 w-3 mr-1 text-primary/80 group-hover:text-primary transition-colors" />
                 Create Term
               </Button>
             </div>
@@ -230,8 +232,12 @@ function AcademicYearCard({
                 {terms.map((term) => (
                   <Card 
                     key={term.id}
-                    className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 ${
-                      term.isCurrent ? 'border-l-4 border-l-yellow-500' : term.isActive ? 'border-l-4 border-l-primary' : ''
+                    className={`transition-all hover:shadow-md ${
+                      term.isCurrent 
+                        ? 'bg-gradient-to-r from-yellow-50/50 to-transparent dark:from-yellow-950/30 border-l-4 border-l-yellow-500 border-primary/20' 
+                        : term.isActive 
+                        ? 'bg-gradient-to-r from-primary/5 to-transparent border-l-4 border-l-primary border-primary/20' 
+                        : 'bg-slate-50 dark:bg-slate-900 border-primary/20'
                     }`}
                   >
                     <CardContent className="pt-3 pb-3">
@@ -248,7 +254,7 @@ function AcademicYearCard({
                               </Badge>
                             )}
                             {term.isActive && !term.isCurrent && (
-                              <Badge className="bg-green-500 hover:bg-green-600 text-white border-0 text-xs">
+                              <Badge className="bg-primary hover:bg-primary/90 text-white border-0 text-xs shadow-sm">
                                 Active
                               </Badge>
                             )}
@@ -322,7 +328,7 @@ function AcademicYearCard({
                                 }
                               }}
                               disabled={settingCurrentTermId === term.id}
-                              className="border-yellow-200 text-yellow-600 hover:bg-yellow-50 hover:border-yellow-300"
+                              className="h-7 w-7 p-0 border-yellow-300/50 bg-yellow-50/50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-950/50 hover:border-yellow-400 transition-all duration-200"
                               title="Set as current term"
                             >
                               {settingCurrentTermId === term.id ? (
@@ -336,7 +342,7 @@ function AcademicYearCard({
                             variant="outline"
                             size="sm"
                             onClick={() => setEditingTerm(term)}
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                            className="h-7 w-7 p-0 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all duration-200"
                           >
                             <Edit2 className="h-3 w-3" />
                           </Button>
@@ -344,7 +350,7 @@ function AcademicYearCard({
                             variant="outline"
                             size="sm"
                             onClick={() => setDeletingTermId(term.id)}
-                            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                            className="h-7 w-7 p-0 border-red-300/50 bg-red-50/50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 hover:border-red-400 transition-all duration-200"
                             disabled={isDeletingTerm}
                           >
                             <Trash2 className="h-3 w-3" />
@@ -358,18 +364,18 @@ function AcademicYearCard({
             )}
 
             {!termsLoading && !termsError && terms && terms.length === 0 && (
-              <div className="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-center">
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+              <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20 rounded-lg text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 font-medium">
                   No terms found for this academic year
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowCreateTermModal(true)}
-                  className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40"
+                  className="h-8 px-3 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
                 >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Create First Term
+                  <Plus className="h-3.5 w-3.5 mr-1.5 text-primary/80 group-hover:text-primary transition-colors" />
+                  <span className="text-xs font-medium tracking-tight">Create First Term</span>
                 </Button>
               </div>
             )}
@@ -607,13 +613,15 @@ export function ViewAcademicYearsDrawer({ trigger, onAcademicYearCreated }: View
         <DrawerTrigger asChild>
           {trigger || defaultTrigger}
         </DrawerTrigger>
-        <DrawerContent className="max-h-[90vh] h-full w-full md:w-1/2 lg:w-1/2" data-vaul-drawer-direction="right">
-          <DrawerHeader className="border-b">
-            <DrawerTitle className="flex flex-row items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Academic Years
+        <DrawerContent className="max-h-[90vh] h-full w-full md:w-1/2 lg:w-1/2 bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-800" data-vaul-drawer-direction="right">
+          <DrawerHeader className="border-b-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+            <DrawerTitle className="flex flex-row items-center gap-2 text-primary">
+              <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
+              <span className="font-mono font-bold text-lg">Academic Years</span>
             </DrawerTitle>
-            <DrawerDescription>
+            <DrawerDescription className="text-slate-600 dark:text-slate-400 mt-2">
               View and manage all academic years for your school
             </DrawerDescription>
           </DrawerHeader>
@@ -627,10 +635,10 @@ export function ViewAcademicYearsDrawer({ trigger, onAcademicYearCreated }: View
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40"
+                    className="h-9 px-4 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Academic Year
+                    <Plus className="h-4 w-4 mr-2 text-primary/80 group-hover:text-primary transition-colors" />
+                    <span className="text-sm font-medium tracking-tight">Create New Academic Year</span>
                   </Button>
                 }
               />
@@ -639,16 +647,19 @@ export function ViewAcademicYearsDrawer({ trigger, onAcademicYearCreated }: View
             {/* Loading State */}
             {loading && (
               <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p className="text-sm text-muted-foreground">Loading academic years...</p>
+                <div className="p-4 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Loading academic years...</p>
               </div>
             )}
 
             {/* Error State */}
             {error && (
-              <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
+              <Card className="bg-red-50 dark:bg-red-950/50 border-2 border-red-200 dark:border-red-800/50">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
                     <span className="text-sm font-medium">Error loading academic years:</span>
                     <span className="text-sm">{error}</span>
                   </div>
@@ -658,14 +669,16 @@ export function ViewAcademicYearsDrawer({ trigger, onAcademicYearCreated }: View
 
             {/* Empty State */}
             {!loading && !error && academicYears.length === 0 && (
-              <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+              <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20">
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Calendar className="h-12 w-12 text-slate-400 mb-4" />
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    <div className="p-4 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                      <Calendar className="h-12 w-12 text-primary/60" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">
                       No academic years found
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500 mb-4">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">
                       Create your first academic year to get started
                     </p>
                     <CreateAcademicYearModal
@@ -674,10 +687,10 @@ export function ViewAcademicYearsDrawer({ trigger, onAcademicYearCreated }: View
                         <Button
                           variant="outline"
                           size="sm"
-                          className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40"
+                          className="h-9 px-4 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Academic Year
+                          <Plus className="h-4 w-4 mr-2 text-primary/80 group-hover:text-primary transition-colors" />
+                          <span className="text-sm font-medium tracking-tight">Create Academic Year</span>
                         </Button>
                       }
                     />
