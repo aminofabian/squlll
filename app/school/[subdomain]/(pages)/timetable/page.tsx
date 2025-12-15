@@ -95,7 +95,8 @@ export default function SmartTimetableNew() {
   const hasWeekTemplate = timeSlots.length > 0;
   const needsOnboarding = !academicYearsLoading && (!hasAcademicYear || !hasTerm || !hasWeekTemplate);
 
-  // Load time slots, grades, subjects, and teachers from backend on mount
+  // Load time slots, grades, subjects, and breaks from backend on mount
+  // Teachers are loaded only when a grade is selected (see useEffect below)
   useEffect(() => {
     setLoadingTimeSlots(true);
     // Use term from context if available, otherwise use selectedTermId from store
@@ -104,13 +105,12 @@ export default function SmartTimetableNew() {
     Promise.all([
       loadGrades(),
       loadSubjects(), // Load all subjects initially
-      loadTeachers(), // Load all teachers
       loadBreaks(), // Load breaks from GetAllDayTemplateBreaks query (no caching)
       // Load complete timetable if term is available (includes time slots and entries)
       termId ? loadSchoolTimetable(termId) : Promise.resolve(),
     ])
       .then(() => {
-        console.log('Grades, subjects, teachers, breaks, and timetable loaded successfully');
+        console.log('Grades, subjects, breaks, and timetable loaded successfully');
       })
       .catch((error) => {
         console.error('Failed to load data:', error);
@@ -126,7 +126,27 @@ export default function SmartTimetableNew() {
       .finally(() => {
         setLoadingTimeSlots(false);
       });
-  }, [loadGrades, loadSubjects, loadTeachers, loadBreaks, loadSchoolTimetable, selectedTerm?.id, selectedTermId, toast]);
+  }, [loadGrades, loadSubjects, loadBreaks, loadSchoolTimetable, selectedTerm?.id, selectedTermId, toast]);
+
+  // Load teachers only when a grade is selected (needed for lesson creation/editing)
+  useEffect(() => {
+    if (!selectedGradeId) {
+      return;
+    }
+
+    loadTeachers()
+      .then(() => {
+        console.log('Teachers loaded successfully for grade:', selectedGradeId);
+      })
+      .catch((error) => {
+        console.error('Failed to load teachers:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load teachers. Please try again.',
+          variant: 'destructive',
+        });
+      });
+  }, [selectedGradeId, loadTeachers, toast]);
 
   // Reload subjects when grade selection changes
   useEffect(() => {
