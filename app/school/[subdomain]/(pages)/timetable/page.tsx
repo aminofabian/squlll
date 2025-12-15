@@ -35,7 +35,7 @@ import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
 import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { PanelLeftClose, PanelLeftOpen, Clock, Edit2, Trash2, Plus, Calendar, BookOpen, Coffee } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, Clock, Edit2, Trash2, Plus, Calendar, BookOpen, Coffee, ChevronDown, ChevronUp } from 'lucide-react';
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 import {
@@ -417,6 +417,7 @@ export default function SmartTimetableNew() {
   // State for drawers
   const [periodsDrawerOpen, setPeriodsDrawerOpen] = useState(false);
   const [breaksDrawerOpen, setBreaksDrawerOpen] = useState(false);
+  const [buttonsExpanded, setButtonsExpanded] = useState(false);
 
   // Get current grade name
   const currentGrade = useMemo(
@@ -820,20 +821,43 @@ export default function SmartTimetableNew() {
           {/* Header */}
           <div className="mb-4">
             {/* Title and Actions Row */}
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 text-xs">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Smart Timetable</h1>
+                <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase">Smart Timetable</h1>
                 {currentGrade?.name && (
                   <>
                     <span className="text-slate-400">•</span>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium uppercase">
                       {currentGrade.name}
                     </p>
                   </>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
-                <div className="flex flex-wrap items-center gap-1.5 lg:grid lg:grid-cols-5 lg:gap-x-1.5 lg:gap-y-2 lg:justify-items-stretch lg:ml-auto lg:relative">
+              <div className="flex flex-col items-end gap-1.5">
+                {/* Toggle Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setButtonsExpanded(!buttonsExpanded)}
+                  className="rounded-none h-8 flex items-center justify-center gap-1.5 border-primary/20"
+                >
+                  {buttonsExpanded ? (
+                    <>
+                      <ChevronUp className="h-3.5 w-3.5" />
+                      <span className="text-xs">Hide Actions</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                      <span className="text-xs">Show Actions</span>
+                    </>
+                  )}
+                </Button>
+
+                {/* Collapsible Button Group */}
+                {buttonsExpanded && (
+                  <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
+                    <div className="flex flex-wrap items-center gap-1.5 lg:grid lg:grid-cols-5 lg:gap-x-1.5 lg:gap-y-2 lg:justify-items-stretch lg:ml-auto lg:relative">
                 {isSidebarMinimized && (
                   <Button
                     variant="outline"
@@ -961,7 +985,9 @@ export default function SmartTimetableNew() {
                   <Trash2 className="h-3.5 w-3.5" />
                   <span className="text-xs uppercase">DELETE TIMETABLE</span>
                 </Button>
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -970,13 +996,13 @@ export default function SmartTimetableNew() {
               <div className="flex items-center gap-2">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-primary" />
-                  <span>View Schedule For:</span>
+                  <span className="uppercase">View Schedule For:</span>
                 </label>
                 <div className="relative">
                   <select
                     value={selectedGradeId || ''}
                     onChange={(e) => handleGradeChange(e.target.value)}
-                    className="appearance-none px-3 py-1.5 pr-8 text-xs border border-primary/20 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium rounded-none hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
+                    className="uppercase appearance-none px-3 py-1.5 pr-8 text-xs border border-primary/20 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-medium rounded-none hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
                   >
                     <option value="" className="font-medium">Select a grade...</option>
                     {grades.map((grade) => (
@@ -985,7 +1011,7 @@ export default function SmartTimetableNew() {
                       </option>
                     ))}
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-none">
                     <svg className="h-3.5 w-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -1045,7 +1071,7 @@ export default function SmartTimetableNew() {
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 border-b-2 border-slate-200 dark:border-slate-600">
-                    <th className="border-r border-slate-200 dark:border-slate-600 p-1.5 text-left font-bold text-slate-700 dark:text-slate-200 text-xs uppercase tracking-wide">
+                    <th className="border-r border-slate-200 dark:border-slate-600 p-1.5 text-left font-bold text-slate-700 dark:text-slate-200 text-xs uppercase tracking-wide w-[170px]">
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3 w-3 text-primary" />
                         <span>Time</span>
@@ -1090,7 +1116,7 @@ export default function SmartTimetableNew() {
                         return (
                           <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
                               <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
-                                <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-1.5 min-w-[90px]">
+                                <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-1.5 w-[170px]">
                                   <div className="flex items-center gap-1">
                                     <div className="flex items-center justify-center w-4 h-4 rounded-none bg-orange-200 dark:bg-orange-900 text-xs flex-shrink-0">
                                       {breaksBeforeAnyPeriod[0].icon}
@@ -1191,10 +1217,10 @@ export default function SmartTimetableNew() {
                             ? 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750'
                             : 'bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-750'
                             }`}>
-                            <td className="border-r border-b border-slate-200 dark:border-slate-700 p-0">
-                              <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:via-primary/10 border-r-2 border-primary/20 dark:border-primary/30 p-1.5 min-w-[90px] group/time">
+                            <td className="border-r border-b border-slate-200 dark:border-slate-700 p-0 w-[170px]">
+                              <div className="relative bg-gradient-to-br from-primary/10 via-primary/5 to-transparent dark:from-primary/20 dark:via-primary/10 border-r-2 border-primary/20 dark:border-primary/30 p-1.5 w-[170px] group/time">
                                 {/* Time Display - Compact Single Line */}
-                                <div className="flex items-center gap-1 pr-6">
+                                <div className="flex items-center gap-1 pr-5">
                                   <div className="flex items-center justify-center w-4 h-4 rounded-none bg-primary/20 dark:bg-primary/30 flex-shrink-0">
                                     <Clock className="h-2.5 w-2.5 text-primary dark:text-primary-foreground" />
                                   </div>
@@ -1383,7 +1409,7 @@ export default function SmartTimetableNew() {
                           {breaksAfterThisPeriod.length > 0 && (
                             <tr className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-950/20 dark:to-amber-950/20 border-y-2 border-orange-200 dark:border-orange-800 hover:from-orange-100 hover:to-amber-100 dark:hover:from-orange-950/30 dark:hover:to-amber-950/30 transition-colors">
                               <td className="border-r border-b border-orange-200 dark:border-orange-800 p-0">
-                                <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-1.5 min-w-[90px]">
+                                <div className="relative bg-gradient-to-br from-orange-100/50 via-orange-50/30 to-transparent dark:from-orange-900/30 dark:via-orange-950/20 border-r-2 border-orange-300 dark:border-orange-700 p-1.5 w-[170px]">
                                   <div className="flex items-center gap-1">
                                     <div className="flex items-center justify-center w-4 h-4 rounded-none bg-orange-200 dark:bg-orange-900 text-xs flex-shrink-0">
                                       {breaksAfterThisPeriod[0].icon}

@@ -1414,13 +1414,10 @@ export const useTimetableStore = create<TimetableStore>()(
             timetableByGrade[0] ||
             null;
 
-          // Resolve the canonical gradeId we will attach to entries
-          const resolvedGradeId = gradeBlock?.gradeLevel?.id || gradeId;
-
           if (!gradeBlock) {
             console.warn('No grade block found for grade:', gradeId);
             set((state) => ({
-              entries: state.entries.filter((e) => e.gradeId !== resolvedGradeId),
+              entries: state.entries.filter((e) => e.gradeId !== gradeId),
               lastUpdated: new Date().toISOString(),
             }));
             return;
@@ -1433,7 +1430,10 @@ export const useTimetableStore = create<TimetableStore>()(
           // Process only the selected grade block for entries (more efficient)
           if (Array.isArray(gradeBlock.days)) {
             gradeBlock.days.forEach((dayItem: any) => {
-              const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+              const dayTemplate = dayItem.dayTemplate;
+              const dayOfWeek = dayTemplate?.dayOfWeek;
+              const dayTemplateId = dayTemplate?.id;
+              
               (dayItem.periods || []).forEach((p: any) => {
                 const period = p?.period;
                 
@@ -1453,24 +1453,21 @@ export const useTimetableStore = create<TimetableStore>()(
                     color: 'border-l-primary',
                     dayOfWeek: dayOfWeek,
                     label: period.label,
+                    dayTemplateId: dayTemplateId || undefined,
                   });
                 }
 
                 // Process entries from this grade block (only non-break periods)
                 if (p?.entry && period?.id && !p?.isBreak) {
                   const entry = p.entry;
+                  // Use the entry's own gradeLevel.id - entries know which grade they belong to
                   const entryGradeLevelId = entry.gradeLevel?.id;
                   
-                  // Defensive check: Verify entry actually belongs to this grade
-                  // (In case backend groups entries incorrectly)
-                  if (entryGradeLevelId && entryGradeLevelId !== resolvedGradeId) {
-                    console.warn('Entry has mismatched gradeLevel, skipping:', {
-                      entryId: entry.id,
-                      entryGradeLevelId,
-                      expectedGradeId: resolvedGradeId,
-                      subject: entry.subject?.name,
-                    });
-                    return; // Skip entries that don't belong to this grade
+                  // Only include entries that match the requested grade
+                  // The backend returns all entries across the timetable, but we filter by grade
+                  if (!entryGradeLevelId || entryGradeLevelId !== gradeId) {
+                    // Skip entries that don't belong to the requested grade
+                    return;
                   }
 
                   const subjectId = entry.subject?.id;
@@ -1483,7 +1480,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   
                   fetchedEntries.push({
                     id: entry.id,
-                    gradeId: resolvedGradeId,
+                    gradeId: entryGradeLevelId, // Use entry's own gradeLevel.id
                     subjectId,
                     teacherId,
                     timeSlotId,
@@ -1509,7 +1506,7 @@ export const useTimetableStore = create<TimetableStore>()(
           // Remove existing entries for this grade and add new ones
           set((state) => {
             const existingEntries = state.entries || [];
-            const otherGradeEntries = existingEntries.filter((e) => e.gradeId !== resolvedGradeId);
+            const otherGradeEntries = existingEntries.filter((e) => e.gradeId !== gradeId);
             const newEntries = [...otherGradeEntries, ...fetchedEntries];
             
             console.log('Updating store entries:', {
@@ -1712,7 +1709,9 @@ export const useTimetableStore = create<TimetableStore>()(
             const gradeId = gradeBlock.gradeLevel?.id;
             
             (gradeBlock.days || []).forEach((dayItem: any) => {
-              const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+              const dayTemplate = dayItem.dayTemplate;
+              const dayOfWeek = dayTemplate?.dayOfWeek;
+              const dayTemplateId = dayTemplate?.id;
               
               (dayItem.periods || []).forEach((p: any) => {
                 const period = p?.period;
@@ -1732,21 +1731,30 @@ export const useTimetableStore = create<TimetableStore>()(
                     endTime: formatTime(period.endTime),
                     color: 'border-l-primary',
                     dayOfWeek: dayOfWeek,
-                    label: period.label,
+                    label: period.label || null,
+                    dayTemplateId: dayTemplateId || undefined,
                   });
                 }
 
                 // Collect entries (only for non-break periods with actual entries)
-                if (p?.entry && period?.id && gradeId && !p?.isBreak) {
+                if (p?.entry && period?.id && !p?.isBreak) {
                   const entry = p.entry;
+                  // Use the entry's own gradeLevel.id - entries know which grade they belong to
+                  const entryGradeLevelId = entry.gradeLevel?.id;
+                  
+                  if (!entryGradeLevelId) {
+                    console.warn('Skipping entry with missing gradeLevel:', entry.id);
+                    return;
+                  }
+                  
                   allEntries.push({
                     id: entry.id,
                     subjectId: entry.subject?.id || '',
                     teacherId: entry.teacher?.id || '',
                     timeSlotId: period.id,
-                    gradeId: gradeId,
-                    dayOfWeek: dayOfWeek,
-                    roomNumber: entry.room?.name,
+                    gradeId: entryGradeLevelId, // Use entry's own gradeLevel.id
+                    dayOfWeek: dayOfWeek || 1, // Default to Monday if missing
+                    roomNumber: entry.room?.name || undefined,
                   });
                 }
               });
