@@ -19,8 +19,8 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
   currentStep
 }) => {
   return (
-    <div className="mb-8">
-      <div className="py-4">
+    <div className="mb-3">
+      <div className="py-1.5">
         <div className="flex items-center justify-between">
           {steps.map((step, index) => {
             const isActive = step.id === currentStep
@@ -31,34 +31,34 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
                   {/* Line before */}
                   {index > 0 && (
                     <div 
-                      className={`absolute left-0 right-1/2 top-1/2 h-0.5 -translate-y-1/2 transition-colors duration-300 ${isCompleted ? 'bg-[#246a59]' : 'bg-gray-200'}`}
-                    aria-hidden="true"
-                    style={{ zIndex: 0 }}
+                      className={`absolute left-0 right-1/2 top-1/2 h-[1.5px] -translate-y-1/2 transition-colors duration-150 ${isCompleted ? 'bg-[#246a59]' : 'bg-gray-200'}`}
+                      aria-hidden="true"
+                      style={{ zIndex: 0 }}
                     />
                   )}
                   {/* Line after */}
                   {index < steps.length - 1 && (
                     <div 
-                      className={`absolute left-1/2 right-0 top-1/2 h-0.5 -translate-y-1/2 transition-colors duration-300 ${step.id < currentStep ? 'bg-[#246a59]' : 'bg-gray-200'}`}
+                      className={`absolute left-1/2 right-0 top-1/2 h-[1.5px] -translate-y-1/2 transition-colors duration-150 ${step.id < currentStep ? 'bg-[#246a59]' : 'bg-gray-200'}`}
                       aria-hidden="true"
                       style={{ zIndex: 0 }}
                     />
                   )}
                   {/* Step circle */}
                   <div 
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 ${isActive ? 'border-[#246a59] bg-[#246a59]/10 shadow-md' : isCompleted ? 'border-[#246a59] bg-[#246a59] text-white' : 'border-gray-300 bg-white'}`}
+                    className={`relative flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-150 ${isActive ? 'border-[#246a59] bg-[#246a59]/10 shadow-sm' : isCompleted ? 'border-[#246a59] bg-[#246a59] text-white' : 'border-gray-300 bg-white'}`}
                     style={{ zIndex: 1 }}
                   >
                     {isCompleted ? (
-                      <Check className="h-5 w-5" />
+                      <Check className="h-3 w-3" />
                     ) : (
-                      <span className={`text-sm font-medium ${isActive ? 'text-[#246a59]' : 'text-gray-500'}`}>{step.id}</span>
+                      <span className={`text-[10px] font-bold ${isActive ? 'text-[#246a59]' : 'text-gray-500'}`}>{step.id}</span>
                     )}
                   </div>
                 </div>
-                <div className="mt-2 text-center">
-                  <div className={`text-sm font-medium ${isActive ? 'text-[#246a59]' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>{step.name}</div>
-                  <div className="text-xs text-gray-500 hidden sm:block">{step.description}</div>
+                <div className="mt-1 text-center">
+                  <div className={`text-[10px] font-semibold ${isActive ? 'text-[#246a59]' : isCompleted ? 'text-gray-700' : 'text-gray-500'}`}>{step.name}</div>
+                  <div className="text-[9px] text-gray-500 hidden sm:block mt-0.5">{step.description}</div>
                 </div>
               </div>
             )
