@@ -495,16 +495,12 @@ Check the browser console for detailed input information.`;
         const createdEntry = result.data.createTimetableEntry;
         console.log('Successfully created entry:', createdEntry);
 
-        // Reload entries to update the UI
-        if (selectedGradeId && termId) {
-          await loadEntries(termId, selectedGradeId);
-        }
-
         toast({
           title: 'Success',
           description: 'Lesson created successfully',
         });
 
+        // Close dialog - onClose will trigger full timetable reload
         onClose();
       } else {
         // Update existing entry via GraphQL mutation
@@ -632,16 +628,12 @@ Check the browser console for detailed input information.`;
         const updatedEntry = result.data.updateTimetableEntry;
         console.log('Successfully updated entry:', updatedEntry);
 
-        // Reload entries to update the UI
-        if (selectedGradeId && termId) {
-          await loadEntries(termId, selectedGradeId);
-        }
-
         toast({
           title: 'Success',
           description: 'Lesson updated successfully',
         });
 
+        // Close dialog - onClose will trigger full timetable reload
         onClose();
       }
     } catch (error) {
@@ -672,16 +664,12 @@ Check the browser console for detailed input information.`;
       // For now, use local delete
       deleteEntry(lesson.id);
 
-      // Reload entries to update the UI
-      if (selectedGradeId && termId) {
-        await loadEntries(termId, selectedGradeId);
-      }
-
       toast({
         title: 'Success',
         description: 'Lesson deleted successfully',
       });
 
+      // Close dialog - onClose will trigger full timetable reload
       onClose();
     } catch (error) {
       console.error('Error deleting lesson:', error);

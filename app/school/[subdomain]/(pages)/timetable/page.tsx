@@ -316,20 +316,35 @@ export default function SmartTimetableNew() {
     [setSelectedGrade]
   );
 
-  // Reload timetable data (breaks, time slots, and entries)
+  // Reload timetable data (breaks, time slots, entries, and full school timetable)
   const reloadTimetableData = useCallback(async () => {
     try {
       const termId = selectedTerm?.id || selectedTermId;
+      if (!termId) {
+        console.warn('No term selected, skipping full timetable reload');
+        return;
+      }
+
+      // Reload full school timetable first (includes time slots and all entries)
+      await loadSchoolTimetable(termId);
+      
+      // Then reload additional data
       await Promise.all([
         loadBreaks(),
         loadDayTemplatePeriods(),
-        termId && selectedGradeId ? loadEntries(termId, selectedGradeId) : Promise.resolve(),
+        selectedGradeId ? loadEntries(termId, selectedGradeId) : Promise.resolve(),
       ]);
+      
       console.log('Timetable data reloaded successfully');
     } catch (error) {
       console.error('Failed to reload timetable data:', error);
+      toast({
+        title: 'Warning',
+        description: 'Some data may not be up to date. Please refresh the page.',
+        variant: 'default',
+      });
     }
-  }, [loadBreaks, loadDayTemplatePeriods, loadEntries, selectedTerm?.id, selectedTermId, selectedGradeId]);
+  }, [loadBreaks, loadDayTemplatePeriods, loadEntries, loadSchoolTimetable, selectedTerm?.id, selectedTermId, selectedGradeId, toast]);
 
   const handleDeleteEntriesForTerm = useCallback(async () => {
     const termId = selectedTerm?.id || selectedTermId;
@@ -1153,11 +1168,11 @@ export default function SmartTimetableNew() {
                     </tr>
                   ) : (
                     <>
-                      {/* Breaks at START of day (before any period) would need afterPeriod === -1 */}
-                      {/* REMOVED: afterPeriod === 0 means AFTER Period 0, not BEFORE */}
+                      {/* Breaks at START of day (before Period 1) */}
+                      {/* afterPeriod === 0 or -1 means BEFORE Period 1 (start of day) */}
                       {(() => {
-                        // Note: Breaks with afterPeriod = 0 are displayed AFTER Period 0 in the period loop
-                        const breaksBeforeAnyPeriod = breaks.filter((b) => b.afterPeriod === -1);
+                        // Breaks with afterPeriod = 0 or -1 show before Period 1
+                        const breaksBeforeAnyPeriod = breaks.filter((b) => b.afterPeriod === 0 || b.afterPeriod === -1);
                         if (breaksBeforeAnyPeriod.length === 0) return null;
 
                         return (
@@ -1785,7 +1800,10 @@ export default function SmartTimetableNew() {
           {/* Bulk Lesson Entry Drawer */}
           <BulkLessonEntryDrawer
             open={bulkLessonEntryOpen}
-            onClose={() => setBulkLessonEntryOpen(false)}
+            onClose={async () => {
+              setBulkLessonEntryOpen(false);
+              await reloadTimetableData();
+            }}
             gradeId={selectedGradeId || undefined}
           />
 

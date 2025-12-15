@@ -208,14 +208,12 @@ export function BulkLessonEntryDrawer({
       // Use the store's bulkCreateEntries method
       await bulkCreateEntries(termId, selectedGradeIdState, entryRequests);
 
-      // Reload entries to update the UI
-      await loadEntries(termId, selectedGradeIdState);
-
       toast({
         title: 'Success',
         description: `Successfully created ${entryRequests.length} lesson${entryRequests.length !== 1 ? 's' : ''} for ${DAYS[selectedDay - 1]}.`,
       });
 
+      // Close drawer - onClose will trigger full timetable reload
       onClose();
     } catch (error) {
       console.error('Error creating bulk entries:', error);
