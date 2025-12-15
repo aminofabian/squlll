@@ -683,17 +683,20 @@ export default function SignupPage() {
           <div className="flex-1 p-6 lg:p-8">
             <Form {...form}>
               <form 
-                onSubmit={form.handleSubmit(onSubmit, (errors) => {
-                  // Handle validation errors
-                  if (errors.name || errors.email || errors.password) {
-                    setError('Please complete your personal information correctly.');
-                    setCurrentStep(0);
-                  } else if (errors.schoolName) {
-                    setError('Please enter a valid school name (at least 2 characters).');
-                  } else {
-                    setError('Please check the form for errors.');
-                  }
-                })} 
+                onSubmit={(e) => {
+                  e.preventDefault(); // Explicitly prevent default form submission
+                  form.handleSubmit(onSubmit, (errors) => {
+                    // Handle validation errors
+                    if (errors.name || errors.email || errors.password) {
+                      setError('Please complete your personal information correctly.');
+                      setCurrentStep(0);
+                    } else if (errors.schoolName) {
+                      setError('Please enter a valid school name (at least 2 characters).');
+                    } else {
+                      setError('Please check the form for errors.');
+                    }
+                  })(e);
+                }} 
                 className="space-y-6 max-w-2xl"
               >
                 {error && (
@@ -929,10 +932,10 @@ export default function SignupPage() {
                   
                   <Button
                     type={currentStep === steps.length - 1 ? "submit" : "button"}
-                    onClick={async (e) => {
-                      // Prevent default form submission for non-final steps
-                      if (currentStep !== steps.length - 1) {
+                    {...(currentStep !== steps.length - 1 ? {
+                      onClick: async (e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         // Validate current step before proceeding
                         const fieldsToValidate = currentStep === 0 
                           ? ['name', 'email', 'password'] as const
@@ -942,8 +945,7 @@ export default function SignupPage() {
                           nextStep();
                         }
                       }
-                      // For final step, let the form's onSubmit handle it naturally
-                    }}
+                    } : {})}
                     className={inputStyles.nextButton}
                     disabled={isLoading}
                   >
