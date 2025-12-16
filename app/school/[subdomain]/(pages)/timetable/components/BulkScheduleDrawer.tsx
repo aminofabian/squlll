@@ -549,7 +549,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                 placeholder="e.g., TERM 1 TIMETABLE 2016"
-                className="h-8 rounded-md border-2 focus:border-primary text-xs uppercase font-semibold tracking-wide"
+                className="h-8 rounded-md border focus:border-border text-xs uppercase font-normal tracking-wide"
               />
             </div>
           )}
@@ -641,7 +641,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
+                      className="h-8 rounded-md border focus:border-border text-xs"
                     />
                   </div>
                   <div className="space-y-0.5">
@@ -661,7 +661,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           setFormData({ ...formData, periodDuration: value });
                         }
                       }}
-                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
+                      className="h-8 rounded-md border focus:border-border text-xs"
                       placeholder="40"
                     />
                   </div>
@@ -684,7 +684,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           setFormData({ ...formData, periodCount: value });
                         }
                       }}
-                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
+                      className="h-8 rounded-md border focus:border-border text-xs"
                       placeholder="8"
                     />
                   </div>
@@ -699,7 +699,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       max="7"
                       value={formData.numberOfDays}
                       onChange={(e) => setFormData({ ...formData, numberOfDays: e.target.value })}
-                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
+                      className="h-8 rounded-md border focus:border-border text-xs"
                     />
                   </div>
                 </div>
