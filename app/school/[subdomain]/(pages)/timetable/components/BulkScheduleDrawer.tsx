@@ -68,6 +68,21 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     return `${formatter.format(start)} – ${formatter.format(end)}`;
   };
 
+  const calculateWeeks = (startDate: string, endDate: string): number | null => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return null;
+    }
+
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const weeks = Math.ceil(diffDays / 7);
+    
+    return weeks;
+  };
+
   // Query terms for the current academic year
   const { data: terms, isLoading: termsLoading } = useQuery<Term[]>({
     queryKey: ['termsByAcademicYear', currentAcademicYear?.id],
@@ -504,6 +519,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 {terms.map((term) => {
                   const isSelected = term.id === selectedTermId;
                   const dateRange = formatDateRange(term.startDate, term.endDate);
+                  const weeks = calculateWeeks(term.startDate, term.endDate);
 
                   return (
                     <button
@@ -529,11 +545,18 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           </span>
                         )}
                       </div>
-                      {dateRange && (
-                        <span className={`text-[10px] ${isSelected ? 'text-primary/70' : 'text-muted-foreground'}`}>
-                          {dateRange}
-                        </span>
-                      )}
+                      <div className="flex flex-col gap-0.5 w-full">
+                        {dateRange && (
+                          <span className={`text-[10px] ${isSelected ? 'text-primary/70' : 'text-muted-foreground'}`}>
+                            {dateRange}
+                          </span>
+                        )}
+                        {weeks !== null && (
+                          <span className={`text-[10px] font-medium ${isSelected ? 'text-primary/80' : 'text-muted-foreground'}`}>
+                            {weeks} {weeks === 1 ? 'week' : 'weeks'}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
