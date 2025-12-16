@@ -63,31 +63,31 @@ export const LevelCard: React.FC<LevelCardProps> = ({
       )}
       
       {/* Main content */}
-      <div className="p-1.5 relative pointer-events-none">
+      <div className="p-2.5 relative pointer-events-none">
         <div className="flex items-start justify-between gap-1.5 mb-1">
           <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-xs transition-colors duration-150 truncate ${
+            <h3 className={`font-bold text-sm transition-colors duration-150 truncate ${
               isSelected
                 ? 'text-[#246a59]'
                 : 'text-gray-900 group-hover:text-[#246a59]'
-            }`}>{level.level}</h3>
+            }`}>{level.level.toUpperCase()}</h3>
             {level.description && (
-              <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1 leading-tight">
+              <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 leading-tight">
                 {level.description}
               </p>
             )}
           </div>
           <div
-            className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-150 pointer-events-none
+            className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150 pointer-events-none
               ${isSelected
                 ? 'border-[#246a59] bg-[#246a59] text-white shadow-sm ring-1 ring-[#246a59]/30'
                 : 'border-gray-300 group-hover:border-[#246a59] bg-white group-hover:bg-[#246a59]/10 group-hover:ring-1 group-hover:ring-[#246a59]/20'
               }
             `}
           >
-            {isSelected && <Check className="w-2.5 h-2.5" />}
+            {isSelected && <Check className="w-3 h-3" />}
             {!isSelected && (
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#246a59]/40 transition-colors" />
+              <div className="w-2 h-2 rounded-full bg-gray-300 group-hover:bg-[#246a59]/40 transition-colors" />
             )}
           </div>
         </div>

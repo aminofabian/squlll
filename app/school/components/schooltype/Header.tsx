@@ -28,12 +28,12 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
             {subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
           </h1>
-          <p className="text-[9px] text-gray-500">School Setup</p>
+          <p className="text-[9px] text-gray-500">SCHOOL SETUP</p>
         </div>
       </div>
       <div className="flex items-center gap-1 text-[10px] bg-[#246a59]/10 px-2 py-1 rounded border border-[#246a59]/20">
         <Clock className="w-3 h-3 text-[#246a59]" />
-        <span className="text-[#246a59] font-semibold">Step {currentStep}/{totalSteps}</span>
+        <span className="text-[#246a59] font-semibold">STEP {currentStep}/{totalSteps}</span>
       </div>
     </div>
   )

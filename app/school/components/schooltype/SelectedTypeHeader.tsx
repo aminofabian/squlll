@@ -22,7 +22,7 @@ export const SelectedTypeHeader: React.FC<SelectedTypeHeaderProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <h2 className="text-sm font-semibold text-[#246a59] truncate">
-              {selectedSchoolType.title}
+              {selectedSchoolType.title.toUpperCase()}
             </h2>
             {selectedSchoolType.emoji && (
               <span className="text-xs flex-shrink-0">{selectedSchoolType.emoji}</span>
@@ -32,7 +32,7 @@ export const SelectedTypeHeader: React.FC<SelectedTypeHeaderProps> = ({
         </div>
         <div className="flex-shrink-0 bg-[#246a59]/10 px-2 py-0.5 rounded border border-[#246a59]/20">
           <span className="text-[10px] font-semibold text-[#246a59]">
-            {getSelectedLevelsCount(selectedType)} selected
+            {getSelectedLevelsCount(selectedType)} SELECTED
           </span>
         </div>
       </div>

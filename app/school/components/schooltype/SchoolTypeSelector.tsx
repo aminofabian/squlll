@@ -39,9 +39,9 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
   return (
     <div className="w-full lg:w-64 lg:flex-shrink-0">
       <div className="lg:sticky lg:top-4 space-y-1 p-2 bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-lg shadow-sm relative">
-        <div className="mb-1.5 px-0.5">
-          <h3 className="text-sm font-semibold text-gray-900">School Type</h3>
-          <p className="text-[10px] text-gray-500 hidden lg:block mt-0.5">Select curriculum</p>
+        <div className="mb-1.5 px-0.5 text-center">
+          <h3 className="text-sm font-semibold text-gray-900">SCHOOL TYPE</h3>
+          <p className="text-[10px] text-gray-500 hidden lg:block mt-0.5">SELECT CURRICULUM</p>
         </div>
         
         {/* Mobile View - Compact Grid */}
@@ -82,32 +82,32 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                 >
                   {/* Selection indicator */}
                   {isSelected && (
-                    <div className="absolute top-1 right-1 w-4 h-4 bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center">
-                      <Check className="w-2.5 h-2.5 text-white" />
+                    <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-white/25 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
                   )}
                   
                   {/* Icon container */}
-                  <div className={`relative mb-0.5 p-1.5 rounded-md transition-all duration-150 ${
+                  <div className={`relative mb-1 p-2 rounded-md transition-all duration-150 ${
                     isSelected 
                       ? 'bg-white/25' 
                       : 'bg-gray-50 group-hover:bg-[#246a59]/15 group-hover:scale-105'
                   }`}>
-                    <Icon className={`w-3.5 h-3.5 transition-colors ${
+                    <Icon className={`w-5 h-5 transition-colors ${
                       isSelected ? 'text-white' : 'text-gray-600 group-hover:text-[#246a59]'
                     }`} />
                   </div>
                   
                   {/* Title */}
-                  <span className={`text-[10px] font-bold text-center px-1 leading-tight ${
+                  <span className={`text-xs font-bold text-center px-1 leading-tight ${
                     isSelected ? 'text-white' : 'text-gray-700 group-hover:text-[#246a59]'
                   }`}>
-                    {type.title.split(' ')[0]}
+                    {type.title.split(' ')[0].toUpperCase()}
                   </span>
                   
                   {/* Badge */}
                   {selectedLevelCount > 0 && (
-                    <span className={`absolute bottom-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
+                    <span className={`absolute bottom-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                       isSelected 
                         ? 'bg-white/30 text-white' 
                         : 'bg-[#246a59] text-white'
@@ -157,7 +157,7 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                   handleTypeSelect(type.id)
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                className={`group relative w-full px-2 py-1.5 border-2 transition-all duration-150 rounded-md overflow-visible cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#246a59]/50 focus:ring-offset-1 z-0
+                className={`group relative w-full px-3 py-2.5 border-2 transition-all duration-150 rounded-md overflow-visible cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#246a59]/50 focus:ring-offset-1 z-0
                   ${isSelected
                     ? 'border-[#246a59] bg-gradient-to-r from-[#246a59]/12 to-[#246a59]/6 shadow-sm ring-1 ring-[#246a59]/20'
                     : 'border-gray-200 bg-white hover:border-[#246a59] hover:bg-[#246a59]/8 hover:shadow-sm hover:ring-1 hover:ring-[#246a59]/15 active:bg-[#246a59]/12'
@@ -170,22 +170,22 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#246a59] to-[#1a4d42]" />
                 )}
                 
-                <div className="relative flex items-center gap-2">
+                <div className="relative flex items-center gap-2.5">
                   {/* Icon with emoji */}
                   <div className="flex-shrink-0 relative">
-                    <div className={`p-1 rounded transition-all duration-150 ${
+                    <div className={`p-1.5 rounded transition-all duration-150 ${
                       isSelected 
                         ? 'bg-[#246a59]/18' 
                         : 'bg-gray-50 group-hover:bg-[#246a59]/12 group-hover:scale-105'
                     }`}>
-                      <Icon className={`w-3.5 h-3.5 transition-colors ${
+                      <Icon className={`w-5 h-5 transition-colors ${
                         isSelected 
                           ? 'text-[#246a59]' 
                           : 'text-gray-500 group-hover:text-[#246a59]'
                       }`} />
                     </div>
                     {type.emoji && (
-                      <span className="absolute -top-0.5 -right-0.5 text-[9px] opacity-60">
+                      <span className="absolute -top-0.5 -right-0.5 text-[10px] opacity-60">
                         {type.emoji}
                       </span>
                     )}
@@ -194,15 +194,15 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1.5">
-                      <h3 className={`text-xs font-semibold truncate transition-colors ${
+                      <h3 className={`text-sm font-semibold truncate transition-colors ${
                         isSelected 
                           ? 'text-[#246a59]' 
                           : 'text-gray-900 group-hover:text-[#246a59]'
                       }`}>
-                        {type.title}
+                        {type.title.toUpperCase()}
                       </h3>
                       {selectedLevelCount > 0 && (
-                        <span className={`flex-shrink-0 inline-flex items-center justify-center w-4 h-4 text-[9px] font-bold rounded-full ${
+                        <span className={`flex-shrink-0 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full ${
                           isSelected 
                             ? 'bg-[#246a59] text-white' 
                             : 'bg-[#246a59] text-white'
@@ -211,7 +211,7 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                         </span>
                       )}
                     </div>
-                    <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1 leading-tight">
+                    <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1 leading-tight">
                       {type.description}
                     </p>
                   </div>
@@ -219,8 +219,8 @@ export const SchoolTypeSelector: React.FC<SchoolTypeSelectorProps> = ({
                   {/* Check icon for selected */}
                   {isSelected && (
                     <div className="flex-shrink-0">
-                      <div className="w-3.5 h-3.5 rounded-full bg-[#246a59] flex items-center justify-center">
-                        <Check className="w-2 h-2 text-white" />
+                      <div className="w-5 h-5 rounded-full bg-[#246a59] flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
                       </div>
                     </div>
                   )}

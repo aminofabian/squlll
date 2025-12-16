@@ -976,56 +976,70 @@ export const SchoolTypeSetup = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900 items-center justify-center">
       <Toaster position="top-center" />
       
-      <Header subdomain={subdomain} currentStep={currentStep} totalSteps={setupSteps.length} />
+      {/* Header with responsive margins */}
+      <div className="w-full px-6 sm:px-12 md:px-16 lg:px-24 xl:px-32 2xl:px-40 pt-4 sm:pt-6">
+        <div className="w-full max-w-[1400px] mx-auto">
+          <Header subdomain={subdomain} currentStep={currentStep} totalSteps={setupSteps.length} />
+        </div>
+      </div>
       
-      <main className="flex-1 w-full px-2 sm:px-4 lg:px-6 py-4">
-        <div className="w-full">
+      {/* Main content with responsive margins */}
+      <main className="flex-1 w-full px-6 sm:px-12 md:px-16 lg:px-24 xl:px-32 2xl:px-40 py-4 sm:py-6 flex items-center justify-center">
+        <div className="w-full max-w-[1400px] mx-auto">
           {/* Progress Stepper */}
-          <ProgressStepper steps={setupSteps} currentStep={currentStep} />
+          <div className="flex justify-center mb-6">
+            <ProgressStepper steps={setupSteps} currentStep={currentStep} />
+          </div>
           
           {/* School Type and Levels Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 mt-1 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 mt-4 sm:mt-6 w-full justify-center">
             {/* School Type Selection - Left Column */}
-            <div className="lg:col-span-3 w-full border-r">
-              <SchoolTypeSelector
-                schoolTypes={schoolTypes}
-                selectedType={selectedType}
-                handleTypeSelect={handleTypeSelect}
-                getSelectedLevelsCount={getSelectedLevelsCount}
-              />
+            <div className="md:col-span-3 w-full md:border-r md:pr-4 lg:pr-6 flex justify-center">
+              <div className="w-full max-w-full">
+                <SchoolTypeSelector
+                  schoolTypes={schoolTypes}
+                  selectedType={selectedType}
+                  handleTypeSelect={handleTypeSelect}
+                  getSelectedLevelsCount={getSelectedLevelsCount}
+                />
+              </div>
             </div>
             
             {/* Selected Type Details - Right Column */}
             {selectedSchoolType && (
-              <div className="lg:col-span-9 w-full lg:pl-2 lg:pr-4">
-                <SelectedTypeHeader
-                  selectedSchoolType={selectedSchoolType}
-                  getSelectedLevelsCount={getSelectedLevelsCount}
-                  selectedType={selectedType}
-                />
-                
-                {/* Level Selection Grid */}
-                <div className="mt-2 relative">
-                  {/* Background decoration */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#246a59]/5 via-transparent to-transparent rounded-lg" />
-                  
-                  <LevelGrid
+              <div className="md:col-span-9 w-full md:pl-4 lg:pl-6 flex justify-center">
+                <div className="w-full max-w-full">
+                  <SelectedTypeHeader
                     selectedSchoolType={selectedSchoolType}
+                    getSelectedLevelsCount={getSelectedLevelsCount}
                     selectedType={selectedType}
-                    selectedLevels={selectedLevels}
-                    toggleLevel={toggleLevel}
-                    levelsSectionRef={levelsSectionRef}
                   />
+                  
+                  {/* Level Selection Grid */}
+                  <div className="mt-4 sm:mt-6 relative">
+                    {/* Background decoration */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#246a59]/5 via-transparent to-transparent rounded-lg" />
+                    
+                    <LevelGrid
+                      selectedSchoolType={selectedSchoolType}
+                      selectedType={selectedType}
+                      selectedLevels={selectedLevels}
+                      toggleLevel={toggleLevel}
+                      levelsSectionRef={levelsSectionRef}
+                    />
+                  </div>
                 </div>
               </div>
             )}
           </div>
           
           {/* Quick Tip */}
-          <QuickTip currentStep={currentStep} />
+          <div className="flex justify-center mt-6">
+            <QuickTip currentStep={currentStep} />
+          </div>
         </div>
       </main>
       
