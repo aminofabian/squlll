@@ -16,13 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Calendar, Clock, GraduationCap, CheckCircle2, ChevronRight, Info } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Loader2, Calendar, Clock, GraduationCap, CheckCircle2, ChevronRight, Info, X } from 'lucide-react';
 
 interface Term {
   id: string;
@@ -148,6 +142,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   });
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(true);
 
   // Generate timetable name from selected term and academic year
   const generateTimetableName = (term: Term | undefined, academicYear: typeof currentAcademicYear): string => {
@@ -157,7 +152,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     const yearMatch = academicYear.name.match(/\d{4}/);
     const year = yearMatch ? yearMatch[0] : '';
     
-    return `${term.name} Timetable ${year}`.trim();
+    return `${term.name.toUpperCase()} TIMETABLE ${year}`.trim();
   };
 
   // Update name when term or academic year changes
@@ -186,6 +181,8 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       } else {
         setSelectedGradeIds([]);
       }
+      // Reset info popup visibility when drawer opens
+      setShowInfoPopup(true);
       
       // Generate timetable name if we have the necessary data
       if (selectedTermId && terms && currentAcademicYear) {
@@ -447,75 +444,45 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       }}
     >
       <SheetContent side="right" className="w-[600px] overflow-y-auto">
-        <SheetHeader className="border-b pb-3 px-4 pt-4">
+        <SheetHeader className="border-b pb-2.5 px-4 pt-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Calendar className="h-4 w-4 text-primary" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+              <Calendar className="h-3.5 w-3.5 text-primary" />
             </div>
             <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <SheetTitle className="text-lg font-semibold">Create Timetable</SheetTitle>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button 
-                        type="button" 
-                        className="text-muted-foreground hover:text-primary transition-colors rounded-full p-0.5 hover:bg-primary/10"
-                      >
-                        <Info className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent 
-                      side="bottom" 
-                      sideOffset={8}
-                      className="bg-white border border-gray-200 shadow-lg text-gray-700 px-3 py-2 max-w-xs rounded-lg"
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="mt-0.5 flex-shrink-0">
-                          <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Info className="h-2.5 w-2.5 text-primary" />
-                          </div>
-                        </div>
-                        <p className="text-xs leading-relaxed">
-                          This is a template. Breaks will be added in the next step.
-                        </p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <SheetDescription className="text-xs text-muted-foreground">
+              <SheetTitle className="text-xs font-semibold uppercase tracking-wide">Create Timetable</SheetTitle>
+              <SheetDescription className="text-[11px] text-muted-foreground">
                 Set up lesson periods for your selected term
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
 
-        <div className="flex flex-col items-center px-4 py-4">
+        <div className="flex flex-col items-center px-4 py-3">
           <div className="w-full max-w-2xl space-y-4">
           {/* Step 1 - Term Selection */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground text-slate-50">
+          <div className="space-y-1.5 pb-4 border-b-2 border-border/50">
+            <div className="flex items-center gap-1.5">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
                 1
               </div>
-              <Label className="text-sm font-semibold">Select Term</Label>
+              <Label className="text-[10px] font-semibold uppercase tracking-wide">Select Term</Label>
             </div>
             {termsLoading ? (
-              <div className="flex items-center justify-center gap-2 rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center justify-center gap-1.5 rounded-md border bg-muted/50 p-2 text-[11px] text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Loading terms...
               </div>
             ) : !currentAcademicYear ? (
-              <div className="rounded-md border bg-muted/50 p-3 text-center text-xs text-muted-foreground">
+              <div className="rounded-md border bg-muted/50 p-2 text-center text-[11px] text-muted-foreground">
                 No academic year available
               </div>
             ) : !terms || terms.length === 0 ? (
-              <div className="rounded-md border bg-muted/50 p-3 text-center text-xs text-muted-foreground">
+              <div className="rounded-md border bg-muted/50 p-2 text-center text-[11px] text-muted-foreground">
                 No terms available
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {terms.map((term) => {
                   const isSelected = term.id === selectedTermId;
                   const dateRange = formatDateRange(term.startDate, term.endDate);
@@ -526,37 +493,42 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       key={term.id}
                       type="button"
                       onClick={() => setSelectedTerm(term.id)}
-                      className={`group relative flex flex-col items-start gap-1 rounded-md border-2 p-2.5 text-left transition-all hover:border-primary/50 ${
+                      className={`group relative flex flex-col items-start gap-1 rounded-lg border-2 p-2.5 text-left transition-all duration-200 cursor-pointer ${
                         isSelected
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border bg-card hover:bg-accent/50'
+                          ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.02]'
+                          : 'border-border bg-card hover:border-primary/60 hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]'
                       }`}
                     >
                       <div className="flex w-full items-center justify-between gap-2">
-                        <span className={`text-xs font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                        <span className={`text-xs font-bold uppercase tracking-wide ${isSelected ? 'text-primary' : 'text-foreground group-hover:text-primary'}`}>
                           {term.name}
                         </span>
                         {isSelected && (
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                          <div className="flex-shrink-0">
+                            <CheckCircle2 className="h-4 w-4 text-primary animate-in fade-in zoom-in-95" />
+                          </div>
                         )}
                         {!isSelected && term.isActive && (
-                          <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          <span className="flex-shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             Active
                           </span>
                         )}
                       </div>
                       <div className="flex flex-col gap-0.5 w-full">
                         {dateRange && (
-                          <span className={`text-[10px] ${isSelected ? 'text-primary/70' : 'text-muted-foreground'}`}>
+                          <span className={`text-[10px] ${isSelected ? 'text-primary/80' : 'text-muted-foreground group-hover:text-primary/70'}`}>
                             {dateRange}
                           </span>
                         )}
                         {weeks !== null && (
-                          <span className={`text-[10px] font-medium ${isSelected ? 'text-primary/80' : 'text-muted-foreground'}`}>
+                          <span className={`text-[10px] font-semibold ${isSelected ? 'text-primary' : 'text-muted-foreground group-hover:text-primary/80'}`}>
                             {weeks} {weeks === 1 ? 'week' : 'weeks'}
                           </span>
                         )}
                       </div>
+                      {isSelected && (
+                        <div className="absolute inset-0 rounded-lg bg-primary/5 pointer-events-none" />
+                      )}
                     </button>
                   );
                 })}
@@ -566,39 +538,40 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
           {/* Step 2 - Timetable Name */}
           {selectedTermId && (
-            <div className="space-y-2 rounded-md border bg-card p-3 transition-all">
-              <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground text-slate-50">
+            <div className="space-y-1.5 rounded-md border bg-card p-2.5 transition-all pb-4 border-b-2 border-border/50">
+              <div className="flex items-center gap-1.5">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
                   2
                 </div>
-                <Label className="text-sm font-semibold">Timetable Name</Label>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide">Timetable Name</Label>
               </div>
               <Input
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Term 1 Timetable 2016"
-                className="h-9 rounded-md border-2 focus:border-primary text-sm"
+                onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
+                placeholder="e.g., TERM 1 TIMETABLE 2016"
+                className="h-8 rounded-md border-2 focus:border-primary text-xs uppercase font-semibold tracking-wide"
               />
             </div>
           )}
 
           {/* Grades Selection */}
-          <div className="space-y-2 rounded-md border bg-card p-3">
+          {selectedTermId && (
+            <div className="space-y-2 rounded-md border bg-card p-3 pb-4 border-b-2 border-border/50">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-semibold">
-                  Grade Levels <span className="text-xs font-normal text-muted-foreground">({selectedGradeIds.length}/{grades.length})</span>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide">
+                  Grade Levels <span className="text-[9px] font-normal text-muted-foreground normal-case">({selectedGradeIds.length}/{grades.length})</span>
                 </Label>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
                   onClick={handleSelectAllGrades}
                   disabled={grades.length === 0}
-                  className="h-7 rounded-md text-xs px-2"
+                  className="h-6 rounded-md text-[10px] px-1.5"
                 >
                   All
                 </Button>
@@ -608,24 +581,24 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   variant="ghost"
                   onClick={handleClearGrades}
                   disabled={selectedGradeIds.length === 0}
-                  className="h-7 rounded-md text-xs px-2"
+                  className="h-6 rounded-md text-[10px] px-1.5"
                 >
                   Clear
                 </Button>
               </div>
             </div>
             {grades.length === 0 ? (
-              <div className="rounded-md border bg-muted/50 p-2 text-center text-xs text-muted-foreground">
+              <div className="rounded-md border bg-muted/50 p-1.5 text-center text-[11px] text-muted-foreground">
                 No grades available
               </div>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {grades.map((grade) => {
                   const isSelected = selectedGradeIds.includes(grade.id);
                   return (
                     <label
                       key={grade.id}
-                      className={`group flex cursor-pointer items-center gap-1.5 rounded-md border-2 px-2.5 py-1.5 transition-all hover:border-primary/60 ${
+                      className={`group flex cursor-pointer items-center gap-1 rounded-md border-2 px-2 py-1 transition-all hover:border-primary/60 ${
                         isSelected
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border bg-card hover:bg-accent/50'
@@ -634,9 +607,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={(checked) => handleGradeToggle(grade.id, checked)}
-                        className="h-3.5 w-3.5"
+                        className="h-3 w-3"
                       />
-                      <span className="text-xs font-medium whitespace-nowrap">
+                      <span className="text-[11px] font-medium whitespace-nowrap">
                         {abbreviateGrade(grade.displayName || grade.name || 'Grade')}
                       </span>
                     </label>
@@ -645,21 +618,22 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               </div>
             )}
           </div>
+          )}
 
           {/* Step 3 - Lesson Periods Configuration */}
           {selectedTermId && (
-            <div className="space-y-3 rounded-md border bg-card p-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 shrink-0 text-slate-50 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            <div className="space-y-2 rounded-md border bg-card p-2.5">
+              <div className="flex items-center gap-1.5">
+                <div className="flex h-5 w-5 text-teal-100 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
                   3
                 </div>
-                <Label className="text-sm font-semibold">Lesson Periods</Label>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide">Lesson Periods</Label>
               </div>
-              <div className="space-y-2.5">
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <Label htmlFor="startTime" className="text-xs font-medium flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="startTime" className="text-[11px] font-medium flex items-center gap-1 uppercase tracking-wide">
+                      <Clock className="h-2.5 w-2.5" />
                       Start Time
                     </Label>
                     <Input
@@ -667,42 +641,55 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="h-9 rounded-md border-2 focus:border-primary text-sm"
+                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="periodDuration" className="text-xs font-medium">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="periodDuration" className="text-[11px] font-medium uppercase tracking-wide">
                       Duration (min)
                     </Label>
                     <Input
                       id="periodDuration"
                       type="number"
-                      min="30"
-                      max="90"
+                      min="15"
+                      max="120"
+                      step="5"
                       value={formData.periodDuration}
-                      onChange={(e) => setFormData({ ...formData, periodDuration: e.target.value })}
-                      className="h-9 rounded-md border-2 focus:border-primary text-sm"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || (Number(value) >= 15 && Number(value) <= 120)) {
+                          setFormData({ ...formData, periodDuration: value });
+                        }
+                      }}
+                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
+                      placeholder="40"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <Label htmlFor="periodCount" className="text-xs font-medium">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="periodCount" className="text-[11px] font-medium uppercase tracking-wide">
                       Periods/Day
                     </Label>
                     <Input
                       id="periodCount"
                       type="number"
-                      min="4"
-                      max="12"
+                      min="1"
+                      max="15"
                       value={formData.periodCount}
-                      onChange={(e) => setFormData({ ...formData, periodCount: e.target.value })}
-                      className="h-9 rounded-md border-2 focus:border-primary text-sm"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || (Number(value) >= 1 && Number(value) <= 15)) {
+                          setFormData({ ...formData, periodCount: value });
+                        }
+                      }}
+                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
+                      placeholder="8"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="numberOfDays" className="text-xs font-medium">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="numberOfDays" className="text-[11px] font-medium uppercase tracking-wide">
                       Days/Week
                     </Label>
                     <Input
@@ -712,40 +699,53 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       max="7"
                       value={formData.numberOfDays}
                       onChange={(e) => setFormData({ ...formData, numberOfDays: e.target.value })}
-                      className="h-9 rounded-md border-2 focus:border-primary text-sm"
+                      className="h-8 rounded-md border-2 focus:border-primary text-xs"
                     />
                   </div>
                 </div>
 
                 {/* Preview */}
-                <div className="rounded-md border-2 border-primary/20 bg-primary/5 p-2.5">
+                <div className="rounded-md border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-2">
                   {(() => {
                     const periodCount = parsePositiveInt(formData.periodCount);
                     const periodDuration = parsePositiveInt(formData.periodDuration);
                     const totalMinutes =
                       periodCount && periodDuration ? periodCount * periodDuration : null;
                     const lastLessonEndTime = calculateEndTime();
+                    const isValid = periodCount && periodDuration && formData.startTime;
 
                     return (
-                      <div className="grid grid-cols-4 gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">Starts</span>
-                          <span className="font-semibold">{formData.startTime}</span>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Clock className="h-3 w-3 text-primary" />
+                          <span className="text-[11px] font-semibold text-primary uppercase tracking-wide">Schedule Preview</span>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">Ends</span>
-                          <span className="font-semibold">{lastLessonEndTime}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">Periods</span>
-                          <span className="font-semibold">{periodCount || '—'}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">Time</span>
-                          <span className="font-semibold">
-                            {totalMinutes ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m` : '—'}
-                          </span>
-                        </div>
+                        {isValid ? (
+                          <div className="grid grid-cols-2 gap-2 text-[11px]">
+                            <div className="space-y-0.5">
+                              <span className="text-muted-foreground block text-[9px]">Day starts</span>
+                              <span className="font-semibold text-xs">{formData.startTime}</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-muted-foreground block text-[9px]">Day ends</span>
+                              <span className="font-semibold text-xs">{lastLessonEndTime}</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-muted-foreground block text-[9px]">Periods per day</span>
+                              <span className="font-semibold text-xs">{periodCount}</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-muted-foreground block text-[9px]">Total time</span>
+                              <span className="font-semibold text-xs">
+                                {totalMinutes ? `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m` : '—'}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground text-center py-0.5">
+                            Enter values to see preview
+                          </p>
+                        )}
                       </div>
                     );
                   })()}
@@ -755,35 +755,61 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           )}
 
           {/* Actions */}
-          <div className="sticky bottom-0 border-t bg-background pt-3 mt-4">
-            <div className="flex gap-2">
+          <div className="sticky bottom-0 border-t bg-background pt-2 mt-3">
+            <div className="flex gap-1.5">
               <Button
                 variant="outline"
                 onClick={onClose}
                 disabled={isCreating}
-                className="flex-1 h-9 rounded-md text-sm"
+                className="flex-1 h-8 rounded-md text-xs"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isCreating || !selectedTermId || selectedGradeIds.length === 0}
-                className="flex-1 h-9 rounded-md text-sm font-semibold"
+                className="flex-1 h-8 rounded-md text-xs font-semibold"
               >
                 {isCreating ? (
                   <>
-                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
                     Creating...
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="mr-2 h-3.5 w-3.5" />
+                    <CheckCircle2 className="mr-1.5 h-3 w-3" />
                     Create Timetable
                   </>
                 )}
               </Button>
             </div>
           </div>
+
+          {/* Info Popup - Below Actions */}
+          {showInfoPopup && (
+            <div className="flex justify-end mt-2">
+              <div className="relative bg-white border border-gray-200 shadow-xl text-gray-700 px-3 py-2 max-w-xs rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setShowInfoPopup(false)}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors p-0.5 rounded-sm hover:bg-gray-100"
+                  aria-label="Close info"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+                <div className="flex items-start gap-2.5 pr-5">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Info className="h-3 w-3 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-xs leading-relaxed text-gray-700">
+                    This is a template. Breaks will be added in the next step.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
         </div>
       </SheetContent>
