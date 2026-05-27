@@ -3,22 +3,10 @@
 
 const testSetupFlow = () => {
   // Simulate the URL parameters that would be passed after registration
-  const testParams = {
-    userId: 'test-user-id-123',
-    email: 'test@example.com',
-    schoolUrl: 'test-school',
-    subdomainUrl: 'test-school.squl.co.ke',
-    tenantId: 'test-tenant-id-456',
-    tenantName: 'Test School',
-    tenantSubdomain: 'test-school',
-    accessToken: 'test-access-token-789',
-    refreshToken: 'test-refresh-token-abc',
-    newRegistration: 'true'
-  }
+  const testParams = { newRegistration: 'true' }
 
-  // Build the test URL
   const params = new URLSearchParams(testParams)
-  const testUrl = `http://localhost:3000/school/test-school/setup?${params.toString()}`
+  const testUrl = `http://test-school.localhost:3000/setup?${params.toString()}`
   
   console.log('Test Setup Flow')
   console.log('===============')
@@ -26,8 +14,8 @@ const testSetupFlow = () => {
   console.log('')
   console.log('Expected Flow:')
   console.log('1. User registers a new school')
-  console.log('2. Registration redirects to: /school/{subdomain}/setup?{params}')
-  console.log('3. Layout processes URL parameters and stores them in cookies')
+  console.log('2. Registration stores session via POST /api/auth/store-tokens')
+  console.log('3. Registration redirects to: https://{subdomain}.squl.co.ke/setup?newRegistration=true')
   console.log('4. Setup page renders SchoolTypeSetup component')
   console.log('5. User completes school type configuration')
   console.log('6. User is redirected to: /school/{subdomain}/dashboard')

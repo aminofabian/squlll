@@ -45,6 +45,7 @@ export interface Teacher {
   subjects: string[];     // Subject names they can teach
   gradeLevels?: string[]; // Grade level names they can teach (e.g., ["Grade 1", "Grade 2"])
   color?: string;         // For UI color coding
+  isActive?: boolean;     // Whether the teacher is active
 }
 
 export interface Grade {

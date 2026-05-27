@@ -287,32 +287,50 @@ export default function SignupPage() {
 
       setSuccess(result.data.createUser)
 
-      setTimeout(() => {
+      setTimeout(async () => {
         const userData = result.data.createUser
         const subdomain = userData.subdomainUrl
         const isProd = process.env.NODE_ENV === "production"
         const baseUrl = isProd ? "https://" : "http://"
         const domain = isProd ? "squl.co.ke" : "localhost:3000"
-
         const subdomainPrefix = subdomain.split(".")[0]
 
-        const params = new URLSearchParams({
-          userId: userData.user.id,
-          email: userData.user.email,
-          schoolUrl: userData.user.schoolUrl || "",
-          subdomainUrl: userData.subdomainUrl,
-          tenantId: userData.tenant.id,
-          tenantName: userData.tenant.name,
-          tenantSubdomain: userData.tenant.subdomain,
-          accessToken: userData.tokens.accessToken,
-          refreshToken: userData.tokens.refreshToken,
-          newRegistration: "true",  // Flag to indicate this is a new registration
-        }).toString()
+        try {
+          const storeResponse = await fetch("/api/auth/store-tokens", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: userData.user.id,
+              email: userData.user.email,
+              schoolUrl: userData.user.schoolUrl || "",
+              subdomainUrl: userData.subdomainUrl,
+              tenantId: userData.tenant.id,
+              tenantName: userData.tenant.name,
+              tenantSubdomain: userData.tenant.subdomain,
+              accessToken: userData.tokens.accessToken,
+              refreshToken: userData.tokens.refreshToken,
+            }),
+          })
 
-        const setupUrl = `${baseUrl}${subdomainPrefix}.${domain}/setup?${params}`
+          if (!storeResponse.ok) {
+            throw new Error("Failed to save session before setup")
+          }
 
-        // Use window.location.replace to avoid back button issues
-        window.location.replace(setupUrl)
+          // Client-readable fallback for setup UI (httpOnly cookie is not visible to JS)
+          try {
+            localStorage.setItem("accessToken", userData.tokens.accessToken)
+          } catch {
+            /* ignore storage errors */
+          }
+
+          const setupUrl = `${baseUrl}${subdomainPrefix}.${domain}/setup?newRegistration=true`
+          window.location.replace(setupUrl)
+        } catch (redirectError) {
+          console.error("Post-registration redirect failed:", redirectError)
+          setError(
+            "Account created, but we could not start setup automatically. Please sign in from your school login page."
+          )
+        }
       }, 3000)
     } catch (error) {
       // Provide user-friendly error messages

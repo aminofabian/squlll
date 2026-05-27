@@ -9,7 +9,8 @@ When a new school registers, the system now uses a dedicated setup page to handl
 ### 1. Registration
 - User registers a new school at `/register`
 - Registration API creates the school and returns user data with tokens
-- User is redirected to `/school/{subdomain}/setup` with all authentication data as URL parameters
+- User session is stored via `POST /api/auth/store-tokens` on the apex domain
+- User is redirected to `https://{subdomain}.squl.co.ke/setup?newRegistration=true` (no tokens in the URL)
 
 ### 2. Setup Page (`/school/{subdomain}/setup`)
 - Renders the SchoolTypeSetup component
@@ -34,20 +35,13 @@ When a new school registers, the system now uses a dedicated setup page to handl
 
 ## URL Parameters
 
-The setup page expects these URL parameters:
+After registration, the setup page only needs:
 
 ```
-?userId={user_id}
-&email={user_email}
-&schoolUrl={school_url}
-&subdomainUrl={subdomain_url}
-&tenantId={tenant_id}
-&tenantName={tenant_name}
-&tenantSubdomain={tenant_subdomain}
-&accessToken={access_token}
-&refreshToken={refresh_token}
-&newRegistration=true
+?newRegistration=true
 ```
+
+Legacy links may still pass full auth parameters in the URL; the setup page will process and clean them.
 
 ## Cookie Storage
 

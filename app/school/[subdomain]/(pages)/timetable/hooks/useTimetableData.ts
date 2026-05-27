@@ -61,11 +61,20 @@ export function usePeriodSlots() {
 
   return useMemo(() => {
     // Group slots by day: { 1: [slot1, slot2], 2: [...], ... }
+    // Slots without dayOfWeek apply to ALL days (1-5)
     const slotsByDay: Record<number, typeof store.timeSlots> = {};
     store.timeSlots.forEach((slot) => {
-      const day = slot.dayOfWeek ?? 1; // Default to Monday if no dayOfWeek
-      if (!slotsByDay[day]) slotsByDay[day] = [];
-      slotsByDay[day].push(slot);
+      if (slot.dayOfWeek) {
+        // Day-specific slot - add to that day only
+        if (!slotsByDay[slot.dayOfWeek]) slotsByDay[slot.dayOfWeek] = [];
+        slotsByDay[slot.dayOfWeek].push(slot);
+      } else {
+        // Slot applies to all days - add to every day (1-5)
+        for (let day = 1; day <= 5; day++) {
+          if (!slotsByDay[day]) slotsByDay[day] = [];
+          slotsByDay[day].push(slot);
+        }
+      }
     });
 
     // Sort slots within each day by period number

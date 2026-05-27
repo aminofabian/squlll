@@ -178,6 +178,7 @@ export async function GET(request: Request) {
       query GetTeachers {
         getTeachers {
           id
+          isActive
           user {
             id
             name

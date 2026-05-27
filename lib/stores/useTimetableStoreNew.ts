@@ -1212,6 +1212,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 subjects: subjectNames, // Array of subject names (not IDs, as per interface)
                 gradeLevels: gradeLevelNames, // Array of grade level names
                 color: undefined, // Can be set later if needed
+                isActive: teacher.isActive !== undefined ? teacher.isActive : true, // Default to true if not provided
               };
 
               console.log('Processed teacher:', processedTeacher);
@@ -1438,6 +1439,8 @@ export const useTimetableStore = create<TimetableStore>()(
                 }
                 
                 // Collect time slots (only non-break periods) - shared across grades
+                // NOTE: Do NOT set dayOfWeek on time slots - they should apply to ALL days
+                // The dayOfWeek is only relevant for entries, not for period definitions
                 if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
@@ -1446,7 +1449,7 @@ export const useTimetableStore = create<TimetableStore>()(
                     startTime: formatTime(period.startTime),
                     endTime: formatTime(period.endTime),
                     color: 'border-l-primary',
-                    dayOfWeek: dayOfWeek,
+                    // dayOfWeek intentionally omitted - slots apply to all days
                     label: period.label,
                     dayTemplateId: dayTemplateId || undefined,
                   });
@@ -1723,6 +1726,8 @@ export const useTimetableStore = create<TimetableStore>()(
                 }
                 
                 // Only collect time slots for non-break periods
+                // NOTE: Do NOT set dayOfWeek on time slots - they should apply to ALL days
+                // The dayOfWeek is only relevant for entries, not for period definitions
                 if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
@@ -1731,7 +1736,7 @@ export const useTimetableStore = create<TimetableStore>()(
                     startTime: formatTime(period.startTime),
                     endTime: formatTime(period.endTime),
                     color: 'border-l-primary',
-                    dayOfWeek: dayOfWeek,
+                    // dayOfWeek intentionally omitted - slots apply to all days
                     label: period.label || null,
                     dayTemplateId: dayTemplateId || undefined,
                   });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
@@ -36,6 +36,12 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Filter to only active teachers - memoized to prevent infinite loops
+  const activeTeachers = useMemo(
+    () => teachers.filter((teacher) => teacher.isActive !== false),
+    [teachers]
+  );
   
   const [formData, setFormData] = useState({
     subjectId: '',
@@ -86,8 +92,8 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         });
       }
 
-      // Find a teacher who can teach this grade
-      const firstAvailableTeacher = teachers.find((teacher) => {
+      // Find a teacher who can teach this grade (only active teachers)
+      const firstAvailableTeacher = activeTeachers.find((teacher) => {
         const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
         const isAvailable = !busyTeacherIds.has(teacher.id);
         return canTeachGrade && isAvailable;
@@ -99,7 +105,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         roomNumber: '',
       });
     }
-  }, [lesson, subjects, teachers, entries]);
+  }, [lesson, subjects, activeTeachers, entries, grades, getGradeById, getSubjectsByLevelId]);
 
   const handleSave = async () => {
     if (!lesson) return;
@@ -187,7 +193,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
 
         // Verify the IDs exist in the store
         const subject = subjects.find((s) => s.id === formData.subjectId);
-        const teacher = teachers.find((t) => t.id === formData.teacherId);
+        const teacher = activeTeachers.find((t) => t.id === formData.teacherId);
         const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
 
         // Log subject ID details for debugging
@@ -251,6 +257,28 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
+        // Validate IDs exist
+        if (!subject) {
+          console.error('Subject not found:', formData.subjectId);
+          toast({
+            title: 'Error',
+            description: `Subject ID ${formData.subjectId} not found in store`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+        if (!teacher) {
+          console.error('Teacher not found or inactive:', formData.teacherId);
+          toast({
+            title: 'Error',
+            description: `Teacher ID ${formData.teacherId} not found or is inactive`,
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+
         console.log('Creating entry with input:', {
           input,
           termId,
@@ -267,28 +295,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
 
         // Log the exact input being sent
         console.log('Exact input object being sent to backend:', JSON.stringify(input, null, 2));
-
-        // Validate IDs exist
-        if (!subject) {
-          console.error('Subject not found:', formData.subjectId);
-          toast({
-            title: 'Error',
-            description: `Subject ID ${formData.subjectId} not found in store`,
-            variant: 'destructive',
-          });
-          setIsSaving(false);
-          return;
-        }
-        if (!teacher) {
-          console.error('Teacher not found:', formData.teacherId);
-          toast({
-            title: 'Error',
-            description: `Teacher ID ${formData.teacherId} not found in store`,
-            variant: 'destructive',
-          });
-          setIsSaving(false);
-          return;
-        }
         if (!timeSlot) {
           console.error('TimeSlot not found:', lesson.timeSlotId);
           toast({
@@ -687,7 +693,7 @@ Check the browser console for detailed input information.`;
 
   const isNew = lesson.isNew;
   const selectedSubject = subjects.find((s) => s.id === formData.subjectId);
-  const selectedTeacher = teachers.find((t) => t.id === formData.teacherId);
+  const selectedTeacher = activeTeachers.find((t) => t.id === formData.teacherId);
   
   // Get timeslot and grade information
   const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
@@ -706,10 +712,11 @@ Check the browser console for detailed input information.`;
       .map((entry) => entry.teacherId)
   );
 
+
   // Filter teachers who:
   // 1. Can teach the selected grade (or show all if no grade selected)
   // 2. Are NOT already scheduled at this timeslot
-  const availableTeachers = teachers.filter((teacher) => {
+  const availableTeachers = activeTeachers.filter((teacher) => {
     // Filter by grade level - show teachers who can teach this grade
     const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
     const isAvailable = !busyTeacherIds.has(teacher.id);
@@ -717,7 +724,7 @@ Check the browser console for detailed input information.`;
   });
 
   // Separate list: teachers who can teach this grade but are busy (for display purposes)
-  const busyButQualifiedTeachers = teachers.filter((teacher) => {
+  const busyButQualifiedTeachers = activeTeachers.filter((teacher) => {
     // Filter by grade level - show teachers who can teach this grade
     const canTeachGrade = !grade?.name || (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
     const isBusy = busyTeacherIds.has(teacher.id);
@@ -771,7 +778,7 @@ Check the browser console for detailed input information.`;
               value={formData.subjectId}
               onValueChange={(value) => {
                 const newSubject = subjects.find((s) => s.id === value);
-                const currentTeacher = teachers.find((t) => t.id === formData.teacherId);
+                const currentTeacher = activeTeachers.find((t) => t.id === formData.teacherId);
                 
                 // Check if current teacher can teach this subject and is available
                 const busyTeacherIds = new Set(
@@ -790,8 +797,8 @@ Check the browser console for detailed input information.`;
                   !busyTeacherIds.has(currentTeacher.id);
 
                 if (!currentTeacherValid) {
-                  // Find first available teacher for this grade
-                  const firstAvailable = teachers.find((t) => {
+                  // Find first available teacher for this grade (only active teachers)
+                  const firstAvailable = activeTeachers.find((t) => {
                     const canTeachGrade = !grade?.name || (t.gradeLevels && t.gradeLevels.includes(grade.name));
                     const isAvailable = !busyTeacherIds.has(t.id);
                     return canTeachGrade && isAvailable;

@@ -145,6 +145,12 @@ export const SchoolTypeSetup = () => {
     
     return token
   }
+
+  const hasSessionCookies = () => {
+    if (typeof document === 'undefined') return false
+    const cookieNames = document.cookie.split(';').map((c) => c.trim().split('=')[0])
+    return cookieNames.includes('tenantId') || cookieNames.includes('userId')
+  }
   
   // Extract all authentication data from URL parameters
   const getAuthDataFromURL = () => {
@@ -283,23 +289,31 @@ export const SchoolTypeSetup = () => {
 
   // Store auth data from URL parameters in cookies and localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const authData = getAuthDataFromURL();
-      
-      if (authData && authData.accessToken) {
-        // Store in localStorage as fallback
-        try {
-          localStorage.setItem('accessToken', authData.accessToken);
-          console.log('🔍 Debug - Stored access token in localStorage as fallback');
-        } catch (error) {
-          console.warn('Failed to store access token in localStorage:', error);
-        }
-        
-        // Store in cookies via API endpoint for HTTP-only cookies
-        storeAuthDataInCookies(authData).catch(error => {
-          console.warn('Failed to store auth data in cookies:', error);
-        });
+    if (typeof window === 'undefined') return
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const isNewRegistration = urlParams.get('newRegistration') === 'true'
+
+    // Registration flow: tokens were stored on apex domain before redirect
+    if (isNewRegistration && !urlParams.get('accessToken')) {
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('newRegistration')
+      window.history.replaceState({}, '', newUrl.toString())
+      return
+    }
+
+    const authData = getAuthDataFromURL()
+
+    if (authData?.accessToken) {
+      try {
+        localStorage.setItem('accessToken', authData.accessToken)
+      } catch (error) {
+        console.warn('Failed to store access token in localStorage:', error)
       }
+
+      storeAuthDataInCookies(authData).catch(error => {
+        console.warn('Failed to store auth data in cookies:', error)
+      })
     }
   }, [])
 
@@ -610,9 +624,10 @@ export const SchoolTypeSetup = () => {
     setIsLoading(true);
     const selectedLevelsList = Array.from(selectedLevels[selectedType]);
     
-    // Check for access token before attempting configuration
+    // Prefer client token; registration may only have httpOnly cookies (see /api/auth/store-tokens)
     const accessToken = getAccessToken();
-    if (!accessToken) {
+
+    if (!accessToken && !hasSessionCookies()) {
       console.error('No access token found. Cannot proceed with configuration.');
       toast.error(
         <div className="space-y-2 p-2">

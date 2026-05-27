@@ -276,6 +276,54 @@ export default function SmartTimetableNew() {
   // Get grid organized by day/period (memoized!)
   const grid = useTimetableGrid(selectedGradeId);
 
+  // DEBUG: Log detailed data to understand the mismatch
+  useEffect(() => {
+    if (selectedGradeId && timeSlots.length > 0) {
+      const storeEntries = useTimetableStore.getState().entries;
+      const entriesForGrade = storeEntries.filter(e => e.gradeId === selectedGradeId);
+      
+      console.log('=== TIMETABLE DEBUG ===');
+      console.log('Selected Grade ID:', selectedGradeId);
+      console.log('Total entries in store:', storeEntries.length);
+      console.log('Entries for this grade:', entriesForGrade.length);
+      console.log('TimeSlots count:', timeSlots.length);
+      
+      // Show sample entries with their timeSlotIds
+      console.log('Sample entries:', entriesForGrade.slice(0, 5).map(e => ({
+        id: e.id,
+        dayOfWeek: e.dayOfWeek,
+        timeSlotId: e.timeSlotId,
+        subjectId: e.subjectId,
+      })));
+      
+      // Show timeSlots with their IDs
+      console.log('TimeSlots:', timeSlots.slice(0, 5).map(ts => ({
+        id: ts.id,
+        periodNumber: ts.periodNumber,
+        dayOfWeek: ts.dayOfWeek,
+      })));
+      
+      // Check if entry timeSlotIds exist in timeSlots
+      const timeSlotIds = new Set(timeSlots.map(ts => ts.id));
+      const missingSlots = entriesForGrade.filter(e => !timeSlotIds.has(e.timeSlotId));
+      if (missingSlots.length > 0) {
+        console.log('⚠️ ENTRIES WITH MISSING TIMESLOT IDS:', missingSlots.map(e => ({
+          entryId: e.id,
+          timeSlotId: e.timeSlotId,
+          dayOfWeek: e.dayOfWeek,
+        })));
+      }
+      
+      // Show grid structure
+      console.log('Grid keys (days):', Object.keys(grid));
+      if (grid[1]) {
+        console.log('Grid day 1 slot IDs:', Object.keys(grid[1]).slice(0, 5));
+        console.log('Grid day 1 entries found:', Object.entries(grid[1]).filter(([_, v]) => v !== null).length);
+      }
+      console.log('======================');
+    }
+  }, [selectedGradeId, timeSlots, grid]);
+
   // Get period slots grouped by day with helpers
   const { periodNumbers, getSlotFor } = usePeriodSlots();
 
