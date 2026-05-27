@@ -77,7 +77,7 @@ const levelNameMapping: Record<string, Record<string, string>> = {
 // Fallback mappings to try if the main mapping fails
 const fallbackLevelMapping: Record<string, Record<string, string[]>> = {
   cbc: {
-    'Pre-Primary': ['pre primary', 'preschool', 'pre-primary', 'Pre Primary'],
+    'Pre-Primary': ['pre primary', 'preschool', 'pre-primary', 'Pre-Primary'],
     'Lower Primary': ['lower primary', 'Lower Primary', 'primary lower'],
     'Upper Primary': ['upper primary', 'Upper Primary', 'primary upper'],
     'Junior Secondary': ['junior secondary', 'Junior Secondary', 'secondary junior'],
