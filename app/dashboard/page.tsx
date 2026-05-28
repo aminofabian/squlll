@@ -1,431 +1,150 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from 'react'
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
-import { Sidebar } from "@/components/dashboard/Sidebar"
-import { SearchFilter } from "@/components/dashboard/SearchFilter"
-import { MobileNav } from "@/components/dashboard/MobileNav"
-import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen } from "lucide-react"
+import { useState, useMemo } from "react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { SearchFilter } from "@/components/dashboard/SearchFilter";
+import { MobileNav } from "@/components/dashboard/MobileNav";
+import {
+  Users,
+  CalendarDays,
+  BookOpen,
+  TrendingUp,
+  GraduationCap,
+  ClipboardList,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
 
-const dashboardStats = [
+// ─── Constants ─────────────────────────────────────────────────
+
+const STATS = [
   {
     title: "Total Students",
     value: "1,234",
     change: "+12 this month",
     icon: Users,
-    color: "text-primary"
+    color: "text-primary",
   },
   {
     title: "Attendance Rate",
     value: "95.8%",
     change: "+0.6% vs last week",
     icon: CalendarDays,
-    color: "text-green-600"
+    color: "text-emerald-600",
   },
   {
     title: "Active Classes",
     value: "48",
     change: "Current semester",
     icon: BookOpen,
-    color: "text-purple-600"
+    color: "text-purple-600",
   },
   {
     title: "Academic Progress",
     value: "87.5%",
     change: "+2.3% this term",
     icon: TrendingUp,
-    color: "text-blue-600"
-  }
-]
-
-interface SystemStatus {
-  name: string
-  status: 'operational' | 'degraded' | 'down'
-  uptime: string
-  lastIncident?: string
-}
-
-const systemStatuses: SystemStatus[] = [
-  {
-    name: "API Gateway",
-    status: "operational",
-    uptime: "99.99%"
+    color: "text-blue-600",
   },
-  {
-    name: "Authentication Service",
-    status: "operational",
-    uptime: "99.95%"
-  },
-  {
-    name: "Database Cluster",
-    status: "degraded",
-    uptime: "99.90%",
-    lastIncident: "2024-01-20T15:30:00Z"
-  }
-]
+];
 
-interface RecentActivity {
-  id: number
-  type: 'store' | 'api_key' | 'credential' | 'auth'
-  action: string
-  target: string
-  timestamp: string
-}
-
-const recentActivities: RecentActivity[] = [
-  {
-    id: 1,
-    type: 'store',
-    action: 'created',
-    target: 'GameStore Alpha',
-    timestamp: '2024-01-20T16:45:00Z'
-  },
-  {
-    id: 2,
-    type: 'api_key',
-    action: 'regenerated',
-    target: 'BetaCasino',
-    timestamp: '2024-01-20T16:30:00Z'
-  },
-  {
-    id: 3,
-    type: 'credential',
-    action: 'updated',
-    target: 'GAMEROOM credentials for Lucky Games',
-    timestamp: '2024-01-20T16:15:00Z'
-  }
-]
-
-interface StoreDetail {
-  id: number
-  name: string
-  requests: string
-  lastActive: string
-}
-
-const mockDashboardFilters = [
-  {
-    id: 1,
-    name: "Active Stores",
-    type: "store" as const,
-    value: "active",
-    count: 15,
-    created_at: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: 2,
-    name: "Failed Requests",
-    type: "status" as const,
-    value: "failed",
-    count: 23,
-    created_at: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: 3,
-    name: "GAMEROOM Issues",
-    type: "provider" as const,
-    value: "GAMEROOM",
-    count: 5,
-    created_at: "2024-01-15T10:30:00Z"
-  }
-]
-
-const mockStoreDetails: Record<number, StoreDetail> = {
-  1: {
-    id: 1,
-    name: "GameStore Alpha",
-    requests: "15,420",
-    lastActive: "2 minutes ago"
-  },
-  2: {
-    id: 2,
-    name: "BetaCasino",
-    requests: "8,934",
-    lastActive: "5 minutes ago"
-  }
-}
-
-const mockProviderIssues = {
-  GAMEROOM: {
-    errors: [
-      {
-        id: 1,
-        error: "API Timeout",
-        count: 3,
-        lastOccurred: "5 minutes ago",
-        affectedStores: ["GameStore Alpha", "BetaCasino"]
-      },
-      {
-        id: 2,
-        error: "Authentication Failed",
-        count: 2,
-        lastOccurred: "15 minutes ago",
-        affectedStores: ["Lucky Games"]
-      }
-    ],
-    responseTime: "245ms",
-    availability: "98.5%"
-  }
-}
-
-const mockStatusIssues = {
-  recentErrors: [
-    {
-      id: 1,
-      type: "API Error",
-      message: "Request timeout exceeded",
-      timestamp: "2024-01-20T16:45:00Z",
-      count: 23
-    },
-    {
-      id: 2,
-      type: "Database Error",
-      message: "Connection pool exhausted",
-      timestamp: "2024-01-20T16:30:00Z",
-      count: 5
-    }
-  ],
-  errorRate: "0.8%",
-  avgResponseTime: "189ms"
-}
-
-const upcomingEvents = [
+const EVENTS = [
   { name: "Parent-Teacher Conference", date: "Mar 15", attendees: 45 },
   { name: "Science Fair", date: "Mar 20", attendees: 120 },
-  { name: "Sports Day", date: "Mar 25", attendees: 200 }
-]
+  { name: "Sports Day", date: "Mar 25", attendees: 200 },
+];
 
-const classPerformance = [
+const CLASS_PERFORMANCE = [
   { name: "Grade 10A", average: 85.6, students: 32 },
   { name: "Grade 11B", average: 82.3, students: 28 },
-  { name: "Grade 12C", average: 88.9, students: 30 }
-]
+  { name: "Grade 12C", average: 88.9, students: 30 },
+];
+
+const RECENT_ACTIVITY = [
+  {
+    action: "Attendance marked",
+    target: "Grade 10A",
+    time: "10 min ago",
+    type: "attendance",
+  },
+  {
+    action: "Exam results posted",
+    target: "Grade 12 - Mathematics",
+    time: "1 hour ago",
+    type: "exam",
+  },
+  {
+    action: "New student enrolled",
+    target: "John Doe - Grade 8B",
+    time: "2 hours ago",
+    type: "enrollment",
+  },
+  {
+    action: "Fee payment received",
+    target: "Jane Smith - Parent",
+    time: "3 hours ago",
+    type: "finance",
+  },
+];
+
+// ─── Component ─────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [selectedFilter, setSelectedFilter] = useState<string>('all')
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleFilterSelect = (filterId: string) => {
-    setSelectedFilter(filterId)
-  }
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    setSelectedFilter('all')
-  }
-
-  const getFilterContent = (filterId: string) => {
-    const filter = mockDashboardFilters.find(f => f.id.toString() === filterId)
-    if (!filter) return null
-
-    switch (filter.type) {
-      case 'store':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-custom-blue" />
-                  <span className="text-sm font-mono">Active Stores</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">15</p>
-              </div>
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CircleDollarSign className="h-5 w-5 text-green-500" />
-                  <span className="text-sm font-mono">Total Revenue</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">$45.2K</p>
-              </div>
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-purple-500" />
-                  <span className="text-sm font-mono">API Requests</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">1.2M</p>
-              </div>
-            </div>
-
-            {/* Store List */}
-            <div className="border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-              <div className="p-4 border-b-2 border-slate-200 dark:border-slate-700">
-                <h2 className="font-mono font-bold">Active Stores</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {Object.values(mockStoreDetails).map(store => (
-                    <div key={store.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded">
-                      <div className="flex items-center gap-3">
-                        <Store className="h-5 w-5 text-custom-blue" />
-                        <div>
-                          <div className="font-mono font-medium">{store.name}</div>
-                          <div className="text-xs text-slate-500">{store.requests} requests</div>
-                        </div>
-                      </div>
-                      <div className="text-xs font-mono">{store.lastActive}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'provider':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  <span className="text-sm font-mono">Active Issues</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">{mockProviderIssues.GAMEROOM.errors.length}</p>
-              </div>
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-purple-500" />
-                  <span className="text-sm font-mono">Response Time</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">{mockProviderIssues.GAMEROOM.responseTime}</p>
-              </div>
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-blue-500" />
-                  <span className="text-sm font-mono">Availability</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">{mockProviderIssues.GAMEROOM.availability}</p>
-              </div>
-            </div>
-
-            <div className="border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-              <div className="p-4 border-b-2 border-slate-200 dark:border-slate-700">
-                <h2 className="font-mono font-bold">Recent Issues</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {mockProviderIssues.GAMEROOM.errors.map(error => (
-                    <div key={error.id} className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded">
-                      <div className="flex items-center justify-between">
-                        <div className="font-mono font-medium text-red-600">{error.error}</div>
-                        <div className="text-xs font-mono">{error.lastOccurred}</div>
-                      </div>
-                      <div className="mt-2 text-xs text-slate-500">
-                        Affected stores: {error.affectedStores.join(", ")}
-                      </div>
-                      <div className="mt-1 text-xs font-mono text-red-500">
-                        Occurred {error.count} times
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'status':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                  <span className="text-sm font-mono">Error Rate</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">{mockStatusIssues.errorRate}</p>
-              </div>
-              <div className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-purple-500" />
-                  <span className="text-sm font-mono">Avg Response</span>
-                </div>
-                <p className="text-2xl font-mono font-bold mt-2">{mockStatusIssues.avgResponseTime}</p>
-              </div>
-            </div>
-
-            <div className="border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-              <div className="p-4 border-b-2 border-slate-200 dark:border-slate-700">
-                <h2 className="font-mono font-bold">Recent Errors</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {mockStatusIssues.recentErrors.map(error => (
-                    <div key={error.id} className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded">
-                      <div className="flex items-center justify-between">
-                        <div className="font-mono font-medium text-red-600">{error.type}</div>
-                        <div className="text-xs font-mono">
-                          {new Date(error.timestamp).toLocaleTimeString()}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-sm text-slate-600">{error.message}</div>
-                      <div className="mt-1 text-xs font-mono text-red-500">
-                        Occurred {error.count} times
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      default:
-        return null
-    }
-  }
-
-  const filteredDashboard = useMemo(() => {
-    if (!searchTerm) return mockDashboardFilters
-    return mockDashboardFilters.filter(filter => 
-      filter.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [searchTerm])
+  const filteredEvents = useMemo(() => {
+    if (!searchTerm) return EVENTS;
+    return EVENTS.filter((e) =>
+      e.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [searchTerm]);
 
   return (
     <DashboardLayout
-      sidebar={<Sidebar />}
       searchFilter={
-        <SearchFilter 
-          type="dashboard" 
-          onStoreSelect={handleFilterSelect}
-          onSearch={handleSearch}
+        <SearchFilter
+          type="dashboard"
+          onSearch={setSearchTerm}
+          onStoreSelect={() => {}}
         />
       }
       mobileNav={<MobileNav />}
     >
-      <div className="space-y-8">
-        {/* Page Header */}
-        <div className="border-b-2 border-primary/20 pb-8">
-          <div className="flex flex-col gap-2">
-            <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-              <span className="text-xs font-mono uppercase tracking-wide text-primary">
-                School Overview
-              </span>
-            </div>
-            <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
-              Dashboard
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-              Monitor school performance and activities
-            </p>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="pb-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="inline-block px-3 py-1 bg-primary/5 border border-primary/20 rounded-md mb-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-primary">
+              School Overview
+            </span>
           </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Dashboard
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Monitor school performance and activities
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {dashboardStats.map((stat) => (
-            <div key={stat.title} className="border-2 border-primary/20 bg-primary/5 p-4 rounded-xl">
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {STATS.map((stat) => (
+            <div
+              key={stat.title}
+              className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-900"
+            >
               <div className="flex items-center gap-3">
                 <div className={stat.color}>
                   <stat.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     {stat.title}
                   </p>
-                  <p className="text-2xl font-mono font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                    {stat.value}
+                  </p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500">
                     {stat.change}
                   </p>
                 </div>
@@ -436,25 +155,31 @@ export default function DashboardPage() {
 
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activities */}
-          <div className="border-2 border-primary/20 rounded-xl">
-            <div className="p-4 border-b-2 border-primary/20">
-              <h2 className="font-mono font-bold">Recent Activities</h2>
+          {/* Recent Activity */}
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Recent Activity
+              </h2>
             </div>
             <div className="p-4">
-              <div className="space-y-4">
-                {recentActivities.map(activity => (
-                  <div key={activity.id} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-primary" />
-                      <div>
-                        <div className="font-mono font-medium">{activity.target}</div>
-                        <div className="text-xs text-slate-500">{activity.action}</div>
+              <div className="space-y-3">
+                {RECENT_ACTIVITY.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <ActivityIcon type={item.type} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                          {item.target}
+                        </p>
+                        <p className="text-xs text-slate-500">{item.action}</p>
                       </div>
                     </div>
-                    <div className="text-xs font-mono">
-                      {new Date(activity.timestamp).toLocaleTimeString()}
-                    </div>
+                    <span className="text-xs text-slate-400 flex-shrink-0 ml-3">
+                      {item.time}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -462,47 +187,72 @@ export default function DashboardPage() {
           </div>
 
           {/* Upcoming Events */}
-          <div className="border-2 border-primary/20 rounded-xl">
-            <div className="p-4 border-b-2 border-primary/20">
-              <h2 className="font-mono font-bold">Upcoming Events</h2>
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Upcoming Events
+              </h2>
             </div>
             <div className="p-4">
-              <div className="space-y-4">
-                {upcomingEvents.map(event => (
-                  <div key={event.name} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <CalendarDays className="h-5 w-5 text-primary" />
-                      <div>
-                        <div className="font-mono font-medium">{event.name}</div>
-                        <div className="text-xs text-slate-500">{event.date} • {event.attendees} attendees</div>
+              {filteredEvents.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-4">
+                  No events found
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredEvents.map((event) => (
+                    <div
+                      key={event.name}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                          <CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                            {event.name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {event.date} · {event.attendees} attendees
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Class Performance */}
-          <div className="border-2 border-primary/20 rounded-xl">
-            <div className="p-4 border-b-2 border-primary/20">
-              <h2 className="font-mono font-bold">Class Performance</h2>
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Class Performance
+              </h2>
             </div>
             <div className="p-4">
               <div className="space-y-4">
-                {classPerformance.map(classData => (
-                  <div key={classData.name} className="space-y-2">
+                {CLASS_PERFORMANCE.map((c) => (
+                  <div key={c.name} className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono">{classData.name}</span>
-                      <span className="text-xs font-mono">{classData.average}% avg</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {c.name}
+                      </span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        {c.average}%
+                      </span>
                     </div>
-                    <div className="h-2 bg-primary/10 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full" 
-                        style={{ width: `${classData.average}%` }} 
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-500"
+                        style={{ width: `${c.average}%` }}
                       />
                     </div>
-                    <div className="text-xs text-slate-500">{classData.students} students</div>
+                    <p className="text-xs text-slate-400">
+                      {c.students} students
+                    </p>
                   </div>
                 ))}
               </div>
@@ -510,33 +260,69 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="border-2 border-primary/20 rounded-xl">
-            <div className="p-4 border-b-2 border-primary/20">
-              <h2 className="font-mono font-bold">Quick Actions</h2>
+          <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Quick Actions
+              </h2>
             </div>
             <div className="p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                  <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <span className="text-sm font-mono">Take Attendance</span>
-                </button>
-                <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                  <GraduationCap className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <span className="text-sm font-mono">Enter Grades</span>
-                </button>
-                <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                  <CalendarDays className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <span className="text-sm font-mono">Schedule Event</span>
-                </button>
-                <button className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">
-                  <ClipboardList className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <span className="text-sm font-mono">Create Report</span>
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                <QuickAction
+                  icon={<Users className="h-5 w-5" />}
+                  label="Take Attendance"
+                />
+                <QuickAction
+                  icon={<GraduationCap className="h-5 w-5" />}
+                  label="Enter Grades"
+                />
+                <QuickAction
+                  icon={<CalendarDays className="h-5 w-5" />}
+                  label="Schedule Event"
+                />
+                <QuickAction
+                  icon={<ClipboardList className="h-5 w-5" />}
+                  label="Create Report"
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
     </DashboardLayout>
-  )
-} 
+  );
+}
+
+// ─── Sub-components ────────────────────────────────────────────
+
+function ActivityIcon({ type }: { type: string }) {
+  switch (type) {
+    case "attendance":
+      return <CalendarDays className="h-4 w-4 text-primary" />;
+    case "exam":
+      return <BookOpen className="h-4 w-4 text-purple-600" />;
+    case "enrollment":
+      return <Users className="h-4 w-4 text-emerald-600" />;
+    case "finance":
+      return <Clock className="h-4 w-4 text-amber-600" />;
+    default:
+      return <AlertCircle className="h-4 w-4 text-slate-400" />;
+  }
+}
+
+function QuickAction({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button className="flex flex-col items-center gap-2 p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-center">
+      <div className="text-primary">{icon}</div>
+      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+        {label}
+      </span>
+    </button>
+  );
+}

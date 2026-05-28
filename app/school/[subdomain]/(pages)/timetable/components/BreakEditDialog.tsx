@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
-import type { Break } from '@/lib/types/timetable';
+import { useState, useEffect } from "react";
+import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
+import type { Break } from "@/lib/types/timetable";
 import {
   Drawer,
   DrawerContent,
@@ -11,19 +11,19 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerClose,
-} from '@/components/ui/drawer';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { X, Loader2 } from 'lucide-react';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Loader2 } from "lucide-react";
 
 interface BreakEditDialogProps {
   breakData: (Break & { isNew?: boolean }) | null;
@@ -32,14 +32,14 @@ interface BreakEditDialogProps {
 
 // Match GraphQL enum types
 const BREAK_TYPES = [
-  { value: 'ASSEMBLY', label: 'Assembly', icon: '🏫', color: '#8B5CF6' },
-  { value: 'SHORT_BREAK', label: 'Short Break', icon: '☕', color: '#3B82F6' },
-  { value: 'LUNCH', label: 'Lunch', icon: '🍽️', color: '#F59E0B' },
-  { value: 'LONG_BREAK', label: 'Long Break', icon: '⏰', color: '#06B6D4' },
-  { value: 'TEA_BREAK', label: 'Tea Break', icon: '🫖', color: '#10B981' },
-  { value: 'RECESS', label: 'Recess', icon: '🏃', color: '#EC4899' },
-  { value: 'SNACK_BREAK', label: 'Snack Break', icon: '🍎', color: '#EF4444' },
-  { value: 'GAMES_BREAK', label: 'Games Break', icon: '⚽', color: '#22C55E' },
+  { value: "ASSEMBLY", label: "Assembly", icon: "🏫", color: "#8B5CF6" },
+  { value: "SHORT_BREAK", label: "Short Break", icon: "☕", color: "#3B82F6" },
+  { value: "LUNCH", label: "Lunch", icon: "🍽️", color: "#F59E0B" },
+  { value: "LONG_BREAK", label: "Long Break", icon: "⏰", color: "#06B6D4" },
+  { value: "TEA_BREAK", label: "Tea Break", icon: "🫖", color: "#10B981" },
+  { value: "RECESS", label: "Recess", icon: "🏃", color: "#EC4899" },
+  { value: "SNACK_BREAK", label: "Snack Break", icon: "🍎", color: "#EF4444" },
+  { value: "GAMES_BREAK", label: "Games Break", icon: "⚽", color: "#22C55E" },
 ] as const;
 
 export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
@@ -51,15 +51,15 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
     loadDayTemplatePeriods,
     loadBreaks,
   } = useTimetableStore();
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'SHORT_BREAK',
+    name: "",
+    type: "SHORT_BREAK",
     afterPeriod: 0,
     durationMinutes: 15,
-    icon: '☕',
-    color: '#3B82F6',
+    icon: "☕",
+    color: "#3B82F6",
   });
   const [applyToAllDays, setApplyToAllDays] = useState(false);
 
@@ -71,8 +71,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         type: breakData.type.toUpperCase(),
         afterPeriod: breakData.afterPeriod,
         durationMinutes: breakData.durationMinutes,
-        icon: breakData.icon || '☕',
-        color: breakData.color || '#3B82F6',
+        icon: breakData.icon || "☕",
+        color: breakData.color || "#3B82F6",
       });
       setApplyToAllDays(breakData.applyToAllDays || false);
     } else if (breakData && breakData.isNew) {
@@ -117,15 +117,19 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           const refreshed = useTimetableStore.getState().timeSlots;
           const refreshedSlot = refreshed.find((s) => s.dayTemplateId);
           if (!refreshedSlot?.dayTemplateId) {
-            throw new Error('No day template found. Please load a day template first.');
+            throw new Error(
+              "No day template found. Please load a day template first.",
+            );
           }
         }
 
-        const dayTemplateId = slotWithTemplate?.dayTemplateId || 
-          useTimetableStore.getState().timeSlots.find((s) => s.dayTemplateId)?.dayTemplateId;
+        const dayTemplateId =
+          slotWithTemplate?.dayTemplateId ||
+          useTimetableStore.getState().timeSlots.find((s) => s.dayTemplateId)
+            ?.dayTemplateId;
 
         if (!dayTemplateId) {
-          throw new Error('No day template ID available');
+          throw new Error("No day template ID available");
         }
 
         // Call GraphQL mutation
@@ -143,14 +147,14 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           }
         `;
 
-        const response = await fetch('/api/graphql', {
-          method: 'POST',
+        const response = await fetch("/api/graphql", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
           },
-          credentials: 'include',
+          credentials: "include",
           body: JSON.stringify({
             query: mutation,
             variables: {
@@ -170,18 +174,22 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          throw new Error(
+            `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+          );
         }
 
         const result = await response.json();
 
         if (result.errors) {
-          const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+          const errorMessages = result.errors
+            .map((e: any) => e.message)
+            .join(", ");
           throw new Error(`GraphQL errors: ${errorMessages}`);
         }
 
         if (!result.data || !result.data.createTimetableBreak) {
-          throw new Error('Invalid response format');
+          throw new Error("Invalid response format");
         }
 
         // Close dialog - parent will reload data
@@ -225,7 +233,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           // When applying to specific day, we need a dayTemplateId
           // Use existing dayTemplateId if available, otherwise get from timeSlots
           let dayTemplateId = breakData.dayTemplateId;
-          
+
           if (!dayTemplateId) {
             // Converting from "all days" to "day-specific" - get dayTemplateId from timeSlots
             const slotWithTemplate = timeSlots.find((s) => s.dayTemplateId);
@@ -240,23 +248,25 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
             } else {
               dayTemplateId = slotWithTemplate.dayTemplateId;
             }
-            
+
             if (!dayTemplateId) {
-              throw new Error('No day template found. Please ensure a day template is loaded.');
+              throw new Error(
+                "No day template found. Please ensure a day template is loaded.",
+              );
             }
           }
-          
+
           input.dayTemplateId = dayTemplateId;
         }
 
-        const response = await fetch('/api/graphql', {
-          method: 'POST',
+        const response = await fetch("/api/graphql", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
           },
-          credentials: 'include',
+          credentials: "include",
           body: JSON.stringify({
             query: mutation,
             variables: {
@@ -268,40 +278,48 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+          throw new Error(
+            `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+          );
         }
 
         const result = await response.json();
 
         if (result.errors) {
-          const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+          const errorMessages = result.errors
+            .map((e: any) => e.message)
+            .join(", ");
           throw new Error(`GraphQL errors: ${errorMessages}`);
         }
 
         if (!result.data || !result.data.updateDayTemplateBreak) {
-          throw new Error('Invalid response format: missing updateDayTemplateBreak data');
+          throw new Error(
+            "Invalid response format: missing updateDayTemplateBreak data",
+          );
         }
 
         // Close dialog - parent will reload data to reflect updated break timing
         onClose();
       }
     } catch (error) {
-      console.error('Error saving break:', error);
-      alert(error instanceof Error ? error.message : 'Failed to save break');
+      console.error("Error saving break:", error);
+      alert(error instanceof Error ? error.message : "Failed to save break");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (breakData && !breakData.isNew && confirm('Delete this break?')) {
+    if (breakData && !breakData.isNew && confirm("Delete this break?")) {
       try {
         setIsSaving(true);
         await deleteBreak(breakData.id);
         onClose();
       } catch (error) {
-        console.error('Failed to delete break:', error);
-        alert(error instanceof Error ? error.message : 'Failed to delete break');
+        console.error("Failed to delete break:", error);
+        alert(
+          error instanceof Error ? error.message : "Failed to delete break",
+        );
       } finally {
         setIsSaving(false);
       }
@@ -319,14 +337,14 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         <DrawerHeader className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-            <DrawerTitle className="text-xl font-bold flex items-center gap-3">
-              <span className="text-2xl">{formData.icon}</span>
-              <span>{isNew ? 'Add Break' : 'Edit Break'}</span>
-            </DrawerTitle>
+              <DrawerTitle className="text-xl font-bold flex items-center gap-3">
+                <span className="text-2xl">{formData.icon}</span>
+                <span>{isNew ? "Add Break" : "Edit Break"}</span>
+              </DrawerTitle>
               <DrawerDescription className="mt-2">
-                {isNew 
-                  ? 'Add a new break time to the timetable schedule.'
-                  : 'Edit the break details including type, duration, and timing.'}
+                {isNew
+                  ? "Add a new break time to the timetable schedule."
+                  : "Edit the break details including type, duration, and timing."}
               </DrawerDescription>
             </div>
             <DrawerClose asChild>
@@ -375,7 +393,9 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="e.g., Morning Break"
               className="h-11"
             />
@@ -384,7 +404,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           {/* After Period */}
           <div className="space-y-2">
             <Label htmlFor="afterPeriod" className="text-sm font-semibold">
-              Occurs After Period
+              Position
             </Label>
             <Select
               value={formData.afterPeriod.toString()}
@@ -396,18 +416,33 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Before Period 0 (Start of day)</SelectItem>
+                <SelectItem value="0">
+                  Before Period 1 (start of day)
+                </SelectItem>
                 {Array.from(
-                  new Map(timeSlots.map((slot) => [slot.periodNumber, slot])).values()
+                  new Map(
+                    timeSlots.map((slot) => [slot.periodNumber, slot]),
+                  ).values(),
                 )
                   .sort((a, b) => a.periodNumber - b.periodNumber)
-                  .map((slot) => (
-                    <SelectItem key={slot.periodNumber} value={slot.periodNumber.toString()}>
+                  .map((slot, i, arr) => (
+                    <SelectItem
+                      key={slot.periodNumber}
+                      value={slot.periodNumber.toString()}
+                    >
                       After Period {slot.periodNumber} ({slot.time})
+                      {i < arr.length - 1
+                        ? ` → before Period ${slot.periodNumber + 1}`
+                        : ""}
                     </SelectItem>
                   ))}
               </SelectContent>
             </Select>
+            <p className="text-[11px] text-slate-500">
+              {formData.afterPeriod === 0
+                ? "Break appears before all periods."
+                : `Break appears after Period ${formData.afterPeriod} (before Period ${formData.afterPeriod + 1}).`}
+            </p>
           </div>
 
           {/* Duration */}
@@ -422,7 +457,10 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
               max="120"
               value={formData.durationMinutes}
               onChange={(e) =>
-                setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 15 })
+                setFormData({
+                  ...formData,
+                  durationMinutes: parseInt(e.target.value) || 15,
+                })
               }
               className="h-11"
             />
@@ -438,13 +476,19 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
               checked={applyToAllDays}
               onCheckedChange={(checked) => setApplyToAllDays(checked === true)}
             />
-            <Label htmlFor="applyToAllDays" className="cursor-pointer font-medium flex-1">
+            <Label
+              htmlFor="applyToAllDays"
+              className="cursor-pointer font-medium flex-1"
+            >
               Apply to all weekdays (Monday-Friday)
             </Label>
           </div>
 
           {/* Preview */}
-          <div className="border-l-4 p-4 rounded-r-lg" style={{ borderColor: formData.color }}>
+          <div
+            className="border-l-4 p-4 rounded-r-lg"
+            style={{ borderColor: formData.color }}
+          >
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded">
                 {formData.icon}
@@ -452,7 +496,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
               <div className="flex-1">
                 <div className="font-bold text-base">{formData.name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {formData.durationMinutes} minutes • After Period {formData.afterPeriod}
+                  {formData.durationMinutes} minutes • After Period{" "}
+                  {formData.afterPeriod}
                 </div>
               </div>
             </div>
@@ -462,11 +507,20 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         <DrawerFooter className="border-t px-6 py-4">
           <div className="flex gap-3 w-full">
             {!isNew && (
-              <Button variant="destructive" onClick={handleDelete} className="flex-1">
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="flex-1"
+              >
                 Delete
               </Button>
             )}
-            <Button variant="outline" onClick={onClose} disabled={isSaving} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isSaving}
+              className="flex-1"
+            >
               Cancel
             </Button>
             <Button
@@ -479,8 +533,10 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
+              ) : isNew ? (
+                "Add Break"
               ) : (
-                isNew ? 'Add Break' : 'Save'
+                "Save"
               )}
             </Button>
           </div>

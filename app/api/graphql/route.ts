@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint';
 
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql';
+const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint();
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -17,8 +18,21 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('accessToken')?.value;
+    const authHeader = request.headers.get('authorization');
+    const tokenFromHeader = authHeader?.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : undefined;
+    const token =
+      tokenFromHeader ?? cookieStore.get('accessToken')?.value;
     const tenantId = cookieStore.get('tenantId')?.value;
+    let tenantSubdomain = cookieStore.get('tenantSubdomain')?.value;
+    if (!tenantSubdomain) {
+      const host = request.headers.get('host') ?? '';
+      const sub = host.match(/^([^.]+)\.localhost(?::\d+)?$/)?.[1];
+      if (sub && sub !== 'localhost') {
+        tenantSubdomain = sub;
+      }
+    }
 
     let body;
     try {
@@ -56,12 +70,22 @@ export async function POST(request: Request) {
 
     let response;
     try {
+      const upstreamHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        upstreamHeaders.Authorization = `Bearer ${token}`;
+      }
+      if (tenantId) {
+        upstreamHeaders['x-tenant-id'] = tenantId;
+      }
+      if (tenantSubdomain) {
+        upstreamHeaders['x-tenant-subdomain'] = tenantSubdomain;
+      }
+
       response = await fetch(GRAPHQL_ENDPOINT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
-        },
+        headers: upstreamHeaders,
         body: JSON.stringify(body),
       });
     } catch (fetchError) {
@@ -109,22 +133,32 @@ export async function POST(request: Request) {
       try {
         data = JSON.parse(responseText);
       } catch (jsonError) {
+        const contentType = response.headers.get('content-type') ?? '';
+        const isHtml =
+          contentType.includes('text/html') ||
+          responseText.trimStart().startsWith('<!DOCTYPE');
+
         console.error('GraphQL API Route - Failed to parse JSON response:', {
           error: jsonError,
+          endpoint: GRAPHQL_ENDPOINT,
           responseText: responseText.substring(0, 1000),
-          contentType: response.headers.get('content-type')
+          contentType,
         });
+
         return NextResponse.json(
           {
             errors: [{
-              message: 'Invalid JSON response from GraphQL endpoint',
-              extensions: { 
+              message: isHtml
+                ? `GraphQL proxy received HTML from ${GRAPHQL_ENDPOINT}. Set GRAPHQL_API_URL=http://localhost:3001/graphql (Nest), restart Next dev server, and ensure the backend is running.`
+                : 'Invalid JSON response from GraphQL endpoint',
+              extensions: {
                 code: 'INVALID_JSON_RESPONSE',
-                responsePreview: responseText.substring(0, 200)
-              }
-            }]
+                endpoint: GRAPHQL_ENDPOINT,
+                responsePreview: responseText.substring(0, 200),
+              },
+            }],
           },
-          { status: 502 }
+          { status: 502 },
         );
       }
     } catch (readError) {
@@ -168,8 +202,18 @@ export async function POST(request: Request) {
           }]
         }, { status: 401 });
       }
-      
-      return NextResponse.json(data, { status: 500 });
+
+      const statusFromError = data.errors.find(
+        (e: { extensions?: { statusCode?: number } }) =>
+          typeof e.extensions?.statusCode === 'number',
+      )?.extensions?.statusCode;
+
+      const httpStatus =
+        statusFromError && statusFromError >= 400 && statusFromError < 600
+          ? statusFromError
+          : 500;
+
+      return NextResponse.json(data, { status: httpStatus });
     }
     
     // Handle top-level error format (e.g., {error: "message"})

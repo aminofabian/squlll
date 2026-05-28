@@ -689,6 +689,7 @@ export const SchoolTypeSetup = () => {
         const response = await fetch('/api/school/configure-levels', {
           method: 'POST',
           headers,
+          credentials: 'include',
           body: JSON.stringify({ levelNames }),
         });
 
@@ -708,10 +709,21 @@ export const SchoolTypeSetup = () => {
           (authError as any).isAuthError = true;
           throw authError;
         }
+
+        if (response.status === 503 || responseData.error === 'BACKEND_UNAVAILABLE') {
+          throw new Error(
+            responseData.message ||
+              'Backend API is not running. Start it with: cd backend && npm run start:dev',
+          );
+        }
         
         // Handle permission errors separately
         if (response.status === 403) {
-          const permError = new Error('Permission denied. You may not have admin rights to configure school levels.');
+          const permError = new Error(
+            responseData.message ||
+              responseData.error ||
+              'Permission denied. You may not have admin rights to configure school levels.',
+          );
           (permError as any).isAuthError = true;
           throw permError;
         }
@@ -837,7 +849,7 @@ export const SchoolTypeSetup = () => {
                               <button
                   onClick={() => {
                     toast.dismiss();
-                    router.push(`/classes`);
+                    router.push(`/dashboard`);
                   }}
                 className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
               >
@@ -880,7 +892,7 @@ export const SchoolTypeSetup = () => {
         
         setTimeout(() => {
           console.log('Redirecting to dashboard...');
-          router.push(`/classes`);
+          router.push(`/dashboard`);
         }, 2000);
       }
     } catch (error: any) {

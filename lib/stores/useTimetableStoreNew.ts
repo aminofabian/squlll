@@ -1,9 +1,9 @@
 // lib/stores/useTimetableStoreNew.ts
 // NEW: Clean store with normalized data structure
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { TimeSlotInput } from '../hooks/useTimeSlots';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { TimeSlotInput } from "../hooks/useTimeSlots";
 import type {
   TimetableData,
   TimetableUIState,
@@ -11,8 +11,8 @@ import type {
   CreateEntryRequest,
   TimeSlot,
   Break,
-} from '../types/timetable';
-import { useSchoolConfigStore } from './useSchoolConfigStore';
+} from "../types/timetable";
+import { useSchoolConfigStore } from "./useSchoolConfigStore";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -29,56 +29,105 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   createDayTemplate: (template: DayTemplateInput) => Promise<void>;
   createWeekTemplate: (input: CreateWeekTemplateInput) => Promise<any>;
   loadWeekTemplates: (includeDetails?: boolean) => Promise<any[]>;
-  updateWeekTemplate: (input: { id: string; defaultStartTime?: string }) => Promise<any>;
-  rebuildWeekTemplatePeriods: (input: { id: string; startTime: string; periodCount: number; periodDuration: number; force?: boolean }) => Promise<any>;
-  addPeriodsToDayTemplate: (dayTemplateId: string, extraPeriods: number) => Promise<any[]>;
-  updateDayTemplatePeriod: (periodId: string, input: { startTime?: string; endTime?: string; label?: string }) => Promise<void>;
-  resetDayTemplatePeriods: (input: { dayTemplateId: string; startTime?: string; periodCount?: number; periodDuration?: number }) => Promise<void>;
+  updateWeekTemplate: (input: {
+    id: string;
+    defaultStartTime?: string;
+  }) => Promise<any>;
+  updateDayTemplate: (input: {
+    dayTemplateId: string;
+    periodCount?: number;
+    startTime?: string;
+    defaultPeriodDuration?: number;
+  }) => Promise<any>;
+  rebuildWeekTemplatePeriods: (input: {
+    id: string;
+    startTime: string;
+    periodCount: number;
+    periodDuration: number;
+    force?: boolean;
+  }) => Promise<any>;
+  addPeriodsToDayTemplate: (
+    dayTemplateId: string,
+    extraPeriods: number,
+  ) => Promise<any[]>;
+  updateDayTemplatePeriod: (
+    periodId: string,
+    input: { startTime?: string; endTime?: string; label?: string },
+  ) => Promise<void>;
+  resetDayTemplatePeriods: (input: {
+    dayTemplateId: string;
+    startTime?: string;
+    periodCount?: number;
+    periodDuration?: number;
+  }) => Promise<void>;
   loadTimeSlots: (termId?: string) => Promise<void>;
   loadDayTemplatePeriods: (dayTemplateId?: string) => Promise<void>;
   loadDayTemplates: () => Promise<any[]>;
   deleteTimeSlot: (id: string) => Promise<void>;
   deleteAllTimeSlots: () => Promise<void>;
-  
+
   // GraphQL grade actions
   loadGrades: () => Promise<void>;
-  
+
   // GraphQL subject actions
   loadSubjects: (gradeId?: string) => Promise<void>;
-  
+
   // GraphQL teacher actions
   loadTeachers: () => Promise<void>;
-  
+
   // GraphQL timetable entry actions
   loadEntries: (termId: string, gradeId: string) => Promise<void>;
+  deleteTimetableEntry: (entryId: string) => Promise<void>;
   deleteEntriesForTerm: (termId: string) => Promise<string | undefined>;
   deleteTimetableForTerm: (termId: string) => Promise<string | undefined>;
   loadSchoolTimetable: (termId: string) => Promise<any>;
-  
+
   // Break actions
-  addBreak: (breakData: Omit<Break, 'id'>) => Break;
-  createBreaks: (breaks: Omit<Break, 'id'>[]) => Promise<void>;
-  createAllBreaksForTemplate: (breaks: Array<{
-    dayTemplateId: string;
-    name: string;
-    type: string;
-    afterPeriod: number;
-    durationMinutes: number;
-    icon?: string;
-    color?: string;
-    applyToAllDays?: boolean;
-  }>) => Promise<void>;
+  addBreak: (breakData: Omit<Break, "id">) => Break;
+  createBreaks: (breaks: Omit<Break, "id">[]) => Promise<void>;
+  createAllBreaksForTemplate: (
+    breaks: Array<{
+      dayTemplateId: string;
+      name: string;
+      type: string;
+      afterPeriod: number;
+      durationMinutes: number;
+      icon?: string;
+      color?: string;
+      applyToAllDays?: boolean;
+    }>,
+  ) => Promise<void>;
   loadBreaks: () => Promise<void>;
   updateBreak: (id: string, updates: Partial<Break>) => void;
   deleteBreak: (id: string) => Promise<void>;
   deleteAllBreaks: () => Promise<void>;
-  
+  deleteAllBreaksByTerm: (termId: string) => Promise<{
+    success: boolean;
+    deletedBreaksCount: number;
+    recalculatedDaysCount: number;
+    message: string;
+  }>;
+  deleteBreaksByType: (
+    termId: string,
+    breakType: string,
+  ) => Promise<{
+    success: boolean;
+    breakType: string;
+    deletedBreaksCount: number;
+    recalculatedDaysCount: number;
+    message: string;
+  }>;
+
   // Bulk actions
   bulkSetSchedule: (timeSlots: TimeSlot[], breaks: Break[]) => void;
-  bulkCreateEntries: (termId: string, gradeId: string, entries: CreateEntryRequest[]) => Promise<void>;
-  
+  bulkCreateEntries: (
+    termId: string,
+    gradeId: string,
+    entries: CreateEntryRequest[],
+  ) => Promise<void>;
+
   loadMockData: () => void;
-  
+
   // Actions for UI state
   setSelectedGrade: (gradeId: string | null) => void;
   setSelectedTerm: (termId: string | null) => void;
@@ -129,11 +178,11 @@ export const useTimetableStore = create<TimetableStore>()(
     (set, get) => ({
       // Initial data - empty arrays (will be loaded from backend)
       ...emptyInitialState,
-      
+
       // Initial UI state
       selectedGradeId: null,
       selectedTermId: null,
-      searchTerm: '',
+      searchTerm: "",
       showConflicts: false,
       isSummaryMinimized: false,
 
@@ -160,7 +209,7 @@ export const useTimetableStore = create<TimetableStore>()(
       updateEntry: (id: string, updates: Partial<TimetableEntry>) => {
         set((state) => ({
           entries: state.entries.map((entry) =>
-            entry.id === id ? { ...entry, ...updates } : entry
+            entry.id === id ? { ...entry, ...updates } : entry,
           ),
           lastUpdated: new Date().toISOString(),
         }));
@@ -173,10 +222,48 @@ export const useTimetableStore = create<TimetableStore>()(
         }));
       },
 
+      deleteTimetableEntry: async (entryId: string) => {
+        try {
+          const mutation = `
+            mutation DeleteEntry {
+              deleteTimetableEntry(id: "${entryId}")
+            }
+          `;
+
+          const response = await fetch("/api/graphql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ query: mutation }),
+          });
+
+          const result = await response.json();
+
+          if (result.errors) {
+            throw new Error(
+              result.errors[0]?.message || "Failed to delete entry",
+            );
+          }
+
+          if (result.data?.deleteTimetableEntry !== true) {
+            throw new Error("Delete entry returned unexpected response");
+          }
+
+          // Remove from local store
+          set((state) => ({
+            entries: state.entries.filter((entry) => entry.id !== entryId),
+            lastUpdated: new Date().toISOString(),
+          }));
+        } catch (error) {
+          console.error("Error deleting timetable entry:", error);
+          throw error;
+        }
+      },
+
       updateTimeSlot: (id: string, updates: Partial<TimeSlot>) => {
         set((state) => ({
           timeSlots: state.timeSlots.map((slot) =>
-            slot.id === id ? { ...slot, ...updates } : slot
+            slot.id === id ? { ...slot, ...updates } : slot,
           ),
           lastUpdated: new Date().toISOString(),
         }));
@@ -185,26 +272,30 @@ export const useTimetableStore = create<TimetableStore>()(
       // GraphQL time slot actions - directly call API
       createTimeSlots: async (timeSlots: TimeSlotInput[]) => {
         try {
-          const response = await fetch('/api/school/time-slot', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/school/time-slot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(timeSlots),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data) {
-            throw new Error('Invalid response format: missing data');
+            throw new Error("Invalid response format: missing data");
           }
 
           // Convert response to TimeSlot format and update store
@@ -212,9 +303,9 @@ export const useTimetableStore = create<TimetableStore>()(
             id: slot.id,
             periodNumber: slot.periodNumber,
             time: slot.displayTime || `${slot.startTime} - ${slot.endTime}`,
-            startTime: slot.startTime || '',
-            endTime: slot.endTime || '',
-            color: slot.color || 'border-l-primary'
+            startTime: slot.startTime || "",
+            endTime: slot.endTime || "",
+            color: slot.color || "border-l-primary",
           }));
 
           set((state) => ({
@@ -222,7 +313,7 @@ export const useTimetableStore = create<TimetableStore>()(
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error creating time slots:', error);
+          console.error("Error creating time slots:", error);
           throw error;
         }
       },
@@ -233,29 +324,33 @@ export const useTimetableStore = create<TimetableStore>()(
 
       createDayTemplates: async (templates: DayTemplateInput[]) => {
         try {
-          const response = await fetch('/api/school/time-slot', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/school/time-slot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(templates),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data) {
-            throw new Error('Invalid response format: missing data');
+            throw new Error("Invalid response format: missing data");
           }
         } catch (error) {
-          console.error('Error creating day templates:', error);
+          console.error("Error creating day templates:", error);
           throw error;
         }
       },
@@ -286,14 +381,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: { input },
@@ -302,31 +397,40 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.createWeekTemplate) {
-            throw new Error('Invalid response format: missing createWeekTemplate data');
+            throw new Error(
+              "Invalid response format: missing createWeekTemplate data",
+            );
           }
 
           return result.data.createWeekTemplate;
         } catch (error) {
-          console.error('Error creating week template:', error);
+          console.error("Error creating week template:", error);
           throw error;
         }
       },
 
       loadWeekTemplates: async (includeDetails = false) => {
         try {
-          console.log('Loading week templates with includeDetails:', includeDetails);
-          
+          console.log(
+            "Loading week templates with includeDetails:",
+            includeDetails,
+          );
+
           const query = `
             query GetWeekTemplates($input: GetWeekTemplatesInput!) {
               getWeekTemplates(input: $input) {
@@ -334,7 +438,9 @@ export const useTimetableStore = create<TimetableStore>()(
                 name
                 numberOfDays
                 termId
-                ${includeDetails ? `
+                ${
+                  includeDetails
+                    ? `
                 dayTemplates {
                   id
                   dayOfWeek
@@ -357,19 +463,21 @@ export const useTimetableStore = create<TimetableStore>()(
                     endTime
                   }
                 }
-                ` : ''}
+                `
+                    : ""
+                }
               }
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query,
               variables: { input: { includeDetails } },
@@ -378,28 +486,37 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getWeekTemplates) {
-            throw new Error('Invalid response format: missing getWeekTemplates data');
+            throw new Error(
+              "Invalid response format: missing getWeekTemplates data",
+            );
           }
 
           return result.data.getWeekTemplates;
         } catch (error) {
-          console.error('Error loading week templates:', error);
+          console.error("Error loading week templates:", error);
           throw error;
         }
       },
 
-      updateWeekTemplate: async (input: { id: string; defaultStartTime?: string }) => {
+      updateWeekTemplate: async (input: {
+        id: string;
+        defaultStartTime?: string;
+      }) => {
         try {
           const mutation = `
             mutation UpdateWeekTemplate($input: UpdateWeekTemplateInput!) {
@@ -420,14 +537,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: { input },
@@ -436,32 +553,111 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.updateWeekTemplate) {
-            throw new Error('Invalid response format: missing updateWeekTemplate data');
+            throw new Error(
+              "Invalid response format: missing updateWeekTemplate data",
+            );
           }
 
           return result.data.updateWeekTemplate;
         } catch (error) {
-          console.error('Error updating week template:', error);
+          console.error("Error updating week template:", error);
           throw error;
         }
       },
 
-      rebuildWeekTemplatePeriods: async (input: { 
-        id: string; 
-        startTime: string; 
-        periodCount: number; 
-        periodDuration: number; 
+      updateDayTemplate: async (input: {
+        dayTemplateId: string;
+        periodCount?: number;
+        startTime?: string;
+        defaultPeriodDuration?: number;
+      }) => {
+        try {
+          const mutation = `
+            mutation UpdateDayTemplate($input: UpdateDayTemplateInput!) {
+              updateDayTemplate(input: $input) {
+                id
+                startTime
+                periodCount
+                defaultPeriodDuration
+                periods {
+                  id
+                  periodNumber
+                  startTime
+                  endTime
+                }
+              }
+            }
+          `;
+
+          const variables: any = {
+            input: {
+              dayTemplateId: input.dayTemplateId,
+            },
+          };
+          if (input.periodCount !== undefined)
+            variables.input.periodCount = input.periodCount;
+          if (input.startTime !== undefined)
+            variables.input.startTime = input.startTime;
+          if (input.defaultPeriodDuration !== undefined)
+            variables.input.defaultPeriodDuration = input.defaultPeriodDuration;
+
+          const response = await fetch("/api/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              query: mutation,
+              variables,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
+            throw new Error(`GraphQL errors: ${errorMessages}`);
+          }
+
+          return result.data?.updateDayTemplate || null;
+        } catch (error) {
+          console.error("Error updating day template:", error);
+          throw error;
+        }
+      },
+
+      rebuildWeekTemplatePeriods: async (input: {
+        id: string;
+        startTime: string;
+        periodCount: number;
+        periodDuration: number;
         force?: boolean;
       }) => {
         try {
@@ -495,14 +691,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: input,
@@ -511,28 +707,37 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.rebuildWeekTemplatePeriods) {
-            throw new Error('Invalid response format: missing rebuildWeekTemplatePeriods data');
+            throw new Error(
+              "Invalid response format: missing rebuildWeekTemplatePeriods data",
+            );
           }
 
           return result.data.rebuildWeekTemplatePeriods;
         } catch (error) {
-          console.error('Error rebuilding week template periods:', error);
+          console.error("Error rebuilding week template periods:", error);
           throw error;
         }
       },
 
-      addPeriodsToDayTemplate: async (dayTemplateId: string, extraPeriods: number) => {
+      addPeriodsToDayTemplate: async (
+        dayTemplateId: string,
+        extraPeriods: number,
+      ) => {
         try {
           const mutation = `
             mutation AddPeriodsToDayTemplate($dayTemplateId: String!, $extraPeriods: Int!) {
@@ -545,14 +750,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: { dayTemplateId, extraPeriods },
@@ -561,18 +766,24 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.addPeriodsToDayTemplate) {
-            throw new Error('Invalid response format: missing addPeriodsToDayTemplate data');
+            throw new Error(
+              "Invalid response format: missing addPeriodsToDayTemplate data",
+            );
           }
 
           // Refresh periods to pull in dayOfWeek mapping
@@ -580,12 +791,15 @@ export const useTimetableStore = create<TimetableStore>()(
 
           return result.data.addPeriodsToDayTemplate;
         } catch (error) {
-          console.error('Error adding periods to day template:', error);
+          console.error("Error adding periods to day template:", error);
           throw error;
         }
       },
 
-      updateDayTemplatePeriod: async (periodId: string, input: { startTime?: string; endTime?: string; label?: string }) => {
+      updateDayTemplatePeriod: async (
+        periodId: string,
+        input: { startTime?: string; endTime?: string; label?: string },
+      ) => {
         try {
           const mutation = `
             mutation UpdateDayTemplatePeriod($periodId: String!, $input: UpdateDayTemplatePeriodInput!) {
@@ -599,14 +813,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: { periodId, input },
@@ -615,29 +829,40 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.updateDayTemplatePeriod) {
-            throw new Error('Invalid response format: missing updateDayTemplatePeriod data');
+            throw new Error(
+              "Invalid response format: missing updateDayTemplatePeriod data",
+            );
           }
 
           // Refresh periods to include latest changes
           await get().loadDayTemplatePeriods();
         } catch (error) {
-          console.error('Error updating day template period:', error);
+          console.error("Error updating day template period:", error);
           throw error;
         }
       },
 
-      resetDayTemplatePeriods: async (input: { dayTemplateId: string; startTime?: string; periodCount?: number; periodDuration?: number }) => {
+      resetDayTemplatePeriods: async (input: {
+        dayTemplateId: string;
+        startTime?: string;
+        periodCount?: number;
+        periodDuration?: number;
+      }) => {
         try {
           const mutation = `
             mutation ResetDayTemplatePeriods($input: ResetDayTemplatePeriodsInput!) {
@@ -652,14 +877,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: { input },
@@ -668,24 +893,30 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.resetDayTemplatePeriods) {
-            throw new Error('Invalid response format: missing resetDayTemplatePeriods data');
+            throw new Error(
+              "Invalid response format: missing resetDayTemplatePeriods data",
+            );
           }
 
           // Refresh periods to reflect new schedule
           await get().loadDayTemplatePeriods();
         } catch (error) {
-          console.error('Error resetting day template periods:', error);
+          console.error("Error resetting day template periods:", error);
           throw error;
         }
       },
@@ -693,17 +924,36 @@ export const useTimetableStore = create<TimetableStore>()(
       loadDayTemplatePeriods: async (dayTemplateIdParam?: string) => {
         try {
           // Fetch templates first to map dayTemplateId -> dayOfWeek
-          const templates = await get().loadDayTemplates();
+          let templates: any[] = [];
+          try {
+            templates = await get().loadDayTemplates();
+          } catch (err) {
+            console.warn(
+              "Could not load day templates, continuing without:",
+              err,
+            );
+            templates = [];
+          }
+
           const templateDayMap = new Map<string, number>();
           templates.forEach((t: any) => {
-            if (t?.id && typeof t.dayOfWeek === 'number') {
+            if (t?.id && typeof t.dayOfWeek === "number") {
               templateDayMap.set(t.id, t.dayOfWeek);
             }
           });
 
-          const targetTemplateId = dayTemplateIdParam || templates?.[0]?.id;
-          if (!targetTemplateId) {
-            throw new Error('No day template available to load periods.');
+          // If a specific template was requested, load only that one.
+          // Otherwise load periods from ALL day templates.
+          const templateIds = dayTemplateIdParam
+            ? [dayTemplateIdParam]
+            : templates.map((t: any) => t.id).filter(Boolean);
+
+          if (templateIds.length === 0) {
+            console.log(
+              "No day templates available — timeSlots will remain empty.",
+            );
+            // Don't throw; just leave timeSlots as-is.
+            return;
           }
 
           const query = `
@@ -719,65 +969,99 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ query, variables: { dayTemplateId: targetTemplateId } }),
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
-          }
-
-          const result = await response.json();
-
-          if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
-            throw new Error(`GraphQL errors: ${errorMessages}`);
-          }
-
-          const periodsData =
-            result.data?.getAllDayTemplatePeriods1 ||
-            result.data?.getAllDayTemplatePeriods ||
-            null;
-
-          if (!periodsData) {
-            throw new Error('Invalid response format: missing day template periods data');
-          }
-
           const formatTime = (timeStr: string) => {
-            if (!timeStr) return '';
+            if (!timeStr) return "";
             if (timeStr.length === 5) return timeStr;
             if (timeStr.length === 8) return timeStr.substring(0, 5);
             return timeStr;
           };
 
-          const periods = periodsData;
-          const mappedSlots: TimeSlot[] = periods.map((p: any) => ({
-            id: p.id,
-            periodNumber: p.periodNumber,
-            time: `${formatTime(p.startTime)} - ${formatTime(p.endTime)}`,
-            startTime: formatTime(p.startTime),
-            endTime: formatTime(p.endTime),
-            color: 'border-l-primary',
-            dayOfWeek: templateDayMap.get(p.dayTemplateId),
-            label: p.label,
-            dayTemplateId: p.dayTemplateId,
-          }));
+          // Fetch periods from all day templates in parallel
+          const allPeriodsResults = await Promise.allSettled(
+            templateIds.map(async (templateId) => {
+              const response = await fetch("/api/graphql", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Cache-Control": "no-cache",
+                  Pragma: "no-cache",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  query,
+                  variables: { dayTemplateId: templateId },
+                }),
+              });
 
-          set((state) => ({
-            timeSlots: mappedSlots,
-            lastUpdated: new Date().toISOString(),
-          }));
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(
+                  `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+                );
+              }
+
+              const result = await response.json();
+
+              if (result.errors) {
+                const errorMessages = result.errors
+                  .map((e: any) => e.message)
+                  .join(", ");
+                throw new Error(`GraphQL errors: ${errorMessages}`);
+              }
+
+              const periodsData =
+                result.data?.getAllDayTemplatePeriods1 ||
+                result.data?.getAllDayTemplatePeriods ||
+                null;
+
+              return periodsData || [];
+            }),
+          );
+
+          // Collect all periods from all templates, deduplicate by id
+          const seenIds = new Set<string>();
+          const allSlots: TimeSlot[] = [];
+
+          allPeriodsResults.forEach((r) => {
+            if (r.status === "fulfilled" && Array.isArray(r.value)) {
+              r.value.forEach((p: any) => {
+                if (!p?.id || seenIds.has(p.id)) return;
+                seenIds.add(p.id);
+                allSlots.push({
+                  id: p.id,
+                  periodNumber: p.periodNumber,
+                  time: `${formatTime(p.startTime)} - ${formatTime(p.endTime)}`,
+                  startTime: formatTime(p.startTime),
+                  endTime: formatTime(p.endTime),
+                  color: "border-l-primary",
+                  dayOfWeek: templateDayMap.get(p.dayTemplateId),
+                  label: p.label,
+                  dayTemplateId: p.dayTemplateId,
+                });
+              });
+            }
+          });
+
+          // Sort by period number for consistent display
+          allSlots.sort((a, b) => a.periodNumber - b.periodNumber);
+
+          // Only update timeSlots if we actually fetched some periods.
+          // If all fetches failed (allSlots is empty), keep whatever is
+          // already in the store so the grid doesn't flip back to the wizard.
+          if (allSlots.length > 0) {
+            set((state) => ({
+              timeSlots: allSlots,
+              lastUpdated: new Date().toISOString(),
+            }));
+          } else {
+            console.warn(
+              "No periods fetched from any day template — keeping existing timeSlots.",
+            );
+          }
         } catch (error) {
-          console.error('Error loading day template periods:', error);
-          throw error;
+          console.error("Error loading day template periods:", error);
+          // Don't rethrow — let the caller decide how to handle
+          // The UI will show whatever timeSlots are already in the store.
         }
       },
 
@@ -800,76 +1084,97 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({ query }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getAllDayTemplates) {
-            throw new Error('Invalid response format: missing getAllDayTemplates data');
+            throw new Error(
+              "Invalid response format: missing getAllDayTemplates data",
+            );
           }
 
           return result.data.getAllDayTemplates;
         } catch (error) {
-          console.error('Error loading day templates:', error);
+          console.error("Error loading day templates:", error);
           throw error;
         }
       },
 
       loadTimeSlots: async (termIdParam?: string) => {
         try {
-          // Deprecated per new template/period flow: use day template periods instead
+          // Load periods from day templates. If no templates exist yet,
+          // timeSlots will remain empty and the setup wizard will be shown.
           await get().loadDayTemplatePeriods();
         } catch (error) {
-          console.error('Error loading time slots:', error);
-          throw error;
+          console.error("Error loading time slots:", error);
+          // Don't throw; the UI handles missing timeSlots via the setup wizard.
         }
       },
 
       deleteTimeSlot: async (id: string) => {
         try {
-          const response = await fetch(`/api/school/time-slot?id=${encodeURIComponent(id)}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-          });
+          const response = await fetch(
+            `/api/school/time-slot?id=${encodeURIComponent(id)}`,
+            {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+            },
+          );
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           // Check if deletion was successful
-          if (result.data?.deleteTimeSlot !== true && result.data?.deleteTimeSlot !== false) {
+          if (
+            result.data?.deleteTimeSlot !== true &&
+            result.data?.deleteTimeSlot !== false
+          ) {
             // If the mutation isn't implemented, still remove from local store
             if (result.featureNotAvailable) {
-              console.warn('Time slot delete mutation not available on server, removing from local store only');
+              console.warn(
+                "Time slot delete mutation not available on server, removing from local store only",
+              );
             } else {
-              throw new Error('Invalid response format: deleteTimeSlot result missing');
+              throw new Error(
+                "Invalid response format: deleteTimeSlot result missing",
+              );
             }
           }
 
@@ -881,37 +1186,48 @@ export const useTimetableStore = create<TimetableStore>()(
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error deleting time slot:', error);
+          console.error("Error deleting time slot:", error);
           throw error;
         }
       },
 
       deleteAllTimeSlots: async () => {
         try {
-          const response = await fetch('/api/school/time-slot?all=true', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/school/time-slot?all=true", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           // Check if deletion was successful
-          if (result.data?.deleteAllTimeSlots !== true && result.data?.deleteAllTimeSlots !== false) {
+          if (
+            result.data?.deleteAllTimeSlots !== true &&
+            result.data?.deleteAllTimeSlots !== false
+          ) {
             // If the mutation isn't implemented, still remove from local store
             if (result.featureNotAvailable) {
-              console.warn('Delete all time slots mutation not available on server, removing from local store only');
+              console.warn(
+                "Delete all time slots mutation not available on server, removing from local store only",
+              );
             } else {
-              throw new Error('Invalid response format: deleteAllTimeSlots result missing');
+              throw new Error(
+                "Invalid response format: deleteAllTimeSlots result missing",
+              );
             }
           }
 
@@ -921,21 +1237,23 @@ export const useTimetableStore = create<TimetableStore>()(
             return {
               timeSlots: [],
               // Also remove any entries that reference any timeslot
-              entries: state.entries.filter((entry) => !timeSlotIds.has(entry.timeSlotId)),
+              entries: state.entries.filter(
+                (entry) => !timeSlotIds.has(entry.timeSlotId),
+              ),
               lastUpdated: new Date().toISOString(),
             };
           });
         } catch (error) {
-          console.error('Error deleting all time slots:', error);
+          console.error("Error deleting all time slots:", error);
           throw error;
         }
       },
 
       loadGrades: async () => {
         try {
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/graphql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               query: `
                 query GradeLevelsForSchoolType {
@@ -950,24 +1268,30 @@ export const useTimetableStore = create<TimetableStore>()(
                     }
                   }
                 }
-              `
+              `,
             }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.gradeLevelsForSchoolType) {
-            throw new Error('Invalid response format: missing gradeLevelsForSchoolType data');
+            throw new Error(
+              "Invalid response format: missing gradeLevelsForSchoolType data",
+            );
           }
 
           // Convert response to Grade format and update store
@@ -976,9 +1300,11 @@ export const useTimetableStore = create<TimetableStore>()(
             .filter((item: any) => item.isActive) // Only include active grades
             .map((item: any) => {
               // Extract level number from name (e.g., "Grade 7" -> 7, "Form 1" -> 1)
-              const name = item.gradeLevel?.name || item.shortName || 'Unknown';
+              const name = item.gradeLevel?.name || item.shortName || "Unknown";
               const levelMatch = name.match(/\d+/);
-              const level = levelMatch ? parseInt(levelMatch[0], 10) : item.sortOrder || 0;
+              const level = levelMatch
+                ? parseInt(levelMatch[0], 10)
+                : item.sortOrder || 0;
 
               return {
                 // Use gradeLevel.id to match entries which use entry.gradeLevel.id
@@ -991,9 +1317,14 @@ export const useTimetableStore = create<TimetableStore>()(
             })
             .sort((a: any, b: any) => a.level - b.level); // Sort by level
 
-          console.log('Grades loaded:', {
+          console.log("Grades loaded:", {
             count: fetchedGrades.length,
-            grades: fetchedGrades.map((g: any) => ({ id: g.id, name: g.name, displayName: g.displayName, tenantGradeLevelId: g.tenantGradeLevelId })),
+            grades: fetchedGrades.map((g: any) => ({
+              id: g.id,
+              name: g.name,
+              displayName: g.displayName,
+              tenantGradeLevelId: g.tenantGradeLevelId,
+            })),
           });
 
           set((state) => ({
@@ -1001,7 +1332,7 @@ export const useTimetableStore = create<TimetableStore>()(
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error loading grades:', error);
+          console.error("Error loading grades:", error);
           throw error;
         }
       },
@@ -1009,12 +1340,12 @@ export const useTimetableStore = create<TimetableStore>()(
       loadSubjects: async (gradeId?: string) => {
         try {
           // Load subjects from backend GraphQL API (tenantSubjects) to get correct backend IDs
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: `
                 query GetTenantSubjects {
@@ -1052,8 +1383,10 @@ export const useTimetableStore = create<TimetableStore>()(
           const result = await response.json();
 
           if (result.errors) {
-            console.error('GraphQL errors loading subjects:', result.errors);
-            throw new Error(`GraphQL errors: ${result.errors.map((e: any) => e.message).join(', ')}`);
+            console.error("GraphQL errors loading subjects:", result.errors);
+            throw new Error(
+              `GraphQL errors: ${result.errors.map((e: any) => e.message).join(", ")}`,
+            );
           }
 
           // Extract subjects from tenantSubjects - use tenantSubject.id (the assignment ID)
@@ -1062,45 +1395,57 @@ export const useTimetableStore = create<TimetableStore>()(
 
           tenantSubjects.forEach((tenantSubject: any) => {
             // Use the actual subject (either subject or customSubject) for name/code/etc.
-            const actualSubject = tenantSubject.subject || tenantSubject.customSubject;
+            const actualSubject =
+              tenantSubject.subject || tenantSubject.customSubject;
             if (actualSubject && actualSubject.name) {
               // IMPORTANT: Use tenantSubject.id (the assignment ID), NOT subject.id
               // The backend timetable entry expects the tenantSubject.id, not the subject.id
               const tenantSubjectId = tenantSubject.id;
               const subjectName = actualSubject.name;
-              
+
               // Use tenantSubjectId as key to avoid duplicates
               if (!subjectsMap.has(tenantSubjectId)) {
                 subjectsMap.set(tenantSubjectId, {
                   id: tenantSubjectId, // This is tenantSubject.id (the assignment ID)
                   name: subjectName,
-                  code: actualSubject.code || actualSubject.shortName || '',
+                  code: actualSubject.code || actualSubject.shortName || "",
                   color: undefined,
-                  department: actualSubject.department || actualSubject.category || '',
+                  department:
+                    actualSubject.department || actualSubject.category || "",
                   // Store the underlying subject ID for reference if needed
                   _subjectId: actualSubject.id,
                 });
               }
             } else {
-              console.warn('TenantSubject missing subject or customSubject:', tenantSubject);
+              console.warn(
+                "TenantSubject missing subject or customSubject:",
+                tenantSubject,
+              );
             }
           });
 
           const fetchedSubjects = Array.from(subjectsMap.values());
-          console.log('Loaded subjects from backend:', fetchedSubjects.length, 'subjects');
-          console.log('Sample tenantSubject IDs (first 3):', fetchedSubjects.slice(0, 3).map(s => ({
-            tenantSubjectId: s.id, // This is the tenantSubject.id (assignment ID)
-            name: s.name,
-            code: s.code,
-            underlyingSubjectId: s._subjectId, // The actual subject.id for reference
-          })));
+          console.log(
+            "Loaded subjects from backend:",
+            fetchedSubjects.length,
+            "subjects",
+          );
+          console.log(
+            "Sample tenantSubject IDs (first 3):",
+            fetchedSubjects.slice(0, 3).map((s) => ({
+              tenantSubjectId: s.id, // This is the tenantSubject.id (assignment ID)
+              name: s.name,
+              code: s.code,
+              underlyingSubjectId: s._subjectId, // The actual subject.id for reference
+            })),
+          );
 
           set((state) => ({
             subjects: fetchedSubjects,
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error loading subjects:', error);
+          console.error("Error loading subjects:", error);
           // Fallback to school config if backend fails
           try {
             const schoolConfigStore = useSchoolConfigStore.getState();
@@ -1114,7 +1459,10 @@ export const useTimetableStore = create<TimetableStore>()(
                 color: undefined,
                 department: s.department || s.category,
               }));
-              console.warn('Using fallback subjects from school config:', fallbackSubjects.length);
+              console.warn(
+                "Using fallback subjects from school config:",
+                fallbackSubjects.length,
+              );
               set((state) => ({
                 subjects: fallbackSubjects,
                 lastUpdated: new Date().toISOString(),
@@ -1130,30 +1478,32 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadTeachers: async () => {
         try {
-          console.log('Loading teachers from /api/school/teacher...');
-          const response = await fetch('/api/school/teacher', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+          console.log("Loading teachers from /api/school/teacher...");
+          const response = await fetch("/api/school/teacher", {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
           });
 
-          console.log('Teachers API response status:', response.status);
+          console.log("Teachers API response status:", response.status);
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Teachers API error response:', errorText);
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            console.error("Teachers API error response:", errorText);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
-          console.log('Teachers API response:', result);
+          console.log("Teachers API response:", result);
 
           // Handle error responses from API
           if (result.error) {
-            console.error('API returned error:', result.error);
+            console.error("API returned error:", result.error);
             // If feature not available, set empty array instead of throwing
             if (result.featureNotAvailable) {
-              console.warn('Teachers feature not available, using empty array');
+              console.warn("Teachers feature not available, using empty array");
               set((state) => ({
                 teachers: [],
                 lastUpdated: new Date().toISOString(),
@@ -1164,14 +1514,18 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
-            console.error('GraphQL errors:', errorMessages);
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
+            console.error("GraphQL errors:", errorMessages);
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getTeachers) {
-            console.error('Invalid response format:', result);
-            throw new Error('Invalid response format: missing getTeachers data');
+            console.error("Invalid response format:", result);
+            throw new Error(
+              "Invalid response format: missing getTeachers data",
+            );
           }
 
           const teachersData = result.data.getTeachers;
@@ -1182,25 +1536,35 @@ export const useTimetableStore = create<TimetableStore>()(
             .filter((teacher: any) => {
               // Filter out teachers with no user (they can't be assigned)
               // But keep teachers with user: null if they have subjects
-              return teacher.user !== null || (teacher.tenantSubjects && teacher.tenantSubjects.length > 0);
+              return (
+                teacher.user !== null ||
+                (teacher.tenantSubjects && teacher.tenantSubjects.length > 0)
+              );
             })
             .map((teacher: any) => {
               // Parse name into firstName and lastName
-              const fullName = teacher.user?.name || `Teacher ${teacher.id.slice(-6)}`;
+              const fullName =
+                teacher.user?.name || `Teacher ${teacher.id.slice(-6)}`;
               const nameParts = fullName.trim().split(/\s+/);
-              const firstName = nameParts[0] || '';
-              const lastName = nameParts.slice(1).join(' ') || '';
+              const firstName = nameParts[0] || "";
+              const lastName = nameParts.slice(1).join(" ") || "";
 
               // Extract subject names from tenantSubjects (remove duplicates)
               const subjectNames = Array.from(
-                new Set(teacher.tenantSubjects?.map((ts: any) => ts.name).filter(Boolean) || [])
+                new Set(
+                  teacher.tenantSubjects
+                    ?.map((ts: any) => ts.name)
+                    .filter(Boolean) || [],
+                ),
               );
 
               // Extract grade level names from tenantGradeLevels
               const gradeLevelNames = Array.from(
                 new Set(
-                  teacher.tenantGradeLevels?.map((tgl: any) => tgl.gradeLevel?.name).filter(Boolean) || []
-                )
+                  teacher.tenantGradeLevels
+                    ?.map((tgl: any) => tgl.gradeLevel?.name)
+                    .filter(Boolean) || [],
+                ),
               );
 
               const processedTeacher = {
@@ -1212,20 +1576,23 @@ export const useTimetableStore = create<TimetableStore>()(
                 subjects: subjectNames, // Array of subject names (not IDs, as per interface)
                 gradeLevels: gradeLevelNames, // Array of grade level names
                 color: undefined, // Can be set later if needed
-                isActive: teacher.isActive !== undefined ? teacher.isActive : true, // Default to true if not provided
+                isActive:
+                  teacher.isActive !== undefined ? teacher.isActive : true, // Default to true if not provided
               };
 
-              console.log('Processed teacher:', processedTeacher);
+              console.log("Processed teacher:", processedTeacher);
               return processedTeacher;
             });
 
-          console.log(`Processed ${fetchedTeachers.length} teachers (filtered from ${teachersData.length} total)`);
+          console.log(
+            `Processed ${fetchedTeachers.length} teachers (filtered from ${teachersData.length} total)`,
+          );
           set((state) => ({
             teachers: fetchedTeachers,
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error loading teachers:', error);
+          console.error("Error loading teachers:", error);
           // Set empty array on error to prevent UI from breaking
           set((state) => ({
             teachers: [],
@@ -1238,8 +1605,13 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadEntries: async (termId: string, gradeId: string) => {
         try {
-          console.log('Loading timetable entries for term:', termId, 'grade:', gradeId);
-          
+          console.log(
+            "Loading timetable entries for term:",
+            termId,
+            "grade:",
+            gradeId,
+          );
+
           const query = `
             query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
               getSchoolTimetable(input: $input) {
@@ -1353,14 +1725,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query,
               variables: {
@@ -1369,46 +1741,55 @@ export const useTimetableStore = create<TimetableStore>()(
             }),
           });
 
-          console.log('Timetable entries API response status:', response.status);
+          console.log(
+            "Timetable entries API response status:",
+            response.status,
+          );
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Timetable entries API error response:', errorText);
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            console.error("Timetable entries API error response:", errorText);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
-          console.log('Timetable entries API response:', result);
+          console.log("Timetable entries API response:", result);
 
           // Handle error responses from API
           if (result.error) {
-            console.error('API returned error:', result.error);
+            console.error("API returned error:", result.error);
             throw new Error(result.error);
           }
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
-            console.error('GraphQL errors:', errorMessages);
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
+            console.error("GraphQL errors:", errorMessages);
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getSchoolTimetable) {
-            console.error('Invalid response format:', result);
-            throw new Error('Invalid response format: missing getSchoolTimetable data');
+            console.error("Invalid response format:", result);
+            throw new Error(
+              "Invalid response format: missing getSchoolTimetable data",
+            );
           }
 
           const timetableData = result.data.getSchoolTimetable;
           const timetableByGrade = timetableData.timetableByGrade || [];
 
           const formatTime = (timeStr: string) => {
-            if (!timeStr) return '';
+            if (!timeStr) return "";
             if (timeStr.length === 5) return timeStr;
             if (timeStr.length === 8) return timeStr.substring(0, 5);
             return timeStr;
           };
 
           if (timetableByGrade.length === 0) {
-            console.warn('No grade blocks found in timetable');
+            console.warn("No grade blocks found in timetable");
             set((state) => ({
               entries: state.entries.filter((e) => e.gradeId !== gradeId),
               lastUpdated: new Date().toISOString(),
@@ -1424,31 +1805,35 @@ export const useTimetableStore = create<TimetableStore>()(
           // Entries can appear in any grade block with their own gradeLevel.id
           timetableByGrade.forEach((gradeBlock: any) => {
             if (!Array.isArray(gradeBlock.days)) return;
-            
+
             gradeBlock.days.forEach((dayItem: any) => {
               const dayTemplate = dayItem.dayTemplate;
               const dayOfWeek = dayTemplate?.dayOfWeek;
               const dayTemplateId = dayTemplate?.id;
-              
+
               (dayItem.periods || []).forEach((p: any) => {
                 const period = p?.period;
-                
+
                 // Skip breaks - they shouldn't be in time slots
                 if (p?.isBreak) {
                   return;
                 }
-                
+
                 // Collect time slots (only non-break periods) - shared across grades
                 // NOTE: Do NOT set dayOfWeek on time slots - they should apply to ALL days
                 // The dayOfWeek is only relevant for entries, not for period definitions
-                if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
+                if (
+                  period?.id &&
+                  !period.id.startsWith("break-") &&
+                  !timeSlotMap.has(period.id)
+                ) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
                     periodNumber: period.periodNumber,
                     time: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
                     startTime: formatTime(period.startTime),
                     endTime: formatTime(period.endTime),
-                    color: 'border-l-primary',
+                    color: "border-l-primary",
                     // dayOfWeek intentionally omitted - slots apply to all days
                     label: period.label,
                     dayTemplateId: dayTemplateId || undefined,
@@ -1461,7 +1846,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   // Use the entry's own gradeLevel.id - entries know which grade they belong to
                   const entryGradeLevelId = entry.gradeLevel?.id;
                   const entryGradeLevelName = entry.gradeLevel?.name;
-                  
+
                   // Only include entries that match the requested grade
                   if (!entryGradeLevelId || entryGradeLevelId !== gradeId) {
                     return;
@@ -1477,10 +1862,13 @@ export const useTimetableStore = create<TimetableStore>()(
                   const teacherId = entry.teacher?.id;
                   const timeSlotId = period.id;
                   if (!subjectId || !teacherId) {
-                    console.warn('Skipping entry due to missing subject/teacher', entry);
+                    console.warn(
+                      "Skipping entry due to missing subject/teacher",
+                      entry,
+                    );
                     return;
                   }
-                  
+
                   fetchedEntries.push({
                     id: entry.id,
                     gradeId: entryGradeLevelId,
@@ -1488,9 +1876,9 @@ export const useTimetableStore = create<TimetableStore>()(
                     subjectId,
                     teacherId,
                     timeSlotId,
-                    dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
+                    dayOfWeek: typeof dayOfWeek === "number" ? dayOfWeek : 1,
                     roomNumber: entry.room?.name || undefined,
-                    isDoublePeriod: false,
+                    isDoublePeriod: entry.isDoublePeriod || false,
                     notes: undefined,
                   });
                 }
@@ -1503,42 +1891,59 @@ export const useTimetableStore = create<TimetableStore>()(
             timeSlots: fetchedTimeSlots,
             lastUpdated: new Date().toISOString(),
           }));
-          console.log(`Loaded ${fetchedTimeSlots.length} time slots from timetableByGrade`);
+          console.log(
+            `Loaded ${fetchedTimeSlots.length} time slots from timetableByGrade`,
+          );
 
-          console.log(`Processed ${fetchedEntries.length} timetable entries from timetableByGrade`);
+          console.log(
+            `Processed ${fetchedEntries.length} timetable entries from timetableByGrade`,
+          );
           // Update store with entries for this grade
           // Remove existing entries for this grade and add new ones
           set((state) => {
             const existingEntries = state.entries || [];
-            const otherGradeEntries = existingEntries.filter((e) => e.gradeId !== gradeId);
+            const otherGradeEntries = existingEntries.filter(
+              (e) => e.gradeId !== gradeId,
+            );
             const newEntries = [...otherGradeEntries, ...fetchedEntries];
-            
-            console.log('Updating store entries:', {
+
+            console.log("Updating store entries:", {
               existingCount: existingEntries.length,
               otherGradeCount: otherGradeEntries.length,
               fetchedCount: fetchedEntries.length,
               newTotalCount: newEntries.length,
               gradeId,
             });
-            
+
             const updatedState = {
               entries: newEntries,
               lastUpdated: new Date().toISOString(),
             };
-            
+
             // Log immediately after setting
-            console.log('Store updated. New entries count:', newEntries.length);
-            console.log('Entries for this grade:', newEntries.filter(e => e.gradeId === gradeId).length);
-            
+            console.log("Store updated. New entries count:", newEntries.length);
+            console.log(
+              "Entries for this grade:",
+              newEntries.filter((e) => e.gradeId === gradeId).length,
+            );
+
             return updatedState;
           });
-          
+
           // Double-check entries were persisted
           const finalState = get();
-          console.log('Final verification - Store entries count:', finalState.entries.length);
-          console.log('Final verification - Entries for grade', gradeId, ':', finalState.entries.filter(e => e.gradeId === gradeId).length);
+          console.log(
+            "Final verification - Store entries count:",
+            finalState.entries.length,
+          );
+          console.log(
+            "Final verification - Entries for grade",
+            gradeId,
+            ":",
+            finalState.entries.filter((e) => e.gradeId === gradeId).length,
+          );
         } catch (error) {
-          console.error('Error loading timetable entries:', error);
+          console.error("Error loading timetable entries:", error);
           // Don't clear entries on error - keep existing ones
           throw error;
         }
@@ -1546,8 +1951,8 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadSchoolTimetable: async (termId: string) => {
         try {
-          console.log('Loading complete school timetable for term:', termId);
-          
+          console.log("Loading complete school timetable for term:", termId);
+
           const query = `
             query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
               getSchoolTimetable(input: $input) {
@@ -1663,14 +2068,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query,
               variables: {
@@ -1681,25 +2086,31 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getSchoolTimetable) {
-            throw new Error('Invalid response format: missing getSchoolTimetable data');
+            throw new Error(
+              "Invalid response format: missing getSchoolTimetable data",
+            );
           }
 
           const timetableData = result.data.getSchoolTimetable;
-          
+
           // Transform and store time slots with breaks
           const formatTime = (timeStr: string) => {
-            if (!timeStr) return '';
+            if (!timeStr) return "";
             if (timeStr.length === 5) return timeStr;
             if (timeStr.length === 8) return timeStr.substring(0, 5);
             return timeStr;
@@ -1711,31 +2122,35 @@ export const useTimetableStore = create<TimetableStore>()(
           // Process all grades
           (timetableData.timetableByGrade || []).forEach((gradeBlock: any) => {
             const gradeId = gradeBlock.gradeLevel?.id;
-            
+
             (gradeBlock.days || []).forEach((dayItem: any) => {
               const dayTemplate = dayItem.dayTemplate;
               const dayOfWeek = dayTemplate?.dayOfWeek;
               const dayTemplateId = dayTemplate?.id;
-              
+
               (dayItem.periods || []).forEach((p: any) => {
                 const period = p?.period;
-                
+
                 // Skip breaks - they are loaded separately via loadBreaks() from GetAllDayTemplateBreaks query
                 if (p?.isBreak) {
                   return;
                 }
-                
+
                 // Only collect time slots for non-break periods
                 // NOTE: Do NOT set dayOfWeek on time slots - they should apply to ALL days
                 // The dayOfWeek is only relevant for entries, not for period definitions
-                if (period?.id && !period.id.startsWith('break-') && !timeSlotMap.has(period.id)) {
+                if (
+                  period?.id &&
+                  !period.id.startsWith("break-") &&
+                  !timeSlotMap.has(period.id)
+                ) {
                   timeSlotMap.set(period.id, {
                     id: period.id,
                     periodNumber: period.periodNumber,
                     time: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
                     startTime: formatTime(period.startTime),
                     endTime: formatTime(period.endTime),
-                    color: 'border-l-primary',
+                    color: "border-l-primary",
                     // dayOfWeek intentionally omitted - slots apply to all days
                     label: period.label || null,
                     dayTemplateId: dayTemplateId || undefined,
@@ -1748,46 +2163,64 @@ export const useTimetableStore = create<TimetableStore>()(
                   // Use the entry's own gradeLevel.id - entries know which grade they belong to
                   const entryGradeLevelId = entry.gradeLevel?.id;
                   const entryGradeLevelName = entry.gradeLevel?.name;
-                  
+
                   if (!entryGradeLevelId) {
-                    console.warn('Skipping entry with missing gradeLevel:', entry.id);
+                    console.warn(
+                      "Skipping entry with missing gradeLevel:",
+                      entry.id,
+                    );
                     return;
                   }
-                  
+
                   allEntries.push({
                     id: entry.id,
-                    subjectId: entry.subject?.id || '',
-                    teacherId: entry.teacher?.id || '',
+                    subjectId: entry.subject?.id || "",
+                    teacherId: entry.teacher?.id || "",
                     timeSlotId: period.id,
                     gradeId: entryGradeLevelId, // Use entry's own gradeLevel.id
                     gradeName: entryGradeLevelName, // Store grade name for matching
                     dayOfWeek: dayOfWeek || 1, // Default to Monday if missing
                     roomNumber: entry.room?.name || undefined,
+                    isDoublePeriod: entry.isDoublePeriod || false,
                   });
                 }
               });
             });
           });
 
-          // Update store with time slots and entries (breaks are loaded separately via loadBreaks())
-          set((state) => ({
-            timeSlots: Array.from(timeSlotMap.values()),
-            entries: allEntries,
-            lastUpdated: new Date().toISOString(),
-            // Preserve existing breaks - they are loaded via loadBreaks() from GetAllDayTemplateBreaks query
-            breaks: state.breaks,
-          }));
+          // Update store — merge timeSlots (never clear existing ones),
+          // and replace entries with the fresh data.
+          set((state) => {
+            const incomingSlots = Array.from(timeSlotMap.values());
+            // Build a merged map: existing slots + incoming slots,
+            // keyed by id so duplicates are resolved to the incoming version.
+            const mergedMap = new Map<string, TimeSlot>();
+            state.timeSlots.forEach((s) => mergedMap.set(s.id, s));
+            incomingSlots.forEach((s) => mergedMap.set(s.id, s));
 
-          console.log('School timetable loaded:', {
+            return {
+              timeSlots: Array.from(mergedMap.values()).sort(
+                (a, b) => a.periodNumber - b.periodNumber,
+              ),
+              entries: allEntries,
+              lastUpdated: new Date().toISOString(),
+            };
+          });
+
+          console.log("School timetable loaded:", {
             timeSlots: timeSlotMap.size,
             entries: allEntries.length,
-            entryGradeIds: [...new Set(allEntries.map(e => e.gradeId))],
-            sampleEntries: allEntries.slice(0, 3).map(e => ({ id: e.id, gradeId: e.gradeId, dayOfWeek: e.dayOfWeek })),
+            entryGradeIds: [...new Set(allEntries.map((e) => e.gradeId))],
+            sampleEntries: allEntries.slice(0, 3).map((e) => ({
+              id: e.id,
+              gradeId: e.gradeId,
+              dayOfWeek: e.dayOfWeek,
+            })),
           });
 
           return timetableData;
         } catch (error) {
-          console.error('Error loading school timetable:', error);
+          console.error("Error loading school timetable:", error);
           throw error;
         }
       },
@@ -1795,7 +2228,9 @@ export const useTimetableStore = create<TimetableStore>()(
       deleteEntriesForTerm: async (termId: string) => {
         try {
           if (!termId) {
-            throw new Error('No term selected. Please select a term to delete its entries.');
+            throw new Error(
+              "No term selected. Please select a term to delete its entries.",
+            );
           }
 
           const mutation = `
@@ -1804,26 +2239,30 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({ query: mutation, variables: { termId } }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
@@ -1833,9 +2272,11 @@ export const useTimetableStore = create<TimetableStore>()(
             lastUpdated: new Date().toISOString(),
           }));
 
-          return result.data?.deleteTimetableEntriesForTerm as string | undefined;
+          return result.data?.deleteTimetableEntriesForTerm as
+            | string
+            | undefined;
         } catch (error) {
-          console.error('Error deleting timetable entries for term:', error);
+          console.error("Error deleting timetable entries for term:", error);
           throw error;
         }
       },
@@ -1843,7 +2284,9 @@ export const useTimetableStore = create<TimetableStore>()(
       deleteTimetableForTerm: async (termId: string) => {
         try {
           if (!termId) {
-            throw new Error('No term selected. Please select a term to delete its timetable.');
+            throw new Error(
+              "No term selected. Please select a term to delete its timetable.",
+            );
           }
 
           const mutation = `
@@ -1852,26 +2295,30 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({ query: mutation, variables: { termId } }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
@@ -1885,13 +2332,13 @@ export const useTimetableStore = create<TimetableStore>()(
 
           return result.data?.deleteTimetableForTerm as string | undefined;
         } catch (error) {
-          console.error('Error deleting timetable for term:', error);
+          console.error("Error deleting timetable for term:", error);
           throw error;
         }
       },
 
       // Break management actions
-      addBreak: (breakData: Omit<Break, 'id'>) => {
+      addBreak: (breakData: Omit<Break, "id">) => {
         const newBreak: Break = {
           id: generateBreakId(),
           ...breakData,
@@ -1905,123 +2352,142 @@ export const useTimetableStore = create<TimetableStore>()(
         return newBreak;
       },
 
-      createBreaks: async (breaks: Omit<Break, 'id'>[]) => {
+      createBreaks: async (breaks: Omit<Break, "id">[]) => {
         try {
-          const response = await fetch('/api/school/break', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/school/break", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(breaks),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data) {
-            throw new Error('Invalid response format: missing data');
+            throw new Error("Invalid response format: missing data");
           }
 
           // Convert response to Break format and update store
           // The response has keys like break1, break2, etc.
-          const newBreaks: Break[] = Object.values(result.data).map((breakItem: any) => {
-            // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
-            const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
-            
-            // Map GraphQL enum to frontend type
-            const typeMap: Record<string, 'short_break' | 'lunch' | 'assembly'> = {
-              'SHORT_BREAK': 'short_break',
-              'LUNCH': 'lunch',
-              'ASSEMBLY': 'assembly',
-            };
-            const breakType: 'short_break' | 'lunch' | 'assembly' = typeMap[breakItem.type] || 'short_break';
-            
-            return {
-              id: breakItem.id,
-              name: breakItem.name,
-              type: breakType,
-              dayOfWeek,
-              afterPeriod: breakItem.afterPeriod,
-              durationMinutes: breakItem.durationMinutes,
-              icon: breakItem.icon || '☕',
-              color: breakItem.color || 'bg-blue-500',
-            } as Break;
-          });
+          const newBreaks: Break[] = Object.values(result.data).map(
+            (breakItem: any) => {
+              // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
+              const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
+
+              // Map GraphQL enum to frontend type
+              const typeMap: Record<
+                string,
+                "short_break" | "lunch" | "assembly"
+              > = {
+                SHORT_BREAK: "short_break",
+                LUNCH: "lunch",
+                ASSEMBLY: "assembly",
+              };
+              const breakType: "short_break" | "lunch" | "assembly" =
+                typeMap[breakItem.type] || "short_break";
+
+              return {
+                id: breakItem.id,
+                name: breakItem.name,
+                type: breakType,
+                dayOfWeek,
+                afterPeriod: breakItem.afterPeriod,
+                durationMinutes: breakItem.durationMinutes,
+                icon: breakItem.icon || "☕",
+                color: breakItem.color || "bg-blue-500",
+              } as Break;
+            },
+          );
 
           set((state) => ({
             breaks: [...state.breaks, ...newBreaks],
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error creating breaks:', error);
+          console.error("Error creating breaks:", error);
           throw error;
         }
       },
 
       createAllBreaksForTemplate: async (breaksInput) => {
         try {
-          const response = await fetch('/api/school/break', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/school/break", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(breaksInput),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data) {
-            throw new Error('Invalid response format: missing data');
+            throw new Error("Invalid response format: missing data");
           }
 
-          const newBreaks: Break[] = Object.values(result.data).map((breakItem: any) => {
-            const dayOfWeek = typeof breakItem.dayOfWeek === 'number' ? (breakItem.dayOfWeek + 1) : 1;
-            const typeMap: Record<string, Break['type']> = {
-              'SHORT_BREAK': 'short_break',
-              'LUNCH': 'lunch',
-              'ASSEMBLY': 'assembly',
-              'LONG_BREAK': 'long_break',
-              'TEA_BREAK': 'afternoon_break',
-              'RECESS': 'recess',
-              'SNACK_BREAK': 'snack',
-              'GAMES_BREAK': 'games',
-            };
-            const mappedType = typeMap[breakItem.type] || 'short_break';
+          const newBreaks: Break[] = Object.values(result.data).map(
+            (breakItem: any) => {
+              const dayOfWeek =
+                typeof breakItem.dayOfWeek === "number"
+                  ? breakItem.dayOfWeek + 1
+                  : 1;
+              const typeMap: Record<string, Break["type"]> = {
+                SHORT_BREAK: "short_break",
+                LUNCH: "lunch",
+                ASSEMBLY: "assembly",
+                LONG_BREAK: "long_break",
+                TEA_BREAK: "afternoon_break",
+                RECESS: "recess",
+                SNACK_BREAK: "snack",
+                GAMES_BREAK: "games",
+              };
+              const mappedType = typeMap[breakItem.type] || "short_break";
 
-            return {
-              id: breakItem.id,
-              name: breakItem.name,
-              type: mappedType as Break['type'],
-              dayOfWeek,
-              afterPeriod: breakItem.afterPeriod,
-              durationMinutes: breakItem.durationMinutes,
-              icon: breakItem.icon || '☕',
-              color: breakItem.color || 'bg-blue-500',
-              applyToAllDays: breakItem.applyToAllDays,
-            } as Break;
-          });
+              return {
+                id: breakItem.id,
+                name: breakItem.name,
+                type: mappedType as Break["type"],
+                dayOfWeek,
+                afterPeriod: breakItem.afterPeriod,
+                durationMinutes: breakItem.durationMinutes,
+                icon: breakItem.icon || "☕",
+                color: breakItem.color || "bg-blue-500",
+                applyToAllDays: breakItem.applyToAllDays,
+              } as Break;
+            },
+          );
 
           set((state) => ({
             breaks: [...state.breaks, ...newBreaks],
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error creating all breaks:', error);
+          console.error("Error creating all breaks:", error);
           throw error;
         }
       },
@@ -2049,71 +2515,80 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({ query }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.getAllDayTemplateBreaks) {
-            throw new Error('Invalid response format: missing getAllDayTemplateBreaks data');
+            throw new Error(
+              "Invalid response format: missing getAllDayTemplateBreaks data",
+            );
           }
 
           // Convert response to Break format and update store
-          const fetchedBreaks = result.data.getAllDayTemplateBreaks.map((breakItem: any) => {
-            // Get dayOfWeek from dayTemplate if available, otherwise use 1 as default
-            const dayOfWeek = breakItem.dayTemplate?.dayOfWeek || 1;
-            
-            // Map GraphQL enum to frontend type
-            const typeMap: Record<string, string> = {
-              'SHORT_BREAK': 'short_break',
-              'LONG_BREAK': 'long_break',
-              'LUNCH': 'lunch',
-              'ASSEMBLY': 'assembly',
-              'RECESS': 'recess',
-              'SNACK_BREAK': 'snack',
-              'TEA_BREAK': 'afternoon_break',
-              'GAMES': 'games',
-            };
-            const breakType = typeMap[breakItem.type] || breakItem.type.toLowerCase();
-            
-            return {
-              id: breakItem.id,
-              name: breakItem.name,
-              type: breakType,
-              dayOfWeek,
-              afterPeriod: breakItem.afterPeriod,
-              durationMinutes: breakItem.durationMinutes,
-              icon: breakItem.icon || '☕',
-              color: breakItem.color || '#3B82F6',
-              dayTemplateId: breakItem.dayTemplateId || null,
-              applyToAllDays: breakItem.applyToAllDays || false,
-            };
-          });
+          const fetchedBreaks = result.data.getAllDayTemplateBreaks.map(
+            (breakItem: any) => {
+              // Get dayOfWeek from dayTemplate if available, otherwise use 1 as default
+              const dayOfWeek = breakItem.dayTemplate?.dayOfWeek || 1;
+
+              // Map GraphQL enum to frontend type
+              const typeMap: Record<string, string> = {
+                SHORT_BREAK: "short_break",
+                LONG_BREAK: "long_break",
+                LUNCH: "lunch",
+                ASSEMBLY: "assembly",
+                RECESS: "recess",
+                SNACK_BREAK: "snack",
+                TEA_BREAK: "afternoon_break",
+                GAMES: "games",
+              };
+              const breakType =
+                typeMap[breakItem.type] || breakItem.type.toLowerCase();
+
+              return {
+                id: breakItem.id,
+                name: breakItem.name,
+                type: breakType,
+                dayOfWeek,
+                afterPeriod: breakItem.afterPeriod,
+                durationMinutes: breakItem.durationMinutes,
+                icon: breakItem.icon || "☕",
+                color: breakItem.color || "#3B82F6",
+                dayTemplateId: breakItem.dayTemplateId || null,
+                applyToAllDays: breakItem.applyToAllDays || false,
+              };
+            },
+          );
 
           set((state) => ({
             breaks: fetchedBreaks,
             lastUpdated: new Date().toISOString(),
           }));
 
-          console.log('Loaded breaks:', fetchedBreaks.length);
+          console.log("Loaded breaks:", fetchedBreaks.length);
         } catch (error) {
-          console.error('Error loading breaks:', error);
+          console.error("Error loading breaks:", error);
           throw error;
         }
       },
@@ -2121,7 +2596,7 @@ export const useTimetableStore = create<TimetableStore>()(
       updateBreak: (id: string, updates: Partial<Break>) => {
         set((state) => ({
           breaks: state.breaks.map((breakItem) =>
-            breakItem.id === id ? { ...breakItem, ...updates } : breakItem
+            breakItem.id === id ? { ...breakItem, ...updates } : breakItem,
           ),
           lastUpdated: new Date().toISOString(),
         }));
@@ -2131,25 +2606,29 @@ export const useTimetableStore = create<TimetableStore>()(
         try {
           // First check if the break exists and has a day template association
           const state = get();
-          const breakToDelete = state.breaks.find(b => b.id === id);
-          
-          console.log('Attempting to delete break:', {
+          const breakToDelete = state.breaks.find((b) => b.id === id);
+
+          console.log("Attempting to delete break:", {
             id,
             breakFound: !!breakToDelete,
-            breakDetails: breakToDelete ? {
-              name: breakToDelete.name,
-              dayTemplateId: breakToDelete.dayTemplateId,
-              dayOfWeek: breakToDelete.dayOfWeek,
-              afterPeriod: breakToDelete.afterPeriod,
-            } : null,
+            breakDetails: breakToDelete
+              ? {
+                  name: breakToDelete.name,
+                  dayTemplateId: breakToDelete.dayTemplateId,
+                  dayOfWeek: breakToDelete.dayOfWeek,
+                  afterPeriod: breakToDelete.afterPeriod,
+                }
+              : null,
           });
-          
+
           if (!breakToDelete) {
-            throw new Error('Break not found in store');
+            throw new Error("Break not found in store");
           }
-          
+
           if (!breakToDelete.dayTemplateId) {
-            throw new Error('Cannot delete break: Break is not associated with a day template. This break may be orphaned and needs to be fixed or deleted from the database directly.');
+            throw new Error(
+              "Cannot delete break: Break is not associated with a day template. This break may be orphaned and needs to be fixed or deleted from the database directly.",
+            );
           }
 
           const mutation = `
@@ -2161,16 +2640,16 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          console.log('Sending delete mutation for break ID:', id);
+          console.log("Sending delete mutation for break ID:", id);
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
               variables: { id },
@@ -2179,12 +2658,14 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('HTTP error response:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+            console.error("HTTP error response:", response.status, errorText);
+            throw new Error(
+              `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
-          console.log('Delete break response:', result);
+          console.log("Delete break response:", result);
 
           if (result.errors) {
             const errors = result.errors.map((e: any) => ({
@@ -2192,20 +2673,26 @@ export const useTimetableStore = create<TimetableStore>()(
               code: e.extensions?.code,
               path: e.path,
             }));
-            console.error('GraphQL errors:', errors);
-            
+            console.error("GraphQL errors:", errors);
+
             // Handle specific error types
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
-            if (errorMessages.includes('INTERNAL_SERVER_ERROR')) {
-              throw new Error('Server error while deleting break. This may be due to database constraints or related records. Check server logs for details.');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
+            if (errorMessages.includes("INTERNAL_SERVER_ERROR")) {
+              throw new Error(
+                "Server error while deleting break. This may be due to database constraints or related records. Check server logs for details.",
+              );
             }
-            
+
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data?.deleteDayTemplateBreak?.success) {
-            const errorMsg = result.data?.deleteDayTemplateBreak?.message || 'Failed to delete break';
-            console.error('Deletion failed:', errorMsg);
+            const errorMsg =
+              result.data?.deleteDayTemplateBreak?.message ||
+              "Failed to delete break";
+            console.error("Deletion failed:", errorMsg);
             throw new Error(errorMsg);
           }
 
@@ -2215,9 +2702,12 @@ export const useTimetableStore = create<TimetableStore>()(
             lastUpdated: new Date().toISOString(),
           }));
 
-          console.log('Break deleted successfully:', result.data.deleteDayTemplateBreak.message);
+          console.log(
+            "Break deleted successfully:",
+            result.data.deleteDayTemplateBreak.message,
+          );
         } catch (error) {
-          console.error('Error deleting break:', error);
+          console.error("Error deleting break:", error);
           throw error;
         }
       },
@@ -2230,14 +2720,14 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch('/api/graphql', {
-            method: 'POST',
+          const response = await fetch("/api/graphql", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({
               query: mutation,
             }),
@@ -2245,13 +2735,17 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
@@ -2262,13 +2756,126 @@ export const useTimetableStore = create<TimetableStore>()(
               breaks: [],
               lastUpdated: new Date().toISOString(),
             }));
-            
-            console.log('All breaks deleted successfully');
+
+            console.log("All breaks deleted successfully");
           } else {
-            throw new Error('Failed to delete all breaks');
+            throw new Error("Failed to delete all breaks");
           }
         } catch (error) {
-          console.error('Error deleting all breaks:', error);
+          console.error("Error deleting all breaks:", error);
+          throw error;
+        }
+      },
+
+      deleteAllBreaksByTerm: async (termId: string) => {
+        try {
+          const mutation = `
+            mutation DeleteAllBreaksByTerm($input: DeleteBreaksByTermInput!) {
+              deleteAllBreaksByTerm(input: $input) {
+                success
+                deletedBreaksCount
+                recalculatedDaysCount
+                message
+                completedAt
+              }
+            }
+          `;
+
+          const response = await fetch("/api/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              query: mutation,
+              variables: { input: { termId, confirmDeletion: true } },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            throw new Error(
+              result.errors[0]?.message || "Failed to delete breaks",
+            );
+          }
+
+          const data = result.data?.deleteAllBreaksByTerm;
+          if (!data?.success) {
+            throw new Error(data?.message || "Failed to delete breaks");
+          }
+
+          return data;
+        } catch (error) {
+          console.error("Error deleting all breaks by term:", error);
+          throw error;
+        }
+      },
+
+      deleteBreaksByType: async (termId: string, breakType: string) => {
+        try {
+          const mutation = `
+            mutation DeleteBreaksByType($input: DeleteBreaksByTypeInput!) {
+              deleteBreaksByType(input: $input) {
+                success
+                breakType
+                deletedBreaksCount
+                recalculatedDaysCount
+                message
+                completedAt
+              }
+            }
+          `;
+
+          const response = await fetch("/api/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              query: mutation,
+              variables: {
+                input: { termId, breakType, confirmDeletion: true },
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
+          }
+
+          const result = await response.json();
+
+          if (result.errors) {
+            throw new Error(
+              result.errors[0]?.message || "Failed to delete breaks",
+            );
+          }
+
+          const data = result.data?.deleteBreaksByType;
+          if (!data?.success) {
+            throw new Error(data?.message || "Failed to delete breaks");
+          }
+
+          return data;
+        } catch (error) {
+          console.error("Error deleting breaks by type:", error);
           throw error;
         }
       },
@@ -2285,11 +2892,15 @@ export const useTimetableStore = create<TimetableStore>()(
       },
 
       // Bulk create timetable entries via GraphQL
-      bulkCreateEntries: async (termId: string, gradeId: string, entries: CreateEntryRequest[]) => {
+      bulkCreateEntries: async (
+        termId: string,
+        gradeId: string,
+        entries: CreateEntryRequest[],
+      ) => {
         try {
-          const response = await fetch('/api/school/timetable/entries', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const response = await fetch("/api/school/timetable/entries", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               termId,
               gradeId,
@@ -2305,41 +2916,50 @@ export const useTimetableStore = create<TimetableStore>()(
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Request failed: ${response.status} - ${errorText.substring(0, 200)}`);
+            throw new Error(
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
+            );
           }
 
           const result = await response.json();
 
           if (result.errors) {
-            const errorMessages = result.errors.map((e: any) => e.message).join(', ');
+            const errorMessages = result.errors
+              .map((e: any) => e.message)
+              .join(", ");
             throw new Error(`GraphQL errors: ${errorMessages}`);
           }
 
           if (!result.data || !result.data.bulkCreateTimetableEntries) {
-            throw new Error('Invalid response format: missing bulkCreateTimetableEntries data');
+            throw new Error(
+              "Invalid response format: missing bulkCreateTimetableEntries data",
+            );
           }
 
           // Convert response entries to TimetableEntry format and update store
           // Match response entries with original entries by index (order should be preserved)
-          const createdEntries: TimetableEntry[] = result.data.bulkCreateTimetableEntries.map((responseEntry: any, index: number) => {
-            const originalEntry = entries[index];
-            return {
-              id: responseEntry.id,
-              gradeId,
-              subjectId: originalEntry.subjectId,
-              teacherId: originalEntry.teacherId,
-              timeSlotId: originalEntry.timeSlotId,
-              dayOfWeek: responseEntry.dayOfWeek,
-              roomNumber: originalEntry.roomNumber || '',
-            };
-          });
+          const createdEntries: TimetableEntry[] =
+            result.data.bulkCreateTimetableEntries.map(
+              (responseEntry: any, index: number) => {
+                const originalEntry = entries[index];
+                return {
+                  id: responseEntry.id,
+                  gradeId,
+                  subjectId: originalEntry.subjectId,
+                  teacherId: originalEntry.teacherId,
+                  timeSlotId: originalEntry.timeSlotId,
+                  dayOfWeek: responseEntry.dayOfWeek,
+                  roomNumber: originalEntry.roomNumber || "",
+                };
+              },
+            );
 
           set((state) => ({
             entries: [...state.entries, ...createdEntries],
             lastUpdated: new Date().toISOString(),
           }));
         } catch (error) {
-          console.error('Error creating bulk timetable entries:', error);
+          console.error("Error creating bulk timetable entries:", error);
           throw error;
         }
       },
@@ -2347,7 +2967,9 @@ export const useTimetableStore = create<TimetableStore>()(
       // DEPRECATED: This function is kept for backward compatibility but should not be used
       // Use loadTimeSlots() and other backend methods instead
       loadMockData: () => {
-        console.warn('loadMockData is deprecated. Use loadTimeSlots() and other backend methods instead.');
+        console.warn(
+          "loadMockData is deprecated. Use loadTimeSlots() and other backend methods instead.",
+        );
         // Do nothing - return empty state
         set({
           ...emptyInitialState,
@@ -2359,16 +2981,19 @@ export const useTimetableStore = create<TimetableStore>()(
       setSelectedGrade: (gradeId) => set({ selectedGradeId: gradeId }),
       setSelectedTerm: (termId) => set({ selectedTermId: termId }),
       setSearchTerm: (term) => set({ searchTerm: term }),
-      toggleConflicts: () => set((state) => ({ showConflicts: !state.showConflicts })),
-      toggleSummary: () => set((state) => ({ isSummaryMinimized: !state.isSummaryMinimized })),
+      toggleConflicts: () =>
+        set((state) => ({ showConflicts: !state.showConflicts })),
+      toggleSummary: () =>
+        set((state) => ({ isSummaryMinimized: !state.isSummaryMinimized })),
     }),
     {
-      name: 'timetable-store-v2',
+      name: "timetable-store-v3",
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        // Only persist data, not UI state
-        // Breaks are not cached - always loaded fresh from backend
-        timeSlots: state.timeSlots,
+        // Only persist reference / cache data, not time-sensitive data.
+        // timeSlots are excluded — they must always be fetched fresh
+        // from the backend so the UI correctly reflects the current state.
         subjects: state.subjects,
         teachers: state.teachers,
         grades: state.grades,
@@ -2378,13 +3003,13 @@ export const useTimetableStore = create<TimetableStore>()(
       onRehydrateStorage: () => (state) => {
         // After rehydration, check if we need to preserve fresh entries
         if (state) {
-          console.log('Store rehydrated. Entries count:', state.entries.length);
+          console.log("Store rehydrated. Entries count:", state.entries.length);
           // Clear breaks on rehydration - they should always be loaded fresh from backend
           state.breaks = [];
         }
       },
-    }
-  )
+    },
+  ),
 );
 
 // Selectors (optimized accessors)
@@ -2394,7 +3019,7 @@ export const useTimetableSelectors = () => {
   return {
     // Get entries for currently selected grade
     selectedGradeEntries: store.entries.filter(
-      (entry) => entry.gradeId === store.selectedGradeId
+      (entry) => entry.gradeId === store.selectedGradeId,
     ),
 
     // Get specific subject by ID
@@ -2416,7 +3041,7 @@ export const useTimetableSelectors = () => {
     // Get entries for specific grade and day
     getEntriesForGradeAndDay: (gradeId: string, dayOfWeek: number) =>
       store.entries.filter(
-        (entry) => entry.gradeId === gradeId && entry.dayOfWeek === dayOfWeek
+        (entry) => entry.gradeId === gradeId && entry.dayOfWeek === dayOfWeek,
       ),
 
     // Enrich an entry with full data
@@ -2428,7 +3053,7 @@ export const useTimetableSelectors = () => {
 
       // If any required data is missing, log a warning but still return the entry
       if (!subject || !teacher || !timeSlot || !grade) {
-        console.warn('Missing data for entry:', {
+        console.warn("Missing data for entry:", {
           entryId: entry.id,
           hasSubject: !!subject,
           hasTeacher: !!teacher,
@@ -2443,12 +3068,31 @@ export const useTimetableSelectors = () => {
 
       return {
         ...entry,
-        subject: subject || { id: entry.subjectId, name: 'Unknown Subject' } as any,
-        teacher: teacher || { id: entry.teacherId, name: 'Unknown Teacher', firstName: '', lastName: '', subjects: [] } as any,
-        timeSlot: timeSlot || { id: entry.timeSlotId, periodNumber: 0, time: 'Unknown', startTime: '', endTime: '', color: '' } as any,
-        grade: grade || { id: entry.gradeId, name: 'Unknown Grade', level: 0 } as any,
+        subject:
+          subject || ({ id: entry.subjectId, name: "Unknown Subject" } as any),
+        teacher:
+          teacher ||
+          ({
+            id: entry.teacherId,
+            name: "Unknown Teacher",
+            firstName: "",
+            lastName: "",
+            subjects: [],
+          } as any),
+        timeSlot:
+          timeSlot ||
+          ({
+            id: entry.timeSlotId,
+            periodNumber: 0,
+            time: "Unknown",
+            startTime: "",
+            endTime: "",
+            color: "",
+          } as any),
+        grade:
+          grade ||
+          ({ id: entry.gradeId, name: "Unknown Grade", level: 0 } as any),
       };
     },
   };
 };
-

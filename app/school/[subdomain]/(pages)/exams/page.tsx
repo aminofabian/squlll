@@ -1,24 +1,21 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from 'react'
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
-import { ExamsFilterSidebar } from "@/components/dashboard/ExamsFilterSidebar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Progress } from "@/components/ui/progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { 
-  Plus, 
-  Eye, 
-  Edit, 
-  Download, 
-  FileText, 
-  BarChart3, 
-  Users, 
-  Trophy, 
+import { useState, useMemo } from "react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { ExamsFilterSidebar } from "@/components/dashboard/ExamsFilterSidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Plus,
+  Eye,
+  Edit,
+  Download,
+  FileText,
+  BarChart3,
+  Users,
+  Trophy,
   Calendar,
   BookOpen,
   Target,
@@ -30,832 +27,664 @@ import {
   ChevronDown,
   ChevronRight,
   Award,
-  CheckCircle
-} from "lucide-react"
-import { mockStudentResults, subjects } from "@/lib/data/mockExams"
-import { Exam, StudentExamResult } from "@/types/exam"
-import { format } from "date-fns"
-import { CreateExamDrawer } from "./components/CreateExamDrawer"
-import { ReportCardTemplateModal } from "./components/ReportCardTemplateModal"
-import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
+  CheckCircle,
+  RefreshCw,
+} from "lucide-react";
+import { subjects } from "@/lib/data/mockExams";
+import type { Exam, StudentExamResult } from "@/types/exam";
+import { format } from "date-fns";
+import { CreateExamDrawer } from "./components/CreateExamDrawer";
+import { ReportCardTemplateModal } from "./components/ReportCardTemplateModal";
+import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 
-// Student Performance View Component
+// ─── Shared Helpers ────────────────────────────────────────────
+
+const GRADE_THRESHOLDS = [
+  { min: 80, grade: "Excellent", color: "text-green-600", bg: "bg-green-50" },
+  { min: 70, grade: "Very Good", color: "text-blue-600", bg: "bg-blue-50" },
+  { min: 60, grade: "Good", color: "text-yellow-600", bg: "bg-yellow-50" },
+  { min: 50, grade: "Average", color: "text-orange-600", bg: "bg-orange-50" },
+  { min: 0, grade: "Below Average", color: "text-red-600", bg: "bg-red-50" },
+] as const;
+
+function getPerformanceGrade(percentage: number) {
+  return (
+    GRADE_THRESHOLDS.find((t) => percentage >= t.min) ||
+    GRADE_THRESHOLDS[GRADE_THRESHOLDS.length - 1]
+  );
+}
+
+// ─── Student Performance View ──────────────────────────────────
+
 function StudentPerformanceView({ studentId }: { studentId: string }) {
-  const studentResults = mockStudentResults.filter(r => r.studentId === studentId)
-  const student = studentResults[0]?.student
+  // TODO: Replace with real API data
+  const studentResults: StudentExamResult[] = [];
+  const student = studentResults[0]?.student;
 
   if (!student) {
     return (
-      <Card className="border border-gray-200">
+      <Card className="border border-slate-200 dark:border-slate-700">
         <CardContent className="flex items-center justify-center py-16">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="h-8 w-8 text-gray-400" />
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="h-8 w-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900">Student not found</h3>
-            <p className="text-gray-600">No performance data available for this student.</p>
+            <h3 className="text-lg font-medium mb-2 text-slate-900 dark:text-slate-100">
+              Student not found
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              No performance data available for this student.
+            </p>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  const averageScore = studentResults.length > 0 ? 
-    studentResults.reduce((sum, r) => sum + r.percentage, 0) / studentResults.length : 0
+  const averageScore =
+    studentResults.length > 0
+      ? studentResults.reduce((sum, r) => sum + r.percentage, 0) /
+        studentResults.length
+      : 0;
 
-  // Calculate subject-wise performance
-  const subjectPerformance = subjects.map(subject => {
-    const subjectResults = studentResults.filter(result => {
-      // Note: Exam data should come from API/store
-      return false
-    })
-    
-    const avgScore = subjectResults.length > 0 
-      ? subjectResults.reduce((sum, r) => sum + r.percentage, 0) / subjectResults.length 
-      : 0
-    
-    const bestScore = subjectResults.length > 0 
-      ? Math.max(...subjectResults.map(r => r.percentage)) 
-      : 0
-    
-    const trend = subjectResults.length >= 2 
-      ? subjectResults[subjectResults.length - 1].percentage - subjectResults[0].percentage
-      : 0
-
-    return {
-      subject,
-      average: Math.round(avgScore),
-      best: bestScore,
-      trend,
-      examCount: subjectResults.length,
-      results: subjectResults
-    }
-  }).filter(perf => perf.examCount > 0)
-
-  // Performance grade calculation
-  const getPerformanceGrade = (percentage: number) => {
-    if (percentage >= 80) return { grade: 'Excellent', color: 'text-green-600', bg: 'bg-green-50' }
-    if (percentage >= 70) return { grade: 'Very Good', color: 'text-blue-600', bg: 'bg-blue-50' }
-    if (percentage >= 60) return { grade: 'Good', color: 'text-yellow-600', bg: 'bg-yellow-50' }
-    if (percentage >= 50) return { grade: 'Average', color: 'text-orange-600', bg: 'bg-orange-50' }
-    return { grade: 'Below Average', color: 'text-red-600', bg: 'bg-red-50' }
-  }
-
-  const overallGrade = getPerformanceGrade(averageScore)
+  const overallGrade = getPerformanceGrade(averageScore);
 
   return (
     <div className="space-y-6">
-      {/* Student Header Card */}
-      <Card className="border border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-        <CardContent className="p-8">
-          <div className="flex items-center gap-8">
-            <div className="relative">
-              <div className="h-24 w-24 bg-gray-200 rounded-2xl flex items-center justify-center border-4 border-white shadow-lg">
-                <span className="text-2xl font-bold text-gray-700">
-                  {student.firstName[0]}{student.lastName[0]}
+      {/* Student Header */}
+      <Card className="border border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
+        <CardContent className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <div className="relative flex-shrink-0">
+              <div className="h-20 w-20 bg-slate-200 dark:bg-slate-700 rounded-2xl flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg">
+                <span className="text-xl font-bold text-slate-700 dark:text-slate-300">
+                  {student.firstName[0]}
+                  {student.lastName[0]}
                 </span>
               </div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Trophy className="h-4 w-4 text-white" />
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center">
+                <Trophy className="h-3.5 w-3.5 text-white" />
               </div>
             </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-3xl font-bold text-gray-900">{student.firstName} {student.lastName}</h2>
-                <Badge variant="outline" className="bg-white">ID: {student.admissionNumber}</Badge>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {student.firstName} {student.lastName}
+                </h2>
+                <Badge variant="outline">ID: {student.admissionNumber}</Badge>
               </div>
-                             <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                 <div className="flex items-center gap-2">
-                   <School className="h-4 w-4" />
-                   <span className="font-medium">{student.class} - {student.stream}</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                   <User className="h-4 w-4" />
-                   <span>{student.gender}</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                   <Calendar className="h-4 w-4" />
-                   <span>ID: {student.admissionNumber}</span>
-                 </div>
-               </div>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                <span className="flex items-center gap-1.5">
+                  <School className="h-4 w-4" />
+                  {student.class} - {student.stream}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <User className="h-4 w-4" />
+                  {student.gender}
+                </span>
+              </div>
               <div className="flex items-center gap-3">
-                <div className={`px-4 py-2 rounded-lg ${overallGrade.bg}`}>
-                  <span className={`font-medium ${overallGrade.color}`}>{overallGrade.grade}</span>
+                <div
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${overallGrade.bg} ${overallGrade.color}`}
+                >
+                  {overallGrade.grade}
                 </div>
-                <div className="text-4xl font-bold text-gray-900">{Math.round(averageScore)}%</div>
-                <span className="text-gray-600">Overall Average</span>
+                <span className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+                  {Math.round(averageScore)}%
+                </span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  Overall Average
+                </span>
               </div>
             </div>
-            
-            <div className="text-right space-y-3">
-              <div className="flex gap-2">
-                <ReportCardTemplateModal
-                  student={{
-                    id: student.id,
-                    name: `${student.firstName} ${student.lastName}`,
-                    admissionNumber: student.admissionNumber,
-                    gender: student.gender,
-                    grade: student.class,
-                    stream: student.stream,
-                    user: { email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@school.com` }
-                  }}
-                  school={{
-                    id: '',
-                    schoolName: '',
-                    subdomain: ''
-                  }}
-                  subjects={subjects}
-                  term="1"
-                  year="2024"
-                />
-                <Button variant="outline">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Transcript
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Profile
-                </Button>
-                <Button variant="outline" size="sm">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </Button>
-              </div>
+
+            <div className="flex flex-wrap gap-2">
+              <ReportCardTemplateModal
+                student={{
+                  id: student.id,
+                  name: `${student.firstName} ${student.lastName}`,
+                  admissionNumber: student.admissionNumber,
+                  gender: student.gender,
+                  grade: student.class,
+                  stream: student.stream,
+                  user: { email: "" },
+                }}
+                school={{ id: "", schoolName: "", subdomain: "" }}
+                subjects={subjects}
+                term="1"
+                year="2024"
+              />
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                Transcript
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Performance Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-600 mb-2">Total Exams</div>
-                <div className="text-3xl font-bold text-gray-900">{studentResults.length}</div>
-                <div className="text-xs text-gray-500 mt-1">Across all subjects</div>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <BookOpen className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-600 mb-2">Highest Score</div>
-                <div className="text-3xl font-bold text-green-600">
-                  {studentResults.length > 0 ? Math.max(...studentResults.map(r => r.percentage)) : 0}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">Personal best</div>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-600 mb-2">Class Rank</div>
-                <div className="text-3xl font-bold text-yellow-600">
-                  #{studentResults[0]?.positionInClass || 'N/A'}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">Current position</div>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-gray-600 mb-2">Attendance</div>
-                <div className="text-3xl font-bold text-purple-600">
-                  {Math.round((studentResults.filter(r => r.status === 'present').length / studentResults.length) * 100)}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">Exam attendance</div>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Target className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<BookOpen className="h-5 w-5" />}
+          value={studentResults.length}
+          label="Total Exams"
+          sub="Across all subjects"
+          color="blue"
+        />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          value={`${studentResults.length > 0 ? Math.max(...studentResults.map((r) => r.percentage)) : 0}%`}
+          label="Highest Score"
+          sub="Personal best"
+          color="emerald"
+        />
+        <StatCard
+          icon={<Trophy className="h-5 w-5" />}
+          value={`#${studentResults[0]?.positionInClass || "N/A"}`}
+          label="Class Rank"
+          sub="Current position"
+          color="amber"
+        />
+        <StatCard
+          icon={<Target className="h-5 w-5" />}
+          value={`${studentResults.length > 0 ? Math.round((studentResults.filter((r) => r.status === "present").length / studentResults.length) * 100) : 0}%`}
+          label="Attendance"
+          sub="Exam attendance"
+          color="purple"
+        />
       </div>
 
-      {/* Subject Performance Breakdown */}
-      <Card className="border border-gray-200">
+      {/* Subject Breakdown */}
+      <Card className="border border-slate-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Subject Performance Overview
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="h-4 w-4" />
+            Subject Performance
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {subjectPerformance.map((perf) => {
-              const subjectGrade = getPerformanceGrade(perf.average)
-              return (
-                <Card key={perf.subject.id} className="border border-gray-100 hover:shadow-md transition-shadow">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="font-semibold text-gray-900 text-lg">{perf.subject.name}</h4>
-                        <p className="text-sm text-gray-600">Code: {perf.subject.code}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900">{perf.average}%</div>
-                        <div className={`text-xs px-2 py-1 rounded ${subjectGrade.bg} ${subjectGrade.color}`}>
-                          {subjectGrade.grade}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Best Score</span>
-                        <span className="font-semibold text-green-600">{perf.best}%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Exams Taken</span>
-                        <span className="font-semibold">{perf.examCount}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Trend</span>
-                        <div className={`flex items-center gap-1 ${perf.trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          <span className="font-semibold">{perf.trend > 0 ? '+' : ''}{Math.round(perf.trend)}%</span>
-                          <TrendingUp className={`h-3 w-3 ${perf.trend < 0 ? 'transform rotate-180' : ''}`} />
-                        </div>
+          {studentResults.length === 0 ? (
+            <EmptyState
+              icon={<BookOpen className="h-8 w-8" />}
+              title="No exam results yet"
+              description="This student hasn't taken any exams."
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {studentResults.map((result) => {
+                const grade = getPerformanceGrade(result.percentage);
+                return (
+                  <div
+                    key={result.id}
+                    className="border border-slate-100 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-slate-900 dark:text-slate-100">
+                        Subject Result
+                      </h4>
+                      <div
+                        className={`text-xs px-2 py-1 rounded font-medium ${grade.bg} ${grade.color}`}
+                      >
+                        {grade.grade}
                       </div>
                     </div>
-                    
-                    <div className="mt-4">
-                      <Progress value={perf.average} className="h-3" />
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Score
+                      </span>
+                      <span className="font-bold text-slate-900 dark:text-slate-100">
+                        {result.marksScored}/{result.totalMarks}
+                        <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
+                          {result.percentage}%
+                        </span>
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Expandable Exam Sessions */}
-      <ExamSessionsList studentResults={studentResults} />
-    </div>
-  )
-}
-
-// Expandable Exam Sessions Component
-function ExamSessionsList({ studentResults }: { studentResults: StudentExamResult[] }) {
-  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set())
-
-  // Group results by exam session (examType + term + academicYear)
-  const examSessions = useMemo(() => {
-    // Note: Exam data should come from API/store
-    // For now, return empty array since we removed mock data
-    // studentResults.forEach(result => {
-    //   const exam = exams.find(e => e.id === result.examId)
-    //   if (!exam) return
-    //   const sessionKey = `${exam.examType}-${exam.term}-${exam.academicYear}`
-    //   ...
-    // })
-
-    // Return empty array since we removed mock exam data
-    return [] as Array<{
-      sessionKey: string;
-      sessionName: string;
-      examType: string;
-      term: string;
-      academicYear: string;
-      dateRange: { start: Date; end: Date };
-      results: (StudentExamResult & { exam: Exam })[];
-      totalSubjects: number;
-      averageScore: number;
-      overallPosition: number;
-      status: 'completed' | 'in-progress' | 'upcoming';
-    }>
-  }, [studentResults])
-
-  const toggleSession = (sessionKey: string) => {
-    const newExpanded = new Set(expandedSessions)
-    if (newExpanded.has(sessionKey)) {
-      newExpanded.delete(sessionKey)
-    } else {
-      newExpanded.add(sessionKey)
-    }
-    setExpandedSessions(newExpanded)
-  }
-
-  const getPerformanceGrade = (percentage: number) => {
-    if (percentage >= 80) return { grade: 'Excellent', color: 'text-green-600', bg: 'bg-green-50' }
-    if (percentage >= 70) return { grade: 'Very Good', color: 'text-blue-600', bg: 'bg-blue-50' }
-    if (percentage >= 60) return { grade: 'Good', color: 'text-yellow-600', bg: 'bg-yellow-50' }
-    if (percentage >= 50) return { grade: 'Average', color: 'text-orange-600', bg: 'bg-orange-50' }
-    return { grade: 'Below Average', color: 'text-red-600', bg: 'bg-red-50' }
-  }
-
-  if (studentResults.length === 0) {
-    return (
-      <Card className="border border-gray-200">
-        <CardContent className="flex items-center justify-center py-16">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-8 w-8 text-gray-400" />
+                    <Progress value={result.percentage} className="h-2" />
+                    {result.teacherComment && (
+                      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800 p-2 rounded">
+                        &ldquo;{result.teacherComment}&rdquo;
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <h3 className="text-lg font-medium mb-2 text-gray-900">No exam results</h3>
-            <p className="text-gray-600">This student hasn't taken any exams yet.</p>
-          </div>
+          )}
         </CardContent>
       </Card>
-    )
-  }
-
-  return (
-    <Card className="border border-gray-200">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            Exam Sessions & Subject Scores
-          </CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export All
-            </Button>
-            <Button variant="outline" size="sm">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Compare Sessions
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {examSessions.map((session) => {
-            const isExpanded = expandedSessions.has(session.sessionKey)
-            const sessionGrade = getPerformanceGrade(session.averageScore)
-            
-            return (
-              <Collapsible
-                key={session.sessionKey}
-                open={isExpanded}
-                onOpenChange={() => toggleSession(session.sessionKey)}
-              >
-                <CollapsibleTrigger asChild>
-                  <Card className="cursor-pointer hover:shadow-md transition-shadow border border-gray-200">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            {isExpanded ? (
-                              <ChevronDown className="h-5 w-5 text-gray-500" />
-                            ) : (
-                              <ChevronRight className="h-5 w-5 text-gray-500" />
-                            )}
-                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                              <Award className="h-6 w-6 text-blue-600" />
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-1">{session.sessionName}</h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                <span>{format(session.dateRange.start, 'MMM dd')} - {format(session.dateRange.end, 'MMM dd, yyyy')}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <BookOpen className="h-4 w-4" />
-                                <span>{session.totalSubjects} Subjects</span>
-                              </div>
-                              <Badge variant="outline" className="bg-white">
-                                {session.term} {session.academicYear}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-6">
-                          <div className="text-center">
-                            <div className="text-3xl font-bold text-gray-900 mb-1">{Math.round(session.averageScore)}%</div>
-                            <div className={`text-sm px-3 py-1 rounded-lg ${sessionGrade.bg} ${sessionGrade.color} font-medium`}>
-                              {sessionGrade.grade}
-                            </div>
-                          </div>
-                          
-                          <div className="text-center">
-                            <div className="flex items-center gap-1 text-2xl font-bold text-yellow-600 mb-1">
-                              <Trophy className="h-6 w-6" />
-                              <span>#{session.overallPosition}</span>
-                            </div>
-                            <div className="text-sm text-gray-600">Avg Position</div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="h-5 w-5 text-green-600" />
-                            <span className="text-sm text-green-600 font-medium">Completed</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent>
-                  <Card className="mt-2 border border-gray-100 bg-gray-50">
-                    <CardContent className="p-6">
-                      <h4 className="text-lg font-semibold mb-4 text-gray-900">Subject-wise Performance</h4>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {session.results.map((result) => {
-                          const resultGrade = getPerformanceGrade(result.percentage)
-                          return (
-                            <Card key={result.id} className="border border-white bg-white hover:shadow-md transition-shadow">
-                              <CardContent className="p-5">
-                                <div className="flex items-center justify-between mb-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                      <BookOpen className="h-5 w-5 text-gray-600" />
-                                    </div>
-                                    <div>
-                                      <h5 className="font-semibold text-gray-900">{result.exam.subject.name}</h5>
-                                      <p className="text-sm text-gray-600">Code: {result.exam.subject.code}</p>
-                                    </div>
-                                  </div>
-                                  <Badge variant={result.grade.startsWith('A') ? 'default' : 'outline'} className="font-bold">
-                                    {result.grade}
-                                  </Badge>
-                                </div>
-                                
-                                <div className="space-y-3">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600">Score</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-bold text-lg">{result.marksScored}/{result.totalMarks}</span>
-                                      <span className={`text-sm px-2 py-1 rounded-full font-medium ${
-                                        result.percentage >= 70 ? 'bg-green-100 text-green-700' :
-                                        result.percentage >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-red-100 text-red-700'
-                                      }`}>
-                                        {result.percentage}%
-                                      </span>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600">Class Position</span>
-                                    <div className="flex items-center gap-1">
-                                      <Trophy className="h-4 w-4 text-yellow-500" />
-                                      <span className="font-bold">#{result.positionInClass}</span>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600">Performance</span>
-                                    <div className={`px-2 py-1 rounded ${resultGrade.bg}`}>
-                                      <span className={`text-xs font-medium ${resultGrade.color}`}>{resultGrade.grade}</span>
-                                    </div>
-                                  </div>
-                                  
-                                  <Progress value={result.percentage} className="h-2 mt-3" />
-                                  
-                                                                     {result.teacherComment && (
-                                     <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                                       <p className="text-sm text-blue-800 italic">"{result.teacherComment}"</p>
-                                       {result.gradedBy && (
-                                         <p className="text-xs text-blue-600 mt-1">- {result.gradedBy.name}</p>
-                                       )}
-                                     </div>
-                                   )}
-                                </div>
-                                
-                                <div className="flex gap-1 mt-4">
-                                  <Button size="sm" variant="ghost" className="flex-1">
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View
-                                  </Button>
-                                  <Button size="sm" variant="ghost" className="flex-1">
-                                    <Download className="h-4 w-4 mr-1" />
-                                    Download
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )
-                        })}
-                      </div>
-                      
-                      {/* Session Summary */}
-                      <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
-                        <h5 className="font-semibold text-gray-900 mb-3">Session Summary</h5>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                          <div>
-                            <div className="text-2xl font-bold text-gray-900">{session.totalSubjects}</div>
-                            <div className="text-sm text-gray-600">Subjects</div>
-                          </div>
-                          <div>
-                            <div className="text-2xl font-bold text-blue-600">{Math.round(session.averageScore)}%</div>
-                            <div className="text-sm text-gray-600">Average</div>
-                          </div>
-                          <div>
-                            <div className="text-2xl font-bold text-green-600">
-                              {Math.max(...session.results.map(r => r.percentage))}%
-                            </div>
-                            <div className="text-sm text-gray-600">Highest</div>
-                          </div>
-                          <div>
-                            <div className="text-2xl font-bold text-yellow-600">#{session.overallPosition}</div>
-                            <div className="text-sm text-gray-600">Position</div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CollapsibleContent>
-              </Collapsible>
-            )
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  )
+    </div>
+  );
 }
+
+// ─── Main Page ──────────────────────────────────────────────────
 
 export default function ExamsPage() {
-  const [selectedClass, setSelectedClass] = useState<string>("Form 2A")
-  const [selectedTerm, setSelectedTerm] = useState<string>("Term 1")
-  const [selectedYear, setSelectedYear] = useState<string>("2025")
-  const [viewMode, setViewMode] = useState<'overview' | 'results' | 'student'>('overview')
-  const [selectedStudentId, setSelectedStudentId] = useState<string>()
-  const [studentSearchTerm, setStudentSearchTerm] = useState<string>('')
-  const [examTypeFilter, setExamTypeFilter] = useState<string>('all')
-  const [subjectFilter, setSubjectFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [selectedGradeId, setSelectedGradeId] = useState<string>()
-  const [selectedLevelId, setSelectedLevelId] = useState<string>()
+  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedTerm, setSelectedTerm] = useState<string>("Term 1");
+  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const [viewMode, setViewMode] = useState<"overview" | "student">("overview");
+  const [selectedStudentId, setSelectedStudentId] = useState<string>();
+  const [examTypeFilter, setExamTypeFilter] = useState<string>("all");
+  const [subjectFilter, setSubjectFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedGradeId, setSelectedGradeId] = useState<string>();
+  const [selectedLevelId, setSelectedLevelId] = useState<string>();
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const classes = [
-    "Form 1A", "Form 1B", "Form 1C",
-    "Form 2A", "Form 2B", "Form 2C", 
-    "Form 3A", "Form 3B", "Form 3C",
-    "Form 4A", "Form 4B", "Form 4C"
-  ]
+  const { config: schoolConfig } = useSchoolConfigStore();
 
-  const terms = ["Term 1", "Term 2", "Term 3"]
-  const years = ["2023", "2024", "2025"]
-
-  // Get school config for grade filtering
-  const { config: schoolConfig } = useSchoolConfigStore()
-
-  // Get selected grade name for filtering
-  const selectedGradeInfo = useMemo(() => {
-    if (!selectedGradeId || !schoolConfig?.selectedLevels) return null
-    
-    for (const level of schoolConfig.selectedLevels) {
-      const grade = level.gradeLevels?.find(g => g.id === selectedGradeId)
-      if (grade) {
-        return {
-          name: grade.name.toLowerCase(),
-          displayName: grade.name
+  // Build classes from school config instead of hardcoded
+  const classes = useMemo(() => {
+    const result: string[] = [];
+    if (schoolConfig?.selectedLevels) {
+      for (const level of schoolConfig.selectedLevels) {
+        for (const grade of level.gradeLevels || []) {
+          const streams = grade.streams || [];
+          if (streams.length > 0) {
+            for (const stream of streams) {
+              result.push(`${grade.name} ${stream.name}`);
+            }
+          } else {
+            result.push(grade.name);
+          }
         }
       }
     }
-    return null
-  }, [selectedGradeId, schoolConfig])
+    return result.length > 0
+      ? result
+      : ["Form 1A", "Form 2A", "Form 3A", "Form 4A"];
+  }, [schoolConfig]);
 
-  // Helper to extract grade from class name (e.g., "Form 2A" -> "Form 2" or "Form 2")
-  const extractGradeFromClass = (className: string): string => {
-    // Remove stream suffix (A, B, C, etc.) and get the base grade
-    return className.replace(/\s+[A-Z]$/, '').toLowerCase().trim()
-  }
+  const terms = ["Term 1", "Term 2", "Term 3"];
+  const years = ["2023", "2024", "2025"];
 
-  // Filter exams based on current selection
+  // TODO: Replace with real API data
+  const exams: Exam[] = [];
+
   const filteredExams = useMemo(() => {
-    // Note: Exam data should come from API/store
-    const exams: Exam[] = []
-    return exams.filter(exam => {
-      // Filter by grade if selected
-      let matchesGrade = true
-      if (selectedGradeInfo) {
-        const examGrade = extractGradeFromClass(exam.class)
-        const selectedGradeLower = selectedGradeInfo.name.toLowerCase()
-        
-        // Match if the exam class contains the grade name or vice versa
-        // Handle cases like "Form 2" matching "Form 2A", "Form 2B", etc.
-        matchesGrade = examGrade.includes(selectedGradeLower) || 
-                      selectedGradeLower.includes(examGrade) ||
-                      exam.class.toLowerCase().includes(selectedGradeLower) ||
-                      selectedGradeLower.includes(exam.class.toLowerCase().split(' ')[0]?.toLowerCase() || '')
-      }
-      
-      const matchesClass = exam.class === selectedClass && 
-                          exam.term === selectedTerm && 
-                          exam.academicYear === selectedYear
-      const matchesType = examTypeFilter === 'all' || exam.examType === examTypeFilter
-      const matchesSubject = subjectFilter === 'all' || exam.subject.name === subjectFilter  
-      const matchesStatus = statusFilter === 'all' || exam.status === statusFilter
-      
-      return matchesGrade && matchesClass && matchesType && matchesSubject && matchesStatus
-    })
-  }, [selectedClass, selectedTerm, selectedYear, examTypeFilter, subjectFilter, statusFilter, selectedGradeInfo])
+    return exams.filter((exam) => {
+      const matchesClass = !selectedClass || exam.class === selectedClass;
+      const matchesTerm = !selectedTerm || exam.term === selectedTerm;
+      const matchesYear = !selectedYear || exam.academicYear === selectedYear;
+      const matchesType =
+        examTypeFilter === "all" || exam.examType === examTypeFilter;
+      const matchesSubject =
+        subjectFilter === "all" || exam.subject.name === subjectFilter;
+      const matchesStatus =
+        statusFilter === "all" || exam.status === statusFilter;
+      return (
+        matchesClass &&
+        matchesTerm &&
+        matchesYear &&
+        matchesType &&
+        matchesSubject &&
+        matchesStatus
+      );
+    });
+  }, [
+    exams,
+    selectedClass,
+    selectedTerm,
+    selectedYear,
+    examTypeFilter,
+    subjectFilter,
+    statusFilter,
+  ]);
 
   const handleGradeSelect = (gradeId: string, levelId: string) => {
-    setSelectedGradeId(gradeId)
-    setSelectedLevelId(levelId)
-  }
+    setSelectedGradeId(gradeId);
+    setSelectedLevelId(levelId);
+  };
+
+  const handleExamCreated = () => {
+    setRefreshKey((k) => k + 1);
+  };
 
   return (
     <DashboardLayout
-      searchFilter={<ExamsFilterSidebar 
-        selectedGradeId={selectedGradeId}
-        onGradeSelect={handleGradeSelect}
-      />}
+      searchFilter={
+        <ExamsFilterSidebar
+          selectedGradeId={selectedGradeId}
+          onGradeSelect={handleGradeSelect}
+        />
+      }
     >
       <div className="space-y-6">
-        {/* Clean Header */}
-        <Card className="border border-gray-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {viewMode === 'student' && (
-                  <Button 
-                    variant="outline" 
+        {/* Header */}
+        <Card className="border border-slate-200 dark:border-slate-700">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {viewMode === "student" && (
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => {
-                      setViewMode('overview')
-                      setSelectedStudentId(undefined)
+                      setViewMode("overview");
+                      setSelectedStudentId(undefined);
                     }}
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Overview
+                    Back
                   </Button>
                 )}
-                <div className="p-3 bg-gray-100 rounded-xl">
-                  <GraduationCap className="h-8 w-8 text-gray-600" />
+                <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                  <GraduationCap className="h-6 w-6 text-slate-600 dark:text-slate-400" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {viewMode === 'student' ? 'Student Performance Analytics' : 'Exams Management'}
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {viewMode === "student" ? "Student Performance" : "Exams"}
                   </h1>
-                  <p className="text-gray-600">
-                    {viewMode === 'student' 
-                      ? 'Comprehensive student performance analysis and insights'
-                      : 'Comprehensive exam management and analytics dashboard'
-                    }
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {viewMode === "student"
+                      ? "Detailed performance analysis"
+                      : "Manage and track examinations"}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <CreateExamDrawer 
-                  onExamCreated={() => {
-                    // Refresh the exams list after creation
-                    window.location.reload();
-                  }}
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setRefreshKey((k) => k + 1)}
+                  variant="outline"
+                  size="sm"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+                <CreateExamDrawer
+                  onExamCreated={handleExamCreated}
                   trigger={
-                    <Button>
+                    <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Exam
                     </Button>
                   }
                 />
-                <Button variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Student Performance View */}
-        {viewMode === 'student' && selectedStudentId && (
+        {/* Student View */}
+        {viewMode === "student" && selectedStudentId && (
           <StudentPerformanceView studentId={selectedStudentId} />
         )}
 
-        {/* Exams Overview - Only show when not viewing student details */}
-        {viewMode === 'overview' && (
-          <>
-            {/* Exams Table */}
-            <Card className="border border-gray-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5" />
+        {/* Overview */}
+        {viewMode === "overview" && (
+          <Card className="border border-slate-200 dark:border-slate-700">
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
                   Exams
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {filteredExams.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <BookOpen className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2 text-gray-900">No exams found</h3>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                      No exams have been created for this class and term yet. Create your first exam to get started.
-                    </p>
-                    <CreateExamDrawer 
-                      onExamCreated={() => {
-                        // Refresh the exams list after creation
-                        window.location.reload();
-                      }}
-                      trigger={
-                        <Button>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create First Exam
-                        </Button>
-                      }
-                    />
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Exam Details</TableHead>
-                          <TableHead>Subject</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Total Marks</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredExams.map((exam) => (
-                          <TableRow key={exam.id} className="hover:bg-gray-50">
-                            <TableCell>
-                              <div>
-                                <div className="font-medium text-gray-900">{exam.title}</div>
-                                <div className="text-sm text-gray-600">{exam.description}</div>
+                <div className="flex flex-wrap gap-2 ml-auto">
+                  <select
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                    className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
+                  >
+                    <option value="">All Classes</option>
+                    {classes.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedTerm}
+                    onChange={(e) => setSelectedTerm(e.target.value)}
+                    className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
+                  >
+                    {terms.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
+                  >
+                    {years.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {filteredExams.length === 0 ? (
+                <EmptyState
+                  icon={<BookOpen className="h-10 w-10" />}
+                  title={
+                    exams.length === 0
+                      ? "No exams yet"
+                      : "No exams match your filters"
+                  }
+                  description={
+                    exams.length === 0
+                      ? "Create your first exam to start tracking student performance."
+                      : "Try adjusting your filters to see more results."
+                  }
+                  action={
+                    exams.length === 0 ? (
+                      <CreateExamDrawer
+                        onExamCreated={handleExamCreated}
+                        trigger={
+                          <Button>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create First Exam
+                          </Button>
+                        }
+                      />
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-700 text-left">
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          Exam
+                        </th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          Subject
+                        </th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          Type
+                        </th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          Date
+                        </th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          Marks
+                        </th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
+                          Status
+                        </th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300 w-[100px]"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredExams.map((exam) => (
+                        <tr
+                          key={exam.id}
+                          className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        >
+                          <td className="py-3 px-3">
+                            <div className="font-medium text-slate-900 dark:text-slate-100">
+                              {exam.title}
+                            </div>
+                            {exam.description && (
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                                {exam.description}
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
-                                  <BookOpen className="h-4 w-4 text-gray-600" />
-                                </div>
-                                <div>
-                                  <div className="font-medium text-gray-900">{exam.subject.name}</div>
-                                  <div className="text-sm text-gray-600">Code: {exam.subject.code}</div>
-                                </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
+                                <BookOpen className="h-3.5 w-3.5 text-slate-500" />
                               </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="font-medium">{exam.examType}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{format(new Date(exam.dateAdministered), 'MMM dd, yyyy')}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium text-lg">{exam.totalMarks}</TableCell>
-                            <TableCell>
-                              <Badge variant={exam.status === 'completed' ? 'default' : 'outline'}>
-                                {exam.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm">
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
+                              <span className="text-slate-900 dark:text-slate-100">
+                                {exam.subject.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <Badge variant="outline" className="text-xs">
+                              {exam.examType}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-xs">
+                            {format(
+                              new Date(exam.dateAdministered),
+                              "MMM dd, yyyy",
+                            )}
+                          </td>
+                          <td className="py-3 px-3 font-medium text-slate-900 dark:text-slate-100">
+                            {exam.totalMarks}
+                          </td>
+                          <td className="py-3 px-3">
+                            <Badge
+                              variant={
+                                exam.status === "completed"
+                                  ? "default"
+                                  : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {exam.status}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-0.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </DashboardLayout>
-  )
+  );
+}
+
+// ─── Shared Sub-Components ─────────────────────────────────────
+
+function StatCard({
+  icon,
+  value,
+  label,
+  sub,
+  color,
+}: {
+  icon: React.ReactNode;
+  value: string | number;
+  label: string;
+  sub: string;
+  color: "blue" | "emerald" | "amber" | "purple";
+}) {
+  const colorMap = {
+    blue: {
+      bg: "bg-blue-100 dark:bg-blue-900/30",
+      text: "text-blue-600 dark:text-blue-400",
+      value: "text-slate-900 dark:text-slate-100",
+    },
+    emerald: {
+      bg: "bg-emerald-100 dark:bg-emerald-900/30",
+      text: "text-emerald-600 dark:text-emerald-400",
+      value: "text-emerald-600 dark:text-emerald-400",
+    },
+    amber: {
+      bg: "bg-amber-100 dark:bg-amber-900/30",
+      text: "text-amber-600 dark:text-amber-400",
+      value: "text-amber-600 dark:text-amber-400",
+    },
+    purple: {
+      bg: "bg-purple-100 dark:bg-purple-900/30",
+      text: "text-purple-600 dark:text-purple-400",
+      value: "text-purple-600 dark:text-purple-400",
+    },
+  };
+  const c = colorMap[color];
+
+  return (
+    <Card className="border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+              {label}
+            </div>
+            <div className={`text-2xl font-bold ${c.value}`}>{value}</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+              {sub}
+            </div>
+          </div>
+          <div
+            className={`w-10 h-10 ${c.bg} rounded-xl flex items-center justify-center`}
+          >
+            <div className={c.text}>{icon}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center max-w-sm">
+        <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="text-slate-400">{icon}</div>
+        </div>
+        <h3 className="text-base font-medium mb-1 text-slate-900 dark:text-slate-100">
+          {title}
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          {description}
+        </p>
+        {action}
+      </div>
+    </div>
+  );
 }

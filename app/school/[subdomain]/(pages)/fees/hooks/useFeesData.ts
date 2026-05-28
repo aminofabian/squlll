@@ -1,105 +1,156 @@
-import { useState, useMemo } from 'react'
-import { FeeInvoice, StudentSummary, SummaryStats } from '../types'
-import { mockFeeInvoices } from '../data/mockData'
-import { useStudentsSummary } from '@/lib/hooks/useStudentsSummary'
-import { useStudentInvoices } from './useStudentInvoices'
+import { useState, useMemo } from "react";
+import { FeeInvoice, StudentSummary, SummaryStats } from "../types";
+import { useStudentsSummary } from "@/lib/hooks/useStudentsSummary";
+import { useStudentInvoices } from "./useStudentInvoices";
+
+/**
+ * Derive invoice-like records from real student fee summaries.
+ * Each student becomes one "invoice" row with their aggregated fee data.
+ */
+function studentsToInvoices(students: StudentSummary[]): FeeInvoice[] {
+  return students.map((s, i) => ({
+    id: s.id,
+    studentId: s.id,
+    studentName: s.name,
+    admissionNumber: s.admissionNumber,
+    class: s.class,
+    section: s.section || "",
+    feeType: "tuition",
+    totalAmount: s.totalOutstanding + s.totalPaid,
+    amountPaid: s.totalPaid,
+    amountDue: s.totalOutstanding,
+    dueDate: new Date().toISOString().split("T")[0],
+    paymentStatus:
+      s.totalOutstanding === 0
+        ? "paid"
+        : s.invoiceCount === 0
+          ? "pending"
+          : s.totalPaid > 0
+            ? "partial"
+            : "pending",
+    invoiceDate: new Date().toISOString().split("T")[0],
+    term: "",
+    academicYear: "",
+    paymentHistory: [],
+    remindersSent: 0,
+    invoiceIndex: i,
+  }));
+}
 
 export const useFeesData = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedFeeType, setSelectedFeeType] = useState<string>('all')
-  const [selectedStatus, setSelectedStatus] = useState<string>('all')
-  const [selectedClass, setSelectedClass] = useState<string>('all')
-  const [selectedSection, setSelectedSection] = useState<string>('all')
-  const [dueDateFilter, setDueDateFilter] = useState<string>('all')
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFeeType, setSelectedFeeType] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<string>("all");
+  const [selectedSection, setSelectedSection] = useState<string>("all");
+  const [dueDateFilter, setDueDateFilter] = useState<string>("all");
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
 
-  // Fetch students using the new summary query
-  const { students } = useStudentsSummary()
+  // Fetch students using the summary query (real API data with feeSummary)
+  const { students } = useStudentsSummary();
 
   // Map API students to StudentSummary for the sidebar
   const allStudents = useMemo(() => {
-    const mapped: StudentSummary[] = students.map(s => ({
+    const mapped: StudentSummary[] = students.map((s) => ({
       id: s.id,
       name: s.studentName,
       admissionNumber: s.admissionNumber,
       class: s.gradeLevelName,
-      section: '',
+      section: "",
       totalOutstanding: s.feeSummary.balance,
       totalPaid: s.feeSummary.totalPaid,
       invoiceCount: s.feeSummary.numberOfFeeItems,
-      overdueCount: 0, // To be populated from actual overdue data
-    }))
-    return mapped.sort((a, b) => a.name.localeCompare(b.name))
-  }, [students])
+      overdueCount: 0,
+    }));
+    return mapped.sort((a, b) => a.name.localeCompare(b.name));
+  }, [students]);
 
   // Filter students by search term
   const filteredStudents = useMemo(() => {
-    if (!searchTerm) return allStudents
-    return allStudents.filter(student =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [allStudents, searchTerm])
+    if (!searchTerm) return allStudents;
+    return allStudents.filter(
+      (student) =>
+        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.admissionNumber
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
+    );
+  }, [allStudents, searchTerm]);
 
   // Get invoices for selected student using GraphQL
-  const { invoices: selectedStudentInvoices, loading: selectedStudentInvoicesLoading, error: selectedStudentInvoicesError } = useStudentInvoices(selectedStudent)
+  const {
+    invoices: selectedStudentInvoices,
+    loading: selectedStudentInvoicesLoading,
+    error: selectedStudentInvoicesError,
+  } = useStudentInvoices(selectedStudent);
 
-  // Filter and calculate statistics
+  // Derive invoice-like records from real student data for filtering/display
+  const derivedInvoices = useMemo(
+    () => studentsToInvoices(allStudents),
+    [allStudents],
+  );
+
+  // Filter derived invoices for the legacy invoice table view
   const filteredInvoices = useMemo(() => {
-    let filtered = mockFeeInvoices.filter(invoice => {
-      const matchesSearch = searchTerm === '' || 
-        invoice.studentName.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchesFeeType = selectedFeeType === 'all' || invoice.feeType === selectedFeeType
-      const matchesStatus = selectedStatus === 'all' || invoice.paymentStatus === selectedStatus
-      const matchesClass = selectedClass === 'all' || invoice.class === selectedClass
-      const matchesSection = selectedSection === 'all' || invoice.section === selectedSection
-      
-      let matchesDueDate = true
-      if (dueDateFilter === 'next7days') {
-        const now = new Date()
-        const dueDate = new Date(invoice.dueDate)
-        const diffTime = dueDate.getTime() - now.getTime()
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        matchesDueDate = diffDays <= 7 && diffDays >= 0
-      } else if (dueDateFilter === 'overdue') {
-        const now = new Date()
-        const dueDate = new Date(invoice.dueDate)
-        matchesDueDate = dueDate < now && invoice.paymentStatus !== 'paid'
-      }
-      
-      return matchesSearch && matchesFeeType && matchesStatus && matchesClass && matchesSection && matchesDueDate
-    })
+    let filtered = derivedInvoices.filter((invoice) => {
+      const matchesSearch =
+        searchTerm === "" ||
+        invoice.studentName.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return filtered.sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime())
-  }, [searchTerm, selectedFeeType, selectedStatus, selectedClass, selectedSection, dueDateFilter])
+      const matchesFeeType =
+        selectedFeeType === "all" || invoice.feeType === selectedFeeType;
+      const matchesStatus =
+        selectedStatus === "all" || invoice.paymentStatus === selectedStatus;
+      const matchesClass =
+        selectedClass === "all" || invoice.class === selectedClass;
+      const matchesSection =
+        selectedSection === "all" || invoice.section === selectedSection;
 
-  // Calculate summary statistics
-  const summaryStats = useMemo(() => {
-    const totalCollected = mockFeeInvoices.reduce((sum, inv) => sum + inv.amountPaid, 0)
-    const totalOutstanding = mockFeeInvoices.reduce((sum, inv) => sum + inv.amountDue, 0)
-    const studentsWithPendingFees = mockFeeInvoices.filter(inv => inv.amountDue > 0).length
-    
-    const now = new Date()
-    const upcomingDueCount = mockFeeInvoices.filter(inv => {
-      const dueDate = new Date(inv.dueDate)
-      const diffTime = dueDate.getTime() - now.getTime()
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      return diffDays <= 7 && diffDays >= 0 && inv.amountDue > 0
-    }).length
+      return (
+        matchesSearch &&
+        matchesFeeType &&
+        matchesStatus &&
+        matchesClass &&
+        matchesSection
+      );
+    });
 
-    const overdueCount = mockFeeInvoices.filter(inv => inv.paymentStatus === 'overdue').length
-    const collectionRate = totalCollected / (totalCollected + totalOutstanding) * 100
+    return filtered.sort(
+      (a, b) => (b.invoiceIndex ?? 0) - (a.invoiceIndex ?? 0),
+    );
+  }, [
+    derivedInvoices,
+    searchTerm,
+    selectedFeeType,
+    selectedStatus,
+    selectedClass,
+    selectedSection,
+  ]);
+
+  // Calculate summary statistics from real student data
+  const summaryStats = useMemo((): SummaryStats => {
+    const totalCollected = allStudents.reduce((sum, s) => sum + s.totalPaid, 0);
+    const totalOutstanding = allStudents.reduce(
+      (sum, s) => sum + s.totalOutstanding,
+      0,
+    );
+    const studentsWithPendingFees = allStudents.filter(
+      (s) => s.totalOutstanding > 0,
+    ).length;
+    const overdueCount = allStudents.filter((s) => s.overdueCount > 0).length;
+    const grossTotal = totalCollected + totalOutstanding;
+    const collectionRate =
+      grossTotal > 0 ? (totalCollected / grossTotal) * 100 : 0;
 
     return {
       totalCollected,
       totalOutstanding,
       studentsWithPendingFees,
-      upcomingDueCount,
+      upcomingDueCount: 0, // Not available from summary — would need a separate query
       overdueCount,
-      collectionRate
-    } as SummaryStats
-  }, [])
+      collectionRate,
+    };
+  }, [allStudents]);
 
   return {
     // State
@@ -117,7 +168,7 @@ export const useFeesData = () => {
     setDueDateFilter,
     selectedStudent,
     setSelectedStudent,
-    
+
     // Computed data
     allStudents,
     filteredStudents,
@@ -125,6 +176,6 @@ export const useFeesData = () => {
     selectedStudentInvoicesLoading,
     selectedStudentInvoicesError,
     filteredInvoices,
-    summaryStats
-  }
-}
+    summaryStats,
+  };
+};

@@ -1,22 +1,23 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
-import { 
-  X, 
-  Upload, 
-  FileText, 
-  Calendar, 
-  User, 
+import {
+  X,
+  Upload,
+  FileText,
+  Calendar,
+  User,
   AlertCircle,
   CheckCircle,
   Loader2,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface Assignment {
   id: string;
@@ -24,7 +25,7 @@ interface Assignment {
   title: string;
   description: string;
   dueDate: string;
-  status: 'pending' | 'overdue' | 'submitted';
+  status: "pending" | "overdue" | "submitted";
   teacher: string;
   maxScore: number;
   attachments?: string[];
@@ -34,14 +35,18 @@ interface SubmitAssignmentModalProps {
   assignment: Assignment;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (assignmentId: string, files: File[], comments: string) => Promise<void>;
+  onSubmit: (
+    assignmentId: string,
+    files: File[],
+    comments: string,
+  ) => Promise<void>;
 }
 
-export default function SubmitAssignmentModal({ 
-  assignment, 
-  isOpen, 
-  onClose, 
-  onSubmit 
+export default function SubmitAssignmentModal({
+  assignment,
+  isOpen,
+  onClose,
+  onSubmit,
 }: SubmitAssignmentModalProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [comments, setComments] = useState("");
@@ -50,7 +55,7 @@ export default function SubmitAssignmentModal({
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setSelectedFiles(prev => [...prev, ...files]);
+    setSelectedFiles((prev) => [...prev, ...files]);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -67,18 +72,18 @@ export default function SubmitAssignmentModal({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
-    setSelectedFiles(prev => [...prev, ...files]);
+    setSelectedFiles((prev) => [...prev, ...files]);
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
     if (selectedFiles.length === 0) {
-      alert("Please select at least one file to submit.");
+      toast.error("Please select at least one file to submit.");
       return;
     }
 
@@ -91,18 +96,18 @@ export default function SubmitAssignmentModal({
       onClose();
     } catch (error) {
       console.error("Error submitting assignment:", error);
-      alert("Failed to submit assignment. Please try again.");
+      toast.error("Failed to submit assignment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (!isOpen) return null;
@@ -111,7 +116,9 @@ export default function SubmitAssignmentModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-xl font-semibold">Submit Assignment</CardTitle>
+          <CardTitle className="text-xl font-semibold">
+            Submit Assignment
+          </CardTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -122,7 +129,7 @@ export default function SubmitAssignmentModal({
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           {/* Assignment Details */}
           <div className="bg-muted/50 rounded-lg p-4 space-y-3">
@@ -130,13 +137,17 @@ export default function SubmitAssignmentModal({
               <h3 className="font-semibold text-lg">{assignment.title}</h3>
               <Badge variant="secondary">{assignment.subject}</Badge>
             </div>
-            
-            <p className="text-muted-foreground text-sm">{assignment.description}</p>
-            
+
+            <p className="text-muted-foreground text-sm">
+              {assignment.description}
+            </p>
+
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                <span>
+                  Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground" />
@@ -165,12 +176,12 @@ export default function SubmitAssignmentModal({
           {/* File Upload */}
           <div className="space-y-4">
             <Label className="text-base font-medium">Upload Files</Label>
-            
+
             <div
               className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                dragActive 
-                  ? 'border-primary bg-primary/5' 
-                  : 'border-muted-foreground/25 hover:border-primary/50'
+                dragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25 hover:border-primary/50"
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -184,7 +195,7 @@ export default function SubmitAssignmentModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => document.getElementById('file-upload')?.click()}
+                onClick={() => document.getElementById("file-upload")?.click()}
                 disabled={isSubmitting}
               >
                 Choose Files
@@ -205,7 +216,10 @@ export default function SubmitAssignmentModal({
                 <Label className="text-sm font-medium">Selected Files:</Label>
                 <div className="space-y-2">
                   {selectedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <FileText className="w-4 h-4 text-muted-foreground" />
                         <div>
@@ -278,4 +292,4 @@ export default function SubmitAssignmentModal({
       </Card>
     </div>
   );
-} 
+}

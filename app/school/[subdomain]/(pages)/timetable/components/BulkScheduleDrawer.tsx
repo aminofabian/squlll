@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
 import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears';
+import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm';
 import { useToast } from '@/components/ui/use-toast';
 import {
   Sheet,
@@ -16,7 +17,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Calendar, Clock, GraduationCap, CheckCircle2, ChevronRight, Info, X } from 'lucide-react';
+import { Loader2, Calendar, Clock, GraduationCap, CheckCircle2, Info, X, AlertTriangle } from 'lucide-react';
+
+interface WeekTemplateSummary {
+  id: string;
+  name: string;
+  termId: string;
+}
 
 interface Term {
   id: string;
@@ -35,10 +42,14 @@ interface BulkScheduleDrawerProps {
 }
 
 export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
-  const { selectedGradeId, selectedTermId, setSelectedTerm, grades } = useTimetableStore();
+  const { selectedTermId: storeTermId, setSelectedTerm: setStoreTerm, grades } = useTimetableStore();
+  const { selectedTerm: contextTerm, setSelectedTerm: setContextTerm } = useSelectedTerm();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { getActiveAcademicYear } = useCurrentAcademicYear();
   const currentAcademicYear = getActiveAcademicYear();
+
+  const effectiveTermId = contextTerm?.id ?? storeTermId ?? null;
 
   const parsePositiveInt = (value: string): number | null => {
     const trimmed = value.trim();
@@ -123,16 +134,6 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     enabled: !!currentAcademicYear?.id && open,
   });
 
-  // Set active term as default when terms load
-  useEffect(() => {
-    if (terms && terms.length > 0 && !selectedTermId) {
-      const activeTerm = terms.find((term) => term.isActive) || terms[0];
-      if (activeTerm) {
-        setSelectedTerm(activeTerm.id);
-      }
-    }
-  }, [terms, selectedTermId, setSelectedTerm]);
-
   const [formData, setFormData] = useState({
     name: '',
     startTime: '08:00',
@@ -143,6 +144,88 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [showInfoPopup, setShowInfoPopup] = useState(true);
+
+  const selectTerm = useCallback(
+    (termId: string) => {
+      setStoreTerm(termId);
+      const term = terms?.find((t) => t.id === termId);
+      if (term) {
+        setContextTerm({
+          id: term.id,
+          name: term.name,
+          startDate: term.startDate,
+          endDate: term.endDate,
+          isActive: term.isActive,
+          academicYear: { name: term.academicYear?.name ?? currentAcademicYear?.name ?? '' },
+        });
+      }
+    },
+    [terms, setStoreTerm, setContextTerm, currentAcademicYear?.name],
+  );
+
+  useEffect(() => {
+    if (!open || !terms?.length) return;
+
+    if (contextTerm?.id && terms.some((t) => t.id === contextTerm.id)) {
+      if (storeTermId !== contextTerm.id) setStoreTerm(contextTerm.id);
+      return;
+    }
+
+    if (storeTermId && terms.some((t) => t.id === storeTermId)) {
+      if (!contextTerm || contextTerm.id !== storeTermId) selectTerm(storeTermId);
+      return;
+    }
+
+    const defaultTerm = terms.find((t) => t.isActive) ?? terms[0];
+    if (defaultTerm) selectTerm(defaultTerm.id);
+  }, [open, terms, contextTerm, storeTermId, selectTerm, setStoreTerm]);
+
+  const { data: allWeekTemplates = [], isLoading: weekTemplatesLoading } = useQuery<WeekTemplateSummary[]>({
+    queryKey: ['weekTemplates', 'bulk-drawer'],
+    queryFn: async () => {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: `
+            query GetWeekTemplates($input: GetWeekTemplatesInput!) {
+              getWeekTemplates(input: $input) {
+                id
+                name
+                termId
+              }
+            }
+          `,
+          variables: { input: { includeDetails: false } },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load existing timetables');
+      }
+
+      const result = await response.json();
+      if (result.errors?.length) {
+        throw new Error(result.errors.map((e: { message: string }) => e.message).join(', '));
+      }
+
+      return (result.data?.getWeekTemplates ?? []) as WeekTemplateSummary[];
+    },
+    enabled: open,
+    staleTime: 0,
+  });
+
+  const templatesByTermId = useMemo(() => {
+    const map = new Map<string, WeekTemplateSummary>();
+    for (const template of allWeekTemplates) {
+      if (template.termId) map.set(template.termId, template);
+    }
+    return map;
+  }, [allWeekTemplates]);
+
+  const existingWeekTemplate = effectiveTermId ? templatesByTermId.get(effectiveTermId) ?? null : null;
+  const selectedTerm = terms?.find((t) => t.id === effectiveTermId);
 
   // Generate timetable name from selected term and academic year
   const generateTimetableName = (term: Term | undefined, academicYear: typeof currentAcademicYear): string => {
@@ -157,14 +240,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
   // Update name when term or academic year changes
   useEffect(() => {
-    if (selectedTermId && terms && currentAcademicYear) {
-      const selectedTerm = terms.find((t) => t.id === selectedTermId);
-      const generatedName = generateTimetableName(selectedTerm, currentAcademicYear);
+    if (effectiveTermId && terms && currentAcademicYear) {
+      const term = terms.find((t) => t.id === effectiveTermId);
+      const generatedName = generateTimetableName(term, currentAcademicYear);
       if (generatedName) {
         setFormData((prev) => ({ ...prev, name: generatedName }));
       }
     }
-  }, [selectedTermId, terms, currentAcademicYear]);
+  }, [effectiveTermId, terms, currentAcademicYear]);
 
   useEffect(() => {
     if (open) {
@@ -185,15 +268,15 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       setShowInfoPopup(true);
       
       // Generate timetable name if we have the necessary data
-      if (selectedTermId && terms && currentAcademicYear) {
-        const selectedTerm = terms.find((t) => t.id === selectedTermId);
-        const generatedName = generateTimetableName(selectedTerm, currentAcademicYear);
+      if (effectiveTermId && terms && currentAcademicYear) {
+        const term = terms.find((t) => t.id === effectiveTermId);
+        const generatedName = generateTimetableName(term, currentAcademicYear);
         if (generatedName) {
           setFormData((prev) => ({ ...prev, name: generatedName }));
         }
       }
     }
-  }, [open, grades, selectedTermId, terms, currentAcademicYear]);
+  }, [open, grades, effectiveTermId, terms, currentAcademicYear]);
 
   const handleGradeToggle = (gradeId: string, checked: boolean | 'indeterminate') => {
     setSelectedGradeIds((prev) => {
@@ -259,8 +342,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
     return gradeName.slice(0, 2).toUpperCase();
   };
 
-  const handleSubmit = async () => {
-    if (!selectedTermId) {
+  const handleCreateClick = () => {
+    void handleSubmit(!!existingWeekTemplate);
+  };
+
+  const handleSubmit = async (replaceExisting: boolean) => {
+    if (!effectiveTermId) {
       toast({
         title: 'No term selected',
         description: 'Please select a term before creating the timetable.',
@@ -378,10 +465,10 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               periodCount,
               periodDuration,
               numberOfDays,
-              termId: selectedTermId,
+              termId: effectiveTermId,
               gradeLevelIds: tenantGradeLevelIds,
               streamIds: [],
-              replaceExisting: false,
+              replaceExisting,
             },
           },
         }),
@@ -406,11 +493,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       const weekTemplate = result.data.createWeekTemplate;
 
       toast({
-        title: 'Timetable created successfully!',
-        description: `Created "${weekTemplate.name}" with ${weekTemplate.dayTemplates.length} day(s) and ${weekTemplate.dayTemplates[0]?.periods?.length || 0} lesson periods per day for ${selectedGradeIds.length} grade(s).`,
+        title: replaceExisting ? 'Timetable replaced successfully!' : 'Timetable created successfully!',
+        description: `${replaceExisting ? 'Replaced' : 'Created'} "${weekTemplate.name}" with ${weekTemplate.dayTemplates.length} day(s) and ${weekTemplate.dayTemplates[0]?.periods?.length || 0} lesson periods per day for ${selectedGradeIds.length} grade(s).`,
         variant: 'default',
       });
 
+      await queryClient.invalidateQueries({ queryKey: ['weekTemplates'] });
       onClose();
     } catch (error) {
       console.error('Error creating timetable:', error);
@@ -450,13 +538,35 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
               <Calendar className="h-3.5 w-3.5 text-primary" />
             </div>
             <div className="flex-1">
-              <SheetTitle className="text-xs font-semibold uppercase tracking-wide">Create Timetable</SheetTitle>
+              <SheetTitle className="text-xs font-semibold uppercase tracking-wide">
+                {existingWeekTemplate ? 'Replace Timetable' : 'Create Timetable'}
+              </SheetTitle>
               <SheetDescription className="text-[11px] text-muted-foreground">
-                Set up lesson periods for your selected term
+                {existingWeekTemplate
+                  ? 'Update the lesson period structure for this term'
+                  : 'Set up lesson periods for your selected term'}
               </SheetDescription>
             </div>
           </div>
         </SheetHeader>
+
+        {weekTemplatesLoading && effectiveTermId && (
+          <div className="mx-4 mt-3 flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Checking for existing timetables…
+          </div>
+        )}
+
+        {!weekTemplatesLoading && existingWeekTemplate && effectiveTermId && (
+          <div className="sticky top-0 z-10 mx-4 mt-3 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-3 text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="text-xs leading-relaxed">
+              A timetable already exists for <span className="font-semibold">{selectedTerm?.name ?? 'this term'}</span>{' '}
+              (<span className="font-semibold">{existingWeekTemplate.name}</span>). Creating again will replace it and
+              remove any scheduled lesson entries on that template.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col items-center px-4 py-3">
           <div className="w-full max-w-2xl space-y-4">
@@ -484,15 +594,16 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                 {terms.map((term) => {
-                  const isSelected = term.id === selectedTermId;
+                  const isSelected = term.id === effectiveTermId;
                   const dateRange = formatDateRange(term.startDate, term.endDate);
                   const weeks = calculateWeeks(term.startDate, term.endDate);
+                  const termTemplate = templatesByTermId.get(term.id);
 
                   return (
                     <button
                       key={term.id}
                       type="button"
-                      onClick={() => setSelectedTerm(term.id)}
+                      onClick={() => selectTerm(term.id)}
                       className={`group relative flex flex-col items-start gap-1 rounded-lg border-2 p-2.5 text-left transition-all duration-200 cursor-pointer ${
                         isSelected
                           ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.02]'
@@ -511,6 +622,11 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                         {!isSelected && term.isActive && (
                           <span className="flex-shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             Active
+                          </span>
+                        )}
+                        {termTemplate && (
+                          <span className="flex-shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                            Has timetable
                           </span>
                         )}
                       </div>
@@ -537,7 +653,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           </div>
 
           {/* Step 2 - Timetable Name */}
-          {selectedTermId && (
+          {effectiveTermId && (
             <div className="space-y-1.5 rounded-md border bg-card p-2.5 transition-all pb-4 border-b-2 border-border/50">
               <div className="flex items-center gap-1.5">
                 <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
@@ -555,7 +671,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           )}
 
           {/* Grades Selection */}
-          {selectedTermId && (
+          {effectiveTermId && (
             <div className="space-y-2 rounded-md border bg-card p-3 pb-4 border-b-2 border-border/50">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -621,7 +737,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           )}
 
           {/* Step 3 - Lesson Periods Configuration */}
-          {selectedTermId && (
+          {effectiveTermId && (
             <div className="space-y-2 rounded-md border bg-card p-2.5">
               <div className="flex items-center gap-1.5">
                 <div className="flex h-5 w-5 text-teal-100 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
@@ -766,19 +882,19 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 Cancel
               </Button>
               <Button
-                onClick={handleSubmit}
-                disabled={isCreating || !selectedTermId || selectedGradeIds.length === 0}
+                onClick={handleCreateClick}
+                disabled={isCreating || !effectiveTermId || selectedGradeIds.length === 0 || weekTemplatesLoading}
                 className="flex-1 h-8 rounded-md text-xs font-semibold"
               >
                 {isCreating ? (
                   <>
                     <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                    Creating...
+                    {existingWeekTemplate ? 'Replacing...' : 'Creating...'}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="mr-1.5 h-3 w-3" />
-                    Create Timetable
+                    {existingWeekTemplate ? 'Replace Timetable' : 'Create Timetable'}
                   </>
                 )}
               </Button>

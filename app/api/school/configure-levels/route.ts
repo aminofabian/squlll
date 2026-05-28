@@ -1,24 +1,25 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint';
 
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql';
+const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint();
 
 export async function POST(request: Request) {
   try {
     const { levelNames } = await request.json();
     
-    // Get the token from cookies first
     const cookieStore = await cookies();
-    let token = cookieStore.get('accessToken')?.value;
-    let tokenSource = 'cookies';
-    
-    // If no token in cookies, check Authorization header
-    if (!token) {
-      const authHeader = request.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7); // Remove 'Bearer ' prefix
-        tokenSource = 'authorization_header';
-      }
+    let token: string | undefined;
+    let tokenSource = 'none';
+
+    // Prefer Authorization header (client localStorage) — httpOnly cookie may be stale or from another env
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.substring(7);
+      tokenSource = 'authorization_header';
+    } else {
+      token = cookieStore.get('accessToken')?.value;
+      tokenSource = token ? 'cookies' : 'none';
     }
     
     console.log('🔍 Debug - Token found:', token ? `${token.substring(0, 30)}...` : 'No token');
@@ -75,19 +76,76 @@ export async function POST(request: Request) {
     console.log('  - Auth header:', `Bearer ${token.substring(0, 30)}...`);
     console.log('  - Request body:', JSON.stringify(requestBody, null, 2));
     
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(requestBody)
-    });
+    const tenantId = cookieStore.get('tenantId')?.value;
+    let tenantSubdomain = cookieStore.get('tenantSubdomain')?.value;
+    if (!tenantSubdomain) {
+      const host = request.headers.get('host') ?? '';
+      const sub = host.match(/^([^.]+)\.localhost(?::\d+)?$/)?.[1];
+      if (sub && sub !== 'localhost') {
+        tenantSubdomain = sub;
+      }
+    }
+
+    const graphqlHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+    if (tenantId) {
+      graphqlHeaders['x-tenant-id'] = tenantId;
+    }
+    if (tenantSubdomain) {
+      graphqlHeaders['x-tenant-subdomain'] = tenantSubdomain;
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: graphqlHeaders,
+        body: JSON.stringify(requestBody),
+      });
+    } catch (fetchError) {
+      const message =
+        fetchError instanceof Error ? fetchError.message : 'Unknown network error';
+      const refused =
+        message.includes('ECONNREFUSED') ||
+        (fetchError instanceof Error &&
+          'cause' in fetchError &&
+          String(fetchError.cause).includes('ECONNREFUSED'));
+
+      console.error('Configure-levels fetch failed:', {
+        endpoint: GRAPHQL_ENDPOINT,
+        error: fetchError,
+      });
+
+      return NextResponse.json(
+        {
+          error: 'BACKEND_UNAVAILABLE',
+          message: refused
+            ? `Cannot reach the API at ${GRAPHQL_ENDPOINT}. Start the backend with: cd backend && npm run start:dev`
+            : `Cannot reach the API at ${GRAPHQL_ENDPOINT}: ${message}`,
+        },
+        { status: 503 },
+      );
+    }
 
     console.log('🔍 Debug - Response status:', response.status);
     console.log('🔍 Debug - Response headers:', Object.fromEntries(response.headers.entries()));
-    
-    const result = await response.json();
+
+    const responseText = await response.text();
+    let result: { data?: unknown; errors?: unknown[] };
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      console.error('Configure-levels non-JSON response:', responseText.slice(0, 500));
+      return NextResponse.json(
+        {
+          error: 'INVALID_BACKEND_RESPONSE',
+          message: `API at ${GRAPHQL_ENDPOINT} did not return JSON (status ${response.status}).`,
+        },
+        { status: 502 },
+      );
+    }
     console.log('🔍 Debug - Full response:', JSON.stringify(result, null, 2));
     
     // Check for GraphQL errors
@@ -95,19 +153,24 @@ export async function POST(request: Request) {
       console.error('GraphQL errors:', result.errors);
       
       // Check for permission denied errors
-      const permissionDeniedError = result.errors.find((error: any) => 
-        error.extensions?.code === 'FORBIDDENEXCEPTION' || 
-        error.message?.includes('Permission denied')
+      const permissionDeniedError = result.errors.find(
+        (error: { extensions?: { code?: string }; message?: string }) =>
+          error.extensions?.code === 'FORBIDDENEXCEPTION' ||
+          (error.message?.includes('Access denied') &&
+            error.message?.includes('Required roles')),
       );
-      
+
       if (permissionDeniedError) {
         return NextResponse.json(
-          { 
+          {
             error: 'PERMISSION_DENIED',
-            message: 'Permission denied. You may not have admin rights to configure school levels.',
-            action: 'redirect_to_login'
+            message:
+              permissionDeniedError.message ||
+              'You need school admin rights to complete setup. Try signing in again after registration.',
+            action: 'redirect_to_login',
+            details: result.errors,
           },
-          { status: 403 }
+          { status: 403 },
         );
       }
       
@@ -127,6 +190,40 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+
+      const unauthorizedError = result.errors.find(
+        (error: { extensions?: { code?: string }; message?: string }) =>
+          error.extensions?.code === 'UNAUTHORIZED' ||
+          error.message?.toLowerCase().includes('access token'),
+      );
+
+      if (unauthorizedError) {
+        return NextResponse.json(
+          {
+            error: 'UNAUTHORIZED',
+            message:
+              'Session expired or token was issued for a different environment. Log out, register/sign in again against your local API (port 3001), then retry setup.',
+            details: result.errors,
+          },
+          { status: 401 },
+        );
+      }
+
+      const schoolSetupBlocked = result.errors.find(
+        (error: { message?: string }) =>
+          error.message?.toLowerCase().includes('school setup incomplete'),
+      );
+
+      if (schoolSetupBlocked) {
+        return NextResponse.json(
+          {
+            error: 'SCHOOL_SETUP_BLOCKED',
+            message: schoolSetupBlocked.message,
+            details: result.errors,
+          },
+          { status: 403 },
+        );
+      }
       
       return NextResponse.json(
         { error: 'Error configuring school levels', details: result.errors },
@@ -137,9 +234,13 @@ export async function POST(request: Request) {
     return NextResponse.json(result.data);
   } catch (error) {
     console.error('Error configuring school levels:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to configure school levels' },
-      { status: 500 }
+      {
+        error: 'Failed to configure school levels',
+        message,
+      },
+      { status: 500 },
     );
   }
 } 

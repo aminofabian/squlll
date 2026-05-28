@@ -1,831 +1,718 @@
-"use client"
+"use client";
 
-import { AuthWrapper } from "@/components/auth/AuthFormWrapper"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useState, useEffect } from "react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CheckCircle2, AlertCircle, Info, User, Mail, Building2, KeyRound, RefreshCw, Globe2, ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { cn } from "@/lib/utils";
 
-// Form validation schema
+// ─── Schema ────────────────────────────────────────────────────
+
 const signupSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one number"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Must contain at least one number"),
   schoolName: z.string().min(2, "School name must be at least 2 characters"),
-  schoolUrl: z.string().optional()
-})
+  schoolUrl: z
+    .string()
+    .min(3, "URL must be at least 3 characters")
+    .max(63, "URL must be 63 characters or fewer")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Only lowercase letters, numbers, and hyphens",
+    ),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the terms to continue" }),
+  }),
+});
 
-type SignupFormValues = z.infer<typeof signupSchema>
+type SignupFormValues = z.infer<typeof signupSchema>;
 
-interface SignupResponse {
-  user: {
-    id: string
-    email: string
-    schoolUrl: string
-  }
-  tenant: {
-    id: string
-    name: string
-    subdomain: string
-  }
-  subdomainUrl: string
-  tokens: {
-    accessToken: string
-    refreshToken: string
-  }
+// ─── Steps ─────────────────────────────────────────────────────
+
+type StepId = "personal" | "school" | "review";
+
+interface Step {
+  id: StepId;
+  title: string;
+  description: string;
+  fields: (keyof SignupFormValues)[];
 }
 
-const steps = [
+const STEPS: Step[] = [
   {
-    id: 'personal',
-    title: 'Personal Information',
-    description: 'Enter your personal details',
-    icon: User,
+    id: "personal",
+    title: "Your Details",
+    description: "Create your account",
+    fields: ["name", "email", "password"],
   },
   {
-    id: 'school',
-    title: 'School Details',
-    description: 'Tell us about your institution',
-    icon: Building2,
-  }
-]
+    id: "school",
+    title: "Your School",
+    description: "Set up your institution",
+    fields: ["schoolName", "schoolUrl"],
+  },
+  {
+    id: "review",
+    title: "Review",
+    description: "Confirm and create",
+    fields: ["acceptTerms"],
+  },
+];
 
-const inputStyles = {
-  base: `h-12 w-full bg-white border-0 px-4 pl-11 text-slate-900 
-    ring-1 ring-inset ring-gray-200
-    placeholder:text-gray-400 
-    focus:ring-2 focus:ring-inset focus:ring-[#246a59]
-    transition-all duration-300 ease-out
-    hover:ring-[#246a59]/20`,
-  icon: `absolute left-3 top-4 h-4 w-4 text-[#246a59]/60
-    transition-all duration-300 ease-out
-    group-focus-within:text-[#246a59]
-    group-hover:text-[#246a59]/80`,
-  label: `text-slate-900 text-[16px] leading-loose mb-3 block relative z-10 font-medium
-    flex items-center gap-2
-    before:content-[''] before:w-1.5 before:h-1.5 before:bg-[#246a59]/80 before:rounded-sm before:transition-all before:duration-300
-    group-focus-within:before:scale-110 group-focus-within:before:bg-[#246a59]`,
-  error: "text-sm text-red-500 mt-2 pl-4 border-l-2 border-red-500/30",
-  container: `group relative mt-2`,
-  formItem: `mb-6`,
-  stepIndicator: `w-10 h-10 flex items-center justify-center relative z-10 
-    transition-all duration-300 ease-out rounded-lg
-    bg-white ring-1 ring-inset ring-[#246a59]/20
-    before:absolute before:inset-0 before:bg-[#246a59]/5 before:rounded-lg before:transition-opacity before:duration-300
-    hover:before:opacity-0`,
-  stepIndicatorActive: `bg-[#246a59] text-white shadow-lg shadow-[#246a59]/20
-    ring-0 before:opacity-0`,
-  stepTitle: `font-medium transition-colors duration-300`,
-  stepTitleActive: `text-[#246a59]`,
-  stepDescription: `text-sm text-gray-500`,
-  stepContainer: `flex items-center space-x-3 relative
-    before:absolute before:left-5 before:top-[calc(100%+0.5rem)] before:h-[calc(100%-1rem)] before:w-[2px]
-    before:bg-gradient-to-b before:from-[#246a59]/10 before:via-[#246a59]/5 before:to-transparent
-    last:before:hidden`,
-  nextButton: `px-6 py-2 bg-[#246a59] text-white hover:bg-[#246a59]/90 transition-all duration-300
-    relative overflow-hidden group
-    before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:to-transparent before:opacity-0
-    before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none
-    after:absolute after:inset-0 after:border after:border-[#246a59] after:translate-x-[2px] after:translate-y-[2px]
-    after:transition-transform after:duration-300 hover:after:translate-x-1 hover:after:translate-y-1 after:pointer-events-none`,
-  prevButton: `px-6 py-2 border border-[#246a59]/20 text-[#246a59] hover:bg-[#246a59]/5 transition-all duration-300
-    relative overflow-hidden group
-    before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#246a59]/5 before:to-transparent before:opacity-0
-    before:transition-opacity before:duration-300 hover:before:opacity-100 before:pointer-events-none`
+// ─── Password Requirements ─────────────────────────────────────
+
+const PASSWORD_RULES = [
+  { test: (p: string) => p.length >= 8, text: "At least 8 characters" },
+  { test: (p: string) => /[A-Z]/.test(p), text: "One uppercase letter" },
+  { test: (p: string) => /[a-z]/.test(p), text: "One lowercase letter" },
+  { test: (p: string) => /[0-9]/.test(p), text: "One number" },
+] as const;
+
+// ─── URL Generator ─────────────────────────────────────────────
+
+function generateSchoolUrl(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 63);
 }
 
+// ─── GraphQL Mutation ──────────────────────────────────────────
+
+const SIGNUP_MUTATION = `
+  mutation CreateUser($input: SignupInput!) {
+    createUser(signupInput: $input) {
+      user { id email schoolUrl }
+      tenant { id name subdomain }
+      subdomainUrl
+      tokens { accessToken refreshToken }
+    }
+  }
+`;
+
+// ─── Component ─────────────────────────────────────────────────
+
 export default function SignupPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<SignupResponse | null>(null)
-  const [passwordFocused, setPasswordFocused] = useState(false)
-  const [currentStep, setCurrentStep] = useState(0)
-  const [isUrlEdited, setIsUrlEdited] = useState(false)
-  const router = useRouter()
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [isUrlEdited, setIsUrlEdited] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
-      name: "",
       schoolName: "",
       schoolUrl: "",
+      acceptTerms: false as unknown as true,
     },
-  })
+    mode: "onChange",
+  });
 
-  // Watch schoolName to update URL only when it's explicitly changed
-  const schoolName = form.watch("schoolName")
-  const name = form.watch("name")
-  const email = form.watch("email")
+  const schoolName = form.watch("schoolName");
 
-  // Update school URL only when schoolName is manually changed
+  // Auto-generate URL from school name (only when not manually edited)
   useEffect(() => {
-    // Skip the effect if we're still on the first step or if schoolName seems to contain personal info
-    if (currentStep !== 1 || !schoolName || schoolName === name || schoolName.includes(email)) {
-      return;
+    if (currentStep < 1 || !schoolName || isUrlEdited) return;
+    const url = generateSchoolUrl(schoolName);
+    if (url.length >= 3) {
+      form.setValue("schoolUrl", url, { shouldValidate: true });
     }
-    
-    if (!isUrlEdited && schoolName) {
-      const generatedUrl = schoolName
-        .toLowerCase()
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
-        .replace(/[^a-z0-9-]/g, '') // Remove special characters
-        .replace(/(high|secondary|school)/g, '') // Remove common words first
-        .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-        .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-        
-      // Ensure the URL meets minimum length requirement
-      if (generatedUrl.length < 3) {
-        // If too short, use the full school name without removing common words
-        const fullUrl = schoolName
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '')
-          .slice(0, 63)
-        
-        form.setValue("schoolUrl", fullUrl)
-      } else {
-        form.setValue("schoolUrl", generatedUrl.slice(0, 63))
+  }, [schoolName, currentStep, isUrlEdited, form]);
+
+  // ─── Step Navigation ────────────────────────────────────────
+
+  const goToStep = useCallback(
+    async (targetStep: number) => {
+      // Validate current step's fields before advancing
+      if (targetStep > currentStep) {
+        const currentFields = STEPS[currentStep].fields;
+        const valid = await form.trigger(currentFields);
+        if (!valid) return;
       }
-    }
-  }, [schoolName, isUrlEdited, form, currentStep, name, email])
+      setError(null);
+      setCurrentStep(targetStep);
+    },
+    [currentStep, form],
+  );
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(prev => prev + 1)
-    }
-  }
+  const handleNext = useCallback(async () => {
+    await goToStep(currentStep + 1);
+  }, [currentStep, goToStep]);
 
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1)
-    }
-  }
+  const handlePrev = useCallback(() => {
+    setError(null);
+    setCurrentStep((p) => Math.max(0, p - 1));
+  }, []);
 
-  async function onSubmit(data: SignupFormValues) {
-    // Prevent double submission
-    if (isLoading) {
-      return;
-    }
-    
-    setIsLoading(true)
-    setError(null)
-    setSuccess(null)
+  // ─── Submit ─────────────────────────────────────────────────
 
-    const mutation = `
-      mutation CreateUser($input: SignupInput!) {
-        createUser(signupInput: $input) {
-          user {
-            id
-            email
-            schoolUrl
-          }
-          tenant {
-            id
-            name
-            subdomain
-          }
-          subdomainUrl
-          tokens {
-            accessToken
-            refreshToken
-          }
-        }
-      }
-    `
+  const onSubmit = useCallback(
+    async (data: SignupFormValues) => {
+      if (isSubmitting) return;
+      setIsSubmitting(true);
+      setError(null);
 
-    const variables = {
-      input: {
-        email: data.email,
-        password: data.password,
-        name: data.name,
-        schoolName: data.schoolName,
-      },
-    }
-
-    try {
-      // Use the local GraphQL proxy to avoid CORS issues in production
-      const apiUrl = "/api/graphql"
-
-      // Create abort controller for timeout handling
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ query: mutation, variables }),
-        signal: controller.signal,
-      }).then((res) => {
-        clearTimeout(timeoutId);
-        return res;
-      }).catch((fetchError) => {
-        clearTimeout(timeoutId);
-        // Handle network errors (connection refused, timeout, etc.)
-        if (fetchError instanceof TypeError && fetchError.message.includes('fetch')) {
-          throw new Error("Network error: Unable to connect to server. Please check your internet connection.");
-        }
-        if (fetchError.name === 'AbortError') {
-          throw new Error("Request timeout: The server took too long to respond. Please try again.");
-        }
-        throw new Error(`Network error: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
-      })
-
-      // Check if response is ok before processing
-      if (!response.ok && response.status >= 500) {
-        throw new Error(`Server error (${response.status}): Please try again later.`);
-      }
-
-      const rawResponse = await response.text()
-
-      if (!rawResponse) {
-        throw new Error("Empty response from server")
-      }
-
-      const cleanResponse = rawResponse.trim().replace(/^\uFEFF/, "")
-
-      let result
       try {
-        result = JSON.parse(cleanResponse)
-      } catch (parseError) {
-        // In production, provide a user-friendly error message
-        throw new Error("Server returned an invalid response. Please try again or contact support if the problem persists.")
-      }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
-      if (!response.ok) {
-        const message = result?.errors?.[0]?.message ?? `Signup failed (${response.status})`
-        throw new Error(message)
-      }
+        const response = await fetch("/api/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            query: SIGNUP_MUTATION,
+            variables: {
+              input: {
+                email: data.email,
+                password: data.password,
+                name: data.name,
+                schoolName: data.schoolName,
+              },
+            },
+          }),
+          signal: controller.signal,
+        });
 
-      if (result.errors) {
-        throw new Error(result.errors[0].message || "Signup failed")
-      }
+        clearTimeout(timeoutId);
 
-      setSuccess(result.data.createUser)
-
-      setTimeout(async () => {
-        const userData = result.data.createUser
-        const subdomain = userData.subdomainUrl
-        const isProd = process.env.NODE_ENV === "production"
-        const baseUrl = isProd ? "https://" : "http://"
-        const domain = isProd ? "squl.co.ke" : "localhost:3000"
-        const subdomainPrefix = subdomain.split(".")[0]
-
-        try {
-          const storeResponse = await fetch("/api/auth/store-tokens", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: userData.user.id,
-              email: userData.user.email,
-              schoolUrl: userData.user.schoolUrl || "",
-              subdomainUrl: userData.subdomainUrl,
-              tenantId: userData.tenant.id,
-              tenantName: userData.tenant.name,
-              tenantSubdomain: userData.tenant.subdomain,
-              accessToken: userData.tokens.accessToken,
-              refreshToken: userData.tokens.refreshToken,
-            }),
-          })
-
-          if (!storeResponse.ok) {
-            throw new Error("Failed to save session before setup")
-          }
-
-          // Client-readable fallback for setup UI (httpOnly cookie is not visible to JS)
-          try {
-            localStorage.setItem("accessToken", userData.tokens.accessToken)
-          } catch {
-            /* ignore storage errors */
-          }
-
-          const setupUrl = `${baseUrl}${subdomainPrefix}.${domain}/setup?newRegistration=true`
-          window.location.replace(setupUrl)
-        } catch (redirectError) {
-          console.error("Post-registration redirect failed:", redirectError)
-          setError(
-            "Account created, but we could not start setup automatically. Please sign in from your school login page."
-          )
+        if (!response.ok && response.status >= 500) {
+          throw new Error("Server error. Please try again later.");
         }
-      }, 3000)
-    } catch (error) {
-      // Provide user-friendly error messages
-      let errorMessage = "An error occurred during signup. Please try again.";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
-  const passwordRequirements = [
-    { test: (pass: string) => pass.length >= 8, text: "At least 8 characters" },
-    { test: (pass: string) => /[A-Z]/.test(pass), text: "One uppercase letter" },
-    { test: (pass: string) => /[a-z]/.test(pass), text: "One lowercase letter" },
-    { test: (pass: string) => /[0-9]/.test(pass), text: "One number" },
-  ]
+        const text = await response.text();
+        if (!text) throw new Error("No response from server.");
+
+        let result: any;
+        try {
+          result = JSON.parse(text.trim().replace(/^\uFEFF/, ""));
+        } catch {
+          throw new Error("Invalid server response. Please try again.");
+        }
+
+        if (result.errors) {
+          const msg = result.errors[0]?.message || "";
+          if (
+            msg.toLowerCase().includes("email") &&
+            msg.toLowerCase().includes("exist")
+          ) {
+            throw new Error(
+              "An account with this email already exists. Please sign in instead.",
+            );
+          }
+          if (
+            msg.toLowerCase().includes("url") ||
+            msg.toLowerCase().includes("subdomain")
+          ) {
+            throw new Error(
+              "This school URL is already taken. Please choose a different one.",
+            );
+          }
+          throw new Error(msg || "Signup failed. Please try again.");
+        }
+
+        const userData = result.data?.createUser;
+        if (!userData) throw new Error("Signup failed. Please try again.");
+
+        setSuccess(true);
+
+        // Redirect after brief success display
+        const subdomain =
+          userData.tenant?.subdomain ||
+          userData.subdomainUrl?.split(".")[0] ||
+          userData.user.schoolUrl;
+        const isProd = process.env.NODE_ENV === "production";
+        const protocol = isProd ? "https://" : "http://";
+        const host = isProd ? "squl.co.ke" : "localhost:3000";
+        const loginUrl = `${protocol}${subdomain}.${host}/login?registered=true&email=${encodeURIComponent(userData.user.email)}`;
+
+        setTimeout(() => {
+          window.location.replace(loginUrl);
+        }, 2000);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.name === "AbortError"
+              ? "Request timed out. Please check your connection and try again."
+              : err.message
+            : "An unexpected error occurred. Please try again.";
+        setError(message);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [isSubmitting],
+  );
+
+  // ─── Current step context ───────────────────────────────────
+
+  const isFirstStep = currentStep === 0;
+  const isLastStep = currentStep === STEPS.length - 1;
+
+  // ─── Render ──────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#edf2f7] flex items-center justify-center p-4 relative">
-      {/* Background decoration elements */}
-      <div className="absolute top-0 left-0 w-full h-64 bg-[#246a59]/5 -skew-y-6 transform origin-top-left"></div>
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#246a59]/3 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#246a59]/3 rounded-full blur-3xl"></div>
-      
-      <div className="w-full max-w-6xl bg-white backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.08),0_8px_24px_-4px_rgba(36,106,89,0.05),0_0_0_1px_rgba(36,106,89,0.05)] overflow-hidden
-        relative before:absolute before:inset-0 before:bg-gradient-to-br before:from-white before:to-gray-50/50
-        border-t-4 border-t-[#246a59] rounded-xl animate-in fade-in-50 duration-500 slide-in-from-bottom-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="relative overflow-hidden">
-          {/* Decorative header background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#246a59]/10 via-transparent to-[#246a59]/5 z-0"></div>
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#246a59]/10 to-transparent opacity-70"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#246a59]/30 to-transparent"></div>
-          
-          <div className="flex items-center justify-between px-8 py-5 relative z-10">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#246a59] to-[#1a4c40] border border-[#1d5547]/50 flex items-center justify-center rounded-xl shadow-lg shadow-[#246a59]/10 transition-all duration-300 group-hover:shadow-[#246a59]/20 group-hover:scale-105">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white drop-shadow-sm" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 3.727 1.51a1 1 0 00.788 0l7-3a1 1 0 000-1.84l-7-3z" />
-                  <path d="M3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                </svg>
-              </div>
-              <div className="font-mono font-bold text-xl tracking-wide transition-all duration-300 group-hover:translate-x-0.5">
-                <span className="text-[#246a59] dark:text-[#2d8570] bg-clip-text bg-gradient-to-r from-[#246a59] to-[#2d8570] text-transparent">SQ</span>
-                <span className="text-[#246a59] bg-clip-text bg-gradient-to-r from-[#246a59] to-[#2d8570] text-transparent">UL</span>
-                <span className="block text-xs font-medium text-[#246a59]/70 mt-0.5">School Management System</span>
-              </div>
-            </Link>
-            <Link 
-              href="/login"
-              className="text-sm font-medium px-5 py-2.5 rounded-lg bg-white border border-gray-200 text-[#246a59] shadow-sm hover:bg-[#246a59]/5 transition-all duration-300 hover:border-[#246a59]/20 flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-              </svg>
-              Sign in
-            </Link>
-          </div>
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 group mb-4">
+            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center shadow-md transition-transform group-hover:scale-105">
+              <span className="text-white font-bold text-sm">SQ</span>
+            </div>
+            <span className="font-bold text-lg text-slate-800 dark:text-slate-200">
+              SQUL
+            </span>
+          </Link>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Create your school account
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Set up your school management system in minutes
+          </p>
         </div>
-        
-        <div className="flex flex-col lg:flex-row">
-          {/* Left sidebar */}
-          <div className="w-full lg:w-[320px] p-8 border-b lg:border-b-0 lg:border-r border-gray-100 bg-gradient-to-br from-white to-gray-50/30 overflow-hidden relative">
-            {/* Decorative elements for sidebar */}
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNGM0LjQxOCAwIDgtMy41ODIgOC04cy0zLjU4Mi04LTgtOC04IDMuNTgyLTggOCAzLjU4MiA4IDggOHptMC0yYzMuMzE0IDAgNi0yLjY4NiA2LTZzLTIuNjg2LTYtNi02LTYgMi42ODYtNiA2IDIuNjg2IDYgNiA2eiIgZmlsbD0iIzI0NmE1OSIgZmlsbC1vcGFjaXR5PSIuMDIiLz48L2c+PC9zdmc+')]  opacity-30 z-0"></div>
-            
-            <div className="relative z-10">
-              <div className="mb-10">
-                <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#246a59] to-[#2d8570]">
-                  Step {currentStep + 1} of {steps.length}
-                </h2>
-                <p className="text-gray-500 mt-2 text-base">
-                  {currentStep === 0 ? 'Let\'s get to know you better' : 'Tell us about your school'}
-                </p>
-                <div className="mt-4 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-[#246a59] to-[#2d8570] h-full rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
 
-              <div className="space-y-6">
-                {steps.map((step, index) => (
-                  <div 
-                    key={step.id} 
-                    className={cn(
-                      "flex items-start gap-4 p-4 rounded-xl transition-all duration-300",
-                      currentStep === index ? "bg-white shadow-sm border border-[#246a59]/10" : "opacity-80"
-                    )}
-                  >
-                    <div 
-                      className={cn(
-                        "flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-300",
-                        currentStep === index 
-                          ? "bg-gradient-to-br from-[#246a59] to-[#2d8570] text-white shadow-lg shadow-[#246a59]/20" 
-                          : "bg-gray-100 text-gray-400"
-                      )}
-                    >
-                      <step.icon className={cn("w-6 h-6 transition-all", currentStep === index ? "scale-110" : "")} />
-                    </div>
-                    <div>
-                      <h3 className={cn(
-                        "font-semibold text-lg transition-all duration-300",
-                        currentStep === index ? "text-[#246a59]" : "text-gray-500"
-                      )}>
-                        {step.title}
-                      </h3>
-                      <p className={cn(
-                        "text-sm transition-all duration-300", 
-                        currentStep === index ? "text-gray-600" : "text-gray-400"
-                      )}>
-                        {step.description}
-                      </p>
-                    </div>
+        {/* Step Indicators */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          {STEPS.map((step, idx) => (
+            <div key={step.id} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (idx < currentStep) setCurrentStep(idx);
+                }}
+                disabled={idx > currentStep}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                  idx === currentStep && "bg-primary text-white shadow-sm",
+                  idx < currentStep &&
+                    "bg-primary/10 text-primary cursor-pointer hover:bg-primary/20",
+                  idx > currentStep &&
+                    "bg-slate-100 dark:bg-slate-800 text-slate-400",
+                )}
+              >
+                <span
+                  className={cn(
+                    "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold",
+                    idx === currentStep && "bg-white/20",
+                    idx < currentStep && "bg-primary/20",
+                    idx > currentStep && "bg-slate-200 dark:bg-slate-700",
+                  )}
+                >
+                  {idx < currentStep ? "✓" : idx + 1}
+                </span>
+                <span className="hidden sm:inline">{step.title}</span>
+              </button>
+              {idx < STEPS.length - 1 && (
+                <div className="w-6 h-px bg-slate-200 dark:bg-slate-700" />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+          {/* Error / Success */}
+          {(error || success) && (
+            <div
+              className={cn(
+                "px-6 py-3 text-sm font-medium border-b",
+                error &&
+                  "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300",
+                success &&
+                  "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300",
+              )}
+            >
+              {error && `⚠️ ${error}`}
+              {success && "✅ Account created! Redirecting you to sign in…"}
+            </div>
+          )}
+
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="p-6 space-y-5"
+          >
+            {/* ── Step 0: Personal Info ── */}
+            <div className={cn("space-y-4", currentStep !== 0 && "hidden")}>
+              <Field
+                form={form}
+                name="name"
+                label="Full Name"
+                placeholder="John Doe"
+                icon={<UserIcon />}
+                disabled={isSubmitting}
+              />
+              <Field
+                form={form}
+                name="email"
+                label="Email Address"
+                type="email"
+                placeholder="you@example.com"
+                icon={<MailIcon />}
+                disabled={isSubmitting}
+              />
+              <div>
+                <Field
+                  form={form}
+                  name="password"
+                  label="Password"
+                  type="password"
+                  placeholder="Create a secure password"
+                  icon={<LockIcon />}
+                  disabled={isSubmitting}
+                  onFocus={() => setPasswordTouched(true)}
+                />
+                {passwordTouched && (
+                  <div className="mt-3 grid grid-cols-2 gap-1.5">
+                    {PASSWORD_RULES.map((rule, i) => {
+                      const pass = form.watch("password") || "";
+                      const met = rule.test(pass);
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            "flex items-center gap-1.5 text-xs transition-colors",
+                            met
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-slate-400 dark:text-slate-500",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] transition-all",
+                              met
+                                ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-400",
+                            )}
+                          >
+                            {met ? "✓" : "○"}
+                          </div>
+                          {rule.text}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
               </div>
+            </div>
 
-              {/* Tips section */}
-              <div className="mt-12 p-4 bg-[#246a59]/5 rounded-xl border border-[#246a59]/10">
-                <h4 className="font-medium text-[#246a59] flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
-                  </svg>
-                  Tips
-                </h4>
-                <p className="text-sm text-gray-600 mt-2">
-                  {currentStep === 0 
-                    ? "Create a strong password that includes uppercase letters, numbers, and symbols for better security."
-                    : "Your school URL will be used to access your school's custom portal, so choose something memorable and relevant."}
+            {/* ── Step 1: School Details ── */}
+            <div className={cn("space-y-4", currentStep !== 1 && "hidden")}>
+              <Field
+                form={form}
+                name="schoolName"
+                label="School Name"
+                placeholder="Springfield High School"
+                icon={<BuildingIcon />}
+                disabled={isSubmitting}
+              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  School URL
+                </label>
+                <div className="flex rounded-lg ring-1 ring-slate-200 dark:ring-slate-700 focus-within:ring-2 focus-within:ring-primary transition-all">
+                  <span className="flex items-center px-3 rounded-l-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm border-r border-slate-200 dark:border-slate-700">
+                    https://
+                  </span>
+                  <input
+                    {...form.register("schoolUrl")}
+                    placeholder="springfield-high"
+                    disabled={isSubmitting}
+                    onChange={(e) => {
+                      form.setValue("schoolUrl", e.target.value, {
+                        shouldValidate: true,
+                      });
+                      setIsUrlEdited(true);
+                    }}
+                    className="flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:ring-0"
+                  />
+                  <span className="flex items-center px-3 rounded-r-lg bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm border-l border-slate-200 dark:border-slate-700">
+                    .squl.co.ke
+                  </span>
+                </div>
+                {isUrlEdited && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUrlEdited(false);
+                      const url = generateSchoolUrl(
+                        form.getValues("schoolName"),
+                      );
+                      form.setValue("schoolUrl", url, { shouldValidate: true });
+                    }}
+                    className="mt-1.5 text-xs text-primary hover:underline"
+                  >
+                    Reset to auto-generated
+                  </button>
+                )}
+                {form.formState.errors.schoolUrl && (
+                  <p className="text-xs text-red-500 mt-1.5">
+                    {form.formState.errors.schoolUrl.message}
+                  </p>
+                )}
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
+                  This will be your school&apos;s unique web address.
+                  Auto-generated from your school name.
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Main content area */}
-          <div className="flex-1 p-6 lg:p-8">
-            <Form {...form}>
-              <form 
-                onSubmit={async (e) => {
-                  e.preventDefault(); // Explicitly prevent default form submission
-                  
-                  // Only proceed if we're on the final step
-                  if (currentStep !== steps.length - 1) {
-                    return;
-                  }
-                  
-                  // Get current form values to check if fields are filled
-                  const values = form.getValues();
-                  
-                  // Manually validate all fields before submission
-                  const isValid = await form.trigger();
-                  
-                  if (!isValid) {
-                    const errors = form.formState.errors;
-                    // Check which fields have errors and show appropriate message
-                    if (errors.name || errors.email || errors.password) {
-                      // Check if these fields are actually empty vs validation error
-                      if (!values.name || !values.email || !values.password) {
-                        setError('Please complete your personal information correctly.');
-                        setCurrentStep(0);
-                      } else {
-                        // Fields have values but failed validation (e.g., password too weak)
-                        setError(errors.name?.message || errors.email?.message || errors.password?.message || 'Please check your personal information.');
-                        setCurrentStep(0);
-                      }
-                    } else if (errors.schoolName) {
-                      setError('Please enter a valid school name (at least 2 characters).');
-                    } else {
-                      setError('Please check the form for errors.');
-                    }
-                    return;
-                  }
-                  
-                  // All valid, proceed with submission
-                  onSubmit(values);
-                }} 
-                className="space-y-6 max-w-2xl"
-              >
-                {error && (
-                  <Alert variant="destructive" className="animate-in fade-in-50 slide-in-from-top-2 border-l-4 border-l-red-500
-                    relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-red-500/5 before:via-red-500/2 before:to-transparent">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+            {/* ── Step 2: Review ── */}
+            <div className={cn("space-y-4", currentStep !== 2 && "hidden")}>
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                Review Your Information
+              </h3>
+              <ReviewRow label="Full Name" value={form.watch("name")} />
+              <ReviewRow label="Email" value={form.watch("email")} />
+              <ReviewRow label="Password" value="••••••••" />
+              <hr className="border-slate-100 dark:border-slate-800" />
+              <ReviewRow label="School Name" value={form.watch("schoolName")} />
+              <ReviewRow
+                label="School URL"
+                value={`https://${form.watch("schoolUrl")}.squl.co.ke`}
+              />
 
-                {success && (
-                  <Alert className="animate-in fade-in-50 slide-in-from-top-2 border-l-4 border-l-[#246a59]
-                    relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#246a59]/5 before:via-[#246a59]/2 before:to-transparent">
-                    <CheckCircle2 className="h-4 w-4 text-[#246a59]" />
-                    <AlertTitle className="text-[#246a59]">Success!</AlertTitle>
-                    <AlertDescription className="text-[#246a59]/80">
-                      Account created successfully. Redirecting...
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Step 0: Personal Information - Keep in DOM but hide when not active */}
-                  <div className={cn("contents", currentStep !== 0 && "hidden")}>
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className={inputStyles.formItem}>
-                          <FormLabel className={inputStyles.label}>Full Name</FormLabel>
-                          <FormControl>
-                            <div className={inputStyles.container}>
-                              <Input 
-                                placeholder="Enter your full name"
-                                className={inputStyles.base}
-                                disabled={isLoading}
-                                autoComplete="name"
-                                {...field}
-                              />
-                              <User className={inputStyles.icon} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className={inputStyles.error} />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem className={inputStyles.formItem}>
-                          <FormLabel className={inputStyles.label}>Email Address</FormLabel>
-                          <FormControl>
-                            <div className={inputStyles.container}>
-                              <Input 
-                                type="email"
-                                placeholder="Enter your email address"
-                                className={inputStyles.base}
-                                disabled={isLoading}
-                                autoComplete="email"
-                                {...field}
-                              />
-                              <Mail className={inputStyles.icon} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className={inputStyles.error} />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                          <FormLabel className={inputStyles.label}>Password</FormLabel>
-                          <FormControl>
-                            <div className={inputStyles.container}>
-                              <Input 
-                                type="password"
-                                placeholder="Create a secure password"
-                                className={inputStyles.base}
-                                disabled={isLoading}
-                                autoComplete="new-password"
-                                onFocus={() => setPasswordFocused(true)}
-                                {...field}
-                                onBlur={() => {
-                                  field.onBlur();
-                                  setPasswordFocused(false);
-                                }}
-                              />
-                              <KeyRound className={inputStyles.icon} />
-                            </div>
-                          </FormControl>
-                          {passwordFocused && (
-                            <div className="mt-3 p-3 bg-gray-50/80 backdrop-blur-sm rounded-lg space-y-2 animate-in fade-in-50 slide-in-from-top-5 border border-gray-100">
-                              {passwordRequirements.map((req, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <div className={cn(
-                                    "w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200",
-                                    req.test(field.value) 
-                                      ? "bg-[#246a59] scale-110" 
-                                      : "bg-gray-200"
-                                  )}>
-                                    {req.test(field.value) && (
-                                      <CheckCircle2 className="w-3 h-3 text-white" />
-                                    )}
-                                  </div>
-                                  <span className={cn(
-                                    "text-sm transition-colors duration-200",
-                                    req.test(field.value) ? "text-[#246a59]" : "text-gray-500"
-                                  )}>
-                                    {req.text}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <FormMessage className={inputStyles.error} />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Step 1: School Details - Keep in DOM but hide when not active */}
-                  <div className={cn("contents", currentStep !== 1 && "hidden")}>
-                    <FormField
-                      control={form.control}
-                      name="schoolName"
-                      render={({ field }) => (
-                        <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                          <FormLabel className={inputStyles.label}>School Name</FormLabel>
-                          <FormControl>
-                            <div className={inputStyles.container}>
-                              <Input 
-                                placeholder="Enter your school name"
-                                className={inputStyles.base}
-                                disabled={isLoading}
-                                autoComplete="organization"
-                                {...field}
-                              />
-                              <Building2 className={inputStyles.icon} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className={inputStyles.error} />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="schoolUrl"
-                      render={({ field }) => (
-                        <FormItem className={cn(inputStyles.formItem, "col-span-2")}>
-                          <FormLabel className={inputStyles.label}>
-                            <div className="flex items-center justify-between">
-                              <span>School URL</span>
-                              {isUrlEdited && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setIsUrlEdited(false);
-                                    const event = new Event('input', { bubbles: true });
-                                    const schoolNameInput = document.querySelector('input[name="schoolName"]');
-                                    schoolNameInput?.dispatchEvent(event);
-                                  }}
-                                  className="h-7 text-xs font-normal text-gray-500 hover:text-[#246a59] hover:bg-[#246a59]/5"
-                                >
-                                  <RefreshCw className="w-3 h-3 mr-1" />
-                                  Reset to auto-generated
-                                </Button>
-                              )}
-                            </div>
-                          </FormLabel>
-                          <FormControl>
-                            <div className="relative group">
-                              <div className="flex rounded-lg shadow-sm ring-1 ring-inset ring-gray-200 focus-within:ring-2 focus-within:ring-[#246a59] transition-all duration-200">
-                                <span className="flex select-none items-center px-3 rounded-l-lg border-0 bg-gray-50 text-gray-500 text-sm sm:text-base">
-                                  https://
-                                </span>
-                                <div className="relative flex-1">
-                                  <Input 
-                                    placeholder="your-school"
-                                    className="block w-full rounded-none border-0 py-3 pl-3 pr-[105px] text-gray-900 ring-0 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                                    disabled={isLoading}
-                                    autoComplete="off"
-                                    {...field}
-                                    onChange={(e) => {
-                                      field.onChange(e);
-                                      setIsUrlEdited(true);
-                                    }}
-                                  />
-                                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                                    .squl.co.ke
-                                  </span>
-                                </div>
-                                <div className="relative -ml-px">
-                                  <div className="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-gray-200 via-gray-200 to-transparent"></div>
-                                  <div className="flex items-center px-3 rounded-r-lg border-0 bg-gray-50">
-                                    <Globe2 className="w-5 h-5 text-gray-400" />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </FormControl>
-                          <div className="mt-2.5 flex items-start space-x-2">
-                            <Info className="w-4 h-4 mt-0.5 text-gray-400" />
-                            <p className="text-sm text-gray-500 leading-tight">
-                              This will be your school's unique URL. Auto-generated from school name for convenience.
-                            </p>
-                          </div>
-                          <FormMessage className={inputStyles.error} />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-6">
-                  {currentStep > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={prevStep}
-                      className={inputStyles.prevButton}
-                      disabled={isLoading}
+              {/* Terms checkbox */}
+              <div className="pt-2">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...form.register("acceptTerms")}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      className="text-primary hover:underline"
                     >
-                      <span className="relative z-10 flex items-center">
-                        <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:-translate-x-1" />
-                        Previous
-                      </span>
-                    </Button>
-                  )}
-                  
-                  <Button
-                    type={currentStep === steps.length - 1 ? "submit" : "button"}
-                    {...(currentStep !== steps.length - 1 ? {
-                      onClick: async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Validate current step before proceeding
-                        const fieldsToValidate = currentStep === 0 
-                          ? ['name', 'email', 'password'] as const
-                          : ['schoolName'] as const;
-                        const isValid = await form.trigger(fieldsToValidate);
-                        if (isValid) {
-                          nextStep();
-                        }
-                      }
-                    } : {})}
-                    className={inputStyles.nextButton}
-                    disabled={isLoading}
-                  >
-                    <span className="relative z-10 flex items-center">
-                      {currentStep === steps.length - 1 
-                        ? (isLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Creating...
-                            </>
-                          ) : (
-                            <>
-                              Create Account
-                              <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                            </>
-                          ))
-                        : (
-                          <>
-                            Next
-                            <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                          </>
-                        )
-                      }
-                    </span>
-                  </Button>
-                </div>
-
-                <div className="mt-8 pt-6 text-center relative">
-                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-sm text-gray-400
-                    before:absolute before:-left-2 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-1 before:bg-gray-300 before:rotate-45
-                    after:absolute after:-right-2 after:top-1/2 after:-translate-y-1/2 after:w-1 after:h-1 after:bg-gray-300 after:rotate-45">
-                    or
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    Already have an account?{" "}
-                    <Link 
-                      href="/login" 
-                      className="font-medium text-[#246a59] hover:text-[#246a59]/90 transition-all duration-300
-                        relative group
-                        after:absolute after:bottom-0 after:left-0 after:w-full after:h-[1px] 
-                        after:bg-[#246a59]/30 hover:after:bg-[#246a59]
-                        after:transition-all after:duration-300
-                        before:absolute before:bottom-0 before:left-1/2 before:w-0 before:h-[1px]
-                        before:bg-[#246a59] hover:before:w-full hover:before:left-0
-                        before:transition-all before:duration-300"
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="text-primary hover:underline"
                     >
-                      Sign in
+                      Privacy Policy
                     </Link>
+                  </span>
+                </label>
+                {form.formState.errors.acceptTerms && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {form.formState.errors.acceptTerms.message}
                   </p>
-                </div>
-              </form>
-            </Form>
-          </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── Navigation Buttons ── */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div>
+                {!isFirstStep && (
+                  <button
+                    type="button"
+                    onClick={handlePrev}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+                  >
+                    ← Back
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {!isLastStep ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="px-5 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                  >
+                    Continue
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-60 flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Creating…
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="text-primary font-medium hover:underline"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
-  )
-} 
+  );
+}
+
+// ─── Reusable Field Component ──────────────────────────────────
+
+function Field({
+  form,
+  name,
+  label,
+  type = "text",
+  placeholder,
+  icon,
+  disabled,
+  onFocus,
+}: {
+  form: ReturnType<typeof useForm<SignupFormValues>>;
+  name: keyof SignupFormValues;
+  label: string;
+  type?: string;
+  placeholder: string;
+  icon: React.ReactNode;
+  disabled?: boolean;
+  onFocus?: () => void;
+}) {
+  const { error } = form.getFieldState(name);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+        {label}
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+          {icon}
+        </div>
+        <input
+          {...form.register(name)}
+          type={type}
+          placeholder={placeholder}
+          disabled={disabled}
+          onFocus={onFocus}
+          className={cn(
+            "w-full h-11 pl-10 pr-3 rounded-lg border text-sm transition-all",
+            "bg-white dark:bg-slate-950",
+            "text-slate-900 dark:text-slate-100",
+            "placeholder:text-slate-400 dark:placeholder:text-slate-500",
+            error
+              ? "border-red-300 dark:border-red-700 focus:ring-2 focus:ring-red-500/20"
+              : "border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-primary/20 focus:border-primary",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+          )}
+        />
+      </div>
+      {error && <p className="text-xs text-red-500 mt-1.5">{error.message}</p>}
+    </div>
+  );
+}
+
+// ─── Review Row ────────────────────────────────────────────────
+
+function ReviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-center py-1.5">
+      <span className="text-sm text-slate-500 dark:text-slate-400">
+        {label}
+      </span>
+      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// ─── Inline Icons (avoids large import) ────────────────────────
+
+function UserIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="w-4 h-4"
+    >
+      <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="w-4 h-4"
+    >
+      <path d="M3 4a2 2 0 00-2 2v1.161l8.441 4.221a1.25 1.25 0 001.118 0L19 7.162V6a2 2 0 00-2-2H3z" />
+      <path d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        fillRule="evenodd"
+        d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function BuildingIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="w-4 h-4"
+    >
+      <path
+        fillRule="evenodd"
+        d="M4 16.5v-13h-.25a.75.75 0 010-1.5h12.5a.75.75 0 010 1.5H16v13h.25a.75.75 0 010 1.5h-3.5a.75.75 0 01-.75-.75v-5.5a.75.75 0 00-.75-.75h-2.5a.75.75 0 00-.75.75v5.5a.75.75 0 01-.75.75h-3.5a.75.75 0 010-1.5H4zm3-11a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1zM7.5 9a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1zM11 5.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1zm.5 3.5a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}

@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  Users, 
-  FileText, 
+import {
+  BookOpen,
+  Calendar,
+  Clock,
+  Users,
+  FileText,
   Filter,
   ChevronDown,
   ChevronUp,
@@ -15,17 +15,31 @@ import {
   Trash2,
   Plus,
   Search,
-  ArrowUpDown
+  ArrowUpDown,
 } from "lucide-react";
 import { graphqlClient } from "@/lib/graphql-client";
-import { DynamicLogo } from '../../parent/components/DynamicLogo';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DynamicLogo } from "../../parent/components/DynamicLogo";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useParams, useRouter } from 'next/navigation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // TypeScript interfaces for the assignment data based on the myAssignMents API response structure
 interface Assignment {
@@ -47,12 +61,12 @@ interface Assignment {
   startTime: string | null;
   duration: number;
   totalMarks: number;
-  status: 'draft' | 'published' | 'completed';
+  status: "draft" | "published" | "completed";
   questions: Array<{
     id: string;
     text: string;
     marks: number;
-    type: 'multiple_choice' | 'short_answer' | 'true_false';
+    type: "multiple_choice" | "short_answer" | "true_false";
     options: Array<{
       id: string;
       text: string;
@@ -122,7 +136,12 @@ const GET_MY_ASSIGNMENTS_QUERY = `
 export default function AssignmentsPage() {
   const params = useParams();
   const router = useRouter();
-  const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
+  const subdomain =
+    typeof params.subdomain === "string"
+      ? params.subdomain
+      : Array.isArray(params.subdomain)
+        ? params.subdomain[0]
+        : "";
 
   // State management
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -132,19 +151,23 @@ export default function AssignmentsPage() {
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<'date' | 'title' | 'subject' | 'grade'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = useState<"date" | "title" | "subject" | "grade">(
+    "date",
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Fetch assignments on component mount
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
         setLoading(true);
-        const response = await graphqlClient.request<AssignmentsResponse>(GET_MY_ASSIGNMENTS_QUERY);
+        const response = await graphqlClient.request<AssignmentsResponse>(
+          GET_MY_ASSIGNMENTS_QUERY,
+        );
         setAssignments(response.myAssignMents || []);
       } catch (err) {
-        console.error('Error fetching assignments:', err);
-        setError('Failed to load assignments. Please try again.');
+        console.error("Error fetching assignments:", err);
+        setError("Failed to load assignments. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -156,29 +179,36 @@ export default function AssignmentsPage() {
   // Get unique values for filters
   const uniqueGrades = Array.from(
     new Set(
-      assignments.flatMap(assignment => 
-        assignment.gradeLevels.map(gradeLevel => gradeLevel.gradeLevel.name)
-      )
-    )
+      assignments.flatMap((assignment) =>
+        assignment.gradeLevels.map((gradeLevel) => gradeLevel.gradeLevel.name),
+      ),
+    ),
   ).sort();
 
   const uniqueSubjects = Array.from(
-    new Set(assignments.map(assignment => assignment.subject.subject.name))
+    new Set(assignments.map((assignment) => assignment.subject.subject.name)),
   ).sort();
 
   // Filter assignments based on search and filters
-  const filteredAssignments = assignments.filter(assignment => {
-    const matchesSearch = assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assignment.subject.subject.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesGrade = selectedGrade === "all" || 
-                        assignment.gradeLevels.some(gradeLevel => gradeLevel.gradeLevel.name === selectedGrade);
-    
-    const matchesSubject = selectedSubject === "all" || 
-                          assignment.subject.subject.name === selectedSubject;
-    
-    const matchesStatus = selectedStatus === "all" || 
-                         assignment.status === selectedStatus;
+  const filteredAssignments = assignments.filter((assignment) => {
+    const matchesSearch =
+      assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      assignment.subject.subject.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+    const matchesGrade =
+      selectedGrade === "all" ||
+      assignment.gradeLevels.some(
+        (gradeLevel) => gradeLevel.gradeLevel.name === selectedGrade,
+      );
+
+    const matchesSubject =
+      selectedSubject === "all" ||
+      assignment.subject.subject.name === selectedSubject;
+
+    const matchesStatus =
+      selectedStatus === "all" || assignment.status === selectedStatus;
 
     return matchesSearch && matchesGrade && matchesSubject && matchesStatus;
   });
@@ -189,71 +219,82 @@ export default function AssignmentsPage() {
     let bValue: string | number;
 
     switch (sortBy) {
-      case 'title':
+      case "title":
         aValue = a.title.toLowerCase();
         bValue = b.title.toLowerCase();
         break;
-      case 'subject':
+      case "subject":
         aValue = a.subject.subject.name.toLowerCase();
         bValue = b.subject.subject.name.toLowerCase();
         break;
-      case 'grade':
-        aValue = a.gradeLevels.map(g => g.gradeLevel.name).sort().join(', ').toLowerCase();
-        bValue = b.gradeLevels.map(g => g.gradeLevel.name).sort().join(', ').toLowerCase();
+      case "grade":
+        aValue = a.gradeLevels
+          .map((g) => g.gradeLevel.name)
+          .sort()
+          .join(", ")
+          .toLowerCase();
+        bValue = b.gradeLevels
+          .map((g) => g.gradeLevel.name)
+          .sort()
+          .join(", ")
+          .toLowerCase();
         break;
-      case 'date':
+      case "date":
       default:
         aValue = new Date(a.date).getTime();
         bValue = new Date(b.date).getTime();
         break;
     }
 
-    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
     return 0;
   });
 
   // Group assignments by grade for better organization
-  const groupedByGrade = sortedAssignments.reduce((groups, assignment) => {
-    assignment.gradeLevels.forEach(gradeLevel => {
-      const gradeName = gradeLevel.gradeLevel.name;
-      if (!groups[gradeName]) {
-        groups[gradeName] = [];
-      }
-      if (!groups[gradeName].some(a => a.id === assignment.id)) {
-        groups[gradeName].push(assignment);
-      }
-    });
-    return groups;
-  }, {} as Record<string, Assignment[]>);
+  const groupedByGrade = sortedAssignments.reduce(
+    (groups, assignment) => {
+      assignment.gradeLevels.forEach((gradeLevel) => {
+        const gradeName = gradeLevel.gradeLevel.name;
+        if (!groups[gradeName]) {
+          groups[gradeName] = [];
+        }
+        if (!groups[gradeName].some((a) => a.id === assignment.id)) {
+          groups[gradeName].push(assignment);
+        }
+      });
+      return groups;
+    },
+    {} as Record<string, Assignment[]>,
+  );
 
   const handleSort = (newSortBy: typeof sortBy) => {
     if (sortBy === newSortBy) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(newSortBy);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case "published":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "draft":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "completed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
@@ -276,9 +317,17 @@ export default function AssignmentsPage() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Assignments</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Error Loading Assignments
+            </h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()} variant="outline">
+            <Button
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+              }}
+              variant="outline"
+            >
               Try Again
             </Button>
           </CardContent>
@@ -306,12 +355,11 @@ export default function AssignmentsPage() {
                 </p>
               </div>
             </div>
-            
-            <Button 
+
+            <Button
               className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
               onClick={() => {
-                // Navigate to create test/assignment page
-                window.location.href = `/school/${subdomain}/teacher`;
+                router.push(`/school/${subdomain}/teacher`);
               }}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -338,38 +386,48 @@ export default function AssignmentsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search assignments..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 border-primary/20 focus:border-primary"
-                />
-              </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search assignments..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 border-primary/20 focus:border-primary"
+                  />
+                </div>
                 <Select value={selectedGrade} onValueChange={setSelectedGrade}>
                   <SelectTrigger className="border-primary/20 focus:border-primary">
                     <SelectValue placeholder="All Grades" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Grades</SelectItem>
-                    {uniqueGrades.map(grade => (
-                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                    {uniqueGrades.map((grade) => (
+                      <SelectItem key={grade} value={grade}>
+                        {grade}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                <Select
+                  value={selectedSubject}
+                  onValueChange={setSelectedSubject}
+                >
                   <SelectTrigger className="border-primary/20 focus:border-primary">
                     <SelectValue placeholder="All Subjects" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Subjects</SelectItem>
-                    {uniqueSubjects.map(subject => (
-                      <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                    {uniqueSubjects.map((subject) => (
+                      <SelectItem key={subject} value={subject}>
+                        {subject}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <Select
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
+                >
                   <SelectTrigger className="border-primary/20 focus:border-primary">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
@@ -407,7 +465,8 @@ export default function AssignmentsPage() {
                   Assignments ({sortedAssignments.length})
                 </CardTitle>
                 <div className="text-sm text-muted-foreground">
-                  Sorted by {sortBy} ({sortOrder === 'asc' ? 'ascending' : 'descending'})
+                  Sorted by {sortBy} (
+                  {sortOrder === "asc" ? "ascending" : "descending"})
                 </div>
               </div>
             </CardHeader>
@@ -416,36 +475,36 @@ export default function AssignmentsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-primary/20 hover:bg-primary/5">
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort('title')}
+                        onClick={() => handleSort("title")}
                       >
                         <div className="flex items-center gap-2">
                           Title
                           <ArrowUpDown className="w-4 h-4" />
                         </div>
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort('subject')}
+                        onClick={() => handleSort("subject")}
                       >
                         <div className="flex items-center gap-2">
                           Subject
                           <ArrowUpDown className="w-4 h-4" />
                         </div>
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort('grade')}
+                        onClick={() => handleSort("grade")}
                       >
                         <div className="flex items-center gap-2">
                           Grades
                           <ArrowUpDown className="w-4 h-4" />
                         </div>
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer hover:bg-primary/10 transition-colors"
-                        onClick={() => handleSort('date')}
+                        onClick={() => handleSort("date")}
                       >
                         <div className="flex items-center gap-2">
                           Date
@@ -465,38 +524,51 @@ export default function AssignmentsPage() {
                         <TableCell colSpan={9} className="text-center py-8">
                           <div className="flex flex-col items-center gap-2">
                             <FileText className="w-12 h-12 text-muted-foreground/50" />
-                            <p className="text-muted-foreground">No assignments found</p>
+                            <p className="text-muted-foreground">
+                              No assignments found
+                            </p>
                             <p className="text-sm text-muted-foreground/70">
-                              {assignments.length === 0 ? 'Create your first assignment to get started' : 'Try adjusting your filters'}
+                              {assignments.length === 0
+                                ? "Create your first assignment to get started"
+                                : "Try adjusting your filters"}
                             </p>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : (
                       sortedAssignments.map((assignment) => (
-                        <TableRow key={assignment.id} className="border-primary/10 hover:bg-primary/5 transition-colors">
+                        <TableRow
+                          key={assignment.id}
+                          className="border-primary/10 hover:bg-primary/5 transition-colors"
+                        >
                           <TableCell className="font-medium">
                             <div className="space-y-1">
                               <button
-                                onClick={() => router.push(`assignments/${assignment.id}`)}
+                                onClick={() =>
+                                  router.push(`assignments/${assignment.id}`)
+                                }
                                 className="font-semibold text-foreground hover:text-primary transition-colors text-left"
                               >
                                 {assignment.title}
                               </button>
                               <div className="text-xs text-muted-foreground">
-                                {assignment.questions.length} questions • {assignment.totalMarks} marks
+                                {assignment.questions.length} questions •{" "}
+                                {assignment.totalMarks} marks
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            <Badge
+                              variant="secondary"
+                              className="bg-primary/10 text-primary border-primary/20"
+                            >
                               {assignment.subject.subject.name}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
                               {assignment.gradeLevels.map((gradeLevel) => (
-                                <Badge 
+                                <Badge
                                   key={gradeLevel.id}
                                   variant="outline"
                                   className="text-xs border-primary/30 text-primary"
@@ -525,13 +597,16 @@ export default function AssignmentsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm font-medium">{assignment.totalMarks} pts</div>
+                            <div className="text-sm font-medium">
+                              {assignment.totalMarks} pts
+                            </div>
                           </TableCell>
                           <TableCell>
-                            <Badge 
+                            <Badge
                               className={`${getStatusBadgeColor(assignment.status)} border`}
                             >
-                              {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+                              {assignment.status.charAt(0).toUpperCase() +
+                                assignment.status.slice(1)}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -541,9 +616,9 @@ export default function AssignmentsPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="hover:bg-primary/10"
                                 onClick={() => {
                                   router.push(`assignments/${assignment.id}`);
@@ -552,29 +627,29 @@ export default function AssignmentsPage() {
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="hover:bg-primary/10"
                                 onClick={() => {
-                                  // Edit assignment
-                                  console.log('Edit assignment:', assignment.id);
-                                  // TODO: Navigate to assignment edit page
+                                  toast.info("Edit is not yet available", {
+                                    description:
+                                      "Assignment editing will be available soon.",
+                                  });
                                 }}
                                 title="Edit Assignment"
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="hover:bg-red-100 hover:text-red-600"
                                 onClick={() => {
-                                  // Delete assignment with confirmation
-                                  if (window.confirm(`Are you sure you want to delete "${assignment.title}"?`)) {
-                                    console.log('Delete assignment:', assignment.id);
-                                    // TODO: Implement delete functionality
-                                  }
+                                  toast.error("Delete is not yet available", {
+                                    description:
+                                      "Assignment deletion will be available soon.",
+                                  });
                                 }}
                                 title="Delete Assignment"
                               >

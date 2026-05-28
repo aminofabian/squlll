@@ -1,389 +1,230 @@
-"use client"
+"use client";
 
-import { useState, useMemo, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useSchoolConfig } from '../../../../../lib/hooks/useSchoolConfig'
-import { useTenantStatistics } from '../../../../../lib/hooks/useTenantStatistics'
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
-import { SchoolSidebar } from "@/components/dashboard/SchoolSidebar"
-import { SearchFilter } from "@/components/dashboard/SearchFilter"
-import { MobileNav } from "@/components/dashboard/MobileNav"
-import { Activity, AlertTriangle, Clock, Store, Users, BarChart3, CircleDollarSign, ShieldAlert, Zap, GraduationCap, CalendarDays, ClipboardList, TrendingUp, BookOpen, PanelLeftClose, PanelLeftOpen, Loader2, Plus } from "lucide-react"
-import { useStudentsStore } from '@/lib/stores/useStudentsStore'
-import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
-import { mockClasses } from '@/lib/data/mockclasses'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { DashboardSearchSidebar } from './components/DashboardSearchSidebar'
-import { CreateAcademicYearModal } from './components/CreateAcademicYearModal'
-import { ViewAcademicYearsDrawer } from './components/ViewAcademicYearsDrawer'
-import { CreateTermModal } from './components/CreateTermModal'
-import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears'
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSchoolConfig } from "../../../../../lib/hooks/useSchoolConfig";
+import { useTenantStatistics } from "../../../../../lib/hooks/useTenantStatistics";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { MobileNav } from "@/components/dashboard/MobileNav";
+import {
+  Users,
+  BarChart3,
+  GraduationCap,
+  CalendarDays,
+  ClipboardList,
+  TrendingUp,
+  BookOpen,
+  PanelLeftOpen,
+  PanelLeftClose,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import { useStudentsStore } from "@/lib/stores/useStudentsStore";
+import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DashboardSearchSidebar } from "./components/DashboardSearchSidebar";
+import { CreateTermModal } from "./components/CreateTermModal";
+import { ViewAcademicYearsDrawer } from "./components/ViewAcademicYearsDrawer";
+import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
+
+// ─── Helpers ───────────────────────────────────────────────────
+
+function getGradeDisplayName(gradeName: string): string {
+  const lower = gradeName.toLowerCase();
+  if (lower.includes("pp1") || lower.includes("baby")) return "PP1";
+  if (lower.includes("pp2") || lower.includes("nursery")) return "PP2";
+  if (lower.includes("pp3") || lower.includes("reception")) return "PP3";
+  if (lower.includes("grade 7") || lower.includes("g7")) return "Form 1";
+  if (lower.includes("grade 8") || lower.includes("g8")) return "Form 2";
+  if (lower.includes("grade 9") || lower.includes("g9")) return "Form 3";
+  if (lower.includes("grade 10") || lower.includes("g10")) return "Form 4";
+  if (lower.includes("grade 11") || lower.includes("g11")) return "Form 5";
+  if (lower.includes("grade 12") || lower.includes("g12")) return "Form 6";
+  const match = gradeName.match(/\d+/);
+  if (match) {
+    const num = parseInt(match[0], 10);
+    if (num >= 1 && num <= 6) return `Grade ${num}`;
+  }
+  return gradeName;
+}
+
+// ─── Component ─────────────────────────────────────────────────
 
 export default function SchoolDashboard() {
-  const params = useParams()
-  const router = useRouter()
-  const subdomain = params.subdomain as string
-  const schoolName = subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-  
-  // State declarations
-  const [selectedFilter, setSelectedFilter] = useState<string>('all')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedGrade, setSelectedGrade] = useState<string | null>(null)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
-  const [showStats, setShowStats] = useState(false)
-  const [showCreateTermModal, setShowCreateTermModal] = useState(false)
-  
-  // Get current academic year for Create Term button
-  const { getActiveAcademicYear } = useCurrentAcademicYear()
-  const currentAcademicYear = getActiveAcademicYear()
-  
-  // Check school configuration
-  const { data: config, isLoading, error } = useSchoolConfig()
-  
-  // Get tenant statistics
-  const { data: tenantStats, isLoading: statsLoading, error: statsError } = useTenantStatistics()
-  
-  // Get real data from stores (must be called before any conditional returns)
-  const { students } = useStudentsStore()
-  const { config: schoolConfig } = useSchoolConfigStore()
-  
-  // Helper function to get grade display name (moved before useMemo hooks)
-  function getGradeDisplayName(gradeName: string): string {
-    const lowerName = gradeName.toLowerCase();
-    
-    // Handle special cases first
-    if (lowerName.includes('pp1') || lowerName.includes('baby')) return 'PP1';
-    if (lowerName.includes('pp2') || lowerName.includes('nursery')) return 'PP2';
-    if (lowerName.includes('pp3') || lowerName.includes('reception')) return 'PP3';
-    
-    // Handle Form grades (Grade 7+ becomes Form 1+)
-    if (lowerName.includes('grade 7') || lowerName.includes('g7')) return 'Form 1';
-    if (lowerName.includes('grade 8') || lowerName.includes('g8')) return 'Form 2';
-    if (lowerName.includes('grade 9') || lowerName.includes('g9')) return 'Form 3';
-    if (lowerName.includes('grade 10') || lowerName.includes('g10')) return 'Form 4';
-    if (lowerName.includes('grade 11') || lowerName.includes('g11')) return 'Form 5';
-    if (lowerName.includes('grade 12') || lowerName.includes('g12')) return 'Form 6';
-    
-    // Handle regular grade numbers
-    const match = gradeName.match(/\d+/);
-    if (match) {
-      const num = parseInt(match[0], 10);
-      if (num >= 1 && num <= 6) {
-        return `Grade ${num}`;
-      }
-    }
-    
-    // If no pattern matches, return the original name
-    return gradeName;
-  }
+  const params = useParams();
+  const router = useRouter();
+  const subdomain = params.subdomain as string;
+  const schoolName = subdomain
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 
-  // Get selected grade information (moved before conditional returns)
+  const [selectedGrade, setSelectedGrade] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showCreateTermModal, setShowCreateTermModal] = useState(false);
+
+  // Data hooks
+  const { getActiveAcademicYear } = useCurrentAcademicYear();
+  const currentAcademicYear = getActiveAcademicYear();
+  const { data: config, isLoading, error } = useSchoolConfig();
+  const {
+    data: tenantStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useTenantStatistics();
+  const { students } = useStudentsStore();
+  const { config: schoolConfig } = useSchoolConfigStore();
+
+  // Selected grade info
   const selectedGradeInfo = useMemo(() => {
-    if (!selectedGrade || !schoolConfig) return null
-    
+    if (!selectedGrade || !schoolConfig) return null;
     for (const level of schoolConfig.selectedLevels) {
-      const grade = level.gradeLevels?.find(g => g.id === selectedGrade)
+      const grade = level.gradeLevels?.find((g) => g.id === selectedGrade);
       if (grade) {
-        return {
-          grade,
-          level,
-          displayName: getGradeDisplayName(grade.name)
-        }
+        return { grade, level, displayName: getGradeDisplayName(grade.name) };
       }
     }
-    return null
-  }, [selectedGrade, schoolConfig])
+    return null;
+  }, [selectedGrade, schoolConfig]);
 
-  // Filter students based on selected grade (moved before conditional returns)
+  // Filter students by grade
   const filteredStudents = useMemo(() => {
-    if (!selectedGrade || !selectedGradeInfo) return students
-    
-    return students.filter(student => {
-      if (typeof student.grade === 'string') return false
-      return student.grade.gradeLevel.name.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase()
-    })
-  }, [students, selectedGrade, selectedGradeInfo])
+    if (!selectedGrade || !selectedGradeInfo) return students;
+    return students.filter((s) => {
+      if (typeof s.grade === "string") return false;
+      return (
+        s.grade.gradeLevel.name.toLowerCase() ===
+        selectedGradeInfo.grade.name.toLowerCase()
+      );
+    });
+  }, [students, selectedGrade, selectedGradeInfo]);
 
-  // Calculate real statistics (moved before conditional returns)
-  const realStats = useMemo(() => {
-    const studentsToUse = selectedGrade ? filteredStudents : students
-    
-    // Use tenant statistics for overall school stats, fallback to local data
-    const totalStudents = !selectedGrade && tenantStats 
-      ? tenantStats.studentCount 
-      : studentsToUse.length
-    const activeStudents = studentsToUse.filter(s => s.isActive).length
-    const totalFeesOwed = studentsToUse.reduce((sum, s) => sum + s.feesOwed, 0)
-    const totalFeesPaid = studentsToUse.reduce((sum, s) => sum + s.totalFeesPaid, 0)
-    
-    // Filter classes based on selected grade
-    const classesToUse = selectedGrade && selectedGradeInfo 
-      ? mockClasses.filter(c => 
-          c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
-          c.status === 'active'
-        )
-      : mockClasses.filter(c => c.status === 'active')
-    const totalClasses = classesToUse.length
-    
-    // Filter subjects based on selected grade
-    const totalSubjects = selectedGrade && selectedGradeInfo 
-      ? selectedGradeInfo.level.subjects.length
-      : (schoolConfig?.selectedLevels.reduce((sum, level) => sum + level.subjects.length, 0) || 0)
-    
-    // Calculate attendance rate (mock data for now)
-    const attendanceRate = selectedGrade ? 92.5 : 95.8
-    
-    // Calculate academic progress (mock data for now)
-    const academicProgress = selectedGrade ? 89.2 : 87.5
-    
-    // Calculate monthly change (mock data for now)
-    const monthlyChange = selectedGrade ? Math.floor(Math.random() * 10) + 2 : Math.floor(Math.random() * 20) + 5
-    
+  // Stats
+  const stats = useMemo(() => {
+    const pool = selectedGrade ? filteredStudents : students;
+    const totalStudents =
+      !selectedGrade && tenantStats ? tenantStats.studentCount : pool.length;
+    const attendanceRate = selectedGrade ? 92.5 : 95.8;
+    const academicProgress = selectedGrade ? 89.2 : 87.5;
+    const monthlyChange = selectedGrade
+      ? Math.floor(Math.random() * 10) + 2
+      : Math.floor(Math.random() * 20) + 5;
+
+    // Count active classes from students' grade assignments
+    const gradeSet = new Set<string>();
+    pool.forEach((s) => {
+      if (typeof s.grade !== "string" && s.grade?.gradeLevel?.name) {
+        gradeSet.add(s.grade.gradeLevel.name);
+      }
+    });
+    const totalClasses = selectedGrade
+      ? selectedGradeInfo?.grade.streams?.length || 1
+      : gradeSet.size;
+
+    const totalSubjects =
+      selectedGrade && selectedGradeInfo
+        ? selectedGradeInfo.level.subjects.length
+        : schoolConfig?.selectedLevels.reduce(
+            (sum, l) => sum + l.subjects.length,
+            0,
+          ) || 0;
+
     return {
       totalStudents,
-      activeStudents,
       totalClasses,
       totalSubjects,
       attendanceRate,
       academicProgress,
       monthlyChange,
-      totalFeesOwed,
-      totalFeesPaid
-    }
-  }, [students, filteredStudents, selectedGrade, selectedGradeInfo, schoolConfig, tenantStats])
+    };
+  }, [
+    students,
+    filteredStudents,
+    selectedGrade,
+    selectedGradeInfo,
+    schoolConfig,
+    tenantStats,
+  ]);
 
-  // Generate grade-specific activities (moved before conditional returns)
-  const recentActivities = useMemo(() => {
-    const baseActivities = [
-      {
-        id: 1,
-        type: 'attendance',
-        action: 'marked attendance',
-        target: selectedGrade && selectedGradeInfo ? `${selectedGradeInfo.displayName}A` : 'Grade 10A',
-        timestamp: new Date().toISOString()
-      },
-      {
-        id: 2,
-        type: 'grade',
-        action: 'updated grades',
-        target: selectedGrade ? 'Mathematics Class' : 'Mathematics Class',
-        timestamp: new Date(Date.now() - 30 * 60000).toISOString()
-      },
-      {
-        id: 3,
-        type: 'event',
-        action: 'scheduled',
-        target: selectedGrade ? 'Parent-Teacher Meeting' : 'Parent-Teacher Meeting',
-        timestamp: new Date(Date.now() - 60 * 60000).toISOString()
-      }
-    ]
-
-    if (selectedGrade && selectedGradeInfo) {
-      return baseActivities.map(activity => ({
-        ...activity,
-        target: activity.target.replace('Grade 10A', `${selectedGradeInfo.displayName}A`)
-      }))
-    }
-
-    return baseActivities
-  }, [selectedGrade, selectedGradeInfo])
-
-  // Generate grade-specific events (moved before conditional returns)
-  const upcomingEvents = useMemo(() => {
-    const baseEvents = [
-      { name: "Parent-Teacher Conference", date: "Mar 15", attendees: selectedGrade ? 25 : 45 },
-      { name: "Science Fair", date: "Mar 20", attendees: selectedGrade ? 60 : 120 },
-      { name: "Sports Day", date: "Mar 25", attendees: selectedGrade ? 100 : 200 }
-    ]
-
-    if (selectedGrade && selectedGradeInfo) {
-      return baseEvents.map(event => ({
-        ...event,
-        name: `${selectedGradeInfo.displayName} ${event.name}`,
-        attendees: Math.floor(event.attendees * (filteredStudents.length / students.length))
-      }))
-    }
-
-    return baseEvents
-  }, [selectedGrade, selectedGradeInfo, filteredStudents, students])
-
-  // Generate grade-specific class performance (moved before conditional returns)
-  const classPerformance = useMemo(() => {
-    if (selectedGrade && selectedGradeInfo) {
-      // Show streams for the selected grade
-      const streams = selectedGradeInfo.grade.streams || []
-      return streams.map((stream, index) => ({
-        name: `${selectedGradeInfo.displayName}${stream.name}`,
-        average: 85 + Math.random() * 10, // Random average between 85-95
-        students: Math.floor(filteredStudents.length / Math.max(streams.length, 1))
-      }))
-    }
-
-    // Show overall class performance
-    return [
-      { name: "Grade 10A", average: 85.6, students: 32 },
-      { name: "Grade 11B", average: 82.3, students: 28 },
-      { name: "Grade 12C", average: 88.9, students: 30 }
-    ]
-  }, [selectedGrade, selectedGradeInfo, filteredStudents])
-  
-  // Redirect to main page if school is not configured
+  // Redirect if not configured
   useEffect(() => {
-    if (!isLoading && !error && (!config || !config.selectedLevels || config.selectedLevels.length === 0)) {
-      // School is not configured, redirect to main page which will show SchoolTypeSetup
-      router.push(`/school/${subdomain}`)
+    if (!isLoading && !error && (!config || !config.selectedLevels?.length)) {
+      router.push(`/school/${subdomain}`);
     }
-  }, [config, isLoading, error, router, subdomain])
+  }, [config, isLoading, error, router, subdomain]);
 
-  // Handle responsive sidebar state based on screen size
+  // Auto-collapse sidebar on medium screens
   useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth
-      
-      if (isInitialLoad) {
-        // On initial load, default to collapsed on 11-inch and medium devices (768px - 1200px)
-        // 11-inch devices are typically around 820-834px width
-        if (width >= 768 && width < 1200) {
-          setIsSidebarCollapsed(true)
-        }
-        setIsInitialLoad(false)
-      } else {
-        // On subsequent resizes, auto-adjust based on screen size
-        // Keep sidebar minimized for 11-inch devices and smaller tablets/laptops
-        if (width >= 768 && width < 1200) {
-          setIsSidebarCollapsed(true)
-        } else if (width >= 1200) {
-          setIsSidebarCollapsed(false)
-        }
-        // Keep current state on small devices (< 768px) as sidebar is hidden via CSS
-      }
-    }
+    const handle = () => {
+      const w = window.innerWidth;
+      if (w >= 768 && w < 1200) setIsSidebarCollapsed(true);
+      else if (w >= 1200) setIsSidebarCollapsed(false);
+    };
+    handle();
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, []);
 
-    // Add event listener
-    window.addEventListener('resize', handleResize)
-    
-    // Call once on mount to handle initial state
-    handleResize()
+  const handleGradeSelect = useCallback((gradeId: string) => {
+    setSelectedGrade(gradeId === "all" ? null : gradeId);
+  }, []);
 
-    // Cleanup
-    return () => window.removeEventListener('resize', handleResize)
-  }, [isInitialLoad])
-  
-  // Show loading state while checking configuration or loading statistics
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm("");
+    setSelectedGrade(null);
+  }, []);
+
+  // ─── Loading ───────────────────────────────────────────────
+
   if (isLoading || (statsLoading && !selectedGrade)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="mt-4 text-sm text-gray-500">Loading dashboard...</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <p className="ml-3 text-sm text-slate-500">Loading dashboard...</p>
       </div>
-    )
+    );
   }
-  
-  // Show error state
+
+  // ─── Error ─────────────────────────────────────────────────
+
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Something went wrong
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          <p className="text-sm text-slate-500 mt-2">
+            {error instanceof Error ? error.message : "Unknown error"}
           </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4"
+            size="sm"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
-    )
-  }
-  
-  // If school is not configured, don't render dashboard (will redirect)
-  if (!config || !config.selectedLevels || config.selectedLevels.length === 0) {
-    return null
+    );
   }
 
+  if (!config?.selectedLevels?.length) return null;
 
-
-  const dashboardStats = [
-    {
-      title: "Total Students",
-      value: realStats.totalStudents.toLocaleString(),
-      change: `+${realStats.monthlyChange} this month`,
-      icon: Users,
-      color: "text-primary"
-    },
-    {
-      title: "Attendance Rate",
-      value: `${realStats.attendanceRate}%`,
-      change: "+0.6% vs last week",
-      icon: CalendarDays,
-      color: "text-green-600"
-    },
-    {
-      title: "Active Classes",
-      value: realStats.totalClasses.toString(),
-      change: "Current semester",
-      icon: BookOpen,
-      color: "text-purple-600"
-    },
-    {
-      title: "Academic Progress",
-      value: `${realStats.academicProgress}%`,
-      change: "+2.3% this term",
-      icon: TrendingUp,
-      color: "text-blue-600"
-    }
-  ]
-
-
-
-  const handleFilterSelect = (filterId: string) => {
-    setSelectedFilter(filterId)
-    
-    // Check if this is a grade selection (grades have UUID-like IDs)
-    if (filterId !== 'all' && filterId.length > 20) {
-      setSelectedGrade(filterId)
-    } else {
-      setSelectedGrade(null)
-    }
-  }
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    setSelectedFilter('all')
-  }
-
-  const handleGradeSelect = (gradeId: string) => {
-    if (gradeId === 'all') {
-      setSelectedGrade(null)
-    } else {
-      setSelectedGrade(gradeId)
-    }
-  }
-
-  const handleClearFilters = () => {
-    setSearchTerm('')
-    setSelectedGrade(null)
-  }
+  // ─── Render ──────────────────────────────────────────────────
 
   return (
     <div className="flex h-full">
-      {/* Search filter column - styled to match theme */}
       {!isSidebarCollapsed && (
         <DashboardSearchSidebar
           searchTerm={searchTerm}
-          onSearchChange={(value) => {
-            setSearchTerm(value);
-          }}
+          onSearchChange={setSearchTerm}
           onClearFilters={handleClearFilters}
-          selectedGradeId={selectedFilter}
+          selectedGradeId={selectedGrade || "all"}
           onCollapse={() => setIsSidebarCollapsed(true)}
           students={students}
           selectedGrade={selectedGrade}
@@ -392,68 +233,50 @@ export default function SchoolDashboard() {
         />
       )}
 
-      {/* Main content column */}
-      <div className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 transition-all duration-300 ease-in-out relative">
-        {/* Floating toggle button when sidebar is collapsed */}
+      <div className="flex-1 overflow-auto p-4 md:p-6 relative">
         {isSidebarCollapsed && (
-          <div className="absolute top-6 left-6 z-10">
+          <div className="absolute top-4 left-4 z-10">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsSidebarCollapsed(false)}
-              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
-              title="Show search sidebar"
+              className="bg-white/80 backdrop-blur-sm shadow-sm"
             >
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           </div>
         )}
-        
-        <div className="flex justify-between items-center mb-6">
+
+        {/* Header Bar */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            Dashboard
+          </h1>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-bold truncate">
-              Dashboard
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* View Academic Years button */}
-            <ViewAcademicYearsDrawer 
-              onAcademicYearCreated={() => {
-                // Optionally refresh data or show success message
-                console.log('Academic year created successfully')
-              }}
+            <ViewAcademicYearsDrawer
+              onAcademicYearCreated={() => {}}
               trigger={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-3 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
-                >
-                  <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-primary/80 group-hover:text-primary transition-colors" />
-                  <span className="text-xs font-medium tracking-tight">Academic Year</span>
+                <Button variant="outline" size="sm" className="h-8">
+                  <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs">Academic Year</span>
                 </Button>
               }
             />
-            
-            {/* Create Term button */}
             {currentAcademicYear && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowCreateTermModal(true)}
-                className="h-8 px-3 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 text-primary hover:from-primary/10 hover:to-primary/15 hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
+                className="h-8"
               >
-                <Plus className="h-3.5 w-3.5 mr-1.5 text-primary/80 group-hover:text-primary transition-colors" />
-                <span className="text-xs font-medium tracking-tight">Create Term</span>
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                <span className="text-xs">Create Term</span>
               </Button>
             )}
-            
-            {/* Sidebar toggle button */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
-              title={isSidebarCollapsed ? "Show search sidebar" : "Hide search sidebar"}
             >
               {isSidebarCollapsed ? (
                 <PanelLeftOpen className="h-4 w-4" />
@@ -464,366 +287,464 @@ export default function SchoolDashboard() {
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Page Header */}
-          <div className="border-b-2 border-primary/20 pb-8">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-4">
-                <div className="inline-block w-fit px-3 py-1 bg-primary/5 border border-primary/20 rounded-md">
-                  <span className="text-xs font-mono uppercase tracking-wide text-primary">
-                    {selectedGrade ? 'Grade Overview' : 'School Overview'}
-                  </span>
-                </div>
-                {selectedGrade && (
-                  <button
-                    onClick={() => {
-                      setSelectedGrade(null)
-                      setSelectedFilter('all')
-                    }}
-                    className="px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    ← Back to All Grades
-                  </button>
-                )}
-              </div>
-              <h1 className="text-2xl md:text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100 break-words">
-                {selectedGrade && selectedGradeInfo 
-                  ? `${selectedGradeInfo.displayName} Dashboard`
-                  : `${schoolName} Dashboard`
-                }
-              </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                {selectedGrade 
-                  ? `Monitor ${selectedGradeInfo?.displayName} performance and activities`
-                  : 'Monitor school performance and activities'
-                }
-              </p>
+          <div className="pb-5 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3 mb-1">
+              <span className="text-xs font-medium uppercase tracking-wide text-primary bg-primary/5 px-2 py-0.5 rounded">
+                {selectedGrade ? "Grade Overview" : "School Overview"}
+              </span>
+              {selectedGrade && (
+                <button
+                  onClick={() => setSelectedGrade(null)}
+                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                >
+                  ← Back to All Grades
+                </button>
+              )}
             </div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {selectedGrade && selectedGradeInfo
+                ? `${selectedGradeInfo.displayName} Dashboard`
+                : `${schoolName} Dashboard`}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {selectedGrade
+                ? `Monitor ${selectedGradeInfo?.displayName} performance`
+                : "Monitor school performance and activities"}
+            </p>
           </div>
 
-          {/* Expandable Stats Section - Only show when viewing all grades */}
+          {/* Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={<Users className="h-5 w-5" />}
+              label="Total Students"
+              value={stats.totalStudents.toLocaleString()}
+              change={`+${stats.monthlyChange} this month`}
+              color="text-primary"
+            />
+            <StatCard
+              icon={<CalendarDays className="h-5 w-5" />}
+              label="Attendance Rate"
+              value={`${stats.attendanceRate}%`}
+              change="+0.6% vs last week"
+              color="text-emerald-600"
+            />
+            <StatCard
+              icon={<BookOpen className="h-5 w-5" />}
+              label="Active Classes"
+              value={stats.totalClasses.toString()}
+              change="Current semester"
+              color="text-purple-600"
+            />
+            <StatCard
+              icon={<TrendingUp className="h-5 w-5" />}
+              label="Academic Progress"
+              value={`${stats.academicProgress}%`}
+              change="+2.3% this term"
+              color="text-blue-600"
+            />
+          </div>
+
+          {/* Expandable School Stats (only when viewing all grades) */}
           {!selectedGrade && (
-            <div className="mb-8">
-              <div className="border-2 border-primary/20 bg-primary/5 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setShowStats(!showStats)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-primary/10 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <BarChart3 className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-mono font-semibold text-slate-900 dark:text-slate-100">School Statistics</h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">View comprehensive school statistics and metrics</p>
-                    </div>
+            <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs">
-                      {tenantStats ? tenantStats.studentCount : students.length} Students
-                    </Badge>
-                    {showStats ? (
-                      <ChevronDown className="w-5 h-5 text-primary" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-primary" />
-                    )}
+                  <div className="text-left">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      School Statistics
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      View comprehensive metrics
+                    </p>
                   </div>
-                </button>
-                
-                {showStats && (
-                  <div className="border-t-2 border-primary/20 bg-white dark:bg-slate-800 p-6">
-                    {/* Tenant Statistics Section */}
-                    {tenantStats && (
-                      <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                        <h4 className="font-mono font-semibold text-sm uppercase tracking-wide text-primary mb-3">
-                          Live School Statistics
-                        </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                          <div className="text-center">
-                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.studentCount}</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Students</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.teacherCount}</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Teachers</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.streamCount}</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Streams</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-mono font-bold text-lg text-primary">{tenantStats.totalCount}</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Total Users</div>
-                          </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    {tenantStats ? tenantStats.studentCount : students.length}{" "}
+                    Students
+                  </Badge>
+                  {showStats ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </div>
+              </button>
+              {showStats && (
+                <div className="border-t border-slate-200 dark:border-slate-700 p-4">
+                  {tenantStats && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                      <div>
+                        <div className="text-lg font-bold text-primary">
+                          {tenantStats.studentCount}
+                        </div>
+                        <div className="text-xs text-slate-500">Students</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-primary">
+                          {tenantStats.teacherCount}
+                        </div>
+                        <div className="text-xs text-slate-500">Teachers</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-primary">
+                          {tenantStats.streamCount}
+                        </div>
+                        <div className="text-xs text-slate-500">Streams</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-primary">
+                          {tenantStats.totalCount}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          Total Users
                         </div>
                       </div>
-                    )}
-                    
-                    {/* Error state for statistics */}
-                    {statsError && (
-                      <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <h4 className="font-mono font-semibold text-sm text-red-800 mb-2">
-                          Statistics Error
-                        </h4>
-                        <p className="text-sm text-red-600">
-                          {statsError instanceof Error ? statsError.message : 'Failed to load statistics'}
-                        </p>
-                      </div>
-                    )}
-                    
-
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Grade-Specific Information */}
-          {selectedGrade && selectedGradeInfo && (
-            <div className="border-2 border-primary/20 rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-mono font-bold">{selectedGradeInfo.displayName} Details</h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {selectedGradeInfo.level.name} • {selectedGradeInfo.level.subjects.length} subjects
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {/* Student Demographics */}
-                <div className="space-y-4">
-                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Student Demographics</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Male Students</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {filteredStudents.filter(s => s.gender.toLowerCase() === 'male').length}
-                      </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Female Students</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {filteredStudents.filter(s => s.gender.toLowerCase() === 'female').length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Active Students</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {filteredStudents.filter(s => s.isActive).length}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Financial Overview */}
-                <div className="space-y-4">
-                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Financial Overview</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Total Fees Paid</span>
-                      <span className="font-mono font-bold text-emerald-600 text-right shrink-0">
-                        KES {filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Outstanding Fees</span>
-                      <span className="font-mono font-bold text-orange-600 text-right shrink-0">
-                        KES {filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Collection Rate</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {(() => {
-                          const totalPaid = filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0)
-                          const totalOwed = filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0)
-                          const total = totalPaid + totalOwed
-                          return total > 0 ? Math.round((totalPaid / total) * 100) : 0
-                        })()}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Academic Structure */}
-                <div className="space-y-4">
-                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600">Academic Structure</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Subjects Offered</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {selectedGradeInfo.level.subjects.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Active Classes</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {mockClasses.filter(c => 
-                          c.grade.toLowerCase() === selectedGradeInfo.grade.name.toLowerCase() && 
-                          c.status === 'active'
-                        ).length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-slate-600 truncate mr-2">Streams</span>
-                      <span className="font-mono font-bold text-primary shrink-0">
-                        {selectedGradeInfo.grade.streams?.length || 0}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Streams List */}
-              {selectedGradeInfo.grade.streams && selectedGradeInfo.grade.streams.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-primary/20">
-                  <h3 className="font-mono font-bold text-sm uppercase tracking-wide text-slate-600 mb-4">Streams</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {selectedGradeInfo.grade.streams.map((stream) => (
-                      <div key={stream.id} className="p-3 md:p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono font-medium truncate mr-2">{stream.name}</span>
-                          <span className="text-sm text-slate-500 shrink-0">
-                            {Math.floor(filteredStudents.length / selectedGradeInfo.grade.streams.length)} students
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  )}
+                  {statsError && (
+                    <p className="text-sm text-red-600 mt-2">
+                      Failed to load statistics.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* Content Grid - Each Section in Its Own Column */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-            {/* Recent Activities */}
-            <div className="border-2 border-primary/20 rounded-xl">
-              <div className="p-4 border-b-2 border-primary/20">
-                <h2 className="font-mono font-bold">Recent Activities</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {recentActivities.map(activity => (
-                    <div key={activity.id} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-                        <Users className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-mono font-medium truncate">{activity.target}</div>
-                          <div className="text-xs text-slate-500 truncate">{activity.action}</div>
-                        </div>
-                      </div>
-                      <div className="text-xs font-mono shrink-0 ml-2">
-                        {new Date(activity.timestamp).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  ))}
+          {/* Grade Detail (when grade selected) */}
+          {selectedGrade && selectedGradeInfo && (
+            <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-5 bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {selectedGradeInfo.displayName}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {selectedGradeInfo.level.name} ·{" "}
+                    {selectedGradeInfo.level.subjects.length} subjects
+                  </p>
                 </div>
               </div>
-            </div>
-
-            {/* Upcoming Events */}
-            <div className="border-2 border-primary/20 rounded-xl">
-              <div className="p-4 border-b-2 border-primary/20">
-                <h2 className="font-mono font-bold">Upcoming Events</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <DetailBlock
+                  title="Demographics"
+                  rows={[
+                    {
+                      label: "Male",
+                      value: filteredStudents.filter(
+                        (s) => s.gender.toLowerCase() === "male",
+                      ).length,
+                    },
+                    {
+                      label: "Female",
+                      value: filteredStudents.filter(
+                        (s) => s.gender.toLowerCase() === "female",
+                      ).length,
+                    },
+                    {
+                      label: "Active",
+                      value: filteredStudents.filter((s) => s.isActive).length,
+                    },
+                  ]}
+                />
+                <DetailBlock
+                  title="Financial"
+                  rows={[
+                    {
+                      label: "Fees Paid",
+                      value: `KES ${filteredStudents.reduce((sum, s) => sum + s.totalFeesPaid, 0).toLocaleString()}`,
+                    },
+                    {
+                      label: "Outstanding",
+                      value: `KES ${filteredStudents.reduce((sum, s) => sum + s.feesOwed, 0).toLocaleString()}`,
+                    },
+                    {
+                      label: "Collection Rate",
+                      value: `${(() => {
+                        const p = filteredStudents.reduce(
+                          (s, st) => s + st.totalFeesPaid,
+                          0,
+                        );
+                        const o = filteredStudents.reduce(
+                          (s, st) => s + st.feesOwed,
+                          0,
+                        );
+                        return p + o > 0 ? Math.round((p / (p + o)) * 100) : 0;
+                      })()}%`,
+                    },
+                  ]}
+                />
+                <DetailBlock
+                  title="Academic"
+                  rows={[
+                    {
+                      label: "Subjects",
+                      value: selectedGradeInfo.level.subjects.length,
+                    },
+                    {
+                      label: "Streams",
+                      value: selectedGradeInfo.grade.streams?.length || 0,
+                    },
+                  ]}
+                />
               </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {upcomingEvents.map(event => (
-                    <div key={event.name} className="flex items-center justify-between p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-                        <CalendarDays className="h-4 w-4 md:h-5 md:w-5 text-primary shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="font-mono font-medium truncate">{event.name}</div>
-                          <div className="text-xs text-slate-500 truncate">{event.date} • {event.attendees} attendees</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            </div>
+          )}
+
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <ContentCard title="Recent Activity">
+              {[
+                {
+                  target:
+                    selectedGrade && selectedGradeInfo
+                      ? `${selectedGradeInfo.displayName}A`
+                      : "Grade 10A",
+                  action: "Attendance marked",
+                  time: "Just now",
+                },
+                {
+                  target: "Mathematics Class",
+                  action: "Grades updated",
+                  time: "30m ago",
+                },
+                {
+                  target: "Parent-Teacher Meeting",
+                  action: "Scheduled",
+                  time: "1h ago",
+                },
+              ].map((item, i) => (
+                <ActivityRow key={i} {...item} />
+              ))}
+            </ContentCard>
+
+            <ContentCard title="Upcoming Events">
+              {[
+                {
+                  name: `Parent-Teacher Conference`,
+                  date: "Mar 15",
+                  count: selectedGrade ? 25 : 45,
+                },
+                {
+                  name: "Science Fair",
+                  date: "Mar 20",
+                  count: selectedGrade ? 60 : 120,
+                },
+                {
+                  name: "Sports Day",
+                  date: "Mar 25",
+                  count: selectedGrade ? 100 : 200,
+                },
+              ].map((e) => (
+                <div key={e.name} className="flex items-center gap-2 py-1.5">
+                  <CalendarDays className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{e.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {e.date} · {e.count} attendees
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </div>
+              ))}
+            </ContentCard>
 
-            {/* Class Performance */}
-            <div className="border-2 border-primary/20 rounded-xl">
-              <div className="p-4 border-b-2 border-primary/20">
-                <h2 className="font-mono font-bold">Class Performance</h2>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {classPerformance.map(classData => (
-                    <div key={classData.name} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono truncate mr-2">{classData.name}</span>
-                        <span className="text-xs font-mono shrink-0">{classData.average}% avg</span>
-                      </div>
-                      <div className="h-2 bg-primary/10 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full" 
-                          style={{ width: `${classData.average}%` }} 
-                        />
-                      </div>
-                      <div className="text-xs text-slate-500 truncate">{classData.students} students</div>
-                    </div>
-                  ))}
+            <ContentCard title="Class Performance">
+              {(selectedGrade && selectedGradeInfo
+                ? (selectedGradeInfo.grade.streams || []).map((s, i) => ({
+                    name: `${selectedGradeInfo.displayName}${s.name}`,
+                    average: 85 + Math.random() * 10,
+                    students: Math.floor(
+                      filteredStudents.length /
+                        Math.max(
+                          (selectedGradeInfo.grade.streams || []).length,
+                          1,
+                        ),
+                    ),
+                  }))
+                : [
+                    { name: "Grade 10A", average: 85.6, students: 32 },
+                    { name: "Grade 11B", average: 82.3, students: 28 },
+                    { name: "Grade 12C", average: 88.9, students: 30 },
+                  ]
+              ).map((c) => (
+                <div key={c.name} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-medium truncate">{c.name}</span>
+                    <span className="font-bold">{c.average.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${c.average}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    {c.students} students
+                  </p>
                 </div>
-              </div>
-            </div>
+              ))}
+            </ContentCard>
 
-            {/* Quick Actions */}
-            <div className="border-2 border-primary/20 rounded-xl">
-              <div className="p-4 border-b-2 border-primary/20">
-                <h2 className="font-mono font-bold">Quick Actions</h2>
+            <ContentCard title="Quick Actions">
+              <div className="grid grid-cols-2 gap-2">
+                <QuickActionBtn
+                  icon={<Users className="h-5 w-5" />}
+                  label="Attendance"
+                />
+                <QuickActionBtn
+                  icon={<GraduationCap className="h-5 w-5" />}
+                  label="Grades"
+                />
+                <QuickActionBtn
+                  icon={<CalendarDays className="h-5 w-5" />}
+                  label="Events"
+                />
+                <QuickActionBtn
+                  icon={<ClipboardList className="h-5 w-5" />}
+                  label="Reports"
+                />
               </div>
-              <div className="p-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
-                    <Users className="h-4 w-4 text-primary mb-2 shrink-0" />
-                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Take Attendance</span>
-                  </button>
-                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
-                    <GraduationCap className="h-4 w-4 text-primary mb-2 shrink-0" />
-                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Enter Grades</span>
-                  </button>
-                  <ViewAcademicYearsDrawer 
-                    onAcademicYearCreated={() => {
-                      console.log('Academic year created successfully')
-                    }}
-                    trigger={
-                      <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
-                        <CalendarDays className="h-4 w-4 text-primary mb-2 shrink-0" />
-                        <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Academic Year</span>
-                      </button>
-                    }
-                  />
-                  <button className="flex flex-col items-center justify-center p-2 bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors min-h-[100px] w-full">
-                    <ClipboardList className="h-4 w-4 text-primary mb-2 shrink-0" />
-                    <span className="text-xs font-mono text-center leading-tight px-1 break-words w-full">Create Report</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
+            </ContentCard>
           </div>
         </div>
       </div>
-      
-      {/* Create Term Modal */}
+
       {currentAcademicYear && (
         <CreateTermModal
           isOpen={showCreateTermModal}
           onClose={() => setShowCreateTermModal(false)}
-          onSuccess={() => {
-            setShowCreateTermModal(false)
-            // Optionally refresh data or show success message
-          }}
+          onSuccess={() => setShowCreateTermModal(false)}
           academicYear={currentAcademicYear}
         />
       )}
     </div>
-  )
-} 
+  );
+}
+
+// ─── Sub-components ────────────────────────────────────────────
+
+function StatCard({
+  icon,
+  label,
+  value,
+  change,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  change: string;
+  color: string;
+}) {
+  return (
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-white dark:bg-slate-900">
+      <div className="flex items-center gap-3">
+        <div className={color}>{icon}</div>
+        <div>
+          <p className="text-xs text-slate-500 uppercase tracking-wide">
+            {label}
+          </p>
+          <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            {value}
+          </p>
+          <p className="text-[11px] text-slate-400">{change}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContentCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900">
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+          {title}
+        </h3>
+      </div>
+      <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+function ActivityRow({
+  target,
+  action,
+  time,
+}: {
+  target: string;
+  action: string;
+  time: string;
+}) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium truncate">{target}</p>
+        <p className="text-xs text-slate-500">{action}</p>
+      </div>
+      <span className="text-xs text-slate-400 flex-shrink-0 ml-2">{time}</span>
+    </div>
+  );
+}
+
+function DetailBlock({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: { label: string; value: string | number }[];
+}) {
+  return (
+    <div>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+        {title}
+      </h4>
+      <div className="space-y-1.5">
+        {rows.map((r, i) => (
+          <div key={i} className="flex justify-between text-sm">
+            <span className="text-slate-600 truncate mr-2">{r.label}</span>
+            <span className="font-medium text-slate-900 dark:text-slate-100 flex-shrink-0">
+              {r.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function QuickActionBtn({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button className="flex flex-col items-center gap-1.5 p-3 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+      <div className="text-primary">{icon}</div>
+      <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+        {label}
+      </span>
+    </button>
+  );
+}

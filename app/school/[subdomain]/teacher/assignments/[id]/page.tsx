@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
-import { 
+import {
   ArrowLeft,
-  BookOpen, 
-  Calendar, 
-  Clock, 
-  Users, 
-  FileText, 
+  BookOpen,
+  Calendar,
+  Clock,
+  Users,
+  FileText,
   Edit,
   Trash2,
   Download,
@@ -22,17 +22,26 @@ import {
   GraduationCap,
   Target,
   Timer,
-  Hash
+  Hash,
 } from "lucide-react";
 import { graphqlClient } from "@/lib/graphql-client";
-import { DynamicLogo } from '../../../parent/components/DynamicLogo';
+import { DynamicLogo } from "../../../parent/components/DynamicLogo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // TypeScript interfaces for the assignment detail data - matching the actual API schema
 interface AssignmentDetail {
@@ -57,14 +66,14 @@ interface AssignmentDetail {
   totalMarks: number;
   resourceUrl: string | null;
   instructions: string;
-  status: 'draft' | 'published' | 'completed';
+  status: "draft" | "published" | "completed";
   questions: Array<{
     id: string;
     text: string;
     imageUrls: string[] | null;
     marks: number;
     order: number;
-    type: 'multiple_choice' | 'short_answer' | 'true_false';
+    type: "multiple_choice" | "short_answer" | "true_false";
     aiPrompt: string | null;
     isAIGenerated: boolean;
     options: Array<{
@@ -170,8 +179,18 @@ const DELETE_ASSIGNMENT_MUTATION = `
 export default function AssignmentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
-  const assignmentId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
+  const subdomain =
+    typeof params.subdomain === "string"
+      ? params.subdomain
+      : Array.isArray(params.subdomain)
+        ? params.subdomain[0]
+        : "";
+  const assignmentId =
+    typeof params.id === "string"
+      ? params.id
+      : Array.isArray(params.id)
+        ? params.id[0]
+        : "";
 
   // State management
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
@@ -185,7 +204,7 @@ export default function AssignmentDetailPage() {
   useEffect(() => {
     const fetchAssignment = async () => {
       if (!assignmentId) {
-        setError('Assignment ID is required');
+        setError("Assignment ID is required");
         setLoading(false);
         return;
       }
@@ -194,12 +213,12 @@ export default function AssignmentDetailPage() {
         setLoading(true);
         const response = await graphqlClient.request<AssignmentDetailResponse>(
           GET_ASSIGNMENT_BY_ID_QUERY,
-          { id: assignmentId }
+          { id: assignmentId },
         );
         setAssignment(response.testById);
       } catch (err) {
-        console.error('Error fetching assignment details:', err);
-        setError('Failed to load assignment details. Please try again.');
+        console.error("Error fetching assignment details:", err);
+        setError("Failed to load assignment details. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -216,19 +235,19 @@ export default function AssignmentDetailPage() {
       setDeleting(true);
       const response = await graphqlClient.request<DeleteAssignmentResponse>(
         DELETE_ASSIGNMENT_MUTATION,
-        { id: assignmentId }
+        { id: assignmentId },
       );
 
       if (response.deleteExam) {
         // Successfully deleted, show success message and navigate back
-        toast.success('Assignment deleted successfully');
+        toast.success("Assignment deleted successfully");
         router.back();
       } else {
-        throw new Error('Failed to delete assignment');
+        throw new Error("Failed to delete assignment");
       }
     } catch (err) {
-      console.error('Error deleting assignment:', err);
-      toast.error('Failed to delete assignment. Please try again.');
+      console.error("Error deleting assignment:", err);
+      toast.error("Failed to delete assignment. Please try again.");
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);
@@ -236,41 +255,41 @@ export default function AssignmentDetailPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case "published":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "draft":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "completed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getQuestionTypeIcon = (type: string) => {
     switch (type) {
-      case 'multiple_choice':
+      case "multiple_choice":
         return <CheckCircle2 className="w-4 h-4" />;
-      case 'short_answer':
+      case "short_answer":
         return <FileText className="w-4 h-4" />;
-      case 'true_false':
+      case "true_false":
         return <AlertCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -279,24 +298,24 @@ export default function AssignmentDetailPage() {
 
   const getQuestionTypeLabel = (type: string) => {
     switch (type) {
-      case 'multiple_choice':
-        return 'Multiple Choice';
-      case 'short_answer':
-        return 'Short Answer';
-      case 'true_false':
-        return 'True/False';
+      case "multiple_choice":
+        return "Multiple Choice";
+      case "short_answer":
+        return "Short Answer";
+      case "true_false":
+        return "True/False";
       default:
-        return 'Question';
+        return "Question";
     }
   };
 
   const getFileIcon = (fileType: string) => {
     switch (fileType.toLowerCase()) {
-      case 'image':
-      case 'jpg':
-      case 'jpeg':
-      case 'png':
-      case 'gif':
+      case "image":
+      case "jpg":
+      case "jpeg":
+      case "png":
+      case "gif":
         return <FileImage className="w-4 h-4" />;
       default:
         return <File className="w-4 h-4" />;
@@ -304,11 +323,11 @@ export default function AssignmentDetailPage() {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (loading) {
@@ -330,10 +349,17 @@ export default function AssignmentDetailPage() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Assignment</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Error Loading Assignment
+            </h3>
             <p className="text-muted-foreground mb-4">{error}</p>
             <div className="flex gap-2 justify-center">
-              <Button onClick={() => window.location.reload()} variant="outline">
+              <Button
+                onClick={() => {
+                  setError(null);
+                }}
+                variant="outline"
+              >
                 Try Again
               </Button>
               <Button onClick={() => router.back()} variant="default">
@@ -374,22 +400,25 @@ export default function AssignmentDetailPage() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-300 hover:bg-gray-50"
                 onClick={() => setShowA4Preview(true)}
               >
                 <FileText className="w-4 h-4 mr-2" />
                 Preview as A4
               </Button>
-              <Button variant="outline" className="border-primary/20 hover:bg-primary/5">
+              <Button
+                variant="outline"
+                className="border-primary/20 hover:bg-primary/5"
+              >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-red-200 hover:bg-red-50 hover:text-red-600"
                 onClick={() => setShowDeleteDialog(true)}
                 disabled={deleting}
@@ -416,9 +445,14 @@ export default function AssignmentDetailPage() {
               <Card className="border-primary/20 shadow-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-bold text-foreground">Assignment Overview</CardTitle>
-                    <Badge className={`${getStatusBadgeColor(assignment.status)} border`}>
-                      {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+                    <CardTitle className="text-xl font-bold text-foreground">
+                      Assignment Overview
+                    </CardTitle>
+                    <Badge
+                      className={`${getStatusBadgeColor(assignment.status)} border`}
+                    >
+                      {assignment.status.charAt(0).toUpperCase() +
+                        assignment.status.slice(1)}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -428,16 +462,24 @@ export default function AssignmentDetailPage() {
                       <BookOpen className="w-5 h-5 text-primary" />
                       <div>
                         <p className="text-sm text-muted-foreground">Subject</p>
-                        <p className="font-semibold text-foreground">{assignment.subject.subject.name}</p>
+                        <p className="font-semibold text-foreground">
+                          {assignment.subject.subject.name}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <GraduationCap className="w-5 h-5 text-primary" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Grade Levels</p>
+                        <p className="text-sm text-muted-foreground">
+                          Grade Levels
+                        </p>
                         <div className="flex flex-wrap gap-1">
                           {assignment.gradeLevels.map((gradeLevel) => (
-                            <Badge key={gradeLevel.id} variant="outline" className="text-xs border-primary/30 text-primary">
+                            <Badge
+                              key={gradeLevel.id}
+                              variant="outline"
+                              className="text-xs border-primary/30 text-primary"
+                            >
                               {gradeLevel.gradeLevel.name}
                             </Badge>
                           ))}
@@ -448,40 +490,58 @@ export default function AssignmentDetailPage() {
                       <Calendar className="w-5 h-5 text-primary" />
                       <div>
                         <p className="text-sm text-muted-foreground">Date</p>
-                        <p className="font-semibold text-foreground">{formatDate(assignment.date)}</p>
+                        <p className="font-semibold text-foreground">
+                          {formatDate(assignment.date)}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Clock className="w-5 h-5 text-primary" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Time & Duration</p>
+                        <p className="text-sm text-muted-foreground">
+                          Time & Duration
+                        </p>
                         <p className="font-semibold text-foreground">
-                          {assignment.startTime && formatTime(assignment.startTime)} • {assignment.duration} mins
+                          {assignment.startTime &&
+                            formatTime(assignment.startTime)}{" "}
+                          • {assignment.duration} mins
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Target className="w-5 h-5 text-primary" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Marks</p>
-                        <p className="font-semibold text-foreground">{assignment.totalMarks} points</p>
+                        <p className="text-sm text-muted-foreground">
+                          Total Marks
+                        </p>
+                        <p className="font-semibold text-foreground">
+                          {assignment.totalMarks} points
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Hash className="w-5 h-5 text-primary" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Questions</p>
-                        <p className="font-semibold text-foreground">{assignment.questions.length} questions</p>
+                        <p className="text-sm text-muted-foreground">
+                          Questions
+                        </p>
+                        <p className="font-semibold text-foreground">
+                          {assignment.questions.length} questions
+                        </p>
                       </div>
                     </div>
                   </div>
-                  
+
                   {assignment.instructions && (
                     <>
                       <Separator className="my-4" />
                       <div>
-                        <h4 className="font-semibold text-foreground mb-2">Instructions</h4>
-                        <p className="text-muted-foreground leading-relaxed">{assignment.instructions}</p>
+                        <h4 className="font-semibold text-foreground mb-2">
+                          Instructions
+                        </h4>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {assignment.instructions}
+                        </p>
                       </div>
                     </>
                   )}
@@ -490,10 +550,12 @@ export default function AssignmentDetailPage() {
                     <>
                       <Separator className="my-4" />
                       <div>
-                        <h4 className="font-semibold text-foreground mb-2">Resource URL</h4>
-                        <a 
-                          href={assignment.resourceUrl} 
-                          target="_blank" 
+                        <h4 className="font-semibold text-foreground mb-2">
+                          Resource URL
+                        </h4>
+                        <a
+                          href={assignment.resourceUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:text-primary/80 flex items-center gap-2"
                         >
@@ -517,82 +579,106 @@ export default function AssignmentDetailPage() {
                   {assignment.questions
                     .sort((a, b) => a.order - b.order)
                     .map((question, index) => (
-                    <div key={question.id} className="border border-primary/10 p-4 space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="w-8 h-8 bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              {getQuestionTypeIcon(question.type)}
-                              <Badge variant="secondary" className="text-xs">
-                                {getQuestionTypeLabel(question.type)}
-                              </Badge>
-                              {question.isAIGenerated && (
-                                <Badge variant="outline" className="text-xs border-purple-200 text-purple-600">
-                                  AI Generated
+                      <div
+                        key={question.id}
+                        className="border border-primary/10 p-4 space-y-4"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className="w-8 h-8 bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                {getQuestionTypeIcon(question.type)}
+                                <Badge variant="secondary" className="text-xs">
+                                  {getQuestionTypeLabel(question.type)}
                                 </Badge>
+                                {question.isAIGenerated && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs border-purple-200 text-purple-600"
+                                  >
+                                    AI Generated
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-foreground leading-relaxed mb-3">
+                                {question.text}
+                              </p>
+
+                              {question.imageUrls &&
+                                question.imageUrls.length > 0 && (
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+                                    {question.imageUrls.map(
+                                      (imageUrl, imgIndex) => (
+                                        <img
+                                          key={imgIndex}
+                                          src={imageUrl}
+                                          alt={`Question ${index + 1} image ${imgIndex + 1}`}
+                                          className="w-full h-32 object-cover border border-primary/20"
+                                        />
+                                      ),
+                                    )}
+                                  </div>
+                                )}
+
+                              {question.options.length > 0 && (
+                                <div className="space-y-2">
+                                  <p className="text-sm font-medium text-muted-foreground">
+                                    Options:
+                                  </p>
+                                  <div className="space-y-2">
+                                    {question.options
+                                      .sort((a, b) => a.order - b.order)
+                                      .map((option) => (
+                                        <div
+                                          key={option.id}
+                                          className={`flex items-center gap-3 p-2 border ${
+                                            option.isCorrect
+                                              ? "border-green-200 bg-green-50"
+                                              : "border-primary/10 bg-background"
+                                          }`}
+                                        >
+                                          <div
+                                            className={`w-4 h-4 flex items-center justify-center text-xs ${
+                                              option.isCorrect
+                                                ? "text-green-600"
+                                                : "text-muted-foreground"
+                                            }`}
+                                          >
+                                            {option.isCorrect && (
+                                              <CheckCircle2 className="w-3 h-3" />
+                                            )}
+                                          </div>
+                                          <span className="text-foreground">
+                                            {option.text}
+                                          </span>
+                                          {option.imageUrl && (
+                                            <img
+                                              src={option.imageUrl}
+                                              alt="Option image"
+                                              className="w-8 h-8 object-cover border border-primary/20"
+                                            />
+                                          )}
+                                        </div>
+                                      ))}
+                                  </div>
+                                </div>
                               )}
                             </div>
-                            <p className="text-foreground leading-relaxed mb-3">{question.text}</p>
-                            
-                            {question.imageUrls && question.imageUrls.length > 0 && (
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-                                {question.imageUrls.map((imageUrl, imgIndex) => (
-                                  <img
-                                    key={imgIndex}
-                                    src={imageUrl}
-                                    alt={`Question ${index + 1} image ${imgIndex + 1}`}
-                                    className="w-full h-32 object-cover border border-primary/20"
-                                  />
-                                ))}
-                              </div>
-                            )}
-
-                            {question.options.length > 0 && (
-                              <div className="space-y-2">
-                                <p className="text-sm font-medium text-muted-foreground">Options:</p>
-                                <div className="space-y-2">
-                                  {question.options
-                                    .sort((a, b) => a.order - b.order)
-                                    .map((option) => (
-                                    <div
-                                      key={option.id}
-                                      className={`flex items-center gap-3 p-2 border ${
-                                        option.isCorrect
-                                          ? 'border-green-200 bg-green-50'
-                                          : 'border-primary/10 bg-background'
-                                      }`}
-                                    >
-                                      <div className={`w-4 h-4 flex items-center justify-center text-xs ${
-                                        option.isCorrect ? 'text-green-600' : 'text-muted-foreground'
-                                      }`}>
-                                        {option.isCorrect && <CheckCircle2 className="w-3 h-3" />}
-                                      </div>
-                                      <span className="text-foreground">{option.text}</span>
-                                      {option.imageUrl && (
-                                        <img
-                                          src={option.imageUrl}
-                                          alt="Option image"
-                                          className="w-8 h-8 object-cover border border-primary/20"
-                                        />
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                          </div>
+                          <div className="text-right">
+                            <Badge
+                              variant="outline"
+                              className="border-primary/30 text-primary"
+                            >
+                              {question.marks} pts
+                            </Badge>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <Badge variant="outline" className="border-primary/30 text-primary">
-                            {question.marks} pts
-                          </Badge>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </CardContent>
               </Card>
             </div>
@@ -602,7 +688,9 @@ export default function AssignmentDetailPage() {
               {/* Teacher Info */}
               <Card className="border-primary/20 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-foreground">Teacher</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    Teacher
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3">
@@ -610,7 +698,9 @@ export default function AssignmentDetailPage() {
                       {assignment.teacher.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{assignment.teacher.name}</p>
+                      <p className="font-semibold text-foreground">
+                        {assignment.teacher.name}
+                      </p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <Mail className="w-3 h-3" />
                         {assignment.teacher.email}
@@ -625,12 +715,16 @@ export default function AssignmentDetailPage() {
                 <Card className="border-primary/20 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-semibold text-foreground">
-                      Reference Materials ({assignment.referenceMaterials.length})
+                      Reference Materials (
+                      {assignment.referenceMaterials.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {assignment.referenceMaterials.map((material) => (
-                      <div key={material.id} className="flex items-center justify-between p-3 border border-primary/10 hover:bg-primary/5 transition-colors">
+                      <div
+                        key={material.id}
+                        className="flex items-center justify-between p-3 border border-primary/10 hover:bg-primary/5 transition-colors"
+                      >
                         <div className="flex items-center gap-3">
                           {getFileIcon(material.fileType)}
                           <div>
@@ -645,7 +739,9 @@ export default function AssignmentDetailPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(material.fileUrl, '_blank')}
+                          onClick={() =>
+                            window.open(material.fileUrl, "_blank")
+                          }
                           className="hover:bg-primary/10"
                         >
                           <Download className="w-4 h-4" />
@@ -659,20 +755,28 @@ export default function AssignmentDetailPage() {
               {/* Assignment Metadata */}
               <Card className="border-primary/20 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-foreground">Details</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    Details
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-sm">
                     <p className="text-muted-foreground">Created</p>
-                    <p className="font-medium text-foreground">{formatDate(assignment.createdAt)}</p>
+                    <p className="font-medium text-foreground">
+                      {formatDate(assignment.createdAt)}
+                    </p>
                   </div>
                   <div className="text-sm">
                     <p className="text-muted-foreground">Last Updated</p>
-                    <p className="font-medium text-foreground">{formatDate(assignment.updatedAt)}</p>
+                    <p className="font-medium text-foreground">
+                      {formatDate(assignment.updatedAt)}
+                    </p>
                   </div>
                   <div className="text-sm">
                     <p className="text-muted-foreground">Assignment ID</p>
-                    <p className="font-mono text-xs text-foreground">{assignment.id}</p>
+                    <p className="font-mono text-xs text-foreground">
+                      {assignment.id}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -687,8 +791,9 @@ export default function AssignmentDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Assignment</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{assignment?.title}"? This action cannot be undone.
-              This will permanently delete the assignment and all associated questions and materials.
+              Are you sure you want to delete "{assignment?.title}"? This action
+              cannot be undone. This will permanently delete the assignment and
+              all associated questions and materials.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -732,7 +837,7 @@ export default function AssignmentDetailPage() {
                 Close
               </button>
             </div>
-            
+
             <div className="flex flex-col items-center mb-6">
               <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
             </div>
@@ -740,22 +845,45 @@ export default function AssignmentDetailPage() {
             {/* Header */}
             <div className="w-full flex flex-row items-start justify-between mb-2">
               <div>
-                <div className="text-2xl font-extrabold text-black mb-1">{assignment.title}</div>
+                <div className="text-2xl font-extrabold text-black mb-1">
+                  {assignment.title}
+                </div>
                 <div className="text-lg italic text-gray-700">
-                  {assignment.subject.subject.name} – {assignment.gradeLevels.map(g => g.gradeLevel.name).join(', ')}
+                  {assignment.subject.subject.name} –{" "}
+                  {assignment.gradeLevels
+                    .map((g) => g.gradeLevel.name)
+                    .join(", ")}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-base font-semibold text-black">Assignment</div>
-                <div className="text-sm text-gray-700">Date: {formatDate(assignment.date)}</div>
+                <div className="text-base font-semibold text-black">
+                  Assignment
+                </div>
+                <div className="text-sm text-gray-700">
+                  Date: {formatDate(assignment.date)}
+                </div>
                 {assignment.startTime && (
-                  <div className="text-sm text-gray-700">Start: {formatTime(assignment.startTime)}</div>
+                  <div className="text-sm text-gray-700">
+                    Start: {formatTime(assignment.startTime)}
+                  </div>
                 )}
-                <div className="text-sm text-gray-700">Duration: {assignment.duration} min</div>
-                <div className="text-sm text-gray-700">Total Marks: {assignment.totalMarks}</div>
+                <div className="text-sm text-gray-700">
+                  Duration: {assignment.duration} min
+                </div>
+                <div className="text-sm text-gray-700">
+                  Total Marks: {assignment.totalMarks}
+                </div>
                 {assignment.resourceUrl && (
                   <div className="text-sm text-gray-700">
-                    Resource: <a href={assignment.resourceUrl} target="_blank" rel="noopener noreferrer" className="text-[#059669] underline">{assignment.resourceUrl}</a>
+                    Resource:{" "}
+                    <a
+                      href={assignment.resourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#059669] underline"
+                    >
+                      {assignment.resourceUrl}
+                    </a>
                   </div>
                 )}
               </div>
@@ -768,8 +896,12 @@ export default function AssignmentDetailPage() {
               Read all questions carefully before answering.
               {assignment.instructions && (
                 <div className="mt-4 text-left">
-                  <div className="font-semibold text-gray-800">Instructions:</div>
-                  <div className="whitespace-pre-wrap text-gray-700 mt-2">{assignment.instructions}</div>
+                  <div className="font-semibold text-gray-800">
+                    Instructions:
+                  </div>
+                  <div className="whitespace-pre-wrap text-gray-700 mt-2">
+                    {assignment.instructions}
+                  </div>
                 </div>
               )}
             </div>
@@ -777,17 +909,26 @@ export default function AssignmentDetailPage() {
             {/* Reference Materials */}
             {assignment.referenceMaterials.length > 0 && (
               <div className="w-full mb-6 p-4 bg-gray-50 border border-gray-200">
-                <div className="font-semibold text-gray-800 mb-2">Reference Materials:</div>
+                <div className="font-semibold text-gray-800 mb-2">
+                  Reference Materials:
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {assignment.referenceMaterials.map((material) => (
-                    <div key={material.id} className="flex items-center gap-2 text-sm text-gray-700">
+                    <div
+                      key={material.id}
+                      className="flex items-center gap-2 text-sm text-gray-700"
+                    >
                       <File className="w-4 h-4 text-[#0d9488]" />
-                      <span>{material.fileType.toUpperCase()} File ({formatFileSize(material.fileSize)})</span>
+                      <span>
+                        {material.fileType.toUpperCase()} File (
+                        {formatFileSize(material.fileSize)})
+                      </span>
                     </div>
                   ))}
                 </div>
                 <div className="text-xs text-gray-500 mt-2">
-                  These files are available as reference materials for this assignment
+                  These files are available as reference materials for this
+                  assignment
                 </div>
               </div>
             )}
@@ -797,55 +938,61 @@ export default function AssignmentDetailPage() {
               {assignment.questions
                 .sort((a, b) => a.order - b.order)
                 .map((question, idx) => (
-                <li key={question.id} className="text-black text-base mb-2">
-                  <div className="mb-2 font-medium">{question.text}</div>
-                  <div className="text-xs text-gray-500 mb-2">({question.marks} marks)</div>
-                  
-                  {question.imageUrls && question.imageUrls.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {question.imageUrls.map((imageUrl, imgIndex) => (
-                        <img
-                          key={imgIndex}
-                          src={imageUrl}
-                          alt={`Question ${idx + 1} image ${imgIndex + 1}`}
-                          className="w-full h-32 object-cover border border-gray-300"
-                        />
-                      ))}
+                  <li key={question.id} className="text-black text-base mb-2">
+                    <div className="mb-2 font-medium">{question.text}</div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      ({question.marks} marks)
                     </div>
-                  )}
 
-                  {question.options.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
-                      {question.options
-                        .sort((a, b) => a.order - b.order)
-                        .map((option, oIdx) => (
-                        <div key={option.id} className="flex items-start gap-2">
-                          <span className="font-bold text-black w-6">
-                            {question.type === 'true_false' 
-                              ? (oIdx === 0 ? "T)" : "F)") 
-                              : `${String.fromCharCode(65 + oIdx)})`
-                            }
-                          </span>
-                          <span className="text-black">{option.text}</span>
-                          {option.imageUrl && (
-                            <img
-                              src={option.imageUrl}
-                              alt="Option image"
-                              className="w-8 h-8 object-cover border border-gray-300 ml-2"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    {question.imageUrls && question.imageUrls.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        {question.imageUrls.map((imageUrl, imgIndex) => (
+                          <img
+                            key={imgIndex}
+                            src={imageUrl}
+                            alt={`Question ${idx + 1} image ${imgIndex + 1}`}
+                            className="w-full h-32 object-cover border border-gray-300"
+                          />
+                        ))}
+                      </div>
+                    )}
 
-                  {question.type === 'short_answer' && (
-                    <div className="mt-4">
-                      <div className="border-b border-gray-300 pb-8"></div>
-                    </div>
-                  )}
-                </li>
-              ))}
+                    {question.options.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4">
+                        {question.options
+                          .sort((a, b) => a.order - b.order)
+                          .map((option, oIdx) => (
+                            <div
+                              key={option.id}
+                              className="flex items-start gap-2"
+                            >
+                              <span className="font-bold text-black w-6">
+                                {question.type === "true_false"
+                                  ? oIdx === 0
+                                    ? "T)"
+                                    : "F)"
+                                  : `${String.fromCharCode(65 + oIdx)})`}
+                              </span>
+                              <span className="text-black">{option.text}</span>
+                              {option.imageUrl && (
+                                <img
+                                  src={option.imageUrl}
+                                  alt="Option image"
+                                  className="w-8 h-8 object-cover border border-gray-300 ml-2"
+                                />
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {question.type === "short_answer" && (
+                      <div className="mt-4">
+                        <div className="border-b border-gray-300 pb-8"></div>
+                      </div>
+                    )}
+                  </li>
+                ))}
             </ol>
 
             {/* Footer */}
@@ -854,7 +1001,7 @@ export default function AssignmentDetailPage() {
               <div>Created: {formatDate(assignment.createdAt)}</div>
             </div>
           </div>
-          
+
           <style>{`
             @media print {
               body * { visibility: hidden !important; }

@@ -1,9 +1,9 @@
 // app/school/[subdomain]/(pages)/timetable/hooks/useTimetableConflictsNew.ts
 // NEW: Efficient conflict detection with normalized data
 
-import { useMemo } from 'react';
-import { useTimetableStore } from '@/lib/stores/useTimetableStoreNew';
-import type { Conflict, TimetableEntry } from '@/lib/types/timetable';
+import { useMemo } from "react";
+import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
+import type { Conflict, TimetableEntry } from "@/lib/types/timetable";
 
 /**
  * Detect teacher conflicts (same teacher, same time, different grades)
@@ -14,14 +14,14 @@ export function useTeacherConflicts() {
 
   return useMemo(() => {
     const conflicts: Conflict[] = [];
-    
+
     // Group entries by teacher + time slot + day
     const timeSlotMap = new Map<string, TimetableEntry[]>();
 
     store.entries.forEach((entry) => {
       // Create a key: "teacher-123-slot-1-day-1"
       const key = `${entry.teacherId}-${entry.timeSlotId}-${entry.dayOfWeek}`;
-      
+
       if (!timeSlotMap.has(key)) {
         timeSlotMap.set(key, []);
       }
@@ -31,24 +31,30 @@ export function useTeacherConflicts() {
     // Check for conflicts (more than 1 entry in same slot)
     timeSlotMap.forEach((entries) => {
       if (entries.length > 1) {
-        const teacher = store.teachers.find((t) => t.id === entries[0].teacherId);
-        const timeSlot = store.timeSlots.find((ts) => ts.id === entries[0].timeSlotId);
+        const teacher = store.teachers.find(
+          (t) => t.id === entries[0].teacherId,
+        );
+        const timeSlot = store.timeSlots.find(
+          (ts) => ts.id === entries[0].timeSlotId,
+        );
 
         if (teacher && timeSlot) {
           conflicts.push({
-            type: 'teacher_conflict',
+            type: "teacher_conflict",
             teacher: {
               id: teacher.id,
               name: teacher.name,
             },
             entries: entries.map((entry) => {
               const grade = store.grades.find((g) => g.id === entry.gradeId);
-              const subject = store.subjects.find((s) => s.id === entry.subjectId);
+              const subject = store.subjects.find(
+                (s) => s.id === entry.subjectId,
+              );
 
               return {
                 id: entry.id,
-                grade: grade?.name || 'Unknown',
-                subject: subject?.name || 'Unknown',
+                grade: grade?.name || "Unknown",
+                subject: subject?.name || "Unknown",
                 dayOfWeek: entry.dayOfWeek,
                 timeSlot: timeSlot.time,
               };
@@ -59,7 +65,13 @@ export function useTeacherConflicts() {
     });
 
     return conflicts;
-  }, [store.entries, store.teachers, store.timeSlots, store.grades, store.subjects]);
+  }, [
+    store.entries,
+    store.teachers,
+    store.timeSlots,
+    store.grades,
+    store.subjects,
+  ]);
 }
 
 /**
@@ -81,7 +93,7 @@ export function useRoomConflicts() {
 
   return useMemo(() => {
     const conflicts: Conflict[] = [];
-    
+
     // Group entries by room + time slot + day
     const roomMap = new Map<string, TimetableEntry[]>();
 
@@ -89,7 +101,7 @@ export function useRoomConflicts() {
       if (!entry.roomNumber) return; // Skip entries without rooms
 
       const key = `${entry.roomNumber}-${entry.timeSlotId}-${entry.dayOfWeek}`;
-      
+
       if (!roomMap.has(key)) {
         roomMap.set(key, []);
       }
@@ -99,20 +111,24 @@ export function useRoomConflicts() {
     // Check for conflicts
     roomMap.forEach((entries) => {
       if (entries.length > 1) {
-        const timeSlot = store.timeSlots.find((ts) => ts.id === entries[0].timeSlotId);
+        const timeSlot = store.timeSlots.find(
+          (ts) => ts.id === entries[0].timeSlotId,
+        );
 
         if (timeSlot) {
           conflicts.push({
-            type: 'room_conflict',
+            type: "room_conflict",
             room: entries[0].roomNumber,
             entries: entries.map((entry) => {
               const grade = store.grades.find((g) => g.id === entry.gradeId);
-              const subject = store.subjects.find((s) => s.id === entry.subjectId);
+              const subject = store.subjects.find(
+                (s) => s.id === entry.subjectId,
+              );
 
               return {
                 id: entry.id,
-                grade: grade?.name || 'Unknown',
-                subject: subject?.name || 'Unknown',
+                grade: grade?.name || "Unknown",
+                subject: subject?.name || "Unknown",
                 dayOfWeek: entry.dayOfWeek,
                 timeSlot: timeSlot.time,
               };
@@ -149,28 +165,27 @@ export function useAllConflicts() {
 export function useSlotConflicts(
   gradeId: string,
   timeSlotId: string,
-  dayOfWeek: number
+  dayOfWeek: number,
 ) {
   const teacherConflicts = useTeacherConflicts();
+  const entries = useTimetableStore((state) => state.entries);
 
   return useMemo(() => {
     // Find entry for this slot
-    const store = useTimetableStore.getState();
-    const entry = store.entries.find(
+    const entry = entries.find(
       (e) =>
         e.gradeId === gradeId &&
         e.timeSlotId === timeSlotId &&
-        e.dayOfWeek === dayOfWeek
+        e.dayOfWeek === dayOfWeek,
     );
 
     if (!entry) return null;
 
     // Check if this entry is involved in any conflicts
     const conflict = teacherConflicts.find((c) =>
-      c.entries.some((e) => e.id === entry.id)
+      c.entries.some((e) => e.id === entry.id),
     );
 
     return conflict || null;
-  }, [gradeId, timeSlotId, dayOfWeek, teacherConflicts]);
+  }, [gradeId, timeSlotId, dayOfWeek, teacherConflicts, entries]);
 }
-

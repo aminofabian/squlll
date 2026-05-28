@@ -78,11 +78,20 @@ export function useSchoolConfig(enabled: boolean = true) {
         console.log('Making GraphQL request to /api/graphql');
         console.log('=== End useSchoolConfig Debug ===');
 
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (typeof window !== 'undefined') {
+          const accessToken = window.localStorage.getItem('accessToken');
+          if (accessToken) {
+            headers.Authorization = `Bearer ${accessToken}`;
+          }
+        }
+
         const response = await fetch('/api/graphql', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          credentials: 'include',
+          headers,
           body: JSON.stringify({
             query: `
               query GetSchoolConfiguration {
@@ -135,6 +144,20 @@ export function useSchoolConfig(enabled: boolean = true) {
           
           const errorData = await response.json();
           console.log('Error response data:', errorData);
+
+          const firstError = errorData.errors?.[0];
+          const isMissingConfig =
+            response.status === 404 ||
+            firstError?.message?.includes('School configuration not found');
+
+          if (
+            isMissingConfig &&
+            typeof window !== 'undefined' &&
+            !window.location.pathname.includes('/setup')
+          ) {
+            window.location.href = '/setup';
+            return null;
+          }
           
           throw {
             response: {
@@ -149,6 +172,17 @@ export function useSchoolConfig(enabled: boolean = true) {
 
         if (data.errors) {
           console.log('GraphQL errors in response:', data.errors);
+
+          const firstError = data.errors[0];
+          if (
+            firstError?.message?.includes('School configuration not found') &&
+            typeof window !== 'undefined' &&
+            !window.location.pathname.includes('/setup')
+          ) {
+            window.location.href = '/setup';
+            return null;
+          }
+
           throw {
             response: {
               status: 500,
@@ -201,9 +235,13 @@ export function useSchoolConfig(enabled: boolean = true) {
             return false;
           }
           
-          // Don't retry "School not found" errors
-          if (firstError?.message?.includes('School (tenant) not found') || 
-              firstError?.extensions?.code === 'NOTFOUNDEXCEPTION') {
+          // Don't retry "School not found" or missing configuration errors
+          if (
+            firstError?.message?.includes('School (tenant) not found') ||
+            firstError?.message?.includes('School configuration not found') ||
+            firstError?.extensions?.code === 'NOTFOUNDEXCEPTION' ||
+            firstError?.extensions?.code === 'NOT_FOUND'
+          ) {
             return false;
           }
         }

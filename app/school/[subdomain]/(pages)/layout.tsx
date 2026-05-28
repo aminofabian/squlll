@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { SchoolSidebar } from '@/components/dashboard/SchoolSidebar'
 import { Toaster } from "sonner"
@@ -45,6 +45,7 @@ function SchoolLayoutContent({
 }) {
   const params = useParams()
   const pathname = usePathname()
+  const router = useRouter()
   const subdomain = params.subdomain as string
   const [schoolName, setSchoolName] = useState('School Dashboard')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -73,6 +74,13 @@ function SchoolLayoutContent({
 
   // Add a state to track if we're in a loading state that should show the loading UI
   const [shouldShowLoading, setShouldShowLoading] = useState(true)
+
+  useEffect(() => {
+    if (isSignupPage || isConfigLoading || isConfigured) {
+      return;
+    }
+    router.replace('/setup');
+  }, [isSignupPage, isConfigLoading, isConfigured, router]);
 
   useEffect(() => {
     // Only show loading state initially, then let the config loading state take over

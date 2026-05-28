@@ -1,7 +1,46 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint'
 
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.zelisline.com/graphql'
+const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint()
+
+async function isSchoolConfigured(
+  accessToken: string,
+  tenantId: string,
+  tenantSubdomain: string,
+): Promise<boolean> {
+  try {
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+        'x-tenant-id': tenantId,
+        'x-tenant-subdomain': tenantSubdomain,
+      },
+      body: JSON.stringify({
+        query: `
+          query SchoolConfigStatus {
+            getSchoolConfiguration {
+              id
+              selectedLevels { id }
+            }
+          }
+        `,
+      }),
+    })
+
+    const data = await response.json()
+    if (data.errors?.length) {
+      return false
+    }
+
+    const levels = data.data?.getSchoolConfiguration?.selectedLevels
+    return Array.isArray(levels) && levels.length > 0
+  } catch {
+    return false
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -181,18 +220,43 @@ export async function POST(request: Request) {
       domain
     })
 
+    const tenantSubdomain =
+      body.subdomain || userData.subdomainUrl?.split('.')[0]
+
+    if (tenantSubdomain) {
+      cookieStore.set('tenantSubdomain', tenantSubdomain, {
+        httpOnly: false,
+        secure,
+        sameSite,
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+        domain,
+      })
+    }
+
+    const role = userData.membership?.role
+    let schoolConfigured = true
+    if (role === 'SCHOOL_ADMIN' && tenantSubdomain) {
+      schoolConfigured = await isSchoolConfigured(
+        userData.tokens.accessToken,
+        userData.membership.tenant.id,
+        tenantSubdomain,
+      )
+    }
+
     // Return success response
     return NextResponse.json({
       user: userData.user,
       membership: userData.membership,
       tenant: userData.membership.tenant,
       subdomainUrl: userData.subdomainUrl,
+      tenantSubdomain,
+      schoolConfigured,
+      accessToken: userData.tokens.accessToken,
       tokens: {
-        // Only return non-sensitive token info if needed
-        accessToken: userData.tokens.accessToken.substring(0, 20) + '...',
-        hasRefreshToken: !!userData.tokens.refreshToken
+        hasRefreshToken: !!userData.tokens.refreshToken,
       },
-      message: 'Sign in successful'
+      message: 'Sign in successful',
     })
 
   } catch (error) {
