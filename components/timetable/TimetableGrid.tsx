@@ -205,7 +205,7 @@ export function TimetableGrid({
                         ? nextLessonId === cell.lesson.id
                         : false;
                       const hasConflict = cell?.type === 'lesson' && cell.lesson
-                        ? conflictLessonIds?.has(cell.lesson.id)
+                        ? (conflictLessonIds?.has(cell.lesson.id) ?? false)
                         : false;
 
                       return (

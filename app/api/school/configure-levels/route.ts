@@ -4,6 +4,18 @@ import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint';
 
 const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint();
 
+type GraphQLError = {
+  extensions?: { code?: string };
+  message?: string;
+};
+
+function toGraphQLError(error: unknown): GraphQLError {
+  if (typeof error === 'object' && error !== null) {
+    return error as GraphQLError;
+  }
+  return {};
+}
+
 export async function POST(request: Request) {
   try {
     const { levelNames } = await request.json();
@@ -153,19 +165,21 @@ export async function POST(request: Request) {
       console.error('GraphQL errors:', result.errors);
       
       // Check for permission denied errors
-      const permissionDeniedError = result.errors.find(
-        (error: { extensions?: { code?: string }; message?: string }) =>
-          error.extensions?.code === 'FORBIDDENEXCEPTION' ||
-          (error.message?.includes('Access denied') &&
-            error.message?.includes('Required roles')),
-      );
+      const permissionDeniedError = result.errors.find((error) => {
+        const e = toGraphQLError(error);
+        return (
+          e.extensions?.code === 'FORBIDDENEXCEPTION' ||
+          (Boolean(e.message?.includes('Access denied')) &&
+            Boolean(e.message?.includes('Required roles')))
+        );
+      });
 
       if (permissionDeniedError) {
         return NextResponse.json(
           {
             error: 'PERMISSION_DENIED',
             message:
-              permissionDeniedError.message ||
+              toGraphQLError(permissionDeniedError).message ||
               'You need school admin rights to complete setup. Try signing in again after registration.',
             action: 'redirect_to_login',
             details: result.errors,
@@ -175,10 +189,13 @@ export async function POST(request: Request) {
       }
       
       // Check if the school is already configured
-      const alreadyConfiguredError = result.errors.find((error: any) => 
-        error.extensions?.code === 'BADREQUESTEXCEPTION' && 
-        error.message === 'School has already been configured'
-      );
+      const alreadyConfiguredError = result.errors.find((error) => {
+        const e = toGraphQLError(error);
+        return (
+          e.extensions?.code === 'BADREQUESTEXCEPTION' &&
+          e.message === 'School has already been configured'
+        );
+      });
       
       if (alreadyConfiguredError) {
         return NextResponse.json(
@@ -191,11 +208,13 @@ export async function POST(request: Request) {
         );
       }
 
-      const unauthorizedError = result.errors.find(
-        (error: { extensions?: { code?: string }; message?: string }) =>
-          error.extensions?.code === 'UNAUTHORIZED' ||
-          error.message?.toLowerCase().includes('access token'),
-      );
+      const unauthorizedError = result.errors.find((error) => {
+        const e = toGraphQLError(error);
+        return (
+          e.extensions?.code === 'UNAUTHORIZED' ||
+          Boolean(e.message?.toLowerCase().includes('access token'))
+        );
+      });
 
       if (unauthorizedError) {
         return NextResponse.json(
@@ -209,16 +228,18 @@ export async function POST(request: Request) {
         );
       }
 
-      const schoolSetupBlocked = result.errors.find(
-        (error: { message?: string }) =>
-          error.message?.toLowerCase().includes('school setup incomplete'),
-      );
+      const schoolSetupBlocked = result.errors.find((error) => {
+        const e = toGraphQLError(error);
+        return Boolean(
+          e.message?.toLowerCase().includes('school setup incomplete'),
+        );
+      });
 
       if (schoolSetupBlocked) {
         return NextResponse.json(
           {
             error: 'SCHOOL_SETUP_BLOCKED',
-            message: schoolSetupBlocked.message,
+            message: toGraphQLError(schoolSetupBlocked).message,
             details: result.errors,
           },
           { status: 403 },
