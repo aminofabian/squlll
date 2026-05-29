@@ -2347,13 +2347,9 @@ export const useTimetableStore = create<TimetableStore>()(
           const timeSlotsSnapshot = get().timeSlots;
           let allEntries: TimetableEntry[] = [];
 
-          // Primary source: flat entries API (reliable after create/update).
+          // Load all term entries (cross-grade) for conflict detection and teacher availability.
           if (termId) {
             try {
-              const tenantForEntries = gradeLevelId
-                ? resolveTenantGradeLevelIdForApi(masterGradeId ?? "", grades) ??
-                  gradeLevelId
-                : undefined;
               const entriesResponse = await fetch("/api/graphql", {
                 method: "POST",
                 headers: {
@@ -2365,12 +2361,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 body: JSON.stringify({
                   query: GET_TIMETABLE_ENTRIES_QUERY,
                   variables: {
-                    input: {
-                      termId,
-                      ...(tenantForEntries
-                        ? { gradeLevelId: tenantForEntries }
-                        : {}),
-                    },
+                    input: { termId },
                   },
                 }),
               });
@@ -2382,8 +2373,6 @@ export const useTimetableStore = create<TimetableStore>()(
                     rows,
                     grades,
                     timeSlotsSnapshot,
-                    masterGradeId,
-                    streamId,
                   );
                 }
               }
@@ -2538,44 +2527,10 @@ export const useTimetableStore = create<TimetableStore>()(
                 }
               : {};
 
-          // Merge entries for this grade/stream; keep other grades in the store.
+          // Keep full term entries in the store; grid hooks filter by grade/stream.
           set((state) => {
-            const otherEntries =
-              masterGradeId && grades.length > 0
-                ? state.entries.filter(
-                    (e) =>
-                      !entryMatchesGradeScope(
-                        e,
-                        masterGradeId,
-                        streamId,
-                        grades,
-                      ),
-                  )
-                : allEntries.length > 0
-                  ? []
-                  : state.entries;
-
-            const scopedFromState =
-              masterGradeId && grades.length > 0
-                ? state.entries.filter((e) =>
-                    entryMatchesGradeScope(
-                      e,
-                      masterGradeId,
-                      streamId,
-                      grades,
-                    ),
-                  )
-                : [];
-
-            const mergedById = new Map<string, TimetableEntry>();
-            for (const entry of scopedFromState) {
-              mergedById.set(entry.id, entry);
-            }
-            for (const entry of allEntries) {
-              mergedById.set(entry.id, entry);
-            }
-            const mergedScoped = Array.from(mergedById.values());
-            const entries = [...otherEntries, ...mergedScoped];
+            const entries =
+              allEntries.length > 0 ? allEntries : state.entries;
 
             return {
               entries,

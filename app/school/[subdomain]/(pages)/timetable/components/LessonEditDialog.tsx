@@ -1124,37 +1124,64 @@ Check the browser console for detailed input information.`;
     }
   };
 
-  const slotPeriodNumber = useMemo(() => {
-    if (!lesson) return undefined;
-    const slot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
-    return slot?.periodNumber;
-  }, [lesson, timeSlots]);
-
-  const targetPeriods = useMemo(
-    () => lessonTargetPeriods(slotPeriodNumber, formData.isDoublePeriod),
-    [slotPeriodNumber, formData.isDoublePeriod],
-  );
+  const effectiveScheduling = useMemo(() => {
+    if (!lesson) {
+      return { day: 1, periods: [] as number[] };
+    }
+    const isEditingMove = !lesson.isNew && moveDay > 0 && movePeriod > 0;
+    const day = isEditingMove ? moveDay : lesson.dayOfWeek;
+    let periodNumber: number | undefined;
+    if (isEditingMove) {
+      const moveSlot = getTimeSlotForDayAndPeriod(
+        timeSlots,
+        moveDay,
+        movePeriod,
+      );
+      periodNumber = moveSlot?.periodNumber ?? movePeriod;
+    } else {
+      const slot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+      periodNumber =
+        slot?.periodNumber ??
+        (lesson as EnrichedTimetableEntry).timeSlot?.periodNumber;
+    }
+    return {
+      day,
+      periods: lessonTargetPeriods(periodNumber, formData.isDoublePeriod),
+    };
+  }, [
+    lesson,
+    moveDay,
+    movePeriod,
+    timeSlots,
+    formData.isDoublePeriod,
+  ]);
 
   const busyTeacherIds = useMemo(() => {
-    if (!lesson) return new Set<string>();
+    if (!lesson || effectiveScheduling.periods.length === 0) {
+      return new Set<string>();
+    }
     return getBusyTeacherIds(
-      lesson.dayOfWeek,
-      targetPeriods,
+      effectiveScheduling.day,
+      effectiveScheduling.periods,
       entries,
       timeSlots,
       !lesson.isNew ? lesson.id : undefined,
     );
-  }, [lesson, targetPeriods, entries, timeSlots]);
+  }, [lesson, effectiveScheduling, entries, timeSlots]);
 
   const scheduleConflict = useMemo(() => {
-    if (!lesson || !formData.teacherId || targetPeriods.length === 0) {
+    if (
+      !lesson ||
+      !formData.teacherId ||
+      effectiveScheduling.periods.length === 0
+    ) {
       return null;
     }
     const result = validateScheduleConflict({
       teacherId: formData.teacherId,
       roomNumber: formData.roomNumber,
-      dayOfWeek: lesson.dayOfWeek,
-      targetPeriods,
+      dayOfWeek: effectiveScheduling.day,
+      targetPeriods: effectiveScheduling.periods,
       entries,
       timeSlots,
       excludeEntryId: !lesson.isNew ? lesson.id : undefined,
@@ -1164,9 +1191,46 @@ Check the browser console for detailed input information.`;
     lesson,
     formData.teacherId,
     formData.roomNumber,
-    targetPeriods,
+    effectiveScheduling,
     entries,
     timeSlots,
+  ]);
+
+  useEffect(() => {
+    if (!lesson || !formData.teacherId) return;
+    if (!busyTeacherIds.has(formData.teacherId)) return;
+
+    const grade = grades.find((g) => g.id === lesson.gradeId);
+    const classSubjects = subjectsForTimetableGrade(
+      lesson.gradeId,
+      grades,
+      subjects,
+      schoolConfigGetters,
+    );
+    const replacement = activeTeachers.find(
+      (teacher) =>
+        teacherCanTeachGrade(teacher, grade?.name) &&
+        !busyTeacherIds.has(teacher.id),
+    );
+    const replacementSubjects = subjectsForSelectedTeacher(
+      replacement,
+      classSubjects,
+    );
+    setFormData((prev) => ({
+      ...prev,
+      teacherId: replacement?.id ?? "",
+      subjectId: replacementSubjects.some((s) => s.id === prev.subjectId)
+        ? prev.subjectId
+        : (replacementSubjects[0]?.id ?? ""),
+    }));
+  }, [
+    lesson,
+    formData.teacherId,
+    busyTeacherIds,
+    activeTeachers,
+    grades,
+    subjects,
+    schoolConfigGetters,
   ]);
 
   if (!lesson) return null;
@@ -1373,7 +1437,11 @@ Check the browser console for detailed input information.`;
               </p>
             )}
             <Select
-              value={formData.teacherId || undefined}
+              value={
+                availableTeachers.some((t) => t.id === formData.teacherId)
+                  ? formData.teacherId
+                  : undefined
+              }
               onValueChange={handleTeacherChange}
             >
               <SelectTrigger
