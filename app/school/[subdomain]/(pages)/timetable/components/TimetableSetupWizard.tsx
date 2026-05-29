@@ -413,17 +413,17 @@ export function TimetableSetupWizard({
   const params = useParams();
   const subdomain = (params?.subdomain as string) || "school";
   const { toast } = useToast();
-  const { selectedTerm } = useSelectedTerm();
-  const { academicYears, getActiveAcademicYear } = useCurrentAcademicYear();
+  const { selectedTerm, hasTerms, termsLoading } = useSelectedTerm();
+  const { academicYears, loading: academicYearsLoading, getActiveAcademicYear } =
+    useCurrentAcademicYear();
 
-  const hasAcademicYear = academicYears.length > 0;
+  const activeYear = getActiveAcademicYear() ?? academicYears[0] ?? null;
+  const hasAcademicYear = !!activeYear;
   const hasTerm = !!selectedTerm;
   const canProceed = hasAcademicYear && hasTerm;
 
   const { data: gradeLevelsRaw = [], isLoading: gradeLevelsLoading } =
     useGradeLevelsForSchoolType(canProceed);
-
-  const activeYear = getActiveAcademicYear();
 
   const defaultTemplateName = useMemo(() => {
     if (!selectedTerm || !activeYear) return "School Timetable";
@@ -693,7 +693,10 @@ export function TimetableSetupWizard({
               </p>
             </div>
           </div>
-          {hasAcademicYear && !hasTerm && (
+          {hasAcademicYear && !hasTerm && termsLoading && (
+            <span className="text-xs text-slate-500 shrink-0">Loading terms…</span>
+          )}
+          {hasAcademicYear && !hasTerm && !termsLoading && !hasTerms && (
             <Button size="sm" onClick={onOpenCreateTerm}>
               Add term
             </Button>

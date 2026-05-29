@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTerm } from '../contexts/TermContext'
 import { 
@@ -49,7 +49,8 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
 
   // Get current academic year
   const { academicYears, loading: currentAcademicYearLoading, getActiveAcademicYear } = useCurrentAcademicYear()
-  const currentAcademicYear = getActiveAcademicYear()
+  const currentAcademicYear =
+    getActiveAcademicYear() ?? academicYears[0] ?? null
 
   // Query to get all terms for the current academic year
   const { data: terms, isLoading: termsLoading, refetch: refetchTerms } = useQuery({
@@ -96,14 +97,6 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
     },
     enabled: !!currentAcademicYear?.id,
   })
-
-  // Set the active term as selected by default
-  useEffect(() => {
-    if (terms && terms.length > 0 && !selectedTerm) {
-      const activeTerm = terms.find(term => term.isActive) || terms[0]
-      setSelectedTerm(activeTerm)
-    }
-  }, [terms, selectedTerm, setSelectedTerm])
 
   const handleTermSelect = (term: Term) => {
     setSelectedTerm(term)
