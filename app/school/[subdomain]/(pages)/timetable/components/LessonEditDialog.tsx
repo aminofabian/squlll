@@ -241,6 +241,28 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
+        const hintedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+        const resolvedSlot =
+          hintedSlot?.periodNumber != null
+            ? getTimeSlotForDayAndPeriod(
+                timeSlots,
+                lesson.dayOfWeek,
+                hintedSlot.periodNumber,
+              )
+            : hintedSlot;
+        const dayTemplatePeriodId = resolvedSlot?.id;
+
+        if (!dayTemplatePeriodId) {
+          toast({
+            title: "Period not found for this class",
+            description:
+              "This time slot does not belong to the selected class. Switch class or set up the timetable for this grade first.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
         // Create new entry via GraphQL - using single entry mutation
         const mutation = `
           mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
@@ -263,7 +285,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           termId: string;
           roomName?: string;
         } = {
-          dayTemplatePeriodId: lesson.timeSlotId,
+          dayTemplatePeriodId,
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
           gradeLevelId: tenantGradeLevelId,
@@ -279,7 +301,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         // Verify the IDs exist in the store
         const subject = subjects.find((s) => s.id === formData.subjectId);
         const teacher = activeTeachers.find((t) => t.id === formData.teacherId);
-        const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+        const timeSlot = resolvedSlot;
 
         // Note: Subject validation is handled by:
         // 1. The dropdown which filters subjects by grade level (name/code matching)

@@ -299,13 +299,15 @@ export function AdminTimetableGrid({
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() =>
+                                  disabled={!daySlot?.id}
+                                  onClick={() => {
+                                    if (!daySlot?.id) return;
                                     onAddLesson?.(
                                       dayOfWeek,
-                                      baseSlot.id,
-                                      daySlot?.id,
-                                    )
-                                  }
+                                      daySlot.id,
+                                      daySlot.id,
+                                    );
+                                  }}
                                   className="flex min-h-[64px] w-full flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-zinc-200/90 bg-zinc-50/50 text-[11px] font-medium text-zinc-400 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/20 dark:hover:border-zinc-600 dark:hover:text-zinc-300"
                                   title="Add lesson"
                                 >

@@ -15,7 +15,7 @@ import type {
 } from "../types/timetable";
 import { useSchoolConfigStore } from "./useSchoolConfigStore";
 import { breakGraphQLToStoreType } from "@/lib/utils/timetable-break-types";
-import { extractTimeSlotsFromTimetableData } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
+import { extractTimeSlotsFromTimetableData, uniquePeriodNumbers } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -964,7 +964,7 @@ export const useTimetableStore = create<TimetableStore>()(
             ? [dayTemplateIdParam]
             : templates.map((t: any) => t.id).filter(Boolean);
 
-          if (!dayTemplateIdParam && gradeIdParam && templateIds.length > 0) {
+          if (!dayTemplateIdParam && gradeIdParam) {
             const tenantGradeLevelId =
               get().grades.find((g) => g.id === gradeIdParam)
                 ?.tenantGradeLevelId ?? gradeIdParam;
@@ -973,9 +973,20 @@ export const useTimetableStore = create<TimetableStore>()(
                 (gl: any) => gl.id === tenantGradeLevelId,
               ),
             );
-            if (gradeTemplates.length > 0) {
-              templateIds = gradeTemplates.map((t: any) => t.id).filter(Boolean);
+            if (gradeTemplates.length === 0) {
+              console.warn(
+                "No day templates for selected grade — clearing timeSlots.",
+                { gradeIdParam, tenantGradeLevelId },
+              );
+              set({
+                timeSlots: [],
+                periodNumbers: [],
+                lessonPeriodsPerDay: 0,
+                lastUpdated: new Date().toISOString(),
+              });
+              return;
             }
+            templateIds = gradeTemplates.map((t: any) => t.id).filter(Boolean);
           }
 
           if (templateIds.length === 0) {
@@ -1085,12 +1096,22 @@ export const useTimetableStore = create<TimetableStore>()(
             );
             set((state) => ({
               timeSlots: allSlots,
+              periodNumbers: [
+                ...new Set(allSlots.map((s) => s.periodNumber)),
+              ].sort((a, b) => a - b),
               lessonPeriodsPerDay: Math.max(
                 state.lessonPeriodsPerDay ?? 0,
                 lessonPeriodsPerDay,
               ),
               lastUpdated: new Date().toISOString(),
             }));
+          } else if (gradeIdParam) {
+            set({
+              timeSlots: [],
+              periodNumbers: [],
+              lessonPeriodsPerDay: 0,
+              lastUpdated: new Date().toISOString(),
+            });
           } else {
             console.warn(
               "No periods fetched from any day template — keeping existing timeSlots.",
@@ -2286,14 +2307,22 @@ export const useTimetableStore = create<TimetableStore>()(
                 )
               : [];
 
-          // Use backend-provided periodNumbers, daysPerWeek, conflicts, and rooms.
-          set((state) => ({
-            entries: allEntries,
-            periodNumbers: resolvedPeriodNumbers,
-            daysPerWeek: resolvedDaysPerWeek,
-            conflicts: timetableData.conflicts || [],
-            knownRoomNumbers: timetableData.knownRoomNumbers || [],
-            ...(gradeScopedSlots.length > 0
+          const gradeSlotUpdate = gradeLevelId
+            ? {
+                timeSlots: gradeScopedSlots,
+                periodNumbers:
+                  gradeScopedSlots.length > 0
+                    ? uniquePeriodNumbers(gradeScopedSlots)
+                    : [],
+                lessonPeriodsPerDay:
+                  gradeScopedSlots.length > 0
+                    ? Math.max(
+                        ...gradeScopedSlots.map((s) => s.periodNumber || 0),
+                        0,
+                      )
+                    : 0,
+              }
+            : gradeScopedSlots.length > 0
               ? {
                   timeSlots: gradeScopedSlots,
                   lessonPeriodsPerDay: Math.max(
@@ -2301,6 +2330,20 @@ export const useTimetableStore = create<TimetableStore>()(
                     0,
                   ),
                 }
+              : {};
+
+          // Use backend-provided periodNumbers, daysPerWeek, conflicts, and rooms.
+          set((state) => ({
+            entries: allEntries,
+            periodNumbers: gradeLevelId
+              ? gradeSlotUpdate.periodNumbers ?? resolvedPeriodNumbers
+              : resolvedPeriodNumbers,
+            daysPerWeek: resolvedDaysPerWeek,
+            conflicts: timetableData.conflicts || [],
+            knownRoomNumbers: timetableData.knownRoomNumbers || [],
+            ...gradeSlotUpdate,
+            ...(gradeLevelId
+              ? {}
               : {
                   lessonPeriodsPerDay: Math.max(
                     state.lessonPeriodsPerDay ?? 0,
