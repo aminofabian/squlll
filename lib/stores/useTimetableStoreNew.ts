@@ -2211,16 +2211,57 @@ export const useTimetableStore = create<TimetableStore>()(
             });
           });
 
+          const periodNumbersFromSchedule = [
+            ...new Set(
+              (timetableData.schedule?.periods || [])
+                .map((p: any) => p?.period?.periodNumber)
+                .filter((n: unknown): n is number => typeof n === "number"),
+            ),
+          ].sort((a, b) => a - b);
+
+          const periodNumbersFromGrades = [
+            ...new Set(
+              (timetableData.timetableByGrade || []).flatMap((gradeBlock: any) =>
+                (gradeBlock.days || []).flatMap((dayItem: any) =>
+                  (dayItem.periods || [])
+                    .filter((p: any) => !p?.isBreak)
+                    .map((p: any) => p?.period?.periodNumber)
+                    .filter((n: unknown): n is number => typeof n === "number"),
+                ),
+              ),
+            ),
+          ].sort((a, b) => a - b);
+
+          const resolvedPeriodNumbers =
+            timetableData.periodNumbers?.length > 0
+              ? timetableData.periodNumbers
+              : periodNumbersFromSchedule.length > 0
+                ? periodNumbersFromSchedule
+                : periodNumbersFromGrades.length > 0
+                  ? periodNumbersFromGrades
+                  : typeof timetableData.totalPeriods === "number" &&
+                      timetableData.totalPeriods > 0
+                    ? Array.from(
+                        { length: timetableData.totalPeriods },
+                        (_, i) => i + 1,
+                      )
+                    : [];
+
+          const resolvedDaysPerWeek =
+            timetableData.daysPerWeek ||
+            timetableData.totalDays ||
+            (timetableData.timetableByGrade?.[0]?.days?.length ?? 5);
+
           // Use backend-provided periodNumbers, daysPerWeek, conflicts, and rooms.
           set((state) => ({
             entries: allEntries,
-            periodNumbers: timetableData.periodNumbers || [],
-            daysPerWeek: timetableData.daysPerWeek || 5,
+            periodNumbers: resolvedPeriodNumbers,
+            daysPerWeek: resolvedDaysPerWeek,
             conflicts: timetableData.conflicts || [],
             knownRoomNumbers: timetableData.knownRoomNumbers || [],
             lessonPeriodsPerDay: Math.max(
               state.lessonPeriodsPerDay ?? 0,
-              timetableData.periodNumbers?.length ?? 0,
+              resolvedPeriodNumbers.length,
             ),
             lastUpdated: new Date().toISOString(),
           }));

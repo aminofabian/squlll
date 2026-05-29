@@ -117,11 +117,14 @@ import { CreateAcademicYearModal } from "@/app/school/[subdomain]/(pages)/dashbo
 import { CreateTermModal } from "@/app/school/[subdomain]/(pages)/dashboard/components/CreateTermModal";
 import { useTimetableWeekDays } from "./hooks/useTimetableWeekDays";
 import { TimetableSetupWizard } from "./components/TimetableSetupWizard";
-import { isTimetableWizardComplete } from "@/lib/utils/timetable-setup";
+import {
+  isTimetableWizardComplete,
+  markTimetableWizardComplete,
+} from "@/lib/utils/timetable-setup";
 import { getTenantIdFromCookies } from "@/lib/utils/school-onboarding";
 
 export default function SmartTimetableNew() {
-  const { selectedTerm, setSelectedTerm } = useSelectedTerm();
+  const { selectedTerm, setSelectedTerm, termsLoading } = useSelectedTerm();
   const {
     academicYears,
     loading: academicYearsLoading,
@@ -276,6 +279,7 @@ export default function SmartTimetableNew() {
   const hasScheduleStructure =
     hasTimeSlots ||
     periodNumbers.length > 0 ||
+    hasAnyLessons ||
     (timetableSetupComplete && breaks.length > 0);
   const stats = useGradeStatistics(selectedGradeId);
   const {
@@ -439,13 +443,31 @@ export default function SmartTimetableNew() {
   }, []);
 
   useEffect(() => {
-    if (isLoadingInitial || academicYearsLoading) return;
-    if (hasScheduleStructure) return;
+    if (isLoadingInitial || academicYearsLoading || termsLoading) return;
+
+    const termId = selectedTerm?.id || selectedTermId;
     const tenantId = getTenantIdFromCookies();
+
+    if (hasScheduleStructure) {
+      if (tenantId) markTimetableWizardComplete(tenantId);
+      setShowTimetableWizard(false);
+      return;
+    }
+
+    // Wait until a term is selected and we've tried loading its timetable.
+    if (!termId) return;
+
     if (!isTimetableWizardComplete(tenantId)) {
       setShowTimetableWizard(true);
     }
-  }, [isLoadingInitial, academicYearsLoading, hasScheduleStructure]);
+  }, [
+    isLoadingInitial,
+    academicYearsLoading,
+    termsLoading,
+    hasScheduleStructure,
+    selectedTerm?.id,
+    selectedTermId,
+  ]);
 
   useEffect(() => {
     periodsRefetchAttemptedRef.current = false;
