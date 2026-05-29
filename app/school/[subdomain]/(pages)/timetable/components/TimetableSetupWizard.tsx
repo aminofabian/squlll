@@ -61,6 +61,7 @@ const LESSON_LENGTH_OPTIONS = [
   { value: "30", label: "30 minutes", subtitle: "Shorter lessons" },
   { value: "40", label: "40 minutes", subtitle: "Most schools" },
   { value: "45", label: "45 minutes", subtitle: "Longer lessons" },
+  { value: "60", label: "60 minutes", subtitle: "Double period / block" },
 ] as const;
 
 const PRESET_LESSON_LENGTH_VALUES = new Set(
@@ -457,8 +458,9 @@ export function TimetableSetupWizard({
     () => new Set([1, 2, 3, 4, 5]),
   );
   const [showOtherStartTime, setShowOtherStartTime] = useState(false);
-  const [showCustomLessonLength, setShowCustomLessonLength] = useState(false);
   const [showPickDays, setShowPickDays] = useState(false);
+
+  const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
 
   const gradeLevelsWithStreams = useMemo(
     () => mapGradeLevelsForSchoolType(gradeLevelsRaw),
@@ -769,59 +771,56 @@ export function TimetableSetupWizard({
               </FieldGroup>
 
               <FieldGroup label="How long is one lesson?">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {LESSON_LENGTH_OPTIONS.map((p) => (
                     <PresetOption
                       key={p.value}
-                      selected={
-                        periodDuration === p.value && !showCustomLessonLength
-                      }
-                      onClick={() => {
-                        setPeriodDuration(p.value);
-                        setShowCustomLessonLength(false);
-                      }}
+                      selected={periodDuration === p.value}
+                      onClick={() => setPeriodDuration(p.value)}
                       title={p.label}
                       subtitle={p.subtitle}
                       icon={Clock}
                     />
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowCustomLessonLength((v) => !v)}
-                  className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#246a59]"
+                <div
+                  className={cn(
+                    "mt-2 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
+                    isCustomLessonLength
+                      ? "border-[#246a59] bg-[#246a59]/10"
+                      : "border-slate-200 bg-slate-50/80 dark:border-slate-700",
+                  )}
                 >
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 transition-transform",
-                      showCustomLessonLength && "rotate-180",
-                    )}
-                  />
-                  Different length
-                </button>
-                {showCustomLessonLength && (
-                  <div className="mt-2 flex items-center gap-2">
+                  <label
+                    htmlFor="custom-lesson-length"
+                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                  >
+                    Other length
+                  </label>
+                  <div className="flex items-center gap-2">
                     <Input
+                      id="custom-lesson-length"
                       type="number"
                       min={1}
                       max={240}
                       inputMode="numeric"
-                      value={
-                        PRESET_LESSON_LENGTH_VALUES.has(periodDuration)
-                          ? ""
-                          : periodDuration
-                      }
-                      placeholder="e.g. 35"
+                      value={isCustomLessonLength ? periodDuration : ""}
+                      placeholder="e.g. 35 or 50"
                       onChange={(e) => {
                         const raw = e.target.value.replace(/\D/g, "");
                         setPeriodDuration(raw);
                       }}
-                      className={cn(onboardingInputClass, "max-w-[120px]")}
-                      aria-label="Lesson length in minutes"
+                      onFocus={() => {
+                        if (PRESET_LESSON_LENGTH_VALUES.has(periodDuration)) {
+                          setPeriodDuration("");
+                        }
+                      }}
+                      className={cn(onboardingInputClass, "w-24")}
+                      aria-label="Custom lesson length in minutes"
                     />
                     <span className="text-sm text-slate-500">minutes</span>
                   </div>
-                )}
+                </div>
               </FieldGroup>
 
               <FieldGroup label="How many lessons in one day?">
