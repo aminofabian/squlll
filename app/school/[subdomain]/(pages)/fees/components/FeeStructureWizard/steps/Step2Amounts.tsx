@@ -389,7 +389,7 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
                         className="text-xs"
                     >
                         <Plus className="h-3.5 w-3.5 mr-1.5" />
-                        Create Bucket
+                        Add fee item
                     </Button>
                 </div>
             </div>
@@ -401,19 +401,19 @@ export const Step2Amounts = ({ formData, onChange, errors }: Step2AmountsProps) 
             <div>
                 {isLoadingBuckets ? (
                     <div className="text-center py-8 text-slate-500 text-sm">
-                        Loading buckets...
+                        Loading fee items...
                     </div>
                 ) : getAllBuckets().length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-lg">
-                        <p className="text-slate-600 mb-3">No fee buckets available</p>
-                        <p className="text-sm text-slate-500 mb-4">Create your first bucket to get started</p>
+                        <p className="text-slate-600 mb-3">No fee items yet</p>
+                        <p className="text-sm text-slate-500 mb-4">Add tuition, transport, lunch, or other charges</p>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setShowBucketModal(true)}
                         >
                             <Plus className="h-4 w-4 mr-2" />
-                            Create Your First Bucket
+                            Add your first fee item
                         </Button>
                     </div>
                 ) : (

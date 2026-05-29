@@ -9,6 +9,10 @@ import { debugAuth } from '@/lib/utils'
 import { TermsDropdown } from './components/TermsDropdown'
 import { TermProvider } from './contexts/TermContext'
 import { SchoolNavbar } from './components/SchoolNavbar'
+import {
+  getTenantIdFromCookies,
+  isSchoolOnboardingComplete,
+} from '@/lib/utils/school-onboarding'
 
 // Loading component for Suspense fallback
 function LayoutLoading() {
@@ -81,6 +85,16 @@ function SchoolLayoutContent({
     }
     router.replace('/setup');
   }, [isSignupPage, isConfigLoading, isConfigured, router]);
+
+  useEffect(() => {
+    if (isSignupPage || isConfigLoading || !isConfigured || !isMounted) {
+      return;
+    }
+    const tenantId = getTenantIdFromCookies();
+    if (!isSchoolOnboardingComplete(tenantId)) {
+      router.replace('/onboarding');
+    }
+  }, [isSignupPage, isConfigLoading, isConfigured, isMounted, router]);
 
   useEffect(() => {
     // Only show loading state initially, then let the config loading state take over

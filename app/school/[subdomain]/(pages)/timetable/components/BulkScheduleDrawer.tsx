@@ -531,7 +531,10 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
         if (!nextOpen) onClose();
       }}
     >
-      <SheetContent side="right" className="w-[600px] overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-[600px] overflow-y-auto"
+      >
         <SheetHeader className="border-b pb-2.5 px-4 pt-3">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
@@ -539,12 +542,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
             </div>
             <div className="flex-1">
               <SheetTitle className="text-xs font-semibold uppercase tracking-wide">
-                {existingWeekTemplate ? 'Replace Timetable' : 'Create Timetable'}
+                Advanced: lesson times
               </SheetTitle>
               <SheetDescription className="text-[11px] text-muted-foreground">
                 {existingWeekTemplate
-                  ? 'Update the lesson period structure for this term'
-                  : 'Set up lesson periods for your selected term'}
+                  ? 'Replaces period start times and counts for this term. Use guided setup for first-time schools.'
+                  : 'Power-user tool to define periods. New schools should use guided setup on the main page.'}
               </SheetDescription>
             </div>
           </div>

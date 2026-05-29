@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { useToast } from "@/components/ui/use-toast";
+import { SCHOOL_DAYS } from "@/lib/constants/breakTypes";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -30,8 +32,13 @@ import {
   Calendar,
   MapPin,
   Loader2,
+  Copy,
 } from "lucide-react";
 import type { CreateEntryRequest } from "@/lib/types/timetable";
+import { useKnownRoomNumbers } from "../hooks/useKnownRoomNumbers";
+import { useTimetableWeekDays } from "../hooks/useTimetableWeekDays";
+import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
+import { normalizeRoomNumber } from "../utils/normalizeRoomNumber";
 
 interface BulkLessonEntryDrawerProps {
   open: boolean;
@@ -47,7 +54,21 @@ interface LessonEntry {
   roomNumber: string;
 }
 
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+const WEEK_DAYS = [
+  ...SCHOOL_DAYS.map((name, i) => ({ value: i + 1, name })),
+  { value: 6, name: "Saturday" },
+  { value: 7, name: "Sunday" },
+];
+
+function blankRow(): LessonEntry {
+  return {
+    id: crypto.randomUUID(),
+    timeSlotId: "",
+    subjectId: "",
+    teacherId: "",
+    roomNumber: "",
+  };
+}
 
 export function BulkLessonEntryDrawer({
   open,
@@ -59,31 +80,44 @@ export function BulkLessonEntryDrawer({
     teachers,
     timeSlots,
     grades,
+    entries: timetableEntries,
     selectedGradeId,
     bulkCreateEntries,
   } = useTimetableStore();
   const { selectedTerm } = useSelectedTerm();
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
   const { toast } = useToast();
+  const knownRooms = useKnownRoomNumbers();
 
   const [gradeIdState, setGradeIdState] = useState("");
-  const [day, setDay] = useState(1);
+  const [selectedDays, setSelectedDays] = useState<number[]>([1]);
+  const [copySourceDay, setCopySourceDay] = useState<string>("");
+  const [duplicateSourceDay, setDuplicateSourceDay] = useState<string>("");
+  const [duplicateTargetDays, setDuplicateTargetDays] = useState<number[]>([]);
   const [entries, setEntries] = useState<LessonEntry[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
+  const { daysPerWeek } = useTimetableWeekDays();
+  const weekDays = useMemo(
+    () => WEEK_DAYS.filter((d) => d.value <= daysPerWeek),
+    [daysPerWeek],
+  );
 
   const termId = selectedTerm?.id || "";
   const effectiveGradeId =
     gradeIdState || initialGradeId || selectedGradeId || "";
 
-  // Reset on open/close
-  useState(() => {
-    if (open) {
-      setGradeIdState(initialGradeId || selectedGradeId || "");
-      if (entries.length === 0) addBlankEntry();
-    }
-  });
+  useEffect(() => {
+    if (!open) return;
+    setGradeIdState(initialGradeId || selectedGradeId || "");
+    setSelectedDays([1]);
+    setCopySourceDay("");
+    setDuplicateSourceDay("");
+    setDuplicateTargetDays([]);
+    setEntries([blankRow()]);
+  }, [open, initialGradeId, selectedGradeId]);
 
-  // Available subjects for selected grade
   const availableSubjects = useMemo(() => {
     if (!effectiveGradeId) return [];
     const gradeInfo = getGradeById(effectiveGradeId);
@@ -91,7 +125,6 @@ export function BulkLessonEntryDrawer({
     return getSubjectsByLevelId(gradeInfo.levelId);
   }, [effectiveGradeId, getGradeById, getSubjectsByLevelId]);
 
-  // Available teachers for this grade
   const availableTeachers = useMemo(() => {
     if (!effectiveGradeId) return teachers;
     const grade = grades.find((g) => g.id === effectiveGradeId);
@@ -103,29 +136,37 @@ export function BulkLessonEntryDrawer({
 
   const selectedGrade = grades.find((g) => g.id === effectiveGradeId);
 
-  // Track which time slots are already assigned to entries
   const usedSlotIds = useMemo(
     () => new Set(entries.map((e) => e.timeSlotId).filter(Boolean)),
     [entries],
   );
 
-  function addBlankEntry() {
-    setEntries((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        timeSlotId: "",
-        subjectId: "",
-        teacherId: "",
-        roomNumber: "",
-      },
-    ]);
-  }
+  const toggleDay = (dayValue: number) => {
+    setSelectedDays((prev) => {
+      if (prev.includes(dayValue)) {
+        const next = prev.filter((d) => d !== dayValue);
+        return next.length > 0 ? next : prev;
+      }
+      return [...prev, dayValue].sort((a, b) => a - b);
+    });
+  };
+
+  const toggleDuplicateTarget = (dayValue: number) => {
+    setDuplicateTargetDays((prev) => {
+      if (prev.includes(dayValue)) {
+        return prev.filter((d) => d !== dayValue);
+      }
+      return [...prev, dayValue].sort((a, b) => a - b);
+    });
+  };
+
+  const addBlankEntry = () => setEntries((prev) => [...prev, blankRow()]);
 
   const removeEntry = useCallback(
     (id: string) => setEntries((prev) => prev.filter((e) => e.id !== id)),
     [],
   );
+
   const updateEntry = useCallback(
     (id: string, updates: Partial<LessonEntry>) =>
       setEntries((prev) =>
@@ -134,13 +175,141 @@ export function BulkLessonEntryDrawer({
     [],
   );
 
+  const handleCopyFromDay = () => {
+    const sourceDay = Number(copySourceDay);
+    if (!effectiveGradeId || !sourceDay) return;
+
+    const sourceEntries = timetableEntries.filter(
+      (e) => e.gradeId === effectiveGradeId && e.dayOfWeek === sourceDay,
+    );
+
+    if (sourceEntries.length === 0) {
+      toast({
+        title: "Nothing to copy",
+        description: `No lessons found for ${weekDays.find((d) => d.value === sourceDay)?.name ?? "that day"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEntries(
+      sourceEntries.map((e) => ({
+        id: crypto.randomUUID(),
+        timeSlotId: e.timeSlotId,
+        subjectId: e.subjectId,
+        teacherId: e.teacherId,
+        roomNumber: e.roomNumber || "",
+      })),
+    );
+
+    toast({
+      title: "Copied lessons",
+      description: `${sourceEntries.length} row(s) loaded — pick target days above, then save.`,
+    });
+  };
+
+  const handleDuplicateDayToTargets = async () => {
+    const sourceDay = Number(duplicateSourceDay);
+    if (!effectiveGradeId || !termId || !sourceDay) return;
+    if (duplicateTargetDays.length === 0) {
+      toast({
+        title: "Pick target days",
+        description: "Select at least one day to copy lessons onto.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sourceEntries = timetableEntries.filter(
+      (e) => e.gradeId === effectiveGradeId && e.dayOfWeek === sourceDay,
+    );
+
+    if (sourceEntries.length === 0) {
+      toast({
+        title: "Nothing to duplicate",
+        description: `${
+          weekDays.find((d) => d.value === sourceDay)?.name ?? "That day"
+        } has no lessons for this class yet.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const occupiedOnTargets = new Set(
+      timetableEntries
+        .filter(
+          (e) =>
+            e.gradeId === effectiveGradeId &&
+            duplicateTargetDays.includes(e.dayOfWeek),
+        )
+        .map((e) => `${e.dayOfWeek}:${e.timeSlotId}`),
+    );
+
+    const requests: CreateEntryRequest[] = duplicateTargetDays.flatMap((day) =>
+      sourceEntries
+        .filter((e) => !occupiedOnTargets.has(`${day}:${e.timeSlotId}`))
+        .map((e) => ({
+          gradeId: effectiveGradeId,
+          subjectId: e.subjectId,
+          teacherId: e.teacherId,
+          timeSlotId: e.timeSlotId,
+          dayOfWeek: day,
+          roomNumber:
+            normalizeRoomNumber(e.roomNumber ?? "", knownRooms) || undefined,
+        })),
+    );
+
+    if (requests.length === 0) {
+      toast({
+        title: "All slots already filled",
+        description:
+          "Every period on the target days already has a lesson. Remove or edit those first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const skipped =
+      sourceEntries.length * duplicateTargetDays.length - requests.length;
+
+    setIsDuplicating(true);
+    try {
+      await bulkCreateEntries(termId, effectiveGradeId, requests);
+      const sourceName =
+        weekDays.find((d) => d.value === sourceDay)?.name ?? "day";
+      const targetNames = duplicateTargetDays
+        .map((d) => weekDays.find((w) => w.value === d)?.name)
+        .filter(Boolean)
+        .join(", ");
+      toast({
+        title: `${requests.length} lesson${requests.length !== 1 ? "s" : ""} copied`,
+        description: `From ${sourceName} to ${targetNames}${
+          skipped > 0 ? ` (${skipped} slot${skipped !== 1 ? "s" : ""} skipped — already filled)` : ""
+        }`,
+      });
+      onClose();
+    } catch (err) {
+      toast({
+        title: "Could not duplicate day",
+        description: sanitizeTimetableUserMessage(err),
+        variant: "destructive",
+      });
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!effectiveGradeId) {
-      toast({ title: "Select a grade first", variant: "destructive" });
+      toast({ title: "Select a class first", variant: "destructive" });
       return;
     }
     if (!termId) {
       toast({ title: "No term selected", variant: "destructive" });
+      return;
+    }
+    if (selectedDays.length === 0) {
+      toast({ title: "Pick at least one day", variant: "destructive" });
       return;
     }
 
@@ -150,7 +319,7 @@ export function BulkLessonEntryDrawer({
     if (incomplete.length > 0) {
       toast({
         title: "Incomplete entries",
-        description: `Fill in all required fields for ${incomplete.length} lesson(s).`,
+        description: `Fill in period, subject, and teacher for ${incomplete.length} row(s).`,
         variant: "destructive",
       });
       return;
@@ -158,23 +327,31 @@ export function BulkLessonEntryDrawer({
 
     setIsSaving(true);
     try {
-      const requests: CreateEntryRequest[] = entries.map((e) => ({
-        gradeId: effectiveGradeId,
-        subjectId: e.subjectId,
-        teacherId: e.teacherId,
-        timeSlotId: e.timeSlotId,
-        dayOfWeek: day,
-        roomNumber: e.roomNumber?.trim() || undefined,
-      }));
+      const requests: CreateEntryRequest[] = selectedDays.flatMap((day) =>
+        entries.map((e) => ({
+          gradeId: effectiveGradeId,
+          subjectId: e.subjectId,
+          teacherId: e.teacherId,
+          timeSlotId: e.timeSlotId,
+          dayOfWeek: day,
+          roomNumber:
+            normalizeRoomNumber(e.roomNumber ?? "", knownRooms) || undefined,
+        })),
+      );
 
       await bulkCreateEntries(termId, effectiveGradeId, requests);
+      const dayLabels = selectedDays
+        .map((d) => weekDays.find((w) => w.value === d)?.name)
+        .filter(Boolean)
+        .join(", ");
       toast({
-        title: `${requests.length} lesson${requests.length !== 1 ? "s" : ""} created for ${DAYS[day - 1]}`,
+        title: `${requests.length} lesson${requests.length !== 1 ? "s" : ""} created`,
+        description: dayLabels,
       });
       onClose();
     } catch (err) {
       toast({
-        title: "Failed",
+        title: "Could not save lessons",
         description: err instanceof Error ? err.message : "Try again.",
         variant: "destructive",
       });
@@ -183,58 +360,173 @@ export function BulkLessonEntryDrawer({
     }
   };
 
+  const selectedDayLabels = selectedDays
+    .map((d) => weekDays.find((w) => w.value === d)?.name)
+    .filter(Boolean);
+
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="pb-3">
           <SheetTitle className="text-lg font-bold flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            Add Lessons
+            Add multiple lessons
           </SheetTitle>
           <SheetDescription className="text-sm">
-            Schedule multiple lessons at once for a single day and grade.
+            Add the same lessons to one or more days at once, or copy from a day
+            that is already filled in.
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 mt-4">
-          {/* Configuration */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs font-medium mb-1 block">Grade</Label>
-              <Select value={effectiveGradeId} onValueChange={setGradeIdState}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {grades.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.displayName || g.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs font-medium mb-1 block">Day</Label>
-              <Select
-                value={String(day)}
-                onValueChange={(v) => setDay(Number(v))}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS.map((d, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div>
+            <Label className="text-xs font-medium mb-1 block">Class</Label>
+            <Select value={effectiveGradeId} onValueChange={setGradeIdState}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Select class" />
+              </SelectTrigger>
+              <SelectContent>
+                {grades.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.displayName || g.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs font-medium mb-2 block">
+              Apply to days
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {weekDays.map((d) => (
+                <label
+                  key={d.value}
+                  className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  <Checkbox
+                    checked={selectedDays.includes(d.value)}
+                    onCheckedChange={() => toggleDay(d.value)}
+                  />
+                  {d.name}
+                </label>
+              ))}
             </div>
           </div>
 
-          {/* Lesson entries */}
+          <div className="rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3 space-y-3">
+            <div>
+              <Label className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                Duplicate a filled day
+              </Label>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Copy every lesson from one day onto other days in one step (e.g.
+                Monday → Tuesday & Wednesday).
+              </p>
+            </div>
+            <Select
+              value={duplicateSourceDay}
+              onValueChange={(v) => {
+                setDuplicateSourceDay(v);
+                const src = Number(v);
+                setDuplicateTargetDays((prev) =>
+                  prev.filter((d) => d !== src),
+                );
+              }}
+            >
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Copy from which day?" />
+              </SelectTrigger>
+              <SelectContent>
+                {weekDays.map((d) => (
+                  <SelectItem key={d.value} value={String(d.value)}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div>
+              <Label className="text-[11px] text-slate-500 mb-1.5 block">
+                Onto these days
+              </Label>
+              <div className="flex flex-wrap gap-2">
+                {weekDays
+                  .filter(
+                    (d) =>
+                      !duplicateSourceDay ||
+                      d.value !== Number(duplicateSourceDay),
+                  )
+                  .map((d) => (
+                    <label
+                      key={d.value}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs cursor-pointer hover:bg-white/80 dark:hover:bg-slate-800"
+                    >
+                      <Checkbox
+                        checked={duplicateTargetDays.includes(d.value)}
+                        onCheckedChange={() => toggleDuplicateTarget(d.value)}
+                      />
+                      {d.name}
+                    </label>
+                  ))}
+              </div>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              className="w-full h-9 gap-1.5"
+              disabled={
+                !duplicateSourceDay ||
+                duplicateTargetDays.length === 0 ||
+                !effectiveGradeId ||
+                isDuplicating
+              }
+              onClick={handleDuplicateDayToTargets}
+            >
+              {isDuplicating ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+              Duplicate to selected days
+            </Button>
+          </div>
+
+          <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-700 p-3 space-y-2">
+            <Label className="text-xs font-medium">
+              Or load into the form below
+            </Label>
+            <p className="text-[11px] text-slate-500">
+              Copy a day&apos;s lessons into the rows below, edit if needed, then
+              save to your chosen days.
+            </p>
+            <div className="flex gap-2">
+              <Select value={copySourceDay} onValueChange={setCopySourceDay}>
+                <SelectTrigger className="h-9 text-sm flex-1">
+                  <SelectValue placeholder="Pick a day to copy from" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weekDays.map((d) => (
+                    <SelectItem key={d.value} value={String(d.value)}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 shrink-0 gap-1"
+                disabled={!copySourceDay || !effectiveGradeId}
+                onClick={handleCopyFromDay}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Load
+              </Button>
+            </div>
+          </div>
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <Label className="text-xs font-medium">
@@ -248,7 +540,7 @@ export function BulkLessonEntryDrawer({
                 className="h-7 text-xs gap-1"
               >
                 <Plus className="h-3 w-3" />
-                Add Row
+                Add row
               </Button>
             </div>
 
@@ -262,7 +554,7 @@ export function BulkLessonEntryDrawer({
                   onClick={addBlankEntry}
                   className="mt-3"
                 >
-                  Add First Lesson
+                  Add first lesson
                 </Button>
               </div>
             ) : (
@@ -277,7 +569,6 @@ export function BulkLessonEntryDrawer({
                         {idx + 1}
                       </span>
                       <div className="grid grid-cols-4 gap-2 flex-1">
-                        {/* Time Slot */}
                         <Select
                           value={entry.timeSlotId || undefined}
                           onValueChange={(v) =>
@@ -303,7 +594,6 @@ export function BulkLessonEntryDrawer({
                           </SelectContent>
                         </Select>
 
-                        {/* Subject */}
                         <Select
                           value={entry.subjectId || undefined}
                           onValueChange={(v) =>
@@ -322,7 +612,6 @@ export function BulkLessonEntryDrawer({
                           </SelectContent>
                         </Select>
 
-                        {/* Teacher */}
                         <Select
                           value={entry.teacherId || undefined}
                           onValueChange={(v) =>
@@ -341,10 +630,10 @@ export function BulkLessonEntryDrawer({
                           </SelectContent>
                         </Select>
 
-                        {/* Room */}
                         <div className="relative">
                           <MapPin className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
                           <Input
+                            list="bulk-known-rooms"
                             value={entry.roomNumber}
                             onChange={(e) =>
                               updateEntry(entry.id, {
@@ -358,6 +647,7 @@ export function BulkLessonEntryDrawer({
                       </div>
                       {entries.length > 1 && (
                         <button
+                          type="button"
                           onClick={() => removeEntry(entry.id)}
                           className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded flex-shrink-0"
                         >
@@ -371,17 +661,28 @@ export function BulkLessonEntryDrawer({
             )}
           </div>
 
-          {/* Summary */}
+          <datalist id="bulk-known-rooms">
+            {knownRooms.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
+
           {entries.length > 0 && selectedGrade && (
             <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20 text-sm">
               <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
               <span>
-                <strong>{entries.length}</strong> lesson
-                {entries.length !== 1 ? "s" : ""} for{" "}
-                <strong>{DAYS[day - 1]}</strong> in{" "}
+                <strong>{entries.length}</strong> row
+                {entries.length !== 1 ? "s" : ""} ×{" "}
+                <strong>{selectedDays.length}</strong> day
+                {selectedDays.length !== 1 ? "s" : ""} ={" "}
+                <strong>{entries.length * selectedDays.length}</strong> lessons
+                for{" "}
                 <strong>
                   {selectedGrade.displayName || selectedGrade.name}
                 </strong>
+                {selectedDayLabels.length > 0 && (
+                  <> ({selectedDayLabels.join(", ")})</>
+                )}
               </span>
             </div>
           )}
@@ -410,7 +711,7 @@ export function BulkLessonEntryDrawer({
             )}
             {isSaving
               ? "Creating..."
-              : `Create ${entries.length || ""} Lesson${entries.length !== 1 ? "s" : ""}`}
+              : `Create ${entries.length * selectedDays.length || ""} lesson${entries.length * selectedDays.length !== 1 ? "s" : ""}`}
           </Button>
         </SheetFooter>
       </SheetContent>

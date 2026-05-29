@@ -24,23 +24,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
+import {
+  ALL_BREAK_TYPE_OPTIONS,
+  breakTypeToFormValue,
+  getBreakTypeOption,
+} from "@/lib/utils/timetable-break-types";
 
 interface BreakEditDialogProps {
   breakData: (Break & { isNew?: boolean }) | null;
   onClose: () => void;
 }
-
-// Match GraphQL enum types
-const BREAK_TYPES = [
-  { value: "ASSEMBLY", label: "Assembly", icon: "🏫", color: "#8B5CF6" },
-  { value: "SHORT_BREAK", label: "Short Break", icon: "☕", color: "#3B82F6" },
-  { value: "LUNCH", label: "Lunch", icon: "🍽️", color: "#F59E0B" },
-  { value: "LONG_BREAK", label: "Long Break", icon: "⏰", color: "#06B6D4" },
-  { value: "TEA_BREAK", label: "Tea Break", icon: "🫖", color: "#10B981" },
-  { value: "RECESS", label: "Recess", icon: "🏃", color: "#EC4899" },
-  { value: "SNACK_BREAK", label: "Snack Break", icon: "🍎", color: "#EF4444" },
-  { value: "GAMES_BREAK", label: "Games Break", icon: "⚽", color: "#22C55E" },
-] as const;
 
 export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
   const {
@@ -68,7 +61,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
       // Editing existing break
       setFormData({
         name: breakData.name,
-        type: breakData.type.toUpperCase(),
+        type: breakTypeToFormValue(breakData.type),
         afterPeriod: breakData.afterPeriod,
         durationMinutes: breakData.durationMinutes,
         icon: breakData.icon || "☕",
@@ -77,10 +70,10 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
       setApplyToAllDays(breakData.applyToAllDays || false);
     } else if (breakData && breakData.isNew) {
       // Creating new break
-      const selectedType = BREAK_TYPES[1]; // Default to SHORT_BREAK
+      const selectedType = ALL_BREAK_TYPE_OPTIONS[1]; // SHORT_BREAK
       setFormData({
         name: selectedType.label,
-        type: selectedType.value,
+        type: selectedType.gql,
         afterPeriod: breakData.afterPeriod || 0,
         durationMinutes: 15,
         icon: selectedType.icon,
@@ -91,7 +84,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
   }, [breakData]);
 
   const handleTypeChange = (type: string) => {
-    const selectedType = BREAK_TYPES.find((t) => t.value === type);
+    const selectedType = getBreakTypeOption(type);
     if (selectedType) {
       setFormData({
         ...formData,
@@ -213,8 +206,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           }
         `;
 
-        // Build input object - handle dayTemplateId based on applyToAllDays
-        // The backend handles conversion between "all days" and "day-specific"
+        // Build input - only send changed fields
         const input: any = {
           name: formData.name,
           type: formData.type,
@@ -225,38 +217,9 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           applyToAllDays,
         };
 
-        // Handle dayTemplateId based on applyToAllDays state
-        if (applyToAllDays) {
-          // When applying to all days, set dayTemplateId to null
-          input.dayTemplateId = null;
-        } else {
-          // When applying to specific day, we need a dayTemplateId
-          // Use existing dayTemplateId if available, otherwise get from timeSlots
-          let dayTemplateId = breakData.dayTemplateId;
-
-          if (!dayTemplateId) {
-            // Converting from "all days" to "day-specific" - get dayTemplateId from timeSlots
-            const slotWithTemplate = timeSlots.find((s) => s.dayTemplateId);
-            if (!slotWithTemplate?.dayTemplateId) {
-              // Try loading day template periods if not found
-              await loadDayTemplatePeriods();
-              const refreshed = useTimetableStore.getState().timeSlots;
-              const refreshedSlot = refreshed.find((s) => s.dayTemplateId);
-              if (refreshedSlot?.dayTemplateId) {
-                dayTemplateId = refreshedSlot.dayTemplateId;
-              }
-            } else {
-              dayTemplateId = slotWithTemplate.dayTemplateId;
-            }
-
-            if (!dayTemplateId) {
-              throw new Error(
-                "No day template found. Please ensure a day template is loaded.",
-              );
-            }
-          }
-
-          input.dayTemplateId = dayTemplateId;
+        // Pass existing dayTemplateId if available; backend can handle null
+        if (breakData.dayTemplateId) {
+          input.dayTemplateId = breakData.dayTemplateId;
         }
 
         const response = await fetch("/api/graphql", {
@@ -329,7 +292,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
   if (!breakData) return null;
 
   const isNew = breakData.isNew;
-  const selectedType = BREAK_TYPES.find((t) => t.value === formData.type);
+  const selectedType = getBreakTypeOption(formData.type);
 
   return (
     <Drawer open={!!breakData} onOpenChange={onClose} direction="right">
@@ -373,8 +336,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                {BREAK_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
+                {ALL_BREAK_TYPE_OPTIONS.map((type) => (
+                  <SelectItem key={type.gql} value={type.gql}>
                     <div className="flex items-center gap-3">
                       <span className="text-lg">{type.icon}</span>
                       <span className="font-medium">{type.label}</span>

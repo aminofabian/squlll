@@ -1,4 +1,5 @@
 // lib/stores/useTimetableStoreNew.ts
+import { timetableBlockMatchesScope } from "@/lib/utils/timetable-setup";
 // NEW: Clean store with normalized data structure
 
 import { create } from "zustand";
@@ -13,6 +14,7 @@ import type {
   Break,
 } from "../types/timetable";
 import { useSchoolConfigStore } from "./useSchoolConfigStore";
+import { breakGraphQLToStoreType } from "@/lib/utils/timetable-break-types";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -80,7 +82,10 @@ interface TimetableStore extends TimetableData, TimetableUIState {
   deleteTimetableEntry: (entryId: string) => Promise<void>;
   deleteEntriesForTerm: (termId: string) => Promise<string | undefined>;
   deleteTimetableForTerm: (termId: string) => Promise<string | undefined>;
-  loadSchoolTimetable: (termId: string) => Promise<any>;
+  loadSchoolTimetable: (
+    termId: string,
+    options?: { gradeLevelId?: string; streamId?: string | null },
+  ) => Promise<any>;
 
   // Break actions
   addBreak: (breakData: Omit<Break, "id">) => Break;
@@ -130,6 +135,7 @@ interface TimetableStore extends TimetableData, TimetableUIState {
 
   // Actions for UI state
   setSelectedGrade: (gradeId: string | null) => void;
+  setSelectedStream: (streamId: string | null) => void;
   setSelectedTerm: (termId: string | null) => void;
   setSearchTerm: (term: string) => void;
   toggleConflicts: () => void;
@@ -169,6 +175,10 @@ const emptyInitialState: TimetableData = {
   teachers: [],
   grades: [],
   entries: [],
+  periodNumbers: [],
+  daysPerWeek: 5,
+  conflicts: [],
+  knownRoomNumbers: [],
   lastUpdated: new Date().toISOString(),
 };
 
@@ -181,6 +191,7 @@ export const useTimetableStore = create<TimetableStore>()(
 
       // Initial UI state
       selectedGradeId: null,
+      selectedStreamId: null,
       selectedTermId: null,
       searchTerm: "",
       showConflicts: false,
@@ -1018,15 +1029,17 @@ export const useTimetableStore = create<TimetableStore>()(
             }),
           );
 
-          // Collect all periods from all templates, deduplicate by id
-          const seenIds = new Set<string>();
+          // Collect all periods from all templates, deduplicate by period number.
+          // Periods across different day templates share the same period numbers,
+          // so we keep only the first occurrence of each period number.
+          const seenPeriods = new Set<number>();
           const allSlots: TimeSlot[] = [];
 
           allPeriodsResults.forEach((r) => {
             if (r.status === "fulfilled" && Array.isArray(r.value)) {
               r.value.forEach((p: any) => {
-                if (!p?.id || seenIds.has(p.id)) return;
-                seenIds.add(p.id);
+                if (!p?.periodNumber || seenPeriods.has(p.periodNumber)) return;
+                seenPeriods.add(p.periodNumber);
                 allSlots.push({
                   id: p.id,
                   periodNumber: p.periodNumber,
@@ -1049,8 +1062,16 @@ export const useTimetableStore = create<TimetableStore>()(
           // If all fetches failed (allSlots is empty), keep whatever is
           // already in the store so the grid doesn't flip back to the wizard.
           if (allSlots.length > 0) {
+            const lessonPeriodsPerDay = Math.max(
+              0,
+              ...allSlots.map((s) => s.periodNumber || 0),
+            );
             set((state) => ({
               timeSlots: allSlots,
+              lessonPeriodsPerDay: Math.max(
+                state.lessonPeriodsPerDay ?? 0,
+                lessonPeriodsPerDay,
+              ),
               lastUpdated: new Date().toISOString(),
             }));
           } else {
@@ -1262,6 +1283,13 @@ export const useTimetableStore = create<TimetableStore>()(
                     isActive
                     shortName
                     sortOrder
+                    tenantStreams {
+                      id
+                      stream {
+                        id
+                        name
+                      }
+                    }
                     gradeLevel {
                       id
                       name
@@ -1306,6 +1334,16 @@ export const useTimetableStore = create<TimetableStore>()(
                 ? parseInt(levelMatch[0], 10)
                 : item.sortOrder || 0;
 
+              const streams = (item.tenantStreams ?? [])
+                .filter(
+                  (ts: { id?: string; stream?: { name?: string } }) =>
+                    ts.id && ts.stream?.name,
+                )
+                .map((ts: { id: string; stream: { name: string } }) => ({
+                  tenantStreamId: ts.id,
+                  name: ts.stream.name,
+                }));
+
               return {
                 // Use gradeLevel.id to match entries which use entry.gradeLevel.id
                 id: item.gradeLevel?.id || item.id,
@@ -1313,6 +1351,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 name: name,
                 level: level,
                 displayName: item.shortName || name,
+                streams,
               };
             })
             .sort((a: any, b: any) => a.level - b.level); // Sort by level
@@ -1699,14 +1738,17 @@ export const useTimetableStore = create<TimetableStore>()(
                     dayName
                     startTime
                     endTime
+                    periodCount
                   }
                   gradeLevels { id name }
                   streams { id name }
                   periods {
                     period {
+                      id
                       periodNumber
                       startTime
                       endTime
+                      label
                     }
                     entry {
                       subject { name }
@@ -1801,9 +1843,12 @@ export const useTimetableStore = create<TimetableStore>()(
           const fetchedEntries: TimetableEntry[] = [];
           const seenEntryIds = new Set<string>();
 
-          // Search ALL grade blocks for entries matching the requested grade
-          // Entries can appear in any grade block with their own gradeLevel.id
+          const streamId = get().selectedStreamId;
+
           timetableByGrade.forEach((gradeBlock: any) => {
+            if (!timetableBlockMatchesScope(gradeBlock, gradeId, streamId)) {
+              return;
+            }
             if (!Array.isArray(gradeBlock.days)) return;
 
             gradeBlock.days.forEach((dayItem: any) => {
@@ -1872,6 +1917,7 @@ export const useTimetableStore = create<TimetableStore>()(
                   fetchedEntries.push({
                     id: entry.id,
                     gradeId: entryGradeLevelId,
+                    streamId: entry.stream?.id ?? null,
                     gradeName: entryGradeLevelName,
                     subjectId,
                     teacherId,
@@ -1949,9 +1995,22 @@ export const useTimetableStore = create<TimetableStore>()(
         }
       },
 
-      loadSchoolTimetable: async (termId: string) => {
+      loadSchoolTimetable: async (
+        termId: string,
+        options?: { gradeLevelId?: string; streamId?: string | null },
+      ) => {
         try {
-          console.log("Loading complete school timetable for term:", termId);
+          const gradeLevelId =
+            options?.gradeLevelId ?? get().selectedGradeId ?? undefined;
+          const streamId =
+            options?.streamId !== undefined
+              ? options.streamId
+              : get().selectedStreamId;
+
+          console.log("Loading school timetable for term:", termId, {
+            gradeLevelId,
+            streamId,
+          });
 
           const query = `
             query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
@@ -2040,14 +2099,17 @@ export const useTimetableStore = create<TimetableStore>()(
                     dayName
                     startTime
                     endTime
+                    periodCount
                   }
                   gradeLevels { id name }
                   streams { id name }
                   periods {
                     period {
+                      id
                       periodNumber
                       startTime
                       endTime
+                      label
                     }
                     entry {
                       subject { name }
@@ -2079,7 +2141,11 @@ export const useTimetableStore = create<TimetableStore>()(
             body: JSON.stringify({
               query,
               variables: {
-                input: { termId },
+                input: {
+                  termId,
+                  ...(gradeLevelId ? { gradeLevelId } : {}),
+                  ...(streamId ? { streamId } : {}),
+                },
               },
             }),
           });
@@ -2108,115 +2174,56 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const timetableData = result.data.getSchoolTimetable;
 
-          // Transform and store time slots with breaks
-          const formatTime = (timeStr: string) => {
-            if (!timeStr) return "";
-            if (timeStr.length === 5) return timeStr;
-            if (timeStr.length === 8) return timeStr.substring(0, 5);
-            return timeStr;
-          };
-
-          const timeSlotMap = new Map<string, TimeSlot>();
+          // Period numbers and days per week come directly from the backend.
+          // We only need to extract entries from the nested grade/stream blocks.
           const allEntries: TimetableEntry[] = [];
 
-          // Process all grades
-          (timetableData.timetableByGrade || []).forEach((gradeBlock: any) => {
-            const gradeId = gradeBlock.gradeLevel?.id;
+          const gradeBlocks = (timetableData.timetableByGrade || []).filter(
+            (gradeBlock: any) =>
+              gradeLevelId
+                ? timetableBlockMatchesScope(gradeBlock, gradeLevelId, streamId)
+                : true,
+          );
 
+          gradeBlocks.forEach((gradeBlock: any) => {
             (gradeBlock.days || []).forEach((dayItem: any) => {
-              const dayTemplate = dayItem.dayTemplate;
-              const dayOfWeek = dayTemplate?.dayOfWeek;
-              const dayTemplateId = dayTemplate?.id;
+              const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
 
               (dayItem.periods || []).forEach((p: any) => {
-                const period = p?.period;
+                if (p?.isBreak || !p?.entry || !p?.period?.id) return;
+                const entry = p.entry;
+                const entryGradeLevelId = entry.gradeLevel?.id;
+                if (!entryGradeLevelId) return;
 
-                // Skip breaks - they are loaded separately via loadBreaks() from GetAllDayTemplateBreaks query
-                if (p?.isBreak) {
-                  return;
-                }
-
-                // Only collect time slots for non-break periods
-                // NOTE: Do NOT set dayOfWeek on time slots - they should apply to ALL days
-                // The dayOfWeek is only relevant for entries, not for period definitions
-                if (
-                  period?.id &&
-                  !period.id.startsWith("break-") &&
-                  !timeSlotMap.has(period.id)
-                ) {
-                  timeSlotMap.set(period.id, {
-                    id: period.id,
-                    periodNumber: period.periodNumber,
-                    time: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
-                    startTime: formatTime(period.startTime),
-                    endTime: formatTime(period.endTime),
-                    color: "border-l-primary",
-                    // dayOfWeek intentionally omitted - slots apply to all days
-                    label: period.label || null,
-                    dayTemplateId: dayTemplateId || undefined,
-                  });
-                }
-
-                // Collect entries (only for non-break periods with actual entries)
-                if (p?.entry && period?.id && !p?.isBreak) {
-                  const entry = p.entry;
-                  // Use the entry's own gradeLevel.id - entries know which grade they belong to
-                  const entryGradeLevelId = entry.gradeLevel?.id;
-                  const entryGradeLevelName = entry.gradeLevel?.name;
-
-                  if (!entryGradeLevelId) {
-                    console.warn(
-                      "Skipping entry with missing gradeLevel:",
-                      entry.id,
-                    );
-                    return;
-                  }
-
-                  allEntries.push({
-                    id: entry.id,
-                    subjectId: entry.subject?.id || "",
-                    teacherId: entry.teacher?.id || "",
-                    timeSlotId: period.id,
-                    gradeId: entryGradeLevelId, // Use entry's own gradeLevel.id
-                    gradeName: entryGradeLevelName, // Store grade name for matching
-                    dayOfWeek: dayOfWeek || 1, // Default to Monday if missing
-                    roomNumber: entry.room?.name || undefined,
-                    isDoublePeriod: entry.isDoublePeriod || false,
-                  });
-                }
+                allEntries.push({
+                  id: entry.id,
+                  subjectId: entry.subject?.id || "",
+                  teacherId: entry.teacher?.id || "",
+                  timeSlotId: p.period.id,
+                  gradeId: entryGradeLevelId,
+                  streamId: entry.stream?.id ?? null,
+                  gradeName: entry.gradeLevel?.name,
+                  dayOfWeek: dayOfWeek || 1,
+                  roomNumber: entry.room?.name || undefined,
+                  isDoublePeriod: entry.isDoublePeriod || false,
+                });
               });
             });
           });
 
-          // Update store — merge timeSlots (never clear existing ones),
-          // and replace entries with the fresh data.
-          set((state) => {
-            const incomingSlots = Array.from(timeSlotMap.values());
-            // Build a merged map: existing slots + incoming slots,
-            // keyed by id so duplicates are resolved to the incoming version.
-            const mergedMap = new Map<string, TimeSlot>();
-            state.timeSlots.forEach((s) => mergedMap.set(s.id, s));
-            incomingSlots.forEach((s) => mergedMap.set(s.id, s));
-
-            return {
-              timeSlots: Array.from(mergedMap.values()).sort(
-                (a, b) => a.periodNumber - b.periodNumber,
-              ),
-              entries: allEntries,
-              lastUpdated: new Date().toISOString(),
-            };
-          });
-
-          console.log("School timetable loaded:", {
-            timeSlots: timeSlotMap.size,
-            entries: allEntries.length,
-            entryGradeIds: [...new Set(allEntries.map((e) => e.gradeId))],
-            sampleEntries: allEntries.slice(0, 3).map((e) => ({
-              id: e.id,
-              gradeId: e.gradeId,
-              dayOfWeek: e.dayOfWeek,
-            })),
-          });
+          // Use backend-provided periodNumbers, daysPerWeek, conflicts, and rooms.
+          set((state) => ({
+            entries: allEntries,
+            periodNumbers: timetableData.periodNumbers || [],
+            daysPerWeek: timetableData.daysPerWeek || 5,
+            conflicts: timetableData.conflicts || [],
+            knownRoomNumbers: timetableData.knownRoomNumbers || [],
+            lessonPeriodsPerDay: Math.max(
+              state.lessonPeriodsPerDay ?? 0,
+              timetableData.periodNumbers?.length ?? 0,
+            ),
+            lastUpdated: new Date().toISOString(),
+          }));
 
           return timetableData;
         } catch (error) {
@@ -2387,22 +2394,10 @@ export const useTimetableStore = create<TimetableStore>()(
               // GraphQL returns dayOfWeek as 0-indexed (0=Monday), frontend uses 1-indexed (1=Monday)
               const dayOfWeek = (breakItem.dayOfWeek ?? 0) + 1;
 
-              // Map GraphQL enum to frontend type
-              const typeMap: Record<
-                string,
-                "short_break" | "lunch" | "assembly"
-              > = {
-                SHORT_BREAK: "short_break",
-                LUNCH: "lunch",
-                ASSEMBLY: "assembly",
-              };
-              const breakType: "short_break" | "lunch" | "assembly" =
-                typeMap[breakItem.type] || "short_break";
-
               return {
                 id: breakItem.id,
                 name: breakItem.name,
-                type: breakType,
+                type: breakGraphQLToStoreType(breakItem.type),
                 dayOfWeek,
                 afterPeriod: breakItem.afterPeriod,
                 durationMinutes: breakItem.durationMinutes,
@@ -2456,22 +2451,10 @@ export const useTimetableStore = create<TimetableStore>()(
                 typeof breakItem.dayOfWeek === "number"
                   ? breakItem.dayOfWeek + 1
                   : 1;
-              const typeMap: Record<string, Break["type"]> = {
-                SHORT_BREAK: "short_break",
-                LUNCH: "lunch",
-                ASSEMBLY: "assembly",
-                LONG_BREAK: "long_break",
-                TEA_BREAK: "afternoon_break",
-                RECESS: "recess",
-                SNACK_BREAK: "snack",
-                GAMES_BREAK: "games",
-              };
-              const mappedType = typeMap[breakItem.type] || "short_break";
-
               return {
                 id: breakItem.id,
                 name: breakItem.name,
-                type: mappedType as Break["type"],
+                type: breakGraphQLToStoreType(breakItem.type),
                 dayOfWeek,
                 afterPeriod: breakItem.afterPeriod,
                 durationMinutes: breakItem.durationMinutes,
@@ -2552,24 +2535,10 @@ export const useTimetableStore = create<TimetableStore>()(
               // Get dayOfWeek from dayTemplate if available, otherwise use 1 as default
               const dayOfWeek = breakItem.dayTemplate?.dayOfWeek || 1;
 
-              // Map GraphQL enum to frontend type
-              const typeMap: Record<string, string> = {
-                SHORT_BREAK: "short_break",
-                LONG_BREAK: "long_break",
-                LUNCH: "lunch",
-                ASSEMBLY: "assembly",
-                RECESS: "recess",
-                SNACK_BREAK: "snack",
-                TEA_BREAK: "afternoon_break",
-                GAMES: "games",
-              };
-              const breakType =
-                typeMap[breakItem.type] || breakItem.type.toLowerCase();
-
               return {
                 id: breakItem.id,
                 name: breakItem.name,
-                type: breakType,
+                type: breakGraphQLToStoreType(breakItem.type),
                 dayOfWeek,
                 afterPeriod: breakItem.afterPeriod,
                 durationMinutes: breakItem.durationMinutes,
@@ -2604,43 +2573,18 @@ export const useTimetableStore = create<TimetableStore>()(
 
       deleteBreak: async (id: string) => {
         try {
-          // First check if the break exists and has a day template association
           const state = get();
           const breakToDelete = state.breaks.find((b) => b.id === id);
 
-          console.log("Attempting to delete break:", {
-            id,
-            breakFound: !!breakToDelete,
-            breakDetails: breakToDelete
-              ? {
-                  name: breakToDelete.name,
-                  dayTemplateId: breakToDelete.dayTemplateId,
-                  dayOfWeek: breakToDelete.dayOfWeek,
-                  afterPeriod: breakToDelete.afterPeriod,
-                }
-              : null,
-          });
-
           if (!breakToDelete) {
-            throw new Error("Break not found in store");
-          }
-
-          if (!breakToDelete.dayTemplateId) {
-            throw new Error(
-              "Cannot delete break: Break is not associated with a day template. This break may be orphaned and needs to be fixed or deleted from the database directly.",
-            );
+            throw new Error("Break not found");
           }
 
           const mutation = `
-            mutation DeleteDayTemplateBreak($id: ID!) {
-              deleteDayTemplateBreak(id: $id) {
-                success
-                message
-              }
+            mutation DeleteTimetableBreak($breakId: String!) {
+              deleteTimetableBreak(breakId: $breakId)
             }
           `;
-
-          console.log("Sending delete mutation for break ID:", id);
 
           const response = await fetch("/api/graphql", {
             method: "POST",
@@ -2652,48 +2596,28 @@ export const useTimetableStore = create<TimetableStore>()(
             credentials: "include",
             body: JSON.stringify({
               query: mutation,
-              variables: { id },
+              variables: { breakId: id },
             }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error("HTTP error response:", response.status, errorText);
             throw new Error(
-              `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+              `Request failed: ${response.status} - ${errorText.substring(0, 200)}`,
             );
           }
 
           const result = await response.json();
-          console.log("Delete break response:", result);
 
           if (result.errors) {
-            const errors = result.errors.map((e: any) => ({
-              message: e.message,
-              code: e.extensions?.code,
-              path: e.path,
-            }));
-            console.error("GraphQL errors:", errors);
-
-            // Handle specific error types
             const errorMessages = result.errors
               .map((e: any) => e.message)
               .join(", ");
-            if (errorMessages.includes("INTERNAL_SERVER_ERROR")) {
-              throw new Error(
-                "Server error while deleting break. This may be due to database constraints or related records. Check server logs for details.",
-              );
-            }
-
-            throw new Error(`GraphQL errors: ${errorMessages}`);
+            throw new Error(`Could not delete break: ${errorMessages}`);
           }
 
-          if (!result.data?.deleteDayTemplateBreak?.success) {
-            const errorMsg =
-              result.data?.deleteDayTemplateBreak?.message ||
-              "Failed to delete break";
-            console.error("Deletion failed:", errorMsg);
-            throw new Error(errorMsg);
+          if (!result.data?.deleteTimetableBreak) {
+            throw new Error("Failed to delete break");
           }
 
           // Remove break from store
@@ -2701,11 +2625,6 @@ export const useTimetableStore = create<TimetableStore>()(
             breaks: state.breaks.filter((breakItem) => breakItem.id !== id),
             lastUpdated: new Date().toISOString(),
           }));
-
-          console.log(
-            "Break deleted successfully:",
-            result.data.deleteDayTemplateBreak.message,
-          );
         } catch (error) {
           console.error("Error deleting break:", error);
           throw error;
@@ -2978,7 +2897,15 @@ export const useTimetableStore = create<TimetableStore>()(
       },
 
       // UI actions
-      setSelectedGrade: (gradeId) => set({ selectedGradeId: gradeId }),
+      setSelectedGrade: (gradeId) => {
+        const grade = get().grades.find((g) => g.id === gradeId);
+        const firstStream = grade?.streams?.[0]?.tenantStreamId ?? null;
+        set({
+          selectedGradeId: gradeId,
+          selectedStreamId: grade?.streams?.length ? firstStream : null,
+        });
+      },
+      setSelectedStream: (streamId) => set({ selectedStreamId: streamId }),
       setSelectedTerm: (termId) => set({ selectedTermId: termId }),
       setSearchTerm: (term) => set({ searchTerm: term }),
       toggleConflicts: () =>

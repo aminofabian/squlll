@@ -56,12 +56,42 @@ export function isAuthenticationError(error: any): boolean {
            error.message.includes('Unauthorized');
   }
   
+  // Custom shape from useSchoolConfig / fetch wrappers
+  if (error.response?.status === 401 || error.response?.status === 403) {
+    return true;
+  }
+
   // Check response status
-  if (error.response?.status === 401 || error.status === 401) {
+  if (error.status === 401 || error.status === 403) {
     return true;
   }
   
   return false;
+}
+
+export function getGraphqlFailureMessage(
+  error: unknown,
+  fallback = 'Something went wrong',
+): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const res = (
+      error as {
+        response?: { status?: number; errors?: Array<{ message?: string }> };
+      }
+    ).response;
+    const first = res?.errors?.[0]?.message?.trim();
+    if (first) return first;
+    if (res?.status === 401) return 'Please sign in again.';
+    if (res?.status === 403) return 'You do not have permission to view this school.';
+    if (res?.status === 404) return 'School setup is not complete yet.';
+  }
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+  if (typeof error === 'string' && error.trim()) {
+    return error.trim();
+  }
+  return fallback;
 }
 
 /**

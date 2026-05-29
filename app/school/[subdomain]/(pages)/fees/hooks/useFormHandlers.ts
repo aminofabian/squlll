@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useToast } from '@/components/ui/use-toast'
 import { 
   NewInvoiceForm, 
   PaymentReminderForm, 
@@ -14,7 +15,8 @@ export const useFormHandlers = (
   filteredInvoices: FeeInvoice[],
   onDataChange?: () => void
 ) => {
-  const { createPayment } = useGraphQLPayments()
+  const { toast } = useToast()
+  const { createPayment, error: paymentError } = useGraphQLPayments()
   const { generateInvoices, isGenerating: isGeneratingInvoices } = useGraphQLInvoices()
   // Modal states
   const [showNewInvoiceDrawer, setShowNewInvoiceDrawer] = useState(false)
@@ -144,14 +146,37 @@ export const useFormHandlers = (
   }
 
   const handleSubmitPayment = async () => {
+    if (!paymentForm.studentId) {
+      toast({
+        title: 'Choose a student first',
+        description: 'Search for the student who made this payment, then continue.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     if (!paymentForm.invoiceId || !paymentForm.amountPaid || !paymentForm.paymentDate) {
-      console.warn('Missing required payment fields')
+      toast({
+        title: 'Fill in all required fields',
+        description: 'Select a bill, enter the amount, and choose the payment date.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const amount = Number(paymentForm.amountPaid)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast({
+        title: 'Invalid amount',
+        description: 'Enter a payment amount greater than zero.',
+        variant: 'destructive',
+      })
       return
     }
 
     const input = {
       invoiceId: paymentForm.invoiceId,
-      amount: Number(paymentForm.amountPaid),
+      amount,
       paymentMethod: paymentForm.paymentMethod?.toUpperCase(),
       transactionReference: paymentForm.referenceNumber || undefined,
       paymentDate: new Date(paymentForm.paymentDate).toISOString(),
@@ -160,6 +185,12 @@ export const useFormHandlers = (
 
     const result = await createPayment(input)
     if (result) {
+      toast({
+        title: 'Payment recorded',
+        description: result.receiptNumber
+          ? `Receipt ${result.receiptNumber} saved.`
+          : 'The payment was saved successfully.',
+      })
       setShowRecordPaymentDrawer(false)
       setPaymentForm({
         invoiceId: '',
@@ -171,12 +202,20 @@ export const useFormHandlers = (
         notes: '',
         partialPayment: false
       })
-      
-      // Trigger data refresh after successful payment
+
       if (onDataChange) {
         onDataChange()
       }
+      return
     }
+
+    toast({
+      title: 'Could not record payment',
+      description:
+        paymentError ||
+        'Something went wrong. Check the amount and try again.',
+      variant: 'destructive',
+    })
   }
 
   // Payment Plan Handlers

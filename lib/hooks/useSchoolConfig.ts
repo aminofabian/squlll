@@ -1,68 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
-import { graphqlClient } from '../graphql-client';
 import { useSchoolConfigStore } from '../stores/useSchoolConfigStore';
 import { SchoolConfiguration } from '../types/school-config';
-import { gql } from 'graphql-request';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useAuthErrorHandler } from './useAuthErrorHandler';
+import { useState } from 'react';
+import {
+  getGraphqlFailureMessage,
+  handleAuthenticationError,
+  isAuthenticationError,
+} from '@/lib/utils/auth-redirect';
 
-interface GetSchoolConfigResponse {
-  getSchoolConfiguration: SchoolConfiguration;
+function shouldRedirectToSchoolSetup(pathname: string): boolean {
+  return (
+    !pathname.includes('/setup') &&
+    !pathname.includes('/onboarding') &&
+    !pathname.includes('/login') &&
+    !pathname.includes('/signup')
+  );
 }
 
-const GET_SCHOOL_CONFIG = gql`
-  query GetSchoolConfiguration {
-    getSchoolConfiguration {
-      id
-      selectedLevels {
-        id
-        name
-        description
-        subjects {
-          id
-          name
-          code
-          subjectType
-          category
-          department
-          shortName
-          isCompulsory
-          totalMarks
-          passingMarks
-          creditHours
-          curriculum
-        }
-        gradeLevels {
-          id
-          name
-          age
-          streams {
-            id
-            name
-          }
-        }
-      }
-      tenant {
-        id
-        schoolName
-        subdomain
-      }
-    }
-  }
-`;
+function isMissingSchoolConfigMessage(message: string): boolean {
+  return (
+    message.includes('School configuration not found') ||
+    message.includes('Complete school setup') ||
+    message.includes('School setup is not complete')
+  );
+}
 
 export function useSchoolConfig(enabled: boolean = true) {
   const [config, setConfig] = useState<SchoolConfiguration | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setConfig: setStoreConfig } = useSchoolConfigStore();
-  const { handleError } = useAuthErrorHandler();
 
   const query = useQuery({
     queryKey: ['schoolConfig'],
     queryFn: async () => {
-      // Only run on client side
       if (typeof window === 'undefined') {
         throw new Error('useSchoolConfig can only be used on the client side');
       }
@@ -71,21 +42,12 @@ export function useSchoolConfig(enabled: boolean = true) {
       setError(null);
 
       try {
-        // Debug: Log the request being made
-        console.log('=== useSchoolConfig Debug ===');
-        console.log('Current URL:', window.location.href);
-        console.log('Current pathname:', window.location.pathname);
-        console.log('Making GraphQL request to /api/graphql');
-        console.log('=== End useSchoolConfig Debug ===');
-
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
-        if (typeof window !== 'undefined') {
-          const accessToken = window.localStorage.getItem('accessToken');
-          if (accessToken) {
-            headers.Authorization = `Bearer ${accessToken}`;
-          }
+        const accessToken = window.localStorage.getItem('accessToken');
+        if (accessToken) {
+          headers.Authorization = `Bearer ${accessToken}`;
         }
 
         const response = await fetch('/api/graphql', {
@@ -136,48 +98,55 @@ export function useSchoolConfig(enabled: boolean = true) {
           }),
         });
 
-        if (!response.ok) {
-          console.log('GraphQL response not ok:', {
-            status: response.status,
-            statusText: response.statusText
-          });
-          
-          const errorData = await response.json();
-          console.log('Error response data:', errorData);
+        let payload: {
+          data?: { getSchoolConfiguration?: SchoolConfiguration };
+          errors?: Array<{ message?: string }>;
+          error?: string;
+        };
 
-          const firstError = errorData.errors?.[0];
-          const isMissingConfig =
-            response.status === 404 ||
-            firstError?.message?.includes('School configuration not found');
+        try {
+          payload = await response.json();
+        } catch {
+          throw {
+            response: {
+              status: response.status,
+              errors: [{ message: 'Invalid response from server' }],
+            },
+          };
+        }
+
+        if (!response.ok) {
+          const firstError = payload.errors?.[0];
+          const message =
+            firstError?.message?.trim() ||
+            payload.error ||
+            `Request failed (${response.status})`;
 
           if (
-            isMissingConfig &&
-            typeof window !== 'undefined' &&
-            !window.location.pathname.includes('/setup')
+            (response.status === 404 ||
+              isMissingSchoolConfigMessage(message)) &&
+            shouldRedirectToSchoolSetup(window.location.pathname)
           ) {
             window.location.href = '/setup';
             return null;
           }
-          
+
           throw {
             response: {
               status: response.status,
-              errors: errorData.errors || [{ message: errorData.error || 'Unknown error' }]
-            }
+              errors: payload.errors ?? [{ message }],
+            },
           };
         }
 
-        const data = await response.json();
-        console.log('GraphQL success response:', data);
+        if (payload.errors?.length) {
+          const message =
+            payload.errors[0]?.message?.trim() ||
+            'Could not load school configuration';
 
-        if (data.errors) {
-          console.log('GraphQL errors in response:', data.errors);
-
-          const firstError = data.errors[0];
           if (
-            firstError?.message?.includes('School configuration not found') &&
-            typeof window !== 'undefined' &&
-            !window.location.pathname.includes('/setup')
+            isMissingSchoolConfigMessage(message) &&
+            shouldRedirectToSchoolSetup(window.location.pathname)
           ) {
             window.location.href = '/setup';
             return null;
@@ -186,75 +155,65 @@ export function useSchoolConfig(enabled: boolean = true) {
           throw {
             response: {
               status: 500,
-              errors: data.errors
-            }
+              errors: payload.errors,
+            },
           };
         }
 
-        const config = data.data.getSchoolConfiguration;
-        console.log('Full config from API:', config);
-        
-        // Update both local state and store
-        setConfig(config);
-        setStoreConfig(config);
-        
-        return config;
-      } catch (error) {
-        console.error('useSchoolConfig error:', error);
-        
-        // Handle authentication errors with redirect
-        const wasHandled = handleError(error);
-        if (wasHandled) {
-          return null; // Don't throw, let the redirect happen
+        const schoolConfig = payload.data?.getSchoolConfiguration;
+        if (!schoolConfig) {
+          const message = 'School configuration not found';
+          if (shouldRedirectToSchoolSetup(window.location.pathname)) {
+            window.location.href = '/setup';
+            return null;
+          }
+          throw {
+            response: {
+              status: 404,
+              errors: [{ message }],
+            },
+          };
         }
-        
-        setError(error instanceof Error ? error.message : 'An error occurred');
-        throw error;
+
+        setConfig(schoolConfig);
+        setStoreConfig(schoolConfig);
+        return schoolConfig;
+      } catch (err) {
+        const message = getGraphqlFailureMessage(
+          err,
+          'Could not load school configuration',
+        );
+        console.error('useSchoolConfig error:', message);
+
+        if (
+          isMissingSchoolConfigMessage(message) &&
+          shouldRedirectToSchoolSetup(window.location.pathname)
+        ) {
+          window.location.href = '/setup';
+          return null;
+        }
+
+        if (isAuthenticationError(err)) {
+          handleAuthenticationError(err);
+          return null;
+        }
+
+        setError(message);
+        return null;
       } finally {
         setLoading(false);
       }
     },
-    // Retry configuration
-    retry: (failureCount, error) => {
-      // Don't retry 401, 403 errors, permission denied errors, or "School not found" errors
-      if (error && typeof error === 'object' && 'response' in error) {
-        const graphQLError = error as any;
-        
-        // Don't retry 403 (forbidden) or 401 (unauthorized) errors
-        if (graphQLError.response?.status === 403 || graphQLError.response?.status === 401) {
-          return false;
-        }
-        
-        // Don't retry GraphQL errors that indicate authentication/permission issues
-        if (graphQLError.response?.errors) {
-          const firstError = graphQLError.response.errors[0];
-          
-          // Don't retry permission denied errors
-          if (firstError?.extensions?.code === 'FORBIDDENEXCEPTION' || 
-              firstError?.message?.includes('Permission denied')) {
-            return false;
-          }
-          
-          // Don't retry "School not found" or missing configuration errors
-          if (
-            firstError?.message?.includes('School (tenant) not found') ||
-            firstError?.message?.includes('School configuration not found') ||
-            firstError?.extensions?.code === 'NOTFOUNDEXCEPTION' ||
-            firstError?.extensions?.code === 'NOT_FOUND'
-          ) {
-            return false;
-          }
-        }
-      }
-      // Retry other errors up to 2 times
+    retry: (failureCount, err) => {
+      if (isAuthenticationError(err)) return false;
+      const message = getGraphqlFailureMessage(err, '');
+      if (isMissingSchoolConfigMessage(message)) return false;
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    // Consider the query successful even if it fails with auth errors (so we can redirect)
     throwOnError: false,
-    // Always enable the query, but it will only run on the client side due to the window check
-    enabled: enabled,
+    enabled,
   });
 
   return query;
-} 
+}

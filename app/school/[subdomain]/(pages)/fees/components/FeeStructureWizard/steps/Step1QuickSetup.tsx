@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Check, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useGradeLevelsForSchoolType } from '@/lib/hooks/useGradeLevelsForSchoolType'
 
 interface Step1QuickSetupProps {
     formData: {
@@ -24,11 +25,12 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
     const [academicYears, setAcademicYears] = useState<Array<{ id: string; name: string; terms: Array<{ id: string; name: string }> }>>([])
     const [isLoadingYears, setIsLoadingYears] = useState(false)
     
-    const grades = [
-        'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4',
-        'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8',
-        'Form 1', 'Form 2', 'Form 3', 'Form 4'
-    ]
+    const { data: gradeLevels = [], isLoading: gradesLoading } =
+        useGradeLevelsForSchoolType()
+
+    const gradeOptions = gradeLevels
+        .map((gl) => gl.gradeLevel?.name || gl.shortName || '')
+        .filter((name): name is string => Boolean(name?.trim()))
 
     // Fetch academic years with terms
     useEffect(() => {
@@ -168,8 +170,18 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
                 <label className="text-sm font-medium text-slate-700 mb-2 block">
                     Select Grades <span className="text-slate-500">(select one or more)</span>
                 </label>
+                {gradesLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-slate-500 py-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading classes from your school…
+                    </div>
+                ) : gradeOptions.length === 0 ? (
+                    <p className="text-sm text-slate-500 py-2">
+                        No classes found. Complete school setup first, then return here.
+                    </p>
+                ) : (
                 <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                    {grades.map((grade) => {
+                    {gradeOptions.map((grade) => {
                         const isSelected = (formData.selectedGrades || []).includes(grade)
 
                         return (
@@ -192,6 +204,7 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
                         )
                     })}
                 </div>
+                )}
                 {errors?.selectedGrades && (
                     <p className="text-sm text-red-600 mt-2">{errors.selectedGrades}</p>
                 )}

@@ -8,6 +8,7 @@ interface Term {
   startDate: string
   endDate: string
   isActive: boolean
+  timetablePublishedAt?: string | null
   academicYear: {
     name: string
   }

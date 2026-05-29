@@ -146,17 +146,18 @@ export function useRoomConflicts() {
  * Get all conflicts (teacher + room)
  */
 export function useAllConflicts() {
-  const teacherConflicts = useTeacherConflicts();
-  const roomConflicts = useRoomConflicts();
+  const conflicts = useTimetableStore((s) => s.conflicts);
 
   return useMemo(() => {
+    const teacher = conflicts.filter((c) => c.type === "teacher_conflict");
+    const room = conflicts.filter((c) => c.type === "room_conflict");
     return {
-      teacher: teacherConflicts,
-      room: roomConflicts,
-      total: teacherConflicts.length + roomConflicts.length,
-      hasConflicts: teacherConflicts.length > 0 || roomConflicts.length > 0,
+      teacher,
+      room,
+      total: conflicts.length,
+      hasConflicts: conflicts.length > 0,
     };
-  }, [teacherConflicts, roomConflicts]);
+  }, [conflicts]);
 }
 
 /**

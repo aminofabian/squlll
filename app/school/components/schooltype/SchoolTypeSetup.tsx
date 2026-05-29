@@ -849,11 +849,11 @@ export const SchoolTypeSetup = () => {
                               <button
                   onClick={() => {
                     toast.dismiss();
-                    router.push(`/dashboard`);
+                    router.push(`/onboarding`);
                   }}
                 className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
               >
-                Go to Dashboard
+                Continue Setup
               </button>
             </div>
           </div>,
@@ -891,8 +891,8 @@ export const SchoolTypeSetup = () => {
         }
         
         setTimeout(() => {
-          console.log('Redirecting to dashboard...');
-          router.push(`/dashboard`);
+          console.log('Redirecting to onboarding...');
+          router.push(`/onboarding`);
         }, 2000);
       }
     } catch (error: any) {
@@ -947,10 +947,8 @@ export const SchoolTypeSetup = () => {
   }
 
   const setupSteps = [
-    { id: 1, name: 'School Type', description: 'Select your curriculum type' },
-    { id: 2, name: 'Classes', description: 'Configure grade levels and classes' },
-    { id: 3, name: 'Teachers', description: 'Add teaching staff' },
-    { id: 4, name: 'Settings', description: 'School details and preferences' },
+    { id: 1, name: 'Curriculum', description: 'School type and grade levels' },
+    { id: 2, name: 'Calendar', description: 'Year, terms, and classes (next)' },
   ]
 
   const getSelectedLevelsCount = (typeId: string) => {

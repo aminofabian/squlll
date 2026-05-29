@@ -82,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({
               </>
             ) : (
               <>
-                <span>Continue</span>
+                <span>Continue to calendar setup</span>
                 <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </>
             )}

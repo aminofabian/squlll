@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { ALL_BREAK_TYPE_OPTIONS } from '@/lib/utils/timetable-break-types';
 
 interface BulkBreaksDrawerProps {
   open: boolean;
@@ -35,17 +36,12 @@ interface BreakEntry {
   durationMinutes: string;
 }
 
-const BREAK_TYPES = [
-  { value: 'ASSEMBLY', label: 'Assembly', icon: '🏫', color: '#8B5CF6' },
-  { value: 'SHORT_BREAK', label: 'Short Break', icon: '☕', color: '#3B82F6' },
-  { value: 'TEA_BREAK', label: 'Tea Break', icon: '🫖', color: '#10B981' },
-  { value: 'SNACK_BREAK', label: 'Snack Break', icon: '🍪', color: '#FBBF24' },
-  { value: 'LONG_BREAK', label: 'Long Break', icon: '⏰', color: '#06B6D4' },
-  { value: 'RECESS', label: 'Recess', icon: '🏃', color: '#EC4899' },
-  { value: 'LUNCH', label: 'Lunch', icon: '🍽️', color: '#F59E0B' },
-  { value: 'TEA_BREAK', label: 'Afternoon Break', icon: '🌅', color: '#F59E0B' },
-  { value: 'GAMES_BREAK', label: 'Games', icon: '🎮', color: '#EF4444' },
-] as const;
+const BREAK_TYPES = ALL_BREAK_TYPE_OPTIONS.map((o) => ({
+  value: o.gql,
+  label: o.label,
+  icon: o.icon,
+  color: o.color,
+}));
 
 export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
   const { timeSlots, loadBreaks, loadDayTemplatePeriods } = useTimetableStore();
@@ -277,7 +273,10 @@ export function BulkBreaksDrawer({ open, onClose }: BulkBreaksDrawerProps) {
         if (!nextOpen) onClose();
       }}
     >
-      <SheetContent side="right" className="w-[600px] overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-[600px] overflow-y-auto"
+      >
         <SheetHeader className="border-b pb-4 px-8">
           <SheetTitle className="text-lg font-semibold">Create Bulk Breaks</SheetTitle>
           <SheetDescription className="text-xs text-muted-foreground">

@@ -1,9 +1,16 @@
 // app/school/[subdomain]/(pages)/timetable/hooks/useTimetableData.ts
 // NEW: Hooks for working with normalized timetable data
 
-import { useMemo } from 'react';
-import { useTimetableStore, useTimetableSelectors } from '@/lib/stores/useTimetableStoreNew';
-import type { TimetableEntry, EnrichedTimetableEntry } from '@/lib/types/timetable';
+import { useMemo } from "react";
+import {
+  useTimetableStore,
+  useTimetableSelectors,
+} from "@/lib/stores/useTimetableStoreNew";
+import type {
+  TimetableEntry,
+  EnrichedTimetableEntry,
+} from "@/lib/types/timetable";
+import { inferDaysPerWeek } from "../utils/timetableWeekDays";
 
 /**
  * Get all entries for the currently selected grade
@@ -17,39 +24,41 @@ export function useSelectedGradeTimetable() {
     if (!store.selectedGradeId) return [];
 
     // Find selected grade info for name-based matching
-    const selectedGrade = store.grades.find(g => g.id === store.selectedGradeId);
+    const selectedGrade = store.grades.find(
+      (g) => g.id === store.selectedGradeId,
+    );
     const selectedGradeName = selectedGrade?.name?.toLowerCase();
 
-    // Debug: log what we're filtering
-    const allGradeIds = [...new Set(store.entries.map(e => e.gradeId))];
-    const allGradeNames = [...new Set(store.entries.map(e => e.gradeName).filter(Boolean))];
-    console.log('useSelectedGradeTimetable filtering:', {
-      selectedGradeId: store.selectedGradeId,
-      selectedGradeName,
-      totalEntries: store.entries.length,
-      uniqueGradeIdsInEntries: allGradeIds,
-      uniqueGradeNamesInEntries: allGradeNames,
-      storeGrades: store.grades.map(g => ({ id: g.id, name: g.name })),
-    });
+    const selectedStreamId = store.selectedStreamId;
 
-    // Match entries by ID first, then try name-based matching using entry's gradeName
+    // Match entries by grade (and stream when the grade has streams)
     const entries = store.entries.filter((entry) => {
-      // Direct ID match
-      if (entry.gradeId === store.selectedGradeId) return true;
-      
-      // Name-based match using entry's stored gradeName
-      if (selectedGradeName && entry.gradeName) {
-        if (entry.gradeName.toLowerCase() === selectedGradeName) return true;
-      }
-      
-      return false;
-    });
+      const gradeMatch =
+        entry.gradeId === store.selectedGradeId ||
+        (selectedGradeName &&
+          entry.gradeName &&
+          entry.gradeName.toLowerCase() === selectedGradeName);
 
-    console.log('Filtered entries count:', entries.length);
+      if (!gradeMatch) return false;
+
+      if (selectedStreamId) {
+        return entry.streamId === selectedStreamId;
+      }
+
+      return !entry.streamId;
+    });
 
     // Enrich with full data
     return entries.map((entry) => selectors.enrichEntry(entry));
-  }, [store.selectedGradeId, store.entries, store.subjects, store.teachers, store.timeSlots, store.grades]);
+  }, [
+    store.selectedGradeId,
+    store.selectedStreamId,
+    store.entries,
+    store.subjects,
+    store.teachers,
+    store.timeSlots,
+    store.grades,
+  ]);
 }
 
 /**
@@ -60,17 +69,15 @@ export function usePeriodSlots() {
   const store = useTimetableStore();
 
   return useMemo(() => {
-    // Group slots by day: { 1: [slot1, slot2], 2: [...], ... }
-    // Slots without dayOfWeek apply to ALL days (1-5)
+    const daysPerWeek = store.daysPerWeek || 5;
+
     const slotsByDay: Record<number, typeof store.timeSlots> = {};
     store.timeSlots.forEach((slot) => {
       if (slot.dayOfWeek) {
-        // Day-specific slot - add to that day only
         if (!slotsByDay[slot.dayOfWeek]) slotsByDay[slot.dayOfWeek] = [];
         slotsByDay[slot.dayOfWeek].push(slot);
       } else {
-        // Slot applies to all days - add to every day (1-5)
-        for (let day = 1; day <= 5; day++) {
+        for (let day = 1; day <= daysPerWeek; day++) {
           if (!slotsByDay[day]) slotsByDay[day] = [];
           slotsByDay[day].push(slot);
         }
@@ -82,14 +89,18 @@ export function usePeriodSlots() {
       slots.sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0));
     });
 
-    // Compute union of all period numbers across all days (exclude period 0 - periods start at 1)
-    const periodSet = new Set<number>();
-    store.timeSlots.forEach((slot) => {
-      if (typeof slot.periodNumber === 'number' && slot.periodNumber >= 1) {
-        periodSet.add(slot.periodNumber);
-      }
-    });
-    const periodNumbers = Array.from(periodSet).sort((a, b) => a - b);
+    const periodNumbers =
+      store.periodNumbers && store.periodNumbers.length > 0
+        ? store.periodNumbers
+        : (() => {
+            const periodSet = new Set<number>();
+            store.timeSlots.forEach((slot) => {
+              if (typeof slot.periodNumber === "number" && slot.periodNumber >= 1) {
+                periodSet.add(slot.periodNumber);
+              }
+            });
+            return Array.from(periodSet).sort((a, b) => a - b);
+          })();
 
     // Helper: get slot for a specific day and period
     const getSlotFor = (dayIndex: number, period: number) => {
@@ -99,7 +110,7 @@ export function usePeriodSlots() {
 
     // Helper: get first available slot for a period (for time column display)
     const getBaseSlotForPeriod = (period: number) => {
-      for (let d = 0; d < 5; d++) {
+      for (let d = 0; d < daysPerWeek; d++) {
         const slot = getSlotFor(d, period);
         if (slot) return slot;
       }
@@ -109,10 +120,11 @@ export function usePeriodSlots() {
     return {
       slotsByDay,
       periodNumbers,
+      daysPerWeek,
       getSlotFor,
       getBaseSlotForPeriod,
     };
-  }, [store.timeSlots]);
+  }, [store.timeSlots, store.entries, store.breaks, store.lessonPeriodsPerDay]);
 }
 
 /**
@@ -125,10 +137,14 @@ export function useTimetableGrid(gradeId: string | null) {
   return useMemo(() => {
     if (!gradeId) return {};
 
-    const grid: Record<string, Record<string, EnrichedTimetableEntry | null>> = {};
+    const grid: Record<
+      string,
+      Record<string, EnrichedTimetableEntry | null>
+    > = {};
 
-    // Initialize grid: { "1": { "slot-1": null, "slot-2": null }, "2": {...}, ... }
-    for (let day = 1; day <= 5; day++) {
+    const daysPerWeek = store.daysPerWeek || 5;
+
+    for (let day = 1; day <= daysPerWeek; day++) {
       grid[day] = {};
       // Only add slots that apply to this day (or have no dayOfWeek = apply to all)
       store.timeSlots
@@ -152,7 +168,7 @@ export function useTimetableGrid(gradeId: string | null) {
       });
 
     return grid;
-  }, [gradeId, store.entries, store.timeSlots, selectors]);
+  }, [gradeId, store.entries, store.timeSlots, store.breaks, selectors]);
 }
 
 /**
@@ -208,6 +224,8 @@ export function useGradeStatistics(gradeId: string | null) {
         subjectDistribution: {},
         teacherWorkload: {},
         completionPercentage: 0,
+        filledSlots: 0,
+        totalSlots: 0,
       };
     }
 
@@ -221,25 +239,40 @@ export function useGradeStatistics(gradeId: string | null) {
       const teacher = store.teachers.find((t) => t.id === entry.teacherId);
 
       if (subject) {
-        subjectDistribution[subject.name] = (subjectDistribution[subject.name] || 0) + 1;
+        subjectDistribution[subject.name] =
+          (subjectDistribution[subject.name] || 0) + 1;
       }
       if (teacher) {
-        teacherWorkload[teacher.name] = (teacherWorkload[teacher.name] || 0) + 1;
+        teacherWorkload[teacher.name] =
+          (teacherWorkload[teacher.name] || 0) + 1;
       }
     });
 
-    const totalPossibleSlots = store.timeSlots.length * 5; // 5 days
-    const completionPercentage = Math.round(
-      (gradeEntries.length / totalPossibleSlots) * 100
-    );
+    const daysPerWeek = store.daysPerWeek || 5;
+    const periodCount = store.timeSlots.length;
+    const totalSlots = periodCount * daysPerWeek;
+    const filledSlots = new Set(
+      gradeEntries.map((e) => `${e.dayOfWeek}:${e.timeSlotId}`),
+    ).size;
+    const completionPercentage =
+      totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
 
     return {
       totalLessons: gradeEntries.length,
       subjectDistribution,
       teacherWorkload,
       completionPercentage,
+      filledSlots,
+      totalSlots,
     };
-  }, [gradeId, store.entries, store.subjects, store.teachers, store.timeSlots]);
+  }, [
+    gradeId,
+    store.entries,
+    store.subjects,
+    store.teachers,
+    store.timeSlots,
+    store.breaks,
+  ]);
 }
 
 /**
@@ -250,9 +283,9 @@ export function useTeacherSchedule(teacherId: string) {
   const selectors = useTimetableSelectors();
 
   return useMemo(() => {
-    const teacherEntries = store.entries.filter((e) => e.teacherId === teacherId);
+    const teacherEntries = store.entries.filter(
+      (e) => e.teacherId === teacherId,
+    );
     return teacherEntries.map((e) => selectors.enrichEntry(e));
   }, [teacherId, store.entries, selectors]);
 }
-
-

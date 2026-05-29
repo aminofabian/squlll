@@ -1,85 +1,181 @@
-'use client'
+"use client";
 
-import { 
-  FileText, 
-  Plus, 
-  Receipt, 
-  Users, 
-  Coins, 
+import {
+  FileText,
+  Plus,
+  Receipt,
+  Users,
+  Coins,
   Eye,
-  Settings,
-  Zap,
-  Building2,
   CreditCard,
-  Activity
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+  CheckCircle2,
+  Circle,
+  ArrowUpRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface QuickActionCardProps {
-  icon: React.ReactNode
-  label: string
-  onClick: () => void
+/* ── Quick Action Tile ─────────────────────────────── */
+
+interface QuickActionTileProps {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  onClick: () => void;
+  primary?: boolean;
 }
 
-const QuickActionCard = ({ icon, label, onClick }: QuickActionCardProps) => {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center justify-center p-6 bg-white hover:bg-primary/10 hover:border-primary/30 border-2 border-primary/10 transition-all duration-200 shadow-sm hover:shadow-lg group"
+const QuickActionTile = ({
+  icon,
+  label,
+  description,
+  onClick,
+  primary,
+}: QuickActionTileProps) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "group flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all duration-150",
+      primary
+        ? "border-slate-900 bg-slate-900 text-white hover:bg-slate-800"
+        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+    )}
+  >
+    <div
+      className={cn(
+        "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+        primary
+          ? "bg-white/15 text-white"
+          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700",
+      )}
     >
-      <div className="mb-3 text-primary/70 group-hover:text-primary transition-colors">
-        {icon}
-      </div>
-      <span className="text-sm font-semibold text-slate-700 group-hover:text-primary transition-colors">
+      {icon}
+    </div>
+    <div>
+      <span
+        className={cn(
+          "block text-sm font-semibold leading-tight",
+          primary ? "text-white" : "text-slate-900",
+        )}
+      >
         {label}
       </span>
-    </button>
-  )
-}
-
-interface StatCardProps {
-  title: string
-  value: string | number
-  icon: React.ReactNode
-  gradient: string
-}
-
-const StatCard = ({ title, value, icon, gradient }: StatCardProps) => {
-  return (
-    <div className={cn("p-6 text-white shadow-sm hover:shadow-md transition-shadow", gradient)}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium opacity-90">{title}</span>
-        <div className="opacity-80">
-          {icon}
-        </div>
-      </div>
-      <div className="text-3xl font-bold">{value}</div>
+      <span
+        className={cn(
+          "mt-0.5 block text-xs leading-relaxed",
+          primary ? "text-white/60" : "text-slate-500",
+        )}
+      >
+        {description}
+      </span>
     </div>
-  )
+  </button>
+);
+
+/* ── Stat Metric ────────────────────────────────────── */
+
+interface StatMetricProps {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  accent?: "neutral" | "emerald" | "amber" | "rose";
 }
+
+const accentMap = {
+  neutral: "bg-slate-100 text-slate-600",
+  emerald: "bg-emerald-50 text-emerald-600",
+  amber: "bg-amber-50 text-amber-600",
+  rose: "bg-rose-50 text-rose-600",
+};
+
+const StatMetric = ({
+  label,
+  value,
+  icon,
+  accent = "neutral",
+}: StatMetricProps) => (
+  <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+    <div
+      className={cn(
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+        accentMap[accent],
+      )}
+    >
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+        {label}
+      </p>
+      <p className="mt-0.5 text-xl font-bold tabular-nums leading-tight text-slate-900">
+        {value}
+      </p>
+    </div>
+  </div>
+);
+
+/* ── Setup Status Row ───────────────────────────────── */
+
+interface SetupRowProps {
+  label: string;
+  done: boolean;
+  detail: string;
+}
+
+const SetupRow = ({ label, done, detail }: SetupRowProps) => (
+  <li className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+    <div className="flex items-center gap-2.5 min-w-0">
+      {done ? (
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+      ) : (
+        <Circle className="h-4 w-4 shrink-0 text-slate-300" />
+      )}
+      <span
+        className={cn("text-sm", done ? "text-slate-700" : "text-slate-400")}
+      >
+        {label}
+      </span>
+    </div>
+    <span
+      className={cn(
+        "text-xs font-medium shrink-0",
+        done ? "text-emerald-600" : "text-slate-400",
+      )}
+    >
+      {detail}
+    </span>
+  </li>
+);
+
+/* ── Props ──────────────────────────────────────────── */
 
 interface FeesActionDashboardProps {
-  onViewStructures: () => void
-  onCreateStructure: () => void
-  onGenerateInvoices: () => void
-  onViewInvoices: () => void
-  onAssignToGrade: () => void
-  onRecordPayment: () => void
-  onViewPayments?: () => void
-  onSettings?: () => void
-  onExport?: () => void
+  onViewStructures: () => void;
+  onCreateStructure: () => void;
+  onGenerateInvoices: () => void;
+  onViewInvoices: () => void;
+  onAssignToGrade: () => void;
+  onRecordPayment: () => void;
   stats?: {
-    feeStructures?: number
-    students?: number
-    invoices?: number
-    totalRevenue?: string | number
-  }
-  showFeeStructures?: boolean
-  feeStructuresContent?: React.ReactNode
-  showInvoices?: boolean
-  invoicesContent?: React.ReactNode
-  onBackToOverview?: () => void
+    feeStructures?: number;
+    students?: number;
+    invoices?: number;
+    totalRevenue?: string | number;
+  };
+  setupStatus?: {
+    plansReady: boolean;
+    classesLinked: boolean;
+    billingStarted: boolean;
+    planCount?: number;
+    assignedClassCount?: number;
+  };
+  showFeeStructures?: boolean;
+  feeStructuresContent?: React.ReactNode;
+  showInvoices?: boolean;
+  invoicesContent?: React.ReactNode;
+  onBackToOverview?: () => void;
 }
+
+/* ── Component ──────────────────────────────────────── */
 
 export const FeesActionDashboard = ({
   onViewStructures,
@@ -88,110 +184,113 @@ export const FeesActionDashboard = ({
   onViewInvoices,
   onAssignToGrade,
   onRecordPayment,
-  onViewPayments,
-  onSettings,
-  onExport,
   stats = {},
+  setupStatus,
   showFeeStructures = false,
   feeStructuresContent,
   showInvoices = false,
   invoicesContent,
-  onBackToOverview
+  onBackToOverview,
 }: FeesActionDashboardProps) => {
   const {
     feeStructures = 0,
     students = 0,
     invoices = 0,
-    totalRevenue = '0'
-  } = stats
+    totalRevenue = "0",
+  } = stats;
+
+  const revenue =
+    typeof totalRevenue === "number"
+      ? `KES ${totalRevenue.toLocaleString()}`
+      : totalRevenue;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Sidebar - Quick Actions */}
-      <div className="lg:col-span-1">
-        <div className="bg-white p-6 shadow-md border-2 border-primary/10">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-primary to-primary-dark shadow-sm">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Quick Actions</h2>
-              <p className="text-xs text-primary/70 font-medium">Instant access to key features</p>
-            </div>
-          </div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* ── Quick Actions Column ── */}
+      <section className="lg:col-span-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="mb-1 text-sm font-semibold tracking-tight text-slate-900">
+            Quick Actions
+          </h2>
+          <p className="mb-5 text-xs text-slate-500">
+            Common tasks for managing school fees
+          </p>
 
-          {/* Action Cards Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <QuickActionCard
-              icon={<FileText className="h-6 w-6" />}
-              label="Fee Structures"
+          <div className="space-y-3">
+            <QuickActionTile
+              icon={<Plus className="h-4 w-4" />}
+              label="Create fee plan"
+              description="Set up charges per class and term"
+              onClick={onCreateStructure}
+              primary
+            />
+            <QuickActionTile
+              icon={<FileText className="h-4 w-4" />}
+              label="View fee plans"
+              description="See and manage existing plans"
               onClick={onViewStructures}
             />
-            <QuickActionCard
-              icon={<Plus className="h-6 w-6" />}
-              label="Create Structure"
-              onClick={onCreateStructure}
-            />
-            <QuickActionCard
-              icon={<Coins className="h-6 w-6" />}
-              label="Generate Invoices"
+            <QuickActionTile
+              icon={<Coins className="h-4 w-4" />}
+              label="Bill students"
+              description="Generate invoices for a term"
               onClick={onGenerateInvoices}
             />
-            <QuickActionCard
-              icon={<Eye className="h-6 w-6" />}
-              label="View Invoices"
-              onClick={onViewInvoices}
-            />
-            <QuickActionCard
-              icon={<Users className="h-6 w-6" />}
-              label="Assign Grade"
+            <QuickActionTile
+              icon={<Users className="h-4 w-4" />}
+              label="Apply to classes"
+              description="Link a plan to specific grades"
               onClick={onAssignToGrade}
             />
-            <QuickActionCard
-              icon={<Receipt className="h-6 w-6" />}
-              label="Record Payment"
+            <QuickActionTile
+              icon={<Receipt className="h-4 w-4" />}
+              label="Record a payment"
+              description="Log money received from families"
               onClick={onRecordPayment}
             />
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center gap-2 text-xs text-primary/70 pt-4 border-t border-primary/10">
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            <span className="font-medium">6 quick actions available</span>
+            <QuickActionTile
+              icon={<Eye className="h-4 w-4" />}
+              label="Student balances"
+              description="See who owes and who has paid"
+              onClick={onViewInvoices}
+            />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Right Side - Overview & Info */}
-      <div className="lg:col-span-2 space-y-6">
+      {/* ── Main Content Column ── */}
+      <section className="lg:col-span-8 space-y-5">
         {showFeeStructures ? (
-          /* Fee Structures List */
-          <div className="bg-white p-6 shadow-md border-2 border-primary/10">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900">Fee Structures</h3>
+          /* Fee plans list */
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-tight text-slate-900">
+                Fee plans
+              </h3>
               {onBackToOverview && (
                 <button
                   onClick={onBackToOverview}
-                  className="text-sm text-primary hover:text-primary-dark font-semibold transition-colors"
+                  className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
                 >
-                  ← Back to Overview
+                  ← Back to overview
                 </button>
               )}
             </div>
             {feeStructuresContent}
           </div>
         ) : showInvoices ? (
-          /* Invoices List */
-          <div className="bg-white p-6 shadow-md border-2 border-primary/10">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900">Invoices</h3>
+          /* Student balances list */
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-tight text-slate-900">
+                Student balances
+              </h3>
               {onBackToOverview && (
                 <button
                   onClick={onBackToOverview}
-                  className="text-sm text-primary hover:text-primary-dark font-semibold transition-colors"
+                  className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
                 >
-                  ← Back to Overview
+                  ← Back to overview
                 </button>
               )}
             </div>
@@ -199,78 +298,84 @@ export const FeesActionDashboard = ({
           </div>
         ) : (
           <>
-            {/* Overview Statistics */}
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Overview</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard
-                  title="Fee Structures"
-                  value={feeStructures}
-                  icon={<FileText className="h-6 w-6" />}
-                  gradient="bg-gradient-to-br from-primary to-primary-dark"
-                />
-                <StatCard
-                  title="Students"
-                  value={students}
-                  icon={<Users className="h-6 w-6" />}
-                  gradient="bg-gradient-to-br from-primary-light to-primary"
-                />
-                <StatCard
-                  title="Invoices"
-                  value={invoices}
-                  icon={<Coins className="h-6 w-6" />}
-                  gradient="bg-gradient-to-br from-primary to-primary-dark"
-                />
-                <StatCard
-                  title="Total Revenue"
-                  value={typeof totalRevenue === 'number' ? `KES ${totalRevenue.toLocaleString()}` : totalRevenue}
-                  icon={<CreditCard className="h-6 w-6" />}
-                  gradient="bg-gradient-to-br from-primary-light to-primary"
-                />
-              </div>
+            {/* ── Stats Row ── */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <StatMetric
+                label="Fee plans"
+                value={feeStructures}
+                icon={<FileText className="h-4 w-4" />}
+                accent="neutral"
+              />
+              <StatMetric
+                label="Students"
+                value={students}
+                icon={<Users className="h-4 w-4" />}
+                accent="emerald"
+              />
+              <StatMetric
+                label="Bills issued"
+                value={invoices}
+                icon={<Coins className="h-4 w-4" />}
+                accent="amber"
+              />
+              <StatMetric
+                label="Collected"
+                value={revenue}
+                icon={<CreditCard className="h-4 w-4" />}
+                accent="rose"
+              />
             </div>
 
-            {/* System Health & Recent Activity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* System Health */}
-              <div className="bg-white p-6 shadow-md border-2 border-primary/10">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">System Health</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-2 hover:bg-primary/5 transition-colors">
-                    <span className="text-sm text-slate-700 font-medium">Fee Structures API</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                      <span className="text-sm text-primary font-semibold">Online</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-2 hover:bg-primary/5 transition-colors">
-                    <span className="text-sm text-slate-700 font-medium">Payment Processing</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                      <span className="text-sm text-primary font-semibold">Active</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-2 hover:bg-primary/5 transition-colors">
-                    <span className="text-sm text-slate-700 font-medium">Invoice Generation</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                      <span className="text-sm text-primary font-semibold">Ready</span>
-                    </div>
-                  </div>
-                </div>
+            {/* ── Setup Status ── */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="mb-4 text-sm font-semibold tracking-tight text-slate-900">
+                Setup progress
+              </h3>
+              <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-slate-800 transition-all duration-500"
+                  style={{
+                    width: `${
+                      [
+                        setupStatus?.plansReady,
+                        setupStatus?.classesLinked,
+                        setupStatus?.billingStarted,
+                      ].filter(Boolean).length * 33.3
+                    }%`,
+                  }}
+                />
               </div>
-
-              {/* Recent Activity */}
-              <div className="bg-white p-6 shadow-md border-2 border-primary/10">
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Recent Activity</h3>
-                <div className="text-sm text-primary/70 font-medium">
-                  No recent system alerts
-                </div>
-              </div>
+              <ul className="divide-y divide-slate-100">
+                <SetupRow
+                  label="Fee plans created"
+                  done={!!setupStatus?.plansReady}
+                  detail={
+                    setupStatus?.plansReady
+                      ? `${setupStatus?.planCount ?? feeStructures} ready`
+                      : "Not yet"
+                  }
+                />
+                <SetupRow
+                  label="Linked to classes"
+                  done={!!setupStatus?.classesLinked}
+                  detail={
+                    setupStatus?.classesLinked
+                      ? `${setupStatus?.assignedClassCount ?? "Some"} linked`
+                      : "Not yet"
+                  }
+                />
+                <SetupRow
+                  label="Students billed"
+                  done={!!setupStatus?.billingStarted}
+                  detail={
+                    setupStatus?.billingStarted ? "Bills sent" : "Not yet"
+                  }
+                />
+              </ul>
             </div>
           </>
         )}
-      </div>
+      </section>
     </div>
-  )
-}
+  );
+};

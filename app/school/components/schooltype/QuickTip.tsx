@@ -18,9 +18,9 @@ export const QuickTip: React.FC<QuickTipProps> = ({ currentStep }) => {
           <div className="flex-1 min-w-0">
             <h4 className="text-[10px] font-semibold text-gray-900 mb-0.5">Quick Tip</h4>
             <p className="text-[9px] text-gray-600 leading-tight">
-              {currentStep === 1 ? 'Select a school type that best matches your curriculum needs.' : 
-               currentStep === 2 ? 'Click on levels to select which grades your school will offer.' : 
-               'Add your teaching staff details in the next step.'}
+              {currentStep === 1
+                ? 'Pick your curriculum, then select which grade levels you offer. You will set up the calendar and classes on the next screens.'
+                : 'Continue to configure your academic year, terms, and class streams.'}
             </p>
           </div>
         </div>

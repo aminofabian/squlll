@@ -1,25 +1,18 @@
 /**
- * AdminTimetableGrid
- *
- * Admin-specific timetable grid with interleaved break rows,
- * edit/delete controls on time slots, and add-buttons on empty slots.
- * Extends the shared TimetableGrid patterns for the admin workflow.
+ * Admin timetable grid — dashboard-style schedule board with clear hierarchy:
+ * period rail · day columns · subject-accent lesson cards · muted break bands.
  */
 
 "use client";
 
-import React from "react";
-import {
-  Clock,
-  Edit2,
-  Trash2,
-  Plus,
-  MapPin,
-  Users,
-  AlertCircle,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Clock, Edit2, Trash2, Plus, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  getSubjectAccent,
+  type SubjectAccentStyle,
+} from "../utils/timetableSubjectColors";
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -57,28 +50,21 @@ interface BreakEntry {
 }
 
 interface AdminTimetableGridProps {
-  /** Period numbers to iterate */
   periodNumbers: number[];
-  /** Days to display (e.g. ["Monday", "Tuesday", ...]) */
   days: string[];
-  /** Get the time slot for a given day+period */
   getSlotFor: (dayIndex: number, period: number) => TimeSlotInfo | null;
-  /** Get the lesson entry for a given day+period */
   getEntryFor: (dayOfWeek: number, period: number) => LessonEntry | null;
-  /** Get breaks after a period (for interleaving) */
   getBreaksAfterPeriod: (period: number) => BreakEntry[];
-  /** Get breaks before Period 1 */
   getBreaksBeforeFirstPeriod: () => BreakEntry[];
-  /** Loading state */
   isLoading?: boolean;
-  /** Empty state: no time slots */
   hasNoTimeSlots?: boolean;
-  /** Get clean break name (strip period info) */
   getCleanBreakName?: (name: string) => string;
-  /** Conflict lesson IDs set */
   conflictLessonIds?: Set<string>;
-  /** Show conflict warnings count */
-  // Callbacks
+  highlightTeacherId?: string | null;
+  getSubjectAccent?: (
+    subjectId: string,
+    subjectName: string,
+  ) => SubjectAccentStyle;
   onEditTimeslot?: (slot: TimeSlotInfo) => void;
   onDeleteTimeslot?: (slot: TimeSlotInfo) => void;
   onEditLesson?: (lesson: LessonEntry) => void;
@@ -90,8 +76,9 @@ interface AdminTimetableGridProps {
   ) => void;
   onEditBreak?: (breakEntry: BreakEntry) => void;
   onAddBreak?: (afterPeriod: number, dayOfWeek?: number) => void;
+  onMoveBreak?: (breakEntry: BreakEntry, direction: -1 | 1) => void;
+  movingBreakId?: string | null;
   onCreateSchedule?: () => void;
-
   className?: string;
 }
 
@@ -108,6 +95,8 @@ export function AdminTimetableGrid({
   hasNoTimeSlots = false,
   getCleanBreakName,
   conflictLessonIds,
+  highlightTeacherId,
+  getSubjectAccent: resolveAccent,
   onEditTimeslot,
   onDeleteTimeslot,
   onEditLesson,
@@ -115,118 +104,147 @@ export function AdminTimetableGrid({
   onAddLesson,
   onEditBreak,
   onAddBreak,
+  onMoveBreak,
+  movingBreakId,
   onCreateSchedule,
   className,
 }: AdminTimetableGridProps) {
   const cleanName = getCleanBreakName || ((name: string) => name);
+  const [mobileDayIndex, setMobileDayIndex] = useState(0);
+  const accentFor = resolveAccent ?? getSubjectAccent;
+
+  useEffect(() => {
+    setMobileDayIndex(0);
+  }, [days.length]);
+
+  const dayColumnClass = (dayIndex: number) =>
+    cn(dayIndex !== mobileDayIndex && "hidden md:table-cell");
 
   return (
     <div
       className={cn(
-        "bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm",
+        "overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-50/40 dark:border-zinc-800 dark:bg-zinc-950/40",
         className,
       )}
     >
+      {days.length > 1 && (
+        <div
+          className="flex items-center gap-1 border-b border-zinc-200/90 bg-white px-2 py-2 dark:border-zinc-800 dark:bg-zinc-900 md:hidden"
+          role="tablist"
+          aria-label="Day of week"
+        >
+          {days.map((day, index) => (
+            <button
+              key={day}
+              type="button"
+              role="tab"
+              aria-selected={index === mobileDayIndex}
+              onClick={() => setMobileDayIndex(index)}
+              className={cn(
+                "flex-1 min-w-0 rounded-lg px-2 py-2 text-[11px] font-semibold tracking-tight transition-colors",
+                index === mobileDayIndex
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
+              )}
+            >
+              {day.slice(0, 3)}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead className="sticky top-0 z-20">
-            <tr className="bg-slate-50/95 dark:bg-slate-800/95 border-b border-slate-200 dark:border-slate-700 backdrop-blur-sm">
-              <th className="border-r border-slate-200 dark:border-slate-700 px-3 py-2.5 text-left font-semibold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider w-[170px] bg-slate-50/95 dark:bg-slate-800/95">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-3 w-3" />
-                  <span>Time</span>
-                </div>
+        <table className="w-full min-w-0 border-collapse md:min-w-[720px]">
+          <thead>
+            <tr className="border-b border-zinc-200/90 dark:border-zinc-800">
+              <th
+                className="sticky left-0 z-20 w-[108px] border-r border-zinc-200/90 bg-zinc-100/95 px-3 py-3 text-left dark:border-zinc-800 dark:bg-zinc-900/95 md:w-[132px]"
+                scope="col"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                  Period
+                </span>
               </th>
               {days.map((day, index) => (
                 <th
-                  key={index}
-                  className="border-r border-slate-200 dark:border-slate-700 last:border-r-0 px-3 py-2.5 text-left font-semibold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider bg-slate-50/95 dark:bg-slate-800/95"
+                  key={day}
+                  scope="col"
+                  className={cn(
+                    "min-w-[120px] border-r border-zinc-200/60 bg-zinc-100/70 px-2 py-3 text-center last:border-r-0 dark:border-zinc-800 dark:bg-zinc-900/70 md:min-w-[140px]",
+                    dayColumnClass(index),
+                  )}
                 >
-                  <div className="flex flex-col">
-                    <span>{day.slice(0, 3)}</span>
-                    <span className="text-[10px] normal-case tracking-normal font-medium text-slate-400">
-                      {day}
-                    </span>
-                  </div>
+                  <span className="block text-[13px] font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+                    {day}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] font-medium tabular-nums text-zinc-400">
+                    Day {index + 1}
+                  </span>
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              /* Skeleton grid — renders immediately so layout never jumps */
-              Array.from({ length: 8 }).map((_, i) => (
-                <tr key={`skel-${i}`}>
-                  <td className="border-r border-b border-slate-200 dark:border-slate-700 p-1.5 w-[170px]">
-                    <div className="h-8 bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+              Array.from({ length: 6 }).map((_, i) => (
+                <tr
+                  key={`skel-${i}`}
+                  className="border-b border-zinc-100 dark:border-zinc-800/80"
+                >
+                  <td className="sticky left-0 border-r border-zinc-200/90 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="h-14 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
                   </td>
                   {days.map((_, di) => (
-                    <td
-                      key={di}
-                      className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-1.5"
-                    >
-                      <div className="h-8 bg-slate-50 dark:bg-slate-800/50 animate-pulse rounded" />
+                    <td key={di} className={cn("p-2", dayColumnClass(di))}>
+                      <div className="h-14 animate-pulse rounded-lg bg-zinc-100/80 dark:bg-zinc-800/60" />
                     </td>
                   ))}
                 </tr>
               ))
             ) : hasNoTimeSlots ? (
-              /* Inline empty state — stay in context, no wizard page */
               <tr>
-                <td
-                  colSpan={days.length + 1}
-                  className="border-b border-slate-200 dark:border-slate-700 p-8 text-center"
-                >
-                  <div className="flex flex-col items-center gap-3 max-w-xs mx-auto">
-                    <Clock className="h-10 w-10 text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <td colSpan={days.length + 1} className="p-12 text-center">
+                  <div className="mx-auto flex max-w-xs flex-col items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+                      <Clock className="h-5 w-5 text-zinc-400" />
+                    </div>
+                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                       No periods yet
                     </p>
-                    <p className="text-xs text-slate-500">
-                      Set up your schedule to start building the timetable.
+                    <p className="text-[12px] leading-relaxed text-zinc-500">
+                      Configure lesson times for this term, then fill the grid.
                     </p>
                     <Button
                       size="sm"
                       onClick={onCreateSchedule}
-                      className="gap-1.5"
+                      className="h-8 gap-1.5 text-xs"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      Create schedule
+                      Set up schedule
                     </Button>
                   </div>
                 </td>
               </tr>
             ) : (
               <>
-                {/* Breaks before Period 1 */}
                 <BreakBeforeFirstRow
                   breaks={getBreaksBeforeFirstPeriod()}
                   days={days}
                   cleanName={cleanName}
                   onEditBreak={onEditBreak}
+                  dayColumnClass={dayColumnClass}
                 />
 
-                {/* Period rows with interleaved breaks */}
-                {periodNumbers.map((period, periodIndex) => {
+                {periodNumbers.map((period) => {
                   const baseSlot = getSlotFor(0, period);
                   if (!baseSlot) return null;
 
                   const breaksAfter = getBreaksAfterPeriod(period);
-                  const isEven = periodIndex % 2 === 0;
 
                   return (
                     <React.Fragment key={`period-${period}`}>
-                      {/* Lesson row */}
-                      <tr
-                        className={cn(
-                          "group transition-colors",
-                          isEven
-                            ? "bg-white dark:bg-slate-900 hover:bg-slate-50/70 dark:hover:bg-slate-850"
-                            : "bg-slate-50/40 dark:bg-slate-900/80 hover:bg-slate-100/70 dark:hover:bg-slate-850",
-                        )}
-                      >
-                        {/* Time column with edit/delete */}
-                        <td className="border-r border-b border-slate-200 dark:border-slate-700 p-0 w-[170px]">
+                      <tr className="group/row border-b border-zinc-200/70 dark:border-zinc-800/80">
+                        <td className="sticky left-0 z-10 border-r border-zinc-200/90 bg-white p-0 align-top dark:border-zinc-800 dark:bg-zinc-900">
                           <TimeColumnCell
                             slot={baseSlot}
                             period={period}
@@ -236,7 +254,6 @@ export function AdminTimetableGrid({
                           />
                         </td>
 
-                        {/* Day columns */}
                         {days.map((_, dayIndex) => {
                           const dayOfWeek = dayIndex + 1;
                           const daySlot = getSlotFor(dayIndex, period);
@@ -249,39 +266,51 @@ export function AdminTimetableGrid({
                             prevEntry?.isDoublePeriod === true;
                           const hasConflict =
                             entry && conflictLessonIds?.has(entry.id);
+                          const isTeacherDimmed = !!(
+                            entry &&
+                            highlightTeacherId &&
+                            entry.teacher.id !== highlightTeacherId
+                          );
 
                           return (
                             <td
                               key={dayIndex}
-                              className="border-r border-b border-slate-200 dark:border-slate-700 last:border-r-0 p-2 align-top"
+                              className={cn(
+                                "bg-white p-1.5 align-top dark:bg-zinc-900/40",
+                                dayColumnClass(dayIndex),
+                              )}
                             >
                               {entry ? (
                                 <AdminLessonCell
                                   entry={entry}
+                                  accent={accentFor(
+                                    entry.subject.id ?? entry.id,
+                                    entry.subject.name,
+                                  )}
                                   hasConflict={!!hasConflict}
+                                  isDimmed={isTeacherDimmed}
                                   onEdit={onEditLesson}
                                   onDelete={onDeleteLesson}
                                 />
                               ) : isContinuation ? (
-                                <div className="w-full h-full min-h-[58px] flex items-center justify-center text-[10px] text-slate-300 dark:text-slate-600 border border-dashed border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50/50 dark:bg-slate-800/30">
-                                  <span className="font-medium">
-                                    ↳ continued
-                                  </span>
+                                <div className="flex min-h-[64px] items-center justify-center rounded-lg border border-dashed border-zinc-200/90 bg-zinc-50/80 px-2 text-center text-[10px] font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/30">
+                                  Continues
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => {
+                                  type="button"
+                                  onClick={() =>
                                     onAddLesson?.(
                                       dayOfWeek,
                                       baseSlot.id,
                                       daySlot?.id,
-                                    );
-                                  }}
-                                  className="w-full h-full min-h-[58px] flex items-center justify-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary-foreground border border-dashed border-slate-200 dark:border-slate-700 rounded-lg hover:border-primary dark:hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all group/empty"
-                                  title="Click to schedule a lesson"
+                                    )
+                                  }
+                                  className="flex min-h-[64px] w-full flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-zinc-200/90 bg-zinc-50/50 text-[11px] font-medium text-zinc-400 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/20 dark:hover:border-zinc-600 dark:hover:text-zinc-300"
+                                  title="Add lesson"
                                 >
-                                  <Plus className="h-3 w-3 opacity-50 group-hover/empty:opacity-100 transition-opacity" />
-                                  <span className="font-medium">Add</span>
+                                  <Plus className="h-3.5 w-3.5 opacity-60" />
+                                  <span>Add</span>
                                 </button>
                               )}
                             </td>
@@ -289,13 +318,15 @@ export function AdminTimetableGrid({
                         })}
                       </tr>
 
-                      {/* Break rows after this period */}
                       {breaksAfter.length > 0 && (
                         <BreakRow
                           breaks={breaksAfter}
                           days={days}
                           cleanName={cleanName}
                           onEditBreak={onEditBreak}
+                          onMoveBreak={onMoveBreak}
+                          movingBreakId={movingBreakId}
+                          dayColumnClass={dayColumnClass}
                         />
                       )}
                     </React.Fragment>
@@ -312,7 +343,6 @@ export function AdminTimetableGrid({
 
 // ─── Sub-components ────────────────────────────────────────────
 
-/** Time column cell with period info and inline controls */
 function TimeColumnCell({
   slot,
   period,
@@ -326,51 +356,66 @@ function TimeColumnCell({
   onDelete?: (slot: TimeSlotInfo) => void;
   onAddBreak?: (afterPeriod: number) => void;
 }) {
+  const timeLabel =
+    slot.displayTime ||
+    slot.time ||
+    `${slot.startTime ?? ""}`.trim() ||
+    `P${period}`;
+
   return (
-    <div className="relative bg-white dark:bg-slate-900 p-2.5 w-[170px] group/time border-r border-slate-100 dark:border-slate-800">
-      <div className="flex items-center gap-2 pr-6">
-        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary/10 flex-shrink-0">
-          <Clock className="h-3 w-3 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold text-[11px] text-slate-900 dark:text-slate-100 tracking-tight leading-tight truncate">
-            {slot.displayTime || slot.time || `P${period}`}
-          </div>
-          <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-            Period {period}
-          </div>
-        </div>
+    <div
+      className="group/time relative w-[108px] cursor-pointer border-b border-transparent p-3 md:w-[132px]"
+      role="button"
+      tabIndex={0}
+      onClick={() => onEdit?.(slot)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onEdit?.(slot);
+        }
+      }}
+      title="Edit lesson times"
+    >
+      <div className="pr-7">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+          P{period}
+        </p>
+        <p className="mt-1 font-mono text-[12px] font-medium tabular-nums leading-tight text-zinc-800 dark:text-zinc-100">
+          {timeLabel}
+        </p>
       </div>
 
-      {/* Hover controls */}
-      <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover/time:opacity-100 transition-opacity z-10">
+      <div className="absolute right-1.5 top-1.5 flex flex-col gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover/time:opacity-100">
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onAddBreak?.(Math.max(0, period - 1));
+            onAddBreak?.(period);
           }}
-          className="flex items-center justify-center w-5 h-5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-orange-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 transition-all"
-          title="Add break before this period"
+          className="flex h-5 w-5 items-center justify-center rounded text-[10px] text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+          title="Add break"
         >
-          <span className="text-[9px] leading-none">☕</span>
+          ☕
         </button>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onEdit?.(slot);
           }}
-          className="flex items-center justify-center w-5 h-5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all"
-          title="Edit timeslot"
+          className="flex h-5 w-5 items-center justify-center rounded text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+          title="Edit"
         >
           <Edit2 className="h-2.5 w-2.5" />
         </button>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onDelete?.(slot);
           }}
-          className="flex items-center justify-center w-5 h-5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-red-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-all"
-          title="Delete timeslot"
+          className="flex h-5 w-5 items-center justify-center rounded text-zinc-400 hover:bg-red-50 hover:text-red-600"
+          title="Delete period"
         >
           <Trash2 className="h-2.5 w-2.5" />
         </button>
@@ -379,110 +424,177 @@ function TimeColumnCell({
   );
 }
 
-/** Lesson cell with polished styling */
 function AdminLessonCell({
   entry,
+  accent,
   hasConflict,
+  isDimmed,
   onEdit,
   onDelete,
 }: {
   entry: LessonEntry;
+  accent: SubjectAccentStyle;
   hasConflict: boolean;
+  isDimmed?: boolean;
   onEdit?: (lesson: LessonEntry) => void;
   onDelete?: (lesson: LessonEntry) => void;
 }) {
   return (
     <div
       className={cn(
-        "group/lesson relative cursor-pointer rounded-lg p-2 hover:shadow-md transition-all duration-150 border",
+        "group/lesson relative min-h-[64px] cursor-pointer overflow-hidden rounded-lg border transition-shadow hover:shadow-sm",
+        isDimmed && "opacity-40 saturate-[0.65]",
         hasConflict
-          ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
-          : "bg-blue-50/60 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700",
+          ? "border-red-200/90 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25"
+          : "border-zinc-200/70 dark:border-zinc-700/80",
       )}
+      style={
+        hasConflict
+          ? undefined
+          : {
+              backgroundColor: accent.background,
+              borderColor: accent.border,
+            }
+      }
+      role="button"
+      tabIndex={0}
       onClick={() => onEdit?.(entry)}
-      title="Click to edit"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onEdit?.(entry);
+        }
+      }}
     >
-      <div className="space-y-1">
-        <div className="font-semibold text-xs text-slate-900 dark:text-slate-100 leading-tight line-clamp-2">
+      <div
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: hasConflict ? "#dc2626" : accent.accent }}
+        aria-hidden
+      />
+
+      <div className="flex min-h-[64px] flex-col justify-center py-2 pl-3.5 pr-8">
+        <p
+          className="text-[13px] font-semibold leading-tight tracking-tight line-clamp-2"
+          style={{ color: hasConflict ? undefined : accent.text }}
+        >
           {entry.subject.name}
-        </div>
-        <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-          <span>{entry.teacher.name}</span>
-        </div>
+        </p>
+        <p className="mt-1 truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+          {entry.teacher.name}
+        </p>
         {entry.roomNumber && (
-          <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 pt-1 border-t border-slate-200/50 dark:border-slate-700/50">
-            <span>{entry.roomNumber}</span>
-          </div>
+          <p className="mt-1 text-[10px] tabular-nums text-zinc-400">
+            Rm {entry.roomNumber}
+          </p>
         )}
       </div>
 
-      {/* Hover controls */}
-      <div className="absolute top-1 right-1 opacity-0 group-hover/lesson:opacity-100 transition-opacity flex items-center gap-0.5">
+      <div className="absolute right-1 top-1 flex items-center gap-0.5 md:opacity-0 md:group-hover/lesson:opacity-100">
         {entry.isDoublePeriod && (
-          <span className="text-[9px] bg-primary/10 text-primary font-semibold px-1.5 py-0.5 rounded-md">
-            2x
+          <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-500 bg-white/80">
+            2×
           </span>
         )}
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onEdit?.(entry);
           }}
-          className="p-1 rounded-md hover:bg-white/80 dark:hover:bg-slate-700 transition-colors"
-          title="Edit lesson"
+          className="rounded p-1 text-zinc-400 hover:bg-white/80"
         >
-          <Edit2 className="h-3 w-3 text-slate-500" />
+          <Edit2 className="h-3 w-3" />
         </button>
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onDelete?.(entry);
           }}
-          className="p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-          title="Delete lesson"
+          className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600"
         >
-          <Trash2 className="h-3 w-3 text-red-400" />
+          <Trash2 className="h-3 w-3" />
         </button>
       </div>
 
       {hasConflict && (
-        <div className="absolute bottom-1 right-1">
-          <AlertCircle className="h-3 w-3 text-red-500" />
-        </div>
+        <AlertCircle className="absolute bottom-1.5 right-1.5 h-3.5 w-3.5 text-red-500" />
       )}
     </div>
   );
 }
 
-/** Break row interleaved between periods */
 function BreakRow({
   breaks,
   days,
   cleanName,
   onEditBreak,
+  onMoveBreak,
+  movingBreakId,
+  dayColumnClass,
 }: {
   breaks: BreakEntry[];
   days: string[];
   cleanName: (name: string) => string;
   onEditBreak?: (breakEntry: BreakEntry) => void;
+  onMoveBreak?: (breakEntry: BreakEntry, direction: -1 | 1) => void;
+  movingBreakId?: string | null;
+  dayColumnClass?: (dayIndex: number) => string;
 }) {
+  const colClass = dayColumnClass ?? (() => "");
+  const label = cleanName(breaks[0]?.name || "Break");
+  const first = breaks[0];
+  const isMoving = first && movingBreakId === first.id;
+
   return (
-    <tr className="bg-amber-50/60 dark:bg-amber-950/10 border-y border-amber-100 dark:border-amber-900/30">
-      <td className="border-r border-amber-100 dark:border-amber-900/30 p-0">
-        <div className="p-2 w-[170px]">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-xs flex-shrink-0">
-              {breaks[0]?.icon || "☕"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-[11px] text-amber-800 dark:text-amber-200 leading-tight truncate">
-                {cleanName(breaks[0]?.name || "Break")}
-              </div>
-              <div className="text-[10px] text-amber-600 dark:text-amber-400">
-                {breaks[0]?.durationMinutes}m
-              </div>
-            </div>
+    <tr className="border-b border-stone-200/80 bg-stone-100/50 dark:border-stone-800/60 dark:bg-stone-900/20">
+      <td className="sticky left-0 z-10 border-r border-stone-200/80 bg-stone-100/80 p-2 dark:border-stone-800 dark:bg-stone-900/40">
+        <div className="flex items-center gap-1">
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-500">
+              Break
+            </p>
+            <p className="mt-0.5 text-[12px] font-medium text-stone-700 dark:text-stone-300 truncate">
+              {label}
+            </p>
+            <p className="text-[10px] tabular-nums text-stone-500">
+              {first?.durationMinutes} min
+            </p>
           </div>
+          {first && onMoveBreak && (
+            <div className="flex flex-col gap-0.5 shrink-0">
+              {isMoving ? (
+                <div className="flex h-8 w-4 items-center justify-center">
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-stone-300 border-t-stone-500" />
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveBreak(first, -1);
+                    }}
+                    className="flex h-4 w-4 items-center justify-center rounded text-[10px] text-stone-400 hover:bg-stone-200 hover:text-stone-700"
+                    title="Move break earlier"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveBreak(first, 1);
+                    }}
+                    className="flex h-4 w-4 items-center justify-center rounded text-[10px] text-stone-400 hover:bg-stone-200 hover:text-stone-700"
+                    title="Move break later"
+                  >
+                    ▼
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </td>
       {days.map((_, dayIndex) => {
@@ -492,40 +604,34 @@ function BreakRow({
         return (
           <td
             key={dayIndex}
-            className="border-r border-amber-100 dark:border-amber-900/30 last:border-r-0 p-1.5 text-center align-middle"
+            className={cn("p-1.5 align-middle", colClass(dayIndex))}
           >
             {dayBreak ? (
-              <div
-                className="inline-flex items-center gap-1.5 cursor-pointer bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1.5 hover:shadow-sm hover:border-amber-300 dark:hover:border-amber-700 transition-all group/break"
+              <button
+                type="button"
                 onClick={() => onEditBreak?.(dayBreak)}
-                title="Click to edit break"
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-stone-200/90 bg-white/90 px-2 py-2 text-[11px] font-medium text-stone-600 transition-colors hover:border-stone-300 hover:bg-white dark:border-stone-700 dark:bg-stone-900/60 dark:text-stone-300"
               >
-                <span className="text-sm">{dayBreak.icon || "☕"}</span>
-                <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-200">
-                  {cleanName(dayBreak.name)}
-                </span>
-                <span className="text-[9px] text-amber-500">
-                  {dayBreak.durationMinutes}m
-                </span>
-                <Edit2 className="h-2.5 w-2.5 text-amber-400 opacity-0 group-hover/break:opacity-100 transition-opacity" />
-              </div>
+                <span>{dayBreak.icon || "☕"}</span>
+                <span className="truncate">{cleanName(dayBreak.name)}</span>
+              </button>
             ) : (
               <button
-                onClick={() => {
+                type="button"
+                onClick={() =>
                   onEditBreak?.({
                     isNew: true,
                     afterPeriod: breaks[0]?.afterPeriod || 0,
                     dayOfWeek: dayIndex + 1,
-                    name: "New Break",
+                    name: "Break",
                     type: "BREAK",
                     durationMinutes: 20,
-                  });
-                }}
-                className="inline-flex items-center gap-1 text-[10px] text-amber-500 hover:text-amber-700 dark:hover:text-amber-300 border border-dashed border-amber-200 dark:border-amber-800 rounded-lg px-2 py-1 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-all"
-                title="Add break for this day"
+                  })
+                }
+                className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-stone-300/80 py-2 text-[10px] font-medium text-stone-400 hover:bg-white/80"
               >
                 <Plus className="h-3 w-3" />
-                <span className="font-medium">Add</span>
+                Add
               </button>
             )}
           </td>
@@ -535,26 +641,33 @@ function BreakRow({
   );
 }
 
-/** Breaks before Period 1 */
 function BreakBeforeFirstRow({
   breaks,
   days,
   cleanName,
   onEditBreak,
+  onMoveBreak,
+  movingBreakId,
+  dayColumnClass,
 }: {
   breaks: BreakEntry[];
   days: string[];
   cleanName: (name: string) => string;
   onEditBreak?: (breakEntry: BreakEntry) => void;
+  onMoveBreak?: (breakEntry: BreakEntry, direction: -1 | 1) => void;
+  movingBreakId?: string | null;
+  dayColumnClass?: (dayIndex: number) => string;
 }) {
   if (breaks.length === 0) return null;
-
   return (
     <BreakRow
       breaks={breaks}
       days={days}
       cleanName={cleanName}
       onEditBreak={onEditBreak}
+      onMoveBreak={onMoveBreak}
+      movingBreakId={movingBreakId}
+      dayColumnClass={dayColumnClass}
     />
   );
 }

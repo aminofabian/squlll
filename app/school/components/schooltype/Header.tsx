@@ -7,12 +7,14 @@ interface HeaderProps {
   subdomain: string
   currentStep: number
   totalSteps: number
+  badgeLabel?: string
 }
 
 export const Header: React.FC<HeaderProps> = ({
   subdomain,
   currentStep,
-  totalSteps
+  totalSteps,
+  badgeLabel = 'SCHOOL SETUP',
 }) => {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3 bg-white/90 backdrop-blur-sm p-2 rounded-md border border-gray-200/60 shadow-sm">
@@ -28,7 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
           <h1 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
             {subdomain.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
           </h1>
-          <p className="text-[9px] text-gray-500">SCHOOL SETUP</p>
+          <p className="text-[9px] text-gray-500">{badgeLabel}</p>
         </div>
       </div>
       <div className="flex items-center gap-1 text-[10px] bg-[#246a59]/10 px-2 py-1 rounded border border-[#246a59]/20">

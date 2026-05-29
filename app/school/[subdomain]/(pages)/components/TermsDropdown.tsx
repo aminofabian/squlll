@@ -24,6 +24,7 @@ interface Term {
   startDate: string
   endDate: string
   isActive: boolean
+  timetablePublishedAt?: string | null
   academicYear: {
     name: string
   }
@@ -70,6 +71,7 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
                 startDate
                 endDate
                 isActive
+                timetablePublishedAt
                 academicYear {
                   name
                 }

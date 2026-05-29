@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
@@ -24,6 +26,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
+import { dayNameFromNumber } from "@/lib/utils/timetable-user-messages";
+import { useKnownRoomNumbers } from "../hooks/useKnownRoomNumbers";
+import { pickTeacherForSubject } from "../utils/pickTeacherForSubject";
+import { normalizeRoomNumber } from "../utils/normalizeRoomNumber";
+import { useTimetableWeekDays } from "../hooks/useTimetableWeekDays";
+import {
+  getTimeSlotForDayAndPeriod,
+  uniquePeriodNumbers,
+} from "../utils/timetableSlots";
 
 interface LessonEditDialogProps {
   lesson: (EnrichedTimetableEntry & { isNew?: boolean }) | null;
@@ -39,13 +51,18 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     grades,
     addEntry,
     deleteEntry,
+    deleteTimetableEntry,
     loadEntries,
     selectedGradeId,
+    selectedStreamId,
     selectedTermId,
   } = useTimetableStore();
   const { selectedTerm } = useSelectedTerm();
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
   const { toast } = useToast();
+  const params = useParams();
+  const subdomain = params?.subdomain as string | undefined;
+  const knownRooms = useKnownRoomNumbers();
   const [isSaving, setIsSaving] = useState(false);
 
   // Filter to only active teachers - memoized to prevent infinite loops
@@ -60,9 +77,20 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     roomNumber: "",
     isDoublePeriod: false,
   });
+  const [moveDay, setMoveDay] = useState(1);
+  const [movePeriod, setMovePeriod] = useState(1);
+
+  const { dayLabels, daysPerWeek } = useTimetableWeekDays();
+  const periodOptions = useMemo(
+    () => uniquePeriodNumbers(timeSlots),
+    [timeSlots],
+  );
 
   useEffect(() => {
     if (lesson && !lesson.isNew) {
+      const slot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+      setMoveDay(lesson.dayOfWeek);
+      setMovePeriod(slot?.periodNumber ?? 1);
       setFormData({
         subjectId: lesson.subjectId,
         teacherId: lesson.teacherId,
@@ -111,17 +139,20 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
       }
 
       // Find a teacher who can teach this grade (only active teachers)
-      const firstAvailableTeacher = activeTeachers.find((teacher) => {
+      const eligibleForGrade = activeTeachers.filter((teacher) => {
         const canTeachGrade =
           !grade?.name ||
           (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
-        const isAvailable = !busyTeacherIds.has(teacher.id);
-        return canTeachGrade && isAvailable;
+        return canTeachGrade && !busyTeacherIds.has(teacher.id);
       });
+      const suggestedTeacher = pickTeacherForSubject(
+        firstSubject?.name,
+        eligibleForGrade,
+      );
 
       setFormData({
         subjectId: firstSubject?.id || "",
-        teacherId: firstAvailableTeacher?.id || "",
+        teacherId: suggestedTeacher?.id || "",
         roomNumber: "",
         isDoublePeriod: false,
       });
@@ -144,25 +175,29 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
 
     if (!termId) {
       toast({
-        title: "Error",
-        description: "No term selected. Please select a term first.",
+        title: "Choose a term first",
+        description:
+          "Use the term selector in the top bar, then try saving again.",
         variant: "destructive",
       });
       return;
     }
 
-    // Verify term has academicYear (backend needs this to derive academicYear)
     if (!selectedTerm?.academicYear?.name) {
       toast({
-        title: "Error",
+        title: "School year missing",
         description:
-          "Selected term does not have an academic year. Please select a different term or contact support.",
+          "This term is not linked to a school year. Pick another term or contact support.",
         variant: "destructive",
       });
       return;
     }
 
     setIsSaving(true);
+    const normalizedRoom = normalizeRoomNumber(
+      formData.roomNumber,
+      knownRooms,
+    );
 
     try {
       if (lesson.isNew) {
@@ -174,9 +209,8 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           !lesson.timeSlotId
         ) {
           toast({
-            title: "Error",
-            description:
-              "Missing required information. Please check all fields are selected.",
+            title: "Fill in all fields",
+            description: "Choose a subject and teacher before saving.",
             variant: "destructive",
           });
           setIsSaving(false);
@@ -209,53 +243,19 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
           gradeLevelId: lesson.gradeId,
-          streamId: null,
+          streamId: selectedStreamId ?? null,
           termId: termId,
         };
 
         // Only add optional fields if they have values
-        if (formData.roomNumber && formData.roomNumber.trim()) {
-          input.roomName = formData.roomNumber.trim();
+        if (normalizedRoom) {
+          input.roomName = normalizedRoom;
         }
-
-        // Validate input structure before sending
-        console.log("Input validation check:", {
-          termId: typeof input.termId === "string" && input.termId.length > 0,
-          subjectId:
-            typeof input.subjectId === "string" && input.subjectId.length > 0,
-          teacherId:
-            typeof input.teacherId === "string" && input.teacherId.length > 0,
-          dayTemplatePeriodId:
-            typeof input.dayTemplatePeriodId === "string" &&
-            input.dayTemplatePeriodId.length > 0,
-          roomName: !input.roomName || typeof input.roomName === "string",
-        });
 
         // Verify the IDs exist in the store
         const subject = subjects.find((s) => s.id === formData.subjectId);
         const teacher = activeTeachers.find((t) => t.id === formData.teacherId);
         const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
-
-        // Log subject ID details for debugging
-        console.log("=== SUBJECT ID VALIDATION ===");
-        console.log(
-          "TenantSubject ID being sent (this is the assignment ID):",
-          formData.subjectId,
-        );
-        console.log("Subject found in store:", subject);
-        console.log("Subject ID type:", typeof formData.subjectId);
-        console.log("Subject ID length:", formData.subjectId?.length);
-        console.log(
-          "Is valid UUID format:",
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-            formData.subjectId,
-          ),
-        );
-        console.log(
-          "All tenantSubject IDs in store:",
-          subjects.map((s) => s.id),
-        );
-        console.log("=== END SUBJECT ID VALIDATION ===");
 
         // Note: Subject validation is handled by:
         // 1. The dropdown which filters subjects by grade level (name/code matching)
@@ -271,22 +271,14 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             timeSlot,
           );
           toast({
-            title: "Time Slots Need Reloading",
+            title: "Please refresh the page",
             description:
-              "Time slots appear to be using old cached data. Please reload the page to fetch fresh time slots from the backend.",
+              "Lesson times did not load correctly. Refresh and try again.",
             variant: "destructive",
           });
           setIsSaving(false);
           return;
         }
-
-        // Log available subjects for debugging
-        console.log(
-          "Available subjects in store:",
-          subjects.map((s) => ({ id: s.id, name: s.name })),
-        );
-        console.log("Selected subject:", subject);
-        console.log("Selected timeSlot:", timeSlot);
 
         // Validate UUID format for all IDs (uuidRegex already declared above)
         const invalidIds: string[] = [];
@@ -310,15 +302,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             )
           ) {
             toast({
-              title: "Time Slots Need Reloading",
+              title: "Please refresh the page",
               description:
-                'Time slots appear to be using old data. Please reload the page or click "Create Time Slots" to refresh them.',
+                "Lesson times did not load correctly. Refresh and try again.",
               variant: "destructive",
             });
           } else {
             toast({
-              title: "Error",
-              description: `Invalid ID format: ${invalidIds.join(", ")}. Please reload the page.`,
+              title: "Could not save lesson",
+              description:
+                "Something did not load correctly. Refresh the page and try again.",
               variant: "destructive",
             });
           }
@@ -348,25 +341,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
-        console.log("Creating entry with input:", {
-          input,
-          termId,
-          selectedTerm: selectedTerm?.name,
-          academicYear: selectedTerm?.academicYear?.name,
-          subjectId: formData.subjectId,
-          subjectName: subject?.name,
-          teacherId: formData.teacherId,
-          teacherName: teacher?.name,
-          dayTemplatePeriodId: lesson.timeSlotId,
-          timeSlotPeriod: timeSlot?.periodNumber,
-          dayOfWeek: lesson.dayOfWeek,
-        });
-
-        // Log the exact input being sent
-        console.log(
-          "Exact input object being sent to backend:",
-          JSON.stringify(input, null, 2),
-        );
         if (!timeSlot) {
           console.error("TimeSlot not found:", lesson.timeSlotId);
           toast({
@@ -386,11 +360,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           query: mutation,
           variables,
         };
-
-        console.log("Creating timetable entry with input:", input);
-        console.log("GraphQL mutation:", mutation);
-        console.log("GraphQL variables:", JSON.stringify(variables, null, 2));
-        console.log("Full request body:", JSON.stringify(requestBody, null, 2));
 
         const response = await fetch("/api/graphql", {
           method: "POST",
@@ -414,7 +383,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           );
         }
 
-        console.log("GraphQL response:", JSON.stringify(result, null, 2));
 
         // Check for GraphQL errors first (these can occur even with 200 status)
         if (
@@ -638,7 +606,6 @@ Check the browser console for detailed input information.`;
         }
 
         const createdEntry = result.data.createTimetableEntry;
-        console.log("Successfully created entry:", createdEntry);
 
         toast({
           title: "Success",
@@ -648,6 +615,89 @@ Check the browser console for detailed input information.`;
         // Close dialog - onClose will trigger full timetable reload
         onClose();
       } else {
+        const targetSlot = getTimeSlotForDayAndPeriod(
+          timeSlots,
+          moveDay,
+          movePeriod,
+        );
+        const isMoving =
+          targetSlot &&
+          (moveDay !== lesson.dayOfWeek ||
+            targetSlot.id !== lesson.timeSlotId);
+
+        if (isMoving && targetSlot) {
+          const slotTaken = entries.some(
+            (e) =>
+              e.gradeId === lesson.gradeId &&
+              e.dayOfWeek === moveDay &&
+              e.timeSlotId === targetSlot.id &&
+              e.id !== lesson.id,
+          );
+          if (slotTaken) {
+            toast({
+              title: "That slot is already filled",
+              description: `Pick another period or day for ${dayNameFromNumber(moveDay)}.`,
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+
+          const moveMutation = `
+            mutation MoveEntry($input: UpdateTimetableEntryInput!) {
+              updateTimetableEntry(input: $input) {
+                id
+              }
+            }
+          `;
+          const moveRes = await fetch("/api/graphql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              query: moveMutation,
+              variables: {
+                input: {
+                  id: lesson.id,
+                  dayTemplatePeriodId: targetSlot.id,
+                  subjectId: formData.subjectId,
+                  teacherId: formData.teacherId,
+                  roomName: normalizedRoom || null,
+                },
+              },
+            }),
+          });
+          const moveResult = await moveRes.json();
+          if (moveResult.errors?.length) {
+            throw new Error(
+              moveResult.errors.map((e: { message: string }) => e.message).join(", "),
+            );
+          }
+          if (!moveResult.data?.updateTimetableEntry?.id) {
+            throw new Error("Could not move lesson to the new slot");
+          }
+
+          await loadEntries(termId);
+
+          toast({
+            title: "Lesson moved",
+            description: `${dayNameFromNumber(moveDay)}, period ${movePeriod}`,
+          });
+          onClose();
+          setIsSaving(false);
+          return;
+        }
+
+        if (!targetSlot && movePeriod) {
+          toast({
+            title: "Invalid period",
+            description: "That period is not available on the selected day.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
         // Update existing entry via GraphQL mutation
         if (!lesson.id) {
           toast({
@@ -682,7 +732,7 @@ Check the browser console for detailed input information.`;
           id: lesson.id,
           teacherId: formData.teacherId,
           subjectId: formData.subjectId,
-          roomName: formData.roomNumber || null,
+          roomName: normalizedRoom || null,
         };
 
         const variables = {
@@ -694,9 +744,6 @@ Check the browser console for detailed input information.`;
           variables,
         };
 
-        console.log("Updating timetable entry with input:", input);
-        console.log("GraphQL mutation:", mutation);
-        console.log("GraphQL variables:", JSON.stringify(variables, null, 2));
 
         const response = await fetch("/api/graphql", {
           method: "POST",
@@ -719,7 +766,6 @@ Check the browser console for detailed input information.`;
           );
         }
 
-        console.log("GraphQL response:", JSON.stringify(result, null, 2));
 
         // Check for GraphQL errors first
         if (
@@ -794,7 +840,6 @@ Check the browser console for detailed input information.`;
         }
 
         const updatedEntry = result.data.updateTimetableEntry;
-        console.log("Successfully updated entry:", updatedEntry);
 
         toast({
           title: "Success",
@@ -807,9 +852,8 @@ Check the browser console for detailed input information.`;
     } catch (error) {
       console.error("Error saving lesson:", error);
       toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to save lesson",
+        title: "Could not save lesson",
+        description: sanitizeTimetableUserMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -829,23 +873,20 @@ Check the browser console for detailed input information.`;
     setIsSaving(true);
 
     try {
-      // TODO: Implement delete mutation when backend supports it
-      // For now, use local delete
-      deleteEntry(lesson.id);
+      await deleteTimetableEntry(lesson.id);
+      if (termId) await loadEntries(termId);
 
       toast({
-        title: "Success",
-        description: "Lesson deleted successfully",
+        title: "Lesson removed",
+        description: "The slot is empty again.",
       });
 
-      // Close dialog - onClose will trigger full timetable reload
       onClose();
     } catch (error) {
       console.error("Error deleting lesson:", error);
       toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to delete lesson",
+        title: "Could not remove lesson",
+        description: sanitizeTimetableUserMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -864,6 +905,16 @@ Check the browser console for detailed input information.`;
   // Get timeslot and grade information
   const timeSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
   const grade = grades.find((g) => g.id === lesson.gradeId);
+  const slotTitle = timeSlot
+    ? `${dayNameFromNumber(lesson.dayOfWeek)} · P${timeSlot.periodNumber}`
+    : dayNameFromNumber(lesson.dayOfWeek);
+  const sectionName =
+    lesson.gradeId && selectedStreamId
+      ? (grades
+          .find((gr) => gr.id === lesson.gradeId)
+          ?.streams?.find((s) => s.tenantStreamId === selectedStreamId)?.name ??
+        null)
+      : null;
 
   // Find teachers already scheduled at this timeslot
   const busyTeacherIds = new Set(
@@ -902,54 +953,135 @@ Check the browser console for detailed input information.`;
     return canTeachGrade && isBusy;
   });
 
+  const gradeQualifiedTeachers = activeTeachers.filter((teacher) => {
+    const canTeachGrade =
+      !grade?.name ||
+      (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
+    return canTeachGrade;
+  });
+
+  const gradeInfo = lesson.gradeId ? getGradeById(lesson.gradeId) : null;
+  const levelSubjects = gradeInfo
+    ? getSubjectsByLevelId(gradeInfo.levelId)
+    : [];
+  const levelSubjectNames = new Set(
+    levelSubjects.map((s) => s.name.toLowerCase().trim()),
+  );
+  const levelSubjectCodes = new Set(
+    levelSubjects.map((s) => s.code?.toLowerCase().trim()).filter(Boolean),
+  );
+  const subjectsForClass = subjects.filter((backendSubject) => {
+    const subjectName = backendSubject.name.toLowerCase().trim();
+    const subjectCode = backendSubject.code?.toLowerCase().trim();
+    return (
+      levelSubjectNames.has(subjectName) ||
+      (subjectCode && levelSubjectCodes.has(subjectCode))
+    );
+  });
+
   return (
     <Drawer open={!!lesson} onOpenChange={onClose} direction="right">
       <DrawerContent className="max-w-md flex flex-col h-full">
-        <DrawerHeader className="bg-white dark:bg-slate-900 border-b border-slate-300 dark:border-slate-600 flex-shrink-0">
-          <DrawerTitle className="text-xl font-bold text-primary">
-            {isNew ? "Add New Lesson" : "Edit Lesson"}
+        <DrawerHeader className="shrink-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+          <DrawerTitle className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            {isNew ? "Add lesson" : "Edit lesson"} · {slotTitle}
           </DrawerTitle>
-          <DrawerDescription>
+          <DrawerDescription className="text-[13px] text-zinc-500">
             {isNew
-              ? "Add a new lesson to the timetable for this time slot and day."
-              : "Edit the lesson details including subject, teacher, and room number."}
+              ? "Choose subject, teacher, and room for this slot."
+              : "Update details or move to another day or period."}
           </DrawerDescription>
-          {/* Timeslot and Grade Info */}
-          <div className="mt-3 space-y-2 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <div className="mt-3 space-y-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
             {timeSlot && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400">
-                  Time Slot:
+                  Lesson time:
                 </span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
-                  Period {timeSlot.periodNumber} • {timeSlot.time}
+                  Period {timeSlot.periodNumber} · {timeSlot.time}
                 </span>
               </div>
             )}
             {grade && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-600 dark:text-slate-400">
-                  Grade:
+                  Class:
                 </span>
                 <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {grade.displayName || grade.name}
+                  {sectionName ? ` — ${sectionName}` : ""}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-600 dark:text-slate-400">Day:</span>
               <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {
-                  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"][
-                    lesson.dayOfWeek - 1
-                  ]
-                }
+                {dayNameFromNumber(lesson.dayOfWeek)}
               </span>
             </div>
           </div>
         </DrawerHeader>
 
         <div className="space-y-4 px-6 py-6 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900">
+          {!isNew && periodOptions.length > 0 && (
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Move to another slot
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  Change day or period, then save.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Day</Label>
+                  <Select
+                    value={String(moveDay)}
+                    onValueChange={(v) => setMoveDay(Number(v))}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dayLabels.slice(0, daysPerWeek).map((label, i) => (
+                        <SelectItem key={label} value={String(i + 1)}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Period</Label>
+                  <Select
+                    value={String(movePeriod)}
+                    onValueChange={(v) => setMovePeriod(Number(v))}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {periodOptions.map((p) => {
+                        const slot = getTimeSlotForDayAndPeriod(
+                          timeSlots,
+                          moveDay,
+                          p,
+                        );
+                        return (
+                          <SelectItem key={p} value={String(p)}>
+                            Period {p}
+                            {slot?.time ? ` · ${slot.time}` : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Subject Selection */}
           <div className="space-y-1.5">
             <Label
@@ -987,20 +1119,40 @@ Check the browser console for detailed input information.`;
                       currentTeacher.gradeLevels.includes(grade.name))) &&
                   !busyTeacherIds.has(currentTeacher.id);
 
-                if (!currentTeacherValid) {
-                  // Find first available teacher for this grade (only active teachers)
-                  const firstAvailable = activeTeachers.find((t) => {
-                    const canTeachGrade =
-                      !grade?.name ||
-                      (t.gradeLevels && t.gradeLevels.includes(grade.name));
-                    const isAvailable = !busyTeacherIds.has(t.id);
-                    return canTeachGrade && isAvailable;
-                  });
+                const eligibleForGrade = activeTeachers.filter((t) => {
+                  const canTeachGrade =
+                    !grade?.name ||
+                    (t.gradeLevels && t.gradeLevels.includes(grade.name));
+                  return canTeachGrade && !busyTeacherIds.has(t.id);
+                });
 
+                if (!currentTeacherValid) {
+                  const suggested = pickTeacherForSubject(
+                    newSubject?.name,
+                    eligibleForGrade,
+                  );
                   setFormData({
                     ...formData,
                     subjectId: value,
-                    teacherId: firstAvailable?.id || "",
+                    teacherId: suggested?.id || "",
+                  });
+                } else if (
+                  newSubject &&
+                  currentTeacher &&
+                  !(currentTeacher.subjects ?? []).some(
+                    (s) =>
+                      s.toLowerCase().trim() ===
+                      newSubject.name.toLowerCase().trim(),
+                  )
+                ) {
+                  const suggested = pickTeacherForSubject(
+                    newSubject.name,
+                    eligibleForGrade,
+                  );
+                  setFormData({
+                    ...formData,
+                    subjectId: value,
+                    teacherId: suggested?.id ?? formData.teacherId,
                   });
                 } else {
                   setFormData({ ...formData, subjectId: value });
@@ -1060,7 +1212,7 @@ Check the browser console for detailed input information.`;
                   if (filteredBackendSubjects.length === 0) {
                     return (
                       <SelectItem value="none" disabled>
-                        No subjects available for this grade
+                        No subjects for this class
                       </SelectItem>
                     );
                   }
@@ -1085,6 +1237,21 @@ Check the browser console for detailed input information.`;
                 })()}
               </SelectContent>
             </Select>
+            {subjectsForClass.length === 0 && gradeInfo && (
+              <p className="text-xs text-slate-500 mt-1.5">
+                No subjects are linked to this class yet.{" "}
+                {subdomain ? (
+                  <Link
+                    href={`/school/${subdomain}/classes`}
+                    className="text-primary font-medium underline underline-offset-2"
+                  >
+                    Set up subjects in Classes
+                  </Link>
+                ) : (
+                  <span>Set up subjects in Classes first.</span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Teacher Selection */}
@@ -1102,6 +1269,14 @@ Check the browser console for detailed input information.`;
                   </span>
                 )}
             </Label>
+            {grade && gradeQualifiedTeachers.length > 0 && (
+              <p className="text-xs text-slate-500">
+                {availableTeachers.length} of {gradeQualifiedTeachers.length}{" "}
+                teacher
+                {gradeQualifiedTeachers.length !== 1 ? "s" : ""} for{" "}
+                {grade.displayName || grade.name} free at this time
+              </p>
+            )}
             <Select
               value={formData.teacherId}
               onValueChange={(value) =>
@@ -1171,10 +1346,11 @@ Check the browser console for detailed input information.`;
               htmlFor="room"
               className="text-sm font-semibold text-slate-700 dark:text-slate-300"
             >
-              Room Number (Optional)
+              Room (optional)
             </Label>
             <Input
               id="room"
+              list="lesson-known-rooms"
               value={formData.roomNumber}
               onChange={(e) =>
                 setFormData({ ...formData, roomNumber: e.target.value })
@@ -1182,6 +1358,16 @@ Check the browser console for detailed input information.`;
               placeholder="e.g. Room 101"
               className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10"
             />
+            <datalist id="lesson-known-rooms">
+              {knownRooms.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
+            {knownRooms.length > 0 && (
+              <p className="text-[11px] text-slate-500">
+                Suggestions from rooms already used on this timetable.
+              </p>
+            )}
           </div>
 
           {/* Double Period Toggle */}
@@ -1204,11 +1390,11 @@ Check the browser console for detailed input information.`;
                   htmlFor="doublePeriod"
                   className="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
-                  Double Period
+                  Two periods in a row
                 </Label>
               </div>
               <p className="text-xs text-slate-500">
-                Lesson spans two consecutive periods
+                This lesson uses this period and the next one
               </p>
             </div>
           )}
