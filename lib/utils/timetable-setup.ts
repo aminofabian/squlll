@@ -12,43 +12,81 @@ export type TimetableBreakDraft = {
 
 /** Preset break types — matches GraphQL `BreakType` enum. */
 export const TIMETABLE_BREAK_TYPES = [
+  { value: 'ASSEMBLY', label: 'Assembly', icon: '🏫', color: '#8B5CF6' },
   { value: 'SHORT_BREAK', label: 'Short break', icon: '☕', color: '#3B82F6' },
+  { value: 'TEA_BREAK', label: 'Tea break', icon: '🫖', color: '#3B82F6' },
   { value: 'LONG_BREAK', label: 'Long break', icon: '⏳', color: '#0EA5E9' },
   { value: 'LUNCH', label: 'Lunch', icon: '🍽️', color: '#F59E0B' },
-  { value: 'TEA_BREAK', label: 'Tea break', icon: '🫖', color: '#3B82F6' },
+  { value: 'GAMES_BREAK', label: 'Games / sports', icon: '🎮', color: '#EF4444' },
   { value: 'RECESS', label: 'Recess', icon: '🌳', color: '#22C55E' },
   { value: 'SNACK_BREAK', label: 'Snack break', icon: '🍎', color: '#F97316' },
-  { value: 'ASSEMBLY', label: 'Assembly', icon: '🏫', color: '#8B5CF6' },
-  { value: 'GAMES_BREAK', label: 'Games / sports', icon: '🎮', color: '#EF4444' },
 ] as const
 
-/** Wizard-only option: styling only; API still uses SHORT_BREAK unless user picks a preset. */
+const GRAPHQL_BREAK_TYPE_VALUES = new Set<string>(
+  TIMETABLE_BREAK_TYPES.map((t) => t.value),
+)
+
+/** Wizard-only option: styling only; API uses `apiType` or nearest enum. */
 export const TIMETABLE_BREAK_TYPE_CUSTOM = 'CUSTOM' as const
 
-export const TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS = [
-  ...TIMETABLE_BREAK_TYPES,
-  {
-    value: TIMETABLE_BREAK_TYPE_CUSTOM,
-    label: 'Other (custom name)',
-    icon: '✏️',
-    color: '#64748B',
-  },
-] as const
-
-export function defaultLabelForBreakType(type: string): string {
-  return TIMETABLE_BREAK_TYPES.find((t) => t.value === type)?.label ?? 'Break'
+export type TimetableWizardBreakTypeOption = {
+  value: string
+  label: string
+  icon: string
+  color: string
+  /** GraphQL enum value when `value` is not on the API (e.g. Preps, Dinner). */
+  apiType?: string
 }
 
-/** GraphQL only accepts `BreakType` enum values — not wizard-only `CUSTOM`. */
+/** Full dropdown list for the setup wizard (ordered for school admins). */
+export const TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS: TimetableWizardBreakTypeOption[] =
+  [
+    ...TIMETABLE_BREAK_TYPES,
+    {
+      value: 'PREPS',
+      label: 'Preps',
+      icon: '📖',
+      color: '#6366F1',
+      apiType: 'LONG_BREAK',
+    },
+    {
+      value: 'DINNER_BREAK',
+      label: 'Dinner break',
+      icon: '🌙',
+      color: '#7C3AED',
+      apiType: 'LUNCH',
+    },
+    {
+      value: TIMETABLE_BREAK_TYPE_CUSTOM,
+      label: 'Other (type your own)',
+      icon: '✏️',
+      color: '#64748B',
+      apiType: 'SHORT_BREAK',
+    },
+  ]
+
+export function getWizardBreakTypeOption(
+  type: string,
+): TimetableWizardBreakTypeOption | undefined {
+  return TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find((t) => t.value === type)
+}
+
+export function defaultLabelForBreakType(type: string): string {
+  return getWizardBreakTypeOption(type)?.label ?? 'Break'
+}
+
+/** GraphQL only accepts `BreakType` enum values — wizard extras map via `apiType`. */
 export function resolveBreakTypeForApi(type: string): string {
-  if (type === TIMETABLE_BREAK_TYPE_CUSTOM) return 'SHORT_BREAK'
-  return type
+  const opt = getWizardBreakTypeOption(type)
+  if (opt?.apiType) return opt.apiType
+  if (GRAPHQL_BREAK_TYPE_VALUES.has(type)) return type
+  return 'SHORT_BREAK'
 }
 
 export function isPresetBreakLabel(label: string): boolean {
   const trimmed = label.trim()
   if (!trimmed) return true
-  return TIMETABLE_BREAK_TYPES.some((t) => t.label === trimmed)
+  return TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.some((t) => t.label === trimmed)
 }
 
 export function isTimetableWizardComplete(tenantId: string | null | undefined): boolean {

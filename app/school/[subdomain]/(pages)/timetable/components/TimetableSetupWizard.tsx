@@ -52,6 +52,7 @@ import {
   suggestBreaksForPeriodCount,
   defaultLabelForBreakType,
   buildDayTimelinePreview,
+  getWizardBreakTypeOption,
   TIMETABLE_BREAK_TYPE_CUSTOM,
   TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS,
 } from "@/lib/utils/timetable-setup";
@@ -176,11 +177,11 @@ const QUICK_PRESET_OPTIONS: BreakOption[] = [
 
 const QUICK_BREAK_ADDS = [
   {
-    emoji: "🍽️",
-    label: "Lunch",
-    type: "LUNCH",
-    durationMinutes: "40",
-    getAfterPeriod: (n: number) => lunchAfterPeriod(n),
+    emoji: "🏫",
+    label: "Assembly",
+    type: "ASSEMBLY",
+    durationMinutes: "15",
+    getAfterPeriod: () => 0,
   },
   {
     emoji: "☕",
@@ -190,11 +191,32 @@ const QUICK_BREAK_ADDS = [
     getAfterPeriod: (n: number) => Math.min(2, n),
   },
   {
-    emoji: "🏫",
-    label: "Assembly",
-    type: "ASSEMBLY",
-    durationMinutes: "15",
-    getAfterPeriod: () => 0,
+    emoji: "🫖",
+    label: "Tea break",
+    type: "TEA_BREAK",
+    durationMinutes: "20",
+    getAfterPeriod: (n: number) => Math.min(2, n),
+  },
+  {
+    emoji: "🍽️",
+    label: "Lunch",
+    type: "LUNCH",
+    durationMinutes: "40",
+    getAfterPeriod: (n: number) => lunchAfterPeriod(n),
+  },
+  {
+    emoji: "🎮",
+    label: "Games",
+    type: "GAMES_BREAK",
+    durationMinutes: "40",
+    getAfterPeriod: (n: number) => gamesAfterPeriod(n),
+  },
+  {
+    emoji: "📖",
+    label: "Preps",
+    type: "PREPS",
+    durationMinutes: "30",
+    getAfterPeriod: (n: number) => Math.max(1, n - 1),
   },
 ] as const;
 
@@ -565,26 +587,20 @@ export function TimetableSetupWizard({
   };
 
   const onCustomBreakTypeChange = (id: string, type: string) => {
-    const preset = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find(
-      (t) => t.value === type,
-    );
+    const preset = getWizardBreakTypeOption(type);
     if (!preset) return;
     updateBreakDraft(id, {
       type,
       icon: preset.icon,
       color: preset.color,
       label:
-        type === TIMETABLE_BREAK_TYPE_CUSTOM
-          ? ""
-          : preset.label,
+        type === TIMETABLE_BREAK_TYPE_CUSTOM ? "" : preset.label,
     });
   };
 
   const addQuickBreak = (quick: (typeof QUICK_BREAK_ADDS)[number]) => {
     setBreakMode("custom");
-    const preset = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find(
-      (t) => t.value === quick.type,
-    );
+    const preset = getWizardBreakTypeOption(quick.type);
     setBreaks((prev) => [
       ...prev,
       newBreakDraft({
