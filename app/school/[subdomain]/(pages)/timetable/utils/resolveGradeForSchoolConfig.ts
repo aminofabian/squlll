@@ -22,6 +22,9 @@ export function resolveSchoolConfigGradeId(
   return timetableGrade?.tenantGradeLevelId ?? gradeId;
 }
 
+/** Tenant grade level id required by timetable GraphQL mutations. */
+export const resolveTenantGradeLevelIdForApi = resolveSchoolConfigGradeId;
+
 export function resolveGradeForSchoolConfig(
   gradeId: string | undefined,
   grades: Grade[],

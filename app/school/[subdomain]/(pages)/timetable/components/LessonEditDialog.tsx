@@ -38,6 +38,7 @@ import {
 } from "../utils/timetableSlots";
 import {
   resolveGradeForSchoolConfig,
+  resolveTenantGradeLevelIdForApi,
   subjectsForTimetableGrade,
 } from "../utils/resolveGradeForSchoolConfig";
 
@@ -225,6 +226,21 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
+        const tenantGradeLevelId = resolveTenantGradeLevelIdForApi(
+          lesson.gradeId,
+          grades,
+        );
+        if (!tenantGradeLevelId) {
+          toast({
+            title: "Class not found",
+            description:
+              "Could not resolve this class for saving. Try selecting the class again.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
         // Create new entry via GraphQL - using single entry mutation
         const mutation = `
           mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
@@ -250,7 +266,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           dayTemplatePeriodId: lesson.timeSlotId,
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
-          gradeLevelId: lesson.gradeId,
+          gradeLevelId: tenantGradeLevelId,
           streamId: selectedStreamId ?? null,
           termId: termId,
         };

@@ -2000,8 +2000,12 @@ export const useTimetableStore = create<TimetableStore>()(
         options?: { gradeLevelId?: string; streamId?: string | null },
       ) => {
         try {
-          const gradeLevelId =
+          const rawGradeLevelId =
             options?.gradeLevelId ?? get().selectedGradeId ?? undefined;
+          const gradeLevelId = rawGradeLevelId
+            ? (get().grades.find((g) => g.id === rawGradeLevelId)
+                ?.tenantGradeLevelId ?? rawGradeLevelId)
+            : undefined;
           const streamId =
             options?.streamId !== undefined
               ? options.streamId
@@ -2858,12 +2862,16 @@ export const useTimetableStore = create<TimetableStore>()(
         entries: CreateEntryRequest[],
       ) => {
         try {
+          const tenantGradeLevelId =
+            get().grades.find((g) => g.id === gradeId)?.tenantGradeLevelId ??
+            gradeId;
+
           const response = await fetch("/api/school/timetable/entries", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               termId,
-              gradeId,
+              gradeId: tenantGradeLevelId,
               entries: entries.map((entry) => ({
                 subjectId: entry.subjectId,
                 teacherId: entry.teacherId,
