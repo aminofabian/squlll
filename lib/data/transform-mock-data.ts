@@ -183,6 +183,17 @@ export function transformMockData(): TimetableData {
     }
   });
 
+  const periodNumbers = [
+    ...new Set(timeSlots.map((s) => s.periodNumber)),
+  ].sort((a, b) => a - b);
+  const knownRoomNumbers = [
+    ...new Set(
+      entries
+        .map((e) => e.roomNumber)
+        .filter((room): room is string => Boolean(room)),
+    ),
+  ].sort();
+
   return {
     timeSlots,
     breaks,
@@ -190,6 +201,10 @@ export function transformMockData(): TimetableData {
     teachers,
     grades,
     entries,
+    periodNumbers,
+    daysPerWeek: 5,
+    conflicts: [],
+    knownRoomNumbers,
     lastUpdated: new Date().toISOString(),
   };
 }

@@ -10,7 +10,16 @@ export interface GradeTimetableOverview {
   lessonCount: number;
 }
 
-export function useTimetableTermOverview() {
+export interface TimetableTermOverview {
+  byGrade: GradeTimetableOverview[];
+  overallPercentage: number;
+  totalFilled: number;
+  totalSlots: number;
+  gradesWithLessons: number;
+  gradeCount: number;
+}
+
+export function useTimetableTermOverview(): TimetableTermOverview {
   const grades = useTimetableStore((s) => s.grades);
   const entries = useTimetableStore((s) => s.entries);
   const timeSlots = useTimetableStore((s) => s.timeSlots);
@@ -41,6 +50,19 @@ export function useTimetableTermOverview() {
       };
     });
 
-    return { byGrade };
+    const totalFilled = byGrade.reduce((sum, g) => sum + g.filledSlots, 0);
+    const totalSlots = byGrade.reduce((sum, g) => sum + g.totalSlots, 0);
+    const overallPercentage =
+      totalSlots > 0 ? Math.round((totalFilled / totalSlots) * 100) : 0;
+    const gradesWithLessons = byGrade.filter((g) => g.lessonCount > 0).length;
+
+    return {
+      byGrade,
+      overallPercentage,
+      totalFilled,
+      totalSlots,
+      gradesWithLessons,
+      gradeCount: byGrade.length,
+    };
   }, [grades, entries, timeSlots, daysPerWeek]);
 }

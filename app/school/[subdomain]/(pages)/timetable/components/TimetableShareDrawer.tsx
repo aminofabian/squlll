@@ -21,7 +21,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { GradeTimetableOverview } from "../hooks/useTimetableTermOverview";
+import type { TimetableTermOverview } from "../hooks/useTimetableTermOverview";
 import { cn } from "@/lib/utils";
 
 interface TimetableShareDrawerProps {
@@ -31,12 +31,7 @@ interface TimetableShareDrawerProps {
   academicYearName?: string;
   hasScheduleStructure: boolean;
   conflictCount: number;
-  overview: {
-    byGrade: GradeTimetableOverview[];
-    overallPercentage: number;
-    gradesWithLessons: number;
-    gradeCount: number;
-  };
+  overview: TimetableTermOverview;
   classLabel?: string;
   sharedAt?: string | null;
   hasChangesSinceShare?: boolean;
