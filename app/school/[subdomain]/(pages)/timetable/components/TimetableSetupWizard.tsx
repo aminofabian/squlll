@@ -36,6 +36,7 @@ import {
   calculateDayEndTime,
   buildDefaultScopeKeys,
   buildTimetableScopeTargets,
+  humanizeWeekTemplateError,
   createTimetablesForScopes,
   mapGradeLevelsForSchoolType,
   markTimetableWizardComplete,
@@ -681,8 +682,9 @@ export function TimetableSetupWizard({
 
       await onComplete();
     } catch (e) {
-      const message =
+      const raw =
         e instanceof Error ? e.message : "Something went wrong. Please try again.";
+      const message = humanizeWeekTemplateError(raw);
       toast({
         title: "Could not create timetable",
         description: message,

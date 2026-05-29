@@ -109,6 +109,59 @@ export function parsePositiveInt(value: string): number | null {
   return int
 }
 
+function defaultWeekdayNumbers(count: number): number[] {
+  const n = Math.min(Math.max(count, 1), 7)
+  return Array.from({ length: n }, (_, i) => i + 1)
+}
+
+/**
+ * Only include schoolDayNumbers when days are non-contiguous (e.g. Mon/Wed/Fri).
+ * Mon–Fri uses numberOfDays alone for compatibility with older API schemas.
+ */
+export function schoolDayNumbersForApi(
+  numberOfDays: number,
+  schoolDayNumbers?: number[],
+): number[] | undefined {
+  if (!schoolDayNumbers?.length) return undefined
+  const sorted = [...new Set(schoolDayNumbers)].sort((a, b) => a - b)
+  const defaultDays = defaultWeekdayNumbers(sorted.length)
+  const isContiguousFromMonday =
+    sorted.length === defaultDays.length &&
+    sorted.every((d, i) => d === defaultDays[i])
+  if (isContiguousFromMonday) return undefined
+  return sorted
+}
+
+export function humanizeWeekTemplateError(message: string): string {
+  const lower = message.toLowerCase()
+  if (
+    lower.includes('schooldaynumbers') &&
+    (lower.includes('not defined') || lower.includes('invalid value'))
+  ) {
+    return 'Custom school days are not supported on this server yet. Use Monday–Friday, or update the backend.'
+  }
+  if (lower.includes('schooldaynumbers')) {
+    return 'Could not save those school days. Try Monday–Friday or refresh and try again.'
+  }
+  if (
+    (lower.includes('gradelevel') || lower.includes('stream') || lower.includes('termid')) &&
+    (lower.includes('invalid') || lower.includes('not found'))
+  ) {
+    return 'Could not link this timetable to the class or term. Refresh the page and try again.'
+  }
+  if (
+    lower.includes('periodcount') ||
+    lower.includes('periodduration') ||
+    lower.includes('starttime')
+  ) {
+    return 'Check lesson count, lesson length, and start time, then try again.'
+  }
+  if (message.length > 160) {
+    return 'Could not create the timetable. Refresh the page and try again.'
+  }
+  return message
+}
+
 export function calculateDayEndTime(
   startTime: string,
   periodCount: number,
@@ -402,39 +455,69 @@ export async function createWeekTemplateFromSetup(input: {
     }
   `
 
-  const response = await fetch('/api/graphql', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      query: mutation,
-      variables: {
-        input: {
-          name: input.name,
-          startTime: input.startTime,
-          periodCount: input.periodCount,
-          periodDuration: input.periodDuration,
-          numberOfDays: input.numberOfDays,
-          ...(input.schoolDayNumbers?.length
-            ? { schoolDayNumbers: input.schoolDayNumbers }
-            : {}),
-          termId: input.termId,
-          gradeLevelIds: input.gradeLevelIds,
-          streamIds: input.streamIds ?? [],
-          replaceExisting: input.replaceExisting ?? false,
-        },
-      },
-    }),
+  const customDays = schoolDayNumbersForApi(
+    input.numberOfDays,
+    input.schoolDayNumbers,
+  )
+
+  const buildVariables = (includeSchoolDayNumbers: boolean) => ({
+    input: {
+      name: input.name,
+      startTime: input.startTime,
+      periodCount: input.periodCount,
+      periodDuration: input.periodDuration,
+      numberOfDays: input.numberOfDays,
+      ...(includeSchoolDayNumbers && customDays?.length
+        ? { schoolDayNumbers: customDays }
+        : {}),
+      termId: input.termId,
+      gradeLevelIds: input.gradeLevelIds,
+      streamIds: input.streamIds ?? [],
+      replaceExisting: input.replaceExisting ?? false,
+    },
   })
 
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(text.slice(0, 200) || 'Failed to create week template')
+  const post = async (includeSchoolDayNumbers: boolean) => {
+    const response = await fetch('/api/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        query: mutation,
+        variables: buildVariables(includeSchoolDayNumbers),
+      }),
+    })
+
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(
+        humanizeWeekTemplateError(text.slice(0, 500) || 'Failed to create week template'),
+      )
+    }
+
+    return response.json() as Promise<{
+      data?: { createWeekTemplate?: unknown }
+      errors?: { message: string }[]
+    }>
   }
 
-  const result = await response.json()
+  let result = await post(Boolean(customDays?.length))
+
+  if (
+    result.errors?.length &&
+    customDays?.length &&
+    result.errors.some((e) => /schoolDayNumbers/i.test(e.message))
+  ) {
+    result = await post(false)
+  }
+
   if (result.errors?.length) {
-    throw new Error(result.errors.map((e: { message: string }) => e.message).join(', '))
+    const raw = result.errors.map((e) => e.message).join(', ')
+    throw new Error(humanizeWeekTemplateError(raw))
+  }
+
+  if (!result.data?.createWeekTemplate) {
+    throw new Error('Could not create the timetable. Please try again.')
   }
 
   return result.data.createWeekTemplate as {
