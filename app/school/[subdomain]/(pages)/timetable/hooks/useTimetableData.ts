@@ -101,9 +101,13 @@ export function usePeriodSlots() {
 
     const periodNumbers = [
       ...new Set([
-        ...(store.periodNumbers || []),
         ...periodNumbersFromSlots,
-        ...(store.lessonPeriodsPerDay && store.lessonPeriodsPerDay > 0
+        ...(periodNumbersFromSlots.length === 0
+          ? store.periodNumbers || []
+          : []),
+        ...(store.timeSlots.length > 0 &&
+        store.lessonPeriodsPerDay &&
+        store.lessonPeriodsPerDay > 0
           ? Array.from(
               { length: store.lessonPeriodsPerDay },
               (_, i) => i + 1,

@@ -241,29 +241,33 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
-        const hintedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
-        const resolvedSlot =
-          hintedSlot?.periodNumber != null
-            ? getTimeSlotForDayAndPeriod(
-                timeSlots,
-                lesson.dayOfWeek,
-                hintedSlot.periodNumber,
-              )
-            : hintedSlot;
-        const dayTemplatePeriodId = resolvedSlot?.id;
-
-        if (!dayTemplatePeriodId) {
+        const clickedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+        if (!clickedSlot) {
           toast({
-            title: "Period not found for this class",
+            title: "This period is not set up for this class",
             description:
-              "This time slot does not belong to the selected class. Switch class or set up the timetable for this grade first.",
+              "The timetable structure for this grade may be missing. Open “Set up schedule” and include this class, or pick a different class.",
             variant: "destructive",
           });
           setIsSaving(false);
           return;
         }
 
-        // Create new entry via GraphQL - using single entry mutation
+        if (
+          clickedSlot.dayOfWeek != null &&
+          clickedSlot.dayOfWeek !== lesson.dayOfWeek
+        ) {
+          toast({
+            title: "Wrong day for this period",
+            description: "Please close and click Add again on the correct day.",
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
+        }
+
+        const dayTemplatePeriodId = clickedSlot.id;
+        const timeSlot = clickedSlot;
         const mutation = `
           mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
             createTimetableEntry(input: $input) {
@@ -298,15 +302,8 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           input.roomName = normalizedRoom;
         }
 
-        // Verify the IDs exist in the store
         const subject = subjects.find((s) => s.id === formData.subjectId);
         const teacher = activeTeachers.find((t) => t.id === formData.teacherId);
-        const timeSlot = resolvedSlot;
-
-        // Note: Subject validation is handled by:
-        // 1. The dropdown which filters subjects by grade level (name/code matching)
-        // 2. The backend which validates the tenantSubject.id is valid for the grade
-        // We don't need to validate here since we're comparing tenantSubject.id to subject.id which won't match
 
         // Check if timeSlot has a valid UUID (not mock data like "slot-1")
         const uuidRegex =
