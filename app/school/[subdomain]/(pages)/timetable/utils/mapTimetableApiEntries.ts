@@ -10,6 +10,7 @@ type ApiTimetableEntryRow = {
   teacherId: string;
   streamId?: string | null;
   dayTemplatePeriodId: string;
+  isDoublePeriod?: boolean;
   gradeLevel?: {
     id: string;
     name?: string | null;
@@ -56,7 +57,7 @@ export function mapApiTimetableEntries(
         undefined,
       dayOfWeek: slot?.dayOfWeek ?? 1,
       roomNumber: row.room?.name || undefined,
-      isDoublePeriod: false,
+      isDoublePeriod: row.isDoublePeriod ?? false,
     };
 
     if (
@@ -80,6 +81,7 @@ export const GET_TIMETABLE_ENTRIES_QUERY = `
       teacherId
       streamId
       dayTemplatePeriodId
+      isDoublePeriod
       gradeLevel {
         id
         name

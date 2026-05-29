@@ -235,7 +235,7 @@ export function AdminTimetableGrid({
                   dayColumnClass={dayColumnClass}
                 />
 
-                {periodNumbers.map((period) => {
+                {periodNumbers.map((period, periodIndex) => {
                   const baseSlot =
                     days.reduce<TimeSlotInfo | null>((found, _, dayIndex) => {
                       if (found) return found;
@@ -244,6 +244,8 @@ export function AdminTimetableGrid({
                   if (!baseSlot) return null;
 
                   const breaksAfter = getBreaksAfterPeriod(period);
+                  const prevPeriodNumber =
+                    periodIndex > 0 ? periodNumbers[periodIndex - 1] : null;
 
                   return (
                     <React.Fragment key={`period-${period}`}>
@@ -263,11 +265,19 @@ export function AdminTimetableGrid({
                           const daySlot = getSlotFor(dayIndex, period);
                           const entry = getEntryFor(dayOfWeek, period);
                           const prevEntry =
-                            period > 1
-                              ? getEntryFor(dayOfWeek, period - 1)
+                            prevPeriodNumber != null
+                              ? getEntryFor(dayOfWeek, prevPeriodNumber)
                               : null;
-                          const isContinuation =
-                            prevEntry?.isDoublePeriod === true;
+                          const breakAfterPrev =
+                            prevPeriodNumber != null
+                              ? getBreaksAfterPeriod(prevPeriodNumber).length > 0
+                              : false;
+                          const coveredByDoubleAbove =
+                            prevEntry?.isDoublePeriod === true &&
+                            !breakAfterPrev;
+                          const spansDouble =
+                            entry?.isDoublePeriod === true &&
+                            breaksAfter.length === 0;
                           const hasConflict =
                             entry && conflictLessonIds?.has(entry.id);
                           const isTeacherDimmed = !!(
@@ -276,9 +286,14 @@ export function AdminTimetableGrid({
                             entry.teacher.id !== highlightTeacherId
                           );
 
+                          if (coveredByDoubleAbove) {
+                            return null;
+                          }
+
                           return (
                             <td
                               key={dayIndex}
+                              rowSpan={spansDouble ? 2 : undefined}
                               className={cn(
                                 "bg-white p-1.5 align-top dark:bg-zinc-900/40",
                                 dayColumnClass(dayIndex),
@@ -293,13 +308,10 @@ export function AdminTimetableGrid({
                                   )}
                                   hasConflict={!!hasConflict}
                                   isDimmed={isTeacherDimmed}
+                                  spansDouble={spansDouble}
                                   onEdit={onEditLesson}
                                   onDelete={onDeleteLesson}
                                 />
-                              ) : isContinuation ? (
-                                <div className="flex min-h-[64px] items-center justify-center rounded-lg border border-dashed border-zinc-200/90 bg-zinc-50/80 px-2 text-center text-[10px] font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/30">
-                                  Continues
-                                </div>
                               ) : (
                                 <button
                                   type="button"
@@ -435,6 +447,7 @@ function AdminLessonCell({
   accent,
   hasConflict,
   isDimmed,
+  spansDouble,
   onEdit,
   onDelete,
 }: {
@@ -442,13 +455,15 @@ function AdminLessonCell({
   accent: SubjectAccentStyle;
   hasConflict: boolean;
   isDimmed?: boolean;
+  spansDouble?: boolean;
   onEdit?: (lesson: LessonEntry) => void;
   onDelete?: (lesson: LessonEntry) => void;
 }) {
   return (
     <div
       className={cn(
-        "group/lesson relative min-h-[64px] cursor-pointer overflow-hidden rounded-lg border transition-shadow hover:shadow-sm",
+        "group/lesson relative cursor-pointer overflow-hidden rounded-lg border transition-shadow hover:shadow-sm",
+        spansDouble ? "min-h-[136px]" : "min-h-[64px]",
         isDimmed && "opacity-40 saturate-[0.65]",
         hasConflict
           ? "border-red-200/90 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25"

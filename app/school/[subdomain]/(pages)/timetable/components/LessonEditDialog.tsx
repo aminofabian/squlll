@@ -269,6 +269,41 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
 
         const dayTemplatePeriodId = clickedSlot.id;
         const timeSlot = clickedSlot;
+
+        if (formData.isDoublePeriod) {
+          const nextPeriodNumber = clickedSlot.periodNumber + 1;
+          const nextSlot = getTimeSlotForDayAndPeriod(
+            timeSlots,
+            lesson.dayOfWeek,
+            nextPeriodNumber,
+          );
+          if (!nextSlot) {
+            toast({
+              title: "No next period",
+              description:
+                "This lesson needs the following period free for a double lesson.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+          const nextTaken = entries.some(
+            (e) =>
+              e.dayOfWeek === lesson.dayOfWeek &&
+              (e.timeSlotId === nextSlot.id ||
+                e.periodNumber === nextPeriodNumber),
+          );
+          if (nextTaken) {
+            toast({
+              title: "Next period is taken",
+              description: "Clear the following period before adding a double lesson.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+        }
+
         const mutation = `
           mutation CreateSingleEntry($input: CreateTimetableEntryInput!) {
             createTimetableEntry(input: $input) {
@@ -289,6 +324,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           streamId: string | null;
           termId: string;
           roomName?: string;
+          isDoublePeriod?: boolean;
         } = {
           dayTemplatePeriodId,
           subjectId: formData.subjectId,
@@ -296,6 +332,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           gradeLevelId: tenantGradeLevelId,
           streamId: selectedStreamId ?? null,
           termId: termId,
+          isDoublePeriod: formData.isDoublePeriod ?? false,
         };
 
         // Only add optional fields if they have values
@@ -719,6 +756,7 @@ Check the browser console for detailed input information.`;
                   subjectId: formData.subjectId,
                   teacherId: formData.teacherId,
                   roomName: normalizedRoom || null,
+                  isDoublePeriod: formData.isDoublePeriod ?? false,
                 },
               },
             }),
@@ -787,6 +825,45 @@ Check the browser console for detailed input information.`;
           return;
         }
 
+        if (formData.isDoublePeriod) {
+          const currentPeriod =
+            timeSlots.find((ts) => ts.id === lesson.timeSlotId)?.periodNumber ??
+            lesson.timeSlot?.periodNumber ??
+            movePeriod;
+          const day = isMoving ? moveDay : lesson.dayOfWeek;
+          const nextSlot = getTimeSlotForDayAndPeriod(
+            timeSlots,
+            day,
+            currentPeriod + 1,
+          );
+          if (!nextSlot) {
+            toast({
+              title: "No next period",
+              description:
+                "This lesson needs the following period free for a double lesson.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+          const nextTaken = entries.some(
+            (e) =>
+              e.id !== lesson.id &&
+              e.dayOfWeek === day &&
+              (e.timeSlotId === nextSlot.id ||
+                e.periodNumber === currentPeriod + 1),
+          );
+          if (nextTaken) {
+            toast({
+              title: "Next period is taken",
+              description: "Clear the following period before using a double lesson.",
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+        }
+
         const mutation = `
           mutation UpdateEntry($input: UpdateTimetableEntryInput!) {
             updateTimetableEntry(input: $input) {
@@ -800,6 +877,7 @@ Check the browser console for detailed input information.`;
           teacherId: formData.teacherId,
           subjectId: formData.subjectId,
           roomName: normalizedRoom || null,
+          isDoublePeriod: formData.isDoublePeriod ?? false,
         };
 
         const variables = {
@@ -1371,33 +1449,31 @@ Check the browser console for detailed input information.`;
           </div>
 
           {/* Double Period Toggle */}
-          {isNew && (
-            <div className="flex items-center gap-3 p-3 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="doublePeriod"
-                  checked={formData.isDoublePeriod}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      isDoublePeriod: e.target.checked,
-                    })
-                  }
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                />
-                <Label
-                  htmlFor="doublePeriod"
-                  className="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
-                >
-                  Two periods in a row
-                </Label>
-              </div>
-              <p className="text-xs text-slate-500">
-                This lesson uses this period and the next one
-              </p>
+          <div className="flex items-center gap-3 p-3 bg-primary/5 dark:bg-primary/10 rounded-lg border border-primary/20">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="doublePeriod"
+                checked={formData.isDoublePeriod}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    isDoublePeriod: e.target.checked,
+                  })
+                }
+                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+              />
+              <Label
+                htmlFor="doublePeriod"
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                Two periods in a row
+              </Label>
             </div>
-          )}
+            <p className="text-xs text-slate-500">
+              Uses this period and the next one on the same day
+            </p>
+          </div>
         </div>
 
         <DrawerFooter className="bg-white dark:bg-slate-900 border-t border-slate-300 dark:border-slate-600 px-6 py-4 gap-3">

@@ -903,6 +903,31 @@ export default function SmartTimetableNew() {
     [selectedGradeId, toast],
   );
 
+  const handleEditLesson = useCallback(
+    (entry: {
+      id: string;
+      subject: { id?: string; name: string };
+      teacher: { id?: string; name: string };
+      roomNumber?: string | null;
+      gradeId?: string;
+      timeSlotId?: string;
+      isDoublePeriod?: boolean;
+    }) => {
+      const full = selectedGradeEntries.find((e) => e.id === entry.id);
+      setEditingLesson(
+        full
+          ? { ...full, isNew: false }
+          : {
+              ...entry,
+              subjectId: entry.subject?.id ?? "",
+              teacherId: entry.teacher?.id ?? "",
+              isNew: false,
+            },
+      );
+    },
+    [selectedGradeEntries],
+  );
+
   const handleAddBreak = useCallback(
     (afterPeriod: number, dayOfWeek?: number) => {
       setEditingBreak({
@@ -1845,7 +1870,7 @@ export default function SmartTimetableNew() {
                       highlightTeacherId={highlightTeacherId}
                       onEditTimeslot={setEditingTimeslot}
                       onDeleteTimeslot={setTimeslotToDelete}
-                      onEditLesson={setEditingLesson}
+                      onEditLesson={handleEditLesson}
                       onDeleteLesson={setDeleteEntryConfirm}
                       onAddLesson={handleAddLesson}
                       onEditBreak={setEditingBreak}

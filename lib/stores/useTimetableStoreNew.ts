@@ -1813,6 +1813,7 @@ export const useTimetableStore = create<TimetableStore>()(
                       }
                       entry {
                         id
+                        isDoublePeriod
                         subject {
                           id
                           name
@@ -2185,6 +2186,7 @@ export const useTimetableStore = create<TimetableStore>()(
                       }
                       entry {
                         id
+                        isDoublePeriod
                         subject {
                           id
                           name
