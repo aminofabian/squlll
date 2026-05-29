@@ -22,6 +22,15 @@ interface TenantGradeLevel {
 
 interface TenantStream {
   id: string;
+  stream?: {
+    name: string;
+  };
+  tenantGradeLevel?: {
+    id: string;
+    gradeLevel?: {
+      name: string;
+    };
+  };
 }
 
 interface GradeLevel {
@@ -95,6 +104,15 @@ const GET_TEACHERS_QUERY = `
       }
       tenantStreams {
         id
+        stream {
+          name
+        }
+        tenantGradeLevel {
+          id
+          gradeLevel {
+            name
+          }
+        }
       }
       classTeacherAssignments {
         id
@@ -142,6 +160,15 @@ const GET_TEACHER_BY_ID_QUERY = `
       }
       tenantStreams {
         id
+        stream {
+          name
+        }
+        tenantGradeLevel {
+          id
+          gradeLevel {
+            name
+          }
+        }
       }
       classTeacherAssignments {
         id

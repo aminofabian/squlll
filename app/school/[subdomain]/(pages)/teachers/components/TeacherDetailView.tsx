@@ -33,6 +33,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useTeacherDetailSummary } from "@/lib/hooks/useTeacherDetailSummary";
+import { TeacherAcademicEditor } from "./TeacherAcademicEditor";
 
 interface TeacherDetailViewProps {
   teacherId: string;
@@ -287,22 +288,37 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
         <TabsContent value="academic">
           <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
             <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Academic Information</CardTitle>
-              <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Subjects, grade levels, and streams assigned to {teacher.fullName || teacher.user.name}
-              </CardDescription>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Academic Information</CardTitle>
+                  <CardDescription className="font-mono text-[var(--color-textSecondary)]">
+                    Subjects, grade levels, and streams assigned to {teacher.fullName || teacher.user.name}
+                  </CardDescription>
+                </div>
+                <TeacherAcademicEditor
+                  teacherId={teacher.id}
+                  teacherName={teacher.fullName || teacher.user.name}
+                  initialSubjectIds={teacher.tenantSubjects.map((s) => s.id)}
+                  initialGradeLevelIds={teacher.tenantGradeLevels.map((g) => g.id)}
+                  initialStreamIds={teacher.tenantStreams.map((s) => s.id)}
+                  tenantSubjects={teacher.tenantSubjects}
+                  tenantGradeLevels={teacher.tenantGradeLevels}
+                  tenantStreams={teacher.tenantStreams}
+                  onSaved={refetch}
+                />
+              </div>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-6">
                 {/* Subjects Section */}
-                {teacher.tenantSubjects.length > 0 && (
-                  <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                    <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                      <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                        <BookOpen className="h-3 w-3 mr-2" />
-                        Subjects Taught
-                      </h3>
-                    </div>
+                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
+                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
+                      <BookOpen className="h-3 w-3 mr-2" />
+                      Subjects Taught
+                    </h3>
+                  </div>
+                  {teacher.tenantSubjects.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {teacher.tenantSubjects.map((subject) => (
                         <Badge key={subject.id} variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono text-xs">
@@ -310,18 +326,22 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm font-mono text-[var(--color-textSecondary)]">
+                      No subjects assigned yet. Use &quot;Edit subjects &amp; classes&quot; to add them.
+                    </p>
+                  )}
+                </div>
 
                 {/* Grade Levels Section */}
-                {teacher.tenantGradeLevels.length > 0 && (
-                  <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                    <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                      <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                        <GraduationCap className="h-3 w-3 mr-2" />
-                        Grade Levels
-                      </h3>
-                    </div>
+                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
+                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
+                      <GraduationCap className="h-3 w-3 mr-2" />
+                      Grade Levels
+                    </h3>
+                  </div>
+                  {teacher.tenantGradeLevels.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {teacher.tenantGradeLevels.map((gradeLevel) => (
                         <Badge key={gradeLevel.id} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 font-mono text-xs">
@@ -329,34 +349,38 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm font-mono text-[var(--color-textSecondary)]">
+                      No grade levels assigned yet.
+                    </p>
+                  )}
+                </div>
 
                 {/* Streams Section */}
-                {teacher.tenantStreams.length > 0 && (
-                  <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                    <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                      <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                        <School className="h-3 w-3 mr-2" />
-                        Streams
-                      </h3>
-                    </div>
+                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
+                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
+                      <School className="h-3 w-3 mr-2" />
+                      Streams / Classes
+                    </h3>
+                  </div>
+                  {teacher.tenantStreams.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {teacher.tenantStreams.map((stream) => (
                         <Badge key={stream.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-mono text-xs">
-                          Stream {stream.id.slice(-4)}
+                          {stream.stream?.name || "Stream"}
+                          {stream.tenantGradeLevel?.gradeLevel?.name
+                            ? ` · ${stream.tenantGradeLevel.gradeLevel.name}`
+                            : ""}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Empty State */}
-                {teacher.tenantSubjects.length === 0 && teacher.tenantGradeLevels.length === 0 && teacher.tenantStreams.length === 0 && (
-                  <div className="text-center p-8 text-[var(--color-textSecondary)] font-mono text-sm">
-                    No academic information available
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm font-mono text-[var(--color-textSecondary)]">
+                      No streams assigned. Streams are optional — if none are picked, all streams for the selected grades apply.
+                    </p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
