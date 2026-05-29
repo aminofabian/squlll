@@ -1,5 +1,90 @@
 import type { TimeSlot } from "@/lib/types/timetable";
 
+function formatSlotTime(timeStr?: string): string {
+  if (!timeStr) return "";
+  if (timeStr.length === 5) return timeStr;
+  if (timeStr.length === 8) return timeStr.substring(0, 5);
+  return timeStr;
+}
+
+/** Build grade-scoped period rows from getSchoolTimetable schedule/day blocks. */
+export function extractTimeSlotsFromTimetableData(
+  timetableData: {
+    schedule?: Array<{
+      dayTemplate?: { id?: string; dayOfWeek?: number };
+      periods?: Array<{
+        isBreak?: boolean;
+        period?: {
+          id?: string;
+          periodNumber?: number;
+          startTime?: string;
+          endTime?: string;
+          label?: string;
+        };
+      }>;
+    }>;
+    timetableByGrade?: Array<{
+      gradeLevel?: { id?: string };
+      days?: Array<{
+        dayTemplate?: { id?: string; dayOfWeek?: number };
+        periods?: Array<{
+          isBreak?: boolean;
+          period?: {
+            id?: string;
+            periodNumber?: number;
+            startTime?: string;
+            endTime?: string;
+            label?: string;
+          };
+        }>;
+      }>;
+    }>;
+  },
+  tenantGradeLevelId?: string,
+): TimeSlot[] {
+  const slots: TimeSlot[] = [];
+  const seenIds = new Set<string>();
+
+  const dayItems =
+    timetableData.schedule && timetableData.schedule.length > 0
+      ? timetableData.schedule
+      : (timetableData.timetableByGrade || [])
+          .filter(
+            (block) =>
+              !tenantGradeLevelId ||
+              block.gradeLevel?.id === tenantGradeLevelId,
+          )
+          .flatMap((block) => block.days || []);
+
+  for (const dayItem of dayItems) {
+    const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+    const dayTemplateId = dayItem.dayTemplate?.id;
+    for (const p of dayItem.periods || []) {
+      if (p?.isBreak || !p?.period?.id || !p.period.periodNumber) continue;
+      if (seenIds.has(p.period.id)) continue;
+      seenIds.add(p.period.id);
+      slots.push({
+        id: p.period.id,
+        periodNumber: p.period.periodNumber,
+        time: `${formatSlotTime(p.period.startTime)} - ${formatSlotTime(p.period.endTime)}`,
+        startTime: formatSlotTime(p.period.startTime),
+        endTime: formatSlotTime(p.period.endTime),
+        color: "border-l-primary",
+        dayOfWeek,
+        label: p.period.label,
+        dayTemplateId,
+      });
+    }
+  }
+
+  return slots.sort((a, b) => {
+    const dayA = a.dayOfWeek ?? 0;
+    const dayB = b.dayOfWeek ?? 0;
+    if (dayA !== dayB) return dayA - dayB;
+    return a.periodNumber - b.periodNumber;
+  });
+}
+
 /** Resolve the period row for a given day (1-based) and period number. */
 export function getTimeSlotForDayAndPeriod(
   timeSlots: TimeSlot[],

@@ -15,6 +15,7 @@ import type {
 } from "../types/timetable";
 import { useSchoolConfigStore } from "./useSchoolConfigStore";
 import { breakGraphQLToStoreType } from "@/lib/utils/timetable-break-types";
+import { extractTimeSlotsFromTimetableData } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -62,8 +63,11 @@ interface TimetableStore extends TimetableData, TimetableUIState {
     periodCount?: number;
     periodDuration?: number;
   }) => Promise<void>;
-  loadTimeSlots: (termId?: string) => Promise<void>;
-  loadDayTemplatePeriods: (dayTemplateId?: string) => Promise<void>;
+  loadTimeSlots: (termId?: string, gradeId?: string) => Promise<void>;
+  loadDayTemplatePeriods: (
+    dayTemplateId?: string,
+    gradeId?: string,
+  ) => Promise<void>;
   loadDayTemplates: () => Promise<any[]>;
   deleteTimeSlot: (id: string) => Promise<void>;
   deleteAllTimeSlots: () => Promise<void>;
@@ -932,7 +936,10 @@ export const useTimetableStore = create<TimetableStore>()(
         }
       },
 
-      loadDayTemplatePeriods: async (dayTemplateIdParam?: string) => {
+      loadDayTemplatePeriods: async (
+        dayTemplateIdParam?: string,
+        gradeIdParam?: string,
+      ) => {
         try {
           // Fetch templates first to map dayTemplateId -> dayOfWeek
           let templates: any[] = [];
@@ -953,11 +960,23 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           });
 
-          // If a specific template was requested, load only that one.
-          // Otherwise load periods from ALL day templates.
-          const templateIds = dayTemplateIdParam
+          let templateIds = dayTemplateIdParam
             ? [dayTemplateIdParam]
             : templates.map((t: any) => t.id).filter(Boolean);
+
+          if (!dayTemplateIdParam && gradeIdParam && templateIds.length > 0) {
+            const tenantGradeLevelId =
+              get().grades.find((g) => g.id === gradeIdParam)
+                ?.tenantGradeLevelId ?? gradeIdParam;
+            const gradeTemplates = templates.filter((t: any) =>
+              (t.gradeLevels || []).some(
+                (gl: any) => gl.id === tenantGradeLevelId,
+              ),
+            );
+            if (gradeTemplates.length > 0) {
+              templateIds = gradeTemplates.map((t: any) => t.id).filter(Boolean);
+            }
+          }
 
           if (templateIds.length === 0) {
             console.log(
@@ -987,7 +1006,7 @@ export const useTimetableStore = create<TimetableStore>()(
             return timeStr;
           };
 
-          // Fetch periods from all day templates in parallel
+          // Fetch periods from matching day templates in parallel
           const allPeriodsResults = await Promise.allSettled(
             templateIds.map(async (templateId) => {
               const response = await fetch("/api/graphql", {
@@ -1029,17 +1048,15 @@ export const useTimetableStore = create<TimetableStore>()(
             }),
           );
 
-          // Collect all periods from all templates, deduplicate by period number.
-          // Periods across different day templates share the same period numbers,
-          // so we keep only the first occurrence of each period number.
-          const seenPeriods = new Set<number>();
+          // Keep every period row — each day template has its own period ids.
+          const seenPeriodIds = new Set<string>();
           const allSlots: TimeSlot[] = [];
 
           allPeriodsResults.forEach((r) => {
             if (r.status === "fulfilled" && Array.isArray(r.value)) {
               r.value.forEach((p: any) => {
-                if (!p?.periodNumber || seenPeriods.has(p.periodNumber)) return;
-                seenPeriods.add(p.periodNumber);
+                if (!p?.periodNumber || !p?.id || seenPeriodIds.has(p.id)) return;
+                seenPeriodIds.add(p.id);
                 allSlots.push({
                   id: p.id,
                   periodNumber: p.periodNumber,
@@ -1094,6 +1111,12 @@ export const useTimetableStore = create<TimetableStore>()(
                 id
                 dayOfWeek
                 tenantId
+                gradeLevels {
+                  id
+                  gradeLevel {
+                    name
+                  }
+                }
                 breaks {
                   id
                   durationMinutes
@@ -1145,11 +1168,10 @@ export const useTimetableStore = create<TimetableStore>()(
         }
       },
 
-      loadTimeSlots: async (termIdParam?: string) => {
+      loadTimeSlots: async (_termIdParam?: string, gradeIdParam?: string) => {
         try {
-          // Load periods from day templates. If no templates exist yet,
-          // timeSlots will remain empty and the setup wizard will be shown.
-          await get().loadDayTemplatePeriods();
+          const gradeId = gradeIdParam ?? get().selectedGradeId ?? undefined;
+          await get().loadDayTemplatePeriods(undefined, gradeId);
         } catch (error) {
           console.error("Error loading time slots:", error);
           // Don't throw; the UI handles missing timeSlots via the setup wizard.
@@ -2256,6 +2278,14 @@ export const useTimetableStore = create<TimetableStore>()(
             timetableData.totalDays ||
             (timetableData.timetableByGrade?.[0]?.days?.length ?? 5);
 
+          const gradeScopedSlots =
+            gradeLevelId && timetableData
+              ? extractTimeSlotsFromTimetableData(
+                  timetableData,
+                  gradeLevelId,
+                )
+              : [];
+
           // Use backend-provided periodNumbers, daysPerWeek, conflicts, and rooms.
           set((state) => ({
             entries: allEntries,
@@ -2263,10 +2293,20 @@ export const useTimetableStore = create<TimetableStore>()(
             daysPerWeek: resolvedDaysPerWeek,
             conflicts: timetableData.conflicts || [],
             knownRoomNumbers: timetableData.knownRoomNumbers || [],
-            lessonPeriodsPerDay: Math.max(
-              state.lessonPeriodsPerDay ?? 0,
-              resolvedPeriodNumbers.length,
-            ),
+            ...(gradeScopedSlots.length > 0
+              ? {
+                  timeSlots: gradeScopedSlots,
+                  lessonPeriodsPerDay: Math.max(
+                    ...gradeScopedSlots.map((s) => s.periodNumber || 0),
+                    0,
+                  ),
+                }
+              : {
+                  lessonPeriodsPerDay: Math.max(
+                    state.lessonPeriodsPerDay ?? 0,
+                    resolvedPeriodNumbers.length,
+                  ),
+                }),
             lastUpdated: new Date().toISOString(),
           }));
 

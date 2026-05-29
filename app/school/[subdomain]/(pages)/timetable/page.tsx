@@ -225,10 +225,18 @@ export default function SmartTimetableNew() {
 
       // Load time slots first, then school timetable (sequential to avoid race)
       if (termId) {
-        await loadTimeSlots(termId).catch((err) =>
+        await loadTimeSlots(termId, selectedGradeId || undefined).catch((err) =>
           console.error("Failed loading time slots:", err),
         );
-        await loadSchoolTimetable(termId).catch((err) =>
+        await loadSchoolTimetable(
+          termId,
+          selectedGradeId
+            ? {
+                gradeLevelId: selectedGradeId,
+                streamId: selectedStreamId,
+              }
+            : undefined,
+        ).catch((err) =>
           console.error("Failed loading school timetable:", err),
         );
       }
@@ -261,6 +269,7 @@ export default function SmartTimetableNew() {
   useEffect(() => {
     const termId = selectedTerm?.id || selectedTermId;
     if (!termId || !selectedGradeId) return;
+    void loadTimeSlots(termId, selectedGradeId).catch(() => {});
     loadSchoolTimetable(termId, {
       gradeLevelId: selectedGradeId,
       streamId: selectedStreamId,
@@ -271,6 +280,7 @@ export default function SmartTimetableNew() {
     selectedTerm?.id,
     selectedTermId,
     loadSchoolTimetable,
+    loadTimeSlots,
   ]);
 
   const grid = useTimetableGrid(selectedGradeId);
@@ -354,10 +364,15 @@ export default function SmartTimetableNew() {
     // then loadSchoolTimetable merges entries without overwriting slots.
     // Running in parallel causes a race condition where loadSchoolTimetable
     // can read stale timeSlots and overwrite with incomplete data.
-    await loadTimeSlots(termId).catch((err) =>
+    await loadTimeSlots(termId, selectedGradeId || undefined).catch((err) =>
       console.error("reloadTimetableData: loadTimeSlots failed:", err),
     );
-    await loadSchoolTimetable(termId).catch((err) =>
+    await loadSchoolTimetable(
+      termId,
+      selectedGradeId
+        ? { gradeLevelId: selectedGradeId, streamId: selectedStreamId }
+        : undefined,
+    ).catch((err) =>
       console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
     );
     await loadBreaks().catch((err) =>
@@ -369,6 +384,8 @@ export default function SmartTimetableNew() {
     loadTimeSlots,
     selectedTerm?.id,
     selectedTermId,
+    selectedGradeId,
+    selectedStreamId,
   ]);
 
   // State
@@ -493,7 +510,7 @@ export default function SmartTimetableNew() {
       if (!state.selectedGradeId && state.grades[0]) {
         setSelectedGrade(state.grades[0].id);
       }
-      await loadTimeSlots(termId);
+      await loadTimeSlots(termId, state.selectedGradeId || undefined);
     })();
   }, [
     isLoadingInitial,
@@ -849,10 +866,20 @@ export default function SmartTimetableNew() {
         });
         return;
       }
+      const resolvedSlotId = daySlotId || timeSlotId;
+      if (!resolvedSlotId) {
+        toast({
+          title: "Period not found",
+          description:
+            "Could not find a time slot for this cell. Try refreshing the timetable.",
+          variant: "destructive",
+        });
+        return;
+      }
       setEditingLesson({
         gradeId: selectedGradeId,
         dayOfWeek,
-        timeSlotId: daySlotId || timeSlotId,
+        timeSlotId: resolvedSlotId,
         isNew: true,
       });
     },
@@ -924,7 +951,10 @@ export default function SmartTimetableNew() {
     try {
       await deleteTimeSlot(timeslotToDelete.id);
       setTimeslotToDelete(null);
-      await loadTimeSlots(selectedTerm?.id || selectedTermId || undefined);
+      await loadTimeSlots(
+        selectedTerm?.id || selectedTermId || undefined,
+        selectedGradeId || undefined,
+      );
     } catch {
       toast({
         title: "Could not delete period",
@@ -947,7 +977,10 @@ export default function SmartTimetableNew() {
     try {
       await deleteAllTimeSlots();
       setShowDeleteAllDialog(false);
-      await loadTimeSlots(selectedTerm?.id || selectedTermId || undefined);
+      await loadTimeSlots(
+        selectedTerm?.id || selectedTermId || undefined,
+        selectedGradeId || undefined,
+      );
     } catch {
       toast({ title: "Failed", variant: "destructive" });
     } finally {
