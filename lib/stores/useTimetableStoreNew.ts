@@ -2212,7 +2212,7 @@ export const useTimetableStore = create<TimetableStore>()(
           });
 
           const periodNumbersFromSchedule = [
-            ...new Set(
+            ...new Set<number>(
               (timetableData.schedule?.periods || [])
                 .map((p: any) => p?.period?.periodNumber)
                 .filter((n: unknown): n is number => typeof n === "number"),
@@ -2220,7 +2220,7 @@ export const useTimetableStore = create<TimetableStore>()(
           ].sort((a, b) => a - b);
 
           const periodNumbersFromGrades = [
-            ...new Set(
+            ...new Set<number>(
               (timetableData.timetableByGrade || []).flatMap((gradeBlock: any) =>
                 (gradeBlock.days || []).flatMap((dayItem: any) =>
                   (dayItem.periods || [])
