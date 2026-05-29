@@ -335,8 +335,13 @@ export function timetableBlockMatchesScope(
   block: { gradeLevel?: { id: string }; stream?: { id: string } | null },
   gradeId: string,
   streamId: string | null | undefined,
+  tenantGradeLevelId?: string,
 ): boolean {
-  if (block.gradeLevel?.id !== gradeId) return false
+  const blockGradeId = block.gradeLevel?.id
+  const matchesGrade =
+    blockGradeId === gradeId ||
+    (!!tenantGradeLevelId && blockGradeId === tenantGradeLevelId)
+  if (!matchesGrade) return false
   const blockStreamId = block.stream?.id ?? null
   if (streamId) return blockStreamId === streamId
   return !blockStreamId

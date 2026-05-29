@@ -259,18 +259,6 @@ export default function SmartTimetableNew() {
       loadSubjects(selectedGradeId).catch(() => {});
     }
   }, [selectedGradeId, loadTeachers, loadSubjects]);
-  useEffect(() => {
-    if (!selectedGradeId) return;
-    const termId = selectedTerm?.id || selectedTermId;
-    if (!termId) return;
-    loadEntries(termId, selectedGradeId).catch(() => {});
-  }, [
-    selectedGradeId,
-    selectedStreamId,
-    selectedTermId,
-    selectedTerm?.id,
-    loadEntries,
-  ]);
 
   useEffect(() => {
     const termId = selectedTerm?.id || selectedTermId;

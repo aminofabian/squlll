@@ -45,16 +45,16 @@ export function extractTimeSlotsFromTimetableData(
   const slots: TimeSlot[] = [];
   const seenIds = new Set<string>();
 
-  const dayItems =
-    timetableData.schedule && timetableData.schedule.length > 0
+  const matchingGradeBlocks = (timetableData.timetableByGrade || []).filter(
+    (block) =>
+      !tenantGradeLevelId || block.gradeLevel?.id === tenantGradeLevelId,
+  );
+
+  const dayItems = tenantGradeLevelId
+    ? matchingGradeBlocks.flatMap((block) => block.days || [])
+    : timetableData.schedule && timetableData.schedule.length > 0
       ? timetableData.schedule
-      : (timetableData.timetableByGrade || [])
-          .filter(
-            (block) =>
-              !tenantGradeLevelId ||
-              block.gradeLevel?.id === tenantGradeLevelId,
-          )
-          .flatMap((block) => block.days || []);
+      : matchingGradeBlocks.flatMap((block) => block.days || []);
 
   for (const dayItem of dayItems) {
     const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
