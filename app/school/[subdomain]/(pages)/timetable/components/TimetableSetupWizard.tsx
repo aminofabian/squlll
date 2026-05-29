@@ -63,6 +63,10 @@ const LESSON_LENGTH_OPTIONS = [
   { value: "45", label: "45 minutes", subtitle: "Longer lessons" },
 ] as const;
 
+const PRESET_LESSON_LENGTH_VALUES = new Set(
+  LESSON_LENGTH_OPTIONS.map((o) => o.value),
+);
+
 const LESSONS_PER_DAY_OPTIONS = [
   { value: "6", label: "6 lessons", subtitle: "Shorter day" },
   { value: "8", label: "8 lessons", subtitle: "Normal day" },
@@ -453,6 +457,7 @@ export function TimetableSetupWizard({
     () => new Set([1, 2, 3, 4, 5]),
   );
   const [showOtherStartTime, setShowOtherStartTime] = useState(false);
+  const [showCustomLessonLength, setShowCustomLessonLength] = useState(false);
   const [showPickDays, setShowPickDays] = useState(false);
 
   const gradeLevelsWithStreams = useMemo(
@@ -768,14 +773,55 @@ export function TimetableSetupWizard({
                   {LESSON_LENGTH_OPTIONS.map((p) => (
                     <PresetOption
                       key={p.value}
-                      selected={periodDuration === p.value}
-                      onClick={() => setPeriodDuration(p.value)}
+                      selected={
+                        periodDuration === p.value && !showCustomLessonLength
+                      }
+                      onClick={() => {
+                        setPeriodDuration(p.value);
+                        setShowCustomLessonLength(false);
+                      }}
                       title={p.label}
                       subtitle={p.subtitle}
                       icon={Clock}
                     />
                   ))}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomLessonLength((v) => !v)}
+                  className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#246a59]"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 transition-transform",
+                      showCustomLessonLength && "rotate-180",
+                    )}
+                  />
+                  Different length
+                </button>
+                {showCustomLessonLength && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={240}
+                      inputMode="numeric"
+                      value={
+                        PRESET_LESSON_LENGTH_VALUES.has(periodDuration)
+                          ? ""
+                          : periodDuration
+                      }
+                      placeholder="e.g. 35"
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        setPeriodDuration(raw);
+                      }}
+                      className={cn(onboardingInputClass, "max-w-[120px]")}
+                      aria-label="Lesson length in minutes"
+                    />
+                    <span className="text-sm text-slate-500">minutes</span>
+                  </div>
+                )}
               </FieldGroup>
 
               <FieldGroup label="How many lessons in one day?">
