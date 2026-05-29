@@ -2517,8 +2517,8 @@ export const useTimetableStore = create<TimetableStore>()(
                   ? []
                   : state.entries;
 
-            const previousScoped =
-              masterGradeId && allEntries.length === 0
+            const scopedFromState =
+              masterGradeId && grades.length > 0
                 ? state.entries.filter((e) =>
                     entryMatchesGradeScope(
                       e,
@@ -2529,13 +2529,17 @@ export const useTimetableStore = create<TimetableStore>()(
                   )
                 : [];
 
-            const mergedEntries =
-              allEntries.length > 0
-                ? [...otherEntries, ...allEntries]
-                : [...otherEntries, ...previousScoped];
+            const mergedById = new Map<string, TimetableEntry>();
+            for (const entry of scopedFromState) {
+              mergedById.set(entry.id, entry);
+            }
+            for (const entry of allEntries) {
+              mergedById.set(entry.id, entry);
+            }
+            const mergedScoped = Array.from(mergedById.values());
 
             return {
-              entries: mergedEntries,
+              entries: [...otherEntries, ...mergedScoped],
               periodNumbers: gradeLevelId
                 ? mergedPeriodNumbers
                 : resolvedPeriodNumbers,

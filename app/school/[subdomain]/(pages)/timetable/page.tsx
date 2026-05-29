@@ -1867,7 +1867,6 @@ export default function SmartTimetableNew() {
         lesson={editingLesson}
         onClose={() => {
           setEditingLesson(null);
-          reloadTimetableData();
         }}
       />
       <TimeslotEditDialog

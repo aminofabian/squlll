@@ -65,9 +65,9 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     grades,
     addEntry,
     upsertEntry,
+    updateEntry,
     deleteEntry,
     deleteTimetableEntry,
-    loadEntries,
     loadTeachers,
     loadSubjects,
     selectedGradeId,
@@ -733,7 +733,18 @@ Check the browser console for detailed input information.`;
             throw new Error("Could not move lesson to the new slot");
           }
 
-          await loadEntries(termId, selectedGradeId ?? lesson.gradeId);
+          upsertEntry({
+            id: lesson.id,
+            gradeId: lesson.gradeId,
+            streamId: selectedStreamId ?? null,
+            subjectId: formData.subjectId,
+            teacherId: formData.teacherId,
+            timeSlotId: targetSlot.id,
+            periodNumber: targetSlot.periodNumber,
+            dayOfWeek: moveDay,
+            roomNumber: normalizedRoom || undefined,
+            isDoublePeriod: formData.isDoublePeriod ?? false,
+          });
 
           toast({
             title: "Lesson moved",
@@ -895,14 +906,18 @@ Check the browser console for detailed input information.`;
           );
         }
 
-        const updatedEntry = result.data.updateTimetableEntry;
+        updateEntry(lesson.id, {
+          subjectId: formData.subjectId,
+          teacherId: formData.teacherId,
+          roomNumber: normalizedRoom || undefined,
+          isDoublePeriod: formData.isDoublePeriod ?? false,
+        });
 
         toast({
           title: "Success",
           description: "Lesson updated successfully",
         });
 
-        // Close dialog - onClose will trigger full timetable reload
         onClose();
       }
     } catch (error) {
@@ -924,15 +939,10 @@ Check the browser console for detailed input information.`;
       return;
     }
 
-    const termId = selectedTerm?.id || selectedTermId;
-
     setIsSaving(true);
 
     try {
       await deleteTimetableEntry(lesson.id);
-      if (termId) {
-        await loadEntries(termId, selectedGradeId ?? lesson.gradeId);
-      }
 
       toast({
         title: "Lesson removed",
