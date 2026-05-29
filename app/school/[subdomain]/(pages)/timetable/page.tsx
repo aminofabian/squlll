@@ -223,20 +223,20 @@ export default function SmartTimetableNew() {
         ),
       ]);
 
-      // Prefer grade-scoped schedule from API; fall back to day-template periods.
+      // Load timeSlots first (grade-scoped), then school timetable.
+      // Time slots must be grade-filtered so period IDs match the correct
+      // day templates for the selected grade.
       if (termId) {
         if (selectedGradeId) {
+          await loadTimeSlots(termId, selectedGradeId).catch((err) =>
+            console.error("Failed loading time slots:", err),
+          );
           await loadSchoolTimetable(termId, {
             gradeLevelId: selectedGradeId,
             streamId: selectedStreamId,
           }).catch((err) =>
             console.error("Failed loading school timetable:", err),
           );
-          if (useTimetableStore.getState().timeSlots.length === 0) {
-            await loadTimeSlots(termId, selectedGradeId).catch((err) =>
-              console.error("Failed loading time slots:", err),
-            );
-          }
         } else {
           await loadTimeSlots(termId).catch((err) =>
             console.error("Failed loading time slots:", err),
@@ -276,13 +276,11 @@ export default function SmartTimetableNew() {
     const termId = selectedTerm?.id || selectedTermId;
     if (!termId || !selectedGradeId) return;
     void (async () => {
+      await loadTimeSlots(termId, selectedGradeId).catch(() => {});
       await loadSchoolTimetable(termId, {
         gradeLevelId: selectedGradeId,
         streamId: selectedStreamId,
       }).catch(() => {});
-      if (useTimetableStore.getState().timeSlots.length === 0) {
-        await loadTimeSlots(termId, selectedGradeId).catch(() => {});
-      }
     })();
   }, [
     selectedGradeId,
@@ -370,28 +368,26 @@ export default function SmartTimetableNew() {
   const reloadTimetableData = useCallback(async () => {
     const termId = selectedTerm?.id || selectedTermId;
     if (!termId) return;
-    // Run sequentially: loadTimeSlots first populates the slot definitions,
-    // then loadSchoolTimetable merges entries without overwriting slots.
-    // Running in parallel causes a race condition where loadSchoolTimetable
-    // can read stale timeSlots and overwrite with incomplete data.
-    await loadSchoolTimetable(
-      termId,
-      selectedGradeId
-        ? { gradeLevelId: selectedGradeId, streamId: selectedStreamId }
-        : undefined,
-    ).catch((err) =>
-      console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
-    );
-    if (
-      selectedGradeId &&
-      useTimetableStore.getState().timeSlots.length === 0
-    ) {
+    // Load timeSlots first (filtered by grade if selected),
+    // then load entries. Both must run sequentially:
+    // timeSlots sets the period IDs for the correct grade's day templates,
+    // then loadSchoolTimetable loads entries keyed to those period IDs.
+    if (selectedGradeId) {
       await loadTimeSlots(termId, selectedGradeId).catch((err) =>
         console.error("reloadTimetableData: loadTimeSlots failed:", err),
       );
-    } else if (!selectedGradeId) {
+      await loadSchoolTimetable(termId, {
+        gradeLevelId: selectedGradeId,
+        streamId: selectedStreamId,
+      }).catch((err) =>
+        console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
+      );
+    } else {
       await loadTimeSlots(termId).catch((err) =>
         console.error("reloadTimetableData: loadTimeSlots failed:", err),
+      );
+      await loadSchoolTimetable(termId).catch((err) =>
+        console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
       );
     }
     await loadBreaks().catch((err) =>
