@@ -146,131 +146,57 @@ const BREAK_MODE_LABELS: Record<BreakMode, string> = {
   custom: "Custom breaks",
 };
 
-const BREAK_SECTIONS: { title: string; options: BreakOption[] }[] = [
+/** Shown inside collapsed “preset” section — not the main flow. */
+const QUICK_PRESET_OPTIONS: BreakOption[] = [
   {
-    title: "Everyday patterns",
-    options: [
-      {
-        mode: "full-day",
-        title: "Full school day",
-        subtitle: "Assembly, short break, then lunch",
-        emoji: "📋",
-        badge: "Most schools",
-      },
-      {
-        mode: "lunch-short",
-        title: "Short break and lunch",
-        subtitle: "Quick break, then lunch (40 min)",
-        emoji: "☕",
-      },
-      {
-        mode: "assembly-lunch",
-        title: "Assembly and lunch",
-        subtitle: "Morning assembly, lunch later",
-        emoji: "🏫",
-      },
-      {
-        mode: "full-with-games",
-        title: "Full day + games",
-        subtitle: "Assembly, breaks, lunch, then games / PE",
-        emoji: "⚽",
-      },
-    ],
+    mode: "full-day",
+    title: "Typical day",
+    subtitle: "Assembly, short break, lunch",
+    emoji: "📋",
   },
   {
-    title: "Longer stops & lunch",
-    options: [
-      {
-        mode: "lunch",
-        title: "Lunch (40 min)",
-        subtitle: "Standard lunch in the middle of the day",
-        emoji: "🍽️",
-      },
-      {
-        mode: "long-lunch",
-        title: "Long lunch (60 min)",
-        subtitle: "Extra-long lunch break",
-        emoji: "🍱",
-      },
-      {
-        mode: "tea-and-lunch",
-        title: "Tea break and lunch",
-        subtitle: "Morning tea (20 min) plus lunch",
-        emoji: "🫖",
-      },
-      {
-        mode: "recess-and-lunch",
-        title: "Recess and lunch",
-        subtitle: "Outdoor recess (25 min) plus lunch",
-        emoji: "🌳",
-      },
-      {
-        mode: "long-morning",
-        title: "Long morning break",
-        subtitle: "30 min stop mid-morning — no lunch block",
-        emoji: "⏳",
-      },
-    ],
+    mode: "assembly-lunch",
+    title: "Assembly + lunch",
+    subtitle: "Morning assembly, then lunch",
+    emoji: "🏫",
   },
   {
-    title: "Games & sports",
-    options: [
-      {
-        mode: "games-only",
-        title: "Games / PE block",
-        subtitle: "45 min sports or games (afternoon)",
-        emoji: "🎮",
-      },
-      {
-        mode: "games-long",
-        title: "Long games session",
-        subtitle: "60 min — sports day or double PE",
-        emoji: "🏃",
-      },
-      {
-        mode: "lunch-games",
-        title: "Lunch and games",
-        subtitle: "Lunch, then 40 min games / sports",
-        emoji: "⚽",
-      },
-    ],
+    mode: "lunch-short",
+    title: "Break + lunch",
+    subtitle: "Short break, then lunch",
+    emoji: "☕",
   },
   {
-    title: "Other",
-    options: [
-      {
-        mode: "short-only",
-        title: "Short break only",
-        subtitle: "15 min break, no lunch (half day)",
-        emoji: "⏱️",
-      },
-      {
-        mode: "none",
-        title: "Not now",
-        subtitle: "Only lessons — add breaks later",
-        emoji: "📚",
-      },
-    ],
+    mode: "none",
+    title: "No breaks yet",
+    subtitle: "Add lessons only for now",
+    emoji: "📚",
   },
 ];
 
-const CUSTOM_BREAK_OPTION: BreakOption = {
-  mode: "custom",
-  title: "Set breaks yourself",
-  subtitle: "Choose type, length, and exactly which lesson each break comes after",
-  emoji: "✏️",
-  badge: "Recommended",
-};
-
-function afterPeriodOptions(periodCount: number): { value: string; label: string }[] {
-  const opts = [
-    { value: "0", label: "Before lesson 1" },
-  ];
-  for (let p = 1; p <= periodCount; p++) {
-    opts.push({ value: String(p), label: `After lesson ${p}` });
-  }
-  return opts;
-}
+const QUICK_BREAK_ADDS = [
+  {
+    emoji: "🍽️",
+    label: "Lunch",
+    type: "LUNCH",
+    durationMinutes: "40",
+    getAfterPeriod: (n: number) => lunchAfterPeriod(n),
+  },
+  {
+    emoji: "☕",
+    label: "Short break",
+    type: "SHORT_BREAK",
+    durationMinutes: "15",
+    getAfterPeriod: (n: number) => Math.min(2, n),
+  },
+  {
+    emoji: "🏫",
+    label: "Assembly",
+    type: "ASSEMBLY",
+    durationMinutes: "15",
+    getAfterPeriod: () => 0,
+  },
+] as const;
 
 function formatCustomBreaksSummary(breaks: TimetableBreakDraft[]): string {
   if (breaks.length === 0) return "No breaks";
@@ -512,6 +438,7 @@ export function TimetableSetupWizard({
   );
   const [showOtherStartTime, setShowOtherStartTime] = useState(false);
   const [showPickDays, setShowPickDays] = useState(false);
+  const [breaksStepInitialized, setBreaksStepInitialized] = useState(false);
 
   const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
   const isCustomPeriodCount = !PRESET_LESSONS_PER_DAY_VALUES.has(periodCount);
@@ -560,8 +487,8 @@ export function TimetableSetupWizard({
   const startFriendly = formatTimeFriendly(startTime);
   const weekLabel = weekdaySummary(activeWeekdays);
 
-  const customDayPreview = useMemo(() => {
-    if (breakMode !== "custom" || breaks.length === 0) return [];
+  const dayPreview = useMemo(() => {
+    if (breakMode === "none" || breaks.length === 0) return [];
     return buildDayTimelinePreview(
       startTime,
       periodCountNum,
@@ -652,6 +579,31 @@ export function TimetableSetupWizard({
           : preset.label,
     });
   };
+
+  const addQuickBreak = (quick: (typeof QUICK_BREAK_ADDS)[number]) => {
+    setBreakMode("custom");
+    const preset = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find(
+      (t) => t.value === quick.type,
+    );
+    setBreaks((prev) => [
+      ...prev,
+      newBreakDraft({
+        type: quick.type,
+        label: quick.label,
+        icon: preset?.icon ?? quick.emoji,
+        color: preset?.color ?? "#64748B",
+        afterPeriod: quick.getAfterPeriod(periodCountNum),
+        durationMinutes: quick.durationMinutes,
+      }),
+    ]);
+  };
+
+  useEffect(() => {
+    if (step === 2 && !breaksStepInitialized) {
+      setBreaksStepInitialized(true);
+      selectBreakMode("custom");
+    }
+  }, [step, breaksStepInitialized]);
 
   const applyWeekPreset = (days: number[]) => {
     setActiveWeekdays(new Set(days));
@@ -795,206 +747,227 @@ export function TimetableSetupWizard({
       ? formatCustomBreaksSummary(breaks)
       : BREAK_MODE_LABELS[breakMode];
 
-  const renderBreakOption = (opt: BreakOption) => (
-    <button
-      key={opt.mode}
-      type="button"
-      onClick={() => selectBreakMode(opt.mode)}
-      className={cn(
-        "w-full rounded-xl border px-4 py-3.5 text-left transition-colors flex items-start gap-3",
-        breakMode === opt.mode
-          ? "border-[#246a59] bg-[#246a59]/10 ring-2 ring-[#246a59]/20"
-          : "border-slate-200 hover:border-[#246a59]/40 dark:border-slate-700",
-      )}
-    >
-      <span className="text-2xl leading-none shrink-0" aria-hidden>
-        {opt.emoji}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            {opt.title}
-          </p>
-          {opt.badge && (
-            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[#246a59]/15 text-[#246a59]">
-              {opt.badge}
-            </span>
+  const renderPlacementPills = (
+    breakId: string,
+    afterPeriod: number,
+  ) => (
+    <div className="flex flex-wrap gap-1">
+      <button
+        type="button"
+        onClick={() => updateBreakDraft(breakId, { afterPeriod: 0 })}
+        className={cn(
+          "rounded-md px-2 py-1 text-[11px] font-medium border transition-colors",
+          afterPeriod === 0
+            ? "border-[#246a59] bg-[#246a59] text-white"
+            : "border-slate-200 text-slate-600 hover:border-[#246a59]/50 dark:border-slate-600",
+        )}
+      >
+        Before L1
+      </button>
+      {Array.from({ length: periodCountNum }, (_, i) => i + 1).map((lesson) => (
+        <button
+          key={lesson}
+          type="button"
+          onClick={() =>
+            updateBreakDraft(breakId, { afterPeriod: lesson })
+          }
+          className={cn(
+            "rounded-md px-2 py-1 text-[11px] font-medium border transition-colors",
+            afterPeriod === lesson
+              ? "border-[#246a59] bg-[#246a59] text-white"
+              : "border-slate-200 text-slate-600 hover:border-[#246a59]/50 dark:border-slate-600",
           )}
-        </div>
-        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-          {opt.subtitle}
-        </p>
-      </div>
-    </button>
+        >
+          After L{lesson}
+        </button>
+      ))}
+    </div>
   );
 
-  const renderCustomBreaksEditor = () => (
-    <div className="space-y-3 rounded-xl border-2 border-[#246a59]/30 bg-[#246a59]/5 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            Your breaks
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Set type, how long, and{" "}
-            <strong className="text-[#246a59]">after which lesson</strong> each
-            stop happens.
-          </p>
+  const renderBreaksStep = () => (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          Quick add
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_BREAK_ADDS.map((quick) => (
+            <button
+              key={quick.type}
+              type="button"
+              onClick={() => addQuickBreak(quick)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-[#246a59]/50 hover:bg-[#246a59]/5 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <span aria-hidden>{quick.emoji}</span>
+              {quick.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={addCustomBreakRow}
+            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#246a59]/50 px-3 py-2 text-sm font-medium text-[#246a59] hover:bg-[#246a59]/5"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Other
+          </button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1 shrink-0 border-[#246a59]/40"
-          onClick={addCustomBreakRow}
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add break
-        </Button>
       </div>
 
-      {breaks.length === 0 ? (
-        <p className="text-xs text-slate-500">
-          Tap <strong>Add break</strong> to add lunch, tea, assembly, or any
-          other stop.
+      {breakMode === "none" ? (
+        <p className="text-sm text-slate-500 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40">
+          No breaks for now. You can add them later from the timetable.
+        </p>
+      ) : breaks.length === 0 ? (
+        <p className="text-sm text-slate-500 text-center py-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+          Tap a button above to add your first break.
         </p>
       ) : (
-        <div className="space-y-3">
-          {breaks.map((b, index) => (
-            <div
-              key={b.id}
-              className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/50 p-3 space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[#246a59]">
-                  Break {index + 1}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-slate-500 hover:text-red-600"
-                  onClick={() => removeCustomBreakRow(b.id)}
-                  aria-label="Remove break"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label className="text-xs">What kind of break?</Label>
-                  <Select
-                    value={b.type}
-                    onValueChange={(v) => onCustomBreakTypeChange(b.id, v)}
-                  >
-                    <SelectTrigger
-                      className={cn(onboardingInputClass, "h-10")}
+        <ul className="space-y-3">
+          {breaks.map((b) => {
+            const displayName =
+              b.label.trim() ||
+              defaultLabelForBreakType(b.type) ||
+              "Break";
+            return (
+              <li
+                key={b.id}
+                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 space-y-3"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="text-xl leading-none pt-0.5" aria-hidden>
+                    {b.icon}
+                  </span>
+                  <div className="flex-1 min-w-0 grid gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+                    <Select
+                      value={b.type}
+                      onValueChange={(v) =>
+                        onCustomBreakTypeChange(b.id, v)
+                      }
                     >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.icon} {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger
+                        className={cn(onboardingInputClass, "h-9")}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>
+                            {t.icon} {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={240}
+                        inputMode="numeric"
+                        value={b.durationMinutes}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          updateBreakDraft(b.id, {
+                            durationMinutes: raw,
+                          });
+                        }}
+                        className={cn(onboardingInputClass, "h-9 w-16")}
+                        aria-label={`${displayName} duration in minutes`}
+                      />
+                      <span className="text-xs text-slate-500 shrink-0">
+                        min
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-slate-400 hover:text-red-600 sm:justify-self-end"
+                      onClick={() => removeCustomBreakRow(b.id)}
+                      aria-label={`Remove ${displayName}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 {b.type === TIMETABLE_BREAK_TYPE_CUSTOM && (
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label className="text-xs">Name</Label>
-                    <Input
-                      value={b.label}
-                      onChange={(e) =>
-                        updateBreakDraft(b.id, { label: e.target.value })
-                      }
-                      placeholder="e.g. Prayer time, Staff meeting"
-                      className={onboardingInputClass}
-                    />
-                  </div>
+                  <Input
+                    value={b.label}
+                    onChange={(e) =>
+                      updateBreakDraft(b.id, { label: e.target.value })
+                    }
+                    placeholder="Break name"
+                    className={cn(onboardingInputClass, "h-9")}
+                  />
                 )}
                 <div className="space-y-1.5">
-                  <Label className="text-xs">After which lesson?</Label>
-                  <Select
-                    value={String(b.afterPeriod)}
-                    onValueChange={(v) =>
-                      updateBreakDraft(b.id, {
-                        afterPeriod: parseInt(v, 10),
-                      })
-                    }
-                  >
-                    <SelectTrigger
-                      className={cn(onboardingInputClass, "h-10")}
-                    >
-                      <SelectValue placeholder="Pick a lesson" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {afterPeriodOptions(periodCountNum).map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Place on the day
+                  </p>
+                  {renderPlacementPills(b.id, b.afterPeriod)}
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">How long (minutes)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={240}
-                      inputMode="numeric"
-                      value={b.durationMinutes}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/\D/g, "");
-                        updateBreakDraft(b.id, { durationMinutes: raw });
-                      }}
-                      className={cn(onboardingInputClass, "w-20")}
-                      aria-label="Break length in minutes"
-                    />
-                    <span className="text-xs text-slate-500">min</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {dayPreview.length > 0 && (
+        <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 px-3 py-3">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+            Your day at a glance
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {dayPreview.map((row, i) =>
+              row.kind === "period" ? (
+                <span
+                  key={`p-${i}`}
+                  className="rounded-md bg-white border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-700 dark:bg-slate-900 dark:border-slate-600"
+                >
+                  L{row.period}
+                </span>
+              ) : (
+                <span
+                  key={`b-${i}`}
+                  className="rounded-md bg-amber-100 border border-amber-200 px-2 py-1 text-[11px] font-medium text-amber-900 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-100"
+                  title={`${row.durationMinutes} min`}
+                >
+                  {row.icon} {row.label}
+                </span>
+              ),
+            )}
+          </div>
         </div>
       )}
 
-      {customDayPreview.length > 0 && (
-        <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/40 px-3 py-2.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">
-            Day preview
-          </p>
-          <ol className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
-            {customDayPreview.map((row, i) => (
-              <li
-                key={`${row.kind}-${i}`}
-                className={cn(
-                  "flex gap-2",
-                  row.kind === "break" &&
-                    "font-medium text-amber-800 dark:text-amber-200",
-                )}
-              >
-                <span className="shrink-0 text-slate-400">
-                  {row.kind === "period" ? "•" : row.icon ?? "☕"}
-                </span>
-                <span>
-                  {row.kind === "period"
-                    ? `Lesson ${row.period} (${row.start} – ${row.end})`
-                    : `${row.label} — ${row.durationMinutes} min${
-                        row.afterPeriod === 0
-                          ? ", before lesson 1"
-                          : `, after lesson ${row.afterPeriod}`
-                      }`}
-                </span>
-              </li>
-            ))}
-          </ol>
+      <details className="group rounded-xl border border-slate-200 dark:border-slate-700">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-600 hover:text-[#246a59] dark:text-slate-400 [&::-webkit-details-marker]:hidden flex items-center justify-between gap-2">
+          <span>Use a preset pattern instead</span>
+          <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-4 pb-4 pt-0 grid gap-2 sm:grid-cols-2">
+          {QUICK_PRESET_OPTIONS.map((opt) => (
+            <button
+              key={opt.mode}
+              type="button"
+              onClick={() => selectBreakMode(opt.mode)}
+              className={cn(
+                "rounded-lg border px-3 py-2.5 text-left text-sm transition-colors flex items-center gap-2",
+                breakMode === opt.mode
+                  ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
+                  : "border-slate-200 hover:border-[#246a59]/40 dark:border-slate-700",
+              )}
+            >
+              <span className="text-lg" aria-hidden>
+                {opt.emoji}
+              </span>
+              <span>
+                <span className="font-medium block">{opt.title}</span>
+                <span className="text-xs text-slate-500">{opt.subtitle}</span>
+              </span>
+            </button>
+          ))}
         </div>
-      )}
+      </details>
     </div>
   );
 
@@ -1340,35 +1313,11 @@ export function TimetableSetupWizard({
           <>
             <StepIntro
               icon={Coffee}
-              title="Do you stop for breaks?"
-              description="Set each break yourself (type, length, and after which lesson), or pick a common pattern below."
+              title="School breaks"
+              description="Tap to add lunch or other stops, then choose which lesson each one comes after."
             />
-            <StepBody className="space-y-4 max-h-[min(70vh,640px)] overflow-y-auto pr-0.5">
-              <div className="space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#246a59]">
-                  Custom placement
-                </p>
-                {renderBreakOption(CUSTOM_BREAK_OPTION)}
-                {breakMode === "custom" && renderCustomBreaksEditor()}
-              </div>
-
-              <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Or use a common pattern
-                </p>
-                <p className="text-xs text-slate-500 -mt-1">
-                  Presets pick break times for you — you can still edit them
-                  later on the timetable.
-                </p>
-                {BREAK_SECTIONS.map((section) => (
-                  <div key={section.title} className="space-y-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 pt-1">
-                      {section.title}
-                    </p>
-                    {section.options.map((opt) => renderBreakOption(opt))}
-                  </div>
-                ))}
-              </div>
+            <StepBody className="max-h-[min(70vh,640px)] overflow-y-auto pr-0.5">
+              {renderBreaksStep()}
             </StepBody>
           </>
         );
