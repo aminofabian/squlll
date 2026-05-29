@@ -11,14 +11,24 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useGradeLevelsForSchoolType } from "@/lib/hooks/useGradeLevelsForSchoolType";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
 import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   OnboardingShell,
   StepIntro,
@@ -40,6 +50,9 @@ import {
   newBreakDraft,
   parsePositiveInt,
   suggestBreaksForPeriodCount,
+  defaultLabelForBreakType,
+  TIMETABLE_BREAK_TYPE_CUSTOM,
+  TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS,
 } from "@/lib/utils/timetable-setup";
 import { cn } from "@/lib/utils";
 
@@ -98,7 +111,8 @@ type BreakMode =
   | "games-long"
   | "lunch-games"
   | "short-only"
-  | "none";
+  | "none"
+  | "custom";
 
 type BreakOption = {
   mode: BreakMode;
@@ -123,6 +137,7 @@ const BREAK_MODE_LABELS: Record<BreakMode, string> = {
   "lunch-games": "Lunch and games",
   "short-only": "Short break only (no lunch)",
   none: "No breaks yet",
+  custom: "Custom breaks",
 };
 
 const BREAK_SECTIONS: { title: string; options: BreakOption[] }[] = [
@@ -229,9 +244,40 @@ const BREAK_SECTIONS: { title: string; options: BreakOption[] }[] = [
         subtitle: "Only lessons — add breaks later",
         emoji: "📚",
       },
+      {
+        mode: "custom",
+        title: "Build your own",
+        subtitle: "Add any breaks — lunch, tea, assembly, your own names",
+        emoji: "✏️",
+        badge: "Custom",
+      },
     ],
   },
 ];
+
+function afterPeriodOptions(periodCount: number): { value: string; label: string }[] {
+  const opts = [
+    { value: "0", label: "Before lesson 1" },
+  ];
+  for (let p = 1; p <= periodCount; p++) {
+    opts.push({ value: String(p), label: `After lesson ${p}` });
+  }
+  return opts;
+}
+
+function formatCustomBreaksSummary(breaks: TimetableBreakDraft[]): string {
+  if (breaks.length === 0) return "No breaks";
+  return breaks
+    .map((b) => {
+      const name = b.label.trim() || defaultLabelForBreakType(b.type);
+      const when =
+        b.afterPeriod === 0
+          ? "before lesson 1"
+          : `after lesson ${b.afterPeriod}`;
+      return `${name} (${b.durationMinutes} min, ${when})`;
+    })
+    .join("; ");
+}
 
 function formatTimeFriendly(hhmm: string): string {
   const [h, m] = hhmm.split(":").map(Number);
@@ -507,8 +553,81 @@ export function TimetableSetupWizard({
   const weekLabel = weekdaySummary(activeWeekdays);
 
   useEffect(() => {
+    if (breakMode === "custom") return;
     setBreaks(breaksForMode(breakMode, periodCountNum));
   }, [breakMode, periodCountNum]);
+
+  useEffect(() => {
+    if (breakMode !== "custom") return;
+    setBreaks((prev) =>
+      prev.map((b) => ({
+        ...b,
+        afterPeriod: Math.min(Math.max(0, b.afterPeriod), periodCountNum),
+      })),
+    );
+  }, [breakMode, periodCountNum]);
+
+  const selectBreakMode = (mode: BreakMode) => {
+    if (mode === "custom") {
+      setBreakMode("custom");
+      setBreaks((prev) =>
+        prev.length > 0
+          ? prev
+          : [
+              newBreakDraft({
+                type: "LUNCH",
+                label: "Lunch",
+                icon: "🍽️",
+                color: "#F59E0B",
+                afterPeriod: lunchAfterPeriod(periodCountNum),
+                durationMinutes: "40",
+              }),
+            ],
+      );
+      return;
+    }
+    setBreakMode(mode);
+  };
+
+  const updateBreakDraft = (
+    id: string,
+    patch: Partial<TimetableBreakDraft>,
+  ) => {
+    setBreaks((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    );
+  };
+
+  const addCustomBreakRow = () => {
+    setBreakMode("custom");
+    setBreaks((prev) => [
+      ...prev,
+      newBreakDraft({
+        afterPeriod: Math.min(2, periodCountNum),
+        durationMinutes: "15",
+      }),
+    ]);
+  };
+
+  const removeCustomBreakRow = (id: string) => {
+    setBreaks((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const onCustomBreakTypeChange = (id: string, type: string) => {
+    const preset = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find(
+      (t) => t.value === type,
+    );
+    if (!preset) return;
+    updateBreakDraft(id, {
+      type,
+      icon: preset.icon,
+      color: preset.color,
+      label:
+        type === TIMETABLE_BREAK_TYPE_CUSTOM
+          ? ""
+          : preset.label,
+    });
+  };
 
   const applyWeekPreset = (days: number[]) => {
     setActiveWeekdays(new Set(days));
@@ -547,6 +666,24 @@ export function TimetableSetupWizard({
       if (!startTime.match(/^\d{2}:\d{2}$/))
         return "Pick when the first lesson starts";
       if (activeWeekdays.size < 1) return "Pick at least one school day";
+      return null;
+    }
+    if (step === 2 && breakMode === "custom") {
+      for (const b of breaks) {
+        const dur = parsePositiveInt(b.durationMinutes);
+        if (!dur || dur > 240) {
+          return "Each break needs a length between 1 and 240 minutes";
+        }
+        if (b.afterPeriod < 0 || b.afterPeriod > periodCountNum) {
+          return "Check when each break happens (before or after which lesson)";
+        }
+        if (
+          b.type === TIMETABLE_BREAK_TYPE_CUSTOM &&
+          !b.label.trim()
+        ) {
+          return "Give each custom break a name";
+        }
+      }
       return null;
     }
     if (step === 3) {
@@ -629,7 +766,10 @@ export function TimetableSetupWizard({
     if (step > 1) setStep((s) => s - 1);
   };
 
-  const breakModeLabel = BREAK_MODE_LABELS[breakMode];
+  const breakModeLabel =
+    breakMode === "custom"
+      ? formatCustomBreaksSummary(breaks)
+      : BREAK_MODE_LABELS[breakMode];
 
   const renderPrerequisites = () => (
     <div className="px-6 sm:px-8 py-8 space-y-6">
@@ -948,7 +1088,7 @@ export function TimetableSetupWizard({
                     <button
                       key={opt.mode}
                       type="button"
-                      onClick={() => setBreakMode(opt.mode)}
+                      onClick={() => selectBreakMode(opt.mode)}
                       className={cn(
                         "w-full rounded-xl border px-4 py-3.5 text-left transition-colors flex items-start gap-3",
                         breakMode === opt.mode
@@ -981,6 +1121,158 @@ export function TimetableSetupWizard({
                   ))}
                 </div>
               ))}
+
+              {breakMode === "custom" && (
+                <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      Your breaks
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      onClick={addCustomBreakRow}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add break
+                    </Button>
+                  </div>
+                  {breaks.length === 0 ? (
+                    <p className="text-xs text-slate-500">
+                      No breaks yet — tap Add break, or pick a preset above.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {breaks.map((b, index) => (
+                        <div
+                          key={b.id}
+                          className="rounded-xl border border-[#246a59]/30 bg-[#246a59]/5 p-3 space-y-3"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-[#246a59]">
+                              Break {index + 1}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-500 hover:text-red-600"
+                              onClick={() => removeCustomBreakRow(b.id)}
+                              aria-label="Remove break"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="space-y-1.5 sm:col-span-2">
+                              <Label className="text-xs">Type</Label>
+                              <Select
+                                value={b.type}
+                                onValueChange={(v) =>
+                                  onCustomBreakTypeChange(b.id, v)
+                                }
+                              >
+                                <SelectTrigger
+                                  className={cn(onboardingInputClass, "h-10")}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.map(
+                                    (t) => (
+                                      <SelectItem
+                                        key={t.value}
+                                        value={t.value}
+                                      >
+                                        {t.icon} {t.label}
+                                      </SelectItem>
+                                    ),
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {b.type === TIMETABLE_BREAK_TYPE_CUSTOM && (
+                              <div className="space-y-1.5 sm:col-span-2">
+                                <Label className="text-xs">Name</Label>
+                                <Input
+                                  value={b.label}
+                                  onChange={(e) =>
+                                    updateBreakDraft(b.id, {
+                                      label: e.target.value,
+                                    })
+                                  }
+                                  placeholder="e.g. Prayer time, Staff meeting"
+                                  className={onboardingInputClass}
+                                />
+                              </div>
+                            )}
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">When</Label>
+                              <Select
+                                value={String(b.afterPeriod)}
+                                onValueChange={(v) =>
+                                  updateBreakDraft(b.id, {
+                                    afterPeriod: parseInt(v, 10),
+                                  })
+                                }
+                              >
+                                <SelectTrigger
+                                  className={cn(onboardingInputClass, "h-10")}
+                                >
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {afterPeriodOptions(periodCountNum).map(
+                                    (opt) => (
+                                      <SelectItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                      >
+                                        {opt.label}
+                                      </SelectItem>
+                                    ),
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">How long</Label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={240}
+                                  inputMode="numeric"
+                                  value={b.durationMinutes}
+                                  onChange={(e) => {
+                                    const raw = e.target.value.replace(
+                                      /\D/g,
+                                      "",
+                                    );
+                                    updateBreakDraft(b.id, {
+                                      durationMinutes: raw,
+                                    });
+                                  }}
+                                  className={cn(
+                                    onboardingInputClass,
+                                    "w-20",
+                                  )}
+                                  aria-label="Break length in minutes"
+                                />
+                                <span className="text-xs text-slate-500">
+                                  minutes
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </StepBody>
           </>
         );

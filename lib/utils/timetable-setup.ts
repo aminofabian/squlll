@@ -39,6 +39,12 @@ export function defaultLabelForBreakType(type: string): string {
   return TIMETABLE_BREAK_TYPES.find((t) => t.value === type)?.label ?? 'Break'
 }
 
+/** GraphQL only accepts `BreakType` enum values — not wizard-only `CUSTOM`. */
+export function resolveBreakTypeForApi(type: string): string {
+  if (type === TIMETABLE_BREAK_TYPE_CUSTOM) return 'SHORT_BREAK'
+  return type
+}
+
 export function isPresetBreakLabel(label: string): boolean {
   const trimmed = label.trim()
   if (!trimmed) return true
@@ -417,7 +423,7 @@ export async function createBreaksFromSetup(
         ${alias}: createTimetableBreak(input: {
           dayTemplateId: "${dayTemplateId}"
           name: "${displayName.replace(/"/g, '\\"')}"
-          type: ${entry.type}
+          type: ${resolveBreakTypeForApi(entry.type)}
           afterPeriod: ${entry.afterPeriod}
           durationMinutes: ${duration}
           icon: "${entry.icon}"
