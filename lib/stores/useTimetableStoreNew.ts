@@ -15,7 +15,10 @@ import type {
 } from "../types/timetable";
 import { useSchoolConfigStore } from "./useSchoolConfigStore";
 import { breakGraphQLToStoreType } from "@/lib/utils/timetable-break-types";
-import { extractTimeSlotsFromTimetableData, uniquePeriodNumbers } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
+import {
+  extractTimeSlotsFromTimetableData,
+  uniquePeriodNumbers,
+} from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -964,31 +967,6 @@ export const useTimetableStore = create<TimetableStore>()(
             ? [dayTemplateIdParam]
             : templates.map((t: any) => t.id).filter(Boolean);
 
-          if (!dayTemplateIdParam && gradeIdParam) {
-            const tenantGradeLevelId =
-              get().grades.find((g) => g.id === gradeIdParam)
-                ?.tenantGradeLevelId ?? gradeIdParam;
-            const gradeTemplates = templates.filter((t: any) =>
-              (t.gradeLevels || []).some(
-                (gl: any) => gl.id === tenantGradeLevelId,
-              ),
-            );
-            if (gradeTemplates.length === 0) {
-              console.warn(
-                "No day templates for selected grade — clearing timeSlots.",
-                { gradeIdParam, tenantGradeLevelId },
-              );
-              set({
-                timeSlots: [],
-                periodNumbers: [],
-                lessonPeriodsPerDay: 0,
-                lastUpdated: new Date().toISOString(),
-              });
-              return;
-            }
-            templateIds = gradeTemplates.map((t: any) => t.id).filter(Boolean);
-          }
-
           if (templateIds.length === 0) {
             console.log(
               "No day templates available — timeSlots will remain empty.",
@@ -1066,7 +1044,8 @@ export const useTimetableStore = create<TimetableStore>()(
           allPeriodsResults.forEach((r) => {
             if (r.status === "fulfilled" && Array.isArray(r.value)) {
               r.value.forEach((p: any) => {
-                if (!p?.periodNumber || !p?.id || seenPeriodIds.has(p.id)) return;
+                if (!p?.periodNumber || !p?.id || seenPeriodIds.has(p.id))
+                  return;
                 seenPeriodIds.add(p.id);
                 allSlots.push({
                   id: p.id,
@@ -2268,13 +2247,16 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const periodNumbersFromGrades = [
             ...new Set<number>(
-              (timetableData.timetableByGrade || []).flatMap((gradeBlock: any) =>
-                (gradeBlock.days || []).flatMap((dayItem: any) =>
-                  (dayItem.periods || [])
-                    .filter((p: any) => !p?.isBreak)
-                    .map((p: any) => p?.period?.periodNumber)
-                    .filter((n: unknown): n is number => typeof n === "number"),
-                ),
+              (timetableData.timetableByGrade || []).flatMap(
+                (gradeBlock: any) =>
+                  (gradeBlock.days || []).flatMap((dayItem: any) =>
+                    (dayItem.periods || [])
+                      .filter((p: any) => !p?.isBreak)
+                      .map((p: any) => p?.period?.periodNumber)
+                      .filter(
+                        (n: unknown): n is number => typeof n === "number",
+                      ),
+                  ),
               ),
             ),
           ].sort((a, b) => a - b);
@@ -2301,10 +2283,7 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const gradeScopedSlots =
             gradeLevelId && timetableData
-              ? extractTimeSlotsFromTimetableData(
-                  timetableData,
-                  gradeLevelId,
-                )
+              ? extractTimeSlotsFromTimetableData(timetableData, gradeLevelId)
               : [];
 
           const slotPeriodNumbers =
