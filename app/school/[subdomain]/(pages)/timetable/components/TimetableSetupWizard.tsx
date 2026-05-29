@@ -23,14 +23,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   OnboardingShell,
   StepIntro,
   StepBody,
@@ -854,9 +846,6 @@ export function TimetableSetupWizard({
             const presetBreakTypes = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.filter(
               (t) => t.value !== TIMETABLE_BREAK_TYPE_CUSTOM,
             );
-            const customBreakType = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find(
-              (t) => t.value === TIMETABLE_BREAK_TYPE_CUSTOM,
-            );
 
             return (
               <li
@@ -866,55 +855,48 @@ export function TimetableSetupWizard({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0 space-y-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs text-slate-500">
+                      <Label
+                        htmlFor={`break-type-${b.id}`}
+                        className="text-xs text-slate-500"
+                      >
                         Break type
                       </Label>
-                      <Select
-                        value={b.type}
-                        onValueChange={(v) =>
-                          onCustomBreakTypeChange(b.id, v)
-                        }
-                      >
-                        <SelectTrigger
+                      <div className="relative">
+                        <span
+                          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base"
+                          aria-hidden
+                        >
+                          {b.icon}
+                        </span>
+                        <select
+                          id={`break-type-${b.id}`}
+                          value={b.type}
+                          onChange={(e) =>
+                            onCustomBreakTypeChange(b.id, e.target.value)
+                          }
                           className={cn(
                             onboardingInputClass,
-                            "h-10 w-full",
+                            "h-10 w-full cursor-pointer appearance-none pl-9 pr-9",
                           )}
                         >
-                          <span className="flex items-center gap-2 truncate text-left">
-                            <span aria-hidden>{b.icon}</span>
-                            <span className="truncate">
-                              {isCustomType
-                                ? b.label.trim() ||
-                                  customBreakType?.label ||
-                                  "Custom break"
-                                : selectedType?.label}
-                            </span>
-                          </span>
-                          <SelectValue className="sr-only" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[min(20rem,70vh)]">
-                          {presetBreakTypes.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>
-                              <span className="flex items-center gap-2">
-                                <span aria-hidden>{t.icon}</span>
+                          <optgroup label="Choose a break">
+                            {presetBreakTypes.map((t) => (
+                              <option key={t.value} value={t.value}>
                                 {t.label}
-                              </span>
-                            </SelectItem>
-                          ))}
-                          {customBreakType && (
-                            <>
-                              <SelectSeparator />
-                              <SelectItem value={customBreakType.value}>
-                                <span className="flex items-center gap-2">
-                                  <span aria-hidden>{customBreakType.icon}</span>
-                                  {customBreakType.label}
-                                </span>
-                              </SelectItem>
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
+                              </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label="Custom">
+                            <option value={TIMETABLE_BREAK_TYPE_CUSTOM}>
+                              Other — type your own name
+                            </option>
+                          </optgroup>
+                        </select>
+                        <ChevronDown
+                          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                          aria-hidden
+                        />
+                      </div>
                     </div>
 
                     {isCustomType && (
