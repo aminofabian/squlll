@@ -967,6 +967,27 @@ export const useTimetableStore = create<TimetableStore>()(
             ? [dayTemplateIdParam]
             : templates.map((t: any) => t.id).filter(Boolean);
 
+          // When a grade is selected, only load periods from that grade's
+          // day templates.  Each grade has its own day templates and
+          // the backend validates that entries use the correct day template.
+          if (!dayTemplateIdParam && gradeIdParam) {
+            const tenantGradeLevelId =
+              get().grades.find((g) => g.id === gradeIdParam)
+                ?.tenantGradeLevelId ?? gradeIdParam;
+            const gradeTemplates = templates.filter((t: any) =>
+              (t.gradeLevels || []).some(
+                (gl: any) => gl.id === tenantGradeLevelId,
+              ),
+            );
+            if (gradeTemplates.length > 0) {
+              templateIds = gradeTemplates
+                .map((t: any) => t.id)
+                .filter(Boolean);
+            }
+            // Fall through: if gradeTemplates is empty, keep all templateIds
+            // (happens when day templates haven't been linked to grades yet)
+          }
+
           if (templateIds.length === 0) {
             console.log(
               "No day templates available — timeSlots will remain empty.",
