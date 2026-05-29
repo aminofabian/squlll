@@ -83,9 +83,14 @@ const PRESET_LESSON_LENGTH_VALUES = new Set<string>(
 
 const LESSONS_PER_DAY_OPTIONS = [
   { value: "6", label: "6 lessons", subtitle: "Shorter day" },
+  { value: "7", label: "7 lessons", subtitle: "Medium day" },
   { value: "8", label: "8 lessons", subtitle: "Normal day" },
   { value: "9", label: "9 lessons", subtitle: "Long day" },
 ] as const;
+
+const PRESET_LESSONS_PER_DAY_VALUES = new Set<string>(
+  LESSONS_PER_DAY_OPTIONS.map((o) => o.value),
+);
 
 const WEEKDAY_OPTIONS = [
   { n: 1, short: "Mon", full: "Monday" },
@@ -507,6 +512,7 @@ export function TimetableSetupWizard({
   const [showPickDays, setShowPickDays] = useState(false);
 
   const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
+  const isCustomPeriodCount = !PRESET_LESSONS_PER_DAY_VALUES.has(periodCount);
 
   const gradeLevelsWithStreams = useMemo(
     () => mapGradeLevelsForSchoolType(gradeLevelsRaw),
@@ -964,7 +970,7 @@ export function TimetableSetupWizard({
               </FieldGroup>
 
               <FieldGroup label="How many lessons in one day?">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {LESSONS_PER_DAY_OPTIONS.map((p) => (
                     <PresetOption
                       key={p.value}
@@ -975,6 +981,44 @@ export function TimetableSetupWizard({
                       icon={LayoutGrid}
                     />
                   ))}
+                </div>
+                <div
+                  className={cn(
+                    "mt-2 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
+                    isCustomPeriodCount
+                      ? "border-[#246a59] bg-[#246a59]/10"
+                      : "border-slate-200 bg-slate-50/80 dark:border-slate-700",
+                  )}
+                >
+                  <label
+                    htmlFor="custom-lessons-per-day"
+                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                  >
+                    Other number
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="custom-lessons-per-day"
+                      type="number"
+                      min={1}
+                      max={20}
+                      inputMode="numeric"
+                      value={isCustomPeriodCount ? periodCount : ""}
+                      placeholder="e.g. 10 or 12"
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, "");
+                        setPeriodCount(raw);
+                      }}
+                      onFocus={() => {
+                        if (PRESET_LESSONS_PER_DAY_VALUES.has(periodCount)) {
+                          setPeriodCount("");
+                        }
+                      }}
+                      className={cn(onboardingInputClass, "w-24")}
+                      aria-label="Custom number of lessons per day"
+                    />
+                    <span className="text-sm text-slate-500">lessons</span>
+                  </div>
                 </div>
               </FieldGroup>
 
