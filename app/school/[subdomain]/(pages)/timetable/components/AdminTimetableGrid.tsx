@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, Edit2, Trash2, Plus, AlertCircle } from "lucide-react";
+import { Clock, Edit2, Trash2, Plus, AlertCircle, Layers2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -246,14 +246,35 @@ export function AdminTimetableGrid({
                   const breaksAfter = getBreaksAfterPeriod(period);
                   const prevPeriodNumber =
                     periodIndex > 0 ? periodNumbers[periodIndex - 1] : null;
+                  const rowHasDoubleBlock = days.some((_, dayIndex) => {
+                    const e = getEntryFor(dayIndex + 1, period);
+                    return e?.isDoublePeriod === true;
+                  });
+                  const rowIsDoubleContinuation =
+                    prevPeriodNumber != null &&
+                    days.some((_, dayIndex) => {
+                      const prev = getEntryFor(dayIndex + 1, prevPeriodNumber);
+                      return (
+                        prev?.isDoublePeriod === true &&
+                        getBreaksAfterPeriod(prevPeriodNumber).length === 0
+                      );
+                    });
 
                   return (
                     <React.Fragment key={`period-${period}`}>
-                      <tr className="group/row border-b border-zinc-200/70 dark:border-zinc-800/80">
+                      <tr
+                        className={cn(
+                          "group/row border-b border-zinc-200/70 dark:border-zinc-800/80",
+                          rowIsDoubleContinuation &&
+                            "bg-zinc-50/60 dark:bg-zinc-900/20",
+                        )}
+                      >
                         <td className="sticky left-0 z-10 border-r border-zinc-200/90 bg-white p-0 align-top dark:border-zinc-800 dark:bg-zinc-900">
                           <TimeColumnCell
                             slot={baseSlot}
                             period={period}
+                            isDoubleBlockRow={rowHasDoubleBlock}
+                            isDoubleContinuation={rowIsDoubleContinuation}
                             onEdit={onEditTimeslot}
                             onDelete={onDeleteTimeslot}
                             onAddBreak={onAddBreak}
@@ -286,6 +307,11 @@ export function AdminTimetableGrid({
                             entry.teacher.id !== highlightTeacherId
                           );
 
+                          const nextPeriodNumber =
+                            periodIndex < periodNumbers.length - 1
+                              ? periodNumbers[periodIndex + 1]
+                              : null;
+
                           if (coveredByDoubleAbove) {
                             return null;
                           }
@@ -295,23 +321,40 @@ export function AdminTimetableGrid({
                               key={dayIndex}
                               rowSpan={spansDouble ? 2 : undefined}
                               className={cn(
-                                "bg-white p-1.5 align-top dark:bg-zinc-900/40",
+                                "bg-white p-1 align-top dark:bg-zinc-900/40",
+                                spansDouble && "p-1",
                                 dayColumnClass(dayIndex),
                               )}
                             >
                               {entry ? (
-                                <AdminLessonCell
-                                  entry={entry}
-                                  accent={accentFor(
-                                    entry.subject.id ?? entry.id,
-                                    entry.subject.name,
-                                  )}
-                                  hasConflict={!!hasConflict}
-                                  isDimmed={isTeacherDimmed}
-                                  spansDouble={spansDouble}
-                                  onEdit={onEditLesson}
-                                  onDelete={onDeleteLesson}
-                                />
+                                spansDouble && nextPeriodNumber != null ? (
+                                  <DoublePeriodLessonCell
+                                    entry={entry}
+                                    period={period}
+                                    nextPeriod={nextPeriodNumber}
+                                    accent={accentFor(
+                                      entry.subject.id ?? entry.id,
+                                      entry.subject.name,
+                                    )}
+                                    hasConflict={!!hasConflict}
+                                    isDimmed={isTeacherDimmed}
+                                    onEdit={onEditLesson}
+                                    onDelete={onDeleteLesson}
+                                  />
+                                ) : (
+                                  <AdminLessonCell
+                                    entry={entry}
+                                    accent={accentFor(
+                                      entry.subject.id ?? entry.id,
+                                      entry.subject.name,
+                                    )}
+                                    hasConflict={!!hasConflict}
+                                    isDimmed={isTeacherDimmed}
+                                    isBlockLesson={entry.isDoublePeriod === true}
+                                    onEdit={onEditLesson}
+                                    onDelete={onDeleteLesson}
+                                  />
+                                )
                               ) : (
                                 <button
                                   type="button"
@@ -364,12 +407,16 @@ export function AdminTimetableGrid({
 function TimeColumnCell({
   slot,
   period,
+  isDoubleBlockRow,
+  isDoubleContinuation,
   onEdit,
   onDelete,
   onAddBreak,
 }: {
   slot: TimeSlotInfo;
   period: number;
+  isDoubleBlockRow?: boolean;
+  isDoubleContinuation?: boolean;
   onEdit?: (slot: TimeSlotInfo) => void;
   onDelete?: (slot: TimeSlotInfo) => void;
   onAddBreak?: (afterPeriod: number) => void;
@@ -382,7 +429,13 @@ function TimeColumnCell({
 
   return (
     <div
-      className="group/time relative w-[108px] cursor-pointer border-b border-transparent p-3 md:w-[132px]"
+      className={cn(
+        "group/time relative w-[108px] cursor-pointer border-b border-transparent p-3 md:w-[132px]",
+        isDoubleBlockRow &&
+          "bg-gradient-to-b from-violet-50/80 to-transparent dark:from-violet-950/20",
+        isDoubleContinuation &&
+          "border-l-2 border-dashed border-violet-200/80 dark:border-violet-800/60",
+      )}
       role="button"
       tabIndex={0}
       onClick={() => onEdit?.(slot)}
@@ -395,9 +448,27 @@ function TimeColumnCell({
       title="Edit lesson times"
     >
       <div className="pr-7">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-          P{period}
-        </p>
+        <div className="flex items-center gap-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+            P{period}
+          </p>
+          {isDoubleBlockRow && (
+            <span
+              className="rounded px-1 py-px text-[8px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400"
+              title="Block lesson starts this period"
+            >
+              blk
+            </span>
+          )}
+          {isDoubleContinuation && (
+            <span
+              className="rounded px-1 py-px text-[8px] font-medium uppercase tracking-wide text-zinc-400"
+              title="Continuation of block above"
+            >
+              ↳
+            </span>
+          )}
+        </div>
         <p className="mt-1 font-mono text-[12px] font-medium tabular-nums leading-tight text-zinc-800 dark:text-zinc-100">
           {timeLabel}
         </p>
@@ -447,7 +518,7 @@ function AdminLessonCell({
   accent,
   hasConflict,
   isDimmed,
-  spansDouble,
+  isBlockLesson,
   onEdit,
   onDelete,
 }: {
@@ -455,15 +526,14 @@ function AdminLessonCell({
   accent: SubjectAccentStyle;
   hasConflict: boolean;
   isDimmed?: boolean;
-  spansDouble?: boolean;
+  isBlockLesson?: boolean;
   onEdit?: (lesson: LessonEntry) => void;
   onDelete?: (lesson: LessonEntry) => void;
 }) {
   return (
     <div
       className={cn(
-        "group/lesson relative cursor-pointer overflow-hidden rounded-lg border transition-shadow hover:shadow-sm",
-        spansDouble ? "min-h-[136px]" : "min-h-[64px]",
+        "group/lesson relative min-h-[64px] cursor-pointer overflow-hidden rounded-lg border transition-shadow hover:shadow-sm",
         isDimmed && "opacity-40 saturate-[0.65]",
         hasConflict
           ? "border-red-200/90 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25"
@@ -494,6 +564,18 @@ function AdminLessonCell({
       />
 
       <div className="flex min-h-[64px] flex-col justify-center py-2 pl-3.5 pr-8">
+        {isBlockLesson && !hasConflict && (
+          <span
+            className="mb-1 inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em]"
+            style={{
+              color: accent.text,
+              backgroundColor: `color-mix(in srgb, ${accent.accent} 12%, white)`,
+            }}
+          >
+            <Layers2 className="h-2.5 w-2.5" aria-hidden />
+            Block
+          </span>
+        )}
         <p
           className="text-[13px] font-semibold leading-tight tracking-tight line-clamp-2"
           style={{ color: hasConflict ? undefined : accent.text }}
@@ -510,37 +592,266 @@ function AdminLessonCell({
         )}
       </div>
 
-      <div className="absolute right-1 top-1 flex items-center gap-0.5 md:opacity-0 md:group-hover/lesson:opacity-100">
-        {entry.isDoublePeriod && (
-          <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-500 bg-white/80">
-            2×
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit?.(entry);
-          }}
-          className="rounded p-1 text-zinc-400 hover:bg-white/80"
-        >
-          <Edit2 className="h-3 w-3" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete?.(entry);
-          }}
-          className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600"
-        >
-          <Trash2 className="h-3 w-3" />
-        </button>
-      </div>
+      <LessonCellActions
+        entry={entry}
+        hasConflict={hasConflict}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
 
       {hasConflict && (
         <AlertCircle className="absolute bottom-1.5 right-1.5 h-3.5 w-3.5 text-red-500" />
       )}
+    </div>
+  );
+}
+
+function DoublePeriodLessonCell({
+  entry,
+  period,
+  nextPeriod,
+  accent,
+  hasConflict,
+  isDimmed,
+  onEdit,
+  onDelete,
+}: {
+  entry: LessonEntry;
+  period: number;
+  nextPeriod: number;
+  accent: SubjectAccentStyle;
+  hasConflict: boolean;
+  isDimmed?: boolean;
+  onEdit?: (lesson: LessonEntry) => void;
+  onDelete?: (lesson: LessonEntry) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "group/lesson relative flex min-h-[148px] cursor-pointer flex-col overflow-hidden rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-all hover:shadow-md dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+        isDimmed && "opacity-40 saturate-[0.65]",
+        hasConflict
+          ? "border-red-200/90 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25"
+          : "border-zinc-200/80 dark:border-zinc-700/80",
+      )}
+      style={
+        hasConflict
+          ? undefined
+          : {
+              backgroundColor: accent.background,
+              borderColor: accent.border,
+              boxShadow: `inset 3px 0 0 0 ${accent.accent}, inset 0 1px 0 rgba(255,255,255,0.5)`,
+            }
+      }
+      role="button"
+      tabIndex={0}
+      onClick={() => onEdit?.(entry)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onEdit?.(entry);
+        }
+      }}
+    >
+      {/* Header band */}
+      <div
+        className="flex items-center justify-between gap-2 border-b px-3 py-1.5"
+        style={{
+          borderColor: hasConflict ? undefined : accent.border,
+          backgroundColor: hasConflict
+            ? undefined
+            : `color-mix(in srgb, ${accent.accent} 8%, transparent)`,
+        }}
+      >
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Layers2
+            className="h-3 w-3 shrink-0 opacity-70"
+            style={{ color: hasConflict ? undefined : accent.accent }}
+            aria-hidden
+          />
+          <span
+            className="text-[9px] font-bold uppercase tracking-[0.14em]"
+            style={{ color: hasConflict ? undefined : accent.text }}
+          >
+            Block lesson
+          </span>
+        </div>
+        <span
+          className="shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums"
+          style={{
+            color: hasConflict ? undefined : accent.text,
+            backgroundColor: hasConflict
+              ? undefined
+              : `color-mix(in srgb, ${accent.accent} 14%, white)`,
+          }}
+        >
+          P{period}–{nextPeriod}
+        </span>
+      </div>
+
+      {/* Main content */}
+      <div className="flex flex-1 flex-col justify-between px-3 py-2.5 pr-8">
+        <div>
+          <p
+            className="text-[14px] font-semibold leading-snug tracking-tight line-clamp-2"
+            style={{ color: hasConflict ? undefined : accent.text }}
+          >
+            {entry.subject.name}
+          </p>
+          <p className="mt-1.5 truncate text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+            {entry.teacher.name}
+          </p>
+          {entry.roomNumber && (
+            <p className="mt-0.5 text-[10px] tabular-nums text-zinc-500">
+              Room {entry.roomNumber}
+            </p>
+          )}
+        </div>
+
+        {/* Period timeline */}
+        <div
+          className="mt-3 rounded-lg border px-2.5 py-2"
+          style={{
+            borderColor: hasConflict ? undefined : accent.border,
+            backgroundColor: hasConflict
+              ? undefined
+              : `color-mix(in srgb, ${accent.accent} 5%, white)`,
+          }}
+        >
+          <div className="flex items-center gap-0">
+            <PeriodNode
+              label={`P${period}`}
+              sublabel="Start"
+              accent={accent}
+              hasConflict={hasConflict}
+              active
+            />
+            <div
+              className="relative mx-1 h-px flex-1"
+              style={{
+                backgroundColor: hasConflict
+                  ? undefined
+                  : `color-mix(in srgb, ${accent.accent} 35%, transparent)`,
+              }}
+              aria-hidden
+            >
+              <div
+                className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{ backgroundColor: accent.accent }}
+              />
+            </div>
+            <PeriodNode
+              label={`P${nextPeriod}`}
+              sublabel="Continues"
+              accent={accent}
+              hasConflict={hasConflict}
+            />
+          </div>
+        </div>
+      </div>
+
+      <LessonCellActions
+        entry={entry}
+        hasConflict={hasConflict}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        showDoubleBadge
+      />
+
+      {hasConflict && (
+        <AlertCircle className="absolute bottom-2 right-2 h-3.5 w-3.5 text-red-500" />
+      )}
+    </div>
+  );
+}
+
+function PeriodNode({
+  label,
+  sublabel,
+  accent,
+  hasConflict,
+  active,
+}: {
+  label: string;
+  sublabel: string;
+  accent: SubjectAccentStyle;
+  hasConflict: boolean;
+  active?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div
+        className={cn(
+          "flex h-5 w-5 items-center justify-center rounded-full border-2 text-[8px] font-bold",
+          active && "ring-2 ring-offset-1",
+        )}
+        style={
+          hasConflict
+            ? undefined
+            : {
+                borderColor: accent.accent,
+                backgroundColor: active
+                  ? accent.accent
+                  : `color-mix(in srgb, ${accent.accent} 12%, white)`,
+                color: active ? "white" : accent.text,
+                ...(active
+                  ? { boxShadow: `0 0 0 2px color-mix(in srgb, ${accent.accent} 25%, transparent)` }
+                  : {}),
+              }
+        }
+      >
+        {active ? "1" : "2"}
+      </div>
+      <span className="font-mono text-[9px] font-semibold tabular-nums text-zinc-600 dark:text-zinc-400">
+        {label}
+      </span>
+      <span className="text-[8px] font-medium uppercase tracking-wide text-zinc-400">
+        {sublabel}
+      </span>
+    </div>
+  );
+}
+
+function LessonCellActions({
+  entry,
+  hasConflict,
+  onEdit,
+  onDelete,
+  showDoubleBadge,
+}: {
+  entry: LessonEntry;
+  hasConflict: boolean;
+  onEdit?: (lesson: LessonEntry) => void;
+  onDelete?: (lesson: LessonEntry) => void;
+  showDoubleBadge?: boolean;
+}) {
+  return (
+    <div className="absolute right-1 top-1 flex items-center gap-0.5 md:opacity-0 md:group-hover/lesson:opacity-100">
+      {(showDoubleBadge || entry.isDoublePeriod) && !hasConflict && (
+        <span className="rounded-md bg-white/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-500 shadow-sm dark:bg-zinc-800/90">
+          2×
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit?.(entry);
+        }}
+        className="rounded p-1 text-zinc-400 hover:bg-white/80 dark:hover:bg-zinc-800/80"
+      >
+        <Edit2 className="h-3 w-3" />
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete?.(entry);
+        }}
+        className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+      >
+        <Trash2 className="h-3 w-3" />
+      </button>
     </div>
   );
 }
