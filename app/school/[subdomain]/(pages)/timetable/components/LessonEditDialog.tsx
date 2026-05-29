@@ -41,6 +41,21 @@ import {
   subjectsForTimetableGrade,
 } from "../utils/resolveGradeForSchoolConfig";
 import { subjectsForSelectedTeacher } from "../utils/subjectsForSelectedTeacher";
+import {
+  getBusyTeacherIds,
+  getOccupiedPeriodNumbers,
+  validateScheduleConflict,
+} from "../utils/computeTimetableConflicts";
+
+function lessonTargetPeriods(
+  periodNumber: number | undefined,
+  isDoublePeriod: boolean,
+): number[] {
+  if (!periodNumber) return [];
+  const periods = [periodNumber];
+  if (isDoublePeriod) periods.push(periodNumber + 1);
+  return periods;
+}
 
 function teacherCanTeachGrade(
   teacher: { gradeLevels?: string[] },
@@ -126,14 +141,16 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         isDoublePeriod: !!(lesson as any).isDoublePeriod,
       });
     } else if (lesson && lesson.isNew) {
-      const busyTeacherIds = new Set(
-        entries
-          .filter(
-            (entry) =>
-              entry.timeSlotId === lesson.timeSlotId &&
-              entry.dayOfWeek === lesson.dayOfWeek,
-          )
-          .map((entry) => entry.teacherId),
+      const clickedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+      const targetPeriods = lessonTargetPeriods(
+        clickedSlot?.periodNumber,
+        false,
+      );
+      const busyTeacherIds = getBusyTeacherIds(
+        lesson.dayOfWeek,
+        targetPeriods,
+        entries,
+        timeSlots,
       );
 
       const grade = grades.find((g) => g.id === lesson.gradeId);
@@ -170,8 +187,8 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     activeTeachers,
     entries,
     grades,
-    grades,
     schoolConfigGetters,
+    timeSlots,
   ]);
 
   const handleSave = async () => {
@@ -287,8 +304,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           const nextTaken = entries.some(
             (e) =>
               e.dayOfWeek === lesson.dayOfWeek &&
-              (e.timeSlotId === nextSlot.id ||
-                e.periodNumber === nextPeriodNumber),
+              getOccupiedPeriodNumbers(e, timeSlots).includes(nextPeriodNumber),
           );
           if (nextTaken) {
             toast({
@@ -299,6 +315,27 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
             setIsSaving(false);
             return;
           }
+        }
+
+        const createConflict = validateScheduleConflict({
+          teacherId: formData.teacherId,
+          roomNumber: normalizedRoom,
+          dayOfWeek: lesson.dayOfWeek,
+          targetPeriods: lessonTargetPeriods(
+            clickedSlot.periodNumber,
+            formData.isDoublePeriod ?? false,
+          ),
+          entries,
+          timeSlots,
+        });
+        if (!createConflict.ok) {
+          toast({
+            title: createConflict.title,
+            description: createConflict.description,
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
         }
 
         const mutation = `
@@ -733,6 +770,28 @@ Check the browser console for detailed input information.`;
             return;
           }
 
+          const moveConflict = validateScheduleConflict({
+            teacherId: formData.teacherId,
+            roomNumber: normalizedRoom,
+            dayOfWeek: moveDay,
+            targetPeriods: lessonTargetPeriods(
+              targetSlot.periodNumber,
+              formData.isDoublePeriod ?? false,
+            ),
+            entries,
+            timeSlots,
+            excludeEntryId: lesson.id,
+          });
+          if (!moveConflict.ok) {
+            toast({
+              title: moveConflict.title,
+              description: moveConflict.description,
+              variant: "destructive",
+            });
+            setIsSaving(false);
+            return;
+          }
+
           const moveMutation = `
             mutation MoveEntry($input: UpdateTimetableEntryInput!) {
               updateTimetableEntry(input: $input) {
@@ -847,8 +906,9 @@ Check the browser console for detailed input information.`;
             (e) =>
               e.id !== lesson.id &&
               e.dayOfWeek === day &&
-              (e.timeSlotId === nextSlot.id ||
-                e.periodNumber === currentPeriod + 1),
+              getOccupiedPeriodNumbers(e, timeSlots).includes(
+                currentPeriod + 1,
+              ),
           );
           if (nextTaken) {
             toast({
@@ -859,6 +919,33 @@ Check the browser console for detailed input information.`;
             setIsSaving(false);
             return;
           }
+        }
+
+        const editDay = isMoving ? moveDay : lesson.dayOfWeek;
+        const editSlot =
+          targetSlot ??
+          timeSlots.find((ts) => ts.id === lesson.timeSlotId) ??
+          lesson.timeSlot;
+        const editConflict = validateScheduleConflict({
+          teacherId: formData.teacherId,
+          roomNumber: normalizedRoom,
+          dayOfWeek: editDay,
+          targetPeriods: lessonTargetPeriods(
+            editSlot?.periodNumber,
+            formData.isDoublePeriod ?? false,
+          ),
+          entries,
+          timeSlots,
+          excludeEntryId: lesson.id,
+        });
+        if (!editConflict.ok) {
+          toast({
+            title: editConflict.title,
+            description: editConflict.description,
+            variant: "destructive",
+          });
+          setIsSaving(false);
+          return;
         }
 
         const mutation = `
@@ -1037,6 +1124,51 @@ Check the browser console for detailed input information.`;
     }
   };
 
+  const slotPeriodNumber = useMemo(() => {
+    if (!lesson) return undefined;
+    const slot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
+    return slot?.periodNumber;
+  }, [lesson, timeSlots]);
+
+  const targetPeriods = useMemo(
+    () => lessonTargetPeriods(slotPeriodNumber, formData.isDoublePeriod),
+    [slotPeriodNumber, formData.isDoublePeriod],
+  );
+
+  const busyTeacherIds = useMemo(() => {
+    if (!lesson) return new Set<string>();
+    return getBusyTeacherIds(
+      lesson.dayOfWeek,
+      targetPeriods,
+      entries,
+      timeSlots,
+      !lesson.isNew ? lesson.id : undefined,
+    );
+  }, [lesson, targetPeriods, entries, timeSlots]);
+
+  const scheduleConflict = useMemo(() => {
+    if (!lesson || !formData.teacherId || targetPeriods.length === 0) {
+      return null;
+    }
+    const result = validateScheduleConflict({
+      teacherId: formData.teacherId,
+      roomNumber: formData.roomNumber,
+      dayOfWeek: lesson.dayOfWeek,
+      targetPeriods,
+      entries,
+      timeSlots,
+      excludeEntryId: !lesson.isNew ? lesson.id : undefined,
+    });
+    return result.ok ? null : result;
+  }, [
+    lesson,
+    formData.teacherId,
+    formData.roomNumber,
+    targetPeriods,
+    entries,
+    timeSlots,
+  ]);
+
   if (!lesson) return null;
 
   const isNew = lesson.isNew;
@@ -1058,21 +1190,6 @@ Check the browser console for detailed input information.`;
           ?.streams?.find((s) => s.tenantStreamId === selectedStreamId)?.name ??
         null)
       : null;
-
-  // Find teachers already scheduled at this timeslot
-  const busyTeacherIds = new Set(
-    entries
-      .filter((entry) => {
-        // Same timeslot and day
-        const sameSlot =
-          entry.timeSlotId === lesson.timeSlotId &&
-          entry.dayOfWeek === lesson.dayOfWeek;
-        // Exclude current lesson if editing (not new)
-        const isCurrentLesson = !isNew && entry.id === lesson.id;
-        return sameSlot && !isCurrentLesson;
-      })
-      .map((entry) => entry.teacherId),
-  );
 
   // Filter teachers who:
   // 1. Can teach the selected grade (or show all if no grade selected)
@@ -1167,6 +1284,12 @@ Check the browser console for detailed input information.`;
         </DrawerHeader>
 
         <div className="space-y-4 px-6 py-6 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900">
+          {scheduleConflict && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+              <p className="font-semibold">{scheduleConflict.title}</p>
+              <p className="mt-1 text-xs">{scheduleConflict.description}</p>
+            </div>
+          )}
           {!isNew && periodOptions.length > 0 && (
             <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 space-y-3">
               <div>
@@ -1480,7 +1603,10 @@ Check the browser console for detailed input information.`;
               <Button
                 onClick={handleSave}
                 disabled={
-                  !formData.subjectId || !formData.teacherId || isSaving
+                  !formData.subjectId ||
+                  !formData.teacherId ||
+                  isSaving ||
+                  !!scheduleConflict
                 }
                 className="flex-1 bg-primary hover:bg-primary/90 text-white font-medium h-10 border border-primary disabled:opacity-50 rounded"
               >

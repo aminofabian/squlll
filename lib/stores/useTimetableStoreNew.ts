@@ -28,6 +28,7 @@ import {
   GET_TIMETABLE_ENTRIES_QUERY,
   mapApiTimetableEntries,
 } from "@/app/school/[subdomain]/(pages)/timetable/utils/mapTimetableApiEntries";
+import { computeTimetableConflicts } from "@/app/school/[subdomain]/(pages)/timetable/utils/computeTimetableConflicts";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -185,6 +186,16 @@ let breakCounter = 100;
 const generateId = () => `entry-${++entryCounter}`;
 const generateBreakId = () => `break-${++breakCounter}`;
 
+function recomputeConflicts(state: TimetableData) {
+  return computeTimetableConflicts(
+    state.entries,
+    state.timeSlots,
+    state.teachers,
+    state.grades,
+    state.subjects,
+  );
+}
+
 // Create empty initial state (no mock data)
 const emptyInitialState: TimetableData = {
   timeSlots: [],
@@ -224,6 +235,10 @@ export const useTimetableStore = create<TimetableStore>()(
 
         set((state) => ({
           entries: [...state.entries, newEntry],
+          conflicts: recomputeConflicts({
+            ...state,
+            entries: [...state.entries, newEntry],
+          }),
           lastUpdated: new Date().toISOString(),
         }));
 
@@ -236,12 +251,16 @@ export const useTimetableStore = create<TimetableStore>()(
       },
 
       updateEntry: (id: string, updates: Partial<TimetableEntry>) => {
-        set((state) => ({
-          entries: state.entries.map((entry) =>
+        set((state) => {
+          const entries = state.entries.map((entry) =>
             entry.id === id ? { ...entry, ...updates } : entry,
-          ),
-          lastUpdated: new Date().toISOString(),
-        }));
+          );
+          return {
+            entries,
+            conflicts: recomputeConflicts({ ...state, entries }),
+            lastUpdated: new Date().toISOString(),
+          };
+        });
       },
 
       upsertEntry: (entry: TimetableEntry) => {
@@ -255,16 +274,21 @@ export const useTimetableStore = create<TimetableStore>()(
               : [...state.entries, entry];
           return {
             entries,
+            conflicts: recomputeConflicts({ ...state, entries }),
             lastUpdated: new Date().toISOString(),
           };
         });
       },
 
       deleteEntry: (id: string) => {
-        set((state) => ({
-          entries: state.entries.filter((entry) => entry.id !== id),
-          lastUpdated: new Date().toISOString(),
-        }));
+        set((state) => {
+          const entries = state.entries.filter((entry) => entry.id !== id);
+          return {
+            entries,
+            conflicts: recomputeConflicts({ ...state, entries }),
+            lastUpdated: new Date().toISOString(),
+          };
+        });
       },
 
       deleteTimetableEntry: async (entryId: string) => {
@@ -295,10 +319,14 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           // Remove from local store
-          set((state) => ({
-            entries: state.entries.filter((entry) => entry.id !== entryId),
-            lastUpdated: new Date().toISOString(),
-          }));
+          set((state) => {
+            const entries = state.entries.filter((entry) => entry.id !== entryId);
+            return {
+              entries,
+              conflicts: recomputeConflicts({ ...state, entries }),
+              lastUpdated: new Date().toISOString(),
+            };
+          });
         } catch (error) {
           console.error("Error deleting timetable entry:", error);
           throw error;
@@ -2547,14 +2575,15 @@ export const useTimetableStore = create<TimetableStore>()(
               mergedById.set(entry.id, entry);
             }
             const mergedScoped = Array.from(mergedById.values());
+            const entries = [...otherEntries, ...mergedScoped];
 
             return {
-              entries: [...otherEntries, ...mergedScoped],
+              entries,
               periodNumbers: gradeLevelId
                 ? mergedPeriodNumbers
                 : resolvedPeriodNumbers,
               daysPerWeek: resolvedDaysPerWeek,
-              conflicts: timetableData.conflicts || [],
+              conflicts: recomputeConflicts({ ...state, entries }),
               knownRoomNumbers: timetableData.knownRoomNumbers || [],
               ...gradeSlotUpdate,
               ...(gradeLevelId || gradeScopedSlots.length > 0
