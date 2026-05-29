@@ -26,6 +26,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -576,6 +577,10 @@ export function TimetableSetupWizard({
     setBreaks((prev) => [
       ...prev,
       newBreakDraft({
+        type: TIMETABLE_BREAK_TYPE_CUSTOM,
+        label: "",
+        icon: "✏️",
+        color: "#64748B",
         afterPeriod: Math.min(2, periodCountNum),
         durationMinutes: "15",
       }),
@@ -824,7 +829,7 @@ export function TimetableSetupWizard({
             className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#246a59]/50 px-3 py-2 text-sm font-medium text-[#246a59] hover:bg-[#246a59]/5"
           >
             <Plus className="h-3.5 w-3.5" />
-            Other
+            Custom name
           </button>
         </div>
       </div>
@@ -840,83 +845,143 @@ export function TimetableSetupWizard({
       ) : (
         <ul className="space-y-3">
           {breaks.map((b) => {
+            const selectedType = getWizardBreakTypeOption(b.type);
+            const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
             const displayName =
               b.label.trim() ||
-              defaultLabelForBreakType(b.type) ||
+              selectedType?.label ||
               "Break";
+            const presetBreakTypes = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.filter(
+              (t) => t.value !== TIMETABLE_BREAK_TYPE_CUSTOM,
+            );
+            const customBreakType = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.find(
+              (t) => t.value === TIMETABLE_BREAK_TYPE_CUSTOM,
+            );
+
             return (
               <li
                 key={b.id}
-                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 space-y-3"
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 space-y-3"
               >
-                <div className="flex items-start gap-2">
-                  <span className="text-xl leading-none pt-0.5" aria-hidden>
-                    {b.icon}
-                  </span>
-                  <div className="flex-1 min-w-0 grid gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center">
-                    <Select
-                      value={b.type}
-                      onValueChange={(v) =>
-                        onCustomBreakTypeChange(b.id, v)
-                      }
-                    >
-                      <SelectTrigger
-                        className={cn(onboardingInputClass, "h-9")}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0 space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-slate-500">
+                        Break type
+                      </Label>
+                      <Select
+                        value={b.type}
+                        onValueChange={(v) =>
+                          onCustomBreakTypeChange(b.id, v)
+                        }
                       >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.map((t) => (
-                          <SelectItem key={t.value} value={t.value}>
-                            {t.icon} {t.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1.5">
-                      <Input
-                        type="number"
-                        min={1}
-                        max={240}
-                        inputMode="numeric"
-                        value={b.durationMinutes}
-                        onChange={(e) => {
-                          const raw = e.target.value.replace(/\D/g, "");
-                          updateBreakDraft(b.id, {
-                            durationMinutes: raw,
-                          });
-                        }}
-                        className={cn(onboardingInputClass, "h-9 w-16")}
-                        aria-label={`${displayName} duration in minutes`}
-                      />
-                      <span className="text-xs text-slate-500 shrink-0">
-                        min
-                      </span>
+                        <SelectTrigger
+                          className={cn(
+                            onboardingInputClass,
+                            "h-10 w-full",
+                          )}
+                        >
+                          <span className="flex items-center gap-2 truncate text-left">
+                            <span aria-hidden>{b.icon}</span>
+                            <span className="truncate">
+                              {isCustomType
+                                ? b.label.trim() ||
+                                  customBreakType?.label ||
+                                  "Custom break"
+                                : selectedType?.label}
+                            </span>
+                          </span>
+                          <SelectValue className="sr-only" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[min(20rem,70vh)]">
+                          {presetBreakTypes.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>
+                              <span className="flex items-center gap-2">
+                                <span aria-hidden>{t.icon}</span>
+                                {t.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                          {customBreakType && (
+                            <>
+                              <SelectSeparator />
+                              <SelectItem value={customBreakType.value}>
+                                <span className="flex items-center gap-2">
+                                  <span aria-hidden>{customBreakType.icon}</span>
+                                  {customBreakType.label}
+                                </span>
+                              </SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-slate-400 hover:text-red-600 sm:justify-self-end"
-                      onClick={() => removeCustomBreakRow(b.id)}
-                      aria-label={`Remove ${displayName}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+
+                    {isCustomType && (
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor={`break-custom-name-${b.id}`}
+                          className="text-xs text-slate-500"
+                        >
+                          Custom name
+                        </Label>
+                        <Input
+                          id={`break-custom-name-${b.id}`}
+                          value={b.label}
+                          onChange={(e) =>
+                            updateBreakDraft(b.id, {
+                              label: e.target.value,
+                            })
+                          }
+                          placeholder="e.g. Prayer time, Staff briefing, Dinner"
+                          className={cn(onboardingInputClass, "h-10")}
+                          autoFocus={!b.label.trim()}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-end gap-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-slate-500">
+                          Duration
+                        </Label>
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={240}
+                            inputMode="numeric"
+                            value={b.durationMinutes}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/\D/g, "");
+                              updateBreakDraft(b.id, {
+                                durationMinutes: raw,
+                              });
+                            }}
+                            className={cn(onboardingInputClass, "h-10 w-20")}
+                            aria-label={`${displayName} duration in minutes`}
+                          />
+                          <span className="text-sm text-slate-500 pb-2">
+                            min
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-slate-400 hover:text-red-600"
+                    onClick={() => removeCustomBreakRow(b.id)}
+                    aria-label={`Remove ${displayName}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                {b.type === TIMETABLE_BREAK_TYPE_CUSTOM && (
-                  <Input
-                    value={b.label}
-                    onChange={(e) =>
-                      updateBreakDraft(b.id, { label: e.target.value })
-                    }
-                    placeholder="Break name"
-                    className={cn(onboardingInputClass, "h-9")}
-                  />
-                )}
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-medium text-slate-500">
+
+                <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-medium text-slate-500">
                     Place on the day
                   </p>
                   {renderPlacementPills(b.id, b.afterPeriod)}

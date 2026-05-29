@@ -58,7 +58,7 @@ export const TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS: TimetableWizardBreakTypeOption
     },
     {
       value: TIMETABLE_BREAK_TYPE_CUSTOM,
-      label: 'Other (type your own)',
+      label: 'Other — type your own name',
       icon: '✏️',
       color: '#64748B',
       apiType: 'SHORT_BREAK',
