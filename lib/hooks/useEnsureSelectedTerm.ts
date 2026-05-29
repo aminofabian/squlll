@@ -5,6 +5,7 @@ import {
   type AcademicYear,
   type Term as AcademicYearTerm,
 } from "./useAcademicYears";
+import { TERM_LIST_SELECTION } from "../graphql/term-fields";
 
 export type SelectedTerm = {
   id: string;
@@ -45,15 +46,7 @@ async function fetchTermsForYear(academicYearId: string): Promise<SelectedTerm[]
       query: `
         query GetAllTermsForAcademicYear($academicYearId: ID!) {
           termsByAcademicYear(academicYearId: $academicYearId) {
-            id
-            name
-            startDate
-            endDate
-            isActive
-            timetablePublishedAt
-            academicYear {
-              name
-            }
+            ${TERM_LIST_SELECTION}
           }
         }
       `,

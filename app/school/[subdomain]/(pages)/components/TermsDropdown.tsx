@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Calendar, ChevronDown, Loader2, Plus } from 'lucide-react'
 import { useCurrentAcademicYear } from '@/lib/hooks/useAcademicYears'
+import { TERM_LIST_SELECTION } from '@/lib/graphql/term-fields'
 import { CreateAcademicYearModal } from '../dashboard/components/CreateAcademicYearModal'
 import { CreateTermModal } from '../dashboard/components/CreateTermModal'
 import { toast } from 'sonner'
@@ -67,15 +68,7 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
           query: `
             query GetAllTermsForAcademicYear($academicYearId: ID!) {
               termsByAcademicYear(academicYearId: $academicYearId) {
-                id
-                name
-                startDate
-                endDate
-                isActive
-                timetablePublishedAt
-                academicYear {
-                  name
-                }
+                ${TERM_LIST_SELECTION}
               }
             }
           `,

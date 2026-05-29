@@ -8,7 +8,6 @@ export async function publishTermTimetable(termId: string): Promise<string> {
         mutation PublishTermTimetable($input: PublishTermTimetableInput!) {
           publishTermTimetable(input: $input) {
             id
-            timetablePublishedAt
           }
         }
       `,
@@ -28,11 +27,10 @@ export async function publishTermTimetable(termId: string): Promise<string> {
     );
   }
 
-  const publishedAt = result.data?.publishTermTimetable?.timetablePublishedAt;
-  if (!publishedAt) {
-    throw new Error('Publish succeeded but no timestamp returned');
+  if (!result.data?.publishTermTimetable?.id) {
+    throw new Error('Publish succeeded but no confirmation returned');
   }
-  return publishedAt as string;
+  return new Date().toISOString();
 }
 
 export async function unpublishTermTimetable(termId: string): Promise<void> {
@@ -45,7 +43,6 @@ export async function unpublishTermTimetable(termId: string): Promise<void> {
         mutation UnpublishTermTimetable($input: PublishTermTimetableInput!) {
           unpublishTermTimetable(input: $input) {
             id
-            timetablePublishedAt
           }
         }
       `,
