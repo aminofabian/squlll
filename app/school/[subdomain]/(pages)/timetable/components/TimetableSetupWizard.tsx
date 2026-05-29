@@ -64,7 +64,7 @@ const LESSON_LENGTH_OPTIONS = [
   { value: "60", label: "60 minutes", subtitle: "Double period / block" },
 ] as const;
 
-const PRESET_LESSON_LENGTH_VALUES = new Set(
+const PRESET_LESSON_LENGTH_VALUES = new Set<string>(
   LESSON_LENGTH_OPTIONS.map((o) => o.value),
 );
 
