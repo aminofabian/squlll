@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
   Calendar,
@@ -167,51 +167,6 @@ const QUICK_PRESET_OPTIONS: BreakOption[] = [
     emoji: "📚",
   },
 ];
-
-const QUICK_BREAK_ADDS = [
-  {
-    emoji: "🏫",
-    label: "Assembly",
-    type: "ASSEMBLY",
-    durationMinutes: "15",
-    getAfterPeriod: () => 0,
-  },
-  {
-    emoji: "☕",
-    label: "Short break",
-    type: "SHORT_BREAK",
-    durationMinutes: "15",
-    getAfterPeriod: (n: number) => Math.min(2, n),
-  },
-  {
-    emoji: "🫖",
-    label: "Tea break",
-    type: "TEA_BREAK",
-    durationMinutes: "20",
-    getAfterPeriod: (n: number) => Math.min(2, n),
-  },
-  {
-    emoji: "🍽️",
-    label: "Lunch",
-    type: "LUNCH",
-    durationMinutes: "40",
-    getAfterPeriod: (n: number) => lunchAfterPeriod(n),
-  },
-  {
-    emoji: "🎮",
-    label: "Games",
-    type: "GAMES_BREAK",
-    durationMinutes: "40",
-    getAfterPeriod: (n: number) => gamesAfterPeriod(n),
-  },
-  {
-    emoji: "📖",
-    label: "Preps",
-    type: "PREPS",
-    durationMinutes: "30",
-    getAfterPeriod: (n: number) => Math.max(1, n - 1),
-  },
-] as const;
 
 function formatCustomBreaksSummary(breaks: TimetableBreakDraft[]): string {
   if (breaks.length === 0) return "No breaks";
@@ -454,6 +409,7 @@ export function TimetableSetupWizard({
   const [showOtherStartTime, setShowOtherStartTime] = useState(false);
   const [showPickDays, setShowPickDays] = useState(false);
   const [breaksStepInitialized, setBreaksStepInitialized] = useState(false);
+  const breaksListEndRef = useRef<HTMLDivElement>(null);
 
   const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
   const isCustomPeriodCount = !PRESET_LESSONS_PER_DAY_VALUES.has(periodCount);
@@ -564,19 +520,27 @@ export function TimetableSetupWizard({
     );
   };
 
-  const addCustomBreakRow = () => {
+  const addAnotherBreak = () => {
     setBreakMode("custom");
+    const lastAfter = breaks[breaks.length - 1]?.afterPeriod ?? 0;
+    const nextAfter = Math.min(periodCountNum, Math.max(0, lastAfter + 1));
     setBreaks((prev) => [
       ...prev,
       newBreakDraft({
-        type: TIMETABLE_BREAK_TYPE_CUSTOM,
-        label: "",
-        icon: "✏️",
-        color: "#64748B",
-        afterPeriod: Math.min(2, periodCountNum),
+        type: "SHORT_BREAK",
+        label: "Short break",
+        icon: "☕",
+        color: "#3B82F6",
+        afterPeriod: nextAfter,
         durationMinutes: "15",
       }),
     ]);
+    requestAnimationFrame(() => {
+      breaksListEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
   };
 
   const removeCustomBreakRow = (id: string) => {
@@ -593,22 +557,6 @@ export function TimetableSetupWizard({
       label:
         type === TIMETABLE_BREAK_TYPE_CUSTOM ? "" : preset.label,
     });
-  };
-
-  const addQuickBreak = (quick: (typeof QUICK_BREAK_ADDS)[number]) => {
-    setBreakMode("custom");
-    const preset = getWizardBreakTypeOption(quick.type);
-    setBreaks((prev) => [
-      ...prev,
-      newBreakDraft({
-        type: quick.type,
-        label: quick.label,
-        icon: preset?.icon ?? quick.emoji,
-        color: preset?.color ?? "#64748B",
-        afterPeriod: quick.getAfterPeriod(periodCountNum),
-        durationMinutes: quick.durationMinutes,
-      }),
-    ]);
   };
 
   useEffect(() => {
@@ -798,62 +746,50 @@ export function TimetableSetupWizard({
   );
 
   const renderBreaksStep = () => (
-    <div className="space-y-5">
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-          Quick add
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {QUICK_BREAK_ADDS.map((quick) => (
-            <button
-              key={quick.type}
-              type="button"
-              onClick={() => addQuickBreak(quick)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-[#246a59]/50 hover:bg-[#246a59]/5 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-            >
-              <span aria-hidden>{quick.emoji}</span>
-              {quick.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={addCustomBreakRow}
-            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#246a59]/50 px-3 py-2 text-sm font-medium text-[#246a59] hover:bg-[#246a59]/5"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Custom name
-          </button>
-        </div>
-      </div>
-
+    <div className="space-y-4">
       {breakMode === "none" ? (
         <p className="text-sm text-slate-500 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40">
           No breaks for now. You can add them later from the timetable.
         </p>
-      ) : breaks.length === 0 ? (
-        <p className="text-sm text-slate-500 text-center py-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-          Tap a button above to add your first break.
-        </p>
       ) : (
-        <ul className="space-y-3">
-          {breaks.map((b) => {
-            const selectedType = getWizardBreakTypeOption(b.type);
-            const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
-            const displayName =
-              b.label.trim() ||
-              selectedType?.label ||
-              "Break";
-            const presetBreakTypes = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.filter(
-              (t) => t.value !== TIMETABLE_BREAK_TYPE_CUSTOM,
-            );
+        <>
+          <ul className="space-y-4">
+            {breaks.map((b, index) => {
+              const selectedType = getWizardBreakTypeOption(b.type);
+              const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
+              const displayName =
+                b.label.trim() ||
+                selectedType?.label ||
+                "Break";
+              const presetBreakTypes = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.filter(
+                (t) => t.value !== TIMETABLE_BREAK_TYPE_CUSTOM,
+              );
 
-            return (
-              <li
-                key={b.id}
-                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 space-y-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0 space-y-3">
+              return (
+                <li
+                  key={b.id}
+                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#246a59]">
+                      Break {index + 1}
+                    </p>
+                    {breaks.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-slate-400 hover:text-red-600"
+                        onClick={() => removeCustomBreakRow(b.id)}
+                        aria-label={`Remove ${displayName}`}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
                     <div className="space-y-1.5">
                       <Label
                         htmlFor={`break-type-${b.id}`}
@@ -917,61 +853,56 @@ export function TimetableSetupWizard({
                           }
                           placeholder="e.g. Prayer time, Staff briefing, Dinner"
                           className={cn(onboardingInputClass, "h-10")}
-                          autoFocus={!b.label.trim()}
                         />
                       </div>
                     )}
 
-                    <div className="flex items-end gap-2">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-slate-500">
-                          Duration
-                        </Label>
-                        <div className="flex items-center gap-1.5">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={240}
-                            inputMode="numeric"
-                            value={b.durationMinutes}
-                            onChange={(e) => {
-                              const raw = e.target.value.replace(/\D/g, "");
-                              updateBreakDraft(b.id, {
-                                durationMinutes: raw,
-                              });
-                            }}
-                            className={cn(onboardingInputClass, "h-10 w-20")}
-                            aria-label={`${displayName} duration in minutes`}
-                          />
-                          <span className="text-sm text-slate-500 pb-2">
-                            min
-                          </span>
-                        </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-slate-500">
+                        Duration
+                      </Label>
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={240}
+                          inputMode="numeric"
+                          value={b.durationMinutes}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, "");
+                            updateBreakDraft(b.id, {
+                              durationMinutes: raw,
+                            });
+                          }}
+                          className={cn(onboardingInputClass, "h-10 w-20")}
+                          aria-label={`${displayName} duration in minutes`}
+                        />
+                        <span className="text-sm text-slate-500">min</span>
                       </div>
                     </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 text-slate-400 hover:text-red-600"
-                    onClick={() => removeCustomBreakRow(b.id)}
-                    aria-label={`Remove ${displayName}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
 
-                <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-medium text-slate-500">
-                    Place on the day
-                  </p>
-                  {renderPlacementPills(b.id, b.afterPeriod)}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                    <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <p className="text-xs font-medium text-slate-500">
+                        Place on the day
+                      </p>
+                      {renderPlacementPills(b.id, b.afterPeriod)}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <button
+            type="button"
+            onClick={addAnotherBreak}
+            className="sticky bottom-0 z-10 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#246a59]/40 bg-white/95 px-4 py-4 text-sm font-medium text-[#246a59] shadow-sm backdrop-blur-sm transition-colors hover:border-[#246a59] hover:bg-[#246a59]/5 dark:bg-slate-900/95 dark:border-[#246a59]/50"
+          >
+            <Plus className="h-5 w-5" />
+            Add another break
+          </button>
+          <div ref={breaksListEndRef} className="h-px" aria-hidden />
+        </>
       )}
 
       {dayPreview.length > 0 && (
@@ -1377,9 +1308,9 @@ export function TimetableSetupWizard({
             <StepIntro
               icon={Coffee}
               title="School breaks"
-              description="Tap to add lunch or other stops, then choose which lesson each one comes after."
+              description="Fill in each break from the top. Scroll down and tap + to add another."
             />
-            <StepBody className="max-h-[min(70vh,640px)] overflow-y-auto pr-0.5">
+            <StepBody className="max-h-[min(70vh,640px)] overflow-y-auto pr-0.5 pb-2">
               {renderBreaksStep()}
             </StepBody>
           </>
