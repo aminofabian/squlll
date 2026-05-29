@@ -10,7 +10,6 @@ import type {
   TimetableEntry,
   EnrichedTimetableEntry,
 } from "@/lib/types/timetable";
-import { inferDaysPerWeek } from "../utils/timetableWeekDays";
 import { entryMatchesGradeScope } from "../utils/resolveGradeForSchoolConfig";
 
 /**
@@ -257,7 +256,14 @@ export function useGradeStatistics(gradeId: string | null) {
       };
     }
 
-    const gradeEntries = store.entries.filter((e) => e.gradeId === gradeId);
+    const gradeEntries = store.entries.filter((entry) =>
+      entryMatchesGradeScope(
+        entry,
+        gradeId,
+        store.selectedStreamId,
+        store.grades,
+      ),
+    );
 
     const subjectDistribution: Record<string, number> = {};
     const teacherWorkload: Record<string, number> = {};

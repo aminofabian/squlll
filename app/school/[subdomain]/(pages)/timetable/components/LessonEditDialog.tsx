@@ -64,6 +64,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     timeSlots,
     grades,
     addEntry,
+    upsertEntry,
     deleteEntry,
     deleteTimetableEntry,
     loadEntries,
@@ -650,12 +651,24 @@ Check the browser console for detailed input information.`;
 
         const createdEntry = result.data.createTimetableEntry;
 
+        upsertEntry({
+          id: createdEntry.id,
+          gradeId: lesson.gradeId,
+          streamId: selectedStreamId ?? null,
+          subjectId: formData.subjectId,
+          teacherId: formData.teacherId,
+          timeSlotId: dayTemplatePeriodId,
+          periodNumber: clickedSlot.periodNumber,
+          dayOfWeek: lesson.dayOfWeek,
+          roomNumber: normalizedRoom || undefined,
+          isDoublePeriod: formData.isDoublePeriod ?? false,
+        });
+
         toast({
           title: "Success",
           description: "Lesson created successfully",
         });
 
-        // Close dialog - onClose will trigger full timetable reload
         onClose();
       } else {
         const targetSlot = getTimeSlotForDayAndPeriod(

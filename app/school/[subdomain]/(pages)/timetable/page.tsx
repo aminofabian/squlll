@@ -318,25 +318,31 @@ export default function SmartTimetableNew() {
 
   const getEntryFor = useCallback(
     (dayOfWeek: number, period: number) => {
-      const daySlot = getSlotFor(dayOfWeek - 1, period);
-      let entry = daySlot ? grid[dayOfWeek]?.[daySlot.id] : null;
+      const fromList = selectedGradeEntries.find((e) => {
+        if (e.dayOfWeek !== dayOfWeek) return false;
+        return (
+          e.periodNumber === period ||
+          e.timeSlot?.periodNumber === period ||
+          timeSlots.some(
+            (ts) => ts.id === e.timeSlotId && ts.periodNumber === period,
+          )
+        );
+      });
 
-      if (!entry) {
-        const scoped = selectedGradeEntries.filter((e) => {
-          if (e.dayOfWeek !== dayOfWeek) return false;
-          return (
-            e.periodNumber === period ||
-            e.timeSlot?.periodNumber === period ||
-            timeSlots.some(
-              (ts) => ts.id === e.timeSlotId && ts.periodNumber === period,
-            )
-          );
-        });
-        const raw = scoped[0];
-        if (raw) {
-          entry = raw;
-        }
+      if (fromList) {
+        return {
+          id: fromList.id,
+          subject: fromList.subject,
+          teacher: fromList.teacher,
+          roomNumber: fromList.roomNumber,
+          gradeId: fromList.gradeId,
+          timeSlotId: fromList.timeSlotId,
+          isDoublePeriod: fromList.isDoublePeriod,
+        };
       }
+
+      const daySlot = getSlotFor(dayOfWeek - 1, period);
+      const entry = daySlot ? grid[dayOfWeek]?.[daySlot.id] : null;
 
       if (!entry) return null;
       return {

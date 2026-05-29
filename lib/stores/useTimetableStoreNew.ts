@@ -22,13 +22,19 @@ import {
 import {
   entryMatchesGradeScope,
   resolveCanonicalGradeId,
+  resolveTenantGradeLevelIdForApi,
 } from "@/app/school/[subdomain]/(pages)/timetable/utils/resolveGradeForSchoolConfig";
+import {
+  GET_TIMETABLE_ENTRIES_QUERY,
+  mapApiTimetableEntries,
+} from "@/app/school/[subdomain]/(pages)/timetable/utils/mapTimetableApiEntries";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
   addEntry: (entry: CreateEntryRequest) => TimetableEntry;
   createEntry: (entry: CreateEntryRequest) => TimetableEntry; // Alias for backward compatibility
   updateEntry: (id: string, updates: Partial<TimetableEntry>) => void;
+  upsertEntry: (entry: TimetableEntry) => void;
   deleteEntry: (id: string) => void;
   updateTimeSlot: (id: string, updates: Partial<TimeSlot>) => void;
 
@@ -236,6 +242,22 @@ export const useTimetableStore = create<TimetableStore>()(
           ),
           lastUpdated: new Date().toISOString(),
         }));
+      },
+
+      upsertEntry: (entry: TimetableEntry) => {
+        set((state) => {
+          const index = state.entries.findIndex((e) => e.id === entry.id);
+          const entries =
+            index >= 0
+              ? state.entries.map((e, i) =>
+                  i === index ? { ...e, ...entry } : e,
+                )
+              : [...state.entries, entry];
+          return {
+            entries,
+            lastUpdated: new Date().toISOString(),
+          };
+        });
       },
 
       deleteEntry: (id: string) => {
@@ -2283,71 +2305,120 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const timetableData = result.data.getSchoolTimetable;
 
-          // Period numbers and days per week come directly from the backend.
-          // We only need to extract entries from the nested grade/stream blocks.
-          const allEntries: TimetableEntry[] = [];
-
-          const gradeBlocks = (timetableData.timetableByGrade || []).filter(
-            (gradeBlock: any) =>
-              gradeLevelId && masterGradeId
-                ? timetableBlockMatchesScope(
-                    gradeBlock,
-                    masterGradeId,
-                    null,
-                    gradeLevelId,
-                  )
-                : true,
-          );
-
           const grades = get().grades;
+          const timeSlotsSnapshot = get().timeSlots;
+          let allEntries: TimetableEntry[] = [];
 
-          gradeBlocks.forEach((gradeBlock: any) => {
-            (gradeBlock.days || []).forEach((dayItem: any) => {
-              const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
-
-              (dayItem.periods || []).forEach((p: any) => {
-                if (p?.isBreak || !p?.entry || !p?.period?.id) return;
-                const entry = p.entry;
-                const entryGradeLevelId = entry.gradeLevel?.id;
-                if (!entryGradeLevelId) return;
-
-                const canonicalGradeId = resolveCanonicalGradeId(
-                  entryGradeLevelId,
-                  grades,
-                );
-                const entryStreamId = entry.stream?.id ?? null;
-
-                if (
-                  masterGradeId &&
-                  !entryMatchesGradeScope(
-                    {
-                      gradeId: canonicalGradeId,
-                      streamId: entryStreamId,
+          // Primary source: flat entries API (reliable after create/update).
+          if (termId) {
+            try {
+              const tenantForEntries = gradeLevelId
+                ? resolveTenantGradeLevelIdForApi(masterGradeId ?? "", grades) ??
+                  gradeLevelId
+                : undefined;
+              const entriesResponse = await fetch("/api/graphql", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Cache-Control": "no-cache",
+                  Pragma: "no-cache",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  query: GET_TIMETABLE_ENTRIES_QUERY,
+                  variables: {
+                    input: {
+                      termId,
+                      ...(tenantForEntries
+                        ? { gradeLevelId: tenantForEntries }
+                        : {}),
                     },
+                  },
+                }),
+              });
+              if (entriesResponse.ok) {
+                const entriesResult = await entriesResponse.json();
+                if (!entriesResult.errors?.length) {
+                  const rows = entriesResult.data?.getTimetableEntries ?? [];
+                  allEntries = mapApiTimetableEntries(
+                    rows,
+                    grades,
+                    timeSlotsSnapshot,
                     masterGradeId,
                     streamId,
-                    grades,
-                  )
-                ) {
-                  return;
+                  );
                 }
+              }
+            } catch (entriesErr) {
+              console.warn(
+                "getTimetableEntries failed, falling back to timetableByGrade:",
+                entriesErr,
+              );
+            }
+          }
 
-                allEntries.push({
-                  id: entry.id,
-                  subjectId: entry.subject?.id || "",
-                  teacherId: entry.teacher?.id || "",
-                  timeSlotId: p.period.id,
-                  periodNumber: p.period.periodNumber,
-                  gradeId: canonicalGradeId,
-                  streamId: entryStreamId,
-                  gradeName: entry.gradeLevel?.name,
-                  dayOfWeek: dayOfWeek || 1,
-                  roomNumber: entry.room?.name || undefined,
-                  isDoublePeriod: entry.isDoublePeriod || false,
+          // Fallback: nested timetableByGrade (legacy path).
+          if (allEntries.length === 0) {
+            const gradeBlocks = (timetableData.timetableByGrade || []).filter(
+              (gradeBlock: any) =>
+                gradeLevelId && masterGradeId
+                  ? timetableBlockMatchesScope(
+                      gradeBlock,
+                      masterGradeId,
+                      null,
+                      gradeLevelId,
+                    )
+                  : true,
+            );
+
+            gradeBlocks.forEach((gradeBlock: any) => {
+              (gradeBlock.days || []).forEach((dayItem: any) => {
+                const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+
+                (dayItem.periods || []).forEach((p: any) => {
+                  if (p?.isBreak || !p?.entry || !p?.period?.id) return;
+                  const entry = p.entry;
+                  const entryGradeLevelId = entry.gradeLevel?.id;
+                  if (!entryGradeLevelId) return;
+
+                  const canonicalGradeId = resolveCanonicalGradeId(
+                    entryGradeLevelId,
+                    grades,
+                  );
+                  const entryStreamId = entry.stream?.id ?? null;
+
+                  if (
+                    masterGradeId &&
+                    !entryMatchesGradeScope(
+                      {
+                        gradeId: canonicalGradeId,
+                        streamId: entryStreamId,
+                      },
+                      masterGradeId,
+                      streamId,
+                      grades,
+                    )
+                  ) {
+                    return;
+                  }
+
+                  allEntries.push({
+                    id: entry.id,
+                    subjectId: entry.subject?.id || "",
+                    teacherId: entry.teacher?.id || "",
+                    timeSlotId: p.period.id,
+                    periodNumber: p.period.periodNumber,
+                    gradeId: canonicalGradeId,
+                    streamId: entryStreamId,
+                    gradeName: entry.gradeLevel?.name,
+                    dayOfWeek: dayOfWeek || 1,
+                    roomNumber: entry.room?.name || undefined,
+                    isDoublePeriod: entry.isDoublePeriod || false,
+                  });
                 });
               });
             });
-          });
+          }
 
           const periodNumbersFromSchedule = [
             ...new Set<number>(
@@ -2446,8 +2517,25 @@ export const useTimetableStore = create<TimetableStore>()(
                   ? []
                   : state.entries;
 
+            const previousScoped =
+              masterGradeId && allEntries.length === 0
+                ? state.entries.filter((e) =>
+                    entryMatchesGradeScope(
+                      e,
+                      masterGradeId,
+                      streamId,
+                      grades,
+                    ),
+                  )
+                : [];
+
+            const mergedEntries =
+              allEntries.length > 0
+                ? [...otherEntries, ...allEntries]
+                : [...otherEntries, ...previousScoped];
+
             return {
-              entries: [...otherEntries, ...allEntries],
+              entries: mergedEntries,
               periodNumbers: gradeLevelId
                 ? mergedPeriodNumbers
                 : resolvedPeriodNumbers,
