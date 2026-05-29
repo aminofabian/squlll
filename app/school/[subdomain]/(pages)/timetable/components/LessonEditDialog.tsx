@@ -677,7 +677,7 @@ Check the browser console for detailed input information.`;
             throw new Error("Could not move lesson to the new slot");
           }
 
-          await loadEntries(termId);
+          await loadEntries(termId, selectedGradeId ?? lesson.gradeId);
 
           toast({
             title: "Lesson moved",
@@ -874,7 +874,9 @@ Check the browser console for detailed input information.`;
 
     try {
       await deleteTimetableEntry(lesson.id);
-      if (termId) await loadEntries(termId);
+      if (termId) {
+        await loadEntries(termId, selectedGradeId ?? lesson.gradeId);
+      }
 
       toast({
         title: "Lesson removed",
