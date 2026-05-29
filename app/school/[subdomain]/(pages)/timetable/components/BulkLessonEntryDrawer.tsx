@@ -36,6 +36,10 @@ import {
 } from "lucide-react";
 import type { CreateEntryRequest } from "@/lib/types/timetable";
 import { useKnownRoomNumbers } from "../hooks/useKnownRoomNumbers";
+import {
+  resolveGradeForSchoolConfig,
+  subjectsForTimetableGrade,
+} from "../utils/resolveGradeForSchoolConfig";
 import { useTimetableWeekDays } from "../hooks/useTimetableWeekDays";
 import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import { normalizeRoomNumber } from "../utils/normalizeRoomNumber";
@@ -83,6 +87,8 @@ export function BulkLessonEntryDrawer({
     entries: timetableEntries,
     selectedGradeId,
     bulkCreateEntries,
+    loadTeachers,
+    loadSubjects,
   } = useTimetableStore();
   const { selectedTerm } = useSelectedTerm();
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
@@ -110,27 +116,38 @@ export function BulkLessonEntryDrawer({
 
   useEffect(() => {
     if (!open) return;
-    setGradeIdState(initialGradeId || selectedGradeId || "");
+    const gradeToLoad = initialGradeId || selectedGradeId || "";
+    setGradeIdState(gradeToLoad);
     setSelectedDays([1]);
     setCopySourceDay("");
     setDuplicateSourceDay("");
     setDuplicateTargetDays([]);
     setEntries([blankRow()]);
-  }, [open, initialGradeId, selectedGradeId]);
+    void loadSubjects(gradeToLoad || undefined).catch(() => {});
+    void loadTeachers().catch(() => {});
+  }, [open, initialGradeId, selectedGradeId, loadSubjects, loadTeachers]);
+
+  const schoolConfigGetters = useMemo(
+    () => ({ getGradeById, getSubjectsByLevelId }),
+    [getGradeById, getSubjectsByLevelId],
+  );
 
   const availableSubjects = useMemo(() => {
-    if (!effectiveGradeId) return [];
-    const gradeInfo = getGradeById(effectiveGradeId);
-    if (!gradeInfo) return [];
-    return getSubjectsByLevelId(gradeInfo.levelId);
-  }, [effectiveGradeId, getGradeById, getSubjectsByLevelId]);
+    return subjectsForTimetableGrade(
+      effectiveGradeId,
+      grades,
+      subjects,
+      schoolConfigGetters,
+    );
+  }, [effectiveGradeId, grades, subjects, schoolConfigGetters]);
 
   const availableTeachers = useMemo(() => {
     if (!effectiveGradeId) return teachers;
     const grade = grades.find((g) => g.id === effectiveGradeId);
     if (!grade?.name) return teachers;
     return teachers.filter(
-      (t) => !t.gradeLevels || t.gradeLevels.includes(grade.name),
+      (t) =>
+        !t.gradeLevels?.length || t.gradeLevels.includes(grade.name),
     );
   }, [teachers, grades, effectiveGradeId]);
 

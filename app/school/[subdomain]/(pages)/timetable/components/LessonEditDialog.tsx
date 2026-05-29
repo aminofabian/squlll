@@ -36,6 +36,19 @@ import {
   getTimeSlotForDayAndPeriod,
   uniquePeriodNumbers,
 } from "../utils/timetableSlots";
+import {
+  resolveGradeForSchoolConfig,
+  subjectsForTimetableGrade,
+} from "../utils/resolveGradeForSchoolConfig";
+
+function teacherCanTeachGrade(
+  teacher: { gradeLevels?: string[] },
+  gradeName?: string,
+): boolean {
+  if (!gradeName) return true;
+  if (!teacher.gradeLevels?.length) return true;
+  return teacher.gradeLevels.includes(gradeName);
+}
 
 interface LessonEditDialogProps {
   lesson: (EnrichedTimetableEntry & { isNew?: boolean }) | null;
@@ -53,6 +66,8 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     deleteEntry,
     deleteTimetableEntry,
     loadEntries,
+    loadTeachers,
+    loadSubjects,
     selectedGradeId,
     selectedStreamId,
     selectedTermId,
@@ -86,6 +101,17 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     [timeSlots],
   );
 
+  const schoolConfigGetters = useMemo(
+    () => ({ getGradeById, getSubjectsByLevelId }),
+    [getGradeById, getSubjectsByLevelId],
+  );
+
+  useEffect(() => {
+    if (!lesson) return;
+    void loadSubjects(lesson.gradeId).catch(() => {});
+    void loadTeachers().catch(() => {});
+  }, [lesson, loadSubjects, loadTeachers]);
+
   useEffect(() => {
     if (lesson && !lesson.isNew) {
       const slot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
@@ -112,38 +138,20 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
       // Get the grade from the store
       const grade = grades.find((g) => g.id === lesson.gradeId);
 
-      // Get the first available backend subject for this grade's level
-      const gradeInfo = getGradeById(lesson.gradeId);
-      let firstSubject = null;
-
-      if (gradeInfo) {
-        const levelSubjects = getSubjectsByLevelId(gradeInfo.levelId);
-        const levelSubjectNames = new Set(
-          levelSubjects.map((s) => s.name.toLowerCase().trim()),
-        );
-        const levelSubjectCodes = new Set(
-          levelSubjects
-            .map((s) => s.code?.toLowerCase().trim())
-            .filter(Boolean),
-        );
-
-        // Find first backend subject that matches the grade's level
-        firstSubject = subjects.find((backendSubject) => {
-          const subjectName = backendSubject.name.toLowerCase().trim();
-          const subjectCode = backendSubject.code?.toLowerCase().trim();
-          return (
-            levelSubjectNames.has(subjectName) ||
-            (subjectCode && levelSubjectCodes.has(subjectCode))
-          );
-        });
-      }
+      const classSubjects = subjectsForTimetableGrade(
+        lesson.gradeId,
+        grades,
+        subjects,
+        schoolConfigGetters,
+      );
+      const firstSubject = classSubjects[0] ?? null;
 
       // Find a teacher who can teach this grade (only active teachers)
       const eligibleForGrade = activeTeachers.filter((teacher) => {
-        const canTeachGrade =
-          !grade?.name ||
-          (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
-        return canTeachGrade && !busyTeacherIds.has(teacher.id);
+        return (
+          teacherCanTeachGrade(teacher, grade?.name) &&
+          !busyTeacherIds.has(teacher.id)
+        );
       });
       const suggestedTeacher = pickTeacherForSubject(
         firstSubject?.name,
@@ -163,8 +171,8 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     activeTeachers,
     entries,
     grades,
-    getGradeById,
-    getSubjectsByLevelId,
+    grades,
+    schoolConfigGetters,
   ]);
 
   const handleSave = async () => {
@@ -937,49 +945,29 @@ Check the browser console for detailed input information.`;
   // 1. Can teach the selected grade (or show all if no grade selected)
   // 2. Are NOT already scheduled at this timeslot
   const availableTeachers = activeTeachers.filter((teacher) => {
-    // Filter by grade level - show teachers who can teach this grade
-    const canTeachGrade =
-      !grade?.name ||
-      (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
     const isAvailable = !busyTeacherIds.has(teacher.id);
-    return canTeachGrade && isAvailable;
+    return teacherCanTeachGrade(teacher, grade?.name) && isAvailable;
   });
 
   // Separate list: teachers who can teach this grade but are busy (for display purposes)
   const busyButQualifiedTeachers = activeTeachers.filter((teacher) => {
-    // Filter by grade level - show teachers who can teach this grade
-    const canTeachGrade =
-      !grade?.name ||
-      (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
     const isBusy = busyTeacherIds.has(teacher.id);
-    return canTeachGrade && isBusy;
+    return teacherCanTeachGrade(teacher, grade?.name) && isBusy;
   });
 
-  const gradeQualifiedTeachers = activeTeachers.filter((teacher) => {
-    const canTeachGrade =
-      !grade?.name ||
-      (teacher.gradeLevels && teacher.gradeLevels.includes(grade.name));
-    return canTeachGrade;
-  });
+  const gradeQualifiedTeachers = activeTeachers.filter((teacher) =>
+    teacherCanTeachGrade(teacher, grade?.name),
+  );
 
-  const gradeInfo = lesson.gradeId ? getGradeById(lesson.gradeId) : null;
-  const levelSubjects = gradeInfo
-    ? getSubjectsByLevelId(gradeInfo.levelId)
-    : [];
-  const levelSubjectNames = new Set(
-    levelSubjects.map((s) => s.name.toLowerCase().trim()),
+  const gradeInfo = lesson.gradeId
+    ? resolveGradeForSchoolConfig(lesson.gradeId, grades, schoolConfigGetters)
+    : null;
+  const subjectsForClass = subjectsForTimetableGrade(
+    lesson.gradeId,
+    grades,
+    subjects,
+    schoolConfigGetters,
   );
-  const levelSubjectCodes = new Set(
-    levelSubjects.map((s) => s.code?.toLowerCase().trim()).filter(Boolean),
-  );
-  const subjectsForClass = subjects.filter((backendSubject) => {
-    const subjectName = backendSubject.name.toLowerCase().trim();
-    const subjectCode = backendSubject.code?.toLowerCase().trim();
-    return (
-      levelSubjectNames.has(subjectName) ||
-      (subjectCode && levelSubjectCodes.has(subjectCode))
-    );
-  });
 
   return (
     <Drawer open={!!lesson} onOpenChange={onClose} direction="right">
@@ -1116,16 +1104,14 @@ Check the browser console for detailed input information.`;
 
                 const currentTeacherValid =
                   currentTeacher &&
-                  (!grade?.name ||
-                    (currentTeacher.gradeLevels &&
-                      currentTeacher.gradeLevels.includes(grade.name))) &&
+                  teacherCanTeachGrade(currentTeacher, grade?.name) &&
                   !busyTeacherIds.has(currentTeacher.id);
 
                 const eligibleForGrade = activeTeachers.filter((t) => {
-                  const canTeachGrade =
-                    !grade?.name ||
-                    (t.gradeLevels && t.gradeLevels.includes(grade.name));
-                  return canTeachGrade && !busyTeacherIds.has(t.id);
+                  return (
+                    teacherCanTeachGrade(t, grade?.name) &&
+                    !busyTeacherIds.has(t.id)
+                  );
                 });
 
                 if (!currentTeacherValid) {
@@ -1168,58 +1154,12 @@ Check the browser console for detailed input information.`;
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
-                {(() => {
-                  // Get the grade info for this lesson
-                  const gradeInfo = getGradeById(lesson.gradeId);
-                  if (!gradeInfo) {
-                    return (
-                      <SelectItem value="none" disabled>
-                        No grade information available
-                      </SelectItem>
-                    );
-                  }
-
-                  // Get subjects for this grade's level from school config (for filtering)
-                  const levelSubjects = getSubjectsByLevelId(gradeInfo.levelId);
-
-                  // Create a set of level subject names for matching
-                  const levelSubjectNames = new Set(
-                    levelSubjects.map((s) => s.name.toLowerCase().trim()),
-                  );
-                  const levelSubjectCodes = new Set(
-                    levelSubjects
-                      .map((s) => s.code?.toLowerCase().trim())
-                      .filter(Boolean),
-                  );
-
-                  // Filter backend subjects to only include those that match the grade's level
-                  // Use backend subject IDs (from timetable store) but filter by name/code match
-                  const filteredBackendSubjects = subjects.filter(
-                    (backendSubject) => {
-                      const subjectName = backendSubject.name
-                        .toLowerCase()
-                        .trim();
-                      const subjectCode = backendSubject.code
-                        ?.toLowerCase()
-                        .trim();
-
-                      // Match by name or code
-                      return (
-                        levelSubjectNames.has(subjectName) ||
-                        (subjectCode && levelSubjectCodes.has(subjectCode))
-                      );
-                    },
-                  );
-
-                  if (filteredBackendSubjects.length === 0) {
-                    return (
-                      <SelectItem value="none" disabled>
-                        No subjects for this class
-                      </SelectItem>
-                    );
-                  }
-
-                  return filteredBackendSubjects.map((subject) => {
+                {subjectsForClass.length === 0 ? (
+                  <SelectItem value="none" disabled>
+                    No subjects available
+                  </SelectItem>
+                ) : (
+                  subjectsForClass.map((subject) => {
                     const subjectColor =
                       "color" in subject && typeof subject.color === "string"
                         ? subject.color
@@ -1235,8 +1175,8 @@ Check the browser console for detailed input information.`;
                         </div>
                       </SelectItem>
                     );
-                  });
-                })()}
+                  })
+                )}
               </SelectContent>
             </Select>
             {subjectsForClass.length === 0 && gradeInfo && (

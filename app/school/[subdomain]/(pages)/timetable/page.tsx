@@ -215,6 +215,9 @@ export default function SmartTimetableNew() {
         loadSubjects().catch((err) =>
           console.error("Failed loading subjects:", err),
         ),
+        loadTeachers().catch((err) =>
+          console.error("Failed loading teachers:", err),
+        ),
         loadBreaks().catch((err) =>
           console.error("Failed loading breaks:", err),
         ),
