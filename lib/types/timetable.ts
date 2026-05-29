@@ -51,6 +51,7 @@ export interface Teacher {
   name: string; // Computed: "John Smith"
   email?: string;
   subjects: string[]; // Subject names they can teach
+  subjectIds?: string[]; // Tenant subject assignment IDs
   gradeLevels?: string[]; // Grade level names they can teach (e.g., ["Grade 1", "Grade 2"])
   color?: string; // For UI color coding
   isActive?: boolean; // Whether the teacher is active

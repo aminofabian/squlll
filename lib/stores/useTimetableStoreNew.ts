@@ -1710,6 +1710,13 @@ export const useTimetableStore = create<TimetableStore>()(
                     .filter(Boolean) || [],
                 ),
               );
+              const subjectIds = Array.from(
+                new Set(
+                  teacher.tenantSubjects
+                    ?.map((ts: any) => ts.id)
+                    .filter(Boolean) || [],
+                ),
+              );
 
               // Extract grade level names from tenantGradeLevels
               const gradeLevelNames = Array.from(
@@ -1727,6 +1734,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 name: fullName,
                 email: teacher.user?.email || undefined,
                 subjects: subjectNames, // Array of subject names (not IDs, as per interface)
+                subjectIds,
                 gradeLevels: gradeLevelNames, // Array of grade level names
                 color: undefined, // Can be set later if needed
                 isActive:

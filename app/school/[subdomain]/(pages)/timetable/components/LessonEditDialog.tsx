@@ -29,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import { dayNameFromNumber } from "@/lib/utils/timetable-user-messages";
 import { useKnownRoomNumbers } from "../hooks/useKnownRoomNumbers";
-import { pickTeacherForSubject } from "../utils/pickTeacherForSubject";
 import { normalizeRoomNumber } from "../utils/normalizeRoomNumber";
 import { useTimetableWeekDays } from "../hooks/useTimetableWeekDays";
 import {
@@ -41,6 +40,7 @@ import {
   resolveTenantGradeLevelIdForApi,
   subjectsForTimetableGrade,
 } from "../utils/resolveGradeForSchoolConfig";
+import { subjectsForSelectedTeacher } from "../utils/subjectsForSelectedTeacher";
 
 function teacherCanTeachGrade(
   teacher: { gradeLevels?: string[] },
@@ -126,7 +126,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         isDoublePeriod: !!(lesson as any).isDoublePeriod,
       });
     } else if (lesson && lesson.isNew) {
-      // For new lessons, find first available teacher
       const busyTeacherIds = new Set(
         entries
           .filter(
@@ -137,7 +136,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           .map((entry) => entry.teacherId),
       );
 
-      // Get the grade from the store
       const grade = grades.find((g) => g.id === lesson.gradeId);
 
       const classSubjects = subjectsForTimetableGrade(
@@ -146,23 +144,22 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
         subjects,
         schoolConfigGetters,
       );
-      const firstSubject = classSubjects[0] ?? null;
 
-      // Find a teacher who can teach this grade (only active teachers)
       const eligibleForGrade = activeTeachers.filter((teacher) => {
         return (
           teacherCanTeachGrade(teacher, grade?.name) &&
           !busyTeacherIds.has(teacher.id)
         );
       });
-      const suggestedTeacher = pickTeacherForSubject(
-        firstSubject?.name,
-        eligibleForGrade,
-      );
+
+      const firstTeacher = eligibleForGrade[0];
+      const firstTeacherSubjects = firstTeacher
+        ? subjectsForSelectedTeacher(firstTeacher, classSubjects)
+        : [];
 
       setFormData({
-        subjectId: firstSubject?.id || "",
-        teacherId: suggestedTeacher?.id || "",
+        subjectId: firstTeacherSubjects[0]?.id ?? "",
+        teacherId: firstTeacher?.id ?? "",
         roomNumber: "",
         isDoublePeriod: false,
       });
@@ -1105,6 +1102,27 @@ Check the browser console for detailed input information.`;
     schoolConfigGetters,
   );
 
+  const availableSubjectsForTeacher = subjectsForSelectedTeacher(
+    selectedTeacher,
+    subjectsForClass,
+    !isNew ? { includeSubjectId: formData.subjectId } : undefined,
+  );
+
+  const handleTeacherChange = (teacherId: string) => {
+    const teacher = activeTeachers.find((t) => t.id === teacherId);
+    const teacherSubjects = subjectsForSelectedTeacher(teacher, subjectsForClass);
+    const keepCurrentSubject = teacherSubjects.some(
+      (s) => s.id === formData.subjectId,
+    );
+    setFormData({
+      ...formData,
+      teacherId,
+      subjectId: keepCurrentSubject
+        ? formData.subjectId
+        : (teacherSubjects[0]?.id ?? ""),
+    });
+  };
+
   return (
     <Drawer open={!!lesson} onOpenChange={onClose} direction="right">
       <DrawerContent className="max-w-md flex flex-col h-full">
@@ -1114,7 +1132,7 @@ Check the browser console for detailed input information.`;
           </DrawerTitle>
           <DrawerDescription className="text-[13px] text-zinc-500">
             {isNew
-              ? "Choose subject, teacher, and room for this slot."
+              ? "Choose teacher, then subject and room for this slot."
               : "Update details or move to another day or period."}
           </DrawerDescription>
           <div className="mt-3 space-y-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
@@ -1208,130 +1226,6 @@ Check the browser console for detailed input information.`;
             </div>
           )}
 
-          {/* Subject Selection */}
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="subject"
-              className="text-sm font-semibold text-slate-700 dark:text-slate-300"
-            >
-              Subject
-            </Label>
-            <Select
-              value={formData.subjectId}
-              onValueChange={(value) => {
-                const newSubject = subjects.find((s) => s.id === value);
-                const currentTeacher = activeTeachers.find(
-                  (t) => t.id === formData.teacherId,
-                );
-
-                // Check if current teacher can teach this subject and is available
-                const busyTeacherIds = new Set(
-                  entries
-                    .filter((entry) => {
-                      const sameSlot =
-                        entry.timeSlotId === lesson.timeSlotId &&
-                        entry.dayOfWeek === lesson.dayOfWeek;
-                      const isCurrentLesson =
-                        !lesson.isNew && entry.id === lesson.id;
-                      return sameSlot && !isCurrentLesson;
-                    })
-                    .map((entry) => entry.teacherId),
-                );
-
-                const currentTeacherValid =
-                  currentTeacher &&
-                  teacherCanTeachGrade(currentTeacher, grade?.name) &&
-                  !busyTeacherIds.has(currentTeacher.id);
-
-                const eligibleForGrade = activeTeachers.filter((t) => {
-                  return (
-                    teacherCanTeachGrade(t, grade?.name) &&
-                    !busyTeacherIds.has(t.id)
-                  );
-                });
-
-                if (!currentTeacherValid) {
-                  const suggested = pickTeacherForSubject(
-                    newSubject?.name,
-                    eligibleForGrade,
-                  );
-                  setFormData({
-                    ...formData,
-                    subjectId: value,
-                    teacherId: suggested?.id || "",
-                  });
-                } else if (
-                  newSubject &&
-                  currentTeacher &&
-                  !(currentTeacher.subjects ?? []).some(
-                    (s) =>
-                      s.toLowerCase().trim() ===
-                      newSubject.name.toLowerCase().trim(),
-                  )
-                ) {
-                  const suggested = pickTeacherForSubject(
-                    newSubject.name,
-                    eligibleForGrade,
-                  );
-                  setFormData({
-                    ...formData,
-                    subjectId: value,
-                    teacherId: suggested?.id ?? formData.teacherId,
-                  });
-                } else {
-                  setFormData({ ...formData, subjectId: value });
-                }
-              }}
-            >
-              <SelectTrigger
-                id="subject"
-                className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10"
-              >
-                <SelectValue placeholder="Select subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjectsForClass.length === 0 ? (
-                  <SelectItem value="none" disabled>
-                    No subjects available
-                  </SelectItem>
-                ) : (
-                  subjectsForClass.map((subject) => {
-                    const subjectColor =
-                      "color" in subject && typeof subject.color === "string"
-                        ? subject.color
-                        : "#3B82F6";
-                    return (
-                      <SelectItem key={subject.id} value={subject.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded"
-                            style={{ backgroundColor: subjectColor }}
-                          />
-                          {subject.name}
-                        </div>
-                      </SelectItem>
-                    );
-                  })
-                )}
-              </SelectContent>
-            </Select>
-            {subjectsForClass.length === 0 && gradeInfo && (
-              <p className="text-xs text-slate-500 mt-1.5">
-                No subjects are linked to this class yet.{" "}
-                {subdomain ? (
-                  <Link
-                    href={`/school/${subdomain}/classes`}
-                    className="text-primary font-medium underline underline-offset-2"
-                  >
-                    Set up subjects in Classes
-                  </Link>
-                ) : (
-                  <span>Set up subjects in Classes first.</span>
-                )}
-              </p>
-            )}
-          </div>
-
           {/* Teacher Selection */}
           <div className="space-y-1.5">
             <Label
@@ -1356,16 +1250,14 @@ Check the browser console for detailed input information.`;
               </p>
             )}
             <Select
-              value={formData.teacherId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, teacherId: value })
-              }
+              value={formData.teacherId || undefined}
+              onValueChange={handleTeacherChange}
             >
               <SelectTrigger
                 id="teacher"
                 className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10"
               >
-                <SelectValue placeholder="Select teacher" />
+                <SelectValue placeholder="Select teacher first" />
               </SelectTrigger>
               <SelectContent>
                 {availableTeachers.length > 0 ? (
@@ -1385,7 +1277,6 @@ Check the browser console for detailed input information.`;
               </SelectContent>
             </Select>
 
-            {/* Show appropriate warning message */}
             {availableTeachers.length === 0 && (
               <div className="text-xs text-red-600 space-y-1">
                 <p>⚠️ No teachers available at this time</p>
@@ -1402,20 +1293,108 @@ Check the browser console for detailed input information.`;
               </div>
             )}
 
-            {/* Show list of busy teachers if any */}
             {busyButQualifiedTeachers.length > 0 &&
               availableTeachers.length > 0 && (
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-2 text-xs">
                   <p className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
-                    Currently busy:
+                    Already booked this period:
                   </p>
-                  <ul className="text-yellow-700 dark:text-yellow-300 space-y-0.5">
-                    {busyButQualifiedTeachers.map((teacher) => (
-                      <li key={teacher.id}>• {teacher.name}</li>
+                  <ul className="list-disc list-inside text-yellow-700 dark:text-yellow-300">
+                    {busyButQualifiedTeachers.map((t) => (
+                      <li key={t.id}>{t.name}</li>
                     ))}
                   </ul>
                 </div>
               )}
+          </div>
+
+          {/* Subject Selection — filtered by selected teacher */}
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="subject"
+              className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Subject
+            </Label>
+            {!formData.teacherId ? (
+              <p className="text-xs text-slate-500 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 px-3 py-2.5">
+                Select a teacher above to see their subjects.
+              </p>
+            ) : (
+              <Select
+                value={formData.subjectId || undefined}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, subjectId: value })
+                }
+                disabled={availableSubjectsForTeacher.length === 0}
+              >
+                <SelectTrigger
+                  id="subject"
+                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 focus:border-primary focus:ring-1 focus:ring-primary h-10"
+                >
+                  <SelectValue placeholder="Select subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSubjectsForTeacher.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      No subjects for this teacher
+                    </SelectItem>
+                  ) : (
+                    availableSubjectsForTeacher.map((subject) => {
+                      const subjectColor =
+                        "color" in subject &&
+                        typeof subject.color === "string"
+                          ? subject.color
+                          : "#3B82F6";
+                      return (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded"
+                              style={{ backgroundColor: subjectColor }}
+                            />
+                            {subject.name}
+                          </div>
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+            {formData.teacherId &&
+              availableSubjectsForTeacher.length === 0 &&
+              selectedTeacher && (
+                <p className="text-xs text-slate-500 mt-1.5">
+                  {selectedTeacher.name} has no subjects assigned for this
+                  class.{" "}
+                  {subdomain ? (
+                    <Link
+                      href={`/school/${subdomain}/teachers`}
+                      className="text-primary font-medium underline underline-offset-2"
+                    >
+                      Assign subjects in Teachers
+                    </Link>
+                  ) : (
+                    <span>Assign subjects on the Teachers page.</span>
+                  )}
+                </p>
+              )}
+            {subjectsForClass.length === 0 && gradeInfo && (
+              <p className="text-xs text-slate-500 mt-1.5">
+                No subjects are linked to this class yet.{" "}
+                {subdomain ? (
+                  <Link
+                    href={`/school/${subdomain}/classes`}
+                    className="text-primary font-medium underline underline-offset-2"
+                  >
+                    Set up subjects in Classes
+                  </Link>
+                ) : (
+                  <span>Set up subjects in Classes first.</span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Room Number */}
