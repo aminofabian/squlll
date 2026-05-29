@@ -89,18 +89,28 @@ export function usePeriodSlots() {
       slots.sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0));
     });
 
-    const periodNumbers =
-      store.periodNumbers && store.periodNumbers.length > 0
-        ? store.periodNumbers
-        : (() => {
-            const periodSet = new Set<number>();
-            store.timeSlots.forEach((slot) => {
-              if (typeof slot.periodNumber === "number" && slot.periodNumber >= 1) {
-                periodSet.add(slot.periodNumber);
-              }
-            });
-            return Array.from(periodSet).sort((a, b) => a - b);
-          })();
+    const periodNumbersFromSlots = (() => {
+      const periodSet = new Set<number>();
+      store.timeSlots.forEach((slot) => {
+        if (typeof slot.periodNumber === "number" && slot.periodNumber >= 1) {
+          periodSet.add(slot.periodNumber);
+        }
+      });
+      return Array.from(periodSet).sort((a, b) => a - b);
+    })();
+
+    const periodNumbers = [
+      ...new Set([
+        ...(store.periodNumbers || []),
+        ...periodNumbersFromSlots,
+        ...(store.lessonPeriodsPerDay && store.lessonPeriodsPerDay > 0
+          ? Array.from(
+              { length: store.lessonPeriodsPerDay },
+              (_, i) => i + 1,
+            )
+          : []),
+      ]),
+    ].sort((a, b) => a - b);
 
     // Helper: get slot for a specific day and period
     const getSlotFor = (dayIndex: number, period: number) => {
@@ -124,7 +134,14 @@ export function usePeriodSlots() {
       getSlotFor,
       getBaseSlotForPeriod,
     };
-  }, [store.timeSlots, store.entries, store.breaks, store.lessonPeriodsPerDay]);
+  }, [
+    store.timeSlots,
+    store.periodNumbers,
+    store.entries,
+    store.breaks,
+    store.lessonPeriodsPerDay,
+    store.daysPerWeek,
+  ]);
 }
 
 /**

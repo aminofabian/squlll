@@ -236,7 +236,11 @@ export function AdminTimetableGrid({
                 />
 
                 {periodNumbers.map((period) => {
-                  const baseSlot = getSlotFor(0, period);
+                  const baseSlot =
+                    days.reduce<TimeSlotInfo | null>((found, _, dayIndex) => {
+                      if (found) return found;
+                      return getSlotFor(dayIndex, period);
+                    }, null);
                   if (!baseSlot) return null;
 
                   const breaksAfter = getBreaksAfterPeriod(period);

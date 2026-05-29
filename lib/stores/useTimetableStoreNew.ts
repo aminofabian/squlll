@@ -2307,28 +2307,39 @@ export const useTimetableStore = create<TimetableStore>()(
                 )
               : [];
 
+          const slotPeriodNumbers =
+            gradeScopedSlots.length > 0
+              ? uniquePeriodNumbers(gradeScopedSlots)
+              : [];
+          const mergedPeriodNumbers = [
+            ...new Set([...slotPeriodNumbers, ...resolvedPeriodNumbers]),
+          ].sort((a, b) => a - b);
+          const mergedLessonPeriodsPerDay = Math.max(
+            mergedPeriodNumbers.length > 0
+              ? Math.max(...mergedPeriodNumbers)
+              : 0,
+            gradeScopedSlots.length > 0
+              ? Math.max(...gradeScopedSlots.map((s) => s.periodNumber || 0), 0)
+              : 0,
+            resolvedPeriodNumbers.length > 0
+              ? Math.max(...resolvedPeriodNumbers)
+              : 0,
+            typeof timetableData.totalPeriods === "number"
+              ? timetableData.totalPeriods
+              : 0,
+          );
+
           const gradeSlotUpdate = gradeLevelId
             ? {
                 timeSlots: gradeScopedSlots,
-                periodNumbers:
-                  gradeScopedSlots.length > 0
-                    ? uniquePeriodNumbers(gradeScopedSlots)
-                    : [],
-                lessonPeriodsPerDay:
-                  gradeScopedSlots.length > 0
-                    ? Math.max(
-                        ...gradeScopedSlots.map((s) => s.periodNumber || 0),
-                        0,
-                      )
-                    : 0,
+                periodNumbers: mergedPeriodNumbers,
+                lessonPeriodsPerDay: mergedLessonPeriodsPerDay,
               }
             : gradeScopedSlots.length > 0
               ? {
                   timeSlots: gradeScopedSlots,
-                  lessonPeriodsPerDay: Math.max(
-                    ...gradeScopedSlots.map((s) => s.periodNumber || 0),
-                    0,
-                  ),
+                  periodNumbers: mergedPeriodNumbers,
+                  lessonPeriodsPerDay: mergedLessonPeriodsPerDay,
                 }
               : {};
 
@@ -2336,13 +2347,13 @@ export const useTimetableStore = create<TimetableStore>()(
           set((state) => ({
             entries: allEntries,
             periodNumbers: gradeLevelId
-              ? gradeSlotUpdate.periodNumbers ?? resolvedPeriodNumbers
+              ? mergedPeriodNumbers
               : resolvedPeriodNumbers,
             daysPerWeek: resolvedDaysPerWeek,
             conflicts: timetableData.conflicts || [],
             knownRoomNumbers: timetableData.knownRoomNumbers || [],
             ...gradeSlotUpdate,
-            ...(gradeLevelId
+            ...(gradeLevelId || gradeScopedSlots.length > 0
               ? {}
               : {
                   lessonPeriodsPerDay: Math.max(
