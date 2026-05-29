@@ -343,7 +343,10 @@ export function timetableBlockMatchesScope(
     (!!tenantGradeLevelId && blockGradeId === tenantGradeLevelId)
   if (!matchesGrade) return false
   const blockStreamId = block.stream?.id ?? null
-  if (streamId) return blockStreamId === streamId
+  if (streamId) {
+    if (blockStreamId) return blockStreamId === streamId
+    return true
+  }
   return !blockStreamId
 }
 

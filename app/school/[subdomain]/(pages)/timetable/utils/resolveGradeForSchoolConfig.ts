@@ -25,6 +25,36 @@ export function resolveSchoolConfigGradeId(
 /** Tenant grade level id required by timetable GraphQL mutations. */
 export const resolveTenantGradeLevelIdForApi = resolveSchoolConfigGradeId;
 
+/** Map API tenant grade id → master grade id used in the timetable UI. */
+export function resolveCanonicalGradeId(
+  gradeIdFromApi: string,
+  grades: Grade[],
+): string {
+  const match = grades.find(
+    (g) => g.id === gradeIdFromApi || g.tenantGradeLevelId === gradeIdFromApi,
+  );
+  return match?.id ?? gradeIdFromApi;
+}
+
+/** Whether a stored entry belongs to the selected grade (and stream, if any). */
+export function entryMatchesGradeScope(
+  entry: { gradeId: string; streamId?: string | null },
+  selectedGradeId: string,
+  selectedStreamId: string | null | undefined,
+  grades: Grade[],
+): boolean {
+  const tenantGradeLevelId = resolveTenantGradeLevelIdForApi(
+    selectedGradeId,
+    grades,
+  );
+  const gradeMatch =
+    entry.gradeId === selectedGradeId ||
+    (!!tenantGradeLevelId && entry.gradeId === tenantGradeLevelId);
+  if (!gradeMatch) return false;
+  if (selectedStreamId) return entry.streamId === selectedStreamId;
+  return !entry.streamId;
+}
+
 export function resolveGradeForSchoolConfig(
   gradeId: string | undefined,
   grades: Grade[],

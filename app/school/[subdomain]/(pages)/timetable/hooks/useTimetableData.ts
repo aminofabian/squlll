@@ -11,6 +11,7 @@ import type {
   EnrichedTimetableEntry,
 } from "@/lib/types/timetable";
 import { inferDaysPerWeek } from "../utils/timetableWeekDays";
+import { entryMatchesGradeScope } from "../utils/resolveGradeForSchoolConfig";
 
 /**
  * Get all entries for the currently selected grade
@@ -23,30 +24,17 @@ export function useSelectedGradeTimetable() {
   return useMemo(() => {
     if (!store.selectedGradeId) return [];
 
-    // Find selected grade info for name-based matching
-    const selectedGrade = store.grades.find(
-      (g) => g.id === store.selectedGradeId,
-    );
-    const selectedGradeName = selectedGrade?.name?.toLowerCase();
-
+    const selectedGradeId = store.selectedGradeId;
     const selectedStreamId = store.selectedStreamId;
 
-    // Match entries by grade (and stream when the grade has streams)
-    const entries = store.entries.filter((entry) => {
-      const gradeMatch =
-        entry.gradeId === store.selectedGradeId ||
-        (selectedGradeName &&
-          entry.gradeName &&
-          entry.gradeName.toLowerCase() === selectedGradeName);
-
-      if (!gradeMatch) return false;
-
-      if (selectedStreamId) {
-        return entry.streamId === selectedStreamId;
-      }
-
-      return !entry.streamId;
-    });
+    const entries = store.entries.filter((entry) =>
+      entryMatchesGradeScope(
+        entry,
+        selectedGradeId,
+        selectedStreamId,
+        store.grades,
+      ),
+    );
 
     // Enrich with full data
     return entries.map((entry) => selectors.enrichEntry(entry));
@@ -177,19 +165,38 @@ export function useTimetableGrid(gradeId: string | null) {
 
     // Fill grid with entries
     store.entries
-      .filter((entry) => entry.gradeId === gradeId)
+      .filter((entry) =>
+        entryMatchesGradeScope(
+          entry,
+          gradeId,
+          store.selectedStreamId,
+          store.grades,
+        ),
+      )
       .forEach((entry) => {
         const enriched = selectors.enrichEntry(entry);
-        if (grid[entry.dayOfWeek]) {
-          // Store entry by timeSlotId (even if slot wasn't initialized for this day)
-          // This handles cases where entries might have timeSlotIds that don't match
-          // day-specific slots (e.g., cycled lessons)
-          grid[entry.dayOfWeek][entry.timeSlotId] = enriched;
-        }
+        if (!grid[entry.dayOfWeek]) return;
+
+        const daySlot =
+          store.timeSlots.find(
+            (s) =>
+              s.id === entry.timeSlotId &&
+              (!s.dayOfWeek || s.dayOfWeek === entry.dayOfWeek),
+          ) ??
+          (entry.periodNumber
+            ? store.timeSlots.find(
+                (s) =>
+                  s.periodNumber === entry.periodNumber &&
+                  (!s.dayOfWeek || s.dayOfWeek === entry.dayOfWeek),
+              )
+            : undefined);
+
+        const slotKey = daySlot?.id ?? entry.timeSlotId;
+        grid[entry.dayOfWeek][slotKey] = enriched;
       });
 
     return grid;
-  }, [gradeId, store.entries, store.timeSlots, store.breaks, selectors]);
+  }, [gradeId, store.entries, store.timeSlots, store.breaks, store.grades, store.selectedStreamId, selectors]);
 }
 
 /**

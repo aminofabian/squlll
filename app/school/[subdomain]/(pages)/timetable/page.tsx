@@ -163,10 +163,11 @@ export default function SmartTimetableNew() {
     deleteEntriesForTerm,
     deleteTimetableForTerm,
     deleteBreak,
-    entries: timetableEntries,
     teachers,
     subjects,
   } = useTimetableStore();
+
+  const selectedGradeEntries = useSelectedGradeTimetable();
 
   const subjectMetaById = useMemo(() => {
     const map = new Map<string, { department?: string; color?: string }>();
@@ -198,7 +199,7 @@ export default function SmartTimetableNew() {
   const hasTerm = !!selectedTerm;
   const hasTimeSlots = timeSlots.length > 0;
   const hasGradeSelected = !!selectedGradeId;
-  const hasAnyLessons = timetableEntries.length > 0;
+  const hasAnyLessons = selectedGradeEntries.length > 0;
 
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
 
@@ -319,17 +320,24 @@ export default function SmartTimetableNew() {
     (dayOfWeek: number, period: number) => {
       const daySlot = getSlotFor(dayOfWeek - 1, period);
       let entry = daySlot ? grid[dayOfWeek]?.[daySlot.id] : null;
-      if (!entry && daySlot && grid[dayOfWeek]) {
-        const efd = Object.entries(grid[dayOfWeek])
-          .filter(([, v]) => v !== null)
-          .map(([, v]) => v);
-        entry =
-          efd.find((e: any) => {
-            if (!e?.timeSlotId) return false;
-            const ts = timeSlots.find((t) => t.id === e.timeSlotId);
-            return ts?.periodNumber === period;
-          }) || null;
+
+      if (!entry) {
+        const scoped = selectedGradeEntries.filter((e) => {
+          if (e.dayOfWeek !== dayOfWeek) return false;
+          return (
+            e.periodNumber === period ||
+            e.timeSlot?.periodNumber === period ||
+            timeSlots.some(
+              (ts) => ts.id === e.timeSlotId && ts.periodNumber === period,
+            )
+          );
+        });
+        const raw = scoped[0];
+        if (raw) {
+          entry = raw;
+        }
       }
+
       if (!entry) return null;
       return {
         id: entry.id,
@@ -341,7 +349,7 @@ export default function SmartTimetableNew() {
         isDoublePeriod: entry.isDoublePeriod,
       };
     },
-    [grid, timeSlots, getSlotFor],
+    [grid, timeSlots, getSlotFor, selectedGradeEntries],
   );
 
   const getBreaksAfterPeriod = useCallback(

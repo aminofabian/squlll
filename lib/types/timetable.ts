@@ -78,6 +78,7 @@ export interface TimetableEntry {
   subjectId: string; // Reference to Subject
   teacherId: string; // Reference to Teacher
   timeSlotId: string; // Reference to TimeSlot
+  periodNumber?: number; // Teaching period row (1-based), for grid matching
   dayOfWeek: number; // 1-5 (Monday-Friday)
   roomNumber?: string; // "Room 4"
   isDoublePeriod?: boolean;

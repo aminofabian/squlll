@@ -19,6 +19,10 @@ import {
   extractTimeSlotsFromTimetableData,
   uniquePeriodNumbers,
 } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
+import {
+  entryMatchesGradeScope,
+  resolveCanonicalGradeId,
+} from "@/app/school/[subdomain]/(pages)/timetable/utils/resolveGradeForSchoolConfig";
 
 interface TimetableStore extends TimetableData, TimetableUIState {
   // Actions for data
@@ -2106,6 +2110,7 @@ export const useTimetableStore = create<TimetableStore>()(
             ? (get().grades.find((g) => g.id === rawGradeLevelId)
                 ?.tenantGradeLevelId ?? rawGradeLevelId)
             : undefined;
+          const masterGradeId = rawGradeLevelId;
           const streamId =
             options?.streamId !== undefined
               ? options.streamId
@@ -2248,7 +2253,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 input: {
                   termId,
                   ...(gradeLevelId ? { gradeLevelId } : {}),
-                  ...(streamId ? { streamId } : {}),
+                  // Stream filter is applied client-side so grade-wide blocks still load.
                 },
               },
             }),
@@ -2284,15 +2289,17 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const gradeBlocks = (timetableData.timetableByGrade || []).filter(
             (gradeBlock: any) =>
-              gradeLevelId
+              gradeLevelId && masterGradeId
                 ? timetableBlockMatchesScope(
                     gradeBlock,
-                    options?.gradeLevelId ?? get().selectedGradeId ?? "",
-                    streamId,
+                    masterGradeId,
+                    null,
                     gradeLevelId,
                   )
                 : true,
           );
+
+          const grades = get().grades;
 
           gradeBlocks.forEach((gradeBlock: any) => {
             (gradeBlock.days || []).forEach((dayItem: any) => {
@@ -2304,13 +2311,35 @@ export const useTimetableStore = create<TimetableStore>()(
                 const entryGradeLevelId = entry.gradeLevel?.id;
                 if (!entryGradeLevelId) return;
 
+                const canonicalGradeId = resolveCanonicalGradeId(
+                  entryGradeLevelId,
+                  grades,
+                );
+                const entryStreamId = entry.stream?.id ?? null;
+
+                if (
+                  masterGradeId &&
+                  !entryMatchesGradeScope(
+                    {
+                      gradeId: canonicalGradeId,
+                      streamId: entryStreamId,
+                    },
+                    masterGradeId,
+                    streamId,
+                    grades,
+                  )
+                ) {
+                  return;
+                }
+
                 allEntries.push({
                   id: entry.id,
                   subjectId: entry.subject?.id || "",
                   teacherId: entry.teacher?.id || "",
                   timeSlotId: p.period.id,
-                  gradeId: entryGradeLevelId,
-                  streamId: entry.stream?.id ?? null,
+                  periodNumber: p.period.periodNumber,
+                  gradeId: canonicalGradeId,
+                  streamId: entryStreamId,
                   gradeName: entry.gradeLevel?.name,
                   dayOfWeek: dayOfWeek || 1,
                   roomNumber: entry.room?.name || undefined,
@@ -2400,26 +2429,43 @@ export const useTimetableStore = create<TimetableStore>()(
                 }
               : {};
 
-          // Use backend-provided periodNumbers, daysPerWeek, conflicts, and rooms.
-          set((state) => ({
-            entries: allEntries,
-            periodNumbers: gradeLevelId
-              ? mergedPeriodNumbers
-              : resolvedPeriodNumbers,
-            daysPerWeek: resolvedDaysPerWeek,
-            conflicts: timetableData.conflicts || [],
-            knownRoomNumbers: timetableData.knownRoomNumbers || [],
-            ...gradeSlotUpdate,
-            ...(gradeLevelId || gradeScopedSlots.length > 0
-              ? {}
-              : {
-                  lessonPeriodsPerDay: Math.max(
-                    state.lessonPeriodsPerDay ?? 0,
-                    resolvedPeriodNumbers.length,
-                  ),
-                }),
-            lastUpdated: new Date().toISOString(),
-          }));
+          // Merge entries for this grade/stream; keep other grades in the store.
+          set((state) => {
+            const otherEntries =
+              masterGradeId && grades.length > 0
+                ? state.entries.filter(
+                    (e) =>
+                      !entryMatchesGradeScope(
+                        e,
+                        masterGradeId,
+                        streamId,
+                        grades,
+                      ),
+                  )
+                : allEntries.length > 0
+                  ? []
+                  : state.entries;
+
+            return {
+              entries: [...otherEntries, ...allEntries],
+              periodNumbers: gradeLevelId
+                ? mergedPeriodNumbers
+                : resolvedPeriodNumbers,
+              daysPerWeek: resolvedDaysPerWeek,
+              conflicts: timetableData.conflicts || [],
+              knownRoomNumbers: timetableData.knownRoomNumbers || [],
+              ...gradeSlotUpdate,
+              ...(gradeLevelId || gradeScopedSlots.length > 0
+                ? {}
+                : {
+                    lessonPeriodsPerDay: Math.max(
+                      state.lessonPeriodsPerDay ?? 0,
+                      resolvedPeriodNumbers.length,
+                    ),
+                  }),
+              lastUpdated: new Date().toISOString(),
+            };
+          });
 
           return timetableData;
         } catch (error) {
@@ -3178,8 +3224,17 @@ export const useTimetableSelectors = () => {
     enrichEntry: (entry: TimetableEntry) => {
       const subject = store.subjects.find((s) => s.id === entry.subjectId);
       const teacher = store.teachers.find((t) => t.id === entry.teacherId);
-      const timeSlot = store.timeSlots.find((ts) => ts.id === entry.timeSlotId);
-      const grade = store.grades.find((g) => g.id === entry.gradeId);
+      let timeSlot = store.timeSlots.find((ts) => ts.id === entry.timeSlotId);
+      if (!timeSlot && entry.periodNumber) {
+        timeSlot = store.timeSlots.find(
+          (ts) =>
+            ts.periodNumber === entry.periodNumber &&
+            (!ts.dayOfWeek || ts.dayOfWeek === entry.dayOfWeek),
+        );
+      }
+      const grade =
+        store.grades.find((g) => g.id === entry.gradeId) ??
+        store.grades.find((g) => g.tenantGradeLevelId === entry.gradeId);
 
       // If any required data is missing, log a warning but still return the entry
       if (!subject || !teacher || !timeSlot || !grade) {
