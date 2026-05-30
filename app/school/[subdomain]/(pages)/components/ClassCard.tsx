@@ -49,7 +49,9 @@ export function ClassCard({
       id: ts.id,
       name: ts.subject?.name || ts.customSubject?.name || "Unknown Subject",
       code: ts.subject?.code || ts.customSubject?.code || "",
-      subjectType: ts.subjectType === "core" ? "core" : "elective",
+      subjectType: (ts.subjectType === "core" ? "core" : "elective") as
+        | "core"
+        | "elective",
       _tenantSubject: ts,
     }));
   }, [tenantSubjects]);

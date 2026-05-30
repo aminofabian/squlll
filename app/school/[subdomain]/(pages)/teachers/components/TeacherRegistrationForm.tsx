@@ -66,10 +66,10 @@ export const TEACHER_WIZARD_STEPS = [
   { id: "classes", label: "Classes" },
 ] as const;
 
-export const WIZARD_STEP_FIELDS: Record<number, string[]> = {
+export const WIZARD_STEP_FIELDS = {
   0: ["firstName", "lastName", "gender", "dateOfBirth", "phoneNumber", "email"],
   1: ["employeeId", "department", "qualifications"],
-};
+} as const;
 
 export interface TeacherRegistrationFormProps {
   form: UseFormReturn<any>;

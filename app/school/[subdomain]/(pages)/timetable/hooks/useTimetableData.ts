@@ -395,7 +395,10 @@ export function useSchoolCombinedEntries() {
       };
     };
 
-    type CombinedSlotEntry = ReturnType<typeof toCombinedEntry>;
+    type FilledCombinedSlotEntry = ReturnType<typeof toCombinedEntry>;
+    type CombinedSlotEntry =
+      | FilledCombinedSlotEntry
+      | (Omit<FilledCombinedSlotEntry, "isEmpty"> & { isEmpty: true });
 
     const createEmptyCombinedEntry = (slot: GradeStreamSlot): CombinedSlotEntry => ({
       id: `empty-${slot.gradeId}-${slot.streamId ?? "all"}`,
@@ -409,10 +412,10 @@ export function useSchoolCombinedEntries() {
       gradeShortLabel: slot.gradeShortLabel,
       shortLabel: slot.gradeShortLabel,
       subject: { id: "", name: "" },
-      subjectCode: undefined,
+      subjectCode: "",
       teacher: { id: "", name: "" },
       roomNumber: undefined,
-      timeSlotId: undefined,
+      timeSlotId: "",
       isDoublePeriod: false,
       isDoubleContinuation: false,
     });

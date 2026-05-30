@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, GraduationCap, X } from "lucide-react"
+import { Search, GraduationCap, X, School, BookOpen, Users, Award } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { Level, GradeLevel, Stream } from '@/lib/types/school-config'

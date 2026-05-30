@@ -24,7 +24,7 @@ import type { SchoolConfiguration } from "@/lib/types/school-config";
 function resolveStreamName(
   config: SchoolConfiguration | null,
   gradeId: string | undefined,
-  streamId: string | undefined,
+  streamId: string | null | undefined,
 ): string {
   if (!streamId || !gradeId || !config?.selectedLevels) return "—";
   for (const level of config.selectedLevels) {

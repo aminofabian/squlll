@@ -31,6 +31,7 @@ interface Term {
   startDate: string;
   endDate: string;
   isActive: boolean;
+  isCurrent: boolean;
   academicYear?: {
     name: string;
   };
@@ -109,6 +110,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 startDate
                 endDate
                 isActive
+                isCurrent
                 academicYear {
                   name
                 }
@@ -156,6 +158,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           startDate: term.startDate,
           endDate: term.endDate,
           isActive: term.isActive,
+          isCurrent: term.isCurrent,
           academicYear: { name: term.academicYear?.name ?? currentAcademicYear?.name ?? '' },
         });
       }
