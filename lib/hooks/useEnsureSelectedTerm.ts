@@ -13,13 +13,24 @@ export type SelectedTerm = {
   startDate: string;
   endDate: string;
   isActive: boolean;
+  isCurrent: boolean;
   timetablePublishedAt?: string | null;
   academicYear: {
     name: string;
   };
 };
 
-function resolveAcademicYear(academicYears: AcademicYear[]): AcademicYear | null {
+function pickDefaultTerm(terms: SelectedTerm[]): SelectedTerm {
+  return (
+    terms.find((t) => t.isCurrent) ||
+    terms.find((t) => t.isActive) ||
+    terms[0]
+  );
+}
+
+function resolveAcademicYear(
+  academicYears: AcademicYear[],
+): AcademicYear | null {
   return academicYears.find((y) => y.isActive) || academicYears[0] || null;
 }
 
@@ -33,11 +44,14 @@ function mapNestedTerms(
     startDate: "",
     endDate: "",
     isActive: false,
+    isCurrent: false,
     academicYear: { name: year.name },
   }));
 }
 
-async function fetchTermsForYear(academicYearId: string): Promise<SelectedTerm[]> {
+async function fetchTermsForYear(
+  academicYearId: string,
+): Promise<SelectedTerm[]> {
   const response = await fetch("/api/graphql", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -96,18 +110,17 @@ export function useEnsureSelectedTerm(
   }, [fetchedTerms, nestedTerms]);
 
   useEffect(() => {
-    if (selectedTerm || yearsLoading) return;
+    if (yearsLoading) return;
 
     if (availableTerms.length === 0) return;
 
-    const active = availableTerms.find((t) => t.isActive) || availableTerms[0];
-    setSelectedTerm(active);
-  }, [
-    selectedTerm,
-    yearsLoading,
-    availableTerms,
-    setSelectedTerm,
-  ]);
+    // Keep a valid user selection; only auto-select when none is set
+    if (selectedTerm && availableTerms.some((t) => t.id === selectedTerm.id)) {
+      return;
+    }
+
+    setSelectedTerm(pickDefaultTerm(availableTerms));
+  }, [selectedTerm, yearsLoading, availableTerms, setSelectedTerm]);
 
   return {
     activeYear,

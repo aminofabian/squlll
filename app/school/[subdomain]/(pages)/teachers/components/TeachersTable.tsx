@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner";
 import { User, MoreVertical, X, Check, Trash } from "lucide-react"
 import Image from "next/image";
+import { teachersPanel, teachersTableHead, teachersTh } from "./teachers-ui";
 
 // Teacher type definition based on GraphQL query
 type Teacher = {
@@ -60,23 +61,20 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
   };
   if (teachers.length === 0) {
     return (
-      <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">All Teachers</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-              Showing 0 teachers
-            </p>
-          </div>
-        </div>
-        
-        <div className="text-center py-12">
+      <div className={`${teachersPanel} overflow-hidden`}>
+      <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          All teachers
+        </h2>
+        <p className="text-xs text-slate-400">No staff match your search</p>
+      </div>
+      <div className="px-4 py-12 text-center">
           <User className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-mono font-semibold text-slate-700 dark:text-slate-300 mb-2">
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
             No teachers found
           </h3>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
-            Try adjusting your search criteria or add a new teacher.
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Try adjusting your search or add a new teacher.
           </p>
         </div>
       </div>
@@ -84,48 +82,43 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
   }
 
   return (
-    <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">All Teachers</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-            Showing {teachers.length} teachers
-          </p>
-        </div>
+    <div className={`${teachersPanel} overflow-hidden`}>
+      <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          All teachers
+        </h2>
+        <p className="text-xs text-slate-400">
+          {teachers.length} on staff
+        </p>
       </div>
-      
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-primary/20">
+
+      <div className="overflow-x-auto">
         {/* Mobile Card Layout - Small screens only */}
         <div className="grid gap-6 p-4 sm:hidden">
           {teachers.map((teacher, index) => (
             <div 
               key={teacher.id} 
-              className="p-5 border-2 border-primary/10 rounded-xl hover:bg-primary/5 transition-colors relative shadow-sm"
+              className="p-5 border border-slate-200/80 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >
-              {/* Teacher Number Badge */}
-              <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
-                <span className="font-mono text-xs font-bold">{index + 1}</span>
-              </div>
-              
               {/* Teacher Header Section */}
-              <div className="flex items-start gap-3 pb-4 border-b-2 border-primary/10 mb-6">
+              <div className="flex items-start gap-3 pb-4 border-b border-slate-100 mb-4">
                 <div className="flex-1 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
                       {teacher.photo ? (
                         <img 
-                          className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" 
+                          className="h-12 w-12 rounded-full object-cover border-2 border-slate-200/80" 
                           src={teacher.photo} 
                           alt={teacher.name} 
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
-                          <User className="h-6 w-6 text-primary" />
+                        <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200/80">
+                          <User className="h-6 w-6 text-slate-600" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
                         {teacher.name}
                       </div>
                       <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
@@ -159,16 +152,16 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 {/* Left Column */}
                 <div className="grid-rows-auto">
-                  <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                  <h4 className="text-sm uppercase tracking-wide text-slate-600 font-bold border-b-2 border-slate-200/80 pb-3 mb-4">
                     Basic Info
                   </h4>
                   <div className="space-y-4">
                     {/* Row 1 - ID */}
                     <div className="flex justify-between items-center py-2 h-[42px]">
-                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                         ID
                       </span>
-                      <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                      <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                         {teacher.employeeId}
                       </span>
                     </div>
@@ -176,10 +169,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     {/* Row 2 - Email */}
                     {teacher.email && (
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Email
                         </span>
-                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
                           {teacher.email}
                         </span>
                       </div>
@@ -188,10 +181,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     {/* Row 3 - Phone */}
                     {teacher.phoneNumber && (
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Phone
                         </span>
-                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                           {teacher.phoneNumber}
                         </span>
                       </div>
@@ -200,10 +193,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     {/* Row 4 - Gender */}
                     {teacher.gender && (
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Gender
                         </span>
-                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                           {typeof teacher.gender === 'string' ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1).toLowerCase() : ''}
                         </span>
                       </div>
@@ -211,7 +204,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     
                     {/* Row 5 - Status */}
                     <div className="flex justify-between items-center py-2 h-[42px]">
-                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                         Status
                       </span>
                       <div className="flex items-center gap-2">
@@ -240,17 +233,17 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                 
                 {/* Right Column */}
                 <div className="grid-rows-auto">
-                  <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                  <h4 className="text-sm uppercase tracking-wide text-slate-600 font-bold border-b-2 border-slate-200/80 pb-3 mb-4">
                     Additional Info
                   </h4>
                   <div className="space-y-4">
                     {/* Date of Birth */}
                     {teacher.dateOfBirth && (
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Birth Date
                         </span>
-                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                           {new Date(teacher.dateOfBirth).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short', 
@@ -263,10 +256,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     {/* Address - Truncated */}
                     {teacher.address && (
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Address
                         </span>
-                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
                           {teacher.address}
                         </span>
                       </div>
@@ -275,7 +268,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     {/* Profile Status */}
                     {teacher.hasCompletedProfile !== undefined && (
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Profile
                         </span>
                         <Badge variant="outline" className={`
@@ -291,7 +284,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     
                     {/* Rating */}
                     <div className="flex justify-between items-center py-2 h-[42px]">
-                      <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                         Rating
                       </span>
                       {teacher.performance?.rating ? (
@@ -306,12 +299,12 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                               />
                             ))}
                           </div>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                             {teacher.performance.rating}/5
                           </span>
                         </div>
                       ) : (
-                        <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
                           Not rated
                         </span>
                       )}
@@ -321,8 +314,8 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
               </div>
               
               {/* Subjects Section */}
-              <div className="border-t border-primary/10 pt-4">
-                <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium block mb-2">
+              <div className="border-t border-slate-100 pt-4">
+                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium block mb-2">
                   Subjects:
                 </span>
                 <div className="flex flex-wrap gap-1">
@@ -343,30 +336,26 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
             {teachers.map((teacher, index) => (
               <div 
                 key={teacher.id} 
-                className="p-5 border-2 border-primary/10 rounded-xl hover:bg-primary/5 transition-colors relative shadow-sm"
+                className="p-5 border border-slate-200/80 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
               >
-                {/* Teacher Number Badge */}
-                <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
-                  <span className="font-mono text-xs font-bold">{index + 1}</span>
-                </div>
                 {/* Teacher Header Section */}
-                <div className="flex items-start justify-between pb-4 border-b-2 border-primary/10 mb-6">
+                <div className="flex items-start justify-between pb-4 border-b border-slate-100 mb-4">
                   <div className="flex items-start gap-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
                     <div className="flex-shrink-0">
                       {teacher.photo ? (
                         <img 
-                          className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" 
+                          className="h-12 w-12 rounded-full object-cover border-2 border-slate-200/80" 
                           src={teacher.photo} 
                           alt={teacher.name} 
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
-                          <User className="h-6 w-6 text-primary" />
+                        <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center border-2 border-slate-200/80">
+                          <User className="h-6 w-6 text-slate-600" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-words">
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 break-words">
                         {teacher.name}
                       </div>
                       <div className="text-sm text-slate-500 dark:text-slate-400 break-words">
@@ -399,16 +388,16 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                 <div className="grid grid-cols-2 gap-6 mb-4">
                   {/* Left Column */}
                   <div className="grid-rows-auto">
-                    <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                    <h4 className="text-sm uppercase tracking-wide text-slate-600 font-bold border-b-2 border-slate-200/80 pb-3 mb-4">
                       Basic Info
                     </h4>
                     <div className="space-y-4">
                       {/* Row 1 - ID */}
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           ID
                         </span>
-                        <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                        <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                           {teacher.employeeId}
                         </span>
                       </div>
@@ -416,10 +405,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       {/* Row 2 - Email */}
                       {teacher.email && (
                         <div className="flex justify-between items-center py-2 h-[42px]">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                             Email
                           </span>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
                             {teacher.email}
                           </span>
                         </div>
@@ -428,10 +417,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       {/* Row 3 - Phone */}
                       {teacher.phoneNumber && (
                         <div className="flex justify-between items-center py-2 h-[42px]">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                             Phone
                           </span>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                             {teacher.phoneNumber}
                           </span>
                         </div>
@@ -440,10 +429,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       {/* Row 4 - Gender */}
                       {teacher.gender && (
                         <div className="flex justify-between items-center py-2 h-[42px]">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                             Gender
                           </span>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                             {typeof teacher.gender === 'string' ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1).toLowerCase() : ''}
                           </span>
                         </div>
@@ -451,7 +440,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       
                       {/* Row 5 - Status */}
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Status
                         </span>
                         <div className="flex items-center gap-2">
@@ -480,17 +469,17 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                   
                   {/* Right Column */}
                   <div className="grid-rows-auto">
-                    <h4 className="font-mono text-sm uppercase tracking-wide text-primary font-bold border-b-2 border-primary/20 pb-3 mb-4">
+                    <h4 className="text-sm uppercase tracking-wide text-slate-600 font-bold border-b-2 border-slate-200/80 pb-3 mb-4">
                       Additional Info
                     </h4>
                     <div className="space-y-4">
                       {/* Date of Birth */}
                       {teacher.dateOfBirth && (
                         <div className="flex justify-between items-center py-2 h-[42px]">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                             Birth Date
                           </span>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                             {new Date(teacher.dateOfBirth).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'short', 
@@ -503,10 +492,10 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       {/* Address - Truncated */}
                       {teacher.address && (
                         <div className="flex justify-between items-center py-2 h-[42px]">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                             Address
                           </span>
-                          <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold truncate max-w-[180px]">
                             {teacher.address}
                           </span>
                         </div>
@@ -515,7 +504,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       {/* Profile Status */}
                       {teacher.hasCompletedProfile !== undefined && (
                         <div className="flex justify-between items-center py-2 h-[42px]">
-                          <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                             Profile
                           </span>
                           <Badge variant="outline" className={`
@@ -531,7 +520,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       
                       {/* Rating */}
                       <div className="flex justify-between items-center py-2 h-[42px]">
-                        <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium">
                           Rating
                         </span>
                         {teacher.performance?.rating ? (
@@ -546,12 +535,12 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                                 />
                               ))}
                             </div>
-                            <span className="font-mono text-sm text-slate-700 dark:text-slate-300 font-semibold">
+                            <span className="text-sm text-slate-700 dark:text-slate-300 font-semibold">
                               {teacher.performance.rating}/5
                             </span>
                           </div>
                         ) : (
-                          <span className="font-mono text-sm text-slate-500 dark:text-slate-400">
+                          <span className="text-sm text-slate-500 dark:text-slate-400">
                             Not rated
                           </span>
                         )}
@@ -561,8 +550,8 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                 </div>
                 
                 {/* Subjects Section */}
-                <div className="border-t border-primary/10 pt-4">
-                  <span className="font-mono text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium block mb-2">
+                <div className="border-t border-slate-100 pt-4">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-medium block mb-2">
                     Subjects:
                   </span>
                   <div className="flex flex-wrap gap-1">
@@ -581,55 +570,31 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
         {/* Desktop Table Layout - 17+ inch screens */}
         <div className="hidden 2xl:block">
           <table className="w-full">
-            <thead className="bg-primary/5 border-b-2 border-primary/20">
+            <thead className={teachersTableHead}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider w-10">
-                  #
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Teacher
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Department
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Employee ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Birth Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Subjects
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Rating
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Profile
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className={`${teachersTh} w-10`}>#</th>
+                <th className={teachersTh}>Teacher</th>
+                <th className={teachersTh}>Contact</th>
+                <th className={teachersTh}>Department</th>
+                <th className={teachersTh}>Employee ID</th>
+                <th className={teachersTh}>Birth date</th>
+                <th className={teachersTh}>Subjects</th>
+                <th className={teachersTh}>Rating</th>
+                <th className={teachersTh}>Profile</th>
+                <th className={teachersTh}>Status</th>
+                <th className={teachersTh}>Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-primary/10">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {teachers.map((teacher, index) => (
                 <tr 
                   key={teacher.id}
-                  className="hover:bg-primary/5 transition-colors"
+                  className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                 >
-                  <td className="px-6 py-4 cursor-pointer" onClick={() => onTeacherSelect(teacher.id)}>
-                    <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-mono text-sm font-bold">
-                      {index + 1}
-                    </div>
+                  <td className="px-4 py-3 text-center text-xs tabular-nums text-slate-400" onClick={() => onTeacherSelect(teacher.id)}>
+                    {index + 1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0 mr-3">
                         <div className="relative h-10 w-10">
@@ -637,12 +602,12 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                             <Image 
                               src={teacher.image} 
                               alt={teacher.name} 
-                              className="h-10 w-10 rounded-full object-cover border-2 border-primary/20" 
+                              className="h-10 w-10 rounded-full object-cover border-2 border-slate-200/80" 
                               width={40} 
                               height={40} 
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-primary/10 border-2 border-primary/20 text-primary">
+                            <div className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-100 border-2 border-slate-200/80 text-slate-600">
                               <User size={20} />
                             </div>
                           )}
@@ -659,7 +624,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex flex-col">
                       <div className="text-slate-700 dark:text-slate-300 truncate max-w-[150px]" title={teacher.email}>
                         {teacher.email || '-'}
@@ -669,13 +634,13 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {teacher.department || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {teacher.employeeId || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {teacher.dateOfBirth ? 
                       new Date(teacher.dateOfBirth).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -693,7 +658,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     </div>
                   </td>
                   {/* Rating Column */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {teacher.performance?.rating ? (
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1">
@@ -713,7 +678,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                     )}
                   </td>
                   {/* Profile Status Column */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {teacher.hasCompletedProfile !== undefined && (
                       <Badge variant="outline" className={`
                         text-xs ${
@@ -725,7 +690,7 @@ export function TeachersTable({ teachers, onTeacherSelect, onTeacherDelete }: Te
                       </Badge>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         teacher.status === 'active' ? 'bg-green-500' : 

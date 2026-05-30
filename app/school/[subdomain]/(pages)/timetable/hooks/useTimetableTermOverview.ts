@@ -1,5 +1,13 @@
 import { useMemo } from "react";
 import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
+import { resolveCanonicalGradeId } from "../utils/resolveGradeForSchoolConfig";
+import {
+  countFilledSlots,
+  countFilledSlotsForGrade,
+  countGradeStreamUnits,
+  getPeriodsPerDay,
+  slotsPerClassWeek,
+} from "../utils/timetableSlotStats";
 
 export interface GradeTimetableOverview {
   gradeId: string;
@@ -23,35 +31,79 @@ export function useTimetableTermOverview(): TimetableTermOverview {
   const grades = useTimetableStore((s) => s.grades);
   const entries = useTimetableStore((s) => s.entries);
   const timeSlots = useTimetableStore((s) => s.timeSlots);
+  const periodNumbers = useTimetableStore((s) => s.periodNumbers);
+  const lessonPeriodsPerDay = useTimetableStore((s) => s.lessonPeriodsPerDay);
   const daysPerWeek = useTimetableStore((s) => s.daysPerWeek);
 
   return useMemo(() => {
-    const d = daysPerWeek || 5;
-    const periodCount = timeSlots.length;
-    const totalSlotsPerGrade = periodCount * d;
+    const days = daysPerWeek || 5;
+    const periodsPerDay = getPeriodsPerDay({
+      periodNumbers,
+      timeSlots,
+      lessonPeriodsPerDay,
+    });
+    const slotsPerWeek = slotsPerClassWeek(periodsPerDay, days);
+    const classUnits = countGradeStreamUnits(grades);
 
-    const byGrade: GradeTimetableOverview[] = grades.map((g) => {
-      const gradeEntries = entries.filter((e) => e.gradeId === g.id);
-      const filledSlots = new Set(
-        gradeEntries.map((e) => `${e.dayOfWeek}:${e.timeSlotId}`),
-      ).size;
+    const byGrade: GradeTimetableOverview[] = grades.flatMap((g) => {
+      const gradeEntries = entries.filter(
+        (e) => resolveCanonicalGradeId(e.gradeId, grades) === g.id,
+      );
+
+      if (g.streams?.length) {
+        return g.streams.map((stream) => {
+          const streamEntries = gradeEntries.filter(
+            (e) => e.streamId === stream.tenantStreamId,
+          );
+          const filledSlots = countFilledSlotsForGrade(
+            entries,
+            g.id,
+            stream.tenantStreamId,
+            grades,
+            timeSlots,
+          );
+          const totalSlots = slotsPerWeek;
+          const completionPercentage =
+            totalSlots > 0
+              ? Math.round((filledSlots / totalSlots) * 100)
+              : 0;
+
+          return {
+            gradeId: g.id,
+            label: `${g.displayName || g.name} · ${stream.name}`,
+            filledSlots,
+            totalSlots,
+            completionPercentage,
+            lessonCount: streamEntries.length,
+          };
+        });
+      }
+
+      const filledSlots = countFilledSlotsForGrade(
+        entries,
+        g.id,
+        null,
+        grades,
+        timeSlots,
+      );
+      const totalSlots = slotsPerWeek;
       const completionPercentage =
-        totalSlotsPerGrade > 0
-          ? Math.round((filledSlots / totalSlotsPerGrade) * 100)
-          : 0;
+        totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
 
-      return {
-        gradeId: g.id,
-        label: g.displayName || g.name,
-        filledSlots,
-        totalSlots: totalSlotsPerGrade,
-        completionPercentage,
-        lessonCount: gradeEntries.length,
-      };
+      return [
+        {
+          gradeId: g.id,
+          label: g.displayName || g.name,
+          filledSlots,
+          totalSlots,
+          completionPercentage,
+          lessonCount: gradeEntries.filter((e) => !e.streamId).length,
+        },
+      ];
     });
 
-    const totalFilled = byGrade.reduce((sum, g) => sum + g.filledSlots, 0);
-    const totalSlots = byGrade.reduce((sum, g) => sum + g.totalSlots, 0);
+    const totalFilled = countFilledSlots(entries, grades, timeSlots);
+    const totalSlots = classUnits * slotsPerWeek;
     const overallPercentage =
       totalSlots > 0 ? Math.round((totalFilled / totalSlots) * 100) : 0;
     const gradesWithLessons = byGrade.filter((g) => g.lessonCount > 0).length;
@@ -64,5 +116,12 @@ export function useTimetableTermOverview(): TimetableTermOverview {
       gradesWithLessons,
       gradeCount: byGrade.length,
     };
-  }, [grades, entries, timeSlots, daysPerWeek]);
+  }, [
+    grades,
+    entries,
+    timeSlots,
+    periodNumbers,
+    lessonPeriodsPerDay,
+    daysPerWeek,
+  ]);
 }

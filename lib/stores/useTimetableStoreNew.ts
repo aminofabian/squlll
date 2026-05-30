@@ -2299,25 +2299,42 @@ export const useTimetableStore = create<TimetableStore>()(
             }
           `;
 
-          const response = await fetch("/api/graphql", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
-              Pragma: "no-cache",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              query,
-              variables: {
-                input: {
-                  termId,
-                  ...(gradeLevelId ? { gradeLevelId } : {}),
-                  // Stream filter is applied client-side so grade-wide blocks still load.
+          const graphqlHeaders = {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          };
+
+          const [response, entriesResponse] = await Promise.all([
+            fetch("/api/graphql", {
+              method: "POST",
+              headers: graphqlHeaders,
+              credentials: "include",
+              body: JSON.stringify({
+                query,
+                variables: {
+                  input: {
+                    termId,
+                    ...(gradeLevelId ? { gradeLevelId } : {}),
+                    // Stream filter is applied client-side so grade-wide blocks still load.
+                  },
                 },
-              },
+              }),
             }),
-          });
+            termId
+              ? fetch("/api/graphql", {
+                  method: "POST",
+                  headers: graphqlHeaders,
+                  credentials: "include",
+                  body: JSON.stringify({
+                    query: GET_TIMETABLE_ENTRIES_QUERY,
+                    variables: {
+                      input: { termId },
+                    },
+                  }),
+                })
+              : Promise.resolve(null),
+          ]);
 
           if (!response.ok) {
             const errorText = await response.text();
@@ -2347,24 +2364,9 @@ export const useTimetableStore = create<TimetableStore>()(
           const timeSlotsSnapshot = get().timeSlots;
           let allEntries: TimetableEntry[] = [];
 
-          // Load all term entries (cross-grade) for conflict detection and teacher availability.
-          if (termId) {
+          // Entries fetched in parallel with getSchoolTimetable above.
+          if (entriesResponse) {
             try {
-              const entriesResponse = await fetch("/api/graphql", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Cache-Control": "no-cache",
-                  Pragma: "no-cache",
-                },
-                credentials: "include",
-                body: JSON.stringify({
-                  query: GET_TIMETABLE_ENTRIES_QUERY,
-                  variables: {
-                    input: { termId },
-                  },
-                }),
-              });
               if (entriesResponse.ok) {
                 const entriesResult = await entriesResponse.json();
                 if (!entriesResult.errors?.length) {

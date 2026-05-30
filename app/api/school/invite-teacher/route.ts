@@ -177,6 +177,7 @@ export async function POST(request: Request) {
           fullName
           status
           createdAt
+          emailSent
         }
       }
     `;

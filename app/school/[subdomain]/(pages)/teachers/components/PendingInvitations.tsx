@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { teachersPanel, teachersTableHead, teachersTh } from "./teachers-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -381,63 +382,53 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
   };
 
   return (
-    <div className="mb-8">
-      <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">Pending Teacher Invitations</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-              {isLoading ? 'Loading...' : `Showing ${invitations.length} pending invitations`}
-            </p>
-          </div>
-          {error && (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              Error loading invitations
-            </Badge>
-          )}
+    <div className={`${teachersPanel} overflow-hidden`}>
+      <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            Pending invitations
+          </h2>
+          <p className="text-xs text-slate-400">
+            {isLoading
+              ? "Loading…"
+              : `${invitations.length} awaiting response`}
+          </p>
         </div>
-        
-        {isLoading ? (
-          <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg border border-primary/20 shadow-sm">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-sm font-mono text-slate-600 dark:text-slate-400">Loading pending invitations...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg border border-red-200 shadow-sm">
-            <div className="text-red-500 mb-4">
-              <Info className="h-10 w-10 mx-auto" />
-            </div>
-            <h3 className="text-lg font-mono font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              Error loading invitations
-            </h3>
-            <p className="text-sm font-mono text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          </div>
-        ) : invitations.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg border border-primary/20 shadow-sm">
-            <Mail className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-mono font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              No pending invitations
-            </h3>
-            <p className="text-sm font-mono text-slate-500 dark:text-slate-400">
-              All teacher invitations have been processed.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-primary/20 shadow-sm overflow-hidden">
+        {error && (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            Error loading invitations
+          </Badge>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="flex flex-col items-center gap-2 px-4 py-12 text-sm text-slate-400">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          Loading invitations…
+        </div>
+      ) : error ? (
+        <div className="px-4 py-12 text-center">
+          <Info className="mx-auto mb-3 h-8 w-8 text-red-400" />
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Error loading invitations
+          </p>
+          <p className="mt-1 text-sm text-red-600">{error}</p>
+        </div>
+      ) : invitations.length === 0 ? (
+        <div className="px-4 py-10 text-center">
+          <Mail className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+          <p className="text-sm text-slate-500">No pending invitations</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden">
             {/* Mobile Card Layout - Small screens only */}
             <div className="grid gap-6 p-4 sm:hidden">
               {invitations.map((invitation, index) => (
-                <div key={invitation.id} className="p-5 border-2 border-primary/10 rounded-xl space-y-3 bg-white dark:bg-slate-800 shadow-sm hover:bg-primary/5 transition-colors relative">                
-                  {/* Invitation Number Badge */}
-                  <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
-                    <span className="font-mono text-xs font-bold">{index + 1}</span>
-                  </div>
+                <div key={invitation.id} className="space-y-3 rounded-xl border border-slate-200/80 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                      <Mail className="h-4 w-4 text-slate-500" />
+                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
                         {invitation.email}
                       </span>
                     </div>
@@ -506,7 +497,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                           size="sm"
                           onClick={() => resendInvitation(invitation.id)}
                           disabled={resendingIds.has(invitation.id)}
-                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
+                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 shadow-sm"
                         >
                           {resendingIds.has(invitation.id) ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -565,7 +556,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                     )}
                   </div>
                   
-                  <div className="text-xs font-mono text-slate-500 space-y-1">
+                  <div className="text-xs text-slate-500 space-y-1">
                     <div>
                       <span className="font-medium">Invited by:</span>{' '}
                       {invitation.invitedBy ? (
@@ -622,18 +613,13 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                 {invitations.map((invitation, index) => (
                   <div
                     key={invitation.id}
-                    className="p-5 border-2 border-primary/10 rounded-xl bg-white dark:bg-slate-800 shadow-sm hover:bg-primary/5 transition-colors relative"
-                  >                
-                    {/* Invitation Number Badge */}
-                    <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
-                      <span className="font-mono text-xs font-bold">{index + 1}</span>
-                    </div>
-                    
+                    className="rounded-xl border border-slate-200/80 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  >
                     {/* First Row */}
                     <div className="grid grid-cols-12 gap-4 mb-4">
                       <div className="col-span-6 flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                        <Mail className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
                           {invitation.email}
                         </span>
                       </div>
@@ -701,7 +687,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                               size="sm"
                               onClick={() => resendInvitation(invitation.id)}
                               disabled={resendingIds.has(invitation.id)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 shadow-sm"
                             >
                               {resendingIds.has(invitation.id) ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -760,7 +746,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                     </div>
                     
                     {/* Second Row */}
-                    <div className="grid grid-cols-3 gap-4 text-xs font-mono text-slate-500">
+                    <div className="grid grid-cols-3 gap-4 text-xs text-slate-500">
                       <div>
                         <span className="font-medium">Invited by:</span>{' '}
                         {invitation.invitedBy ? (
@@ -815,35 +801,29 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
             {/* Desktop Table Layout - 17+ inch screens */}
             <div className="hidden 2xl:block">
               <table className="w-full">
-                <thead className="bg-primary/10 border-b border-primary/20">
-                  <tr className="text-xs">
-                    <th className="w-10 px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">#</th>
-                    <th className="px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Invited By</th>
-                    <th className="px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Created At</th>
-                    <th className="px-6 py-3 text-left font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Expires</th>
-                    <th className="px-6 py-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Actions</th>
+                <thead className={teachersTableHead}>
+                  <tr>
+                    <th className={teachersTh}>Email</th>
+                    <th className={teachersTh}>Role</th>
+                    <th className={teachersTh}>Status</th>
+                    <th className={teachersTh}>Invited by</th>
+                    <th className={teachersTh}>Created</th>
+                    <th className={teachersTh}>Expires</th>
+                    <th className={`${teachersTh} text-right`}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-primary/10">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {invitations.map((invitation, index) => (
-                    <tr key={invitation.id} className="hover:bg-primary/5 transition-colors group even:bg-slate-50 even:dark:bg-slate-900/20">
-                      <td className="px-6 py-4 text-center">
-                        <div className="inline-flex h-6 w-6 rounded-full bg-primary text-white items-center justify-center shadow-sm">
-                          <span className="font-mono text-xs font-bold">{index + 1}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
+                    <tr key={invitation.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="px-4 py-3">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Mail className="h-4 w-4 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                              <Mail className="h-4 w-4 text-slate-500" />
                             </div>
                           </div>
                           <div className="ml-3 min-w-0 flex-1">
-                            <div className="text-sm font-mono font-medium text-slate-900 dark:text-slate-100 break-all">
+                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
                               {invitation.email}
                             </div>
                           </div>
@@ -964,7 +944,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
                               size="sm"
                               onClick={() => resendInvitation(invitation.id)}
                               disabled={resendingIds.has(invitation.id)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-primary/5 shadow-sm"
+                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 shadow-sm"
                             >
                               {resendingIds.has(invitation.id) ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -1029,7 +1009,6 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

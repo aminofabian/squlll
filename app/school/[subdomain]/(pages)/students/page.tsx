@@ -1,689 +1,429 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { CreateStudentDrawer } from "./components/CreateStudentDrawer";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Filter,
-  User,
-  Info,
-  CalendarDays,
-  School,
-  Search,
-  ArrowUp,
-  ArrowDown,
-  Check,
-  SortAsc,
-  SortDesc,
-  ListFilter,
-  Clock,
-  Calendar,
-  Heart,
-  Home,
-  Mail,
-  MapPin,
-  Phone,
-  X,
-  BookText,
-  Layers,
-  GraduationCap,
-  Receipt,
-  Crown,
-  GraduationCap as Gradebook,
-  Grid2x2PlusIcon,
-  BookKeyIcon,
-  BookOpen,
-  Loader2,
-  Download,
-  Printer,
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  BarChart3,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
-
-// Import hooks and types for real data
+import { StudentDetailsView } from "./components/StudentDetailsView";
+import { StudentsOverviewBar } from "./components/StudentsOverviewBar";
+import { StudentsTable } from "./components/StudentsTable";
+import { StudentsContextBar } from "./components/StudentsContextBar";
+import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
+import { ClassesStats } from "../classes/components/ClassesStats";
+import { ClassesContextBar } from "../classes/components/ClassesContextBar";
+import { GradeDetailsView } from "../classes/components/GradeDetailsView";
 import { useStudents, useStudentsFromStore } from "@/lib/hooks/useStudents";
-import { GraphQLStudent } from "@/types/student";
-import SchoolReportCard from "./components/ReportCard";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
-import AllGradesStudentsTable from "./components/AllGradesStudentsTable";
-import { StudentsStats } from "./components/StudentsStats";
-import { StudentDetailsView } from "./components/StudentDetailsView";
-import { GradeFilter } from "./components/GradeFilter";
-import { StudentSearchSidebar } from "./components/StudentSearchSidebar";
-import { StudentCard } from "./components/StudentCard";
+import { GraphQLStudent } from "@/types/student";
+import { formatGradeDisplayName } from "@/lib/utils/grade-display";
+import { cn } from "@/lib/utils";
+import type { SchoolConfiguration } from "@/lib/types/school-config";
 
-// Import types and utilities
-import { Student, EducationLevel, Grade } from "./types/studentTypes";
-import {
-  getLevelIcon,
-  getLevelColor,
-  formatCurrency,
-  getStatusColor,
-  getTrendIcon,
-  getEducationLevel,
-  getLevelCategory,
-  convertGradeToForm,
-  getGradeNumber,
-} from "./utils/studentUtils";
+function resolveStreamName(
+  config: SchoolConfiguration | null,
+  gradeId: string | undefined,
+  streamId: string | undefined,
+): string {
+  if (!streamId || !gradeId || !config?.selectedLevels) return "—";
+  for (const level of config.selectedLevels) {
+    const grade = level.gradeLevels?.find((g) => g.id === gradeId);
+    const stream = grade?.streams?.find((s) => s.id === streamId);
+    if (stream) return stream.name;
+  }
+  return "—";
+}
+
+function mapGraphQLStudent(
+  student: GraphQLStudent,
+  config: SchoolConfiguration | null,
+) {
+  const name =
+    student.user?.name ||
+    (student.user?.email
+      ? student.user.email.split("@")[0].replace(/[0-9]/g, " ").trim()
+      : `Student ${student.admission_number}`);
+
+  const gradeName =
+    typeof student.grade === "object"
+      ? student.grade?.gradeLevel?.name || "—"
+      : student.grade || "—";
+
+  const gradeId =
+    typeof student.grade === "object"
+      ? student.grade?.gradeLevel?.id
+      : undefined;
+
+  const streamId = student.streamId;
+
+  return {
+    id: student.id,
+    name,
+    admissionNumber: student.admission_number,
+    grade: formatGradeDisplayName(gradeName),
+    gradeId,
+    stream: resolveStreamName(config, gradeId, streamId),
+    streamId,
+    status: student.isActive ? ("active" as const) : ("inactive" as const),
+  };
+}
 
 export default function StudentsPage() {
-  // State for mobile sidebar visibility and student selection
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const openAddStudent = searchParams.get("action") === "add";
+
+  const [selectedGradeId, setSelectedGradeId] = useState("");
+  const [selectedLevelId, setSelectedLevelId] = useState("");
+  const [selectedStreamId, setSelectedStreamId] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
   );
-  const [sortField, setSortField] = useState("name");
-  const [sortDirection, setSortDirection] = useState("asc");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedGradeId, setSelectedGradeId] = useState<string>("all");
-  const [expandedDocuments, setExpandedDocuments] = useState<Set<string>>(
-    new Set(),
-  );
-  const [selectedTemplate, setSelectedTemplate] = useState<
-    "modern" | "classic" | "compact" | "uganda-classic"
-  >("modern");
-  const [displayedStudentsCount, setDisplayedStudentsCount] = useState(10);
-  const [showStats, setShowStats] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
-  // Fetch real data from the store
   const {
     students: graphqlStudents,
     isLoading,
     error,
   } = useStudentsFromStore();
   const { refetch } = useStudents();
+  const { isLoading: configLoading, error: configError } = useSchoolConfig();
+  const { config } = useSchoolConfigStore();
 
-  // Fetch school configuration
-  const { data: schoolConfig } = useSchoolConfig();
-  const { config, getGradeById, getAllGradeLevels } = useSchoolConfigStore();
+  const students = useMemo(() => {
+    return graphqlStudents
+      .filter((s) => s?.id && s?.admission_number)
+      .map((s) => mapGraphQLStudent(s, config));
+  }, [graphqlStudents, config]);
 
-  // Get all available grades from school config
-  const allGradeLevels = getAllGradeLevels();
-
-  // Add fallback grades if they're missing from the configuration
-  const enhancedGradeLevels = useMemo(() => {
-    const levels = [...allGradeLevels];
-
-    // Check if we have Senior Secondary level but missing F4, F5, F6
-    let seniorSecondaryLevel = levels.find((level) =>
-      level.levelName.toLowerCase().includes("senior secondary"),
-    );
-
-    // If no Senior Secondary level exists, skip fallback creation
-    if (!seniorSecondaryLevel) {
-      return levels;
-    }
-
-    if (seniorSecondaryLevel) {
-      const existingGradeNames = seniorSecondaryLevel.grades.map((g) =>
-        g.name.toLowerCase(),
-      );
-      const missingGrades = [];
-
-      // Check for missing Form 4, 5, 6 (or Grade 10, 11, 12)
-      const hasGrade10 = existingGradeNames.some(
-        (name) =>
-          name.includes("grade 10") ||
-          name.includes("form 4") ||
-          name.includes("f4"),
-      );
-      const hasGrade11 = existingGradeNames.some(
-        (name) =>
-          name.includes("grade 11") ||
-          name.includes("form 5") ||
-          name.includes("f5"),
-      );
-      const hasGrade12 = existingGradeNames.some(
-        (name) =>
-          name.includes("grade 12") ||
-          name.includes("form 6") ||
-          name.includes("f6"),
-      );
-
-      if (!hasGrade10) {
-        missingGrades.push({
-          id: "fallback-f4",
-          name: "Grade 10",
-          age: 17,
-          streams: [],
-        });
-      }
-
-      if (!hasGrade11) {
-        missingGrades.push({
-          id: "fallback-f5",
-          name: "Grade 11",
-          age: 18,
-          streams: [],
-        });
-      }
-
-      if (!hasGrade12) {
-        missingGrades.push({
-          id: "fallback-f6",
-          name: "Grade 12",
-          age: 19,
-          streams: [],
-        });
-      }
-
-      if (missingGrades.length > 0) {
-        seniorSecondaryLevel.grades = [
-          ...seniorSecondaryLevel.grades,
-          ...missingGrades,
-        ];
+  const selectedGrade = useMemo(() => {
+    if (!selectedGradeId || !config) return null;
+    for (const level of config.selectedLevels) {
+      const grade = level.gradeLevels?.find((g) => g.id === selectedGradeId);
+      if (grade) {
+        const stream = selectedStreamId
+          ? grade.streams?.find((s) => s.id === selectedStreamId)
+          : null;
+        return {
+          name: grade.name,
+          displayName: formatGradeDisplayName(grade.name),
+          levelName: level.name,
+          streamName: stream?.name,
+          grade,
+          level,
+        };
       }
     }
+    return null;
+  }, [selectedGradeId, selectedStreamId, config]);
 
-    return levels;
-  }, [allGradeLevels]);
+  const selectedStudent = useMemo(
+    () => students.find((s) => s.id === selectedStudentId) ?? null,
+    [students, selectedStudentId],
+  );
 
-  // Transform GraphQL data to match our Student type
-  const students: Student[] = useMemo(() => {
-    // Filter out any invalid student data
-    const validStudents = graphqlStudents.filter(
-      (student) => student && student.id && student.admission_number,
-    );
-
-    return validStudents.map((graphqlStudent: GraphQLStudent) => {
-      const generateNameFromEmail = (email: string) => {
-        const username = email.split("@")[0];
-        return username
-          .replace(/[0-9]/g, "") // Remove numbers
-          .replace(/([A-Z])/g, " $1") // Add spaces before capitals
-          .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
-          .trim();
-      };
-
-      const studentName = graphqlStudent.user?.name
-        ? graphqlStudent.user.name
-        : graphqlStudent.user?.email
-          ? generateNameFromEmail(graphqlStudent.user.email)
-          : `Student ${graphqlStudent.admission_number}`;
-
-      const guardianName = studentName.split(" ")[0] || "Guardian";
-
-      // Get grade name from nested gradeLevel object
-      const gradeName =
-        typeof graphqlStudent.grade === "object"
-          ? graphqlStudent.grade?.gradeLevel?.name || "Unknown Grade"
-          : graphqlStudent.grade || "Unknown Grade";
-
-      const convertedGradeName = convertGradeToForm(gradeName);
-
-      return {
-        id: graphqlStudent.id,
-        name: studentName,
-        admissionNumber: graphqlStudent.admission_number,
-        photo: undefined,
-        gender: (graphqlStudent.gender as "male" | "female") || "male",
-        class: convertedGradeName,
-        stream: graphqlStudent.streamId || "-",
-        grade: convertedGradeName,
-        age: null as any,
-        admissionDate: graphqlStudent.createdAt || "",
-        status: graphqlStudent.isActive ? "active" : ("inactive" as const),
-        contacts: {
-          primaryGuardian: `Guardian of ${guardianName}`,
-          guardianPhone: graphqlStudent.phone || "N/A",
-          guardianEmail: graphqlStudent.user?.email || "",
-          homeAddress: "",
-        },
-        academicDetails: {
-          averageGrade: "N/A",
-          classRank: 0,
-          streamRank: 0,
-          yearRank: 0,
-          kcpeScore: 0,
-          kcsePrediction: "N/A",
-        },
-        feeStatus: {
-          currentBalance: graphqlStudent.feesOwed || 0,
-          lastPaymentDate: "",
-          lastPaymentAmount: graphqlStudent.totalFeesPaid || 0,
-          scholarshipPercentage: 0,
-        },
-        attendance: {
-          rate: "N/A",
-          absentDays: 0,
-          lateDays: 0,
-          trend: "stable" as const,
-        },
-        healthInfo: {
-          bloodGroup: "",
-          knownConditions: [],
-          emergencyContact: "",
-          nhifNumber: "",
-        },
-        extraCurricular: {
-          clubs: [],
-          sports: [],
-          achievements: [],
-          leadership: [],
-        },
-      };
-    });
-  }, [graphqlStudents, getGradeById]);
-
-  // Filter and sort students based on selected criteria
-  const filteredAndSortedStudents = useMemo(() => {
+  const filteredStudents = useMemo(() => {
     let result = [...students];
 
-    // Apply search filter
     if (searchTerm) {
-      const lowercasedSearch = searchTerm.toLowerCase();
+      const q = searchTerm.toLowerCase();
       result = result.filter(
-        (student) =>
-          student.name.toLowerCase().includes(lowercasedSearch) ||
-          student.admissionNumber.toLowerCase().includes(lowercasedSearch),
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          s.admissionNumber.toLowerCase().includes(q),
       );
     }
 
-    // Apply class filter
-    if (selectedClass) {
-      result = result.filter((student) => student.class === selectedClass);
+    if (selectedGradeId) {
+      result = result.filter((s) => s.gradeId === selectedGradeId);
     }
 
-    // Apply grade filter
-    if (selectedGradeId && selectedGradeId !== "all") {
-      // Find the grade name from the selected grade id using school config
-      const selectedGradeInfo = getGradeById(selectedGradeId);
-      if (selectedGradeInfo) {
-        const selectedGradeName = selectedGradeInfo.grade.name;
-
-        const convertedSelectedGrade = convertGradeToForm(selectedGradeName);
-
-        // Filter students based on converted grade names
-        result = result.filter((student) => {
-          const studentGrade = student.grade?.toLowerCase();
-          const studentClass = student.class?.toLowerCase();
-          const selectedGrade = convertedSelectedGrade.toLowerCase();
-
-          // Check for exact match with converted grade name
-          if (
-            studentGrade === selectedGrade ||
-            studentClass === selectedGrade
-          ) {
-            return true;
-          }
-
-          // Check if student grade/class contains the selected grade
-          if (
-            studentGrade?.includes(selectedGrade) ||
-            studentClass?.includes(selectedGrade)
-          ) {
-            return true;
-          }
-
-          // Handle Form matching (e.g., "Form 1" matches "form 1", "form1")
-          const formMatch = selectedGrade.match(/form\s*(\d+)/i);
-          if (formMatch) {
-            const formNumber = formMatch[1];
-            if (
-              studentGrade?.includes(`form ${formNumber}`) ||
-              studentGrade?.includes(`form${formNumber}`) ||
-              studentClass?.includes(`form ${formNumber}`) ||
-              studentClass?.includes(`form${formNumber}`)
-            ) {
-              return true;
-            }
-          }
-
-          return false;
-        });
-      }
+    if (selectedStreamId) {
+      result = result.filter((s) => s.streamId === selectedStreamId);
     }
 
-    // Apply status filter
-    if (selectedStatus) {
-      result = result.filter((student) => student.status === selectedStatus);
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      let valA: any;
-      let valB: any;
-
-      // Determine which field to sort by
-      switch (sortField) {
-        case "name":
-          valA = a.name;
-          valB = b.name;
-          break;
-        case "admissionNumber":
-          valA = a.admissionNumber;
-          valB = b.admissionNumber;
-          break;
-        case "class":
-          valA = a.class;
-          valB = b.class;
-          break;
-        case "grade":
-          valA = getGradeNumber(a.grade);
-          valB = getGradeNumber(b.grade);
-          break;
-        case "age":
-          valA = a.age;
-          valB = b.age;
-          break;
-        case "academicRank":
-          valA = a.academicDetails?.classRank || 999;
-          valB = b.academicDetails?.classRank || 999;
-          break;
-        case "feeBalance":
-          valA = a.feeStatus?.currentBalance || 0;
-          valB = b.feeStatus?.currentBalance || 0;
-          break;
-        default:
-          valA = a.name;
-          valB = b.name;
-      }
-
-      // Determine sort direction
-      return sortDirection === "asc"
-        ? valA > valB
-          ? 1
-          : valA < valB
-            ? -1
-            : 0
-        : valA < valB
-          ? 1
-          : valA > valB
-            ? -1
-            : 0;
-    });
-
+    result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [
-    students,
-    searchTerm,
-    selectedClass,
-    selectedGradeId,
-    selectedStatus,
-    sortField,
-    sortDirection,
-  ]);
+  }, [students, searchTerm, selectedGradeId, selectedStreamId]);
 
-  // Get all available classes and grades for filters
-  const availableClasses = [
-    ...new Set(students.map((student) => student.class)),
-  ];
-  const availableGrades = [
-    ...new Set(students.map((student) => student.grade)),
-  ].sort((a, b) => parseInt(a) - parseInt(b));
+  const gradesWithStudents = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of students) {
+      if (s.gradeId) ids.add(s.gradeId);
+    }
+    return ids.size;
+  }, [students]);
 
-  // Add a mounted state to prevent hydration issues
-  const [isMounted, setIsMounted] = useState(false);
+  const activeCount = students.filter((s) => s.status === "active").length;
+  const inactiveCount = students.length - activeCount;
 
-  useEffect(() => {
-    setIsMounted(true);
+  const handleGradeSelect = useCallback((gradeId: string, levelId: string) => {
+    setSelectedGradeId(gradeId);
+    setSelectedLevelId(levelId);
+    setSelectedStreamId("");
+    setSelectedStudentId(null);
+    setSearchTerm("");
   }, []);
 
-  // Don't render until mounted to prevent hydration issues
-  if (!isMounted) {
+  const handleStreamSelect = useCallback(
+    (streamId: string, gradeId: string, levelId: string) => {
+      setSelectedStreamId(streamId);
+      setSelectedStudentId(null);
+      if (gradeId !== selectedGradeId || levelId !== selectedLevelId) {
+        setSelectedGradeId(gradeId);
+        setSelectedLevelId(levelId);
+      }
+    },
+    [selectedGradeId, selectedLevelId],
+  );
+
+  const clearFilters = useCallback(() => {
+    setSelectedGradeId("");
+    setSelectedLevelId("");
+    setSelectedStreamId("");
+    setSearchTerm("");
+    setSelectedStudentId(null);
+  }, []);
+
+  useEffect(() => {
+    const handle = () => {
+      const w = window.innerWidth;
+      if (w >= 768 && w < 1200) setIsSidebarMinimized(true);
+      else if (w >= 1200) setIsSidebarMinimized(false);
+    };
+    handle();
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, []);
+
+  const pageError = error || configError;
+  const pageLoading = isLoading || configLoading;
+  const isGradeView = !!selectedGradeId && !selectedStudentId;
+  const isOverview = !selectedGradeId && !selectedStudentId;
+
+  const tableTitle = selectedGrade
+    ? selectedGrade.streamName
+      ? `${selectedGrade.displayName} · ${selectedGrade.streamName}`
+      : selectedGrade.displayName
+    : "All students";
+
+  const tableDescription = isOverview
+    ? "Select a row to view student details."
+    : filteredStudents.length === 0
+      ? "No students enrolled in this grade yet."
+      : `${filteredStudents.length} enrolled`;
+
+  const emptyMessage = selectedGradeId
+    ? "No students in this grade yet"
+    : searchTerm
+      ? "No students match your search"
+      : "No students yet";
+
+  if (pageError) {
     return (
-      <div className="flex h-full">
-        <div className="hidden md:flex flex-col w-96 border-r overflow-y-auto p-6 shrink-0 bg-white">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-1">Search Students</h2>
-            <p className="text-sm text-muted-foreground">
-              Find students by name
-            </p>
-          </div>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Student Name
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search by name..."
-                  className="pl-9 h-12 text-base"
-                  disabled
-                />
-              </div>
-            </div>
-          </div>
-          <div className="mt-8">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium">
-                Students <span className="text-muted-foreground">(0)</span>
-              </h3>
-            </div>
-            <div className="space-y-2">
-              <div className="text-center py-8 text-muted-foreground">
-                Loading students...
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 overflow-auto p-8">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">Loading...</h1>
-            </div>
-          </div>
-          <div className="bg-muted/30 rounded-lg p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <Loader2 className="h-12 w-12 text-muted-foreground animate-spin" />
-            </div>
-            <h2 className="text-2xl font-medium mb-2">
-              Loading student information
-            </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Please wait while we load the student data...
-            </p>
-          </div>
+      <div className="flex h-screen items-center justify-center bg-slate-50/80 dark:bg-slate-950">
+        <div className="rounded-xl border border-red-200 bg-white px-6 py-8 text-center dark:border-red-900 dark:bg-slate-900">
+          <h2 className="mb-1 text-base font-semibold text-red-600">
+            Error loading students
+          </h2>
+          <p className="text-sm text-slate-500">
+            {pageError instanceof Error ? pageError.message : "An error occurred"}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full">
-      {/* Mobile sidebar overlay */}
-      {isMobileSidebarOpen && (
+    <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "md:relative md:translate-x-0",
+          isSidebarMinimized ? "w-14" : "w-64",
+        )}
+      >
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* Search filter column - styled to match theme */}
-      {!isSidebarCollapsed && (
-        <StudentSearchSidebar
-          searchTerm={searchTerm}
-          onSearchChange={(value) => {
-            setSearchTerm(value);
-            setDisplayedStudentsCount(10);
-          }}
-          filteredStudents={filteredAndSortedStudents}
-          selectedStudentId={selectedStudentId}
-          onStudentSelect={setSelectedStudentId}
-          displayedStudentsCount={displayedStudentsCount}
-          onLoadMore={() =>
-            setDisplayedStudentsCount((prev) =>
-              Math.min(prev + 10, filteredAndSortedStudents.length),
-            )
-          }
-          onClearFilters={() => {
-            setSearchTerm("");
-            setSelectedGradeId("all");
-            setDisplayedStudentsCount(10);
-          }}
-          selectedGradeId={selectedGradeId}
-          onCollapse={() => setIsSidebarCollapsed(true)}
-        />
-      )}
-
-      {/* Main content column - Grade Filter and Student Details */}
-      <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
-        {/* Floating toggle button when sidebar is collapsed */}
-        {isSidebarCollapsed && (
-          <div className="absolute top-6 left-6 z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSidebarCollapsed(false)}
-              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
-              title="Show search sidebar"
-            >
+          className={cn(
+            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+            isSidebarMinimized ? "justify-center" : "justify-end",
+          )}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          >
+            {isSidebarMinimized ? (
               <PanelLeftOpen className="h-4 w-4" />
-            </Button>
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+        {!isSidebarMinimized && (
+          <div className="flex-1 overflow-hidden px-3 pb-3">
+            <SchoolSearchFilter
+              className="h-full"
+              variant="minimal"
+              type="grades"
+              onGradeSelect={handleGradeSelect}
+              onStreamSelect={handleStreamSelect}
+              isLoading={pageLoading}
+              selectedGradeId={selectedGradeId}
+              selectedStreamId={selectedStreamId}
+            />
           </div>
         )}
+      </div>
 
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Students</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Sidebar toggle button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
-              title={
-                isSidebarCollapsed
-                  ? "Show search sidebar"
-                  : "Hide search sidebar"
-              }
-            >
-              {isSidebarCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </Button>
-            <CreateStudentDrawer
-              onStudentCreated={(studentName) => {
-                // Refetch students data to ensure search filter updates
-                refetch();
-                // Clear grade and status filters to show the new student
-                setSelectedGradeId("all");
-                setSelectedStatus("");
-                setSelectedClass("");
-                // If student name is provided, search for the new student
-                if (studentName) {
-                  setSearchTerm(studentName);
-                } else {
-                  setSearchTerm("");
-                }
-              }}
-            />
+      {/* Main */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Students
+                </h1>
+                {isOverview && (
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    Browse and enroll students by grade.
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {isSidebarMinimized && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+                    onClick={() => setIsSidebarMinimized(false)}
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                )}
+                {!selectedStudentId && (
+                  <CreateStudentDrawer
+                    defaultOpen={openAddStudent}
+                    onStudentCreated={() => {
+                      refetch();
+                      clearFilters();
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {selectedStudentId ? (
-          <StudentDetailsView
-            studentId={selectedStudentId}
-            onClose={() => setSelectedStudentId(null)}
-            schoolConfig={config}
-          />
-        ) : (
-          // Show grade filter and table
-          <>
-            {/* Expandable Stats Section - Only show when viewing all grades */}
-            {selectedGradeId === "all" && (
-              <div className="mb-8">
-                <div className="border-2 border-primary/20 bg-primary/5 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setShowStats(!showStats)}
-                    className="w-full p-4 flex items-center justify-between hover:bg-primary/10 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <BarChart3 className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-mono font-semibold text-slate-900 dark:text-slate-100">
-                          School Statistics
-                        </h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          View comprehensive school statistics and metrics
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-primary/20 text-primary border border-primary/30 font-mono text-xs">
-                        {students.length} Students
-                      </Badge>
-                      {showStats ? (
-                        <ChevronDown className="w-5 h-5 text-primary" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                  </button>
-
-                  {showStats && (
-                    <div className="border-t-2 border-primary/20 bg-white dark:bg-slate-800 p-6">
-                      <StudentsStats
-                        totalStudents={students.length}
-                        studentsAddedToday={0}
-                        absentToday={0}
-                        presentToday={students.length}
-                        classesWithMarkedRegisters={0}
-                        totalClasses={0}
-                        topPerformingGrade="N/A"
-                        studentsWithScholarships={0}
-                        newAdmissionsThisMonth={0}
-                        feeDefaulters={0}
-                        averageGrade="N/A"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+        <div className="flex-1 overflow-y-auto">
+          <div
+            className={cn(
+              "mx-auto max-w-5xl p-4 sm:p-6",
+              selectedStudentId || selectedGradeId ? "space-y-4" : "space-y-5",
             )}
+          >
+            {selectedStudent ? (
+              <>
+                <StudentsContextBar
+                  gradeName={selectedStudent.grade}
+                  studentName={selectedStudent.name}
+                  admissionNumber={selectedStudent.admissionNumber}
+                  onClear={() => setSelectedStudentId(null)}
+                />
+                <StudentDetailsView
+                  studentId={selectedStudent.id}
+                  onClose={() => setSelectedStudentId(null)}
+                  schoolConfig={config}
+                  embedded
+                />
+              </>
+            ) : (
+              <>
+                {isOverview && (
+                  <>
+                    <ClassesStats
+                      config={config}
+                      isLoading={pageLoading}
+                      studentCount={students.length}
+                      studentsLoading={pageLoading}
+                    />
+                    <StudentsOverviewBar
+                      total={students.length}
+                      active={activeCount}
+                      inactive={inactiveCount}
+                      gradeCount={gradesWithStudents}
+                      isLoading={pageLoading}
+                    />
+                  </>
+                )}
 
-            <GradeFilter
-              selectedGradeId={selectedGradeId}
-              onGradeSelect={setSelectedGradeId}
-            />
+                {selectedGrade && (
+                  <>
+                    <ClassesContextBar
+                      levelName={selectedGrade.levelName}
+                      gradeName={selectedGrade.displayName}
+                      streamName={selectedGrade.streamName}
+                      onClear={clearFilters}
+                      actions={[]}
+                    />
+                    <GradeDetailsView
+                      grade={selectedGrade.grade}
+                      selectedStreamId={selectedStreamId || undefined}
+                      onStreamSelect={(streamId) =>
+                        handleStreamSelect(
+                          streamId,
+                          selectedGrade.grade.id,
+                          selectedGrade.level.id,
+                        )
+                      }
+                    />
+                  </>
+                )}
 
-            {/* Students Table */}
-            <AllGradesStudentsTable
-              students={filteredAndSortedStudents.map((s) => ({
-                id: s.id,
-                name: s.name,
-                session: s.admissionDate, // or use a real session field if available
-                gender: s.gender,
-                dob: s.admissionDate, // or s.dob if available
-                class: s.class,
-                section: s.stream || "-",
-                guardianName: s.contacts?.primaryGuardian || "-",
-                guardianEmail: s.contacts?.guardianEmail || "-",
-                guardianMobile: s.contacts?.guardianPhone || "-",
-                status: s.status,
-              }))}
-              onStudentClick={setSelectedStudentId}
-            />
-          </>
-        )}
+                {searchTerm && isOverview && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                      Search results
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    >
+                      &ldquo;{searchTerm}&rdquo;
+                      <X className="h-3 w-3 text-slate-400" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      Clear search
+                    </button>
+                  </div>
+                )}
+
+                <StudentsTable
+                  students={filteredStudents}
+                  isLoading={pageLoading}
+                  onStudentClick={setSelectedStudentId}
+                  title={tableTitle}
+                  description={tableDescription}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  hideGradeColumn={isGradeView}
+                  emptyMessage={emptyMessage}
+                  showAddAction={filteredStudents.length === 0}
+                />
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

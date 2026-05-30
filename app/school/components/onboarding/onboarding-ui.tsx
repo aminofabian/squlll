@@ -54,61 +54,58 @@ export function OnboardingShell({
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ')
 
-  const progress = Math.round((currentStep / totalSteps) * 100)
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#f4f7f6] dark:bg-slate-950">
+    <div className="min-h-screen flex flex-col bg-slate-50/80 dark:bg-slate-950">
       {/* Top bar */}
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:bg-slate-900/90 dark:border-slate-800">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-[#246a59] to-[#1a4d42] flex items-center justify-center shadow-sm">
               <span className="text-sm font-bold text-white">
                 {subdomain.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                 {schoolLabel}
               </p>
-              <p className="text-[11px] text-slate-500 uppercase tracking-wide">Getting started</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-medium text-slate-500 hidden sm:inline">
-              Step {currentStep} of {totalSteps}
-            </span>
-            <div className="h-2 w-16 sm:w-24 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-[#246a59] transition-all duration-300 ease-out"
-                style={{ width: `${progress}%` }}
-              />
+              <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                Getting started
+              </span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-32">
-        <OnboardingStepper steps={steps} currentStep={currentStep} />
-        <div className="mt-6 sm:mt-8 rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/50 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none overflow-hidden">
+      <main className="flex-1 w-full mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 pb-36">
+        <div className="sticky top-[57px] z-10 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 bg-slate-50/95 backdrop-blur-sm dark:bg-slate-950/95">
+          <OnboardingStepper steps={steps} currentStep={currentStep} />
+        </div>
+        <div className="mt-5 sm:mt-6 max-w-3xl mx-auto rounded-xl border border-slate-200/80 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
           {children}
         </div>
       </main>
 
       <footer className="fixed bottom-0 inset-x-0 z-20 border-t border-slate-200/80 bg-white/95 backdrop-blur-md dark:bg-slate-900/95 dark:border-slate-800">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onBack}
             disabled={currentStep === 1}
-            className="text-slate-600"
+            className="text-slate-600 shrink-0"
           >
             <ChevronLeft className="h-4 w-4 mr-0.5" />
             Back
           </Button>
-          <div className="flex items-center gap-2">
+          <p
+            className="text-[11px] font-medium text-slate-500 tabular-nums sm:text-xs"
+            aria-live="polite"
+          >
+            {currentStep} / {totalSteps}
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
             {showSkip && onSkip && (
               <Button type="button" variant="ghost" size="sm" onClick={onSkip} className="text-slate-500">
                 {skipLabel}
@@ -119,7 +116,7 @@ export function OnboardingShell({
               size="sm"
               onClick={onContinue}
               disabled={isContinueDisabled || isLoading}
-              className="min-w-[120px] max-w-[min(100%,14rem)] rounded-lg bg-[#246a59] hover:bg-[#1a4d42] text-white shadow-sm"
+              className="min-w-[120px] max-w-[min(100%,14rem)] rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
             >
               {isLoading ? (
                 <>
@@ -149,39 +146,67 @@ export function OnboardingStepper({
 }) {
   return (
     <nav aria-label="Setup progress" className="overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
-      <ol className="flex gap-1 min-w-max sm:min-w-0 sm:justify-between">
-        {steps.map((step) => {
+      <ol className="flex min-w-max items-start sm:min-w-0 sm:justify-between">
+        {steps.map((step, index) => {
           const isActive = step.id === currentStep
           const isDone = step.id < currentStep
+          const isLast = index === steps.length - 1
           return (
             <li
               key={step.id}
               className={cn(
-                'flex flex-col items-center flex-1 min-w-[72px] sm:min-w-0 px-1',
-                !isActive && !isDone && 'opacity-50',
+                'flex flex-1 min-w-[88px] items-start sm:min-w-0',
+                !isLast && 'pr-2 sm:pr-0',
               )}
             >
               <div
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors',
-                  isDone && 'bg-[#246a59] text-white',
-                  isActive && 'bg-[#246a59] text-white ring-4 ring-[#246a59]/20',
-                  !isActive && !isDone && 'bg-slate-100 text-slate-500 dark:bg-slate-800',
+                  'flex flex-col items-center flex-1 min-w-0 px-1',
+                  !isActive && !isDone && 'opacity-50',
                 )}
               >
-                {isDone ? <Check className="h-4 w-4" /> : step.id}
+                <div className="flex w-full items-center">
+                  {index > 0 && (
+                    <div
+                      className={cn(
+                        'hidden h-px flex-1 sm:block',
+                        isDone || isActive ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-slate-700',
+                      )}
+                      aria-hidden
+                    />
+                  )}
+                  <div
+                    className={cn(
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
+                      isDone && 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900',
+                      isActive && 'bg-slate-900 text-white ring-4 ring-slate-900/15 dark:bg-slate-100 dark:text-slate-900 dark:ring-slate-100/20',
+                      !isActive && !isDone && 'bg-slate-100 text-slate-500 dark:bg-slate-800',
+                    )}
+                  >
+                    {isDone ? <Check className="h-4 w-4" /> : step.id}
+                  </div>
+                  {!isLast && (
+                    <div
+                      className={cn(
+                        'hidden h-px flex-1 sm:block',
+                        isDone ? 'bg-slate-900 dark:bg-slate-100' : 'bg-slate-200 dark:bg-slate-700',
+                      )}
+                      aria-hidden
+                    />
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    'mt-2 text-[11px] font-medium text-center leading-tight',
+                    isActive ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400',
+                  )}
+                >
+                  {step.name}
+                </span>
+                <span className="text-[10px] text-slate-400 text-center hidden sm:block mt-0.5 max-w-[88px] leading-snug">
+                  {step.description}
+                </span>
               </div>
-              <span
-                className={cn(
-                  'mt-2 text-[11px] font-medium text-center leading-tight',
-                  isActive ? 'text-[#246a59]' : 'text-slate-600 dark:text-slate-400',
-                )}
-              >
-                {step.name}
-              </span>
-              <span className="text-[10px] text-slate-400 text-center hidden sm:block mt-0.5 max-w-[88px] leading-snug">
-                {step.description}
-              </span>
             </li>
           )
         })}
@@ -194,22 +219,48 @@ export function StepIntro({
   icon: Icon,
   title,
   description,
+  compact = false,
 }: {
   icon: React.ComponentType<{ className?: string }>
   title: string
-  description: string
+  description?: string
+  compact?: boolean
 }) {
   return (
-    <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-b from-[#f8fbfb] to-white dark:from-slate-900 dark:to-slate-900">
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#246a59]/10 text-[#246a59]">
-          <Icon className="h-6 w-6" />
+    <div
+      className={cn(
+        'border-b border-slate-100 dark:border-slate-800 bg-gradient-to-b from-[#f8fbfb] to-white dark:from-slate-900 dark:to-slate-900',
+        compact ? 'px-6 sm:px-8 pt-4 pb-3' : 'px-6 sm:px-8 pt-6 sm:pt-8 pb-4',
+      )}
+    >
+      <div className={cn('flex items-start', compact ? 'gap-2.5' : 'gap-4')}>
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-xl bg-[#246a59]/10 text-[#246a59]',
+            compact ? 'h-8 w-8' : 'h-12 w-12',
+          )}
+        >
+          <Icon className={compact ? 'h-3.5 w-3.5' : 'h-6 w-6'} />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50 tracking-tight">
+          <h2
+            className={cn(
+              'font-semibold text-slate-900 dark:text-slate-50 tracking-tight',
+              compact ? 'text-base' : 'text-xl',
+            )}
+          >
             {title}
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{description}</p>
+          {description ? (
+            <p
+              className={cn(
+                'text-slate-500 dark:text-slate-400 leading-relaxed',
+                compact ? 'text-xs mt-0.5' : 'text-sm mt-1',
+              )}
+            >
+              {description}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
@@ -226,13 +277,15 @@ export function PresetOption({
   title,
   subtitle,
   icon: Icon,
+  visual,
   badge,
 }: {
   selected?: boolean
   onClick: () => void
   title: string
   subtitle: string
-  icon: React.ComponentType<{ className?: string }>
+  icon?: React.ComponentType<{ className?: string }>
+  visual?: React.ReactNode
   badge?: string
 }) {
   return (
@@ -252,9 +305,13 @@ export function PresetOption({
           {badge}
         </span>
       )}
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-600 mb-3">
-        <Icon className="h-4 w-4 text-[#246a59]" />
-      </div>
+      {visual ? (
+        visual
+      ) : Icon ? (
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-600 mb-3">
+          <Icon className="h-4 w-4 text-[#246a59]" />
+        </div>
+      ) : null}
       <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</span>
       <span className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">{subtitle}</span>
     </button>

@@ -6,18 +6,17 @@ import {
   Dialog, 
   DialogContent, 
   DialogDescription, 
-  DialogFooter, 
   DialogHeader, 
-  DialogTitle 
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
-import { Loader2, Search, User, Mail, BookOpen, GraduationCap, X } from 'lucide-react'
+import { Loader2, Search, X } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { FormField } from '../classes/components/FormField'
 
 interface Teacher {
   id: string
@@ -71,6 +70,7 @@ export function AssignTeacherModal({
   const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([])
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectionError, setSelectionError] = useState('')
   const queryClient = useQueryClient()
 
   // Fetch teachers when modal opens
@@ -153,11 +153,10 @@ export function AssignTeacherModal({
 
   const handleAssignTeacher = async () => {
     if (!selectedTeacher) {
-      toast.error('Validation Error', {
-        description: 'Please select a teacher to assign',
-      })
+      setSelectionError('Please select a teacher from the list below')
       return
     }
+    setSelectionError('')
 
     setIsAssigning(true)
 
@@ -202,6 +201,7 @@ export function AssignTeacherModal({
       
       // Invalidate and refetch school configuration to show the updated assignment
       await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] })
+      await queryClient.invalidateQueries({ queryKey: ['classTeacherAssignment'] })
       
       onSuccess()
       onClose()
@@ -283,6 +283,7 @@ export function AssignTeacherModal({
       
       // Invalidate and refetch school configuration to show the updated assignment
       await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] })
+      await queryClient.invalidateQueries({ queryKey: ['classTeacherAssignment'] })
       
       onSuccess()
       onClose()
@@ -315,6 +316,7 @@ export function AssignTeacherModal({
   const handleClose = () => {
     setSelectedTeacher(null)
     setSearchTerm('')
+    setSelectionError('')
     onClose()
   }
 
@@ -322,194 +324,208 @@ export function AssignTeacherModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col rounded-none border-2 border-primary/20 bg-white shadow-lg">
-        <DialogHeader>
-          <DialogTitle className="text-slate-800">
-            {currentTeacherId ? 'Manage Class Teacher' : 'Assign Class Teacher'}
+      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden border-slate-200/80 bg-slate-50/50 p-0 sm:max-w-lg dark:border-slate-800 dark:bg-slate-950">
+        <DialogHeader className="border-b border-slate-200/80 bg-white px-5 py-4 text-left dark:border-slate-800 dark:bg-slate-900">
+          <DialogTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            {currentTeacherId ? 'Manage class teacher' : 'Assign class teacher'}
           </DialogTitle>
-          <DialogDescription className="text-slate-600">
+          <DialogDescription className="text-xs text-slate-500">
             {currentTeacherId ? (
-              <div className="space-y-2">
-                <div>Current teacher for <strong>{displayName}</strong>: <strong className="text-primary">{currentTeacherName}</strong></div>
-                <div>Select a different teacher to reassign, click the current teacher to unassign, or click "Unassign Teacher" to remove the assignment.</div>
-              </div>
+              <>
+                Currently assigned:{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {currentTeacherName}
+                </span>
+              </>
             ) : (
-              <div>Select a teacher to assign as class teacher for <strong>{displayName}</strong></div>
+              <>Choose who will be the main teacher for this class.</>
             )}
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex flex-col gap-4 flex-1 min-h-0">
-          {/* Search Input */}
-          <div className="flex items-center gap-3 mb-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 h-4 w-4" />
-              <Input
-                placeholder="Search teachers by name, email, or department..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-2 border-primary/20 rounded-none focus:border-primary focus:ring-0 bg-white text-slate-800 placeholder:text-slate-500"
-              />
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
+          <div className="rounded-lg border border-slate-200/80 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/40">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              Assigning to
+            </p>
+            <p className="mt-0.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+              {displayName}
+            </p>
           </div>
 
-          {/* Teachers List */}
-          <div className="flex-1 min-h-0">
+          <FormField
+            id="teacher-search"
+            label="Find a teacher"
+            hint="Search by name, email, or department"
+            error={selectionError}
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                id="teacher-search"
+                placeholder="Start typing a name..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  if (selectionError) setSelectionError('')
+                }}
+                className="h-9 pl-9 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+              />
+            </div>
+          </FormField>
+
+          <div className="min-h-0 flex-1">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin mr-2 text-primary" />
-                <span className="text-slate-700">Loading teachers...</span>
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
               </div>
             ) : filteredTeachers.length === 0 ? (
-              <div className="text-center py-8 text-slate-600">
+              <p className="py-10 text-center text-xs text-slate-400">
                 {searchTerm ? 'No teachers match your search.' : 'No teachers found.'}
-              </div>
+              </p>
             ) : (
-              <ScrollArea className="h-full">
-                <div className="grid gap-3 pr-4">
+              <ScrollArea className="h-[min(50vh,320px)]">
+                <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
                   {filteredTeachers.map((teacher) => {
                     const isCurrentTeacher = teacher.id === currentTeacherId
                     const isSelected = selectedTeacher?.id === teacher.id
                     const hasActiveAssignments = teacher.classTeacherAssignments.some(assignment => assignment.active)
                     
                     return (
-                    <div 
-                      key={teacher.id}
-                      className={`cursor-pointer transition-all hover:shadow-md border-2 p-4 ${
-                        isSelected 
-                          ? 'ring-2 ring-primary bg-primary/5 border-primary/40' 
-                          : isCurrentTeacher
-                          ? 'bg-amber-50 border-amber-300 hover:bg-amber-100 hover:border-amber-400'
-                          : hasActiveAssignments
-                          ? 'bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300'
-                          : 'border-primary/20 bg-white hover:bg-primary/5 hover:border-primary/40'
-                      }`}
-                      onClick={() => setSelectedTeacher(teacher)}
-                    >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className="flex items-center justify-center w-10 h-10 bg-primary/10 mt-1">
-                              <User className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-slate-800">{teacher.fullName}</div>
-                              <div className="flex items-center gap-1 text-sm text-slate-600 mb-1">
-                                <Mail className="h-3 w-3" />
-                                <span className="truncate">{teacher.email}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-slate-600 mb-2">
-                                <BookOpen className="h-3 w-3" />
-                                {teacher.department}
-                              </div>
-                              {teacher.classTeacherAssignments.some(assignment => assignment.active) && (
-                                <div className="space-y-1">
-                                  <div className="text-xs text-slate-500 font-medium">Current Assignments:</div>
+                      <li key={teacher.id}>
+                        <button
+                          type="button"
+                          className={`w-full px-3 py-2.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 ${
+                            isSelected
+                              ? 'bg-slate-50 dark:bg-slate-800/60'
+                              : ''
+                          }`}
+                          onClick={() => {
+                            setSelectedTeacher(teacher)
+                            setSelectionError('')
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                                {teacher.fullName}
+                              </p>
+                              <p className="truncate text-[11px] text-slate-400">
+                                {teacher.email} · {teacher.department}
+                              </p>
+                              {hasActiveAssignments && (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
                                   {teacher.classTeacherAssignments
                                     .filter(assignment => assignment.active)
                                     .map(assignment => (
-                                      <div key={assignment.id} className="flex items-center gap-1 text-xs">
-                                        <GraduationCap className="h-3 w-3 text-primary" />
-                                        <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                                          {assignment.stream?.stream?.name || assignment.gradeLevel?.gradeLevel?.name || 'Unknown'}
-                                        </Badge>
-                                      </div>
-                                    ))
-                                  }
+                                      <span
+                                        key={assignment.id}
+                                        className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-slate-500 dark:border-slate-700 dark:bg-slate-800"
+                                      >
+                                        {assignment.stream?.stream?.name || assignment.gradeLevel?.gradeLevel?.name || 'Assigned'}
+                                      </span>
+                                    ))}
                                 </div>
                               )}
                             </div>
+                            <div className="flex shrink-0 flex-col gap-1">
+                              {isCurrentTeacher && (
+                                <Badge variant="outline" className="text-[10px] h-5 border-amber-200 bg-amber-50 text-amber-700">
+                                  Current
+                                </Badge>
+                              )}
+                              {isSelected && !isCurrentTeacher && (
+                                <Badge variant="outline" className="text-[10px] h-5">
+                                  Selected
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            {isCurrentTeacher && (
-                              <Badge variant="default" className="bg-amber-600 text-white text-xs">Current</Badge>
-                            )}
-                            {hasActiveAssignments && !isCurrentTeacher && (
-                              <Badge variant="default" className="bg-orange-600 text-white text-xs">Assigned</Badge>
-                            )}
-                            {isSelected && (
-                              <Badge variant="default" className="bg-primary text-white text-xs">Selected</Badge>
-                            )}
-                          </div>
-                        </div>
-                    </div>
+                        </button>
+                      </li>
                     )
                   })}
-                </div>
+                </ul>
               </ScrollArea>
             )}
           </div>
         </div>
 
-        <DialogFooter className="gap-3">
+        <div className="flex flex-col gap-2 border-t border-slate-200/80 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] text-slate-400">
+            {selectedTeacher
+              ? `Selected: ${selectedTeacher.fullName}`
+              : 'Select a teacher to continue'}
+          </p>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
           <Button 
             type="button" 
-            variant="outline" 
+            variant="ghost" 
+            size="sm"
             onClick={handleClose} 
             disabled={isAssigning || isUnassigning}
-            className="border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 rounded-none"
           >
             Cancel
           </Button>
           
-          {/* Show Unassign button when there's a current teacher and no new teacher is selected */}
           {currentTeacherId && !selectedTeacher && (
             <Button 
               type="button" 
-              variant="destructive"
+              variant="outline"
+              size="sm"
               onClick={handleUnassignTeacher} 
               disabled={isAssigning || isUnassigning}
-              className="bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700 rounded-none"
+              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               {isUnassigning ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Unassigning...
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  Removing...
                 </>
               ) : (
                 <>
-                  <X className="mr-2 h-4 w-4" />
-                  Unassign Teacher
+                  <X className="mr-1.5 h-3.5 w-3.5" />
+                  Remove teacher
                 </>
               )}
             </Button>
           )}
           
-          {/* Show Assign/Unassign button when a teacher is selected, or when there's no current teacher */}
           {(selectedTeacher || !currentTeacherId) && (
             <Button 
-              type="button" 
+              type="button"
+              size="sm"
               onClick={
                 selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active)
                   ? handleUnassignTeacher 
                   : handleAssignTeacher
               } 
               disabled={(isAssigning || isUnassigning) || (!selectedTeacher && !currentTeacherId)}
-              className={`border-2 rounded-none ${
+              variant={
                 selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active)
-                  ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700'
-                  : 'bg-primary hover:bg-primary/90 text-white border-primary hover:border-primary/90'
-              }`}
+                  ? "outline"
+                  : "default"
+              }
+              className={
+                selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active)
+                  ? "h-9 min-w-[9rem] border-red-200 text-red-600 hover:bg-red-50"
+                  : "h-9 min-w-[9rem]"
+              }
             >
               {(isAssigning || isUnassigning) ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active) ? 'Unassigning...' : 'Assigning...'}
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  {selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active) ? 'Removing...' : 'Assigning...'}
                 </>
               ) : (
-                <>
-                  {selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active) ? (
-                    <>
-                      <X className="mr-2 h-4 w-4" />
-                      Unassign Teacher
-                    </>
-                  ) : (
-                    'Assign Teacher'
-                  )}
-                </>
+                selectedTeacher && selectedTeacher.classTeacherAssignments.some(assignment => assignment.active)
+                  ? 'Remove teacher'
+                  : 'Assign teacher'
               )}
             </Button>
           )}
-        </DialogFooter>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

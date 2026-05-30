@@ -45,139 +45,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// Data for subjects based on Kenyan CBC structure
-const SUBJECT_DATA = {
-  PrePrimary: {
-    grades: ["Baby Class", "PP1", "PP2"],
-    subjects: [
-      "Language Activities",
-      "Mathematical Activities",
-      "Environmental Activities",
-      "Psychomotor and Creative Activities",
-      "Religious Education Activities",
-    ],
-  },
-  Tertiary: {
-    grades: ["Year 1", "Year 2", "Year 3", "Year 4"],
-    subjects: [
-      "University Core Courses",
-      "Major Specific Courses",
-      "Minor/Elective Courses",
-      "Research Methods",
-    ],
-  },
-  Other: {
-    grades: ["Not Specified"],
-    subjects: ["Not Specified"],
-  },
-  LowerPrimary: {
-    grades: ["Grade 1", "Grade 2", "Grade 3"],
-    subjects: [
-      "Literacy",
-      "Kiswahili Language Activities",
-      "English Language Activities",
-      "Indigenous Language Activities",
-      "Mathematical Activities",
-      "Environmental Activities",
-      "Hygiene and Nutrition Activities",
-      "Religious Education Activities",
-      "Movement and Creative Activities",
-    ],
-  },
-  UpperPrimary: {
-    grades: ["Grade 4", "Grade 5", "Grade 6"],
-    subjects: [
-      "English",
-      "Kiswahili",
-      "Mathematics",
-      "Science and Technology",
-      "Agriculture and Nutrition",
-      "Social Studies",
-      "Religious Education (CRE, IRE, HRE)",
-      "Creative Arts",
-      "Physical and Health Education",
-      "Optional Foreign Languages (e.g. French, Arabic, Mandarin)",
-    ],
-  },
-  JuniorSecondary: {
-    grades: ["Grade 7", "Grade 8", "Grade 9"],
-    core_subjects: [
-      "English",
-      "Kiswahili or Kenya Sign Language",
-      "Mathematics",
-      "Integrated Science",
-      "Social Studies",
-      "Agriculture",
-      "Religious Education (CRE, IRE, HRE)",
-      "Health Education",
-      "Life Skills Education",
-      "Pre-Technical and Pre-Career Education",
-      "Sports and Physical Education",
-    ],
-    optional_subjects: [
-      "Visual Arts",
-      "Performing Arts",
-      "Home Science",
-      "Computer Science",
-      "Foreign Languages (German, French, Mandarin, Arabic)",
-      "Indigenous Languages",
-      "Kenyan Sign Language",
-    ],
-  },
-  SeniorSecondary: {
-    grades: ["Grade 10", "Grade 11", "Grade 12"],
-    core_subjects: [
-      "English",
-      "Kiswahili or Kenya Sign Language",
-      "Community Service Learning",
-      "Physical Education",
-    ],
-    pathways: {
-      STEM: [
-        "Mathematics / Advanced Math",
-        "Biology",
-        "Chemistry",
-        "Physics",
-        "General Science",
-        "Agriculture",
-        "Computer Studies",
-        "Home Science",
-        "Drawing and Design",
-        "Aviation Technology",
-        "Building and Construction",
-        "Electrical Technology",
-        "Metal Technology",
-        "Power Mechanics",
-        "Wood Technology",
-        "Media Technology",
-        "Marine and Fisheries Technology",
-      ],
-      SocialSciences: [
-        "Literature in English",
-        "Advanced English",
-        "Indigenous Languages",
-        "Kiswahili Kipevu",
-        "History and Citizenship",
-        "Geography",
-        "Business Studies",
-        "Religious Studies (CRE, IRE, HRE)",
-        "Foreign Languages (French, German, Arabic, Mandarin)",
-        "Kenyan Sign Language",
-      ],
-      ArtsAndSports: [
-        "Music and Dance",
-        "Fine Art",
-        "Theatre and Film",
-        "Sports and Recreation",
-        "Creative Writing",
-      ],
-    },
-  },
-};
-
-type EducationLevelKey = keyof typeof SUBJECT_DATA; // "PrePrimary" | "LowerPrimary" | ...
-
-// Map your existing EducationLevel type to the keys in SUBJECT_DATA
 type EducationLevel =
   | "preschool"
   | "primary"
@@ -185,6 +52,282 @@ type EducationLevel =
   | "senior-secondary"
   | "tertiary"
   | "other";
+
+type SubjectGroup = {
+  label: string;
+  subjects: string[];
+  optional?: boolean;
+};
+
+type SubjectLevelConfig = {
+  label: string;
+  grades: string[];
+  informal?: boolean;
+  groups: SubjectGroup[];
+  pathways?: Record<string, string[]>;
+};
+
+function subjectsFromLevelConfig(config: SubjectLevelConfig): string[] {
+  const fromGroups = config.groups.flatMap((group) => group.subjects);
+  const fromPathways = config.pathways
+    ? Object.values(config.pathways).flat()
+    : [];
+  return Array.from(new Set([...fromGroups, ...fromPathways])).sort();
+}
+
+type SubjectPickerGroup = {
+  label: string;
+  subjects: string[];
+  kind: "core" | "elective" | "pathway";
+};
+
+function getSubjectPickerGroups(level: EducationLevel): SubjectPickerGroup[] {
+  const toPickerGroup = (
+    group: SubjectGroup,
+    prefix?: string,
+  ): SubjectPickerGroup => ({
+    label: prefix ? `${prefix} — ${group.label}` : group.label,
+    subjects: group.subjects,
+    kind: group.optional ? "elective" : "core",
+  });
+
+  if (level === "preschool") {
+    return SUBJECT_DATA.PrePrimary.groups.map((g) => toPickerGroup(g));
+  }
+
+  if (level === "primary") {
+    return [
+      ...SUBJECT_DATA.LowerPrimary.groups.map((g) =>
+        toPickerGroup(g, "Lower primary"),
+      ),
+      ...SUBJECT_DATA.UpperPrimary.groups.map((g) =>
+        toPickerGroup(g, "Upper primary"),
+      ),
+    ];
+  }
+
+  const dataKey = mapEducationLevelToSubjectDataKey(level);
+  if (!dataKey || !SUBJECT_DATA[dataKey]) return [];
+
+  const config = SUBJECT_DATA[dataKey];
+  const groups: SubjectPickerGroup[] = config.groups.map((g) => toPickerGroup(g));
+
+  if (config.pathways) {
+    for (const [pathwayName, subjects] of Object.entries(config.pathways)) {
+      groups.push({
+        label: `${pathwayName} pathway`,
+        subjects,
+        kind: "pathway",
+      });
+    }
+  }
+
+  return groups;
+}
+
+const SUBJECT_GROUP_STYLES: Record<
+  SubjectPickerGroup["kind"],
+  { section: string; chip: string; badge: string }
+> = {
+  core: {
+    section: "border-emerald-200/80 bg-emerald-50/50",
+    chip: "border-emerald-200/70 bg-white hover:bg-emerald-50/80",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  },
+  elective: {
+    section: "border-amber-200/80 bg-amber-50/40",
+    chip: "border-amber-200/70 bg-white hover:bg-amber-50/60",
+    badge: "bg-amber-100 text-amber-800 border-amber-200",
+  },
+  pathway: {
+    section: "border-violet-200/80 bg-violet-50/40",
+    chip: "border-violet-200/70 bg-white hover:bg-violet-50/60",
+    badge: "bg-violet-100 text-violet-800 border-violet-200",
+  },
+};
+
+// Data for subjects based on Kenyan CBC structure.
+// School setup uses backend/src/admin/school-type/config/cbc-curriculum.config.ts — keep both in sync.
+const SUBJECT_DATA: Record<string, SubjectLevelConfig> = {
+  BabyClass: {
+    label: "Baby Class",
+    grades: ["Baby Class"],
+    informal: true,
+    groups: [
+      {
+        label: "Learning areas",
+        subjects: [
+          "Language Activities",
+          "Mathematical Activities",
+          "Environmental Activities",
+          "Psychomotor & Creative Activities",
+          "Religious Education Activities",
+        ],
+      },
+    ],
+  },
+  PrePrimary: {
+    label: "Pre-primary",
+    grades: ["PP1", "PP2"],
+    groups: [
+      {
+        label: "Learning areas",
+        subjects: [
+          "Language Activities",
+          "Mathematical Activities",
+          "Environmental Activities",
+          "Psychomotor & Creative Activities",
+          "Religious Education Activities",
+        ],
+      },
+    ],
+  },
+  LowerPrimary: {
+    label: "Lower primary",
+    grades: ["Grade 1", "Grade 2", "Grade 3"],
+    groups: [
+      {
+        label: "Core",
+        subjects: [
+          "English Language Activities",
+          "Kiswahili Language Activities",
+          "Mathematical Activities",
+          "Environmental Activities",
+          "Hygiene & Nutrition Activities",
+          "Religious Education Activities",
+          "Movement & Creative Activities",
+        ],
+      },
+      {
+        label: "Non-formal",
+        optional: true,
+        subjects: ["Indigenous Language Activities"],
+      },
+    ],
+  },
+  UpperPrimary: {
+    label: "Upper primary",
+    grades: ["Grade 4", "Grade 5", "Grade 6"],
+    groups: [
+      {
+        label: "Core",
+        subjects: [
+          "English",
+          "Kiswahili",
+          "Mathematics",
+          "Science & Technology",
+          "Agriculture & Nutrition",
+          "Social Studies",
+          "Religious Education",
+          "Creative Arts",
+          "Physical & Health Education",
+        ],
+      },
+      {
+        label: "Optional foreign languages",
+        optional: true,
+        subjects: ["French", "Arabic", "Mandarin", "German"],
+      },
+    ],
+  },
+  JuniorSecondary: {
+    label: "Junior secondary",
+    grades: ["Grade 7", "Grade 8", "Grade 9"],
+    groups: [
+      {
+        label: "Core (all mandatory)",
+        subjects: [
+          "English",
+          "Kiswahili / Kenya Sign Language",
+          "Mathematics",
+          "Integrated Science",
+          "Social Studies",
+          "Pre-Technical & Pre-Career Education",
+          "Agriculture",
+          "Religious Education",
+          "Creative Arts & Sports",
+        ],
+      },
+      {
+        label: "Non-formal (not examined)",
+        optional: true,
+        subjects: ["Foreign Languages", "Indigenous Languages"],
+      },
+    ],
+  },
+  SeniorSecondary: {
+    label: "Senior secondary",
+    grades: ["Grade 10", "Grade 11", "Grade 12"],
+    groups: [
+      {
+        label: "Core (all learners)",
+        subjects: [
+          "English",
+          "Kiswahili / Kenya Sign Language",
+          "Community Service Learning",
+          "Physical Education",
+        ],
+      },
+    ],
+    pathways: {
+      STEM: [
+        "Mathematics / Advanced Math",
+        "Biology",
+        "Chemistry",
+        "Physics",
+        "Computer Studies",
+        "Agriculture",
+        "Drawing & Design",
+        "Building & Construction",
+        "Electrical Technology",
+        "Home Science",
+      ],
+      "Social Sciences": [
+        "Literature in English",
+        "History & Citizenship",
+        "Geography",
+        "Business Studies",
+        "Religious Studies",
+        "Foreign Languages",
+        "Kiswahili Kipevu",
+      ],
+      "Arts & Sports": [
+        "Music & Dance",
+        "Fine Art",
+        "Theatre & Film",
+        "Sports & Recreation",
+        "Creative Writing",
+      ],
+    },
+  },
+  Tertiary: {
+    label: "Tertiary",
+    grades: ["University", "TVET"],
+    groups: [
+      {
+        label: "Varies by institution",
+        subjects: [
+          "Core Courses",
+          "Major Courses",
+          "Elective Courses",
+          "Research Methods",
+        ],
+      },
+    ],
+  },
+  Other: {
+    label: "Other / not specified",
+    grades: [],
+    groups: [
+      {
+        label: "",
+        subjects: ["Not specified"],
+      },
+    ],
+  },
+};
+
+type EducationLevelKey = keyof typeof SUBJECT_DATA; // "PrePrimary" | "LowerPrimary" | ...
 
 const mapEducationLevelToSubjectDataKey = (
   level: EducationLevel,
@@ -301,7 +444,13 @@ export function CreateClassDrawer({
   const selectedGrade = form.watch("grade"); // Watch the grade as well
 
   const getGradesForLevel = (level: EducationLevel): string[] => {
-    // Special case for primary to include both lower and upper primary grades
+    if (level === "preschool") {
+      return [
+        ...SUBJECT_DATA["BabyClass"].grades,
+        ...SUBJECT_DATA["PrePrimary"].grades,
+      ];
+    }
+
     if (level === "primary") {
       return [
         ...SUBJECT_DATA["LowerPrimary"].grades,
@@ -312,11 +461,7 @@ export function CreateClassDrawer({
     const dataKey = mapEducationLevelToSubjectDataKey(level);
     if (!dataKey) return [];
 
-    const levelData = SUBJECT_DATA[dataKey];
-    if (levelData && "grades" in levelData) {
-      return (levelData as any).grades;
-    }
-    return [];
+    return SUBJECT_DATA[dataKey]?.grades ?? [];
   };
 
   const availableGrades = useMemo(() => {
@@ -325,63 +470,31 @@ export function CreateClassDrawer({
 
   // Determine subjects based on selected level and possibly grade
   const getDefaultSubjects = (): string[] => {
-    // Special case for primary to include both Lower and Upper Primary subjects
+    if (selectedEducationLevel === "preschool") {
+      return subjectsFromLevelConfig(SUBJECT_DATA["PrePrimary"]);
+    }
+
     if (selectedEducationLevel === "primary") {
-      let subjects = [
-        ...SUBJECT_DATA["LowerPrimary"].subjects,
-        ...SUBJECT_DATA["UpperPrimary"].subjects,
-      ];
-      // Remove duplicates and sort
-      return Array.from(new Set(subjects)).sort();
+      return Array.from(
+        new Set([
+          ...subjectsFromLevelConfig(SUBJECT_DATA["LowerPrimary"]),
+          ...subjectsFromLevelConfig(SUBJECT_DATA["UpperPrimary"]),
+        ]),
+      ).sort();
     }
 
     const dataKey = mapEducationLevelToSubjectDataKey(selectedEducationLevel);
     if (!dataKey) return [];
 
     const levelData = SUBJECT_DATA[dataKey];
-
-    if (levelData) {
-      if ("subjects" in levelData && Array.isArray(levelData.subjects)) {
-        return levelData.subjects;
-      }
-      if (
-        ("core_subjects" in levelData &&
-          Array.isArray(levelData.core_subjects)) ||
-        ("pathways" in levelData && typeof levelData.pathways === "object")
-      ) {
-        let subjects: string[] = [];
-        if (
-          "core_subjects" in levelData &&
-          Array.isArray(levelData.core_subjects)
-        ) {
-          subjects = [...levelData.core_subjects];
-        }
-        if (
-          selectedEducationLevel === "junior-secondary" &&
-          "optional_subjects" in levelData &&
-          Array.isArray(levelData.optional_subjects)
-        ) {
-          subjects = [...subjects, ...levelData.optional_subjects];
-        }
-        if (
-          selectedEducationLevel === "senior-secondary" &&
-          "pathways" in levelData
-        ) {
-          // Flatten all subjects from pathways for selection
-          Object.values(levelData.pathways).forEach((pathSubjects) => {
-            if (Array.isArray(pathSubjects)) {
-              subjects = [...subjects, ...pathSubjects];
-            }
-          });
-        }
-        // Remove duplicates and sort
-        return Array.from(new Set(subjects)).sort();
-      }
-    }
-    return [];
+    return levelData ? subjectsFromLevelConfig(levelData) : [];
   };
 
   const defaultSubjects = getDefaultSubjects();
+  const subjectPickerGroups = useMemo(
+    () => getSubjectPickerGroups(selectedEducationLevel),
+    [selectedEducationLevel],
+  );
 
   // Reset selected subjects when education level changes
   useEffect(() => {
@@ -785,10 +898,10 @@ export function CreateClassDrawer({
                     render={({ field }) => (
                       <FormItem>
                         <FormDescription>
-                          Select default subjects or add custom ones for this
-                          class.
+                          Core subjects are required; elective and pathway
+                          subjects are optional for this class.
                         </FormDescription>
-                        <div className="mb-3">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
                           <Button
                             type="button"
                             onClick={() => handleSelectAllSubjects(field)}
@@ -797,36 +910,70 @@ export function CreateClassDrawer({
                             className="border-indigo-200 hover:bg-indigo-50 text-indigo-700"
                           >
                             <Book className="h-4 w-4 mr-1" />
-                            Select All Subjects
+                            Select all
                           </Button>
+                          <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800">
+                            Core
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                            Elective
+                          </span>
+                          <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-800">
+                            Pathway
+                          </span>
                         </div>
-                        <div className="flex flex-wrap gap-2 py-2">
-                          {defaultSubjects.map((subject) => (
-                            <div
-                              key={subject}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`subject-${subject}`}
-                                checked={field.value.includes(subject)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, subject])
-                                    : field.onChange(
-                                        field.value.filter(
-                                          (value) => value !== subject,
-                                        ),
-                                      );
-                                }}
-                              />
-                              <label
-                                htmlFor={`subject-${subject}`}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        <div className="space-y-3 py-1">
+                          {subjectPickerGroups.map((group) => {
+                            const styles = SUBJECT_GROUP_STYLES[group.kind];
+                            return (
+                              <div
+                                key={group.label}
+                                className={`rounded-lg border p-3 ${styles.section}`}
                               >
-                                {subject}
-                              </label>
-                            </div>
-                          ))}
+                                <div className="mb-2 flex items-center justify-between gap-2">
+                                  <p className="text-xs font-semibold text-slate-700">
+                                    {group.label}
+                                  </p>
+                                  <span
+                                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium capitalize ${styles.badge}`}
+                                  >
+                                    {group.kind === "elective"
+                                      ? "Optional"
+                                      : group.kind}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {group.subjects.map((subject) => {
+                                    const checked = field.value.includes(subject);
+                                    return (
+                                      <label
+                                        key={subject}
+                                        htmlFor={`subject-${subject}`}
+                                        className={`flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors ${styles.chip} ${checked ? "ring-1 ring-[#246a59]/40" : ""}`}
+                                      >
+                                        <Checkbox
+                                          id={`subject-${subject}`}
+                                          checked={checked}
+                                          onCheckedChange={(isChecked) => {
+                                            field.onChange(
+                                              isChecked
+                                                ? [...field.value, subject]
+                                                : field.value.filter(
+                                                    (v: string) => v !== subject,
+                                                  ),
+                                            );
+                                          }}
+                                        />
+                                        <span className="leading-tight">
+                                          {subject}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
 
                         <div className="flex items-center space-x-2 mt-2">
@@ -852,21 +999,29 @@ export function CreateClassDrawer({
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {field.value.map((subject: string) => (
-                            <Badge
-                              key={subject}
-                              variant="secondary"
-                              className="flex items-center gap-1"
-                            >
-                              {subject}
-                              <X
-                                className="h-3 w-3 cursor-pointer"
-                                onClick={() =>
-                                  handleRemoveSubject(subject, field)
-                                }
-                              />
-                            </Badge>
-                          ))}
+                          {field.value.map((subject: string) => {
+                            const groupKind =
+                              subjectPickerGroups.find((g) =>
+                                g.subjects.includes(subject),
+                              )?.kind ?? "core";
+                            const badgeStyle =
+                              SUBJECT_GROUP_STYLES[groupKind].badge;
+                            return (
+                              <Badge
+                                key={subject}
+                                variant="outline"
+                                className={`flex items-center gap-1 ${badgeStyle}`}
+                              >
+                                {subject}
+                                <X
+                                  className="h-3 w-3 cursor-pointer"
+                                  onClick={() =>
+                                    handleRemoveSubject(subject, field)
+                                  }
+                                />
+                              </Badge>
+                            );
+                          })}
                         </div>
                         <FormMessage />
                       </FormItem>

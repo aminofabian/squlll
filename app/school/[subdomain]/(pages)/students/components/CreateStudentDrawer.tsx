@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -93,10 +93,14 @@ type StudentFormData = z.infer<typeof studentFormSchema>
 interface CreateStudentDrawerProps {
   onStudentCreated: (studentName?: string) => void
   onStudentCreatedWithId?: (studentId: string, studentName?: string) => void
+  defaultOpen?: boolean
 }
 
-export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerProps) {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+export function CreateStudentDrawer({
+  onStudentCreated,
+  defaultOpen = false,
+}: CreateStudentDrawerProps) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(defaultOpen)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successData, setSuccessData] = useState<{
     user: { id: string; email: string; name: string }
@@ -106,6 +110,12 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
   const { data: schoolConfig } = useSchoolConfig()
   const { data: gradeLevelsForSchoolType, isLoading: gradesLoading } = useGradeLevelsForSchoolType()
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (defaultOpen) {
+      setIsDrawerOpen(true)
+    }
+  }, [defaultOpen])
   
   // Create student mutation
   const createStudentMutation = useMutation({
@@ -358,13 +368,13 @@ export function CreateStudentDrawer({ onStudentCreated }: CreateStudentDrawerPro
     <>
     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
-        <Button 
-          variant="default" 
-          className="flex items-center gap-2 font-mono"
+        <Button
+          size="sm"
+          className="flex items-center gap-1.5 bg-[#246a59] hover:bg-[#1a4d42]"
           disabled={createStudentMutation.isPending || gradesLoading}
         >
-          <UserPlus className="h-4 w-4" />
-          {gradesLoading ? 'Loading Grades...' : 'Add New Student'}
+          <UserPlus className="h-3.5 w-3.5" />
+          {gradesLoading ? "Loading…" : "Add student"}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-full w-full md:w-1/2 bg-white dark:bg-slate-900 flex flex-col" data-vaul-drawer-direction="right">

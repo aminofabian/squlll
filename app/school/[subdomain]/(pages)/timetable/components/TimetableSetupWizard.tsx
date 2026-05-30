@@ -3,31 +3,23 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
-  Calendar,
   Clock,
   Coffee,
   GraduationCap,
-  LayoutGrid,
   CheckCircle2,
-  AlertCircle,
-  ChevronDown,
   Plus,
   Trash2,
 } from "lucide-react";
 import { useGradeLevelsForSchoolType } from "@/lib/hooks/useGradeLevelsForSchoolType";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
-import { useCurrentAcademicYear } from "@/lib/hooks/useAcademicYears";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   OnboardingShell,
   StepIntro,
   StepBody,
-  PresetOption,
-  FieldGroup,
   onboardingInputClass,
 } from "@/app/school/components/onboarding/onboarding-ui";
 import { getTenantIdFromCookies } from "@/lib/utils/school-onboarding";
@@ -61,9 +53,9 @@ const WIZARD_STEPS = [
 const TOTAL_STEPS = WIZARD_STEPS.length;
 
 const START_OPTIONS = [
-  { value: "07:30", label: "7:30 in the morning" },
-  { value: "08:00", label: "8:00 in the morning" },
-  { value: "08:30", label: "8:30 in the morning" },
+  { value: "07:30", label: "7:30 AM" },
+  { value: "08:00", label: "8:00 AM" },
+  { value: "08:30", label: "8:30 AM" },
 ] as const;
 
 const LESSON_LENGTH_OPTIONS = [
@@ -123,24 +115,6 @@ type BreakOption = {
   badge?: string;
 };
 
-const BREAK_MODE_LABELS: Record<BreakMode, string> = {
-  "full-day": "Assembly, short break, and lunch",
-  "full-with-games": "Assembly, breaks, lunch, and games",
-  "lunch-short": "Short break and lunch",
-  lunch: "Lunch (40 minutes)",
-  "long-lunch": "Long lunch (60 minutes)",
-  "tea-and-lunch": "Tea break and lunch",
-  "recess-and-lunch": "Recess and lunch",
-  "long-morning": "Long morning break (no lunch)",
-  "assembly-lunch": "Assembly and lunch",
-  "games-only": "Games / sports block only",
-  "games-long": "Long games / sports session",
-  "lunch-games": "Lunch and games",
-  "short-only": "Short break only (no lunch)",
-  none: "No breaks yet",
-  custom: "Custom breaks",
-};
-
 /** Shown inside collapsed “preset” section — not the main flow. */
 const QUICK_PRESET_OPTIONS: BreakOption[] = [
   {
@@ -167,21 +141,21 @@ const QUICK_PRESET_OPTIONS: BreakOption[] = [
     subtitle: "Add lessons only for now",
     emoji: "📚",
   },
+  {
+    mode: "custom",
+    title: "Build my own",
+    subtitle: "Add and place each break yourself",
+    emoji: "✏️",
+  },
 ];
 
-function formatCustomBreaksSummary(breaks: TimetableBreakDraft[]): string {
-  if (breaks.length === 0) return "No breaks";
-  return breaks
-    .map((b) => {
-      const name = b.label.trim() || defaultLabelForBreakType(b.type);
-      const when =
-        b.afterPeriod === 0
-          ? "before lesson 1"
-          : `after lesson ${b.afterPeriod}`;
-      return `${name} (${b.durationMinutes} min, ${when})`;
-    })
-    .join("; ");
-}
+const BREAK_TYPE_CHIPS = [
+  "ASSEMBLY",
+  "SHORT_BREAK",
+  "LUNCH",
+  "GAMES_BREAK",
+  TIMETABLE_BREAK_TYPE_CUSTOM,
+] as const;
 
 function formatTimeFriendly(hhmm: string): string {
   const [h, m] = hhmm.split(":").map(Number);
@@ -189,6 +163,165 @@ function formatTimeFriendly(hhmm: string): string {
   const ap = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 || 12;
   return `${h12}:${String(m).padStart(2, "0")} ${ap}`;
+}
+
+function wizardChipClass(selected: boolean) {
+  return cn(
+    "shrink-0 rounded-lg border px-2.5 py-1.5 text-sm font-medium transition-colors",
+    selected
+      ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+  );
+}
+
+function WizardQuestion({
+  number,
+  title,
+  hint,
+  children,
+}: {
+  number: number;
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={`wizard-q-${number}-title`}
+      className="rounded-xl border border-slate-200/70 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40 sm:p-4"
+    >
+      <div className="mb-3 flex items-start gap-2.5">
+        <span
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          aria-hidden
+        >
+          {number}
+        </span>
+        <div className="min-w-0">
+          <h3
+            id={`wizard-q-${number}-title`}
+            className="text-sm font-medium text-slate-900 dark:text-slate-100"
+          >
+            {title}
+          </h3>
+          {hint ? (
+            <p className="mt-0.5 text-xs text-slate-400">{hint}</p>
+          ) : null}
+        </div>
+      </div>
+      <div className="space-y-2.5">{children}</div>
+    </section>
+  );
+}
+
+function FieldRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function SchoolDayPreview({
+  startFriendly,
+  dayEndFriendly,
+  periodCountNum,
+  periodDurationNum,
+  weekLabel,
+}: {
+  startFriendly: string;
+  dayEndFriendly: string;
+  periodCountNum: number;
+  periodDurationNum: number;
+  weekLabel: string;
+}) {
+  return (
+    <div className="border-b border-slate-200/80 bg-slate-50/80 px-6 py-2.5 dark:border-slate-800 dark:bg-slate-900/50 sm:px-8">
+      <p className="text-sm text-slate-600 dark:text-slate-300">
+        <span className="font-medium">{startFriendly} → {dayEndFriendly}</span>
+        <span className="text-slate-400 dark:text-slate-500">
+          {" "}
+          · {periodCountNum}×{periodDurationNum} min · {weekLabel}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function BreakDayPreview({
+  dayPreview,
+}: {
+  dayPreview: ReturnType<typeof buildDayTimelinePreview>;
+}) {
+  return (
+    <div className="border-b border-slate-200/80 bg-slate-50/80 px-6 py-2.5 dark:border-slate-800 dark:bg-slate-900/50 sm:px-8">
+      {dayPreview.length === 0 ? (
+        <p className="text-sm text-slate-500">Lessons only</p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {dayPreview.map((row, i) =>
+            row.kind === "period" ? (
+              <span
+                key={`p-${i}`}
+                className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              >
+                Lesson {row.period}
+              </span>
+            ) : (
+              <span
+                key={`b-${i}`}
+                className="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100"
+                title={`${row.durationMinutes} min`}
+              >
+                {row.icon} {row.label}
+              </span>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClassesSummaryPreview({
+  startFriendly,
+  dayEndFriendly,
+  periodCountNum,
+  periodDurationNum,
+  weekLabel,
+  selectedCount,
+  totalCount,
+}: {
+  startFriendly: string;
+  dayEndFriendly: string;
+  periodCountNum: number;
+  periodDurationNum: number;
+  weekLabel: string;
+  selectedCount: number;
+  totalCount: number;
+}) {
+  return (
+    <div className="border-b border-slate-200/80 bg-slate-50/80 px-6 py-2.5 dark:border-slate-800 dark:bg-slate-900/50 sm:px-8">
+      <p className="text-sm text-slate-600 dark:text-slate-300">
+        <span className="font-medium">{startFriendly} → {dayEndFriendly}</span>
+        <span className="text-slate-400 dark:text-slate-500">
+          {" "}
+          · {periodCountNum}×{periodDurationNum} min · {weekLabel}
+        </span>
+        <span className="text-slate-400 dark:text-slate-500">
+          {" "}
+          · {selectedCount}/{totalCount} selected
+        </span>
+      </p>
+    </div>
+  );
 }
 
 function lunchAfterPeriod(periodCount: number): number {
@@ -354,42 +487,22 @@ export interface TimetableSetupWizardProps {
   onComplete: () => void | Promise<void>;
   onFailed?: (message: string) => void | Promise<void>;
   onSkip: () => void;
-  onOpenAcademicYear: () => void;
-  onOpenCreateTerm: () => void;
 }
 
 export function TimetableSetupWizard({
   onComplete,
   onFailed,
   onSkip,
-  onOpenAcademicYear,
-  onOpenCreateTerm,
 }: TimetableSetupWizardProps) {
   const params = useParams();
   const subdomain = (params?.subdomain as string) || "school";
   const { toast } = useToast();
-  const { selectedTerm, hasTerms, termsLoading } = useSelectedTerm();
-  const { academicYears, loading: academicYearsLoading, getActiveAcademicYear } =
-    useCurrentAcademicYear();
-
-  const activeYear = getActiveAcademicYear() ?? academicYears[0] ?? null;
-  const hasAcademicYear = !!activeYear;
-  const hasTerm = !!selectedTerm;
-  const canProceed = hasAcademicYear && hasTerm;
+  const { selectedTerm } = useSelectedTerm();
 
   const { data: gradeLevelsRaw = [], isLoading: gradeLevelsLoading } =
-    useGradeLevelsForSchoolType(canProceed);
+    useGradeLevelsForSchoolType(true);
 
-  const defaultTemplateName = useMemo(() => {
-    if (!selectedTerm || !activeYear) return "School Timetable";
-    const yearMatch = activeYear.name.match(/\d{4}/);
-    const year = yearMatch ? yearMatch[0] : "";
-    const termName = selectedTerm.name
-      .split(" ")
-      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
-    return `${termName} Timetable ${year}`.trim();
-  }, [selectedTerm, activeYear]);
+  const defaultTemplateName = "School Timetable";
 
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -407,9 +520,7 @@ export function TimetableSetupWizard({
   const [activeWeekdays, setActiveWeekdays] = useState<Set<number>>(
     () => new Set([1, 2, 3, 4, 5]),
   );
-  const [showOtherStartTime, setShowOtherStartTime] = useState(false);
   const [showPickDays, setShowPickDays] = useState(false);
-  const [breaksStepInitialized, setBreaksStepInitialized] = useState(false);
   const breaksListEndRef = useRef<HTMLDivElement>(null);
 
   const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
@@ -516,6 +627,7 @@ export function TimetableSetupWizard({
     id: string,
     patch: Partial<TimetableBreakDraft>,
   ) => {
+    setBreakMode("custom");
     setBreaks((prev) =>
       prev.map((b) => (b.id === id ? { ...b, ...patch } : b)),
     );
@@ -560,16 +672,9 @@ export function TimetableSetupWizard({
     });
   };
 
-  useEffect(() => {
-    if (step === 2 && !breaksStepInitialized) {
-      setBreaksStepInitialized(true);
-      selectBreakMode("custom");
-    }
-  }, [step, breaksStepInitialized]);
-
   const applyWeekPreset = (days: number[]) => {
     setActiveWeekdays(new Set(days));
-    if (days.length === 5 && days[0] === 1) setShowPickDays(false);
+    setShowPickDays(false);
   };
 
   const toggleWeekday = (dayNum: number) => {
@@ -592,7 +697,6 @@ export function TimetableSetupWizard({
   };
 
   const validateStep = (): string | null => {
-    if (!canProceed) return "Add your school year and term first";
     if (step === 1) {
       if (!parsePositiveInt(periodCount) || parsePositiveInt(periodCount)! > 20)
         return "Pick how many lessons fit in one day";
@@ -645,7 +749,10 @@ export function TimetableSetupWizard({
 
     const termId = selectedTerm?.id;
     if (!termId) {
-      toast({ title: "Pick a term first", variant: "destructive" });
+      toast({
+        title: "Pick a term in the top bar first",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -705,688 +812,232 @@ export function TimetableSetupWizard({
     if (step > 1) setStep((s) => s - 1);
   };
 
-  const breakModeLabel =
-    breakMode === "custom"
-      ? formatCustomBreaksSummary(breaks)
-      : BREAK_MODE_LABELS[breakMode];
+  const renderBreakCard = (b: TimetableBreakDraft, index: number) => {
+    const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
+    const displayName =
+      b.label.trim() ||
+      getWizardBreakTypeOption(b.type)?.label ||
+      "Break";
 
-  const renderPlacementPills = (
-    breakId: string,
-    afterPeriod: number,
-  ) => (
-    <div className="flex flex-wrap gap-1">
-      <button
-        type="button"
-        onClick={() => updateBreakDraft(breakId, { afterPeriod: 0 })}
-        className={cn(
-          "rounded-md px-2 py-1 text-[11px] font-medium border transition-colors",
-          afterPeriod === 0
-            ? "border-[#246a59] bg-[#246a59] text-white"
-            : "border-slate-200 text-slate-600 hover:border-[#246a59]/50 dark:border-slate-600",
-        )}
+    return (
+      <li
+        key={b.id}
+        className="rounded-xl border border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-700/80 dark:bg-slate-900/30"
       >
-        Before L1
-      </button>
-      {Array.from({ length: periodCountNum }, (_, i) => i + 1).map((lesson) => (
-        <button
-          key={lesson}
-          type="button"
-          onClick={() =>
-            updateBreakDraft(breakId, { afterPeriod: lesson })
-          }
-          className={cn(
-            "rounded-md px-2 py-1 text-[11px] font-medium border transition-colors",
-            afterPeriod === lesson
-              ? "border-[#246a59] bg-[#246a59] text-white"
-              : "border-slate-200 text-slate-600 hover:border-[#246a59]/50 dark:border-slate-600",
-          )}
-        >
-          After L{lesson}
-        </button>
-      ))}
-    </div>
-  );
-
-  const renderBreaksStep = () => (
-    <div className="space-y-4">
-      {breakMode === "none" ? (
-        <p className="text-sm text-slate-500 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40">
-          No breaks for now. You can add them later from the timetable.
-        </p>
-      ) : (
-        <>
-          <ul className="space-y-4">
-            {breaks.map((b, index) => {
-              const selectedType = getWizardBreakTypeOption(b.type);
-              const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
-              const displayName =
-                b.label.trim() ||
-                selectedType?.label ||
-                "Break";
-              const presetBreakTypes = TIMETABLE_WIZARD_BREAK_TYPE_OPTIONS.filter(
-                (t) => t.value !== TIMETABLE_BREAK_TYPE_CUSTOM,
-              );
-
-              return (
-                <li
-                  key={b.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 space-y-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[#246a59]">
-                      Break {index + 1}
-                    </p>
-                    {breaks.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-slate-400 hover:text-red-600"
-                        onClick={() => removeCustomBreakRow(b.id)}
-                        aria-label={`Remove ${displayName}`}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label
-                        htmlFor={`break-type-${b.id}`}
-                        className="text-xs text-slate-500"
-                      >
-                        Break type
-                      </Label>
-                      <div className="relative">
-                        <span
-                          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base"
-                          aria-hidden
-                        >
-                          {b.icon}
-                        </span>
-                        <select
-                          id={`break-type-${b.id}`}
-                          value={b.type}
-                          onChange={(e) =>
-                            onCustomBreakTypeChange(b.id, e.target.value)
-                          }
-                          className={cn(
-                            onboardingInputClass,
-                            "h-10 w-full cursor-pointer appearance-none pl-9 pr-9",
-                          )}
-                        >
-                          <optgroup label="Choose a break">
-                            {presetBreakTypes.map((t) => (
-                              <option key={t.value} value={t.value}>
-                                {t.label}
-                              </option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="Custom">
-                            <option value={TIMETABLE_BREAK_TYPE_CUSTOM}>
-                              Other — type your own name
-                            </option>
-                          </optgroup>
-                        </select>
-                        <ChevronDown
-                          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                          aria-hidden
-                        />
-                      </div>
-                    </div>
-
-                    {isCustomType && (
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor={`break-custom-name-${b.id}`}
-                          className="text-xs text-slate-500"
-                        >
-                          Custom name
-                        </Label>
-                        <Input
-                          id={`break-custom-name-${b.id}`}
-                          value={b.label}
-                          onChange={(e) =>
-                            updateBreakDraft(b.id, {
-                              label: e.target.value,
-                            })
-                          }
-                          placeholder="e.g. Prayer time, Staff briefing, Dinner"
-                          className={cn(onboardingInputClass, "h-10")}
-                        />
-                      </div>
-                    )}
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-slate-500">
-                        Duration
-                      </Label>
-                      <div className="flex items-center gap-1.5">
-                        <Input
-                          type="number"
-                          min={1}
-                          max={240}
-                          inputMode="numeric"
-                          value={b.durationMinutes}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/\D/g, "");
-                            updateBreakDraft(b.id, {
-                              durationMinutes: raw,
-                            });
-                          }}
-                          className={cn(onboardingInputClass, "h-10 w-20")}
-                          aria-label={`${displayName} duration in minutes`}
-                        />
-                        <span className="text-sm text-slate-500">min</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                      <p className="text-xs font-medium text-slate-500">
-                        Place on the day
-                      </p>
-                      {renderPlacementPills(b.id, b.afterPeriod)}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-
-          <button
-            type="button"
-            onClick={addAnotherBreak}
-            className="sticky bottom-0 z-10 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#246a59]/40 bg-white/95 px-4 py-4 text-sm font-medium text-[#246a59] shadow-sm backdrop-blur-sm transition-colors hover:border-[#246a59] hover:bg-[#246a59]/5 dark:bg-slate-900/95 dark:border-[#246a59]/50"
-          >
-            <Plus className="h-5 w-5" />
-            Add another break
-          </button>
-          <div ref={breaksListEndRef} className="h-px" aria-hidden />
-        </>
-      )}
-
-      {dayPreview.length > 0 && (
-        <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 px-3 py-3">
-          <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-            Your day at a glance
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            Break {index + 1}
+            <span className="font-normal text-slate-400"> · {displayName}</span>
           </p>
-          <div className="flex flex-wrap gap-1.5">
-            {dayPreview.map((row, i) =>
-              row.kind === "period" ? (
-                <span
-                  key={`p-${i}`}
-                  className="rounded-md bg-white border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-700 dark:bg-slate-900 dark:border-slate-600"
-                >
-                  L{row.period}
-                </span>
-              ) : (
-                <span
-                  key={`b-${i}`}
-                  className="rounded-md bg-amber-100 border border-amber-200 px-2 py-1 text-[11px] font-medium text-amber-900 dark:bg-amber-950/50 dark:border-amber-800 dark:text-amber-100"
-                  title={`${row.durationMinutes} min`}
-                >
-                  {row.icon} {row.label}
-                </span>
-              ),
+          {breaks.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+              onClick={() => removeCustomBreakRow(b.id)}
+              aria-label={`Remove ${displayName}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <FieldRow label="Type">
+            <div className="flex flex-wrap gap-2">
+              {BREAK_TYPE_CHIPS.map((typeValue) => {
+                const opt = getWizardBreakTypeOption(typeValue);
+                if (!opt) return null;
+                const shortLabel =
+                  typeValue === TIMETABLE_BREAK_TYPE_CUSTOM
+                    ? "Other"
+                    : opt.label.replace(" break", "").replace(" / sports", "");
+                return (
+                  <button
+                    key={typeValue}
+                    type="button"
+                    onClick={() => onCustomBreakTypeChange(b.id, typeValue)}
+                    className={wizardChipClass(b.type === typeValue)}
+                  >
+                    {opt.icon} {shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+            {isCustomType && (
+              <Input
+                id={`break-custom-name-${b.id}`}
+                value={b.label}
+                onChange={(e) =>
+                  updateBreakDraft(b.id, { label: e.target.value })
+                }
+                placeholder="Name this break"
+                className={cn(onboardingInputClass, "mt-2 h-9 max-w-xs")}
+              />
             )}
+          </FieldRow>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FieldRow label="Duration">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <Input
+                  type="number"
+                  min={1}
+                  max={240}
+                  inputMode="numeric"
+                  value={b.durationMinutes}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "");
+                    updateBreakDraft(b.id, { durationMinutes: raw });
+                  }}
+                  className={cn(onboardingInputClass, "h-9 w-16 px-2 text-sm")}
+                  aria-label={`${displayName} duration in minutes`}
+                />
+                minutes
+              </label>
+            </FieldRow>
+
+            <FieldRow label="When">
+              <select
+                value={b.afterPeriod}
+                onChange={(e) =>
+                  updateBreakDraft(b.id, {
+                    afterPeriod: Number(e.target.value),
+                  })
+                }
+                className={cn(onboardingInputClass, "h-9 w-full max-w-xs text-sm")}
+                aria-label={`When ${displayName} happens`}
+              >
+                <option value={0}>Before lesson 1</option>
+                {Array.from({ length: periodCountNum }, (_, i) => i + 1).map(
+                  (lesson) => (
+                    <option key={lesson} value={lesson}>
+                      After lesson {lesson}
+                    </option>
+                  ),
+                )}
+              </select>
+            </FieldRow>
           </div>
         </div>
-      )}
+      </li>
+    );
+  };
 
-      <details className="group rounded-xl border border-slate-200 dark:border-slate-700">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-slate-600 hover:text-[#246a59] dark:text-slate-400 [&::-webkit-details-marker]:hidden flex items-center justify-between gap-2">
-          <span>Use a preset pattern instead</span>
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
-        </summary>
-        <div className="px-4 pb-4 pt-0 grid gap-2 sm:grid-cols-2">
+  const renderBreaksStep = () => (
+    <div className="space-y-3">
+      <WizardQuestion
+        number={1}
+        title="Break pattern"
+      >
+        <div className="flex flex-wrap gap-2">
           {QUICK_PRESET_OPTIONS.map((opt) => (
             <button
               key={opt.mode}
               type="button"
               onClick={() => selectBreakMode(opt.mode)}
-              className={cn(
-                "rounded-lg border px-3 py-2.5 text-left text-sm transition-colors flex items-center gap-2",
-                breakMode === opt.mode
-                  ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
-                  : "border-slate-200 hover:border-[#246a59]/40 dark:border-slate-700",
-              )}
+              className={wizardChipClass(breakMode === opt.mode)}
+              title={opt.subtitle}
             >
-              <span className="text-lg" aria-hidden>
-                {opt.emoji}
-              </span>
-              <span>
-                <span className="font-medium block">{opt.title}</span>
-                <span className="text-xs text-slate-500">{opt.subtitle}</span>
-              </span>
+              {opt.title}
             </button>
           ))}
         </div>
-      </details>
-    </div>
-  );
+      </WizardQuestion>
 
-  const renderPrerequisites = () => (
-    <div className="px-6 sm:px-8 py-8 space-y-6">
-      <div className="text-center max-w-md mx-auto">
-        <div className="h-14 w-14 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="h-7 w-7 text-amber-600" />
-        </div>
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-50">
-          One quick thing first
-        </h2>
-        <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-          We need to know which term this timetable is for. It only takes a
-          minute.
+      {breakMode === "none" ? (
+        <p className="rounded-xl border border-slate-200/70 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
+          No breaks — add them later from the timetable.
         </p>
-      </div>
-      <div className="space-y-3">
-        <div
-          className={cn(
-            "flex items-center justify-between gap-4 rounded-xl border p-4",
-            hasAcademicYear
-              ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
-              : "border-slate-200 bg-slate-50/80 dark:border-slate-700",
-          )}
+      ) : (
+        <WizardQuestion
+          number={2}
+          title="Adjust breaks"
         >
-          <div className="flex items-center gap-3">
-            {hasAcademicYear ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            ) : (
-              <Calendar className="h-5 w-5 text-[#246a59] shrink-0" />
-            )}
-            <div>
-              <p className="text-sm font-medium">School year</p>
-              <p className="text-xs text-slate-500">
-                {hasAcademicYear
-                  ? activeYear?.name || "Done"
-                  : "Like 2025–2026"}
-              </p>
-            </div>
-          </div>
-          {!hasAcademicYear && (
-            <Button size="sm" onClick={onOpenAcademicYear}>
-              Add year
-            </Button>
-          )}
-        </div>
-        <div
-          className={cn(
-            "flex items-center justify-between gap-4 rounded-xl border p-4",
-            hasTerm
-              ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
-              : "border-slate-200 bg-slate-50/80 dark:border-slate-700",
-          )}
-        >
-          <div className="flex items-center gap-3">
-            {hasTerm ? (
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            ) : (
-              <Calendar className="h-5 w-5 text-[#246a59] shrink-0" />
-            )}
-            <div>
-              <p className="text-sm font-medium">Term</p>
-              <p className="text-xs text-slate-500">
-                {hasTerm
-                  ? selectedTerm?.name
-                  : hasAcademicYear
-                    ? "Like Term 1"
-                    : "Add school year first"}
-              </p>
-            </div>
-          </div>
-          {hasAcademicYear && !hasTerm && termsLoading && (
-            <span className="text-xs text-slate-500 shrink-0">Loading terms…</span>
-          )}
-          {hasAcademicYear && !hasTerm && !termsLoading && !hasTerms && (
-            <Button size="sm" onClick={onOpenCreateTerm}>
-              Add term
-            </Button>
-          )}
-        </div>
-      </div>
+          <ul className="space-y-2.5">{breaks.map(renderBreakCard)}</ul>
+          <button
+            type="button"
+            onClick={addAnotherBreak}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+          >
+            <Plus className="h-4 w-4" />
+            Add another break
+          </button>
+          <div ref={breaksListEndRef} className="h-px" aria-hidden />
+        </WizardQuestion>
+      )}
     </div>
   );
 
-  const renderStepContent = () => {
-    if (!canProceed) return renderPrerequisites();
+  const renderClassesStep = () => {
+    const allScopeKeys = buildDefaultScopeKeys(gradeLevelsWithStreams);
+    const allSelected =
+      allScopeKeys.length > 0 &&
+      allScopeKeys.every((key) => selectedScopeKeys.has(key));
+    const noneSelected = selectedScopeKeys.size === 0;
 
-    switch (step) {
-      case 1:
-        return (
-          <>
-            <StepIntro
-              icon={Clock}
-              title="When does school run?"
-              description="Tap the answers that match your school. You can change them later."
-            />
-            <StepBody className="space-y-7">
-              <FieldGroup label="First lesson starts at">
-                <div className="grid gap-2">
-                  {START_OPTIONS.map((p) => (
-                    <button
-                      key={p.value}
-                      type="button"
-                      onClick={() => {
-                        setStartTime(p.value);
-                        setShowOtherStartTime(false);
-                      }}
-                      className={cn(
-                        "w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors",
-                        startTime === p.value && !showOtherStartTime
-                          ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
-                          : "border-slate-200 text-slate-700 hover:border-[#246a59]/40 dark:border-slate-700",
-                      )}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowOtherStartTime((v) => !v)}
-                  className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#246a59]"
-                >
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 transition-transform",
-                      showOtherStartTime && "rotate-180",
+    return (
+      <div className="space-y-3">
+        <WizardQuestion
+          number={1}
+          title="Select classes"
+        >
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={selectAllScopes}
+              className={wizardChipClass(allSelected)}
+            >
+              All classes
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedScopeKeys(new Set())}
+              className={wizardChipClass(noneSelected)}
+            >
+              None
+            </button>
+          </div>
+
+          {gradeLevelsLoading ? (
+            <p className="py-6 text-center text-sm text-slate-500">
+              Loading classes…
+            </p>
+          ) : gradeLevelsWithStreams.length === 0 ? (
+            <p className="rounded-xl border border-slate-200/70 bg-slate-50/50 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
+              No classes yet — finish school setup first.
+            </p>
+          ) : (
+            <div className="max-h-[min(44vh,380px)] space-y-3 overflow-y-auto pr-1">
+              {gradeLevelsWithStreams.map((gl) => {
+                const gradeName = gl.displayName || gl.name;
+                const items =
+                  gl.streams.length > 0
+                    ? gl.streams.map((s) => ({
+                        key: `${gl.gradeLevelId}:${s.tenantStreamId}`,
+                        label: s.name,
+                      }))
+                    : [{ key: `${gl.gradeLevelId}:`, label: gradeName }];
+
+                return (
+                  <div key={gl.gradeLevelId}>
+                    {gl.streams.length > 0 && (
+                      <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {gradeName}
+                      </p>
                     )}
-                  />
-                  Different time
-                </button>
-                {showOtherStartTime && (
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className={cn(onboardingInputClass, "mt-2 max-w-[160px]")}
-                  />
-                )}
-              </FieldGroup>
-
-              <FieldGroup label="How long is one lesson?">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {LESSON_LENGTH_OPTIONS.map((p) => (
-                    <PresetOption
-                      key={p.value}
-                      selected={periodDuration === p.value}
-                      onClick={() => setPeriodDuration(p.value)}
-                      title={p.label}
-                      subtitle={p.subtitle}
-                      icon={Clock}
-                    />
-                  ))}
-                </div>
-                <div
-                  className={cn(
-                    "mt-2 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
-                    isCustomLessonLength
-                      ? "border-[#246a59] bg-[#246a59]/10"
-                      : "border-slate-200 bg-slate-50/80 dark:border-slate-700",
-                  )}
-                >
-                  <label
-                    htmlFor="custom-lesson-length"
-                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
-                  >
-                    Other length
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="custom-lesson-length"
-                      type="number"
-                      min={1}
-                      max={240}
-                      inputMode="numeric"
-                      value={isCustomLessonLength ? periodDuration : ""}
-                      placeholder="e.g. 35 or 50"
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/\D/g, "");
-                        setPeriodDuration(raw);
-                      }}
-                      onFocus={() => {
-                        if (PRESET_LESSON_LENGTH_VALUES.has(periodDuration)) {
-                          setPeriodDuration("");
-                        }
-                      }}
-                      className={cn(onboardingInputClass, "w-24")}
-                      aria-label="Custom lesson length in minutes"
-                    />
-                    <span className="text-sm text-slate-500">minutes</span>
-                  </div>
-                </div>
-              </FieldGroup>
-
-              <FieldGroup label="How many lessons in one day?">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {LESSONS_PER_DAY_OPTIONS.map((p) => (
-                    <PresetOption
-                      key={p.value}
-                      selected={periodCount === p.value}
-                      onClick={() => setPeriodCount(p.value)}
-                      title={p.label}
-                      subtitle={p.subtitle}
-                      icon={LayoutGrid}
-                    />
-                  ))}
-                </div>
-                <div
-                  className={cn(
-                    "mt-2 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 transition-colors",
-                    isCustomPeriodCount
-                      ? "border-[#246a59] bg-[#246a59]/10"
-                      : "border-slate-200 bg-slate-50/80 dark:border-slate-700",
-                  )}
-                >
-                  <label
-                    htmlFor="custom-lessons-per-day"
-                    className="text-sm font-medium text-slate-700 dark:text-slate-300"
-                  >
-                    Other number
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="custom-lessons-per-day"
-                      type="number"
-                      min={1}
-                      max={20}
-                      inputMode="numeric"
-                      value={isCustomPeriodCount ? periodCount : ""}
-                      placeholder="e.g. 10 or 12"
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/\D/g, "");
-                        setPeriodCount(raw);
-                      }}
-                      onFocus={() => {
-                        if (PRESET_LESSONS_PER_DAY_VALUES.has(periodCount)) {
-                          setPeriodCount("");
-                        }
-                      }}
-                      className={cn(onboardingInputClass, "w-24")}
-                      aria-label="Custom number of lessons per day"
-                    />
-                    <span className="text-sm text-slate-500">lessons</span>
-                  </div>
-                </div>
-              </FieldGroup>
-
-              <FieldGroup label="Which days is school open?">
-                <div className="grid gap-2">
-                  <button
-                    type="button"
-                    onClick={() => applyWeekPreset([1, 2, 3, 4, 5])}
-                    className={cn(
-                      "w-full rounded-xl border px-4 py-3 text-left transition-colors",
-                      activeWeekdays.size === 5 &&
-                        [...activeWeekdays].every((d) => d <= 5) &&
-                        !showPickDays
-                        ? "border-[#246a59] bg-[#246a59]/10"
-                        : "border-slate-200 hover:border-[#246a59]/40 dark:border-slate-700",
-                    )}
-                  >
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                      Monday to Friday
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Most schools use this
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowPickDays(true);
-                      applyWeekPreset([1, 2, 3, 4, 5, 6]);
-                    }}
-                    className={cn(
-                      "w-full rounded-xl border px-4 py-3 text-left transition-colors",
-                      activeWeekdays.size === 6 &&
-                        [...activeWeekdays].every((d) => d <= 6)
-                        ? "border-[#246a59] bg-[#246a59]/10"
-                        : "border-slate-200 hover:border-[#246a59]/40 dark:border-slate-700",
-                    )}
-                  >
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                      Monday to Saturday
-                    </p>
-                    <p className="text-xs text-slate-500 mt-0.5">Six days a week</p>
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPickDays((v) => !v)}
-                  className="mt-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#246a59]"
-                >
-                  <ChevronDown
-                    className={cn(
-                      "h-3.5 w-3.5 transition-transform",
-                      showPickDays && "rotate-180",
-                    )}
-                  />
-                  Pick days myself
-                </button>
-                {showPickDays && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {WEEKDAY_OPTIONS.map(({ n, short }) => {
-                      const checked = activeWeekdays.has(n);
-                      return (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => toggleWeekday(n)}
-                          className={cn(
-                            "min-w-[3.25rem] rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                            checked
-                              ? "border-[#246a59] bg-[#246a59] text-white"
-                              : "border-slate-200 text-slate-600 hover:border-[#246a59]/40 dark:border-slate-700",
-                          )}
-                        >
-                          {short}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                <p className="text-xs text-slate-500 mt-2">{weekLabel}</p>
-              </FieldGroup>
-
-              <div className="rounded-xl border border-[#246a59]/20 bg-[#246a59]/5 px-4 py-3 text-sm leading-relaxed">
-                <p className="text-slate-600 dark:text-slate-400">
-                  Lessons start at{" "}
-                  <strong className="text-[#246a59]">{startFriendly}</strong> and
-                  finish around{" "}
-                  <strong className="text-[#246a59]">{dayEndFriendly}</strong>{" "}
-                  (before lunch and other breaks).
-                </p>
-              </div>
-            </StepBody>
-          </>
-        );
-
-      case 2:
-        return (
-          <>
-            <StepIntro
-              icon={Coffee}
-              title="School breaks"
-              description="Fill in each break from the top. Scroll down and tap + to add another."
-            />
-            <StepBody className="max-h-[min(70vh,640px)] overflow-y-auto pr-0.5 pb-2">
-              {renderBreaksStep()}
-            </StepBody>
-          </>
-        );
-
-      case 3:
-        return (
-          <>
-            <StepIntro
-              icon={GraduationCap}
-              title="Which classes get a timetable?"
-              description="Each ticked class gets the same lesson times. After this, you add subjects to the grid."
-            />
-            <StepBody className="space-y-5">
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/40 px-4 py-3 text-sm space-y-1.5">
-                <p className="font-medium text-slate-800 dark:text-slate-100">
-                  You chose:
-                </p>
-                <ul className="text-slate-600 dark:text-slate-400 space-y-0.5 list-disc pl-4">
-                  <li>
-                    {periodCountNum} lessons × {periodDurationNum} minutes, starting{" "}
-                    {startFriendly}
-                  </li>
-                  <li>{weekLabel}</li>
-                  <li>{breakModeLabel}</li>
-                  <li>
-                    School ends around {dayEndFriendly} (lessons only)
-                  </li>
-                </ul>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={selectAllScopes}
-                >
-                  Tick all
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedScopeKeys(new Set())}
-                >
-                  Untick all
-                </Button>
-              </div>
-
-              {gradeLevelsLoading ? (
-                <p className="text-sm text-slate-500 py-4 text-center">
-                  Loading classes…
-                </p>
-              ) : gradeLevelsWithStreams.length === 0 ? (
-                <p className="text-sm text-slate-500 py-4 text-center leading-relaxed">
-                  No classes found yet. Finish school setup, then come back.
-                </p>
-              ) : (
-                <ul className="space-y-2 max-h-[min(50vh,420px)] overflow-y-auto pr-1">
-                  {gradeLevelsWithStreams.flatMap((gl) => {
-                    const gradeName = gl.displayName || gl.name;
-                    if (gl.streams.length > 0) {
-                      return gl.streams.map((s) => {
-                        const key = `${gl.gradeLevelId}:${s.tenantStreamId}`;
+                    <ul className="space-y-1.5">
+                      {items.map(({ key, label }) => {
                         const checked = selectedScopeKeys.has(key);
                         return (
                           <li key={key}>
                             <label
                               className={cn(
-                                "flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors",
+                                "flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors",
                                 checked
-                                  ? "border-[#246a59] bg-[#246a59]/5"
-                                  : "border-slate-200 hover:border-slate-300 dark:border-slate-700",
+                                  ? "border-slate-900 bg-slate-50 dark:border-slate-100 dark:bg-slate-800/60"
+                                  : "border-slate-200/70 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/30",
                               )}
                             >
                               <Checkbox
@@ -1395,49 +1046,267 @@ export function TimetableSetupWizard({
                                   toggleScopeKey(key, c === true)
                                 }
                               />
-                              <span className="text-sm font-medium">
-                                {gradeName} — {s.name}
+                              <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                                {gl.streams.length > 0
+                                  ? label
+                                  : gradeName}
                               </span>
                             </label>
                           </li>
                         );
-                      });
-                    }
-                    const gradeOnlyKey = `${gl.gradeLevelId}:`;
-                    const checked = selectedScopeKeys.has(gradeOnlyKey);
-                    return (
-                      <li key={gradeOnlyKey}>
-                        <label
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors",
-                            checked
-                              ? "border-[#246a59] bg-[#246a59]/5"
-                              : "border-slate-200 hover:border-slate-300 dark:border-slate-700",
-                          )}
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={(c) =>
-                              toggleScopeKey(gradeOnlyKey, c === true)
-                            }
-                          />
-                          <span className="text-sm font-medium">{gradeName}</span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-              {scopeTargets.length > 0 && (
-                <p className="text-sm text-center text-slate-600 dark:text-slate-400">
-                  We will make{" "}
-                  <strong className="text-[#246a59]">{scopeTargets.length}</strong>{" "}
-                  timetable
-                  {scopeTargets.length === 1 ? "" : "s"}:{" "}
-                  {scopeSummaryLabel(scopeTargets)}
-                </p>
-              )}
+          {scopeTargets.length > 0 && (
+            <p className="text-xs text-slate-500">
+              {scopeTargets.length} timetable{scopeTargets.length === 1 ? "" : "s"}:{" "}
+              {scopeSummaryLabel(scopeTargets)}
+            </p>
+          )}
+        </WizardQuestion>
+      </div>
+    );
+  };
+
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        return (
+          <>
+            <StepIntro
+              compact
+              icon={Clock}
+              title="When does school run?"
+            />
+            <SchoolDayPreview
+              startFriendly={startFriendly}
+              dayEndFriendly={dayEndFriendly}
+              periodCountNum={periodCountNum}
+              periodDurationNum={periodDurationNum}
+              weekLabel={weekLabel}
+            />
+            <StepBody className="space-y-3 py-4 sm:py-5">
+              <WizardQuestion
+                number={1}
+                title="First lesson starts at"
+              >
+                <div className="flex flex-wrap gap-2">
+                  {START_OPTIONS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setStartTime(p.value)}
+                      className={wizardChipClass(startTime === p.value)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2.5 text-sm text-slate-500">
+                  Custom
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className={cn(
+                      onboardingInputClass,
+                      "h-9 w-[7.5rem] px-2 text-sm",
+                      !START_OPTIONS.some((p) => p.value === startTime) &&
+                        "border-slate-900 ring-1 ring-slate-900/20 dark:border-slate-100",
+                    )}
+                    aria-label="Custom start time"
+                  />
+                </label>
+              </WizardQuestion>
+
+              <WizardQuestion
+                number={2}
+                title="How long is one lesson?"
+              >
+                <div className="flex flex-wrap gap-2">
+                  {LESSON_LENGTH_OPTIONS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setPeriodDuration(p.value)}
+                      className={wizardChipClass(periodDuration === p.value)}
+                      title={p.subtitle}
+                    >
+                      {p.value} min
+                    </button>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2.5 text-sm text-slate-500">
+                  Other
+                  <Input
+                    id="custom-lesson-length"
+                    type="number"
+                    min={1}
+                    max={240}
+                    inputMode="numeric"
+                    value={isCustomLessonLength ? periodDuration : ""}
+                    placeholder="35"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      setPeriodDuration(raw);
+                    }}
+                    onFocus={() => {
+                      if (PRESET_LESSON_LENGTH_VALUES.has(periodDuration)) {
+                        setPeriodDuration("");
+                      }
+                    }}
+                    className={cn(
+                      onboardingInputClass,
+                      "h-9 w-16 px-2 text-sm",
+                      isCustomLessonLength &&
+                        "border-slate-900 ring-1 ring-slate-900/20 dark:border-slate-100",
+                    )}
+                    aria-label="Custom lesson length in minutes"
+                  />
+                  <span>min</span>
+                </label>
+              </WizardQuestion>
+
+              <WizardQuestion
+                number={3}
+                title="How many lessons in one day?"
+              >
+                <div className="flex flex-wrap gap-2">
+                  {LESSONS_PER_DAY_OPTIONS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setPeriodCount(p.value)}
+                      className={wizardChipClass(periodCount === p.value)}
+                      title={p.subtitle}
+                    >
+                      {p.value}
+                    </button>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2.5 text-sm text-slate-500">
+                  Other
+                  <Input
+                    id="custom-lessons-per-day"
+                    type="number"
+                    min={1}
+                    max={20}
+                    inputMode="numeric"
+                    value={isCustomPeriodCount ? periodCount : ""}
+                    placeholder="10"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, "");
+                      setPeriodCount(raw);
+                    }}
+                    onFocus={() => {
+                      if (PRESET_LESSONS_PER_DAY_VALUES.has(periodCount)) {
+                        setPeriodCount("");
+                      }
+                    }}
+                    className={cn(
+                      onboardingInputClass,
+                      "h-9 w-16 px-2 text-sm",
+                      isCustomPeriodCount &&
+                        "border-slate-900 ring-1 ring-slate-900/20 dark:border-slate-100",
+                    )}
+                    aria-label="Custom number of lessons per day"
+                  />
+                  <span>lessons</span>
+                </label>
+              </WizardQuestion>
+
+              <WizardQuestion
+                number={4}
+                title="Which days is school open?"
+              >
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyWeekPreset([1, 2, 3, 4, 5])}
+                    className={wizardChipClass(
+                      activeWeekdays.size === 5 &&
+                        [...activeWeekdays].every((d) => d <= 5) &&
+                        !showPickDays,
+                    )}
+                  >
+                    Mon–Fri
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyWeekPreset([1, 2, 3, 4, 5, 6])}
+                    className={wizardChipClass(
+                      activeWeekdays.size === 6 &&
+                        [...activeWeekdays].every((d) => d <= 6) &&
+                        !showPickDays,
+                    )}
+                  >
+                    Mon–Sat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPickDays(true)}
+                    className={wizardChipClass(showPickDays)}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {showPickDays && (
+                  <div className="flex flex-wrap gap-2">
+                    {WEEKDAY_OPTIONS.map(({ n, short }) => {
+                      const checked = activeWeekdays.has(n);
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          aria-pressed={checked}
+                          onClick={() => toggleWeekday(n)}
+                          className={wizardChipClass(checked)}
+                        >
+                          {short}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {!showPickDays && (
+                  <p className="text-xs text-slate-400">{weekLabel}</p>
+                )}
+              </WizardQuestion>
+            </StepBody>
+          </>
+        );
+
+      case 2:
+        return (
+          <>
+            <StepIntro compact icon={Coffee} title="School breaks" />
+            <BreakDayPreview dayPreview={dayPreview} />
+            <StepBody className="space-y-3 py-4 sm:py-5">
+              {renderBreaksStep()}
+            </StepBody>
+          </>
+        );
+
+      case 3:
+        return (
+          <>
+            <StepIntro compact icon={GraduationCap} title="Select classes" />
+            <ClassesSummaryPreview
+              startFriendly={startFriendly}
+              dayEndFriendly={dayEndFriendly}
+              periodCountNum={periodCountNum}
+              periodDurationNum={periodDurationNum}
+              weekLabel={weekLabel}
+              selectedCount={scopeTargets.length}
+              totalCount={buildDefaultScopeKeys(gradeLevelsWithStreams).length}
+            />
+            <StepBody className="space-y-3 py-4 sm:py-5">
+              {renderClassesStep()}
             </StepBody>
           </>
         );
@@ -1450,7 +1319,7 @@ export function TimetableSetupWizard({
   return (
     <OnboardingShell
       subdomain={subdomain}
-      currentStep={canProceed ? step : 1}
+      currentStep={step}
       totalSteps={TOTAL_STEPS}
       steps={[...WIZARD_STEPS]}
       onBack={handleBack}
@@ -1458,16 +1327,14 @@ export function TimetableSetupWizard({
       skipLabel="I'll do this later"
       onContinue={() => void handleContinue()}
       continueLabel={
-        !canProceed
-          ? "Next"
-          : step === TOTAL_STEPS
-            ? isSubmitting
-              ? "May take a few minutes…"
-              : "Make my timetables"
-            : "Next"
+        step === TOTAL_STEPS
+          ? isSubmitting
+            ? "May take a few minutes…"
+            : "Make my timetables"
+          : `Next: ${WIZARD_STEPS[step]?.name ?? "Continue"}`
       }
       showSkip={!isSubmitting}
-      isContinueDisabled={!canProceed || isSubmitting}
+      isContinueDisabled={isSubmitting}
       isLoading={isSubmitting}
     >
       {renderStepContent()}

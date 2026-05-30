@@ -8,26 +8,17 @@ interface TimetableScheduleSummaryProps {
   periodCount: number;
   dayCount: number;
   breakCount: number;
-  termName?: string;
 }
 
 export function TimetableScheduleSummary({
   periodCount,
   dayCount,
   breakCount,
-  termName,
 }: TimetableScheduleSummaryProps) {
   return (
     <div className={cn(tt.panelMuted, "px-4 py-3")}>
       <p className={cn(tt.body, "mb-3 text-[13px]")}>
-        School day is configured
-        {termName ? (
-          <>
-            {" "}
-            for <span className="font-semibold">{termName}</span>
-          </>
-        ) : null}
-        . Pick a class below to add lessons.
+        School day is configured. Pick a class below to add lessons.
       </p>
       <dl className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg border border-zinc-200/80 bg-white px-2 py-2.5 dark:border-zinc-700 dark:bg-zinc-900/60">

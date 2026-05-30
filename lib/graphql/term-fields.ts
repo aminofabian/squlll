@@ -5,6 +5,7 @@ export const TERM_LIST_SELECTION = `
   startDate
   endDate
   isActive
+  isCurrent
   academicYear {
     name
   }

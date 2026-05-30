@@ -28,6 +28,7 @@ interface InvitationSuccessModalProps {
     fullName: string;
     status: string;
     createdAt: string;
+    emailSent?: boolean;
   };
   schoolSubdomain?: string;
 }
@@ -64,12 +65,23 @@ export function InvitationSuccessModal({
             </div>
           </div>
           <DialogTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            Invitation Sent!
+            {invitationData.emailSent === false
+              ? 'Teacher registered'
+              : 'Invitation sent!'}
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-600 dark:text-slate-400">
-            {invitationData.fullName} will receive an email to join your school
+            {invitationData.emailSent === false
+              ? `${invitationData.fullName} was added, but the invitation email could not be delivered.`
+              : `${invitationData.fullName} will receive an email to join your school`}
           </DialogDescription>
         </DialogHeader>
+
+        {invitationData.emailSent === false && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+            Email delivery failed (likely a mail provider config issue in dev).
+            Open <strong>Pending invitations</strong> and tap <strong>Resend</strong> once email is configured.
+          </div>
+        )}
 
         <div className="space-y-4">
           {/* Teacher Details */}
@@ -130,22 +142,39 @@ export function InvitationSuccessModal({
           {/* What's Next */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
-              What happens next?
+              {invitationData.emailSent === false
+                ? 'What you can do'
+                : 'What happens next?'}
             </h3>
             
             <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
-              <div className="flex items-start gap-2">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <span>They'll get an email with a signup link</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <span>They'll create their password and join your school</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <span>You'll see them in your teachers list once they sign up</span>
-              </div>
+              {invitationData.emailSent === false ? (
+                <>
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>The teacher record and pending invitation are saved</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Use Resend on the pending invitations list when email is working</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>They&apos;ll get an email with a signup link</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>They&apos;ll create their password and join your school</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>You&apos;ll see them in your teachers list once they sign up</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

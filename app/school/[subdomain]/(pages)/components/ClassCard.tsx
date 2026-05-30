@@ -1,462 +1,379 @@
-'use client'
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { BookOpen, ChevronDown, ChevronUp, Edit, Plus, Trash2, GraduationCap, Layers, UserPlus, DollarSign, Users, TrendingUp, TrendingDown, Eye, EyeOff } from 'lucide-react'
-import type { Level, Subject, GradeLevel } from '@/lib/types/school-config'
-import { useState, useMemo } from 'react'
-import { EditSubjectDialog } from './EditSubjectDialog'
-import { useTenantSubjects, TenantSubject } from '@/lib/hooks/useTenantSubjects'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import CreateClassDrawer from "@/app/school/components/CreateClassDrawer"
-import { AddStreamModal } from './AddStreamModal'
-import { AssignTeacherModal } from './AssignTeacherModal'
-import { useGradeLevelFeeSummary } from '@/lib/hooks/useGradeLevelFeeSummary'
+import { Button } from "@/components/ui/button";
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  Eye,
+  EyeOff,
+  Copy,
+} from "lucide-react";
+import type { Level, Subject } from "@/lib/types/school-config";
+import { useState, useMemo } from "react";
+import { EditSubjectDialog } from "./EditSubjectDialog";
+import { useTenantSubjects, TenantSubject } from "@/lib/hooks/useTenantSubjects";
+import { useGradeLevelFeeSummary } from "@/lib/hooks/useGradeLevelFeeSummary";
+import { cn } from "@/lib/utils";
+import {
+  ClassActionBar,
+} from "../classes/components/ClassActionBar";
+import { dedupeSubjectsByMaster } from "../classes/utils/dedupeSubjects";
+import { useSubjectTeacherMap } from "../classes/utils/useSubjectTeacherMap";
+import { SubjectTeacherBadge } from "../classes/components/SubjectTeacherBadge";
+import { toast } from "sonner";
 
 interface ClassCardProps {
   level: Level;
-  selectedGradeId?: string;
-  selectedStreamId?: string;
-  onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void;
+  selectedGradeId: string;
+  onAssignTeacher?: () => void;
 }
 
-// Helper function to get component level color
-function getComponentLevelColor(name: string) {
-  switch(name.toLowerCase()) {
-    case 'madrasa lower': return 'bg-purple-100 text-purple-800 border-purple-400';
-    case 'madrasa beginners': return 'bg-custom-blue/10 text-custom-blue border-custom-blue/40';
-    default: return 'bg-gray-100 text-gray-800 border-gray-400';
-  }
-}
+export function ClassCard({
+  level,
+  selectedGradeId,
+  onAssignTeacher,
+}: ClassCardProps) {
+  const [showSubjects, setShowSubjects] = useState(true);
+  const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(
+    null,
+  );
+  const [showFeeDetails, setShowFeeDetails] = useState(true);
 
-export function ClassHeader() {
-  return (
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Classes</h2>
-        <p className="text-muted-foreground">
-          Manage class information and subjects across all levels
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <CreateClassDrawer onClassCreated={() => {
-          // Refresh class list or show success message
-          console.log('Class created successfully');
-        }} />
-      </div>
-    </div>
-  )
-}
+  const { data: tenantSubjects = [] } = useTenantSubjects();
+  const { data: feeSummary } = useGradeLevelFeeSummary(selectedGradeId || null);
+  const { getTeacherForSubject } = useSubjectTeacherMap();
 
-export function ClassCard({ level, selectedGradeId, selectedStreamId, onStreamSelect }: ClassCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'core' | 'optional'>('all')
-  const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(null)
-  const [showFeeDetails, setShowFeeDetails] = useState(true)
-  
-  // Load tenant subjects instead of using school config subjects
-  const { data: tenantSubjects = [], isLoading: subjectsLoading } = useTenantSubjects()
-  
-  // Load fee summary for the selected grade
-  const { data: feeSummary, isLoading: feeSummaryLoading } = useGradeLevelFeeSummary(selectedGradeId || null)
-  
-  const [showStreamModal, setShowStreamModal] = useState(false)
-  const [selectedGradeForStream, setSelectedGradeForStream] = useState<GradeLevel | null>(null)
-  const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false)
-  const [assignTeacherData, setAssignTeacherData] = useState<{
-    streamId?: string
-    streamName?: string
-    gradeLevelId?: string
-    gradeName?: string
-  }>({})  
-
-  // Transform tenant subjects to match the Subject interface for compatibility
   const transformedSubjects = useMemo(() => {
-    return tenantSubjects.map(ts => ({
-      id: ts.id, // Use tenant subject ID
-      name: ts.subject?.name || ts.customSubject?.name || 'Unknown Subject',
-      code: ts.subject?.code || ts.customSubject?.code || '',
-      subjectType: ts.subjectType === 'core' ? 'core' : 'optional',
-      category: ts.subject?.category || ts.customSubject?.category,
-      department: ts.subject?.department || ts.customSubject?.department,
-      shortName: ts.subject?.shortName || ts.customSubject?.shortName,
-      isCompulsory: ts.isCompulsory,
-      totalMarks: ts.totalMarks,
-      passingMarks: ts.passingMarks,
-      creditHours: ts.creditHours,
-      curriculum: ts.curriculum.name,
-      // Store the original tenant subject for editing
-      _tenantSubject: ts
+    return tenantSubjects.map((ts) => ({
+      id: ts.id,
+      name: ts.subject?.name || ts.customSubject?.name || "Unknown Subject",
+      code: ts.subject?.code || ts.customSubject?.code || "",
+      subjectType: ts.subjectType === "core" ? "core" : "elective",
+      _tenantSubject: ts,
     }));
   }, [tenantSubjects]);
 
-  // Filter subjects based on selected grade, stream, and filter type
   const filteredSubjects = useMemo(() => {
     let subjects = transformedSubjects;
 
-    // Filter by grade level if a grade is selected AND it belongs to this level
     if (selectedGradeId) {
-      // Check if the selected grade belongs to this level
       const gradeBelongsToLevel = level.gradeLevels?.some(
-        grade => grade.id === selectedGradeId
+        (grade) => grade.id === selectedGradeId,
       );
 
       if (gradeBelongsToLevel) {
-        // Get subjects from the level that contains the selected grade
-        // Match tenant subjects with level subjects by name or code
         const levelSubjectNames = new Set(
-          level.subjects.map(s => s.name.toLowerCase().trim())
+          level.subjects.map((s) => s.name.toLowerCase().trim()),
         );
         const levelSubjectCodes = new Set(
-          level.subjects.map(s => s.code?.toLowerCase().trim()).filter(Boolean)
+          level.subjects
+            .map((s) => s.code?.toLowerCase().trim())
+            .filter(Boolean),
         );
 
-        subjects = subjects.filter(subject => {
+        subjects = subjects.filter((subject) => {
           const subjectName = subject.name.toLowerCase().trim();
           const subjectCode = subject.code?.toLowerCase().trim();
-          
-          // Match by name or code
-          return levelSubjectNames.has(subjectName) || 
-                 (subjectCode && levelSubjectCodes.has(subjectCode));
+          return (
+            levelSubjectNames.has(subjectName) ||
+            (subjectCode && levelSubjectCodes.has(subjectCode))
+          );
         });
       } else {
-        // If selected grade doesn't belong to this level, show no subjects
         subjects = [];
       }
     }
 
-    // Then filter based on selected type (all/core/optional)
-    subjects = subjects.filter(subject => {
-      if (selectedFilter === 'all') return true;
-      return selectedFilter === 'core' ? subject.subjectType === 'core' : subject.subjectType !== 'core';
-    });
-    
-    // Then sort: core subjects first, then by name within each group
-    return subjects.sort((a, b) => {
-      // First sort by type (core comes first)
-      if (a.subjectType === 'core' && b.subjectType !== 'core') return -1;
-      if (a.subjectType !== 'core' && b.subjectType === 'core') return 1;
-      
-      // Then sort alphabetically by name within each group
+    return dedupeSubjectsByMaster(subjects).sort((a, b) => {
+      if (a.subjectType === "core" && b.subjectType !== "core") return -1;
+      if (a.subjectType !== "core" && b.subjectType === "core") return 1;
       return a.name.localeCompare(b.name);
     });
-  }, [transformedSubjects, selectedFilter, selectedGradeId, level.subjects, level.gradeLevels]);
+  }, [
+    transformedSubjects,
+    selectedGradeId,
+    level.subjects,
+    level.gradeLevels,
+  ]);
 
-  // Get the selected grade and stream if any
+  const coreSubjects = filteredSubjects.filter((s) => s.subjectType === "core");
+  const electiveSubjects = filteredSubjects.filter(
+    (s) => s.subjectType === "elective",
+  );
+
   const selectedGrade = useMemo(() => {
-    if (!selectedGradeId) return null;
-    return level.gradeLevels?.find(grade => grade.id === selectedGradeId) || null;
+    return level.gradeLevels?.find((grade) => grade.id === selectedGradeId) || null;
   }, [level.gradeLevels, selectedGradeId]);
-  
-  const selectedStream = useMemo(() => {
-    if (!selectedStreamId || !selectedGrade) return null;
-    return selectedGrade.streams?.find(stream => stream.id === selectedStreamId) || null;
-  }, [selectedGrade, selectedStreamId]);
-
-  const handleDeleteSubject = (subjectId: string) => {
-    // TODO: Implement delete functionality
-    console.log('Delete subject:', subjectId);
-  };
-
-  const handleAddSubject = () => {
-    // TODO: Implement add subject functionality
-    console.log('Add new subject to level:', level.id);
-  };
-
-  const handleEditSubject = (subject: any) => {
-    // Extract the original tenant subject from our transformed subject
-    const tenantSubject = subject._tenantSubject;
-    setEditingSubject(tenantSubject);
-  };
 
   const handleSaveSubject = (updatedSubject: Subject) => {
-    // TODO: Implement save functionality
-    console.log('Save updated subject:', updatedSubject);
+    console.log("Save updated subject:", updatedSubject);
   };
 
-  const handleAddStream = (gradeId: string) => {
-    const grade = level.gradeLevels?.find(g => g.id === gradeId);
-    if (grade) {
-      setSelectedGradeForStream(grade);
-      setShowStreamModal(true);
-    }
-  };
-
-  const handleAssignTeacherToStream = (streamId: string, streamName: string) => {
-    setAssignTeacherData({
-      streamId,
-      streamName,
-    });
-    setShowAssignTeacherModal(true);
-  };
-
-  const handleAssignTeacherToGrade = (gradeLevelId: string, gradeName: string) => {
-    setAssignTeacherData({
-      gradeLevelId,
-      gradeName,
-    });
-    setShowAssignTeacherModal(true);
-  };
-
-  const handleStreamClick = (streamId: string) => {
-    if (onStreamSelect && selectedGrade) {
-      onStreamSelect(streamId, selectedGrade.id, level.id);
-    }
-  };
+  if (!selectedGrade) return null;
 
   return (
-    <div className="w-full space-y-6">
+    <div className="space-y-3">
+        <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+          <button
+            type="button"
+            onClick={() => setShowSubjects(!showSubjects)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left"
+          >
+            <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+              Subjects
+              {!showSubjects && filteredSubjects.length > 0 && (
+                <span className="ml-1.5 font-normal text-slate-400">
+                  ({filteredSubjects.length})
+                </span>
+              )}
+            </span>
+            {showSubjects ? (
+              <ChevronUp className="h-4 w-4 text-slate-400" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            )}
+          </button>
 
-      {/* Student Fee Breakdown - Shown when grade is selected */}
-      {selectedGrade && feeSummary && feeSummary.students.length > 0 && (
-        <Card className="shadow-sm border-0 bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-800 dark:to-slate-900/50">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                  Student Fee Breakdown
-                </CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">
-                  Fee details for {selectedGrade.name}
-                </CardDescription>
-              </div>
+          {showSubjects && (
+            <div className="space-y-3 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+              {filteredSubjects.length === 0 ? (
+                <p className="py-4 text-center text-xs text-slate-400">No subjects</p>
+              ) : (
+                <div className="space-y-3">
+                  {coreSubjects.length > 0 && (
+                      <SubjectList
+                        title="Core"
+                        hint="Required"
+                        accent="emerald"
+                        subjects={coreSubjects}
+                        getTeacherForSubject={getTeacherForSubject}
+                        onAssignTeacher={onAssignTeacher}
+                        onEdit={(s) => setEditingSubject(s._tenantSubject)}
+                      />
+                    )}
+                  {electiveSubjects.length > 0 && (
+                      <SubjectList
+                        title="Elective"
+                        hint="Optional"
+                        accent="amber"
+                        subjects={electiveSubjects}
+                        getTeacherForSubject={getTeacherForSubject}
+                        onAssignTeacher={onAssignTeacher}
+                        onEdit={(s) => setEditingSubject(s._tenantSubject)}
+                      />
+                    )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {feeSummary && feeSummary.students.length > 0 && (
+          <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                Fees
+              </h4>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
+                className="h-8 text-xs text-slate-500"
                 onClick={() => setShowFeeDetails(!showFeeDetails)}
-                className="border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 gap-2"
               >
                 {showFeeDetails ? (
-                  <>
-                    <EyeOff className="h-4 w-4" />
-                    Hide Details
-                  </>
+                  <EyeOff className="h-3.5 w-3.5" />
                 ) : (
-                  <>
-                    <Eye className="h-4 w-4" />
-                    Show Details
-                  </>
+                  <Eye className="h-3.5 w-3.5" />
                 )}
               </Button>
             </div>
-          </CardHeader>
-
-          {showFeeDetails && (
-            <CardContent className="pt-0">
-              {/* Desktop Table View */}
-              <div className="hidden lg:block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-600">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          Admission
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          Student Name
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          Owed
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          Paid
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          Balance
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                          Fee Items
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                      {feeSummary.students.map((student) => (
-                        <tr key={student.admissionNumber} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {student.admissionNumber}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-800 dark:text-slate-200">
-                            {student.studentName}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-medium text-slate-700 dark:text-slate-300">
-                            {student.feeSummary.totalOwed.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                            {student.feeSummary.totalPaid.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-semibold text-red-600 dark:text-red-400">
-                            {student.feeSummary.balance.toLocaleString()}
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex flex-wrap gap-1.5 justify-center max-w-xs mx-auto">
-                              {student.feeSummary.feeItems.map((item, itemIndex) => (
-                                <TooltipProvider key={itemIndex}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge 
-                                        variant={item.isMandatory ? "default" : "outline"}
-                                        className="text-xs font-medium cursor-help border-slate-200 dark:border-slate-600"
-                                      >
-                                        {item.feeBucketName}
-                                      </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <div className="space-y-1">
-                                        <p className="font-semibold">{item.feeBucketName}</p>
-                                        <p className="text-xs">Amount: KES {item.amount.toLocaleString()}</p>
-                                        <p className="text-xs">{item.isMandatory ? '✓ Mandatory' : '○ Optional'}</p>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="lg:hidden space-y-3">
-                {feeSummary.students.map((student) => (
-                  <div 
-                    key={student.admissionNumber} 
-                    className="bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 space-y-4"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-800 dark:text-slate-200">
-                          {student.studentName}
-                        </p>
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                          {student.admissionNumber}
-                        </p>
-                      </div>
-                      <Badge 
-                        variant="outline" 
-                        className={`border-2 font-medium ${
-                          student.feeSummary.balance === 0 
-                            ? 'border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20' 
-                            : 'border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
-                        }`}
+            {showFeeDetails && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/60">
+                      <th className="px-4 py-2 text-left text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Student
+                      </th>
+                      <th className="px-4 py-2 text-right text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Owed
+                      </th>
+                      <th className="px-4 py-2 text-right text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Paid
+                      </th>
+                      <th className="px-4 py-2 text-right text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        Balance
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {feeSummary.students.map((student) => (
+                      <tr
+                        key={student.admissionNumber}
+                        className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                       >
-                        {student.feeSummary.balance === 0 ? 'Paid' : 'Pending'}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Owed</p>
-                        <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                        <td className="px-4 py-2.5">
+                          <p className="font-medium text-slate-800 dark:text-slate-100">
+                            {student.studentName}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            {student.admissionNumber}
+                          </p>
+                        </td>
+                        <td className="px-4 py-2.5 text-right text-slate-600 dark:text-slate-300">
                           {student.feeSummary.totalOwed.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Paid</p>
-                        <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                        </td>
+                        <td className="px-4 py-2.5 text-right text-emerald-600 dark:text-emerald-400">
                           {student.feeSummary.totalPaid.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Balance</p>
-                        <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                        </td>
+                        <td
+                          className={cn(
+                            "px-4 py-2.5 text-right font-medium",
+                            student.feeSummary.balance === 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-red-600 dark:text-red-400",
+                          )}
+                        >
                           {student.feeSummary.balance.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
-                      <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Fee Items</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {student.feeSummary.feeItems.map((item, itemIndex) => (
-                          <TooltipProvider key={itemIndex}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge 
-                                  variant={item.isMandatory ? "default" : "outline"}
-                                  className="text-xs font-medium cursor-help border-slate-200 dark:border-slate-600"
-                                >
-                                  {item.feeBucketName}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <div className="space-y-1">
-                                  <p className="font-semibold">{item.feeBucketName}</p>
-                                  <p className="text-xs">Amount: KES {item.amount.toLocaleString()}</p>
-                                  <p className="text-xs">{item.isMandatory ? '✓ Mandatory' : '○ Optional'}</p>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </CardContent>
-          )}
-        </Card>
-      )}
+            )}
+          </div>
+        )}
 
+        {editingSubject && (
+          <EditSubjectDialog
+            subject={{
+              id: editingSubject.id,
+              name:
+                editingSubject.subject?.name ||
+                editingSubject.customSubject?.name ||
+                "Unknown Subject",
+              code:
+                editingSubject.subject?.code ||
+                editingSubject.customSubject?.code ||
+                "",
+              subjectType: editingSubject.subjectType,
+              category:
+                editingSubject.subject?.category ||
+                editingSubject.customSubject?.category ||
+                null,
+              department:
+                editingSubject.subject?.department ||
+                editingSubject.customSubject?.department ||
+                null,
+              shortName:
+                editingSubject.subject?.shortName ||
+                editingSubject.customSubject?.shortName ||
+                null,
+              isCompulsory: editingSubject.isCompulsory,
+              totalMarks: editingSubject.totalMarks,
+              passingMarks: editingSubject.passingMarks,
+              creditHours: editingSubject.creditHours,
+              curriculum: editingSubject.curriculum.name,
+            }}
+            onClose={() => setEditingSubject(null)}
+            onSave={handleSaveSubject}
+            isOpen={!!editingSubject}
+            tenantSubjectId={editingSubject.id}
+          />
+        )}
+      </div>
+    );
+}
 
-      {editingSubject && (
-        <EditSubjectDialog
-          subject={{
-            id: editingSubject.id,
-            name: editingSubject.subject?.name || editingSubject.customSubject?.name || 'Unknown Subject',
-            code: editingSubject.subject?.code || editingSubject.customSubject?.code || '',
-            subjectType: editingSubject.subjectType,
-            category: editingSubject.subject?.category || editingSubject.customSubject?.category || null,
-            department: editingSubject.subject?.department || editingSubject.customSubject?.department || null,
-            shortName: editingSubject.subject?.shortName || editingSubject.customSubject?.shortName || null,
-            isCompulsory: editingSubject.isCompulsory,
-            totalMarks: editingSubject.totalMarks,
-            passingMarks: editingSubject.passingMarks,
-            creditHours: editingSubject.creditHours,
-            curriculum: editingSubject.curriculum.name
-          }}
-          onClose={() => setEditingSubject(null)}
-          onSave={handleSaveSubject}
-          isOpen={!!editingSubject}
-          tenantSubjectId={editingSubject.id}
-        />
-      )}
+function SubjectList({
+  title,
+  hint,
+  accent,
+  subjects,
+  getTeacherForSubject,
+  onAssignTeacher,
+  onEdit,
+}: {
+  title: string;
+  hint: string;
+  accent: "emerald" | "amber";
+  subjects: Array<{
+    id: string;
+    name: string;
+    code: string;
+    tenantSubjectIds: string[];
+    _tenantSubject: TenantSubject;
+  }>;
+  getTeacherForSubject: (tenantSubjectIds: string[]) => string | undefined;
+  onAssignTeacher?: () => void;
+  onEdit: (s: {
+    id: string;
+    name: string;
+    code: string;
+    _tenantSubject: TenantSubject;
+  }) => void;
+}) {
+  const dot = accent === "emerald" ? "bg-emerald-500" : "bg-amber-400";
 
-      {selectedGradeForStream && (
-        <AddStreamModal
-          isOpen={showStreamModal}
-          onClose={() => {
-            setShowStreamModal(false);
-            setSelectedGradeForStream(null);
-          }}
-          onSuccess={() => {
-            // The modal now handles revalidation automatically
-            console.log('Stream created successfully');
-          }}
-          gradeId={selectedGradeForStream.id}
-          gradeName={selectedGradeForStream.name}
-        />
-      )}
-
-      <AssignTeacherModal
-        isOpen={showAssignTeacherModal}
-        onClose={() => {
-          setShowAssignTeacherModal(false);
-          setAssignTeacherData({});
-        }}
-        onSuccess={() => {
-          console.log('Teacher assigned successfully');
-        }}
-        streamId={assignTeacherData.streamId}
-        streamName={assignTeacherData.streamName}
-        gradeLevelId={assignTeacherData.gradeLevelId}
-        gradeName={assignTeacherData.gradeName}
-      />
-    </div>
+  return (
+    <section>
+      <div className="mb-1.5 flex items-center gap-1.5 px-0.5">
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dot)} />
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+          {title} · {hint}
+        </p>
+      </div>
+      <ul className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+          {subjects.map((s) => (
+            <li
+              key={s.id}
+              className="group flex items-center gap-2 border-b border-slate-100 px-3 py-2 last:border-b-0 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-800/40"
+            >
+              <span
+                className="min-w-0 flex-1 truncate text-xs font-medium text-slate-800 dark:text-slate-100"
+                title={s.name}
+              >
+                {s.name}
+              </span>
+              <SubjectTeacherBadge
+                teacherName={getTeacherForSubject(s.tenantSubjectIds)}
+                onAssign={onAssignTeacher}
+              />
+              <div className="flex shrink-0 items-center">
+                <ClassActionBar
+                  layout="icons"
+                  actions={[
+                    {
+                      id: "edit",
+                      label: "Edit subject",
+                      tooltip: "Edit subject settings",
+                      icon: Edit,
+                      onClick: () => onEdit(s),
+                    },
+                    {
+                      id: "copy",
+                      label: "Copy code",
+                      tooltip: s.code
+                        ? `Copy subject code (${s.code})`
+                        : "Copy subject code",
+                      icon: Copy,
+                      onClick: () => {
+                        if (s.code) {
+                          navigator.clipboard.writeText(s.code);
+                          toast.success("Subject code copied");
+                        }
+                      },
+                      disabled: !s.code,
+                      disabledReason: "This subject has no code",
+                    },
+                  ]}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+    </section>
   );
 }

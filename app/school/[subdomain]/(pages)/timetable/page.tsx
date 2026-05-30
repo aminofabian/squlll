@@ -14,17 +14,21 @@ import {
   useTimetableGrid,
   useGradeStatistics,
   usePeriodSlots,
+  useSchoolCombinedEntries,
 } from "./hooks/useTimetableData";
 import { useAllConflicts } from "./hooks/useTimetableConflictsNew";
 import { useConflictLessonIds } from "./hooks/useConflictLessonIds";
 import { TimetableConflictsPanel } from "./components/TimetableConflictsPanel";
-import { TimetableProgressStrip } from "./components/TimetableProgressStrip";
+import { TimetableStatusBar } from "./components/TimetableStatusBar";
 import { TimetableClassSidebar } from "./components/TimetableClassSidebar";
-import { TimetableScheduleSummary } from "./components/TimetableScheduleSummary";
-import { TimetableFillProgress } from "./components/TimetableFillProgress";
 import { TimetableOnboarding } from "./components/TimetableOnboarding";
+import { TimetableFillProgress } from "./components/TimetableFillProgress";
 import { TimetableSubjectInsights } from "./components/TimetableSubjectInsights";
-import { TimetableClassContextBar } from "./components/TimetableClassContextBar";
+import { TimetableGhostGrid } from "./components/TimetableGhostGrid";
+import {
+  TimetableGridSkeleton,
+  TimetableSidebarSkeleton,
+} from "./components/TimetableGridSkeleton";
 import { TimetableCompletionBanner } from "./components/TimetableCompletionBanner";
 import { TimetablePrintStyles } from "./components/TimetablePrintStyles";
 import { TimetableShareDrawer } from "./components/TimetableShareDrawer";
@@ -39,7 +43,6 @@ import {
   downloadTextFile,
 } from "./utils/timetableSummaryText";
 import { getTimeSlotForDayAndPeriod } from "./utils/timetableSlots";
-import { TermsDropdown } from "../components/TermsDropdown";
 import { formatBreakTypeLabel } from "@/lib/utils/timetable-user-messages";
 import { LessonEditDialog } from "./components/LessonEditDialog";
 import { TimeslotEditDialog } from "./components/TimeslotEditDialog";
@@ -75,7 +78,6 @@ import {
   Clock,
   Trash2,
   Plus,
-  Calendar,
   Coffee,
   GraduationCap,
   AlertCircle,
@@ -113,8 +115,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CreateAcademicYearModal } from "@/app/school/[subdomain]/(pages)/dashboard/components/CreateAcademicYearModal";
-import { CreateTermModal } from "@/app/school/[subdomain]/(pages)/dashboard/components/CreateTermModal";
 import { useTimetableWeekDays } from "./hooks/useTimetableWeekDays";
 import { TimetableSetupWizard } from "./components/TimetableSetupWizard";
 import {
@@ -168,6 +168,7 @@ export default function SmartTimetableNew() {
   } = useTimetableStore();
 
   const selectedGradeEntries = useSelectedGradeTimetable();
+  const storeEntries = useTimetableStore((state) => state.entries);
 
   const subjectMetaById = useMemo(() => {
     const map = new Map<string, { department?: string; color?: string }>();
@@ -195,64 +196,93 @@ export default function SmartTimetableNew() {
     }
   }, [selectedTerm?.id, selectedTermId, setStoreTerm]);
 
-  const hasAcademicYear = academicYears.length > 0;
   const hasTerm = !!selectedTerm;
   const hasTimeSlots = timeSlots.length > 0;
   const hasGradeSelected = !!selectedGradeId;
-  const hasAnyLessons = selectedGradeEntries.length > 0;
+  const hasAnyLessons = selectedGradeId
+    ? selectedGradeEntries.length > 0
+    : storeEntries.length > 0;
 
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isLoadingTimetable, setIsLoadingTimetable] = useState(false);
+  const initialGradeScopeKey = useRef<string | null>(null);
+  const isPageLoading =
+    isLoadingInitial || termsLoading || academicYearsLoading;
+  const isGridLoading = isPageLoading || isLoadingTimetable;
 
   useEffect(() => {
+    initialGradeScopeKey.current = null;
+  }, [selectedTerm?.id, selectedTermId]);
+
+  useEffect(() => {
+    let cancelled = false;
     setIsLoadingInitial(true);
     const termId = selectedTerm?.id || selectedTermId;
 
     const loadAll = async () => {
-      // Load base data in parallel (independent calls)
-      await Promise.all([
-        loadGrades().catch((err) =>
+      try {
+        await loadGrades().catch((err) =>
           console.error("Failed loading grades:", err),
-        ),
-        loadSubjects().catch((err) =>
-          console.error("Failed loading subjects:", err),
-        ),
-        loadTeachers().catch((err) =>
-          console.error("Failed loading teachers:", err),
-        ),
-        loadBreaks().catch((err) =>
-          console.error("Failed loading breaks:", err),
-        ),
-      ]);
+        );
 
-      // Load timeSlots first (grade-scoped), then school timetable.
-      // Time slots must be grade-filtered so period IDs match the correct
-      // day templates for the selected grade.
-      if (termId) {
-        if (selectedGradeId) {
-          await loadTimeSlots(termId, selectedGradeId).catch((err) =>
-            console.error("Failed loading time slots:", err),
-          );
-          await loadSchoolTimetable(termId, {
-            gradeLevelId: selectedGradeId,
-            streamId: selectedStreamId,
-          }).catch((err) =>
-            console.error("Failed loading school timetable:", err),
-          );
-        } else {
-          await loadTimeSlots(termId).catch((err) =>
-            console.error("Failed loading time slots:", err),
-          );
-          await loadSchoolTimetable(termId).catch((err) =>
-            console.error("Failed loading school timetable:", err),
-          );
+        if (cancelled) return;
+
+        const timetableLoads = termId
+          ? [
+              loadTimeSlots(termId, selectedGradeId || undefined).catch((err) =>
+                console.error("Failed loading time slots:", err),
+              ),
+              loadSchoolTimetable(
+                termId,
+                selectedGradeId
+                  ? {
+                      gradeLevelId: selectedGradeId,
+                      streamId: selectedStreamId,
+                    }
+                  : undefined,
+              ).catch((err) =>
+                console.error("Failed loading school timetable:", err),
+              ),
+            ]
+          : [];
+
+        await Promise.all([
+          loadSubjects().catch((err) =>
+            console.error("Failed loading subjects:", err),
+          ),
+          loadTeachers().catch((err) =>
+            console.error("Failed loading teachers:", err),
+          ),
+          loadBreaks().catch((err) =>
+            console.error("Failed loading breaks:", err),
+          ),
+          ...timetableLoads,
+        ]);
+      } finally {
+        if (!cancelled) {
+          initialGradeScopeKey.current = selectedGradeId
+            ? `${selectedGradeId}:${selectedStreamId ?? ""}`
+            : null;
+          setIsLoadingInitial(false);
         }
       }
     };
 
-    loadAll().finally(() => setIsLoadingInitial(false));
+    void loadAll();
+    return () => {
+      cancelled = true;
+    };
   }, [
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     selectedTerm?.id,
+    selectedTermId,
+    loadGrades,
+    loadSubjects,
+    loadTeachers,
+    loadBreaks,
+    loadTimeSlots,
+    loadSchoolTimetable,
+    // Grade/stream on first paint only — grade changes use the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   ]);
   useEffect(() => {
     if (selectedGradeId) {
@@ -263,14 +293,34 @@ export default function SmartTimetableNew() {
 
   useEffect(() => {
     const termId = selectedTerm?.id || selectedTermId;
-    if (!termId || !selectedGradeId) return;
+    if (!termId || !selectedGradeId || isLoadingInitial) return;
+
+    const scopeKey = `${selectedGradeId}:${selectedStreamId ?? ""}`;
+    if (initialGradeScopeKey.current === scopeKey) {
+      initialGradeScopeKey.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingTimetable(true);
+
     void (async () => {
-      await loadTimeSlots(termId, selectedGradeId).catch(() => {});
-      await loadSchoolTimetable(termId, {
-        gradeLevelId: selectedGradeId,
-        streamId: selectedStreamId,
-      }).catch(() => {});
+      try {
+        await Promise.all([
+          loadTimeSlots(termId, selectedGradeId).catch(() => {}),
+          loadSchoolTimetable(termId, {
+            gradeLevelId: selectedGradeId,
+            streamId: selectedStreamId,
+          }).catch(() => {}),
+        ]);
+      } finally {
+        if (!cancelled) setIsLoadingTimetable(false);
+      }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     selectedGradeId,
     selectedStreamId,
@@ -278,6 +328,7 @@ export default function SmartTimetableNew() {
     selectedTermId,
     loadSchoolTimetable,
     loadTimeSlots,
+    isLoadingInitial,
   ]);
 
   const grid = useTimetableGrid(selectedGradeId);
@@ -375,22 +426,26 @@ export default function SmartTimetableNew() {
     // timeSlots sets the period IDs for the correct grade's day templates,
     // then loadSchoolTimetable loads entries keyed to those period IDs.
     if (selectedGradeId) {
-      await loadTimeSlots(termId, selectedGradeId).catch((err) =>
-        console.error("reloadTimetableData: loadTimeSlots failed:", err),
-      );
-      await loadSchoolTimetable(termId, {
-        gradeLevelId: selectedGradeId,
-        streamId: selectedStreamId,
-      }).catch((err) =>
-        console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
-      );
+      await Promise.all([
+        loadTimeSlots(termId, selectedGradeId).catch((err) =>
+          console.error("reloadTimetableData: loadTimeSlots failed:", err),
+        ),
+        loadSchoolTimetable(termId, {
+          gradeLevelId: selectedGradeId,
+          streamId: selectedStreamId,
+        }).catch((err) =>
+          console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
+        ),
+      ]);
     } else {
-      await loadTimeSlots(termId).catch((err) =>
-        console.error("reloadTimetableData: loadTimeSlots failed:", err),
-      );
-      await loadSchoolTimetable(termId).catch((err) =>
-        console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
-      );
+      await Promise.all([
+        loadTimeSlots(termId).catch((err) =>
+          console.error("reloadTimetableData: loadTimeSlots failed:", err),
+        ),
+        loadSchoolTimetable(termId).catch((err) =>
+          console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
+        ),
+      ]);
     }
     await loadBreaks().catch((err) =>
       console.error("reloadTimetableData: loadBreaks failed:", err),
@@ -418,8 +473,6 @@ export default function SmartTimetableNew() {
   } | null>(null);
   const [bulkBreaksOpen, setBulkBreaksOpen] = useState(false);
   const [bulkLessonEntryOpen, setBulkLessonEntryOpen] = useState(false);
-  const [createTermModalOpen, setCreateTermModalOpen] = useState(false);
-  const academicYearTriggerRef = useRef<HTMLButtonElement>(null);
   const [addingPeriods, setAddingPeriods] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -456,7 +509,12 @@ export default function SmartTimetableNew() {
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
   const periodsRefetchAttemptedRef = useRef(false);
 
+  const { getCombinedEntriesFor } = useSchoolCombinedEntries();
   const termOverview = useTimetableTermOverview();
+  const schoolLessonCount = useMemo(
+    () => termOverview.byGrade.reduce((sum, g) => sum + g.lessonCount, 0),
+    [termOverview.byGrade],
+  );
   const termIdForShare = selectedTerm?.id || selectedTermId;
   const { markShared, hasChangesSinceShare, sharedAt } =
     useTimetableShareStatus(termIdForShare, selectedTerm?.timetablePublishedAt);
@@ -480,7 +538,7 @@ export default function SmartTimetableNew() {
   }, []);
 
   useEffect(() => {
-    if (isLoadingInitial || academicYearsLoading || termsLoading) return;
+    if (isGridLoading || academicYearsLoading || termsLoading) return;
 
     const termId = selectedTerm?.id || selectedTermId;
     const tenantId = getTenantIdFromCookies();
@@ -498,7 +556,7 @@ export default function SmartTimetableNew() {
       setShowTimetableWizard(true);
     }
   }, [
-    isLoadingInitial,
+    isPageLoading,
     academicYearsLoading,
     termsLoading,
     hasScheduleStructure,
@@ -511,7 +569,7 @@ export default function SmartTimetableNew() {
   }, [selectedTerm?.id, selectedTermId]);
 
   useEffect(() => {
-    if (isLoadingInitial) return;
+    if (isGridLoading) return;
     if (hasTimeSlots || periodNumbers.length > 0) return;
     if (!timetableSetupComplete) return;
     if (periodsRefetchAttemptedRef.current) return;
@@ -530,7 +588,7 @@ export default function SmartTimetableNew() {
       await loadTimeSlots(termId, state.selectedGradeId || undefined);
     })();
   }, [
-    isLoadingInitial,
+    isPageLoading,
     hasTimeSlots,
     periodNumbers.length,
     timetableSetupComplete,
@@ -942,6 +1000,18 @@ export default function SmartTimetableNew() {
     [],
   );
 
+  const handleCombinedLessonClick = useCallback(
+    (entry: { gradeId?: string; streamId?: string | null }) => {
+      if (entry.gradeId) setSelectedGrade(entry.gradeId);
+      if (entry.streamId) {
+        setSelectedStream(entry.streamId);
+      } else {
+        setSelectedStream(null);
+      }
+    },
+    [setSelectedGrade, setSelectedStream],
+  );
+
   const [movingBreakId, setMovingBreakId] = useState<string | null>(null);
 
   const handleMoveBreak = useCallback(
@@ -1160,7 +1230,7 @@ export default function SmartTimetableNew() {
   };
 
   return (
-    <div className={cn("relative flex h-screen overflow-hidden", tt.pageBg)}>
+    <div className="relative flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
       <TimetablePrintStyles />
       {showTimetableWizard && (
         <div className="fixed inset-0 z-[60] overflow-auto">
@@ -1178,41 +1248,44 @@ export default function SmartTimetableNew() {
               await reloadTimetableData();
             }}
             onSkip={() => setShowTimetableWizard(false)}
-            onOpenAcademicYear={() => academicYearTriggerRef.current?.click()}
-            onOpenCreateTerm={() => setCreateTermModalOpen(true)}
           />
         </div>
       )}
       {/* ── Sidebar ── */}
-      {hasScheduleStructure && !isSidebarMinimized && (
-        <aside
-          data-timetable-no-print
-          className="flex w-64 flex-shrink-0 flex-col border-r border-zinc-200/90 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:w-72"
-        >
-          <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800">
-            <span className={tt.label}>Classes</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-              onClick={() => setIsSidebarMinimized(true)}
-            >
-              <PanelLeftClose className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <TimetableClassSidebar
-              grades={sidebarGrades}
-              allGradesCount={grades.length}
-              selectedGradeId={selectedGradeId}
-              pinnedGradeId={pinnedGradeId}
-              onSelectGrade={setSelectedGrade}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              searchInputRef={gradeSearchRef}
-            />
-          </div>
-        </aside>
+      {isPageLoading && !isSidebarMinimized ? (
+        <TimetableSidebarSkeleton />
+      ) : (
+        hasScheduleStructure &&
+        !isSidebarMinimized && (
+          <aside
+            data-timetable-no-print
+            className="flex w-64 flex-shrink-0 flex-col border-r border-zinc-200/90 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:w-72"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800">
+              <span className={tt.label}>Classes</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={() => setIsSidebarMinimized(true)}
+              >
+                <PanelLeftClose className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <TimetableClassSidebar
+                grades={sidebarGrades}
+                allGradesCount={grades.length}
+                selectedGradeId={selectedGradeId}
+                pinnedGradeId={pinnedGradeId}
+                onSelectGrade={setSelectedGrade}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchInputRef={gradeSearchRef}
+              />
+            </div>
+          </aside>
+        )
       )}
 
       {/* ── Main ── */}
@@ -1220,35 +1293,20 @@ export default function SmartTimetableNew() {
         {/* ── Toolbar ── */}
         <header
           data-timetable-no-print
-          className="flex-shrink-0 border-b border-zinc-200/90 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 lg:px-6"
+          className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6"
         >
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-start gap-3 lg:items-center lg:justify-between">
+          <div className="mx-auto flex max-w-5xl flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
-                    <Calendar className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h1 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 lg:text-lg">
-                      Timetable
-                    </h1>
-                    <p className={cn(tt.caption, "truncate max-w-md")}>
-                      {selectedTerm
-                        ? `Editing ${selectedTerm.name}${activeAcademicYear ? ` · ${activeAcademicYear.name}` : ""} — set times, then add lessons`
-                        : "Choose your school year and term (top bar), then set up lesson times"}
-                    </p>
-                  </div>
-                </div>
+                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Timetable
+                </h1>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Build your weekly schedule.
+                </p>
               </div>
 
-              <div className="flex items-center gap-1.5 flex-wrap lg:flex-nowrap">
-                {selectedTerm && (
-                  <span className="shrink-0 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 md:hidden">
-                    {selectedTerm.name}
-                  </span>
-                )}
-                <TermsDropdown className="shrink-0" />
+              <div className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap">
                 {hasScheduleStructure && isSidebarMinimized && (
                   <Button
                     variant="outline"
@@ -1301,17 +1359,6 @@ export default function SmartTimetableNew() {
                       </Select>
                     </div>
                   )}
-                {!hasScheduleStructure && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="hidden h-9 gap-1.5 border-zinc-200 text-xs lg:inline-flex dark:border-zinc-700"
-                    onClick={() => setShowTimetableWizard(true)}
-                  >
-                    <LayoutGrid className="h-3.5 w-3.5" />
-                    Set up school day
-                  </Button>
-                )}
                 {hasScheduleStructure && selectedTerm && (
                   <Button
                     variant="outline"
@@ -1349,14 +1396,6 @@ export default function SmartTimetableNew() {
                       >
                         <PanelLeftOpen className="h-3.5 w-3.5 mr-2" />
                         Class list
-                      </DropdownMenuItem>
-                    )}
-                    {!hasScheduleStructure && (
-                      <DropdownMenuItem
-                        onClick={() => setShowTimetableWizard(true)}
-                      >
-                        <LayoutGrid className="h-3.5 w-3.5 mr-2" />
-                        Set up school day
                       </DropdownMenuItem>
                     )}
                     {hasScheduleStructure && selectedTerm && (
@@ -1465,7 +1504,7 @@ export default function SmartTimetableNew() {
                         className="text-amber-800 dark:text-amber-200"
                       >
                         <LayoutGrid className="h-3.5 w-3.5 mr-2" />
-                        Advanced: lesson times…
+                        Edit lesson times…
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
@@ -1543,7 +1582,7 @@ export default function SmartTimetableNew() {
               </div>
             </div>
 
-            <div className="space-y-2 rounded-xl border border-zinc-200/90 bg-zinc-50/50 px-2.5 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="space-y-2.5 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/40">
               {hasScheduleStructure && isSidebarMinimized && (
                 <GradeClassSearch
                   ref={gradeSearchRef}
@@ -1639,21 +1678,8 @@ export default function SmartTimetableNew() {
         </header>
 
         {/* ── Content ── */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-4 lg:p-6 space-y-4 lg:space-y-5">
-            {!selectedTerm && !academicYearsLoading && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
-                <strong>Choose a term</strong> using the term selector in the
-                toolbar (or top navigation bar) before editing timetables.
-                {!hasAcademicYear && (
-                  <span className="block mt-1 text-xs">
-                    You also need a school year — use guided setup to create
-                    one.
-                  </span>
-                )}
-              </div>
-            )}
-
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
             {!hideLiveBanner && hasScheduleStructure && (
               <div
                 className={cn(
@@ -1665,7 +1691,7 @@ export default function SmartTimetableNew() {
                   <strong className="font-semibold text-zinc-700 dark:text-zinc-200">
                     Saves apply immediately.
                   </strong>{" "}
-                  Use Share with staff to publish the term for teachers.
+                  Use Share with staff to publish for teachers.
                 </span>
                 <Button
                   type="button"
@@ -1688,61 +1714,155 @@ export default function SmartTimetableNew() {
 
             {!hasScheduleStructure &&
               !showTimetableWizard &&
-              !isLoadingInitial && (
+              !isPageLoading && (
                 <TimetableOnboarding
                   onSetupSchoolDay={() => setShowTimetableWizard(true)}
-                  onManageBreaks={() =>
-                    hasScheduleStructure
-                      ? setBreaksDrawerOpen(true)
-                      : setShowTimetableWizard(true)
-                  }
-                  onAddLessons={() => {
-                    if (!selectedGradeId && grades.length > 0) {
-                      setSelectedGrade(grades[0].id);
-                    }
-                    setBulkLessonEntryOpen(true);
-                  }}
-                  onOpenAcademicYearDrawer={() =>
-                    academicYearTriggerRef.current?.click()
-                  }
-                  onOpenCreateTermDrawer={() => setCreateTermModalOpen(true)}
                 />
               )}
 
-            <TimetableProgressStrip
+            {(hasScheduleStructure ||
+              isPageLoading ||
+              selectedGradeId) && (
+              <section data-timetable-print-root className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900">
+                <div className="hidden print:block px-4 lg:px-5 pt-4 border-b border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {classDisplayLabel}
+                    {currentStream ? ` — ${currentStream.name}` : ""}
+                  </h2>
+                </div>
+                <div
+                  data-timetable-no-print
+                  className="border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800 lg:px-5"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                        {selectedGradeId
+                          ? "Schedule"
+                          : hasScheduleStructure
+                            ? "All classes"
+                            : "Preview"}
+                      </p>
+                      <h2 className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {selectedGradeId ? "Weekly timetable" : "Whole-school timetable"}
+                      </h2>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {selectedGradeId
+                          ? "Tap an empty cell to add a lesson. Tap a filled cell to edit."
+                          : hasScheduleStructure
+                            ? "Every class and stream in each slot — filled cells show the lesson; empty cells are open. Tap to open a class."
+                            : "Complete step 1 above to see the schedule here."}
+                        {highlightTeacherId && (
+                          <span className="mt-1 block text-slate-600 dark:text-slate-300">
+                            Dimmed cells are taught by other teachers.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    {hasScheduleStructure && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 border-zinc-200 text-xs text-zinc-600 dark:border-zinc-700"
+                        onClick={requestOpenAdvancedSchedule}
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5 mr-1.5" />
+                        Edit lesson times
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-zinc-50/30 p-3 dark:bg-zinc-950/30 lg:p-4">
+                  {isGridLoading ? (
+                    <TimetableGridSkeleton combined={!selectedGradeId} />
+                  ) : !selectedGradeId ? (
+                    !hasScheduleStructure ? (
+                      <TimetableGhostGrid className="opacity-60" />
+                    ) : (
+                      <AdminTimetableGrid
+                        schoolCombined
+                        periodNumbers={periodNumbers}
+                        days={days}
+                        getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
+                        getEntryFor={() => null}
+                        getCombinedEntriesFor={getCombinedEntriesFor}
+                        onCombinedLessonClick={handleCombinedLessonClick}
+                        getBreaksAfterPeriod={getBreaksAfterPeriod}
+                        getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
+                        hasNoTimeSlots={!hasScheduleStructure}
+                        getCleanBreakName={getCleanBreakName}
+                        getSubjectAccent={getSubjectAccentForGrid}
+                        conflictLessonIds={
+                          showConflicts ? conflictLessonIds : undefined
+                        }
+                        highlightTeacherId={highlightTeacherId}
+                        onEditTimeslot={setEditingTimeslot}
+                        onEditBreak={setEditingBreak}
+                        onMoveBreak={handleMoveBreak}
+                        movingBreakId={movingBreakId}
+                        onCreateSchedule={() => setShowTimetableWizard(true)}
+                      />
+                    )
+                  ) : !hasScheduleStructure ? (
+                    <TimetableGhostGrid className="opacity-60" />
+                  ) : (
+                    <AdminTimetableGrid
+                      periodNumbers={periodNumbers}
+                      days={days}
+                      getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
+                      getEntryFor={getEntryFor}
+                      getBreaksAfterPeriod={getBreaksAfterPeriod}
+                      getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
+                      hasNoTimeSlots={!hasScheduleStructure}
+                      getCleanBreakName={getCleanBreakName}
+                      getSubjectAccent={getSubjectAccentForGrid}
+                      conflictLessonIds={
+                        showConflicts ? conflictLessonIds : undefined
+                      }
+                      highlightTeacherId={highlightTeacherId}
+                      onEditTimeslot={setEditingTimeslot}
+                      onDeleteTimeslot={setTimeslotToDelete}
+                      onEditLesson={handleEditLesson}
+                      onDeleteLesson={setDeleteEntryConfirm}
+                      onAddLesson={handleAddLesson}
+                      onEditBreak={setEditingBreak}
+                      onAddBreak={handleAddBreak}
+                      onMoveBreak={handleMoveBreak}
+                      movingBreakId={movingBreakId}
+                      onCreateSchedule={() => setShowTimetableWizard(true)}
+                    />
+                  )}
+                </div>
+              </section>
+            )}
+
+            <TimetableStatusBar
               hasScheduleStructure={hasScheduleStructure}
               hasAnyLessons={hasAnyLessons}
               conflictCount={conflictCount}
-              onSetupSchoolDay={() => setShowTimetableWizard(true)}
               onAddFirstLesson={() => {
                 if (!selectedGradeId && grades.length > 0) {
                   setSelectedGrade(grades[0].id);
                 }
               }}
               onHighlightProblems={handleHighlightProblems}
+              classLabel={
+                selectedGradeId ? classDisplayLabel : "All classes"
+              }
+              streamName={currentStream?.name}
+              filledSlots={
+                selectedGradeId ? stats.filledSlots : termOverview.totalFilled
+              }
+              totalSlots={
+                selectedGradeId ? stats.totalSlots : termOverview.totalSlots
+              }
+              totalLessons={
+                selectedGradeId ? stats.totalLessons : schoolLessonCount
+              }
+              periodCount={periodNumbers.length}
+              lastUpdatedIso={lastUpdated}
             />
-
-            {selectedGradeId && (
-              <TimetableClassContextBar
-                classLabel={classDisplayLabel}
-                streamName={currentStream?.name}
-                filledSlots={stats.filledSlots}
-                totalSlots={stats.totalSlots}
-                totalLessons={stats.totalLessons}
-                periodCount={periodNumbers.length}
-                conflictCount={conflictCount}
-                lastUpdatedIso={lastUpdated}
-              />
-            )}
-
-            {!selectedGradeId && hasScheduleStructure && (
-              <TimetableScheduleSummary
-                periodCount={periodNumbers.length}
-                dayCount={daysPerWeek}
-                breakCount={breaks.length}
-                termName={selectedTerm?.name}
-              />
-            )}
 
             {selectedGradeId &&
               stats.totalSlots > 0 &&
@@ -1778,111 +1898,6 @@ export default function SmartTimetableNew() {
               />
             )}
 
-            {(hasScheduleStructure || isLoadingInitial) && (
-              <section data-timetable-print-root className={tt.panel}>
-                <div className="hidden print:block px-4 lg:px-5 pt-4 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-900">
-                    {classDisplayLabel}
-                    {currentStream ? ` — ${currentStream.name}` : ""}
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    {selectedTerm?.name}
-                    {activeAcademicYear ? ` · ${activeAcademicYear.name}` : ""}
-                  </p>
-                </div>
-                <div
-                  data-timetable-no-print
-                  className="border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800 lg:px-5"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-[13px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                        Weekly schedule
-                      </h2>
-                      <p className={cn(tt.caption, "mt-0.5")}>
-                        Empty slots add lessons · filled slots open the editor
-                        {highlightTeacherId && (
-                          <span className="mt-1 block text-zinc-600 dark:text-zinc-300">
-                            Faded cells belong to other teachers.
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-zinc-200 text-xs text-zinc-600 dark:border-zinc-700"
-                      onClick={() =>
-                        hasScheduleStructure
-                          ? requestOpenAdvancedSchedule()
-                          : setShowTimetableWizard(true)
-                      }
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5 mr-1.5" />
-                      {hasScheduleStructure
-                        ? "Advanced: lesson times"
-                        : "Set up school day"}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-50/30 p-3 dark:bg-zinc-950/30 lg:p-4">
-                  {/* No grade selected */}
-                  {!selectedGradeId && hasScheduleStructure ? (
-                    <div className="flex items-center justify-center min-h-[54vh]">
-                      <div className="max-w-sm text-center">
-                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
-                          <GraduationCap className="h-8 w-8 text-slate-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                          Pick a class to see its timetable
-                        </h3>
-                        <p className="text-sm text-slate-500 mb-4">
-                          Choose a class from the chips above or the class list
-                          on the left, then tap any empty slot to add a lesson.
-                        </p>
-                        {grades.length > 0 && (
-                          <Button
-                            size="sm"
-                            className="h-9"
-                            onClick={() => setSelectedGrade(grades[0].id)}
-                          >
-                            Open {grades[0].displayName || grades[0].name}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <AdminTimetableGrid
-                      periodNumbers={periodNumbers}
-                      days={days}
-                      getSlotFor={(d, p) => getSlotFor(d, p) ?? null}
-                      getEntryFor={getEntryFor}
-                      getBreaksAfterPeriod={getBreaksAfterPeriod}
-                      getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                      isLoading={isLoadingInitial}
-                      hasNoTimeSlots={!hasScheduleStructure}
-                      getCleanBreakName={getCleanBreakName}
-                      getSubjectAccent={getSubjectAccentForGrid}
-                      conflictLessonIds={
-                        showConflicts ? conflictLessonIds : undefined
-                      }
-                      highlightTeacherId={highlightTeacherId}
-                      onEditTimeslot={setEditingTimeslot}
-                      onDeleteTimeslot={setTimeslotToDelete}
-                      onEditLesson={handleEditLesson}
-                      onDeleteLesson={setDeleteEntryConfirm}
-                      onAddLesson={handleAddLesson}
-                      onEditBreak={setEditingBreak}
-                      onAddBreak={handleAddBreak}
-                      onMoveBreak={handleMoveBreak}
-                      movingBreakId={movingBreakId}
-                      onCreateSchedule={() => setShowTimetableWizard(true)}
-                    />
-                  )}
-                </div>
-              </section>
-            )}
           </div>
         </div>
       </main>
@@ -2130,44 +2145,6 @@ export default function SmartTimetableNew() {
         </SheetContent>
       </Sheet>
 
-      <CreateAcademicYearModal
-        onSuccess={() => {
-          refetchAcademicYears();
-          toast({ title: "Academic year created" });
-        }}
-        trigger={
-          <button
-            ref={academicYearTriggerRef}
-            style={{
-              position: "absolute",
-              width: 0,
-              height: 0,
-              opacity: 0,
-              pointerEvents: "none",
-              overflow: "hidden",
-            }}
-            tabIndex={-1}
-          />
-        }
-      />
-      {academicYears.length > 0 && (
-        <CreateTermModal
-          isOpen={createTermModalOpen}
-          onClose={() => setCreateTermModalOpen(false)}
-          onSuccess={() => {
-            setCreateTermModalOpen(false);
-            refetchAcademicYears();
-            reloadTimetableData();
-          }}
-          academicYear={{
-            id: academicYears[0].id,
-            name: academicYears[0].name,
-            startDate: academicYears[0].startDate,
-            endDate: academicYears[0].endDate,
-          }}
-        />
-      )}
-
       <AlertDialog
         open={!!timeslotToDelete}
         onOpenChange={() => setTimeslotToDelete(null)}
@@ -2296,11 +2273,11 @@ export default function SmartTimetableNew() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Advanced: change lesson times?</AlertDialogTitle>
+            <AlertDialogTitle>Edit lesson times?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                This tool replaces period start times and how many lessons fit
-                in each day. It is meant for experienced admins.
+                This updates when lessons start, how long they run, and how many
+                fit in each day. Existing lessons stay in place where possible.
               </span>
               <span className="block">
                 For first-time setup, use <strong>Guided setup</strong> from the

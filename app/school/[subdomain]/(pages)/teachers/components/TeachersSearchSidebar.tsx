@@ -1,19 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  PanelLeftClose,
-  User,
-  Loader2,
-  AlertCircle
-} from "lucide-react";
-import { useGetTeachers } from '@/lib/hooks/useTeachers';
+import React, { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Loader2, AlertCircle, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useGetTeachers } from "@/lib/hooks/useTeachers";
 
-// Teacher type definition (simplified for sidebar use)
 type Teacher = {
   id: string;
   name: string;
@@ -29,7 +22,6 @@ interface TeachersSearchSidebarProps {
   onTeacherSelect: (teacherId: string) => void;
   displayedTeachersCount: number;
   onLoadMore: () => void;
-  onCollapse: () => void;
 }
 
 export function TeachersSearchSidebar({
@@ -39,249 +31,165 @@ export function TeachersSearchSidebar({
   onTeacherSelect,
   displayedTeachersCount,
   onLoadMore,
-  onCollapse
 }: TeachersSearchSidebarProps) {
-  // Fetch teachers using the getTeachers query
-  const { teachers: graphqlTeachers, isLoading, isError, error, refetch } = useGetTeachers();
+  const { teachers: graphqlTeachers, isLoading, isError, error, refetch } =
+    useGetTeachers();
 
-  // Debug logging
-  useEffect(() => {
-    console.log('TeachersSearchSidebar - graphqlTeachers:', graphqlTeachers);
-    console.log('TeachersSearchSidebar - isLoading:', isLoading);
-    console.log('TeachersSearchSidebar - isError:', isError);
-    console.log('TeachersSearchSidebar - error:', error);
-  }, [graphqlTeachers, isLoading, isError, error]);
-
-  // Transform GraphQL teachers to Teacher format
   const teachers: Teacher[] = useMemo(() => {
-    console.log('Transforming teachers, graphqlTeachers:', graphqlTeachers);
-    
-    if (!graphqlTeachers || !Array.isArray(graphqlTeachers)) {
-      console.log('No teachers data or not an array');
-      return [];
-    }
+    if (!graphqlTeachers || !Array.isArray(graphqlTeachers)) return [];
 
-    if (graphqlTeachers.length === 0) {
-      console.log('Teachers array is empty');
-      return [];
-    }
-
-    const transformed = graphqlTeachers.map((teacher: any) => {
-      // Get name from fullName, firstName/lastName, or user.name
-      const name = teacher.fullName || 
-                   (teacher.firstName && teacher.lastName ? `${teacher.firstName} ${teacher.lastName}` : '') ||
-                   teacher.user?.name || 
-                   'Unknown Teacher';
-
-      // Get department, default to "General" if not available
-      const department = teacher.department || 'General';
-
-      // Get subjects from tenantSubjects
-      const subjects = teacher.tenantSubjects?.map((subject: any) => subject.name) || [];
-
-      // Determine status based on isActive
-      const status: Teacher['status'] = teacher.isActive ? 'active' : 'former';
+    return graphqlTeachers.map((teacher: {
+      id: string;
+      fullName?: string;
+      firstName?: string;
+      lastName?: string;
+      department?: string;
+      isActive?: boolean;
+      user?: { name?: string };
+      tenantSubjects?: { name: string }[];
+    }) => {
+      const name =
+        teacher.fullName ||
+        (teacher.firstName && teacher.lastName
+          ? `${teacher.firstName} ${teacher.lastName}`
+          : "") ||
+        teacher.user?.name ||
+        "Unknown Teacher";
 
       return {
         id: teacher.id,
         name,
-        department,
-        subjects,
-        status,
+        department: teacher.department || "General",
+        subjects: teacher.tenantSubjects?.map((s) => s.name) || [],
+        status: teacher.isActive ? "active" : "former",
       };
     });
-
-    console.log('Transformed teachers:', transformed);
-    return transformed;
   }, [graphqlTeachers]);
 
-  // Filter teachers based on search term
   const filteredTeachers = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return teachers;
-    }
-
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return teachers.filter((teacher) => {
-      return (
-        teacher.name.toLowerCase().includes(lowerSearchTerm) ||
-        teacher.department.toLowerCase().includes(lowerSearchTerm) ||
-        teacher.subjects.some(subject => subject.toLowerCase().includes(lowerSearchTerm)) ||
-        teacher.id.toLowerCase().includes(lowerSearchTerm)
-      );
-    });
+    if (!searchTerm.trim()) return teachers;
+    const q = searchTerm.toLowerCase();
+    return teachers.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        t.department.toLowerCase().includes(q) ||
+        t.subjects.some((s) => s.toLowerCase().includes(q)) ||
+        t.id.toLowerCase().includes(q),
+    );
   }, [teachers, searchTerm]);
 
-  const handleClearSearch = () => {
-    onSearchChange('');
-  };
+  const visible = filteredTeachers.slice(0, displayedTeachersCount);
 
   return (
-    <div className="hidden md:flex flex-col w-96 border-r border-primary/20 overflow-y-auto p-6 shrink-0 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out relative">
-      {/* Collapse button positioned at top-right of sidebar */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onCollapse}
-        className="absolute top-4 right-4 border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200 z-10"
-        title="Hide search sidebar"
-      >
-        <PanelLeftClose className="h-4 w-4" />
-      </Button>
-      
-      <div className="space-y-6">
-        {/* Search Input Section */}
-        <div className="border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-          <div className="inline-block w-fit px-3 py-1 bg-primary/10 border border-primary/20 rounded-md mb-4">
-            <label className="text-xs font-mono uppercase tracking-wide text-primary flex items-center">
-              <Search className="h-3 w-3 mr-2" />
-              Teacher Name
-            </label>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-primary" />
-            <Input
-              type="text"
-              placeholder="Search by name, employee ID, email..."
-              className="pl-9 h-12 text-base font-mono bg-white dark:bg-slate-800 border-primary/20 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Clear Search Button */}
+    <div className="flex h-full flex-col pt-2">
+      <div className="relative mb-3">
+        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+        <Input
+          type="text"
+          placeholder="Search teachers…"
+          className="h-9 border-slate-200/80 bg-white pl-8 text-sm dark:border-slate-700 dark:bg-slate-900"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
         {searchTerm && (
-          <div className="pt-1">
-            <Button 
-              variant="outline" 
-              onClick={handleClearSearch}
-              className="w-full border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono"
-            >
-              Clear All Filters
-            </Button>
-          </div>
+          <button
+            type="button"
+            onClick={() => onSearchChange("")}
+            className="absolute right-2 top-2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+            aria-label="Clear search"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         )}
       </div>
-      
-      {/* Teachers List Section */}
-      <div className="mt-8 border-2 border-primary/20 bg-primary/5 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-mono font-bold text-slate-900 dark:text-slate-100">Teachers</h3>
-            {isLoading ? (
-              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium flex items-center gap-2">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Loading teachers...
-              </p>
-            ) : (
-              <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                Showing {Math.min(displayedTeachersCount, filteredTeachers.length)} of {filteredTeachers.length} teachers
-              </p>
-            )}
-          </div>
-          <Badge className="bg-primary/10 text-primary border border-primary/20 font-mono">
-            {isLoading ? '...' : filteredTeachers.length}
-          </Badge>
-        </div>
-        
-        {/* Error State */}
-        {isError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <p className="text-sm font-mono text-red-600">
-                {error instanceof Error ? error.message : 'Failed to load teachers'}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              className="w-full border-red-200 text-red-700 hover:bg-red-100 font-mono text-xs"
-            >
-              Retry
-            </Button>
-          </div>
-        )}
-        
-        <div className="space-y-2 mb-4">
-          {isLoading ? (
-            <div className="text-center py-8 text-slate-600 dark:text-slate-400 font-medium flex flex-col items-center gap-2">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span>Loading teachers...</span>
-            </div>
-          ) : filteredTeachers.length === 0 ? (
-            <div className="text-center py-8 text-slate-600 dark:text-slate-400 font-medium">
-              {searchTerm ? 'No teachers match your search criteria' : 'No teachers found'}
-            </div>
-          ) : (
-            filteredTeachers.slice(0, displayedTeachersCount).map((teacher) => (
-              <div
-                key={teacher.id}
-                className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                  teacher.id === selectedTeacherId 
-                    ? 'bg-primary/10 border-primary/40 shadow-md' 
-                    : 'bg-white dark:bg-slate-800 border-primary/20 hover:bg-primary/5 hover:border-primary/40 hover:shadow-sm'
-                }`}
-                onClick={() => onTeacherSelect(teacher.id)}
-                title="Click to view teacher details"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className={`w-3 h-3 rounded-full ${
-                        teacher.status === 'active' ? 'bg-green-500' : 
-                        teacher.status === 'on leave' ? 'bg-yellow-500' : 'bg-gray-400'
-                      }`} />
-                      <div className="font-mono font-medium text-slate-900 dark:text-slate-100">
-                        {teacher.name}
-                      </div>
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400 font-mono mb-1">
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                        {teacher.department}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-slate-600 dark:text-slate-400 font-mono">
-                      {teacher.subjects.join(', ')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
 
-        {/* Load More Section */}
-        {filteredTeachers.length > displayedTeachersCount && (
-          <div className="border-t border-primary/20 pt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                Showing {displayedTeachersCount} of {filteredTeachers.length} teachers
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLoadMore}
-                className="border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 font-mono text-xs"
-              >
-                Load More ({Math.min(10, filteredTeachers.length - displayedTeachersCount)})
-              </Button>
-            </div>
-          </div>
-        )}
-        
-        {displayedTeachersCount >= filteredTeachers.length && filteredTeachers.length > 10 && (
-          <div className="border-t border-primary/20 pt-4">
-            <div className="flex items-center justify-center">
-              <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
-                All {filteredTeachers.length} teachers loaded
-              </span>
-            </div>
-          </div>
+      <div className="mb-2 flex items-center justify-between px-0.5">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          Staff
+        </p>
+        {!isLoading && (
+          <span className="text-[11px] tabular-nums text-slate-400">
+            {visible.length}/{filteredTeachers.length}
+          </span>
         )}
       </div>
+
+      {isError && (
+        <div className="mb-3 rounded-lg border border-red-200/80 bg-red-50 p-2.5">
+          <div className="mb-1.5 flex items-center gap-1.5 text-xs text-red-600">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            {error instanceof Error ? error.message : "Failed to load"}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-7 w-full border-red-200 text-xs text-red-700"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-sm text-slate-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading…
+          </div>
+        ) : filteredTeachers.length === 0 ? (
+          <p className="py-8 text-center text-xs text-slate-400">
+            {searchTerm ? "No matches" : "No teachers yet"}
+          </p>
+        ) : (
+          visible.map((teacher) => (
+            <button
+              key={teacher.id}
+              type="button"
+              onClick={() => onTeacherSelect(teacher.id)}
+              className={cn(
+                "w-full rounded-lg border px-3 py-2.5 text-left transition-colors",
+                teacher.id === selectedTeacherId
+                  ? "border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-900"
+                  : "border-transparent hover:border-slate-200/80 hover:bg-white/80 dark:hover:border-slate-700 dark:hover:bg-slate-900/60",
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    teacher.status === "active"
+                      ? "bg-emerald-500"
+                      : "bg-slate-300",
+                  )}
+                />
+                <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                  {teacher.name}
+                </span>
+              </div>
+              <p className="mt-0.5 truncate pl-3.5 text-[11px] text-slate-400">
+                {teacher.department}
+                {teacher.subjects.length > 0 &&
+                  ` · ${teacher.subjects.slice(0, 2).join(", ")}`}
+              </p>
+            </button>
+          ))
+        )}
+      </div>
+
+      {filteredTeachers.length > displayedTeachersCount && (
+        <div className="mt-2 shrink-0 border-t border-slate-200/80 pt-2 dark:border-slate-800">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLoadMore}
+            className="h-7 w-full text-xs text-slate-500 hover:text-slate-700"
+          >
+            Load more (
+            {Math.min(10, filteredTeachers.length - displayedTeachersCount)})
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

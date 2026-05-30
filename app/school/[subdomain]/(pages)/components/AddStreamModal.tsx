@@ -2,19 +2,18 @@
 
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { FormField } from '../classes/components/FormField'
 
 interface AddStreamModalProps {
   isOpen: boolean
@@ -31,28 +30,35 @@ export function AddStreamModal({ isOpen, onClose, onSuccess, gradeId, gradeName 
     name: '',
     capacity: '30'
   })
+  const [errors, setErrors] = useState<{ name?: string; capacity?: string }>({})
+
+  const resetForm = () => {
+    setFormData({ name: '', capacity: '30' })
+    setErrors({})
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    setErrors(prev => ({ ...prev, [name]: undefined }))
+  }
+
+  const validate = () => {
+    const next: { name?: string; capacity?: string } = {}
+    if (!formData.name.trim()) {
+      next.name = 'Stream name is required'
+    }
+    const capacity = Number(formData.capacity)
+    if (!formData.capacity || Number.isNaN(capacity) || capacity < 1) {
+      next.capacity = 'Enter a capacity of at least 1 student'
+    }
+    setErrors(next)
+    return Object.keys(next).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!formData.name) {
-      toast.error("Validation Error", {
-        description: "Stream name is required"
-      })
-      return
-    }
-
-    if (!formData.capacity || isNaN(Number(formData.capacity)) || Number(formData.capacity) < 1) {
-      toast.error("Validation Error", {
-        description: "Capacity must be a positive number"
-      })
-      return
-    }
+    if (!validate()) return
 
     setIsLoading(true)
 
@@ -63,7 +69,7 @@ export function AddStreamModal({ isOpen, onClose, onSuccess, gradeId, gradeName 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
+          name: formData.name.trim(),
           capacity: formData.capacity,
           gradeId
         }),
@@ -72,7 +78,6 @@ export function AddStreamModal({ isOpen, onClose, onSuccess, gradeId, gradeName 
       const data = await response.json()
       
       if (!response.ok) {
-        // Check if there are GraphQL error details
         if (data.details && Array.isArray(data.details) && data.details.length > 0) {
           const firstError = data.details[0];
           throw new Error(firstError.message || data.error || 'Failed to create stream');
@@ -80,91 +85,99 @@ export function AddStreamModal({ isOpen, onClose, onSuccess, gradeId, gradeName 
         throw new Error(data.error || 'Failed to create stream')
       }
 
-      // Show success message
-      toast.success(`Stream Created: ${formData.name}`, {
-        description: `New stream has been successfully added to ${gradeName} with capacity of ${formData.capacity} students.`,
-        duration: 5000
-      })
+      toast.success(`Stream "${formData.name.trim()}" created`)
       
-      // Invalidate and refetch school configuration to show the new stream
       await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] })
       
+      resetForm()
       onSuccess()
       onClose()
     } catch (error) {
-      console.error('Error creating stream:', error)
-      
-      // Determine if this is a validation error (duplicate stream name)
       const errorMessage = error instanceof Error ? error.message : "An error occurred while creating the stream"
       const isValidationError = errorMessage.includes('already exists')
       
-      toast.error(isValidationError ? "Stream Already Exists" : "Error", {
-        description: isValidationError 
-          ? "A stream with this name already exists for this grade level. Please choose a different name."
-          : errorMessage,
-        duration: 6000
-      })
+      if (isValidationError) {
+        setErrors({ name: 'A stream with this name already exists in this grade' })
+      } else {
+        toast.error(errorMessage)
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add Stream for {gradeName}</DialogTitle>
-          <DialogDescription>
-            Create a new stream for this grade level. A stream represents a class section or group.
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md gap-0 overflow-hidden border-slate-200/80 bg-slate-50/50 p-0 dark:border-slate-800 dark:bg-slate-950">
+        <DialogHeader className="border-b border-slate-200/80 bg-white px-5 py-4 text-left dark:border-slate-800 dark:bg-slate-900">
+          <DialogTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            Add stream
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-500">
+            Create a new class division for <span className="font-medium text-slate-700 dark:text-slate-300">{gradeName}</span>.
+            Streams let you split one grade into groups (e.g. East, West, Blue).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Stream Name
-              </Label>
-              <Input
+          <div className="space-y-4 px-5 py-4">
+            <div className="rounded-xl border border-slate-200/80 bg-white p-4 space-y-4 dark:border-slate-800 dark:bg-slate-900/40">
+              <FormField
                 id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="e.g. Stream A, Red Stream"
-                className="col-span-3"
+                label="Stream name"
                 required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="capacity" className="text-right">
-                Capacity
-              </Label>
-              <Input
+                hint="Use a short, recognizable name"
+                error={errors.name}
+              >
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="e.g. East, Stream A, Blue"
+                  className="h-9 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+                  aria-invalid={!!errors.name}
+                />
+              </FormField>
+              <FormField
                 id="capacity"
-                name="capacity"
-                type="number"
-                value={formData.capacity}
-                onChange={handleChange}
-                className="col-span-3"
-                min={1}
+                label="Maximum students"
                 required
-              />
+                hint="How many students this stream can hold"
+                error={errors.capacity}
+              >
+                <Input
+                  id="capacity"
+                  name="capacity"
+                  type="number"
+                  value={formData.capacity}
+                  onChange={handleChange}
+                  className="h-9 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+                  min={1}
+                  aria-invalid={!!errors.capacity}
+                />
+              </FormField>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          <div className="flex flex-col-reverse gap-2 border-t border-slate-200/80 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" size="sm" onClick={handleClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" size="sm" className="h-9 sm:min-w-[8rem]" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                   Creating...
                 </>
               ) : (
-                'Create Stream'
+                'Create stream'
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

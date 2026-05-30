@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Badge } from "@/components/ui/badge";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Drawer,
   DrawerClose,
@@ -20,18 +19,23 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
-  BookOpen,
-  GraduationCap,
 } from "lucide-react";
 import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { ClassesStats } from "./components/ClassesStats";
+import { ClassesOverview } from "./components/ClassesOverview";
+import { ClassesContextBar } from "./components/ClassesContextBar";
 import { SubjectsView } from "./components/SubjectsView";
 import { GradeDetailsView } from "./components/GradeDetailsView";
-import { ActionsDrawer } from "./components/ActionsDrawer";
 import { AddStreamModal } from "../components/AddStreamModal";
 import { AssignTeacherModal } from "../components/AssignTeacherModal";
+import { AddSubjectDialog } from "../components/AddSubjectDialog";
+import { ClassActionBar, type ClassAction } from "./components/ClassActionBar";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { BookOpen, Layers, Plus, UserPlus } from "lucide-react";
 
 export default function ClassesPage() {
+  const searchParams = useSearchParams();
   const { config } = useSchoolConfigStore();
   const { isLoading, error } = useSchoolConfig();
 
@@ -49,8 +53,20 @@ export default function ClassesPage() {
     gradeLevelId?: string;
     gradeName?: string;
   }>({});
+  const [showAddSubjectDialog, setShowAddSubjectDialog] = useState(false);
+  const [addSubjectContext, setAddSubjectContext] = useState<{
+    curriculumId: string;
+    levelName: string;
+    gradeName?: string;
+    streamName?: string;
+  } | null>(null);
 
-  // Filter levels
+  useEffect(() => {
+    if (searchParams.get("tab") === "subjects") {
+      setShowSubjectsDrawer(true);
+    }
+  }, [searchParams]);
+
   const filteredLevels = useMemo(() => {
     if (!config?.selectedLevels) return [];
     return config.selectedLevels.filter((level) => {
@@ -134,16 +150,127 @@ export default function ClassesPage() {
     setSearchTerm("");
   };
 
-  // ─── Error ─────────────────────────────────────────────────
+  const openAddSubject = (context: {
+    curriculumId: string;
+    levelName: string;
+    gradeName?: string;
+    streamName?: string;
+  }) => {
+    if (!context.curriculumId) {
+      toast.error("Could not determine the level for this class");
+      return;
+    }
+    setAddSubjectContext(context);
+    setShowAddSubjectDialog(true);
+  };
+
+  const defaultAddSubjectContext = useMemo(() => {
+    if (!selectedGrade) return null;
+    return {
+      curriculumId: selectedGrade.level.id,
+      levelName: selectedGrade.levelName,
+      gradeName: selectedGrade.name,
+      streamName: selectedGrade.streamName,
+    };
+  }, [selectedGrade]);
+
+  const openAssignTeacher = () => {
+    if (selectedStreamId && selectedGrade?.streamName) {
+      setAssignTeacherData({
+        streamId: selectedStreamId,
+        streamName: selectedGrade.streamName,
+      });
+    } else if (selectedGrade?.grade) {
+      setAssignTeacherData({
+        gradeLevelId: selectedGrade.grade.id,
+        gradeName: selectedGrade.name,
+      });
+    } else {
+      toast.error("Select a grade first");
+      return;
+    }
+    setShowAssignTeacherModal(true);
+  };
+
+  const headerActions: ClassAction[] = [
+    {
+      id: "add-subject",
+      label: "Add subject",
+      icon: Plus,
+      onClick: () => {
+        if (defaultAddSubjectContext) {
+          openAddSubject(defaultAddSubjectContext);
+        } else {
+          toast.error("Select a grade first");
+        }
+      },
+      disabled: !selectedGrade?.grade,
+      disabledReason: "Select a grade in the sidebar first",
+    },
+    {
+      id: "add-stream",
+      label: "Add stream",
+      icon: Layers,
+      onClick: () => {
+        if (selectedGrade?.grade) setShowAddStreamModal(true);
+        else toast.error("Select a grade first");
+      },
+      disabled: !selectedGrade?.grade,
+      disabledReason: "Select a grade in the sidebar first",
+    },
+    {
+      id: "assign-teacher",
+      label: "Assign teacher",
+      icon: UserPlus,
+      onClick: openAssignTeacher,
+      disabled: !selectedGrade?.grade,
+      disabledReason: "Select a grade in the sidebar first",
+    },
+    {
+      id: "subjects",
+      label: "All subjects",
+      icon: BookOpen,
+      onClick: () => setShowSubjectsDrawer(true),
+    },
+  ];
+
+  const contextActions: ClassAction[] = [
+    {
+      id: "assign-teacher",
+      label: "Assign teacher",
+      icon: UserPlus,
+      onClick: openAssignTeacher,
+    },
+    {
+      id: "add-subject",
+      label: "Add subject",
+      icon: Plus,
+      onClick: () => {
+        if (defaultAddSubjectContext) openAddSubject(defaultAddSubjectContext);
+      },
+    },
+    {
+      id: "add-stream",
+      label: "Add stream",
+      icon: Layers,
+      onClick: () => setShowAddStreamModal(true),
+    },
+    {
+      id: "subjects",
+      label: "Subjects",
+      icon: BookOpen,
+      onClick: () => setShowSubjectsDrawer(true),
+    },
+  ];
 
   if (error) {
     return (
-      <div className="flex h-screen bg-slate-50 dark:bg-slate-900 items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-lg font-semibold text-red-600 mb-2">
-            Error Loading Classes
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="rounded-xl border border-red-200 bg-white px-6 py-8 text-center dark:border-red-900 dark:bg-slate-900">
+          <h2 className="text-base font-semibold text-red-600 mb-1">
+            Error loading classes
           </h2>
-          <p className="text-sm text-red-500">
+          <p className="text-sm text-slate-500">
             {error instanceof Error ? error.message : "An error occurred"}
           </p>
         </div>
@@ -151,20 +278,26 @@ export default function ClassesPage() {
     );
   }
 
-  // ─── Render ──────────────────────────────────────────────────
-
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transform md:relative md:translate-x-0 transition-all duration-300 ${isSidebarMinimized ? "w-16" : "w-72"} flex flex-col`}
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "md:relative md:translate-x-0",
+          isSidebarMinimized ? "w-14" : "w-64",
+        )}
       >
         <div
-          className={`p-4 border-b border-slate-200 dark:border-slate-800 ${isSidebarMinimized ? "flex justify-center" : "flex justify-end"}`}
+          className={cn(
+            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+            isSidebarMinimized ? "justify-center" : "justify-end",
+          )}
         >
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           >
             {isSidebarMinimized ? (
@@ -175,9 +308,10 @@ export default function ClassesPage() {
           </Button>
         </div>
         {!isSidebarMinimized && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-hidden px-3 pb-3">
             <SchoolSearchFilter
-              className="p-4"
+              className="h-full"
+              variant="minimal"
               type="grades"
               onSearch={setSearchTerm}
               onGradeSelect={handleGradeSelect}
@@ -191,159 +325,142 @@ export default function ClassesPage() {
       </div>
 
       {/* Main */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-4 sm:p-6">
-          {/* Tabs */}
-          <Tabs defaultValue="classes" className="mb-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="classes" className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" />
-                Classes & Grades
-              </TabsTrigger>
-              <TabsTrigger
-                value="subjects"
-                className="flex items-center gap-2"
-                onClick={() => setShowSubjectsDrawer(true)}
-              >
-                <BookOpen className="h-4 w-4" />
-                Subjects
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {/* Header */}
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                Classes & Grades
-              </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Manage class information, subjects, and financial summaries
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Classes & Grades
+                </h1>
+                {!selectedGrade && (
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    Browse and select a grade in the sidebar to manage it.
+                  </p>
+                )}
+              </div>
               {isSidebarMinimized && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
+                  className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
                   onClick={() => setIsSidebarMinimized(false)}
                 >
-                  <PanelLeftOpen className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Filters</span>
+                  <PanelLeftOpen className="h-4 w-4" />
                 </Button>
               )}
-              <ActionsDrawer
-                onCreateClass={() => {}}
-                onViewSubjects={() => setShowSubjectsDrawer(true)}
-                selectedGrade={selectedGrade?.grade || null}
-                selectedStreamId={selectedStreamId || undefined}
-                selectedStreamName={selectedGrade?.streamName}
-                onAddStream={() => {
-                  if (selectedGrade?.grade) setShowAddStreamModal(true);
-                }}
-                onAssignTeacher={(levelId, gradeName) => {
-                  setAssignTeacherData({ gradeLevelId: levelId, gradeName });
-                  setShowAssignTeacherModal(true);
-                }}
-                onAssignStreamTeacher={(streamId, streamName) => {
-                  setAssignTeacherData({ streamId, streamName });
-                  setShowAssignTeacherModal(true);
-                }}
+            </div>
+            {!selectedGrade && (
+              <ClassActionBar
+                actions={headerActions}
+                layout="links"
+                className="mt-2.5"
               />
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Stats (only when no grade selected) */}
-          {!selectedGradeId && (
-            <div className="mb-6">
+        <div className="flex-1 overflow-y-auto">
+          <div
+            className={cn(
+              "mx-auto max-w-5xl p-4 sm:p-6",
+              selectedGradeId ? "space-y-4" : "space-y-5",
+            )}
+          >
+            {!selectedGradeId && (
               <ClassesStats config={config} isLoading={isLoading} />
-            </div>
-          )}
+            )}
 
-          {/* Active Filters */}
-          {!isLoading && config && (selectedGrade || searchTerm) && (
-            <div className="mb-4 p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 flex flex-wrap gap-2 items-center">
-              <span className="text-xs font-semibold text-slate-500">
-                Filters:
-              </span>
-              {selectedGrade && (
-                <Badge
-                  variant="secondary"
-                  className="flex gap-1.5 items-center"
-                >
-                  {selectedGrade.name}
-                  {selectedGrade.streamName
-                    ? ` (${selectedGrade.streamName})`
-                    : ""}{" "}
-                  · {selectedGrade.levelName}
-                  <X
-                    className="h-3 w-3 cursor-pointer hover:text-red-500"
-                    onClick={clearFilters}
-                  />
-                </Badge>
-              )}
-              {searchTerm && (
-                <Badge
-                  variant="secondary"
-                  className="flex gap-1.5 items-center"
+            {selectedGrade && (
+              <ClassesContextBar
+                levelName={selectedGrade.levelName}
+                gradeName={selectedGrade.name}
+                streamName={selectedGrade.streamName}
+                onClear={clearFilters}
+                actions={contextActions}
+              />
+            )}
+
+            {!isLoading && config && searchTerm && !selectedGrade && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  Search results
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                 >
                   &ldquo;{searchTerm}&rdquo;
-                  <X
-                    className="h-3 w-3 cursor-pointer hover:text-red-500"
-                    onClick={() => setSearchTerm("")}
-                  />
-                </Badge>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-auto text-xs"
-                onClick={clearFilters}
-              >
-                Clear All
-              </Button>
-            </div>
-          )}
-
-          {/* Grade Detail */}
-          {selectedGradeId && selectedGrade?.grade && (
-            <div className="mb-6">
-              <GradeDetailsView
-                grade={selectedGrade.grade}
-                levelName={selectedGrade.levelName}
-                selectedStreamId={selectedStreamId || undefined}
-              />
-            </div>
-          )}
-
-          {/* Class Cards */}
-          <div className="space-y-4">
-            {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <ClassCardSkeleton key={i} />
-              ))
-            ) : filteredLevels.length > 0 ? (
-              filteredLevels.map((level) => (
-                <ClassCard
-                  key={level.id}
-                  level={level}
-                  selectedGradeId={selectedGradeId}
-                  selectedStreamId={selectedStreamId}
-                  onStreamSelect={handleStreamSelect}
-                />
-              ))
-            ) : config ? (
-              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-8 text-center">
-                <h3 className="text-base font-medium text-slate-600 dark:text-slate-400">
-                  No classes found
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  {selectedGrade
-                    ? `No classes for ${selectedGrade.name} in ${selectedGrade.levelName}.`
-                    : "Try adjusting your search or filters."}
-                </p>
+                  <X className="h-3 w-3 text-slate-400" />
+                </button>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-xs text-slate-400 hover:text-slate-600"
+                >
+                  Clear search
+                </button>
               </div>
-            ) : null}
+            )}
+
+            {selectedGradeId && selectedGrade?.grade && (
+              <>
+                <GradeDetailsView
+                  grade={selectedGrade.grade}
+                  selectedStreamId={selectedStreamId || undefined}
+                  onStreamSelect={(streamId) =>
+                    handleStreamSelect(
+                      streamId,
+                      selectedGrade.grade.id,
+                      selectedGrade.level.id,
+                    )
+                  }
+                  onAssignTeacher={openAssignTeacher}
+                />
+
+                {isLoading ? (
+                  <ClassCardSkeleton />
+                ) : (
+                  filteredLevels.map((level) => (
+                    <ClassCard
+                      key={level.id}
+                      level={level}
+                      selectedGradeId={selectedGradeId}
+                      onAssignTeacher={openAssignTeacher}
+                    />
+                  ))
+                )}
+              </>
+            )}
+
+            {!selectedGradeId &&
+              (isLoading ? (
+                <ClassesOverview levels={[]} isLoading />
+              ) : config && filteredLevels.length > 0 ? (
+                <ClassesOverview levels={filteredLevels} />
+              ) : config ? (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    No classes found
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {searchTerm
+                      ? "Try a different search term, or clear the search to see all grades."
+                      : "Your school levels will appear here once setup is complete."}
+                  </p>
+                  {searchTerm && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => setSearchTerm("")}
+                    >
+                      Clear search
+                    </Button>
+                  )}
+                </div>
+              ) : null)}
           </div>
         </div>
       </div>
@@ -354,16 +471,17 @@ export default function ClassesPage() {
         onOpenChange={setShowSubjectsDrawer}
         direction="right"
       >
-        <DrawerContent className="max-w-4xl h-[95vh] flex flex-col">
-          <DrawerHeader className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
-            <div className="flex items-center justify-between">
+        <DrawerContent className="flex h-[95vh] max-h-[95dvh] flex-col bg-slate-50/50 dark:bg-slate-950 sm:max-w-lg">
+          <DrawerHeader className="flex-shrink-0 border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <DrawerTitle className="text-lg font-bold flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                  Subjects
+                <DrawerTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  All subjects
                 </DrawerTitle>
-                <DrawerDescription className="text-sm text-slate-500">
-                  View and manage all subjects across grades
+                <DrawerDescription className="mt-1 text-xs text-slate-500">
+                  {selectedGrade
+                    ? `${selectedGrade.levelName} · ${selectedGrade.name}`
+                    : "Core and elective subjects"}
                 </DrawerDescription>
               </div>
               <DrawerClose asChild>
@@ -373,13 +491,42 @@ export default function ClassesPage() {
               </DrawerClose>
             </div>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto p-4">
-            <SubjectsView selectedGradeId={selectedGradeId || null} />
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <SubjectsView
+              selectedGradeId={selectedGradeId || null}
+              onAddSubject={
+                defaultAddSubjectContext
+                  ? () => openAddSubject(defaultAddSubjectContext)
+                  : undefined
+              }
+              onAddStream={
+                selectedGrade?.grade
+                  ? () => setShowAddStreamModal(true)
+                  : undefined
+              }
+              onAssignTeacher={
+                selectedGrade?.grade
+                  ? () => {
+                      if (selectedStreamId && selectedGrade.streamName) {
+                        setAssignTeacherData({
+                          streamId: selectedStreamId,
+                          streamName: selectedGrade.streamName,
+                        });
+                      } else {
+                        setAssignTeacherData({
+                          gradeLevelId: selectedGrade.grade.id,
+                          gradeName: selectedGrade.name,
+                        });
+                      }
+                      setShowAssignTeacherModal(true);
+                    }
+                  : undefined
+              }
+            />
           </div>
         </DrawerContent>
       </Drawer>
 
-      {/* Modals */}
       {showAddStreamModal && selectedGrade?.grade && (
         <AddStreamModal
           isOpen={showAddStreamModal}
@@ -398,6 +545,17 @@ export default function ClassesPage() {
           streamName={assignTeacherData.streamName}
           gradeLevelId={assignTeacherData.gradeLevelId}
           gradeName={assignTeacherData.gradeName}
+        />
+      )}
+
+      {addSubjectContext && (
+        <AddSubjectDialog
+          open={showAddSubjectDialog}
+          onOpenChange={setShowAddSubjectDialog}
+          curriculumId={addSubjectContext.curriculumId}
+          levelName={addSubjectContext.levelName}
+          gradeName={addSubjectContext.gradeName}
+          streamName={addSubjectContext.streamName}
         />
       )}
     </div>

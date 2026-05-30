@@ -54,14 +54,22 @@ import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary';
 import { StudentLedger } from './StudentLedger';
 import { useStudentLedger } from '@/lib/hooks/use-student-ledger';
 import { useStudentCredentials } from '@/lib/hooks/useStudentCredentials';
+import { cn } from '@/lib/utils';
 
 interface StudentDetailsViewProps {
   studentId: string;
   onClose: () => void;
   schoolConfig?: any;
+  /** When true, hides back navigation — parent provides context bar */
+  embedded?: boolean;
 }
 
-export function StudentDetailsView({ studentId, onClose, schoolConfig }: StudentDetailsViewProps) {
+export function StudentDetailsView({
+  studentId,
+  onClose,
+  schoolConfig,
+  embedded = false,
+}: StudentDetailsViewProps) {
   const { toast } = useToast();
   const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
@@ -246,10 +254,10 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
   // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)] mx-auto" />
-          <p className="text-sm font-mono text-[var(--color-textSecondary)]">Loading student details...</p>
+      <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          <p className="text-sm text-slate-500">Loading student…</p>
         </div>
       </div>
     );
@@ -258,12 +266,12 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
   // Show error state
   if (error || !studentDetail) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <AlertCircle className="h-8 w-8 text-[var(--color-error)] mx-auto" />
-          <p className="text-sm font-mono text-[var(--color-error)]">{error || 'Student not found'}</p>
-          <Button onClick={refetch} variant="outline" size="sm" className="font-mono border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)]">
-            <RefreshCw className="h-4 w-4 mr-2" />
+      <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="text-center">
+          <AlertCircle className="mx-auto h-5 w-5 text-red-500" />
+          <p className="mt-2 text-sm text-slate-500">{error || "Student not found"}</p>
+          <Button onClick={refetch} variant="outline" size="sm" className="mt-3">
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
             Retry
           </Button>
         </div>
@@ -274,98 +282,59 @@ export function StudentDetailsView({ studentId, onClose, schoolConfig }: Student
   const student = studentDetail;
 
   return (
-    <div className="space-y-6">
-      {/* Back button and header */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          onClick={onClose}
-          className="flex items-center gap-2 border-[var(--color-border)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:border-[var(--color-primary)]/40 font-mono"
-        >
-          ← Back to Students
-        </Button>
-        <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-4">
-          <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-2">
-            <span className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">
-              Student Details
-            </span>
-          </div>
-          <h2 className="text-xl font-mono font-bold tracking-wide text-[var(--color-text)]">
-            {student.studentName}
-          </h2>
+    <div className="space-y-4">
+      {!embedded && (
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={onClose}>
+            ← Back
+          </Button>
         </div>
-      </div>
-      
+      )}
+
       {/* Student profile header */}
-      <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Student photo */}
-          <div className="flex-shrink-0">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--color-primary)]/20">
-              <div className="w-full h-full bg-[var(--color-primary)]/10 flex items-center justify-center">
-                <User className="h-12 w-12 text-[var(--color-primary)]" />
-              </div>
-              
-              <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white ${
-                student.isActive ? 'bg-[var(--color-success)]' : 'bg-[var(--color-textSecondary)]'
-              }`} />
-            </div>
+      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="flex flex-col gap-5 md:flex-row md:items-start">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+            <User className="h-7 w-7 text-slate-400" />
           </div>
-          
-          {/* Student basic info */}
-          <div className="flex flex-col justify-between">
-            <div>
-              <h2 className="text-2xl font-mono font-bold tracking-wide text-[var(--color-text)]">{student.studentName}</h2>
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-[var(--color-textSecondary)] font-mono">
-                <div className="flex items-center gap-1">
-                  <Info className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                  <span>ID: {student.admissionNumber}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <School className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                  <span>{student.gradeLevelName}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <BookOpen className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                  <span>{student.curriculumName}</span>
-                </div>
-                {student.streamName && (
-                  <div className="flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                    <span>Stream: {student.streamName}</span>
-                  </div>
-                )}
-              </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              {student.studentName}
+            </h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+              <span>{student.admissionNumber}</span>
+              <span>{student.gradeLevelName}</span>
+              {student.streamName && <span>{student.streamName}</span>}
             </div>
-            
-            <div className="flex items-center gap-2 mt-4">
-              <Badge className={`font-mono text-xs capitalize border-2 ${
-                student.isActive 
-                  ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' 
-                  : 'bg-[var(--color-textSecondary)]/10 text-[var(--color-textSecondary)] border-[var(--color-textSecondary)]/20'
-              }`}>
-                {student.isActive ? 'Active' : 'Inactive'}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs capitalize",
+                  student.isActive
+                    ? "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
+                    : "text-slate-400",
+                )}
+              >
+                {student.isActive ? "Active" : "Inactive"}
               </Badge>
-              <Badge variant="outline" className="capitalize font-mono border-[var(--color-primary)]/20 text-[var(--color-primary)]">
+              <Badge variant="outline" className="text-xs capitalize text-slate-500">
                 {student.gender}
               </Badge>
-              <Badge variant="outline" className="capitalize font-mono border-[var(--color-primary)]/20 text-[var(--color-primary)]">
-                {student.schoolType}
-              </Badge>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Student details tabs */}
       <Tabs defaultValue="details">
-        <TabsList className="grid grid-cols-6 mb-6 border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-1">
-          <TabsTrigger value="details" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Details</TabsTrigger>
-          <TabsTrigger value="attendance" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Attendance</TabsTrigger>
-          <TabsTrigger value="academics" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Academics</TabsTrigger>
-          <TabsTrigger value="fees" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Fees</TabsTrigger>
-          <TabsTrigger value="ledger" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Ledger</TabsTrigger>
-          <TabsTrigger value="documents" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Documents</TabsTrigger>
+        <TabsList className="mb-4 grid h-auto w-full grid-cols-3 gap-1 rounded-lg border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60 lg:grid-cols-6">
+          <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
+          <TabsTrigger value="attendance" className="text-xs">Attendance</TabsTrigger>
+          <TabsTrigger value="academics" className="text-xs">Academics</TabsTrigger>
+          <TabsTrigger value="fees" className="text-xs">Fees</TabsTrigger>
+          <TabsTrigger value="ledger" className="text-xs">Ledger</TabsTrigger>
+          <TabsTrigger value="documents" className="text-xs">Documents</TabsTrigger>
         </TabsList>
         
         <TabsContent value="details">

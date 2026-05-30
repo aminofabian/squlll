@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from "react";
 import {
   CalendarRange,
   CheckCircle2,
@@ -11,13 +11,14 @@ import {
   Sparkles,
   Trash2,
   X,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
-import type { TermDraft } from '@/lib/utils/school-calendar-presets'
-import { STREAM_NAME_SUGGESTIONS } from '@/lib/utils/school-calendar-presets'
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent } from "@/components/ui/card";
+import type { TermDraft } from "@/lib/utils/school-calendar-presets";
+import { STREAM_NAME_SUGGESTIONS } from "@/lib/utils/school-calendar-presets";
 import {
   DateField,
   FieldGroup,
@@ -25,49 +26,62 @@ import {
   StepBody,
   StepIntro,
   onboardingInputClass,
-} from './onboarding-ui'
+} from "./onboarding-ui";
 
-export function DoneBanner({ label, detail }: { label: string; detail: string }) {
+export function DoneBanner({
+  label,
+  detail,
+}: {
+  label: string;
+  detail: string;
+}) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 dark:bg-emerald-950/40 dark:border-emerald-800 p-5">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50">
         <CheckCircle2 className="h-5 w-5 text-emerald-600" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">{label}</p>
-        <p className="text-sm text-emerald-700/90 dark:text-emerald-300/90 mt-1">{detail}</p>
+        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+          {label}
+        </p>
+        <p className="text-sm text-emerald-700/90 dark:text-emerald-300/90 mt-1">
+          {detail}
+        </p>
       </div>
     </div>
-  )
+  );
 }
 
 export function formatDisplayDate(iso: string) {
   try {
     return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   } catch {
-    return iso
+    return iso;
   }
 }
 
 type AcademicYearStepProps = {
-  hasAcademicYear: boolean
-  activeYearLabel?: string
-  activeYearRange?: string
-  form: { name: string; startDate: string; endDate: string }
-  onFormChange: (field: 'name' | 'startDate' | 'endDate', value: string) => void
-  onSuggestCurrentYear: () => void
-  onSuggestMoe: () => void
-  suggestedYearLabel: string
-  moeYear: number
-  isCreating: boolean
-  onCreate: () => void
-}
+  hasAcademicYear: boolean;
+  activeYearLabel?: string;
+  activeYearRange?: string;
+  form: { name: string; startDate: string; endDate: string };
+  onFormChange: (
+    field: "name" | "startDate" | "endDate",
+    value: string,
+  ) => void;
+  onSuggestCurrentYear: () => void;
+  onSuggestMoe: () => void;
+  suggestedYearLabel: string;
+  moeYear: number;
+  isCreating: boolean;
+  onCreate: () => void;
+};
 
-type YearPreset = 'standard' | 'moe' | 'custom'
+type YearPreset = "standard" | "moe" | "custom";
 
 export function AcademicYearStepContent({
   hasAcademicYear,
@@ -82,25 +96,34 @@ export function AcademicYearStepContent({
   isCreating,
   onCreate,
 }: AcademicYearStepProps) {
-  const [activePreset, setActivePreset] = useState<YearPreset | null>('standard')
+  const [activePreset, setActivePreset] = useState<YearPreset | null>(
+    "standard",
+  );
 
   const preview = useMemo(() => {
-    if (!form.startDate || !form.endDate) return null
-    const start = new Date(form.startDate)
-    const end = new Date(form.endDate)
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) return null
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+    if (!form.startDate || !form.endDate) return null;
+    const start = new Date(form.startDate);
+    const end = new Date(form.endDate);
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      start >= end
+    )
+      return null;
+    const days = Math.ceil(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return {
       days,
       range: `${formatDisplayDate(form.startDate)} – ${formatDisplayDate(form.endDate)}`,
-    }
-  }, [form.startDate, form.endDate])
+    };
+  }, [form.startDate, form.endDate]);
 
   const isValid =
     form.name.trim() &&
     form.startDate &&
     form.endDate &&
-    new Date(form.startDate) < new Date(form.endDate)
+    new Date(form.startDate) < new Date(form.endDate);
 
   if (hasAcademicYear && activeYearLabel && activeYearRange) {
     return (
@@ -111,21 +134,24 @@ export function AcademicYearStepContent({
           description="Your school calendar is ready for terms and classes."
         />
         <StepBody>
-          <DoneBanner label={`${activeYearLabel} is ready`} detail={activeYearRange} />
+          <DoneBanner
+            label={`${activeYearLabel} is ready`}
+            detail={activeYearRange}
+          />
         </StepBody>
       </>
-    )
+    );
   }
 
   const selectStandard = () => {
-    setActivePreset('standard')
-    onSuggestCurrentYear()
-  }
+    setActivePreset("standard");
+    onSuggestCurrentYear();
+  };
 
   const selectMoe = () => {
-    setActivePreset('moe')
-    onSuggestMoe()
-  }
+    setActivePreset("moe");
+    onSuggestMoe();
+  };
 
   return (
     <>
@@ -141,7 +167,7 @@ export function AcademicYearStepContent({
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <PresetOption
-              selected={activePreset === 'standard'}
+              selected={activePreset === "standard"}
               onClick={selectStandard}
               icon={School}
               title={`${suggestedYearLabel} school year`}
@@ -149,7 +175,7 @@ export function AcademicYearStepContent({
               badge="Common"
             />
             <PresetOption
-              selected={activePreset === 'moe'}
+              selected={activePreset === "moe"}
               onClick={selectMoe}
               icon={Sparkles}
               title={`Kenya MoE ${moeYear}`}
@@ -170,14 +196,18 @@ export function AcademicYearStepContent({
         </div>
 
         <section className="space-y-4">
-          <FieldGroup label="Year name" htmlFor="year-name" hint="Shown across fees, reports, and timetables">
+          <FieldGroup
+            label="Year name"
+            htmlFor="year-name"
+            hint="Shown across fees, reports, and timetables"
+          >
             <Input
               id="year-name"
               placeholder={`e.g. ${suggestedYearLabel}`}
               value={form.name}
               onChange={(e) => {
-                setActivePreset('custom')
-                onFormChange('name', e.target.value)
+                setActivePreset("custom");
+                onFormChange("name", e.target.value);
               }}
               className={onboardingInputClass}
             />
@@ -190,8 +220,8 @@ export function AcademicYearStepContent({
                 value={form.startDate}
                 max={form.endDate || undefined}
                 onChange={(v) => {
-                  setActivePreset('custom')
-                  onFormChange('startDate', v)
+                  setActivePreset("custom");
+                  onFormChange("startDate", v);
                 }}
               />
             </FieldGroup>
@@ -201,8 +231,8 @@ export function AcademicYearStepContent({
                 value={form.endDate}
                 min={form.startDate || undefined}
                 onChange={(v) => {
-                  setActivePreset('custom')
-                  onFormChange('endDate', v)
+                  setActivePreset("custom");
+                  onFormChange("endDate", v);
                 }}
               />
             </FieldGroup>
@@ -213,7 +243,7 @@ export function AcademicYearStepContent({
           <div className="rounded-xl border border-[#246a59]/20 bg-[#246a59]/5 px-4 py-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                {form.name || 'Untitled year'}
+                {form.name || "Untitled year"}
               </p>
               <p className="text-xs text-slate-500 mt-0.5">{preview.range}</p>
             </div>
@@ -234,34 +264,34 @@ export function AcademicYearStepContent({
               Creating…
             </>
           ) : (
-            'Create academic year'
+            "Create academic year"
           )}
         </Button>
       </StepBody>
     </>
-  )
+  );
 }
 
 type TermsStepProps = {
-  hasAcademicYear: boolean
-  hasTerms: boolean
-  academicYearName?: string
-  existingTermNames?: string
-  termDrafts: TermDraft[]
-  onTermDraftsChange: (drafts: TermDraft[]) => void
-  termMode: 'suggested' | 'moe' | 'custom'
-  onTermModeChange: (mode: 'suggested' | 'moe' | 'custom') => void
-  suggestedTermCount: number
-  onSuggestedTermCountChange: (n: number) => void
-  onApplySuggested: () => void
-  onApplyMoe: () => void
-  moeYear: number
-  customTerm: TermDraft
-  onCustomTermChange: (t: TermDraft) => void
-  isCreating: boolean
-  onCreateDrafts: () => void
-  onAddCustomTerm: () => void
-}
+  hasAcademicYear: boolean;
+  hasTerms: boolean;
+  academicYearName?: string;
+  existingTermNames?: string;
+  termDrafts: TermDraft[];
+  onTermDraftsChange: (drafts: TermDraft[]) => void;
+  termMode: "suggested" | "moe" | "custom";
+  onTermModeChange: (mode: "suggested" | "moe" | "custom") => void;
+  suggestedTermCount: number;
+  onSuggestedTermCountChange: (n: number) => void;
+  onApplySuggested: () => void;
+  onApplyMoe: () => void;
+  moeYear: number;
+  customTerm: TermDraft;
+  onCustomTermChange: (t: TermDraft) => void;
+  isCreating: boolean;
+  onCreateDrafts: () => void;
+  onAddCustomTerm: () => void;
+};
 
 export function TermsStepContent({
   hasAcademicYear,
@@ -288,30 +318,52 @@ export function TermsStepContent({
       <p className="text-sm text-slate-500 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4">
         Go back and create an academic year first.
       </p>
-    )
+    );
   }
 
   if (hasTerms && existingTermNames) {
-    return <DoneBanner label="Terms are set up" detail={existingTermNames} />
+    return <DoneBanner label="Terms are set up" detail={existingTermNames} />;
   }
 
-  const updateDraft = (index: number, field: keyof TermDraft, value: string) => {
-    const next = [...termDrafts]
-    next[index] = { ...next[index], [field]: value }
-    onTermDraftsChange(next)
-  }
+  const [activeTerm, setActiveTerm] = useState<number>(0);
+
+  // Sync activeTerm to termDrafts so the wizard picks up the correct isActive
+  useEffect(() => {
+    const next = termDrafts.map((t, i) => ({
+      ...t,
+      active: i === activeTerm,
+    }));
+    onTermDraftsChange(next);
+  }, [activeTerm]);
+
+  const updateDraft = (
+    index: number,
+    field: keyof TermDraft,
+    value: string | boolean,
+  ) => {
+    const next = [...termDrafts];
+    next[index] = { ...next[index], [field]: value };
+    // If the active term gets unchecked, clear the active selection
+    if (field === "included" && value === false && index === activeTerm) {
+      setActiveTerm(-1);
+    }
+    onTermDraftsChange(next);
+  };
 
   const modeOptions = [
-    { id: 'suggested' as const, label: 'Auto-split' },
-    { id: 'moe' as const, label: `MoE ${moeYear}` },
-    { id: 'custom' as const, label: 'Add manually' },
-  ]
+    { id: "suggested" as const, label: "Auto-split" },
+    { id: "moe" as const, label: `MoE ${moeYear}` },
+    { id: "custom" as const, label: "Add manually" },
+  ];
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-slate-600 dark:text-slate-400">
-        Divide <strong className="text-slate-800 dark:text-slate-200">{academicYearName}</strong> into
-        teaching periods. Pick a template, edit the list, then save.
+        Divide{" "}
+        <strong className="text-slate-800 dark:text-slate-200">
+          {academicYearName}
+        </strong>{" "}
+        into teaching periods. Pick a template, edit the list, then save.
       </p>
 
       <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 gap-1">
@@ -322,8 +374,8 @@ export function TermsStepContent({
             onClick={() => onTermModeChange(id)}
             className={`flex-1 text-xs sm:text-sm font-medium py-2.5 px-2 rounded-lg transition-all ${
               termMode === id
-                ? 'bg-white dark:bg-slate-900 text-[#246a59] shadow-sm'
-                : 'text-slate-500 hover:text-slate-700'
+                ? "bg-white dark:bg-slate-900 text-[#246a59] shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
             }`}
           >
             {label}
@@ -331,7 +383,7 @@ export function TermsStepContent({
         ))}
       </div>
 
-      {termMode === 'suggested' && (
+      {termMode === "suggested" && (
         <Card>
           <CardContent className="pt-4 space-y-3">
             <div className="flex flex-wrap items-center gap-3">
@@ -341,32 +393,43 @@ export function TermsStepContent({
                   key={n}
                   type="button"
                   size="sm"
-                  variant={suggestedTermCount === n ? 'secondary' : 'ghost'}
+                  variant={suggestedTermCount === n ? "secondary" : "ghost"}
                   onClick={() => onSuggestedTermCountChange(n)}
                 >
                   {n}
                 </Button>
               ))}
-              <Button type="button" size="sm" variant="outline" onClick={onApplySuggested}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={onApplySuggested}
+              >
                 <Pencil className="h-3.5 w-3.5 mr-1" />
                 Generate dates
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              We&apos;ll spread dates evenly across your academic year. You can edit each row below.
+              We&apos;ll spread dates evenly across your academic year. You can
+              edit each row below.
             </p>
           </CardContent>
         </Card>
       )}
 
-      {termMode === 'moe' && (
+      {termMode === "moe" && (
         <Card className="border-dashed">
           <CardContent className="pt-4">
             <p className="text-sm text-muted-foreground mb-3">
-              Optional shortcut for Kenyan public schools — official {moeYear} term dates from the Ministry of
-              Education.
+              Optional shortcut for Kenyan public schools — official {moeYear}{" "}
+              term dates from the Ministry of Education.
             </p>
-            <Button type="button" size="sm" variant="outline" onClick={onApplyMoe}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={onApplyMoe}
+            >
               <Sparkles className="h-3.5 w-3.5 mr-1.5" />
               Load MoE term dates
             </Button>
@@ -374,7 +437,7 @@ export function TermsStepContent({
         </Card>
       )}
 
-      {termMode === 'custom' && (
+      {termMode === "custom" && (
         <Card>
           <CardContent className="pt-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -383,7 +446,9 @@ export function TermsStepContent({
                 <Input
                   placeholder="Term 1"
                   value={customTerm.name}
-                  onChange={(e) => onCustomTermChange({ ...customTerm, name: e.target.value })}
+                  onChange={(e) =>
+                    onCustomTermChange({ ...customTerm, name: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-1">
@@ -392,7 +457,9 @@ export function TermsStepContent({
                   compact
                   showHint={false}
                   value={customTerm.startDate}
-                  onChange={(v) => onCustomTermChange({ ...customTerm, startDate: v })}
+                  onChange={(v) =>
+                    onCustomTermChange({ ...customTerm, startDate: v })
+                  }
                 />
               </div>
               <div className="space-y-1">
@@ -402,11 +469,18 @@ export function TermsStepContent({
                   showHint={false}
                   value={customTerm.endDate}
                   min={customTerm.startDate || undefined}
-                  onChange={(v) => onCustomTermChange({ ...customTerm, endDate: v })}
+                  onChange={(v) =>
+                    onCustomTermChange({ ...customTerm, endDate: v })
+                  }
                 />
               </div>
             </div>
-            <Button type="button" size="sm" variant="secondary" onClick={onAddCustomTerm}>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={onAddCustomTerm}
+            >
               <Plus className="h-3.5 w-3.5 mr-1" />
               Add to list
             </Button>
@@ -416,51 +490,86 @@ export function TermsStepContent({
 
       {termDrafts.length > 0 && (
         <div className="space-y-3">
-          <Label className="text-xs font-medium uppercase tracking-wider text-slate-400">
-            Terms to create ({termDrafts.length})
-          </Label>
-          <ul className="rounded-xl border border-slate-200 dark:border-slate-700 divide-y max-h-56 overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-medium uppercase tracking-wider text-slate-400">
+              Terms to create ({termDrafts.filter((t) => t.included).length})
+            </Label>
+          </div>
+          <ul className="rounded-xl border border-slate-200 dark:border-slate-700 divide-y">
             {termDrafts.map((term, i) => (
               <li
                 key={`${term.name}-${i}`}
-                className="p-3 grid gap-2 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center bg-white dark:bg-slate-900"
+                className="p-3 bg-white dark:bg-slate-900"
               >
-                <Input
-                  value={term.name}
-                  onChange={(e) => updateDraft(i, 'name', e.target.value)}
-                  className={`h-10 ${onboardingInputClass}`}
-                />
-                <DateField
-                  compact
-                  showHint={false}
-                  value={term.startDate}
-                  aria-label={`${term.name} start date`}
-                  onChange={(v) => updateDraft(i, 'startDate', v)}
-                />
-                <DateField
-                  compact
-                  showHint={false}
-                  value={term.endDate}
-                  min={term.startDate || undefined}
-                  aria-label={`${term.name} end date`}
-                  onChange={(v) => updateDraft(i, 'endDate', v)}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 shrink-0"
-                  onClick={() => onTermDraftsChange(termDrafts.filter((_, j) => j !== i))}
-                  aria-label="Remove term"
-                >
-                  <Trash2 className="h-4 w-4 text-slate-400" />
-                </Button>
+                <div className="flex items-center gap-3 mb-2">
+                  <Checkbox
+                    id={`include-term-${i}`}
+                    checked={term.included ?? true}
+                    onCheckedChange={(checked) => {
+                      updateDraft(i, "included", checked === true);
+                    }}
+                  />
+                  <Label
+                    htmlFor={`include-term-${i}`}
+                    className="flex-1 text-sm font-medium text-slate-900 cursor-pointer"
+                  >
+                    {term.name || "Unnamed term"}
+                  </Label>
+                  {term.included !== false && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTerm(activeTerm === i ? -1 : i);
+                      }}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                        activeTerm === i
+                          ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                          : "bg-slate-100 text-slate-500 border-slate-200 hover:border-emerald-200 hover:text-emerald-600"
+                      }`}
+                    >
+                      {activeTerm === i ? "Active term" : "Set as active"}
+                    </button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() =>
+                      onTermDraftsChange(termDrafts.filter((_, j) => j !== i))
+                    }
+                    aria-label="Remove term"
+                  >
+                    <Trash2 className="h-4 w-4 text-slate-400" />
+                  </Button>
+                </div>
+                <div className="ml-8 grid gap-2 sm:grid-cols-2">
+                  <DateField
+                    compact
+                    showHint={false}
+                    value={term.startDate}
+                    disabled={term.included === false}
+                    aria-label={`${term.name} start date`}
+                    onChange={(v) => updateDraft(i, "startDate", v)}
+                  />
+                  <DateField
+                    compact
+                    showHint={false}
+                    value={term.endDate}
+                    min={term.startDate || undefined}
+                    disabled={term.included === false}
+                    aria-label={`${term.name} end date`}
+                    onChange={(v) => updateDraft(i, "endDate", v)}
+                  />
+                </div>
               </li>
             ))}
           </ul>
           <Button
             onClick={onCreateDrafts}
-            disabled={isCreating || termDrafts.length === 0}
+            disabled={
+              isCreating || termDrafts.filter((t) => t.included).length === 0
+            }
             className="w-full h-12 rounded-xl bg-[#246a59] hover:bg-[#1a4d42]"
           >
             {isCreating ? (
@@ -469,53 +578,65 @@ export function TermsStepContent({
                 Saving terms...
               </>
             ) : (
-              `Save ${termDrafts.length} term${termDrafts.length === 1 ? '' : 's'}`
+              `Save ${termDrafts.filter((t) => t.included).length} selected term${termDrafts.filter((t) => t.included).length === 1 ? "" : "s"}`
             )}
           </Button>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export type StreamDraft = { id: string; name: string; capacity: string }
+export type StreamDraft = { id: string; name: string; capacity: string };
 
-export type GradeStreamPlans = Record<string, StreamDraft[]>
+export type GradeStreamPlans = Record<string, StreamDraft[]>;
 
 type GradeRow = {
-  gradeId: string
-  gradeName: string
-  levelName: string
-  existingStreams: string[]
-}
+  gradeId: string;
+  gradeName: string;
+  levelName: string;
+  existingStreams: string[];
+};
 
 type StreamsStepProps = {
-  gradeRows: GradeRow[]
-  gradeStreamPlans: GradeStreamPlans
-  onGradeStreamPlansChange: (plans: GradeStreamPlans) => void
-  isCreating: boolean
-  onCreateSelected: () => void
-}
+  gradeRows: GradeRow[];
+  gradeStreamPlans: GradeStreamPlans;
+  onGradeStreamPlansChange: (plans: GradeStreamPlans) => void;
+  isCreating: boolean;
+  onCreateSelected: () => void;
+};
 
-function newStreamDraft(name = '', capacity = '30'): StreamDraft {
-  return { id: `stream-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, name, capacity }
+function newStreamDraft(name = "", capacity = "30"): StreamDraft {
+  return {
+    id: `stream-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name,
+    capacity,
+  };
 }
 
 function cloneDrafts(drafts: StreamDraft[]): StreamDraft[] {
-  return drafts.map((d) => newStreamDraft(d.name, d.capacity))
+  return drafts.map((d) => newStreamDraft(d.name, d.capacity));
 }
 
-function countPlannedCreates(gradeRows: GradeRow[], plans: GradeStreamPlans): number {
-  let total = 0
+function countPlannedCreates(
+  gradeRows: GradeRow[],
+  plans: GradeStreamPlans,
+): number {
+  let total = 0;
   for (const grade of gradeRows) {
     for (const draft of plans[grade.gradeId] || []) {
-      const name = draft.name.trim()
-      if (!name) continue
-      if (grade.existingStreams.some((s) => s.toLowerCase() === name.toLowerCase())) continue
-      total++
+      const name = draft.name.trim();
+      if (!name) continue;
+      if (
+        grade.existingStreams.some(
+          (s) => s.toLowerCase() === name.toLowerCase(),
+        )
+      )
+        continue;
+      total++;
     }
   }
-  return total
+  return total;
 }
 
 export function StreamsStepContent({
@@ -528,101 +649,113 @@ export function StreamsStepContent({
   if (gradeRows.length === 0) {
     return (
       <p className="text-sm text-slate-500 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4">
-        No grades found from your curriculum setup. Finish setup first or add levels on the Classes page.
+        No grades found from your curriculum setup. Finish setup first or add
+        levels on the Classes page.
       </p>
-    )
+    );
   }
 
-  const plannedCreates = countPlannedCreates(gradeRows, gradeStreamPlans)
-  const sourceGradeId = gradeRows[0]?.gradeId
+  const plannedCreates = countPlannedCreates(gradeRows, gradeStreamPlans);
+  const sourceGradeId = gradeRows[0]?.gradeId;
 
   const setGradePlans = (gradeId: string, drafts: StreamDraft[]) => {
-    onGradeStreamPlansChange({ ...gradeStreamPlans, [gradeId]: drafts })
-  }
+    onGradeStreamPlansChange({ ...gradeStreamPlans, [gradeId]: drafts });
+  };
 
-  const addStreamToGrade = (gradeId: string, name = '', capacity = '30') => {
-    const current = gradeStreamPlans[gradeId] || []
-    setGradePlans(gradeId, [...current, newStreamDraft(name, capacity)])
-  }
+  const addStreamToGrade = (gradeId: string, name = "", capacity = "30") => {
+    const current = gradeStreamPlans[gradeId] || [];
+    setGradePlans(gradeId, [...current, newStreamDraft(name, capacity)]);
+  };
 
-  const addPresetsToGrade = (gradeId: string, names: string[], existing: string[]) => {
-    const current = gradeStreamPlans[gradeId] || []
+  const addPresetsToGrade = (
+    gradeId: string,
+    names: string[],
+    existing: string[],
+  ) => {
+    const current = gradeStreamPlans[gradeId] || [];
     const have = new Set([
       ...existing.map((s) => s.toLowerCase()),
       ...current.map((d) => d.name.trim().toLowerCase()).filter(Boolean),
-    ])
-    const toAdd = names.filter((n) => !have.has(n.toLowerCase())).map((n) => newStreamDraft(n, '30'))
+    ]);
+    const toAdd = names
+      .filter((n) => !have.has(n.toLowerCase()))
+      .map((n) => newStreamDraft(n, "30"));
     if (toAdd.length > 0) {
-      setGradePlans(gradeId, [...current, ...toAdd])
+      setGradePlans(gradeId, [...current, ...toAdd]);
     }
-  }
+  };
 
   const updateGradeDraft = (
     gradeId: string,
     draftId: string,
-    field: 'name' | 'capacity',
+    field: "name" | "capacity",
     value: string,
   ) => {
-    const current = gradeStreamPlans[gradeId] || []
+    const current = gradeStreamPlans[gradeId] || [];
     setGradePlans(
       gradeId,
       current.map((d) => (d.id === draftId ? { ...d, [field]: value } : d)),
-    )
-  }
+    );
+  };
 
   const removeGradeDraft = (gradeId: string, draftId: string) => {
-    const current = gradeStreamPlans[gradeId] || []
-    if (current.length <= 1) return
+    const current = gradeStreamPlans[gradeId] || [];
+    if (current.length <= 1) return;
     setGradePlans(
       gradeId,
       current.filter((d) => d.id !== draftId),
-    )
-  }
+    );
+  };
 
   const copyPlansToAllGrades = () => {
-    const template = gradeStreamPlans[sourceGradeId] || []
-    if (template.length === 0) return
-    const next = { ...gradeStreamPlans }
+    const template = gradeStreamPlans[sourceGradeId] || [];
+    if (template.length === 0) return;
+    const next = { ...gradeStreamPlans };
     for (const g of gradeRows) {
-      if (g.gradeId === sourceGradeId) continue
+      if (g.gradeId === sourceGradeId) continue;
       const cloned = cloneDrafts(template).filter(
         (d) =>
-          !g.existingStreams.some((s) => s.toLowerCase() === d.name.trim().toLowerCase()),
-      )
-      next[g.gradeId] = cloned
+          !g.existingStreams.some(
+            (s) => s.toLowerCase() === d.name.trim().toLowerCase(),
+          ),
+      );
+      next[g.gradeId] = cloned;
     }
-    onGradeStreamPlansChange(next)
-  }
+    onGradeStreamPlansChange(next);
+  };
 
   return (
     <div className="space-y-5">
       <p className="text-sm text-slate-600 dark:text-slate-400">
-        Set up streams <strong>per grade</strong>. Grade 4 might have A and B, while Grade 5 only has
-        A — configure each class separately below.
+        Set up streams <strong>per grade</strong>. Grade 4 might have A and B,
+        while Grade 5 only has A — configure each class separately below.
       </p>
 
-      {gradeRows.length > 1 && (gradeStreamPlans[sourceGradeId]?.length ?? 0) > 0 && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 text-xs"
-          onClick={copyPlansToAllGrades}
-        >
-          Copy {gradeRows[0]?.gradeName}&apos;s streams to all grades
-        </Button>
-      )}
+      {gradeRows.length > 1 &&
+        (gradeStreamPlans[sourceGradeId]?.length ?? 0) > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={copyPlansToAllGrades}
+          >
+            Copy {gradeRows[0]?.gradeName}&apos;s streams to all grades
+          </Button>
+        )}
 
       <ul className="space-y-4 max-h-[min(28rem,60vh)] overflow-y-auto pr-1">
         {gradeRows.map((grade) => {
-          const drafts = gradeStreamPlans[grade.gradeId] || []
+          const drafts = gradeStreamPlans[grade.gradeId] || [];
           const pendingNames = drafts
             .map((d) => d.name.trim())
             .filter(
               (name) =>
                 name &&
-                !grade.existingStreams.some((s) => s.toLowerCase() === name.toLowerCase()),
-            )
+                !grade.existingStreams.some(
+                  (s) => s.toLowerCase() === name.toLowerCase(),
+                ),
+            );
 
           return (
             <li
@@ -654,7 +787,9 @@ export function StreamsStepContent({
 
               <div className="p-4 space-y-2">
                 {drafts.length === 0 ? (
-                  <p className="text-xs text-slate-500 py-2">No new streams — add one below.</p>
+                  <p className="text-xs text-slate-500 py-2">
+                    No new streams — add one below.
+                  </p>
                 ) : (
                   drafts.map((draft) => (
                     <div
@@ -665,7 +800,12 @@ export function StreamsStepContent({
                         placeholder="Stream name"
                         value={draft.name}
                         onChange={(e) =>
-                          updateGradeDraft(grade.gradeId, draft.id, 'name', e.target.value)
+                          updateGradeDraft(
+                            grade.gradeId,
+                            draft.id,
+                            "name",
+                            e.target.value,
+                          )
                         }
                         className={`h-10 ${onboardingInputClass}`}
                       />
@@ -675,7 +815,12 @@ export function StreamsStepContent({
                         placeholder="Cap."
                         value={draft.capacity}
                         onChange={(e) =>
-                          updateGradeDraft(grade.gradeId, draft.id, 'capacity', e.target.value)
+                          updateGradeDraft(
+                            grade.gradeId,
+                            draft.id,
+                            "capacity",
+                            e.target.value,
+                          )
                         }
                         className={`h-10 ${onboardingInputClass}`}
                       />
@@ -685,7 +830,9 @@ export function StreamsStepContent({
                         size="icon"
                         className="h-10 w-10 text-slate-400 hover:text-red-600"
                         disabled={drafts.length <= 1}
-                        onClick={() => removeGradeDraft(grade.gradeId, draft.id)}
+                        onClick={() =>
+                          removeGradeDraft(grade.gradeId, draft.id)
+                        }
                         aria-label={`Remove stream from ${grade.gradeName}`}
                       >
                         <X className="h-4 w-4" />
@@ -710,21 +857,31 @@ export function StreamsStepContent({
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => addPresetsToGrade(grade.gradeId, ['A', 'B', 'C'], grade.existingStreams)}
+                    onClick={() =>
+                      addPresetsToGrade(
+                        grade.gradeId,
+                        ["A", "B", "C"],
+                        grade.existingStreams,
+                      )
+                    }
                   >
                     A, B, C
                   </Button>
                   {STREAM_NAME_SUGGESTIONS.filter(
                     (s) =>
-                      !grade.existingStreams.some((x) => x.toLowerCase() === s.toLowerCase()) &&
-                      !drafts.some((d) => d.name.trim().toLowerCase() === s.toLowerCase()),
+                      !grade.existingStreams.some(
+                        (x) => x.toLowerCase() === s.toLowerCase(),
+                      ) &&
+                      !drafts.some(
+                        (d) => d.name.trim().toLowerCase() === s.toLowerCase(),
+                      ),
                   )
                     .slice(0, 4)
                     .map((s) => (
                       <button
                         key={s}
                         type="button"
-                        onClick={() => addStreamToGrade(grade.gradeId, s, '30')}
+                        onClick={() => addStreamToGrade(grade.gradeId, s, "30")}
                         className="text-xs px-2 py-1 border border-slate-200 rounded-full bg-white hover:border-[#246a59]/40 hover:text-[#246a59] dark:bg-slate-900"
                       >
                         + {s}
@@ -734,19 +891,20 @@ export function StreamsStepContent({
 
                 {pendingNames.length > 0 && (
                   <p className="text-xs text-[#246a59] pt-1">
-                    Will add: {pendingNames.join(', ')}
+                    Will add: {pendingNames.join(", ")}
                   </p>
                 )}
               </div>
             </li>
-          )
+          );
         })}
       </ul>
 
       {plannedCreates > 0 && (
         <p className="text-sm text-center text-slate-600 dark:text-slate-400 rounded-lg bg-[#246a59]/5 border border-[#246a59]/15 py-2.5 px-3">
-          Ready to create <strong className="text-[#246a59]">{plannedCreates}</strong> stream
-          {plannedCreates === 1 ? '' : 's'} across your grades
+          Ready to create{" "}
+          <strong className="text-[#246a59]">{plannedCreates}</strong> stream
+          {plannedCreates === 1 ? "" : "s"} across your grades
         </p>
       )}
 
@@ -761,11 +919,11 @@ export function StreamsStepContent({
             Creating streams...
           </>
         ) : plannedCreates > 0 ? (
-          `Create ${plannedCreates} stream${plannedCreates === 1 ? '' : 's'}`
+          `Create ${plannedCreates} stream${plannedCreates === 1 ? "" : "s"}`
         ) : (
-          'Add streams to at least one grade'
+          "Add streams to at least one grade"
         )}
       </Button>
     </div>
-  )
+  );
 }

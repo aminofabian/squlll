@@ -2,15 +2,18 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Search, GraduationCap, X, BookOpen, School, Users, Award, GitBranch } from "lucide-react"
+import { Search, GraduationCap, X } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { Level, GradeLevel, Stream } from '@/lib/types/school-config'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { motion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
+import {
+  abbreviateGradeShort,
+  getGradeCurriculumBand,
+  getGradeSortOrder,
+} from '@/lib/utils/grade-display'
 
 // Define the exact education level names and their order
 const LEVEL_ORDER: { [key: string]: number } = {
@@ -33,122 +36,20 @@ const LEVEL_ORDER: { [key: string]: number } = {
   'Madrasa Secondary': 13
 };
 
-// Helper function to get the sort order for a grade
-function getGradeSortOrder(gradeName: string): number {
-  const lowerName = gradeName.toLowerCase().trim();
-  
-  // Play group / Baby class comes first - check exact matches and variations first
-  if (
-    lowerName === 'baby' ||
-    lowerName === 'play group' ||
-    lowerName === 'playgroup' ||
-    lowerName.startsWith('baby') ||
-    lowerName.startsWith('play group') ||
-    lowerName.includes('play group') ||
-    lowerName.includes('baby class') ||
-    (lowerName.includes('baby') && !lowerName.includes('pp1') && !lowerName.includes('pp2'))
-  ) {
-    return 1;
-  }
-  
-  // PP1 comes second - be more specific to avoid matching "Baby" or other grades
-  if (lowerName === 'pp1' || lowerName.includes('pp1') || lowerName.includes('pre-primary 1')) {
-    return 2;
-  }
-  
-  // PP2 comes third
-  if (lowerName === 'pp2' || lowerName.includes('pp2') || lowerName.includes('pre-primary 2')) {
-    return 3;
-  }
-  
-  // PP3 if it exists
-  if (lowerName === 'pp3' || lowerName.includes('pp3') || lowerName.includes('pre-primary 3')) {
-    return 4;
-  }
-  
-  // Extract number from grade name
-  const match = gradeName.match(/\d+/);
-  if (match) {
-    const num = parseInt(match[0], 10);
-    
-    // G1-G6 come after preschool
-    if (num >= 1 && num <= 6) {
-      return 4 + num; // 5, 6, 7, 8, 9, 10
-    }
-    
-    // G7+ should be displayed as F1, F2, etc.
-    // G7 = F1 (sort order 11), G8 = F2 (sort order 12), etc.
-    if (num >= 7) {
-      return 4 + num; // G7 = 11, G8 = 12, G9 = 13, etc.
-    }
-  }
-  
-  // Default for unknown grades
-  return 999;
-}
-
 // Helper function to sort grades within a level
 function sortGrades(grades: GradeLevel[], levelName: string): GradeLevel[] {
   return [...grades].sort((a, b) => {
     const aOrder = getGradeSortOrder(a.name);
     const bOrder = getGradeSortOrder(b.name);
-    
-    // Always sort in ascending order based on sort order
     return aOrder - bOrder;
   });
-}
-
-// Helper function to abbreviate grade names
-function abbreviateGrade(gradeName: string): string {
-  const lowerName = gradeName.toLowerCase().trim();
-  
-  // Handle special cases first - check exact matches and variations
-  if (
-    lowerName === 'baby' ||
-    lowerName === 'play group' ||
-    lowerName === 'playgroup' ||
-    lowerName.startsWith('baby') ||
-    lowerName.startsWith('play group') ||
-    lowerName.includes('play group') ||
-    lowerName.includes('baby class') ||
-    (lowerName.includes('baby') && !lowerName.includes('pp1') && !lowerName.includes('pp2'))
-  ) {
-    return 'PG';
-  }
-  if (lowerName === 'pp1' || lowerName.includes('pp1') || lowerName.includes('pre-primary 1')) return 'PP1';
-  if (lowerName === 'pp2' || lowerName.includes('pp2') || lowerName.includes('pre-primary 2')) return 'PP2';
-  if (lowerName === 'pp3' || lowerName.includes('pp3') || lowerName.includes('pre-primary 3')) return 'PP3';
-  if (lowerName.includes('early childhood')) return 'EC';
-  if (lowerName.includes('kindergarten')) return 'KG';
-  if (lowerName.includes('nursery')) return 'NS';
-  if (lowerName.includes('reception')) return 'RC';
-
-  // Extract number from grade name
-  const match = gradeName.match(/\d+/);
-  if (match) {
-    const num = parseInt(match[0], 10);
-    
-    // G1-G6 display as G1, G2, etc.
-    if (num >= 1 && num <= 6) {
-      return `G${num}`;
-    }
-    
-    // G7+ display as F1, F2, F3, etc.
-    // G7 = F1, G8 = F2, G9 = F3, G10 = F4, G11 = F5, G12 = F6
-    if (num >= 7) {
-      const formNumber = num - 6; // G7 -> F1, G8 -> F2, etc.
-      return `F${formNumber}`;
-    }
-  }
-
-  // If no number found, return first 2 characters
-  return gradeName.slice(0, 2);
 }
 
 // Props for the SchoolSearchFilter component
 interface SchoolSearchFilterProps {
   className?: string
   type?: 'grades' | 'classes' | 'students'
+  variant?: 'default' | 'minimal'
   onSearch?: (term: string) => void
   onGradeSelect?: (gradeId: string, levelId: string) => void
   onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void
@@ -160,6 +61,7 @@ interface SchoolSearchFilterProps {
 export function SchoolSearchFilter({ 
   className, 
   type = 'grades',
+  variant = 'default',
   onSearch,
   onGradeSelect,
   onStreamSelect,
@@ -226,44 +128,60 @@ export function SchoolSearchFilter({
     const term = searchTerm.toLowerCase();
     return allGrades.filter(grade =>
       grade.name.toLowerCase().includes(term) ||
-      abbreviateGrade(grade.name).toLowerCase().includes(term)
+      abbreviateGradeShort(grade.name).toLowerCase().includes(term)
     );
   }, [allGrades, searchTerm]);
 
-  // Group grades into three categories
+  // Group grades by configured school level (minimal sidebar) or curriculum band (default)
+  const levelGroups = useMemo(() => {
+    if (!config?.selectedLevels) return [];
+
+    return config.selectedLevels
+      .map((level) => ({
+        key: level.id,
+        title: level.name,
+        grades: filteredGrades.filter((grade) => grade.levelId === level.id),
+      }))
+      .filter((group) => group.grades.length > 0);
+  }, [config?.selectedLevels, filteredGrades]);
+
+  // Group grades into three categories (default sidebar)
   const groupedGrades = useMemo(() => {
     const preschool: Array<GradeLevel & { levelId: string }> = [];
     const primary: Array<GradeLevel & { levelId: string }> = [];
-    const form: Array<GradeLevel & { levelId: string }> = [];
+    const secondary: Array<GradeLevel & { levelId: string }> = [];
 
-    filteredGrades.forEach(grade => {
-      const sortOrder = getGradeSortOrder(grade.name);
-      const abbreviated = abbreviateGrade(grade.name);
-      
-      // Preschool: PG, PP1, PP2 (sort order 1-3)
-      if (sortOrder >= 1 && sortOrder <= 3) {
-        preschool.push(grade);
-      }
-      // Primary: G1-G6 (sort order 5-10, which is 4+1 to 4+6)
-      else if (sortOrder >= 5 && sortOrder <= 10) {
-        primary.push(grade);
-      }
-      // Form: F1-F6 (G7-G12, sort order 11-16, which is 4+7 to 4+12)
-      else if (sortOrder >= 11 && sortOrder <= 16) {
-        form.push(grade);
-      }
-      // Handle edge cases - check abbreviated name as fallback
-      else if (abbreviated.startsWith('PG') || abbreviated.startsWith('PP')) {
-        preschool.push(grade);
-      } else if (abbreviated.startsWith('G') && /^G[1-6]$/.test(abbreviated)) {
-        primary.push(grade);
-      } else if (abbreviated.startsWith('F') && /^F[1-6]$/.test(abbreviated)) {
-        form.push(grade);
-      }
+    filteredGrades.forEach((grade) => {
+      const band = getGradeCurriculumBand(grade.name);
+      if (band === "preschool") preschool.push(grade);
+      else if (band === "primary") primary.push(grade);
+      else if (band === "secondary") secondary.push(grade);
     });
 
-    return { preschool, primary, form };
+    return { preschool, primary, secondary };
   }, [filteredGrades]);
+
+  // Auto-select first stream when a grade with streams is chosen (minimal sidebar)
+  useEffect(() => {
+    if (variant !== "minimal" || !selectedGradeId || !onStreamSelect) return;
+
+    const grade = allGrades.find((g) => g.id === selectedGradeId);
+    if (!grade?.streams?.length) return;
+
+    const hasValidStream =
+      selectedStreamId &&
+      grade.streams.some((stream) => stream.id === selectedStreamId);
+
+    if (hasValidStream) return;
+
+    onStreamSelect(grade.streams[0].id, grade.id, grade.levelId);
+  }, [
+    variant,
+    selectedGradeId,
+    selectedStreamId,
+    allGrades,
+    onStreamSelect,
+  ]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -284,27 +202,59 @@ export function SchoolSearchFilter({
     await queryClient.invalidateQueries({ queryKey: ['schoolConfig'] });
   };
 
-  const handleGradeClick = (gradeId: string, levelId: string) => {
+  const handleGradeClick = (
+    grade: GradeLevel & { levelId: string },
+  ) => {
+    if (variant === "minimal") {
+      if (onGradeSelect) {
+        onGradeSelect(grade.id, grade.levelId);
+      }
+
+      if (grade.streams?.length && onStreamSelect) {
+        const keepCurrentStream =
+          selectedGradeId === grade.id &&
+          selectedStreamId &&
+          grade.streams.some((stream) => stream.id === selectedStreamId);
+        onStreamSelect(
+          keepCurrentStream ? selectedStreamId : grade.streams[0].id,
+          grade.id,
+          grade.levelId,
+        );
+      }
+      return;
+    }
+
     // Toggle expanded state for the grade
-    setExpandedGrades(prev => {
+    setExpandedGrades((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(gradeId)) {
-        newSet.delete(gradeId);
+      if (newSet.has(grade.id)) {
+        newSet.delete(grade.id);
       } else {
-        newSet.add(gradeId);
+        newSet.add(grade.id);
       }
       return newSet;
     });
-    
+
     if (onGradeSelect) {
-      onGradeSelect(gradeId, levelId);
+      onGradeSelect(grade.id, grade.levelId);
     }
   };
-  
-  const handleStreamClick = (streamId: string, gradeId: string, levelId: string) => {
+
+  const handleStreamClick = (
+    streamId: string,
+    gradeId: string,
+    levelId: string,
+  ) => {
+    if (variant === "minimal") {
+      if (onStreamSelect) {
+        onStreamSelect(streamId, gradeId, levelId);
+      }
+      return;
+    }
+
     // Toggle stream selection if clicking the same stream
-    const newStreamId = selectedStreamId === streamId ? '' : streamId;
-    
+    const newStreamId = selectedStreamId === streamId ? "" : streamId;
+
     if (onStreamSelect) {
       onStreamSelect(newStreamId, gradeId, levelId);
     }
@@ -471,39 +421,67 @@ export function SchoolSearchFilter({
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      <div className="flex flex-col space-y-4 p-4 border-b">
-        {/* Search Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Grade Levels</h3>
-          <div className="flex items-center gap-2">
+      <div
+        className={cn(
+          "flex flex-col space-y-3",
+          variant === "minimal" ? "pb-3" : "p-4 border-b",
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h3
+            className={cn(
+              variant === "minimal"
+                ? "text-[11px] font-semibold uppercase tracking-wide text-slate-400"
+                : "text-lg font-semibold",
+            )}
+          >
+            {variant === "minimal" ? "Browse grades" : "Grade Levels"}
+          </h3>
+          <div className="flex items-center gap-1">
             {searchTerm && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearSearch}
-                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "h-7 px-2",
+                  variant === "minimal"
+                    ? "text-xs text-slate-400 hover:text-slate-600"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 Clear
-                <X className="ml-2 h-4 w-4" />
+                <X className="ml-1 h-3.5 w-3.5" />
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshConfig}
-              className="h-8 px-2 text-muted-foreground hover:text-foreground"
-            >
-              Refresh
-            </Button>
+            {variant === "default" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refreshConfig}
+                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+              >
+                Refresh
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Search Input */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search
+            className={cn(
+              "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
+              variant === "minimal" ? "text-slate-400" : "text-muted-foreground",
+            )}
+          />
           <Input
             placeholder="Search grades..."
-            className="pl-9 h-10"
+            className={cn(
+              "pl-9",
+              variant === "minimal"
+                ? "h-9 border-slate-200 bg-white text-sm dark:border-slate-700 dark:bg-slate-900"
+                : "h-10",
+            )}
             value={searchTerm}
             onChange={handleSearchChange}
           />
@@ -511,187 +489,253 @@ export function SchoolSearchFilter({
       </div>
       
       {/* Grades List */}
-      <ScrollArea className="flex-1 px-4">
-        <div className="space-y-6 py-4">
+      <ScrollArea className={cn("flex-1", variant === "minimal" ? "" : "px-4")}>
+        <div className={cn(variant === "minimal" ? "space-y-4 py-1" : "space-y-6 py-4")}>
           {isLoading ? (
             <div className="grid grid-cols-2 gap-2 py-2">
-              {/* Grades Grid Skeleton */}
               {[...Array(12)].map((_, j) => (
-                <motion.div 
-                  key={j} 
-                  className="h-8 w-full border border-primary/20 rounded-md bg-muted-foreground/5"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2, delay: j * 0.03 }}
-                >
-                  <div className="flex items-center justify-center h-full px-3">
-                    <div className="h-3.5 w-3.5 rounded-full bg-muted-foreground/10 animate-pulse" />
-                    <div className="h-2 w-12 bg-muted-foreground/10 rounded ml-1.5 animate-pulse" />
-                  </div>
-                </motion.div>
+                <div
+                  key={j}
+                  className={cn(
+                    "h-8 w-full rounded-lg animate-pulse",
+                    variant === "minimal"
+                      ? "bg-slate-100 dark:bg-slate-800"
+                      : "border border-primary/20 bg-muted-foreground/5",
+                  )}
+                />
               ))}
             </div>
           ) : filteredGrades.length === 0 ? (
-            <div className="text-center py-8 rounded-lg border-2 border-dashed">
-              <p className="text-muted-foreground">No grades found</p>
+            <div
+              className={cn(
+                "text-center py-8 rounded-lg",
+                variant === "minimal"
+                  ? "border border-dashed border-slate-200 dark:border-slate-800"
+                  : "border-2 border-dashed",
+              )}
+            >
+              <p className="text-xs text-slate-400">No grades found</p>
             </div>
           ) : (
-            <div className="space-y-6 py-2">
-              {/* Helper function to render a grade group */}
+            <div className={cn(variant === "minimal" ? "space-y-4 py-1" : "space-y-6 py-2")}>
               {(() => {
+                const levelDivider = (
+                  <div
+                    className={cn(
+                      "h-px",
+                      variant === "minimal"
+                        ? "bg-slate-100 dark:bg-slate-800"
+                        : "bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2",
+                    )}
+                  />
+                );
+
                 const renderGradeGroup = (
                   grades: Array<GradeLevel & { levelId: string }>,
-                  groupTitle: string
+                  groupTitle: string,
                 ) => {
                   if (grades.length === 0) return null;
 
+                  const activeGrade =
+                    variant === "minimal" && selectedGradeId
+                      ? grades.find((grade) => grade.id === selectedGradeId)
+                      : null;
+
                   return (
-                    <div className="space-y-3">
-                      {/* Group Header */}
-                      <div className="flex items-center gap-2 px-1">
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-                        <h4 className="text-xs font-semibold text-primary/80 uppercase tracking-wider px-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-0.5">
+                        {variant === "default" && (
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                        )}
+                        <h4
+                          className={cn(
+                            variant === "minimal"
+                              ? "text-[11px] font-semibold uppercase tracking-wide text-slate-400"
+                              : "text-xs font-semibold text-primary/80 uppercase tracking-wider px-2",
+                          )}
+                        >
                           {groupTitle}
                         </h4>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                        {variant === "default" && (
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                        )}
+                        {variant === "minimal" && (
+                          <span className="ml-auto rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-slate-800">
+                            {grades.length}
+                          </span>
+                        )}
                       </div>
-                      
-                      {/* Grades Grid */}
-                      <div className="grid grid-cols-2 gap-2">
+
+                      <div className="grid grid-cols-2 gap-1.5">
                         {grades.map((grade) => (
-                          <div key={grade.id} className="flex flex-col gap-1.5">
-                            <Button
-                              variant={selectedGradeId === grade.id ? "default" : "outline"}
+                          <div key={grade.id} className="flex flex-col gap-1">
+                            <button
+                              type="button"
                               className={cn(
-                                "h-8 px-3 transition-all duration-300 group text-xs relative w-full",
-                                selectedGradeId === grade.id 
-                                  ? "bg-primary text-white hover:text-white shadow-sm"
-                                  : "hover:bg-primary/5 hover:text-primary hover:border-primary/30"
+                                "h-8 px-2.5 transition-all text-xs relative w-full rounded-lg border font-medium",
+                                selectedGradeId === grade.id
+                                  ? variant === "minimal"
+                                    ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                                    : "bg-primary text-white border-primary shadow-sm"
+                                  : variant === "minimal"
+                                    ? "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    : "border-input bg-background hover:bg-primary/5 hover:text-primary hover:border-primary/30",
                               )}
-                              onClick={() => handleGradeClick(grade.id, grade.levelId)}
+                              onClick={() => handleGradeClick(grade)}
                             >
-                              <div className="flex items-center gap-1.5 justify-center w-full">
-                                <div className={cn(
-                                  "flex items-center justify-center h-4 w-4 rounded-full transition-colors",
-                                  selectedGradeId === grade.id 
-                                    ? "bg-white/20" 
-                                    : "bg-muted group-hover:bg-primary/10"
-                                )}>
-                                  <GraduationCap className={cn(
-                                    "h-2.5 w-2.5 shrink-0",
-                                    selectedGradeId === grade.id 
-                                      ? "text-white" 
-                                      : "text-muted-foreground group-hover:text-primary"
-                                  )} />
-                                </div>
-                                <span className="font-medium">
-                                  {abbreviateGrade(grade.name)}
-                                </span>
-                                {grade.streams?.length > 0 && (
-                                  <div className="flex items-center">
-                                    <Badge 
-                                      variant="outline" 
+                              <div className="flex w-full items-center justify-between gap-1">
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  {variant === "default" && (
+                                    <div
                                       className={cn(
-                                        "ml-1 text-[9px] h-4 px-1.5 shrink-0 transition-all duration-300",
+                                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition-colors",
                                         selectedGradeId === grade.id
-                                          ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
-                                          : "border-dashed hover:border-primary/50"
+                                          ? "bg-white/20"
+                                          : "bg-muted group-hover:bg-primary/10",
                                       )}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleGradeClick(grade.id, grade.levelId);
-                                      }}
                                     >
-                                      <GitBranch className="mr-0.5 h-2 w-2 shrink-0" />
-                                      {grade.streams.length}
-                                    </Badge>
-                                  </div>
-                                )}
-                              </div>
-                              {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
-                                <motion.div 
-                                  initial={{ opacity: 0, scale: 0.8 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  className="absolute -right-1 -top-1 h-2 w-2 bg-secondary rounded-full" 
-                                />
-                              )}
-                            </Button>
-                            
-                            {/* Streams section */}
-                            {expandedGrades.has(grade.id) && grade.streams?.length > 0 && (
-                              <motion.div 
-                                initial={{ opacity: 0, y: -5 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="grid grid-cols-2 gap-1.5 pl-1 overflow-visible"
-                              >
-                                {grade.streams.map((stream) => {
-                                  const isSelected = selectedStreamId === stream.id;
-                                  
-                                  return (
-                                    <Button
-                                      key={stream.id}
-                                      variant="outline"
-                                      size="sm"
+                                      <GraduationCap
+                                        className={cn(
+                                          "h-2.5 w-2.5 shrink-0",
+                                          selectedGradeId === grade.id
+                                            ? "text-white"
+                                            : "text-muted-foreground group-hover:text-primary",
+                                        )}
+                                      />
+                                    </div>
+                                  )}
+                                  <span>{abbreviateGradeShort(grade.name)}</span>
+                                </div>
+                                {grade.streams?.length > 0 &&
+                                  variant === "minimal" && (
+                                    <span
                                       className={cn(
-                                        "h-6 py-0 px-2.5 text-[10px] relative group overflow-hidden transition-all duration-300 w-full",
-                                        isSelected 
-                                          ? "bg-white dark:bg-slate-800 border border-primary shadow-sm" 
-                                          : "hover:bg-primary/5 dark:hover:bg-primary/10 border border-dashed hover:border-primary/40"
+                                        "flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums",
+                                        selectedGradeId === grade.id
+                                          ? "bg-white/20 text-white dark:bg-slate-900/15 dark:text-slate-600"
+                                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
                                       )}
-                                      onClick={() => handleStreamClick(stream.id, grade.id, grade.levelId)}
                                     >
-                                      <div className="flex items-center gap-1.5 justify-center w-full">
-                                        <div className={cn(
-                                          "flex items-center justify-center h-3.5 w-3.5 rounded-full transition-colors",
-                                          isSelected
-                                            ? "bg-primary" 
-                                            : "bg-muted group-hover:bg-primary/10"
-                                        )}>
-                                          <GitBranch className={cn(
-                                            "h-2 w-2 shrink-0",
-                                            isSelected ? "text-white" : "text-muted-foreground group-hover:text-primary"
-                                          )} />
-                                        </div>
-                                        <span className={cn(
-                                          "font-medium truncate",
-                                          isSelected && "text-primary"
-                                        )}>{stream.name}</span>
-                                      </div>
-                                      
-                                      {isSelected && (
-                                        <motion.div 
-                                          initial={{ width: 0 }}
-                                          animate={{ width: '100%' }}
-                                          transition={{ duration: 0.2 }}
-                                          className="absolute bottom-0 left-0 h-0.5 bg-primary" 
-                                        />
+                                      {grade.streams.length}
+                                    </span>
+                                  )}
+                                {grade.streams?.length > 0 &&
+                                  variant === "default" && (
+                                    <span
+                                      className={cn(
+                                        "text-[10px] tabular-nums",
+                                        selectedGradeId === grade.id
+                                          ? "text-white/80"
+                                          : "text-slate-400",
                                       )}
-                                    </Button>
-                                  );
-                                })}
-                              </motion.div>
-                            )}
+                                    >
+                                      ·{grade.streams.length}
+                                    </span>
+                                  )}
+                              </div>
+                            </button>
+
+                            {variant !== "minimal" &&
+                              expandedGrades.has(grade.id) &&
+                              grade.streams?.length > 0 && (
+                                <div className="grid grid-cols-2 gap-1 pl-0.5">
+                                  {grade.streams.map((stream) => {
+                                    const isSelected =
+                                      selectedStreamId === stream.id;
+
+                                    return (
+                                      <button
+                                        key={stream.id}
+                                        type="button"
+                                        className={cn(
+                                          "h-6 w-full truncate rounded-md border px-2 py-0 text-[10px] font-medium transition-colors",
+                                          isSelected
+                                            ? "border-primary bg-white text-primary shadow-sm dark:bg-slate-800"
+                                            : "border-dashed hover:border-primary/40 hover:bg-primary/5",
+                                        )}
+                                        onClick={() =>
+                                          handleStreamClick(
+                                            stream.id,
+                                            grade.id,
+                                            grade.levelId,
+                                          )
+                                        }
+                                      >
+                                        {stream.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
                           </div>
                         ))}
                       </div>
+
+                      {activeGrade && activeGrade.streams?.length > 0 && (
+                        <div className="space-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
+                          <p className="text-[10px] font-medium text-slate-400">
+                            Streams in {abbreviateGradeShort(activeGrade.name)}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {activeGrade.streams.map((stream) => {
+                              const isSelected = selectedStreamId === stream.id;
+
+                              return (
+                                <button
+                                  key={stream.id}
+                                  type="button"
+                                  className={cn(
+                                    "flex h-8 min-w-[2.25rem] items-center justify-center rounded-lg border px-3 text-xs font-medium transition-colors",
+                                    isSelected
+                                      ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+                                  )}
+                                  onClick={() =>
+                                    handleStreamClick(
+                                      stream.id,
+                                      activeGrade.id,
+                                      activeGrade.levelId,
+                                    )
+                                  }
+                                >
+                                  {stream.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 };
 
-                return (
-                  <>
-                    {renderGradeGroup(groupedGrades.preschool, 'Preschool')}
-                    {groupedGrades.preschool.length > 0 && groupedGrades.primary.length > 0 && (
-                      <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
-                    )}
-                    {renderGradeGroup(groupedGrades.primary, 'Primary')}
-                    {groupedGrades.primary.length > 0 && groupedGrades.form.length > 0 && (
-                      <div className="h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2" />
-                    )}
-                    {renderGradeGroup(groupedGrades.form, 'Form')}
-                  </>
-                );
+                const groups =
+                  variant === "minimal"
+                    ? levelGroups
+                    : [
+                        {
+                          key: "preschool",
+                          title: "Preschool",
+                          grades: groupedGrades.preschool,
+                        },
+                        {
+                          key: "primary",
+                          title: "Primary",
+                          grades: groupedGrades.primary,
+                        },
+                        {
+                          key: "secondary",
+                          title: "Secondary",
+                          grades: groupedGrades.secondary,
+                        },
+                      ].filter((group) => group.grades.length > 0);
+
+                return groups.map((group, index) => (
+                  <div key={group.key}>
+                    {index > 0 && levelDivider}
+                    {renderGradeGroup(group.grades, group.title)}
+                  </div>
+                ));
               })()}
             </div>
           )}

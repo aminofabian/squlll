@@ -375,7 +375,7 @@ export const SchoolTypeSetup = () => {
           level: 'Pre-Primary',
           description: 'Early childhood education for ages 4-5',
           classes: [
-            {name: 'Early Childhood', age: '3'},
+            { name: 'Baby Class', age: '3' },
             { name: 'PP1', age: '4' },
             { name: 'PP2', age: '5' }
           ]

@@ -158,6 +158,21 @@ export function BulkLessonEntryDrawer({
     [entries],
   );
 
+  const sortedTimeSlots = useMemo(
+    () => [...timeSlots].sort((a, b) => a.periodNumber - b.periodNumber),
+    [timeSlots],
+  );
+
+  const sortedEntryRows = useMemo(() => {
+    return [...entries].sort((a, b) => {
+      const periodA =
+        sortedTimeSlots.find((s) => s.id === a.timeSlotId)?.periodNumber ?? 999;
+      const periodB =
+        sortedTimeSlots.find((s) => s.id === b.timeSlotId)?.periodNumber ?? 999;
+      return periodA - periodB;
+    });
+  }, [entries, sortedTimeSlots]);
+
   const toggleDay = (dayValue: number) => {
     setSelectedDays((prev) => {
       if (prev.includes(dayValue)) {
@@ -575,17 +590,30 @@ export function BulkLessonEntryDrawer({
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {entries.map((entry, idx) => (
+              <div className="space-y-3">
+                {sortedEntryRows.map((entry) => (
                   <div
                     key={entry.id}
-                    className="border rounded-lg p-3 bg-white dark:bg-slate-900"
+                    className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">
-                        {idx + 1}
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                        P{sortedTimeSlots.find((s) => s.id === entry.timeSlotId)?.periodNumber ?? "—"}
                       </span>
-                      <div className="grid grid-cols-4 gap-2 flex-1">
+                      {entries.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeEntry(entry.id)}
+                          className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                          aria-label="Remove lesson row"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="space-y-0.5">
+                        <Label className="text-[10px] text-slate-500">Period</Label>
                         <Select
                           value={entry.timeSlotId || undefined}
                           onValueChange={(v) =>
@@ -593,10 +621,10 @@ export function BulkLessonEntryDrawer({
                           }
                         >
                           <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Period" />
+                            <SelectValue placeholder="Choose period" />
                           </SelectTrigger>
                           <SelectContent>
-                            {timeSlots.map((s) => (
+                            {sortedTimeSlots.map((s) => (
                               <SelectItem
                                 key={s.id}
                                 value={s.id}
@@ -610,7 +638,10 @@ export function BulkLessonEntryDrawer({
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
 
+                      <div className="space-y-0.5">
+                        <Label className="text-[10px] text-slate-500">Subject</Label>
                         <Select
                           value={entry.subjectId || undefined}
                           onValueChange={(v) =>
@@ -618,7 +649,7 @@ export function BulkLessonEntryDrawer({
                           }
                         >
                           <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Subject" />
+                            <SelectValue placeholder="Choose subject" />
                           </SelectTrigger>
                           <SelectContent>
                             {availableSubjects.map((s) => (
@@ -628,7 +659,10 @@ export function BulkLessonEntryDrawer({
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
 
+                      <div className="space-y-0.5">
+                        <Label className="text-[10px] text-slate-500">Teacher</Label>
                         <Select
                           value={entry.teacherId || undefined}
                           onValueChange={(v) =>
@@ -636,7 +670,7 @@ export function BulkLessonEntryDrawer({
                           }
                         >
                           <SelectTrigger className="h-8 text-xs">
-                            <SelectValue placeholder="Teacher" />
+                            <SelectValue placeholder="Choose teacher" />
                           </SelectTrigger>
                           <SelectContent>
                             {availableTeachers.map((t) => (
@@ -646,7 +680,10 @@ export function BulkLessonEntryDrawer({
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
 
+                      <div className="space-y-0.5">
+                        <Label className="text-[10px] text-slate-500">Room</Label>
                         <div className="relative">
                           <MapPin className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
                           <Input
@@ -657,20 +694,11 @@ export function BulkLessonEntryDrawer({
                                 roomNumber: e.target.value,
                               })
                             }
-                            placeholder="Room"
+                            placeholder="Rm"
                             className="h-8 text-xs pl-7"
                           />
                         </div>
                       </div>
-                      {entries.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeEntry(entry.id)}
-                          className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded flex-shrink-0"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}

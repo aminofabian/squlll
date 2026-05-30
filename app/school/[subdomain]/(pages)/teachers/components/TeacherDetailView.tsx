@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useTeacherDetailSummary } from "@/lib/hooks/useTeacherDetailSummary";
 import { TeacherAcademicEditor } from "./TeacherAcademicEditor";
+import { teachersPanel, teachersPanelMuted } from "./teachers-ui";
 
 interface TeacherDetailViewProps {
   teacherId: string;
@@ -46,24 +47,23 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
   // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)] mx-auto" />
-          <p className="text-sm font-mono text-[var(--color-textSecondary)]">Loading teacher details...</p>
+      <div className="flex min-h-[320px] items-center justify-center">
+        <div className="space-y-3 text-center">
+          <Loader2 className="mx-auto h-7 w-7 animate-spin text-slate-400" />
+          <p className="text-sm text-slate-500">Loading teacher details…</p>
         </div>
       </div>
     );
   }
 
-  // Show error state
   if (error || !teacherDetail) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <AlertCircle className="h-8 w-8 text-[var(--color-error)] mx-auto" />
-          <p className="text-sm font-mono text-[var(--color-error)]">{error || 'Teacher not found'}</p>
-          <Button onClick={refetch} variant="outline" size="sm" className="font-mono border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)]">
-            <RefreshCw className="h-4 w-4 mr-2" />
+      <div className="flex min-h-[320px] items-center justify-center">
+        <div className="space-y-3 text-center">
+          <AlertCircle className="mx-auto h-7 w-7 text-red-400" />
+          <p className="text-sm text-red-600">{error || "Teacher not found"}</p>
+          <Button onClick={refetch} variant="outline" size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
             Retry
           </Button>
         </div>
@@ -74,75 +74,75 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
   const teacher = teacherDetail;
 
   return (
-    <div className="space-y-6">
-      {/* Back button and header */}
+    <div className="space-y-5">
       {onClose && (
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="flex items-center gap-2 border-[var(--color-border)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 hover:border-[var(--color-primary)]/40 font-mono"
-          >
-            ← Back to Teachers
-          </Button>
-        
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onClose}
+          className="h-8 px-2 text-xs text-slate-500 hover:text-slate-800"
+        >
+          ← Back to list
+        </Button>
       )}
-      
-      {/* Teacher profile header */}
-      <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Teacher photo */}
-          <div className="flex-shrink-0">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--color-primary)]/20">
-              <div className="w-full h-full bg-[var(--color-primary)]/10 flex items-center justify-center">
-                <User className="h-12 w-12 text-[var(--color-primary)]" />
+
+      <div className={`${teachersPanel} p-5`}>
+        <div className="flex flex-col gap-5 md:flex-row">
+          <div className="shrink-0">
+            <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-slate-200/80">
+              <div className="flex h-full w-full items-center justify-center bg-slate-100">
+                <User className="h-10 w-10 text-slate-400" />
               </div>
-              
-              <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white ${
-                teacher.isActive ? 'bg-[var(--color-success)]' : 'bg-[var(--color-textSecondary)]'
-              }`} />
+              <div
+                className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
+                  teacher.isActive ? "bg-emerald-500" : "bg-slate-300"
+                }`}
+              />
             </div>
           </div>
-          
-          {/* Teacher basic info */}
+
           <div className="flex flex-col justify-between">
             <div>
-              <h2 className="text-2xl font-mono font-bold tracking-wide text-[var(--color-text)]">{teacher.fullName || teacher.user.name}</h2>
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-[var(--color-textSecondary)] font-mono">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {teacher.fullName || teacher.user.name}
+              </h2>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                 {teacher.department && (
                   <div className="flex items-center gap-1">
-                    <Award className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <Award className="h-3.5 w-3.5 text-slate-400" />
                     <span>{teacher.department}</span>
                   </div>
                 )}
                 {teacher.role && (
                   <div className="flex items-center gap-1">
-                    <User className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <User className="h-3.5 w-3.5 text-slate-400" />
                     <span>{teacher.role}</span>
                   </div>
                 )}
                 {teacher.tenantGradeLevels.length > 0 && (
                   <div className="flex items-center gap-1">
-                    <GraduationCap className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
                     <span>{teacher.tenantGradeLevels.map(g => g.gradeLevel?.name || 'Unknown').join(', ')}</span>
                   </div>
                 )}
                 {teacher.tenantSubjects.length > 0 && (
                   <div className="flex items-center gap-1">
-                    <BookOpen className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <BookOpen className="h-3.5 w-3.5 text-slate-400" />
                     <span>{teacher.tenantSubjects.length} Subject{teacher.tenantSubjects.length !== 1 ? 's' : ''}</span>
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="flex items-center gap-2 mt-4">
-              <Badge className={`font-mono text-xs capitalize border-2 ${
-                teacher.isActive 
-                  ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' 
-                  : 'bg-[var(--color-textSecondary)]/10 text-[var(--color-textSecondary)] border-[var(--color-textSecondary)]/20'
-              }`}>
+            <div className="mt-3 flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className={`text-xs capitalize ${
+                  teacher.isActive
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 bg-slate-50 text-slate-600"
+                }`}
+              >
                 {teacher.isActive ? 'Active' : 'Inactive'}
               </Badge>
             </div>
@@ -152,15 +152,15 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
       
       {/* Teacher details tabs */}
       <Tabs defaultValue="details">
-        <TabsList className="grid grid-cols-3 mb-6 border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-1">
-          <TabsTrigger value="details" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Details</TabsTrigger>
-          <TabsTrigger value="academic" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Academic</TabsTrigger>
-          <TabsTrigger value="assignments" className="font-mono text-xs data-[state=active]:bg-[var(--color-primary)] data-[state=active]:text-white data-[state=active]:shadow-sm">Assignments</TabsTrigger>
+        <TabsList className="mb-4 grid h-9 grid-cols-3 rounded-lg border border-slate-200/80 bg-slate-50/80 p-0.5 dark:border-slate-800">
+          <TabsTrigger value="details" className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">Details</TabsTrigger>
+          <TabsTrigger value="academic" className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">Academic</TabsTrigger>
+          <TabsTrigger value="assignments" className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">Assignments</TabsTrigger>
         </TabsList>
         
         <TabsContent value="details">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
+          <Card className={`${teachersPanel} overflow-hidden`}>
+            <CardHeader className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
               <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Teacher Information</CardTitle>
               <CardDescription className="font-mono text-[var(--color-textSecondary)]">
                 Detailed personal information about {teacher.fullName || teacher.user.name}
@@ -169,7 +169,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
             <CardContent className="p-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Personal Information */}
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                <div className={`${teachersPanelMuted} p-5`}>
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
                       <User className="h-3 w-3" />
@@ -201,7 +201,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                 </div>
 
                 {/* Professional Information */}
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                <div className={`${teachersPanelMuted} p-5`}>
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
                       <Award className="h-3 w-3" />
@@ -229,7 +229,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                 </div>
                 
                 {/* Contact Information */}
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                <div className={`${teachersPanelMuted} p-5`}>
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
                       <Mail className="h-3 w-3" />
@@ -286,8 +286,8 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
         </TabsContent>
         
         <TabsContent value="academic">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
+          <Card className={`${teachersPanel} overflow-hidden`}>
+            <CardHeader className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Academic Information</CardTitle>
@@ -311,7 +311,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
             <CardContent className="p-6">
               <div className="space-y-6">
                 {/* Subjects Section */}
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                <div className={`${teachersPanelMuted} p-5`}>
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
                       <BookOpen className="h-3 w-3 mr-2" />
@@ -334,7 +334,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                 </div>
 
                 {/* Grade Levels Section */}
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                <div className={`${teachersPanelMuted} p-5`}>
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
                       <GraduationCap className="h-3 w-3 mr-2" />
@@ -357,7 +357,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
                 </div>
 
                 {/* Streams Section */}
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
+                <div className={`${teachersPanelMuted} p-5`}>
                   <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
                     <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
                       <School className="h-3 w-3 mr-2" />
@@ -387,8 +387,8 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
         </TabsContent>
         
         <TabsContent value="assignments">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
+          <Card className={`${teachersPanel} overflow-hidden`}>
+            <CardHeader className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
               <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Class Teacher Assignments</CardTitle>
               <CardDescription className="font-mono text-[var(--color-textSecondary)]">
                 Classes where {teacher.fullName || teacher.user.name} serves as class teacher
