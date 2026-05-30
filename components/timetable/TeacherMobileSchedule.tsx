@@ -94,11 +94,11 @@ function UpNextCard({ nextLesson }: { nextLesson: NextLessonInfo }) {
 }
 
 function StatCards({ stats }: { stats: TimetableStats }) {
-  const items = [
+  const items: { value: number; label: string; accent?: boolean }[] = [
     { value: stats.totalLessons, label: 'Classes' },
     { value: stats.totalSubjects, label: 'Subjects' },
     { value: stats.completedLessons, label: 'Done', accent: true },
-  ] as const;
+  ];
 
   return (
     <div className="grid shrink-0 grid-cols-3 gap-2">

@@ -258,20 +258,22 @@ export interface TeacherSchoolSchedule {
   schedule: SchoolTimetableResponse['getSchoolTimetable']['schedule']
 }
 
+export type TeacherTimetableData = {
+  timeSlots: TimeSlot[]
+  entries: TimetableEntry[]
+  breaks: TimetableBreak[]
+  grades: TimetableGrade[]
+  lastUpdated: string
+  teacherName: string
+  teacherId: string
+  totalClasses: number
+  timetablePublishedAt: string | null
+  mySchedule: TeacherTimetableDayApi[]
+  schoolSchedule: TeacherSchoolSchedule | null
+}
+
 export interface UseTeacherTimetableResult {
-  data: {
-    timeSlots: TimeSlot[]
-    entries: TimetableEntry[]
-    breaks: TimetableBreak[]
-    grades: TimetableGrade[]
-    lastUpdated: string
-    teacherName: string
-    teacherId: string
-    totalClasses: number
-    timetablePublishedAt: string | null
-    mySchedule: TeacherTimetableDayApi[]
-    schoolSchedule: TeacherSchoolSchedule | null
-  } | null
+  data: TeacherTimetableData | null
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
@@ -349,7 +351,7 @@ function formatTime(timeStr: string): string {
 
 function mapMyTimetableToHookData(
   api: MyTimetableResponse['getMyTimetable'],
-): UseTeacherTimetableResult['data'] {
+): TeacherTimetableData {
   const periodTimes = new Map<number, { start: string; end: string }>()
   const gradeNames = new Set<string>()
   const entries: TimetableEntry[] = []

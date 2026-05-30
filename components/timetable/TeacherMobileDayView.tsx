@@ -21,13 +21,6 @@ import {
 import { formatGradeShort } from './TeacherMobileWeekTable';
 
 export const WEEKDAY_NUMBERS = [1, 2, 3, 4, 5] as const;
-export const DAY_SHORT_NAMES: Record<number, string> = {
-  1: 'Mon',
-  2: 'Tue',
-  3: 'Wed',
-  4: 'Thu',
-  5: 'Fri',
-};
 
 function trimHourLabel(time: string): string {
   return time.replace(/^0(\d)/, '$1').trim();
@@ -315,5 +308,3 @@ export function countDayLessons(
   if (!day) return 0;
   return day.cells.filter((c) => c?.type === 'lesson' && c.lesson).length;
 }
-
-export { DAY_SHORT_NAMES };

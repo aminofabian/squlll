@@ -788,6 +788,7 @@ export function transformTeacherTimetable(
     const cells: (TimetableCell | null)[] = [];
 
     for (let si = 0; si < sortedSlots.length; si++) {
+      const slot = sortedSlots[si];
       const slotEntryList = dayEntryMap.get(si);
 
       if (!slotEntryList || slotEntryList.length === 0) {
