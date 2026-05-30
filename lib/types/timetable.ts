@@ -113,6 +113,15 @@ export interface TimetableData {
   /** Backend-computed: known room numbers on this timetable */
   knownRoomNumbers: string[];
 
+  /** Backend-computed: per-grade fill statistics from getSchoolTimetable */
+  gradeStats?: Array<{
+    gradeId: string;
+    gradeName: string;
+    filledSlots: number;
+    totalSlots: number;
+    totalLessons: number;
+  }>;
+
   // Metadata
   lastUpdated: string;
 }

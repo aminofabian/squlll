@@ -1,6 +1,12 @@
 "use client";
 
-import { CheckCircle2, Circle, AlertCircle, BookOpen, Clock } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  AlertCircle,
+  BookOpen,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
@@ -119,7 +125,8 @@ export function TimetableStatusBar({
         <div
           className={cn(
             "flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5",
-            showProgress && "lg:border-l lg:border-zinc-200/80 lg:pl-4 dark:lg:border-zinc-700",
+            showProgress &&
+              "lg:border-l lg:border-zinc-200/80 lg:pl-4 dark:lg:border-zinc-700",
           )}
         >
           <div className="min-w-0">
@@ -127,14 +134,20 @@ export function TimetableStatusBar({
             <p className="text-[14px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               {classLabel}
               {streamName ? (
-                <span className="font-medium text-zinc-500"> · {streamName}</span>
+                <span className="font-medium text-zinc-500">
+                  {" "}
+                  · {streamName}
+                </span>
               ) : null}
             </p>
             <TimetableLastUpdated isoTimestamp={lastUpdatedIso} />
           </div>
           <div className="flex flex-wrap items-center gap-4 sm:gap-5">
             {totalSlots > 0 && (
-              <div className="min-w-[4.5rem]">
+              <div
+                className="min-w-[4.5rem]"
+                title={`${filledSlots} of ${totalSlots} time slots filled. Formula: classUnits × periodsPerDay × daysPerWeek = ${totalSlots}`}
+              >
                 <p className={tt.label}>Filled</p>
                 <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                   {filledSlots}/{totalSlots} ({fillPct}%)

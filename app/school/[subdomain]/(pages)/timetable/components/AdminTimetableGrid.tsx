@@ -25,10 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  TooltipContent,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
+import { TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getBreakTypeOption } from "@/lib/utils/timetable-break-types";
 import {
@@ -65,7 +62,9 @@ function resolveBreakVisual(
   const typeOpt = getBreakTypeOption(breakEntry.type);
   const haystack = `${breakEntry.type} ${rawName}`.toLowerCase();
 
-  const base = (visual: Omit<BreakVisual, "label"> & { label?: string }): BreakVisual => ({
+  const base = (
+    visual: Omit<BreakVisual, "label"> & { label?: string },
+  ): BreakVisual => ({
     ...visual,
     label: visual.label ?? typeOpt?.label ?? rawName,
   });
@@ -98,7 +97,11 @@ function resolveBreakVisual(
     });
   }
 
-  if (haystack.includes("short") || haystack.includes("tea") || haystack.includes("snack")) {
+  if (
+    haystack.includes("short") ||
+    haystack.includes("tea") ||
+    haystack.includes("snack")
+  ) {
     const isTea = haystack.includes("tea");
     return base({
       Icon: isTea ? CupSoda : Coffee,
@@ -109,7 +112,11 @@ function resolveBreakVisual(
       iconWrap: "bg-sky-200/70 dark:bg-sky-800/50",
       iconColor: "text-sky-700 dark:text-sky-200",
       text: "text-sky-800 dark:text-sky-100",
-      label: isTea ? "Tea break" : haystack.includes("snack") ? "Snack break" : "Short break",
+      label: isTea
+        ? "Tea break"
+        : haystack.includes("snack")
+          ? "Snack break"
+          : "Short break",
     });
   }
 
@@ -210,7 +217,10 @@ function breakTimeRange(
       const first = getSlotFor(0, firstPeriod);
       if (first?.startTime) {
         const endMin = parseHHMM(first.startTime);
-        return formatCompactRange(formatHHMM(endMin - duration), first.startTime);
+        return formatCompactRange(
+          formatHHMM(endMin - duration),
+          first.startTime,
+        );
       }
     }
     return duration ? `${duration}m` : "";
@@ -289,6 +299,8 @@ interface AdminTimetableGridProps {
   hasNoTimeSlots?: boolean;
   getCleanBreakName?: (name: string) => string;
   conflictLessonIds?: Set<string>;
+  conflictTooltipMap?: Map<string, string>;
+  showFullSubjectName?: boolean;
   highlightTeacherId?: string | null;
   getSubjectAccent?: (
     subjectId: string,
@@ -311,10 +323,7 @@ interface AdminTimetableGridProps {
   className?: string;
   /** Show all classes in each cell (whole-school view). */
   schoolCombined?: boolean;
-  getCombinedEntriesFor?: (
-    dayOfWeek: number,
-    period: number,
-  ) => LessonEntry[];
+  getCombinedEntriesFor?: (dayOfWeek: number, period: number) => LessonEntry[];
   onCombinedLessonClick?: (entry: LessonEntry) => void;
 }
 
@@ -331,6 +340,8 @@ export function AdminTimetableGrid({
   hasNoTimeSlots = false,
   getCleanBreakName,
   conflictLessonIds,
+  conflictTooltipMap,
+  showFullSubjectName,
   highlightTeacherId,
   getSubjectAccent: resolveAccent,
   onEditTimeslot,
@@ -354,8 +365,7 @@ export function AdminTimetableGrid({
   const accentFor = resolveAccent ?? getSubjectAccent;
 
   const visibleDayIndices = useMemo(
-    () =>
-      isMobile ? [mobileDayIndex] : days.map((_, index) => index),
+    () => (isMobile ? [mobileDayIndex] : days.map((_, index) => index)),
     [isMobile, mobileDayIndex, days],
   );
 
@@ -398,7 +408,10 @@ export function AdminTimetableGrid({
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-0 table-fixed border-collapse md:min-w-[520px]">
+        <table
+          className="w-full min-w-0 table-fixed border-collapse md:min-w-[520px]"
+          aria-label={schoolCombined ? "Whole-school timetable" : "Timetable"}
+        >
           <thead>
             <tr className="border-b border-zinc-200/90 dark:border-zinc-800">
               <th
@@ -438,11 +451,21 @@ export function AdminTimetableGrid({
                   className="border-b border-zinc-100 dark:border-zinc-800/80"
                 >
                   <td className="sticky left-0 border-r border-zinc-200/90 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className={cn(ROW_H, "animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800")} />
+                    <div
+                      className={cn(
+                        ROW_H,
+                        "animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800",
+                      )}
+                    />
                   </td>
                   {visibleDayIndices.map((di) => (
                     <td key={di} className="p-1">
-                      <div className={cn(ROW_H, "animate-pulse rounded-md bg-zinc-100/80 dark:bg-zinc-800/60")} />
+                      <div
+                        className={cn(
+                          ROW_H,
+                          "animate-pulse rounded-md bg-zinc-100/80 dark:bg-zinc-800/60",
+                        )}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -486,11 +509,13 @@ export function AdminTimetableGrid({
                 />
 
                 {periodNumbers.map((period, periodIndex) => {
-                  const baseSlot =
-                    days.reduce<TimeSlotInfo | null>((found, _, dayIndex) => {
+                  const baseSlot = days.reduce<TimeSlotInfo | null>(
+                    (found, _, dayIndex) => {
                       if (found) return found;
                       return getSlotFor(dayIndex, period);
-                    }, null);
+                    },
+                    null,
+                  );
                   if (!baseSlot) return null;
 
                   const breaksAfter = getBreaksAfterPeriod(period);
@@ -557,7 +582,8 @@ export function AdminTimetableGrid({
                               : null;
                           const breakAfterPrev =
                             prevPeriodNumber != null
-                              ? getBreaksAfterPeriod(prevPeriodNumber).length > 0
+                              ? getBreaksAfterPeriod(prevPeriodNumber).length >
+                                0
                               : false;
                           const coveredByDoubleAbove =
                             prevEntry?.isDoublePeriod === true &&
@@ -592,6 +618,8 @@ export function AdminTimetableGrid({
                                   entries={combinedEntries}
                                   accentFor={accentFor}
                                   conflictLessonIds={conflictLessonIds}
+                                  conflictTooltipMap={conflictTooltipMap}
+                                  showFullSubjectName={showFullSubjectName}
                                   highlightTeacherId={highlightTeacherId}
                                   onSelect={onCombinedLessonClick}
                                 />
@@ -629,7 +657,9 @@ export function AdminTimetableGrid({
                                     )}
                                     hasConflict={!!hasConflict}
                                     isDimmed={isTeacherDimmed}
-                                    isBlockLesson={entry.isDoublePeriod === true}
+                                    isBlockLesson={
+                                      entry.isDoublePeriod === true
+                                    }
                                     onEdit={onEditLesson}
                                     onDelete={onDeleteLesson}
                                   />
@@ -700,13 +730,20 @@ function lessonTooltip(entry: LessonEntry, extra?: string) {
   return parts.join(" · ");
 }
 
-function CombinedChipTooltipContent({ entry }: { entry: LessonEntry }) {
+function CombinedChipTooltipContent({
+  entry,
+  conflictTooltip,
+}: {
+  entry: LessonEntry;
+  conflictTooltip?: string;
+}) {
   const gradeName =
-    entry.gradeFullLabel ?? entry.gradeLabel ?? entry.gradeShortLabel ?? "Class";
+    entry.gradeFullLabel ??
+    entry.gradeLabel ??
+    entry.gradeShortLabel ??
+    "Class";
   const teacherName =
-    entry.teacher.fullName?.trim() ||
-    entry.teacher.name?.trim() ||
-    null;
+    entry.teacher.fullName?.trim() || entry.teacher.name?.trim() || null;
 
   if (entry.isEmpty) {
     return (
@@ -731,7 +768,15 @@ function CombinedChipTooltipContent({ entry }: { entry: LessonEntry }) {
       ) : null}
       {entry.isDoublePeriod ? (
         <p className="text-[11px] leading-snug text-white/60">
-          {entry.isDoubleContinuation ? "Double period · 2nd half" : "Double period"}
+          {entry.isDoubleContinuation
+            ? "Double period · 2nd half"
+            : "Double period"}
+        </p>
+      ) : null}
+      {conflictTooltip ? (
+        <p className="mt-1 flex gap-1 border-t border-red-400/30 pt-1 text-[11px] leading-snug text-red-300">
+          <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+          <span>{conflictTooltip}</span>
         </p>
       ) : null}
     </div>
@@ -764,8 +809,7 @@ function TimeColumnCell({
         "border-l-[3px] border-l-slate-300 dark:border-l-slate-600",
         isDoubleBlockRow &&
           "bg-gradient-to-b from-violet-50/80 to-transparent dark:from-violet-950/20",
-        isDoubleContinuation &&
-          "border-l-violet-300 dark:border-l-violet-700",
+        isDoubleContinuation && "border-l-violet-300 dark:border-l-violet-700",
       )}
     >
       <button
@@ -806,22 +850,30 @@ function CombinedLessonCell({
   entries,
   accentFor,
   conflictLessonIds,
+  conflictTooltipMap,
+  showFullSubjectName,
   highlightTeacherId,
   onSelect,
 }: {
   entries: LessonEntry[];
-  accentFor: (
-    subjectId: string,
-    subjectName: string,
-  ) => SubjectAccentStyle;
+  accentFor: (subjectId: string, subjectName: string) => SubjectAccentStyle;
   conflictLessonIds?: Set<string>;
+  conflictTooltipMap?: Map<string, string>;
+  showFullSubjectName?: boolean;
   highlightTeacherId?: string | null;
   onSelect?: (entry: LessonEntry) => void;
 }) {
   if (entries.length === 0) {
     return (
-      <div className="relative flex min-h-[44px] items-center justify-center overflow-hidden rounded border border-dashed border-zinc-200/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.9)_25%,transparent_25%,transparent_50%,rgba(248,250,252,0.9)_50%,rgba(248,250,252,0.9)_75%,transparent_75%,transparent)] bg-[length:8px_8px] dark:border-zinc-700/60 dark:bg-zinc-900/20">
-        <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-300/80 dark:text-zinc-600">
+      <div
+        className="relative flex min-h-[44px] items-center justify-center overflow-hidden rounded border border-dashed border-zinc-200/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.9)_25%,transparent_25%,transparent_50%,rgba(248,250,252,0.9)_50%,rgba(248,250,252,0.9)_75%,transparent_75%,transparent)] bg-[length:8px_8px] dark:border-zinc-700/60 dark:bg-zinc-900/20"
+        role="presentation"
+        aria-label="No classes configured"
+      >
+        <span
+          className="text-[10px] font-medium uppercase tracking-widest text-zinc-300/80 dark:text-zinc-600"
+          aria-hidden
+        >
           —
         </span>
       </div>
@@ -830,13 +882,18 @@ function CombinedLessonCell({
 
   const dense = entries.length >= 6;
   const twoColumn = entries.length > 1;
+  const manyEntries = entries.length >= 15;
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <TooltipProvider delayDuration={250}>
       <div
         className={cn(
-          "grid min-h-[44px] grid-cols-2 overflow-y-auto overscroll-contain",
-          dense ? "max-h-56 gap-0.5" : "max-h-48 gap-1",
+          "grid min-h-[44px] grid-cols-2 overscroll-contain",
+          manyEntries && !expanded
+            ? "overflow-y-auto max-h-56"
+            : "overflow-y-visible",
+          dense ? "gap-0.5" : "gap-1",
         )}
       >
         {entries.map((entry) => (
@@ -859,6 +916,7 @@ function CombinedLessonCell({
                         entry.subject.name,
                       )
                 }
+                showFullSubjectName={showFullSubjectName}
                 hasConflict={
                   !entry.isEmpty && !!conflictLessonIds?.has(entry.id)
                 }
@@ -874,12 +932,31 @@ function CombinedLessonCell({
             <TooltipContent
               side="top"
               sideOffset={4}
-              className="max-w-[220px] border-0 px-3 py-2 text-xs"
+              className="max-w-[260px] border-0 px-3 py-2 text-xs"
             >
-              <CombinedChipTooltipContent entry={entry} />
+              <CombinedChipTooltipContent
+                entry={entry}
+                conflictTooltip={conflictTooltipMap?.get(entry.id)}
+              />
             </TooltipContent>
           </TooltipPrimitive.Root>
         ))}
+        {manyEntries && (
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="col-span-2 flex items-center justify-center gap-1 rounded border border-dashed border-slate-200/70 bg-slate-50/60 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-zinc-700/50 dark:bg-zinc-900/30 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/40"
+            aria-expanded={expanded}
+          >
+            <ChevronDown
+              className={cn(
+                "h-3 w-3 transition-transform duration-200",
+                expanded && "rotate-180",
+              )}
+            />
+            {expanded ? "Show less" : `Show all ${entries.length} classes`}
+          </button>
+        )}
       </div>
     </TooltipProvider>
   );
@@ -891,6 +968,7 @@ function CombinedShortcodeChip({
   hasConflict,
   isTeacherDimmed,
   compact,
+  showFullSubjectName,
   onSelect,
 }: {
   entry: LessonEntry;
@@ -898,6 +976,7 @@ function CombinedShortcodeChip({
   hasConflict: boolean;
   isTeacherDimmed: boolean;
   compact?: boolean;
+  showFullSubjectName?: boolean;
   onSelect: () => void;
 }) {
   const isEmpty = entry.isEmpty === true;
@@ -916,10 +995,34 @@ function CombinedShortcodeChip({
     !isEmpty && entry.isDoublePeriod && !entry.isDoubleContinuation;
   const isDoubleCont = !isEmpty && entry.isDoubleContinuation === true;
 
+  const chipLabel = useMemo(() => {
+    const parts = [displayGrade];
+    if (displayStream) parts.push(displayStream);
+    if (isEmpty) {
+      parts.push("— No lesson scheduled");
+    } else {
+      parts.push(entry.subject.name);
+      const teacherName =
+        entry.teacher.fullName?.trim() || entry.teacher.name?.trim();
+      if (teacherName) parts.push(teacherName);
+      if (hasConflict) parts.push("conflict");
+    }
+    return parts.join(", ");
+  }, [
+    displayGrade,
+    displayStream,
+    isEmpty,
+    entry.subject.name,
+    entry.teacher.fullName,
+    entry.teacher.name,
+    hasConflict,
+  ]);
+
   return (
     <button
       type="button"
       onClick={onSelect}
+      aria-label={chipLabel}
       className={cn(
         "group/chip relative flex min-w-0 items-center overflow-hidden rounded border text-left",
         "transition-all duration-150",
@@ -992,14 +1095,23 @@ function CombinedShortcodeChip({
         ) : subjectCode ? (
           <span
             className={cn(
-              "min-w-0 truncate font-semibold uppercase leading-none tracking-wide",
-              compact ? "text-[8px]" : "text-[9px]",
+              "min-w-0 truncate font-semibold leading-none tracking-wide",
+              showFullSubjectName
+                ? "text-[9px] normal-case"
+                : "text-[8px] uppercase",
+              compact
+                ? showFullSubjectName
+                  ? "text-[8px]"
+                  : "text-[7px]"
+                : "",
               hasConflict ? "text-red-600 dark:text-red-400" : "",
             )}
             style={hasConflict ? undefined : { color: accent.text }}
-            title={entry.subject.name}
+            title={
+              showFullSubjectName ? (subjectCode ?? "") : entry.subject.name
+            }
           >
-            {subjectCode}
+            {showFullSubjectName ? entry.subject.name : subjectCode}
           </span>
         ) : null}
       </div>
@@ -1030,12 +1142,13 @@ function CombinedShortcodeChip({
       ) : null}
 
       {hasConflict ? (
-        <span
-          className="absolute bottom-0.5 right-1 text-[7px] font-semibold uppercase tracking-wide text-red-600 dark:text-red-400"
+        <AlertCircle
+          className={cn(
+            "absolute bottom-0.5 right-0.5 shrink-0 text-red-600 dark:text-red-400",
+            compact ? "h-2.5 w-2.5" : "h-3 w-3",
+          )}
           aria-hidden
-        >
-          clash
-        </span>
+        />
       ) : null}
     </button>
   );
@@ -1200,13 +1313,7 @@ function BreakRow({
   const canMoveDown = afterPeriod < maxPeriod && !isMoving;
 
   return (
-    <tr
-      className={cn(
-        "group/break border-y",
-        visual.rowBorder,
-        visual.rowBg,
-      )}
-    >
+    <tr className={cn("group/break border-y", visual.rowBorder, visual.rowBg)}>
       <td
         className={cn(
           "sticky left-0 z-10 border-r p-0",

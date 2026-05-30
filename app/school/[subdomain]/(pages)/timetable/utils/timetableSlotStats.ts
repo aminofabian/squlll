@@ -1,22 +1,34 @@
 import type { Grade, TimetableEntry, TimeSlot } from "@/lib/types/timetable";
 import { resolveCanonicalGradeId } from "./resolveGradeForSchoolConfig";
 
+/** Unique teaching period numbers (1-based), sorted ascending. */
+export function dedupePeriodNumbers(
+  sources: Array<number[] | undefined>,
+): number[] {
+  const set = new Set<number>();
+  for (const list of sources) {
+    for (const n of list ?? []) {
+      if (typeof n === "number" && n >= 1) set.add(n);
+    }
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
+
 /** Teaching periods per day — not raw timeSlots.length (that counts every day template row). */
 export function getPeriodsPerDay(options: {
   periodNumbers?: number[];
   timeSlots?: TimeSlot[];
   lessonPeriodsPerDay?: number;
 }): number {
-  if (options.periodNumbers?.length) {
-    return options.periodNumbers.length;
-  }
-
   const fromSlots = new Set(
     (options.timeSlots ?? [])
       .map((s) => s.periodNumber)
       .filter((n): n is number => typeof n === "number" && n >= 1),
   );
   if (fromSlots.size > 0) return fromSlots.size;
+
+  const fromList = dedupePeriodNumbers([options.periodNumbers]);
+  if (fromList.length > 0) return fromList.length;
 
   if (options.lessonPeriodsPerDay && options.lessonPeriodsPerDay > 0) {
     return options.lessonPeriodsPerDay;

@@ -6,4 +6,5 @@
 
 export { CurrentLessonBanner } from './CurrentLessonBanner';
 export { TimetableGrid } from './TimetableGrid';
+export { TeacherMobileSchedule } from './TeacherMobileSchedule';
 export { NextLessonPreview } from './NextLessonPreview';

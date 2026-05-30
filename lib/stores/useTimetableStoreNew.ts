@@ -320,7 +320,9 @@ export const useTimetableStore = create<TimetableStore>()(
 
           // Remove from local store
           set((state) => {
-            const entries = state.entries.filter((entry) => entry.id !== entryId);
+            const entries = state.entries.filter(
+              (entry) => entry.id !== entryId,
+            );
             return {
               entries,
               conflicts: recomputeConflicts({ ...state, entries }),
@@ -1081,9 +1083,7 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           if (templateIds.length === 0) {
-            console.log(
-              "No day templates available — clearing timeSlots.",
-            );
+            console.log("No day templates available — clearing timeSlots.");
             set({
               timeSlots: [],
               periodNumbers: [],
@@ -1203,6 +1203,13 @@ export const useTimetableStore = create<TimetableStore>()(
               lastUpdated: new Date().toISOString(),
             }));
           } else if (gradeIdParam) {
+            const existing = get();
+            if (existing.timeSlots.length > 0) {
+              console.warn(
+                "No periods returned for grade — keeping existing timeSlots.",
+              );
+              return;
+            }
             set({
               timeSlots: [],
               periodNumbers: [],
@@ -1849,7 +1856,6 @@ export const useTimetableStore = create<TimetableStore>()(
                       }
                       entry {
                         id
-                        isDoublePeriod
                         subject {
                           id
                           name
@@ -1887,6 +1893,13 @@ export const useTimetableStore = create<TimetableStore>()(
                     occupiedPeriods
                     freePeriods
                   }
+                }
+                gradeStats {
+                  gradeId
+                  gradeName
+                  filledSlots
+                  totalSlots
+                  totalLessons
                 }
                 schedule {
                   dayTemplate {
@@ -2111,8 +2124,7 @@ export const useTimetableStore = create<TimetableStore>()(
           set((state) => {
             const existingEntries = state.entries || [];
             const otherGradeEntries = existingEntries.filter(
-              (e) =>
-                e.gradeId !== gradeId && e.gradeId !== tenantGradeLevelId,
+              (e) => e.gradeId !== gradeId && e.gradeId !== tenantGradeLevelId,
             );
             const newEntries = [...otherGradeEntries, ...fetchedEntries];
 
@@ -2222,7 +2234,6 @@ export const useTimetableStore = create<TimetableStore>()(
                       }
                       entry {
                         id
-                        isDoublePeriod
                         subject {
                           id
                           name
@@ -2260,6 +2271,13 @@ export const useTimetableStore = create<TimetableStore>()(
                     occupiedPeriods
                     freePeriods
                   }
+                }
+                gradeStats {
+                  gradeId
+                  gradeName
+                  filledSlots
+                  totalSlots
+                  totalLessons
                 }
                 schedule {
                   dayTemplate {
@@ -2473,20 +2491,24 @@ export const useTimetableStore = create<TimetableStore>()(
             ),
           ].sort((a, b) => a - b);
 
+          // Never use totalPeriods as a 1..N array — API totalPeriods is aggregate slots
+          // across days, not "periods per day".
           const resolvedPeriodNumbers =
-            timetableData.periodNumbers?.length > 0
-              ? timetableData.periodNumbers
-              : periodNumbersFromSchedule.length > 0
-                ? periodNumbersFromSchedule
-                : periodNumbersFromGrades.length > 0
-                  ? periodNumbersFromGrades
-                  : typeof timetableData.totalPeriods === "number" &&
-                      timetableData.totalPeriods > 0
-                    ? Array.from(
-                        { length: timetableData.totalPeriods },
-                        (_, i) => i + 1,
-                      )
-                    : [];
+            periodNumbersFromSchedule.length > 0
+              ? periodNumbersFromSchedule
+              : periodNumbersFromGrades.length > 0
+                ? periodNumbersFromGrades
+                : Array.isArray(timetableData.periodNumbers) &&
+                    timetableData.periodNumbers.length > 0
+                  ? [
+                      ...new Set<number>(
+                        timetableData.periodNumbers.filter(
+                          (n: unknown): n is number =>
+                            typeof n === "number" && n >= 1,
+                        ),
+                      ),
+                    ].sort((a, b) => a - b)
+                  : [];
 
           const resolvedDaysPerWeek =
             timetableData.daysPerWeek ||
@@ -2524,24 +2546,35 @@ export const useTimetableStore = create<TimetableStore>()(
             gradeLevelId && gradeScopedSlots.length > 0
               ? {
                   timeSlots: gradeScopedSlots,
-                  periodNumbers: mergedPeriodNumbers,
-                  lessonPeriodsPerDay: mergedLessonPeriodsPerDay,
+                  ...(mergedPeriodNumbers.length > 0
+                    ? {
+                        periodNumbers: mergedPeriodNumbers,
+                        lessonPeriodsPerDay: mergedLessonPeriodsPerDay,
+                      }
+                    : {}),
                 }
               : {};
 
           // Keep full term entries in the store; grid hooks filter by grade/stream.
           set((state) => {
-            const entries =
-              allEntries.length > 0 ? allEntries : state.entries;
+            const entries = allEntries.length > 0 ? allEntries : state.entries;
+            const nextPeriodNumbers = gradeLevelId
+              ? mergedPeriodNumbers
+              : resolvedPeriodNumbers;
+            const periodNumbers =
+              nextPeriodNumbers.length > 0
+                ? nextPeriodNumbers
+                : state.periodNumbers;
+            const daysPerWeek =
+              resolvedDaysPerWeek > 0 ? resolvedDaysPerWeek : state.daysPerWeek;
 
             return {
               entries,
-              periodNumbers: gradeLevelId
-                ? mergedPeriodNumbers
-                : resolvedPeriodNumbers,
-              daysPerWeek: resolvedDaysPerWeek,
+              periodNumbers,
+              daysPerWeek,
               conflicts: recomputeConflicts({ ...state, entries }),
               knownRoomNumbers: timetableData.knownRoomNumbers || [],
+              gradeStats: timetableData.gradeStats || [],
               ...gradeSlotUpdate,
               ...(gradeLevelId || gradeScopedSlots.length > 0
                 ? {}
@@ -2558,6 +2591,14 @@ export const useTimetableStore = create<TimetableStore>()(
           return timetableData;
         } catch (error) {
           console.error("Error loading school timetable:", error);
+          const state = get();
+          if (state.entries.length > 0 || state.timeSlots.length > 0) {
+            console.warn(
+              "Keeping cached timetable data after load failure",
+              error,
+            );
+            return null;
+          }
           throw error;
         }
       },
@@ -3232,6 +3273,13 @@ export const useTimetableStore = create<TimetableStore>()(
 
       // UI actions
       setSelectedGrade: (gradeId) => {
+        if (gradeId === null) {
+          set({
+            selectedGradeId: null,
+            selectedStreamId: null,
+          });
+          return;
+        }
         const grade = get().grades.find((g) => g.id === gradeId);
         const firstStream = grade?.streams?.[0]?.tenantStreamId ?? null;
         set({

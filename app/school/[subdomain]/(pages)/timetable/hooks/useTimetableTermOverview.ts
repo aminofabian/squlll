@@ -34,8 +34,47 @@ export function useTimetableTermOverview(): TimetableTermOverview {
   const periodNumbers = useTimetableStore((s) => s.periodNumbers);
   const lessonPeriodsPerDay = useTimetableStore((s) => s.lessonPeriodsPerDay);
   const daysPerWeek = useTimetableStore((s) => s.daysPerWeek);
+  const gradeStats = useTimetableStore((s) => s.gradeStats);
 
   return useMemo(() => {
+    // Use backend-precomputed gradeStats when available (avoids client-side recomputation)
+    if (
+      gradeStats &&
+      gradeStats.length > 0 &&
+      gradeStats.length >= grades.length
+    ) {
+      const byGrade: GradeTimetableOverview[] = gradeStats.map((gs) => {
+        const grade = grades.find((g) => g.id === gs.gradeId);
+        return {
+          gradeId: gs.gradeId,
+          label: grade?.displayName || grade?.name || gs.gradeName,
+          filledSlots: gs.filledSlots,
+          totalSlots: gs.totalSlots,
+          completionPercentage:
+            gs.totalSlots > 0
+              ? Math.round((gs.filledSlots / gs.totalSlots) * 100)
+              : 0,
+          lessonCount: gs.totalLessons,
+        };
+      });
+
+      const totalFilled = byGrade.reduce((sum, g) => sum + g.filledSlots, 0);
+      const totalSlots = byGrade.reduce((sum, g) => sum + g.totalSlots, 0);
+      const overallPercentage =
+        totalSlots > 0 ? Math.round((totalFilled / totalSlots) * 100) : 0;
+      const gradesWithLessons = byGrade.filter((g) => g.lessonCount > 0).length;
+
+      return {
+        byGrade,
+        overallPercentage,
+        totalFilled,
+        totalSlots,
+        gradesWithLessons,
+        gradeCount: byGrade.length,
+      };
+    }
+
+    // Fallback: client-side computation (for entries loaded outside getSchoolTimetable)
     const days = daysPerWeek || 5;
     const periodsPerDay = getPeriodsPerDay({
       periodNumbers,
@@ -64,9 +103,7 @@ export function useTimetableTermOverview(): TimetableTermOverview {
           );
           const totalSlots = slotsPerWeek;
           const completionPercentage =
-            totalSlots > 0
-              ? Math.round((filledSlots / totalSlots) * 100)
-              : 0;
+            totalSlots > 0 ? Math.round((filledSlots / totalSlots) * 100) : 0;
 
           return {
             gradeId: g.id,
@@ -123,5 +160,6 @@ export function useTimetableTermOverview(): TimetableTermOverview {
     periodNumbers,
     lessonPeriodsPerDay,
     daysPerWeek,
+    gradeStats,
   ]);
 }

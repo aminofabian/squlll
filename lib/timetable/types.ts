@@ -45,6 +45,8 @@ export interface TimetableSlot {
   endTime: string;     // "08:45" (24h format)
   displayTime: string; // "8:00 AM – 8:45 AM"
   color?: string | null;
+  /** Gap period (break/assembly) — no teaching slot in template */
+  isNonTeaching?: boolean;
 }
 
 // ─── Break ─────────────────────────────────────────────────────
@@ -164,13 +166,25 @@ export interface CurrentLessonStatus {
 
 // ─── Next Lesson Info ──────────────────────────────────────────
 
+export interface CountdownParts {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  totalSeconds: number;
+}
+
 export interface NextLessonInfo {
   lesson: TimetableLesson;
+  /** Exact start time for live countdown */
+  startsAt: string;
   startsInMinutes: number;
-  startsInFormatted: string;   // "23m" or "2h 15m"
+  startsInFormatted: string;
   time: string;                // "10:00 AM"
   period: string;              // "Period 4" or "P4"
   isNextDay: boolean;
+  /** e.g. "Tomorrow", "Monday" — null when the lesson is later today */
+  dayLabel?: string | null;
 }
 
 // ─── Conflict ──────────────────────────────────────────────────

@@ -14,6 +14,7 @@ import type {
   TimetableDay,
   CurrentLessonStatus,
   NextLessonInfo,
+  CountdownParts,
   LessonStatus,
 } from './types';
 import { BREAK_TYPE_CONFIG, DAY_NAMES, DAY_SHORT_NAMES, WEEK_DAYS } from './constants';
@@ -79,6 +80,33 @@ export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+/** Seconds remaining until a target time (0 if already passed). */
+export function getSecondsUntil(target: Date | string, now: Date = new Date()): number {
+  const at = typeof target === 'string' ? new Date(target) : target;
+  return Math.max(0, Math.floor((at.getTime() - now.getTime()) / 1000));
+}
+
+/** Split total seconds into days, hours, minutes, seconds. */
+export function getCountdownParts(totalSeconds: number): CountdownParts {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(safe / 86_400);
+  const hours = Math.floor((safe % 86_400) / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = safe % 60;
+  return { days, hours, minutes, seconds, totalSeconds: safe };
+}
+
+/** Compact countdown string, e.g. "1d 08h 15m 32s". */
+export function formatCountdown(totalSeconds: number): string {
+  const { days, hours, minutes, seconds } = getCountdownParts(totalSeconds);
+  const segments: string[] = [];
+  if (days > 0) segments.push(`${days}d`);
+  segments.push(`${hours}h`);
+  segments.push(`${String(minutes).padStart(2, '0')}m`);
+  segments.push(`${String(seconds).padStart(2, '0')}s`);
+  return segments.join(' ');
 }
 
 /**
@@ -267,98 +295,113 @@ export function getCurrentLessonStatus(
 // ─── Next Lesson ───────────────────────────────────────────────
 
 /**
+ * Next calendar occurrence of a school-day lesson (Mon–Fri in timetable).
+ * Skips weekends: Saturday → Monday, Sunday → Monday, etc.
+ */
+export function getNextLessonOccurrence(
+  now: Date,
+  schoolDayOfWeek: number,
+  startTime: string,
+): Date {
+  const slotMinutes = timeToMinutes(startTime);
+  const jsDay = now.getDay(); // 0=Sun … 6=Sat (matches school days 1=Mon … 5=Fri)
+  const currentMinutes = getCurrentTimeInMinutes(now);
+
+  let daysUntil = (schoolDayOfWeek - jsDay + 7) % 7;
+  if (daysUntil === 0 && currentMinutes >= slotMinutes) {
+    daysUntil = 7;
+  }
+
+  const at = new Date(now);
+  at.setDate(at.getDate() + daysUntil);
+  at.setHours(Math.floor(slotMinutes / 60), slotMinutes % 60, 0, 0);
+  return at;
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/** Label for Up Next chip: "Tomorrow", weekday name, or null if later today. */
+export function getNextLessonDayLabel(at: Date, now: Date): string | null {
+  if (isSameCalendarDay(at, now)) return null;
+
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (isSameCalendarDay(at, tomorrow)) return 'Tomorrow';
+
+  return at.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+/**
  * Find the next non-break lesson across days.
- * Returns null if no upcoming lessons this week.
+ * Uses real calendar time (skips Sat/Sun). Returns null if no upcoming lessons.
  */
 export function getNextLesson(
   days: TimetableDay[],
   timeSlots: TimetableSlot[],
   now: Date = new Date()
 ): NextLessonInfo | null {
-  const currentDayOfWeek = getCurrentDayOfWeek(now);
-  const currentPeriodIdx = getCurrentPeriodIndex(timeSlots, now);
-  const currentMinutes = getCurrentTimeInMinutes(now);
-
-  if (currentDayOfWeek === null || currentPeriodIdx === -1) {
-    // Try finding the first lesson of the current/next day
-    return findFirstLessonInWeek(days, timeSlots, currentDayOfWeek ?? 1, 0, currentMinutes);
-  }
-
   const sortedSlots = [...timeSlots].sort((a, b) => a.periodNumber - b.periodNumber);
 
-  // Search remaining periods today
-  const todayDay = days.find(d => d.dayOfWeek === currentDayOfWeek);
-  if (todayDay) {
-    for (let i = currentPeriodIdx + 1; i < todayDay.cells.length; i++) {
-      const cell = todayDay.cells[i];
-      if (cell?.type === 'lesson' && cell.lesson) {
-        const slot = sortedSlots[i];
-        if (!slot) continue;
-        const slotStart = timeToMinutes(slot.startTime);
-        const minutesUntil = slotStart - currentMinutes;
-        return buildNextLessonInfo(cell.lesson, slot, minutesUntil, false);
-      }
-    }
-  }
+  let best: {
+    lesson: TimetableLesson;
+    slot: TimetableSlot;
+    at: Date;
+  } | null = null;
 
-  // Search next days
-  for (let d = currentDayOfWeek + 1; d <= 5; d++) {
-    const nextDay = days.find(day => day.dayOfWeek === d);
-    if (!nextDay) continue;
-
-    const result = findFirstLessonInWeek(
-      days, timeSlots, d,
-      (24 * 60 - currentMinutes) + (d - currentDayOfWeek) * 24 * 60,
-      currentMinutes
-    );
-    if (result) return result;
-  }
-
-  return null;
-}
-
-function findFirstLessonInWeek(
-  days: TimetableDay[],
-  timeSlots: TimetableSlot[],
-  startDayOfWeek: number,
-  baseOffset: number,
-  currentMinutes: number
-): NextLessonInfo | null {
-  const sortedSlots = [...timeSlots].sort((a, b) => a.periodNumber - b.periodNumber);
-
-  for (let d = startDayOfWeek; d <= 5; d++) {
-    const day = days.find(dd => dd.dayOfWeek === d);
-    if (!day) continue;
+  for (const day of days) {
+    if (day.dayOfWeek < 1 || day.dayOfWeek > 5) continue;
 
     for (let i = 0; i < day.cells.length; i++) {
       const cell = day.cells[i];
-      if (cell?.type === 'lesson' && cell.lesson) {
-        const slot = sortedSlots[i];
-        if (!slot) continue;
-        const slotStart = timeToMinutes(slot.startTime);
-        const dayOffset = (d - startDayOfWeek) * 24 * 60;
-        const minutesUntil = baseOffset + dayOffset + slotStart;
-        return buildNextLessonInfo(cell.lesson, slot, minutesUntil, d !== startDayOfWeek);
+      if (cell?.type !== 'lesson' || !cell.lesson) continue;
+
+      const slot = sortedSlots[i];
+      if (!slot) continue;
+
+      const at = getNextLessonOccurrence(now, day.dayOfWeek, slot.startTime);
+      if (at.getTime() <= now.getTime()) continue;
+
+      if (!best || at.getTime() < best.at.getTime()) {
+        best = { lesson: cell.lesson, slot, at };
       }
     }
   }
 
-  return null;
+  if (!best) return null;
+
+  return buildNextLessonInfo(
+    best.lesson,
+    best.slot,
+    best.at,
+    !isSameCalendarDay(best.at, now),
+    getNextLessonDayLabel(best.at, now),
+  );
 }
 
 function buildNextLessonInfo(
   lesson: TimetableLesson,
   slot: TimetableSlot,
-  minutesUntil: number,
-  isNextDay: boolean
+  startsAt: Date,
+  isNextDay: boolean,
+  dayLabel: string | null = null,
 ): NextLessonInfo {
+  const secondsUntil = getSecondsUntil(startsAt);
+  const minutesUntil = Math.max(0, Math.round(secondsUntil / 60));
   return {
     lesson,
-    startsInMinutes: Math.max(0, minutesUntil),
-    startsInFormatted: formatDuration(Math.max(0, minutesUntil)),
+    startsAt: startsAt.toISOString(),
+    startsInMinutes: minutesUntil,
+    startsInFormatted: formatCountdown(secondsUntil),
     time: slot.displayTime,
     period: `Period ${slot.periodNumber}`,
     isNextDay,
+    dayLabel,
   };
 }
 

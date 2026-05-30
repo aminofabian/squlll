@@ -3,6 +3,19 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { SetTeacherPasswordDialog } from "./SetTeacherPasswordDialog";
+import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
+import { toast } from "sonner";
 import { 
   Card, 
   CardContent, 
@@ -30,7 +43,9 @@ import {
   Copy,
   RefreshCw,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  KeyRound,
+  Trash2,
 } from "lucide-react";
 import { useTeacherDetailSummary } from "@/lib/hooks/useTeacherDetailSummary";
 import { TeacherAcademicEditor } from "./TeacherAcademicEditor";
@@ -38,11 +53,26 @@ import { teachersPanel, teachersPanelMuted } from "./teachers-ui";
 
 interface TeacherDetailViewProps {
   teacherId: string;
+  tenantId?: string | null;
   onClose?: () => void;
+  onTeacherRemoved?: () => void;
 }
 
-export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps) {
+export function TeacherDetailView({
+  teacherId,
+  tenantId,
+  onClose,
+  onTeacherRemoved,
+}: TeacherDetailViewProps) {
   const { teacherDetail, loading, error, refetch } = useTeacherDetailSummary(teacherId);
+  const {
+    deleteTeacherRecord,
+    setTeacherPassword,
+    isDeleting,
+    isSettingPassword,
+  } = useTeacherAdminActions();
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
   // Show loading state
   if (loading) {
@@ -72,6 +102,26 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
   }
 
   const teacher = teacherDetail;
+  const displayName = teacher.fullName || teacher.user.name;
+  const userId = teacher.user?.id;
+
+  const handleRemove = async () => {
+    if (!tenantId) {
+      toast.error("Tenant not found. Please sign in again.");
+      return;
+    }
+    try {
+      await deleteTeacherRecord(teacher.id, tenantId);
+      toast.success(`${displayName} has been removed`);
+      setRemoveDialogOpen(false);
+      onTeacherRemoved?.();
+      onClose?.();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to remove teacher",
+      );
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -134,7 +184,7 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
               </div>
             </div>
             
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge
                 variant="outline"
                 className={`text-xs capitalize ${
@@ -147,8 +197,72 @@ export function TeacherDetailView({ teacherId, onClose }: TeacherDetailViewProps
               </Badge>
             </div>
           </div>
+
+          <div className="flex flex-wrap gap-2 md:justify-end">
+            {userId ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setPasswordDialogOpen(true)}
+              >
+                <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+                Set password
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 border-red-200 text-xs text-red-700 hover:bg-red-50 hover:text-red-800"
+              onClick={() => setRemoveDialogOpen(true)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Remove
+            </Button>
+          </div>
         </div>
       </div>
+
+      {userId ? (
+        <SetTeacherPasswordDialog
+          open={passwordDialogOpen}
+          onOpenChange={setPasswordDialogOpen}
+          teacherName={displayName}
+          isSubmitting={isSettingPassword}
+          onSubmit={async (password) => {
+            await setTeacherPassword(userId, password);
+            toast.success(`Password updated for ${displayName}`);
+          }}
+        />
+      ) : null}
+
+      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {displayName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the teacher from your school and deletes their login
+              if it is not used elsewhere. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleRemove();
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Removing…" : "Remove teacher"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Teacher details tabs */}
       <Tabs defaultValue="details">

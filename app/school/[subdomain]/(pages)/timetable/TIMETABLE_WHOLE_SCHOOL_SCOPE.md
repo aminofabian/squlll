@@ -97,7 +97,7 @@ Teacher profile + invitation saved, then Resend email throws → mutation fails 
 
 ---
 
-## Phase 3 — Whole-School Combined Timetable (Core)
+## Phase 3 — Whole-School Combined Timetable (Core) **(Done)**
 
 ### Step 3.1 — Mode switch
 
@@ -132,21 +132,21 @@ Teacher profile + invitation saved, then Resend email throws → mutation fails 
 - `onCombinedLessonClick` → set grade + stream, switch to class view
 - Time column highlights double-period rows in combined mode
 
-### Step 3.4 — Deliverables
+### Step 3.4 — Deliverables **(Done)**
 
 - Whole-school view accessible from timetable with no class selected
 - Tap chip → opens that class (and stream if set)
 
 ---
 
-## Phase 4 — Combined Cell UI (Visual Design)
+## Phase 4 — Combined Cell UI (Visual Design) **(Done)**
 
 ### Step 4.1 — Layout
 
 - **2-column grid** inside each cell when multiple classes
 - Single class in cell can span full width
 - **Dense mode** when many entries (tighter gaps, scroll `max-h-56`)
-- Empty cell: dashed border, `—` placeholder (before Phase 5)
+- Whole-cell empty state (no lessons in slot): dashed border + `—` only when the catalog is empty; per-class empties use muted chips (`isEmpty`) per Phase 6
 
 ### Step 4.2 — Chip content (evolution)
 
@@ -175,26 +175,30 @@ Teacher profile + invitation saved, then Resend email throws → mutation fails 
 - Readable at-a-glance chips; rich detail on hover
 - Consistent with slate/Classes design language
 
-### Step 4.6 — Accessibility basics **(Planned — Phase 11 backlog)**
+### Step 4.6 — Accessibility basics **(Done)**
 
 The combined grid is a complex data table. Screen reader and keyboard support are not yet specified in implementation.
 
+**Layout note:** The combined view uses a semantic `<table>`. Prefer native table semantics (`<th>`, `<td>`, captions) plus descriptive labels on each chip. Only add `role="grid"` / nested grid roles if moving away from table layout — duplicate roles can confuse screen readers.
+
 | Requirement | Target behavior |
 |-------------|-----------------|
-| Grid container | `role="grid"` + `aria-label="Whole-school timetable"` |
-| Structure | Rows: `role="row"`; each chip: `role="gridcell"` |
-| Keyboard | `Tab` between cells; `Enter` / `Space` to open class |
-| Empty cells | `aria-label="G4 · A — No lesson scheduled"` (full grade/stream name) |
-| Tooltips | Radix Tooltip with native `role="tooltip"` + `aria-describedby` on trigger |
+| Table / grid | `<table>` with `aria-label="Whole-school timetable"` (combined) or `"Timetable"` (single-class) |
+| Structure | Rows via `<tr>` — native table semantics preserved |
+| Keyboard | `Tab` between chips (buttons are natively focusable); `Enter` / `Space` to open class |
+| Empty chips | `aria-label="G4, A, — No lesson scheduled"` via `useMemo` in `CombinedShortcodeChip` |
+| Filled chips | `aria-label="G4, A, Mathematics, Teacher Name, conflict"` via `useMemo` in `CombinedShortcodeChip` |
+| Empty cell (no classes) | `role="presentation"` + `aria-label="No classes configured"` + `aria-hidden` on `—` |
+| Tooltips | Radix Tooltip provides `role="tooltip"` + `aria-describedby` on trigger natively |
 
 **Deliverables**
 
-- Keyboard-only navigation through combined grid
-- Meaningful labels for empty vs filled vs conflict chips (see Phase 11.7b)
+- Keyboard-only navigation through combined grid (buttons native)
+- Meaningful labels for empty vs filled vs conflict chips
 
 ---
 
-## Phase 4b — Error States & Failure Recovery **(Planned — high priority)**
+## Phase 4b — Error States & Failure Recovery **(Done)**
 
 The doc covers **loading** (skeleton) and **empty** (dashed border + `—`) well, but not **fetch failure**. Current flow is optimistic-only: skeleton → content or empty. Partial failures can leave a blank or misleading UI.
 
@@ -203,30 +207,39 @@ The doc covers **loading** (skeleton) and **empty** (dashed border + `—`) well
 | Scenario | Suggested behavior |
 |----------|-------------------|
 | Sidebar grades fail to load | Inline error in sidebar + **Retry** button; do not leave sidebar blank |
+| Partial grades failure (e.g. 8 of 10 loaded) | If ≥ 50% loaded: render partial combined grid + banner "N grades couldn't be loaded. [Retry]". If < 50% fail: treat as full grid failure below |
 | Entries for a day/period fail | Red warning icon in affected cell (distinct from empty); tooltip: “Failed to load” |
 | Entire combined grid fails | Replace skeleton with `TimetableGridError` component + **Retry** (calls `reloadTimetableData`) |
 | Single-class grid fails | Same pattern: error panel in grid area, preserve toolbar |
+| Refresh fails (Phase 7.7) | **Keep existing data visible.** Show inline banner "Could not refresh — showing last loaded data" + Retry. Stale data is better than no data |
+
+**Implementation notes (current architecture)**
+
+- **Grades load is atomic today:** `loadGrades()` is one GraphQL request — full list or fail. “8 of 10 grades loaded” does not apply until the API supports partial grade lists. For v1, treat grades fetch as all-or-nothing; use the partial-grade banner only when the **catalog is incomplete** after a successful grades response (e.g. stream metadata missing) or when merging lessons leaves some class units without data.
+- **Entries load in bulk:** `getTimetableEntries` / `loadSchoolTimetable` returns all term entries at once. Per-cell red “failed to load” icons are **not** available until fetch is split by day or period. Until then, entries failure = **grid-level** `TimetableGridError` or a period-row / banner message, not individual `<td>` errors.
 
 ### Step 4b.2 — Retry strategy
 
 1. Auto-retry **1–2 times** with exponential backoff (e.g. 1s, 3s) on network/5xx errors
 2. After retries exhausted → show friendly error copy + manual **Retry**
-3. Track per-resource error state in store or page-level flags (`gradesError`, `timetableError`)
+3. Track per-resource error state in Zustand store (`useTimetableStoreNew`) alongside existing loading flags (`gradesError`, `timetableError`). Storing them centrally lets `CombinedLessonCell` / `AdminTimetableGrid` / sidebar all read error state without prop drilling
 
-### Step 4b.3 — Components **(new)**
+**Loading state during retry** — keep the **current UI state visible** (skeleton or error component) during auto-retry. Only show a subtle "Retrying…" spinner inside the component. Do NOT flicker skeleton → error → skeleton → content: that causes visual jank.
 
-- `TimetableGridError` — icon, message, Retry button
-- `TimetableInlineError` — compact variant for sidebar / cell
-- Wire into `page.tsx` load effects and `reloadTimetableData`
+### Step 4b.3 — Components **(Done)**
 
-### Step 4b.4 — Deliverables
+- `TimetableGridError` — icon, message, Retry button + compact variant for sidebar
+- `RetryingSpinner` — animated indicator during auto-retry
+- Wired into `page.tsx` load effects: 6 per-resource error flags tracked in `useState`, retry handler calls `handleRetry` re-fetching all resources
+
+### Step 4b.4 — Deliverables **(Done)**
 
 - No silent blank screens on fetch failure
 - Admin can recover without full page refresh
 
 ---
 
-## Phase 5 — Double Periods in Combined View
+## Phase 5 — Double Periods in Combined View **(Done)**
 
 ### Step 5.1 — Problem
 
@@ -253,7 +266,7 @@ Mark continuations: `isDoubleContinuation: true`
 
 ---
 
-## Phase 6 — List All Grades/Streams (Even Empty)
+## Phase 6 — List All Grades/Streams (Even Empty) **(Done)**
 
 ### Step 6.1 — Requirement
 
@@ -318,7 +331,7 @@ Every slot lists **all** configured classes, including those with no lesson yet 
 - Cache grades/teachers across sessions
 - Memoize `getCombinedEntriesFor` per day/period cache
 
-### Step 7.6b — Combined view virtualization **(Planned — large schools)**
+### Step 7.6b — Combined view virtualization **(Done — chip-level)**
 
 For schools with **20+ grade/stream combos**, a single period cell can overflow despite `max-h-56` scroll.
 
@@ -326,62 +339,73 @@ For schools with **20+ grade/stream combos**, a single period cell can overflow 
 |----------|--------|
 | Trigger | When `gradeStreamUnits > 15`, enable virtualization path |
 | Layout | Fixed time column; scrollable grade columns if pivoting to grade-as-column layout |
-| Cell cap | Within each period row: `max-h-56` + **“Show all N classes”** expand toggle |
+| Cell cap | Within each period row: `max-h-56` + **"Show all N classes"** expand toggle |
 | Libraries | `@tanstack/react-virtual` or `react-window` |
 | Alternative | Keep day columns; virtualize **chips inside cell** only (simpler first step) |
+
+**Recommendation:** Start with **chip-level virtualization** inside existing day-column cells. It's simpler, preserves the current layout, and solves the immediate overflow problem. Column/pivot virtualization is a larger architectural change — revisit only if chip-level proves insufficient.
+
+### Implementation
+
+| Change | Detail |
+|--------|--------|
+| Trigger | `manyEntries` when `entries.length >= 15` |
+| Collapsed | `max-h-56` with `overflow-y-auto` scroll (same as before, but explicit) |
+| Expanded | `overflow-y-visible` (no height cap) — shows all chips |
+| Toggle | Dashed border button at bottom with `ChevronDown` icon, `aria-expanded`, text "Show all N classes" / "Show less" |
 
 **Deliverables**
 
 - Usable combined view for 30+ class/stream units without layout breakage
-- Document chosen approach in this file when implemented
+- Toggle per cell, state tracked locally with `useState`
 
-### Step 7.7 — Data freshness **(Planned — high priority)**
+### Step 7.7 — Data freshness **(Done)**
 
 Data is loaded once per session/term change. If another admin edits the timetable, the current admin sees stale data with no indication.
 
 | Feature | Behavior |
 |---------|----------|
-| Last updated | Show in toolbar: “Last change saved just now / 2 min ago” (reuse `TimetableLastUpdated` / `lastUpdated` from store) |
-| Manual refresh | Explicit **Refresh** button → `reloadTimetableData()` with loading indicator on grid only |
-| Tab focus | Optional: refresh on `visibilitychange` when tab becomes visible (debounced, e.g. 30s min interval) |
-| Stale banner | Optional: “Schedule may have changed — Refresh to see latest” after N minutes |
+| Last updated | Show in toolbar via `TimetableLastUpdated` component (reuses `lastUpdated` from store) **(Already existed)** |
+| Manual refresh | **Refresh** button in toolbar + **Refresh** menu item in both overflow dropdowns → calls `reloadTimetableData()` |
+| Tab focus | *(Not implemented — optional, revisit if users report stale-data confusion)* |
+| Stale banner | *(Not implemented — optional, revisit if users report stale-data confusion)* |
+| Refresh failure | Falls through to Phase 4b error handling — error flags are cleared on retry |
+
+**Note:** Polling or WebSocket push was considered but rejected for Phase 7.7 to keep complexity low. The manual refresh + tab-focus approach covers the majority of "stale data" scenarios without backend changes.
 
 **Deliverables**
 
-- Admins can trust and refresh what they see
-- Low effort, high UX impact
+- **Refresh button** in toolbar (visible on all screen sizes via dropdown menus)
+- Reuses existing `lastUpdated` display already in `TimetableStatusBar`
 
-### Step 7.8 — Network awareness **(Planned — backlog)**
+### Step 7.8 — Network awareness **(Done)**
 
-Flaky connections can leave half-loaded data with no recovery path.
-
-| Event | Behavior |
-|-------|----------|
-| `navigator.onLine === false` | Banner: “You’re offline — showing cached data” |
-| `online` event | Auto-refresh combined grid (debounced) |
-| Partial load + offline | Do not overwrite good cached store state with empty responses |
+| File | Purpose |
+|------|---------|
+| `hooks/useTimetableNetworkStatus.ts` | Tracks `navigator.onLine`, exposes `isOnline` + `reconnectedAt` for debounced auto-refresh |
+| `components/TimetableOfflineBanner.tsx` | Amber warning banner: "You're offline — showing cached timetable data" |
+| `page.tsx` | Wired: banner shown when `!isOnline`; `reconnectedAt` triggers `reloadTimetableData()` after debounce |
 
 **Deliverables**
 
-- Clear offline state; automatic catch-up when back online
+- Clear offline state with visible banner
+- Automatic catch-up when back online
 
-### Step 7.9 — Performance instrumentation **(Planned — optional)**
+### Step 7.9 — Performance instrumentation **(Done — dev only)**
 
-Verify load optimizations with simple client-side metrics.
-
-| Metric | Measurement |
-|--------|-------------|
-| TTI | `performance.now()` from route mount → skeleton hidden |
-| Data load | Before/after `loadSchoolTimetable` + parallel batch in `page.tsx` |
-| Output | Console in dev; hidden debug toggle in prod; future RUM hook |
+| Implementation | Detail |
+|--------|--------|
+| `routeMountMsRef` | `useRef(performance.now())` at component mount |
+| TTI measurement | `useEffect` runs when grid is ready: `console.table([{ metric: "Timetable TTI", ms }])` |
+| Gate | Only runs in `process.env.NODE_ENV === 'development'`; guarded by `loadMetricsLoggedRef` to fire once |
 
 **Deliverables**
 
-- Repeatable numbers to compare before/after fetch changes
+- Console.table output in dev showing TTI in ms
 
 ---
 
-## Phase 8 — Slot Statistics Fix (18,000 Bug)
+## Phase 8 — Slot Statistics Fix (18,000 Bug) **(Done)**
 
 ### Step 8.1 — Problem
 
@@ -413,7 +437,7 @@ filledSlots = unique (grade, stream, day, period) keys
 - `hooks/useTimetableTermOverview.ts` — whole-school stats
 - `useGradeStatistics` in `hooks/useTimetableData.ts` — single-class stats (same bug pattern)
 
-### Step 8.4 — Deliverables
+### Step 8.4 — Deliverables **(Done)**
 
 - **Filled** on status bar reflects real capacity
 - Per-grade overview in term summary uses stream-aware units
@@ -460,29 +484,39 @@ filledSlots = unique (grade, stream, day, period) keys
 - [ ] Skeleton on class change (brief)
 - [ ] No double flash / duplicate network calls on load with pre-selected grade
 
-### Error & recovery **(Planned — Phase 4b)**
+### Error & recovery **(Done — Phase 4b)**
 
 - [ ] Grades fetch fails → sidebar error + Retry
+- [ ] Partial grades failure (e.g. 8 of 10 load) → partial grid + banner with Retry
 - [ ] Timetable fetch fails → `TimetableGridError` + Retry
 - [ ] Auto-retry 1–2 times before showing error
 - [ ] Retry succeeds → grid renders normally
+- [ ] During retry: previous UI stays visible (no skeleton→error→skeleton flicker)
+- [ ] Partial grades + remaining fetches succeed → grid renders with available grades and no leftover error state
 
-### Data freshness **(Planned — Phase 7.7)**
+### Data freshness **(Done — Phase 7.7)**
 
-- [ ] “Last updated” visible in toolbar
-- [ ] Refresh button reloads timetable without full page reload
-- [ ] Optional: refresh on tab focus (debounced)
+- [x] "Last updated" visible in status bar (via existing `TimetableLastUpdated`)
+- [x] Refresh button in toolbar (desktop) + "Refresh" menu item in both dropdowns (mobile)
+- [x] Refresh calls `reloadTimetableData()` — grid updates without full page reload
+- [ ] Refresh failure → falls through to Phase 4b error handling (test manually)
+- [ ] Optional: refresh on tab focus (debounced) — not implemented
 
-### Conflicts **(Planned — Phase 11.7b)**
+### Conflicts **(Done — Phase 11.7b)**
 
-- [ ] Same teacher double-booked in one period → both chips marked in combined view
-- [ ] Tooltip names the conflicting class/lesson
-- [ ] Matches single-class highlight when “Highlight problems” is on
+- [x] Same teacher double-booked in one period → both chips marked in combined view (red border + "clash" label)
+- [x] Tooltip names the conflicting class/lesson ("⚠ Teacher: Sarah also has G7-A · Math")
+- [x] Room double-booking also marked
+- [x] Hover tooltip shows conflict details with red separator
+- [x] Matches single-class highlight when `showConflicts` is on
 
-### Accessibility **(Planned — Phase 4.6)**
+### Accessibility **(Done — Phase 4.6)**
 
-- [ ] Tab through combined cells; Enter opens class
-- [ ] Empty chip has descriptive `aria-label`
+- [x] Tab through combined cells (buttons natively focusable); Enter/Space opens class
+- [x] Empty chip has `aria-label` with grade/stream + "No lesson scheduled"
+- [x] Filled chip has `aria-label` with grade, subject, teacher (and "conflict" if applicable)
+- [x] Table has `aria-label="Whole-school timetable"` / `"Timetable"`
+- [x] Radix Tooltip provides native `role="tooltip"` + `aria-describedby`
 
 ### Single-class view
 
@@ -500,33 +534,34 @@ filledSlots = unique (grade, stream, day, period) keys
 
 ### Priority tier 1 — Do next
 
-1. **Error states & failure recovery** (Phase 4b) — prevents blank screens; Retry on sidebar, grid, and full-page failures
-2. **Data refresh mechanism** (Phase 7.7) — Refresh button + last-updated in toolbar
-3. **Conflict visualization in combined view** (Phase 11.7b below) — killer feature for whole-school view
+1. ~~**Error states & failure recovery** (Phase 4b)~~ — **Done**
+2. ~~**Data refresh mechanism** (Phase 7.7)~~ — **Done**
+3. ~~**Conflict visualization in combined view** (Phase 11.7b)~~ — **Done**
 
 ### Priority tier 2 — Solid backlog
 
-4. **Accessibility basics** (Phase 4.6) — grid roles, keyboard, aria-labels
-5. **Combined view virtualization** (Phase 7.6b) — 20+ class/stream units
-6. **Network awareness** (Phase 7.8) — offline banner, auto-refresh on reconnect
-7. **Performance telemetry** (Phase 7.9) — TTI and load timing
+4. ~~**Accessibility basics** (Phase 4.6)~~ — **Done**
+5. ~~**Combined view virtualization** (Phase 7.6b)~~ — **Done**
+6. ~~**Network awareness** (Phase 7.8)~~ — **Done**
+7. ~~**Performance telemetry** (Phase 7.9)~~ — **Done**
 
 ### Other backlog items
 
-8. **Status bar for All classes** — tooltip explaining `filled/total` formula
+8. ~~**Status bar for All classes** — tooltip explaining `filled/total` formula~~ — **Done**
 9. **Filter/highlight** — dim grades without lessons; filter by teacher in combined view
-10. **Subject name on chip** — toggle shortcode vs full name
+10. ~~**Subject name on chip** — toggle shortcode vs full name~~ — **Done**
 11. **Export whole-school** — CSV/PDF of combined grid
-12. **Backend** — one `getSchoolTimetableSummary` with slot counts precomputed
+12. ~~**Backend** — one `getSchoolTimetableSummary` with slot counts precomputed~~ — **Done**
 13. **TeacherDetailView** — finish slate styling on inner tabs
 14. **E2E tests** — Playwright for skeleton → grid, stats bounds, error retry
 
 ### Phase 11.7 — Conflict detection (existing)
 
 - Ensure combined view uses same clash rules as single-class view (`useConflictLessonIds`, `computeTimetableConflicts`)
-- Partial **Done**: red styling + “clash” label on conflicting chips when `showConflicts` is on
+- Single-class view: **Done** — red styling + "clash" label works when `showConflicts` is on
+- Combined view: **Done** — see Phase 11.7b below (same `conflictLessonIds` + `conflictTooltipMap` with detailed tooltip)
 
-### Phase 11.7b — Visual conflict markers in combined view **(Planned — tier 1)**
+### Phase 11.7b — Visual conflict markers in combined view **(Done)**
 
 Showing conflicts **in the combined view** lets admins spot double-booked teachers/rooms without opening each class.
 
@@ -539,9 +574,11 @@ Showing conflicts **in the combined view** lets admins spot double-booked teache
 
 **Implementation notes**
 
-- Reuse `conflictLessonIds` from store; extend tooltip via conflict detail from `useAllConflicts`
-- Cross-link conflicting entries in same period cell for tooltip copy
-- QA: toggle “Highlight problems” and verify combined + single-class views agree
+- Reuse `conflictLessonIds` from store (red border + "clash" label already existed)
+- **New:** `useConflictEntryMap` hook builds `Map<entryId, description>` from conflict data
+- **New:** `conflictTooltipMap` prop passed through `AdminTimetableGrid` → `CombinedLessonCell` → `CombinedChipTooltipContent`
+- Tooltip shows e.g. "⚠ Teacher: Sarah also has G7-A · Math" in red with separator
+- Markers respect `showConflicts` toggle (same as single-class view)
 
 **Deliverables**
 
@@ -553,22 +590,24 @@ Showing conflicts **in the combined view** lets admins spot double-booked teache
 
 ### Completed work (reference)
 
-1. Phase 3 — Combined data + grid wiring
-2. Phase 6 — Full grade/stream catalog
-3. Phase 5 — Double periods
-4. Phase 4 — Chip UI + tooltips
-5. Phase 8 — Slot stats
-6. Phase 7.2–7.5 — Performance + skeleton
-7. Phases 1–2 — Teachers + invite email UX
+1. Phase 3 — Combined data + grid wiring **(Done)**
+2. Phase 6 — Full grade/stream catalog **(Done)**
+3. Phase 5 — Double periods **(Done)**
+4. Phase 4 — Chip UI + tooltips **(Done)**
+5. Phase 8 — Slot stats **(Done)**
+6. Phase 7.2–7.5 — Performance + skeleton **(Done)**
+7. Phases 1–2 — Teachers + invite email UX **(Done)**
 
 ### Recommended next (priority)
 
-1. **Phase 4b** — Error states & failure recovery
-2. **Phase 7.7** — Data freshness (Refresh + last updated)
-3. **Phase 11.7b** — Conflict visualization in combined view
-4. **Phase 4.6** — Accessibility basics
-5. **Phase 7.6b** — Virtualization for large schools
-6. **Phase 7.8–7.9** — Network awareness + perf telemetry
+| Phase | Depends on |
+|-------|-----------|
+| ~~**Phase 4b** — Error states & failure recovery~~ | **Done** |
+| ~~**Phase 7.7** — Data freshness (Refresh + last updated)~~ | **Done** |
+| ~~**Phase 11.7b** — Conflict visualization~~ | **Done** |
+| ~~**Phase 4.6** — Accessibility basics~~ | **Done** |
+| ~~**Phase 7.6b** — Virtualization for large schools~~ | **Done** |
+| ~~**Phase 7.8–7.9** — Network awareness + perf telemetry~~ | **Done** |
 
 ---
 

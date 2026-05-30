@@ -110,17 +110,32 @@ export const SUBJECT_COLOR_PALETTE = [
   { bg: 'bg-indigo-50 dark:bg-indigo-950/30', border: 'border-l-indigo-500', text: 'text-indigo-700', accent: '#6366F1' },
 ];
 
+/** Stable key so "Social Studies" and "social studies" share one colour. */
+export function normalizeSubjectName(subjectName: string): string {
+  return subjectName.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 /**
  * Deterministically assign a color to a subject based on its name.
  * Same subject always gets the same color across all views.
  */
 export function getSubjectPaletteColor(subjectName: string) {
+  const key = normalizeSubjectName(subjectName);
   let hash = 0;
-  for (let i = 0; i < subjectName.length; i++) {
-    hash = ((hash << 5) - hash) + subjectName.charCodeAt(i);
+  for (let i = 0; i < key.length; i++) {
+    hash = ((hash << 5) - hash) + key.charCodeAt(i);
     hash |= 0;
   }
   return SUBJECT_COLOR_PALETTE[Math.abs(hash) % SUBJECT_COLOR_PALETTE.length];
+}
+
+/** Resolve palette from stored accent or subject name. */
+export function getLessonSubjectPalette(subject: { name: string; color?: string }) {
+  if (subject.color) {
+    const match = SUBJECT_COLOR_PALETTE.find((p) => p.accent === subject.color);
+    if (match) return match;
+  }
+  return getSubjectPaletteColor(subject.name);
 }
 
 // ─── Status Colors ─────────────────────────────────────────────

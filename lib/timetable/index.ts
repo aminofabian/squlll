@@ -68,6 +68,9 @@ export {
   parseAmPmTime,
   getCurrentTimeInMinutes,
   formatDuration,
+  formatCountdown,
+  getCountdownParts,
+  getSecondsUntil,
   formatCurrentTime,
   formatFullDate,
   getCurrentPeriodIndex,
@@ -91,4 +94,11 @@ export { useTimetableCore } from "./useTimetableCore";
 export {
   transformStudentTimetable,
   transformTeacherTimetable,
+  transformTeacherTimetableMerged,
+  transformTeacherTimetableFromSchoolSchedule,
+} from "./transformers";
+export type {
+  SchoolScheduleDayApi,
+  SchoolScheduleSlotApi,
+  MyTimetableLessonApi,
 } from "./transformers";

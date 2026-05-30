@@ -18,145 +18,34 @@ import { TeachersStats } from "./components/TeachersStats";
 import { TeachersTable } from "./components/TeachersTable";
 import { PendingInvitations } from "./components/PendingInvitations";
 import { usePendingInvitationsStore } from "@/lib/stores/usePendingInvitationsStore";
-import { useTeachersByTenantQuery, useTeacherData } from "@/lib/stores/useTeachersStore";
-import { useDeleteTeacher } from "@/lib/hooks/useTeachers";
+import { useGetTeachers } from "@/lib/hooks/useTeachers";
+import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
 import { getTenantInfo } from "@/lib/utils";
-
-type Teacher = {
-  id: string;
-  name: string;
-  title?: string;
-  photo?: string;
-  gender: "male" | "female";
-  dateOfBirth: string;
-  joinDate: string;
-  employeeId: string;
-  staffId?: string;
-  status: "active" | "on leave" | "former" | "substitute" | "retired";
-  designation: string;
-  department: string;
-  subjects: string[];
-  classesAssigned: string[];
-  grades: string[];
-  curriculum?: string[];
-  timetable?: { day: string; periods: { time: string; class: string; subject: string }[] }[];
-  classTeacherOf?: string;
-  academic: {
-    qualification: string;
-    university?: string;
-    specialization: string;
-    experience: number;
-    tscNumber?: string;
-    certifications?: string[];
-  };
-  contacts: {
-    phone: string;
-    email: string;
-    address?: string;
-    officeLocation?: string;
-  };
-  performance?: {
-    rating: number;
-    lastEvaluation?: string;
-    studentPerformance?: string;
-    classPerformance?: { subject: string; performance: string }[];
-    subjectPerformanceHistory?: { year: string; performance: string }[];
-    attendanceRate?: number;
-    disciplineReports?: number;
-    studentsMentored?: number;
-    trend?: "improving" | "declining" | "stable";
-  };
-  responsibilities?: string[];
-  extraCurricular?: {
-    clubs?: string[];
-    sports?: string[];
-    committees?: string[];
-  };
-  leadershipRoles?: string[];
-  administrativeNotes?: string;
-  reportsSubmitted?: { type: string; date: string; status: string }[];
-  administrative?: {
-    roles?: string[];
-    committees?: string[];
-    reports?: { type: string; date: string; status: string }[];
-    notes?: { title: string; date: string; addedBy: string; content: string }[];
-  };
-  documents?: {
-    name: string;
-    type: "pdf" | "image" | "doc" | string;
-    url: string;
-    size: string;
-    dateAdded?: string;
-  }[];
-  systemMetadata?: {
-    dateAdded: string;
-    lastUpdated: string;
-    updatedBy: string;
-  };
-  awards?: string[];
-  languagesSpoken?: string[];
-  motto?: string;
-  officeHours?: { day: string; hours: string }[];
-};
-
-const transformUserToTeacher = (user: {
-  id: string;
-  name: string;
-  email: string;
-}): Teacher => ({
-  id: user.id,
-  name: user.name,
-  employeeId: `TCH/${new Date().getFullYear()}/${user.id.slice(-3)}`,
-  gender: "male",
-  dateOfBirth: "1980-01-01",
-  joinDate: new Date().toISOString().split("T")[0],
-  status: "active",
-  subjects: ["General"],
-  classesAssigned: [],
-  grades: [],
-  designation: "teacher",
-  department: "General",
-  contacts: {
-    phone: "+254700000000",
-    email: user.email,
-    address: "Address not provided",
-  },
-  academic: {
-    qualification: "bachelors",
-    specialization: "General Education",
-    experience: 1,
-    certifications: [],
-  },
-  performance: {
-    rating: 4.0,
-    lastEvaluation: new Date().toISOString().split("T")[0],
-    studentPerformance: "Good",
-    trend: "stable",
-  },
-  responsibilities: [],
-  extraCurricular: {
-    clubs: [],
-    sports: [],
-    committees: [],
-  },
-});
+import { mapGraphqlTeacherToListItem } from "./utils/mapGraphqlTeacher";
 
 function TeachersPage() {
   const tenantInfo = getTenantInfo();
   const tenantId = tenantInfo?.tenantId;
   const hasInitialFetch = useRef(false);
 
-  const { fetchTeachersByTenant } = useTeachersByTenantQuery();
   const {
-    teacherStaffUsers: graphqlTeachers,
+    teachers: graphqlTeachers,
     isLoading: teachersLoading,
-    error: teachersError,
-  } = useTeacherData();
-  const { deleteTeacher } = useDeleteTeacher();
+    isError: teachersIsError,
+    error: teachersQueryError,
+    refetch: refetchTeachers,
+  } = useGetTeachers();
+  const { deleteTeacherRecord } = useTeacherAdminActions();
+
+  const teachersError = teachersIsError
+    ? teachersQueryError instanceof Error
+      ? teachersQueryError.message
+      : "Failed to load teachers"
+    : null;
 
   const teachers = useMemo(() => {
-    if (!graphqlTeachers || !Array.isArray(graphqlTeachers)) return [];
-    return graphqlTeachers.map(transformUserToTeacher);
+    if (!graphqlTeachers?.length) return [];
+    return graphqlTeachers.map(mapGraphqlTeacherToListItem);
   }, [graphqlTeachers]);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -177,10 +66,9 @@ function TeachersPage() {
   useEffect(() => {
     if (tenantId && !hasInitialFetch.current) {
       hasInitialFetch.current = true;
-      fetchTeachersByTenant(tenantId).catch(console.error);
       fetchPendingInvitations(tenantId);
     }
-  }, [tenantId, fetchTeachersByTenant, fetchPendingInvitations]);
+  }, [tenantId, fetchPendingInvitations]);
 
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
@@ -196,8 +84,8 @@ function TeachersPage() {
 
   const handleTeacherCreated = () => {
     setTeacherCreated(true);
+    void refetchTeachers();
     if (tenantId) {
-      fetchTeachersByTenant(tenantId).catch(console.error);
       fetchPendingInvitations(tenantId);
     }
     setTimeout(() => setTeacherCreated(false), 3000);
@@ -205,8 +93,11 @@ function TeachersPage() {
 
   const handleTeacherDelete = async (teacherId: string) => {
     if (!tenantId) throw new Error("Tenant ID not found");
-    await deleteTeacher(teacherId, tenantId);
-    fetchTeachersByTenant(tenantId).catch(console.error);
+    await deleteTeacherRecord(teacherId, tenantId);
+    await refetchTeachers();
+    if (selectedTeacherId === teacherId) {
+      setSelectedTeacherId(null);
+    }
   };
 
   return (
@@ -309,7 +200,7 @@ function TeachersPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => tenantId && fetchTeachersByTenant(tenantId)}
+                  onClick={() => void refetchTeachers()}
                   className="h-7 border-red-200 text-red-700 hover:bg-red-100"
                 >
                   Retry
@@ -327,7 +218,12 @@ function TeachersPage() {
             {selectedTeacherId ? (
               <TeacherDetailView
                 teacherId={selectedTeacherId}
+                tenantId={tenantId}
                 onClose={() => setSelectedTeacherId(null)}
+                onTeacherRemoved={() => {
+                  void refetchTeachers();
+                  setSelectedTeacherId(null);
+                }}
               />
             ) : (
               <>
@@ -350,8 +246,8 @@ function TeachersPage() {
                   onTeacherActivated={() => {
                     if (tenantId) {
                       fetchPendingInvitations(tenantId);
-                      fetchTeachersByTenant(tenantId).catch(console.error);
                     }
+                    void refetchTeachers();
                   }}
                 />
 

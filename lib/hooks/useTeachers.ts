@@ -6,7 +6,7 @@ interface TeachersResponse {
   usersByTenant: any[];
 }
 
-interface Teacher {
+export interface Teacher {
   id: string;
   fullName?: string;
   firstName?: string;

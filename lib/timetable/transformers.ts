@@ -15,6 +15,7 @@ import type {
   TimetableStats,
   BreakType,
 } from "@/lib/timetable/types";
+import { getSubjectPaletteColor, normalizeSubjectName } from "@/lib/timetable/constants";
 
 interface GraphQLTimeSlot {
   id: string;
@@ -302,9 +303,435 @@ interface TeacherEntryInput {
   timeSlot: { id: string; periodNumber: number; displayTime: string };
 }
 
+function formatSlotTime(timeStr?: string): string {
+  if (!timeStr) return "";
+  if (timeStr.length === 5) return timeStr;
+  if (timeStr.length >= 8) return timeStr.substring(0, 5);
+  return timeStr;
+}
+
+function slotTimeFields(start?: string, end?: string) {
+  const startTime = formatSlotTime(start);
+  const endTime = formatSlotTime(end);
+  return {
+    startTime,
+    endTime,
+    displayTime:
+      startTime && endTime ? `${startTime} - ${endTime}` : startTime || endTime,
+  };
+}
+
+function addMinutesToTime(timeStr: string, minutes: number): string {
+  const normalized = formatSlotTime(timeStr);
+  if (!normalized) return "";
+  const [h, m] = normalized.split(":").map(Number);
+  const total = h * 60 + m + minutes;
+  const nh = Math.floor(total / 60) % 24;
+  const nm = total % 60;
+  return `${String(nh).padStart(2, "0")}:${String(nm).padStart(2, "0")}`;
+}
+
+export interface WeekTemplateDayApi {
+  dayOfWeek: number;
+  startTime?: string;
+  periods?: Array<{
+    id: string;
+    periodNumber: number;
+    startTime: string;
+    endTime: string;
+    label?: string | null;
+  }>;
+  breaks?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    afterPeriod: number;
+    durationMinutes: number;
+    icon?: string | null;
+    applyToAllDays?: boolean;
+    dayTemplateId?: string | null;
+  }>;
+}
+
+export interface WeekTemplateScheduleApi {
+  id: string;
+  dayTemplates?: WeekTemplateDayApi[];
+}
+
+/** Build school schedule shape from week templates when getSchoolTimetable returns empty. */
+export function schoolScheduleFromWeekTemplates(
+  weekTemplates: WeekTemplateScheduleApi[],
+): SchoolScheduleDayApi[] {
+  if (!weekTemplates.length) return [];
+
+  const week = weekTemplates[0];
+  const days = (week.dayTemplates ?? []).filter(
+    (d) => d.dayOfWeek >= 1 && d.dayOfWeek <= 5,
+  );
+  if (!days.length) return [];
+
+  const globalBreaks = days.flatMap((d) =>
+    (d.breaks ?? []).filter((b) => b.applyToAllDays),
+  );
+
+  return days
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+    .map((day) => {
+      const periods = [...(day.periods ?? [])]
+        .filter((p) => p.periodNumber > 0)
+        .sort((a, b) => a.periodNumber - b.periodNumber);
+
+      const dayBreaks = [...(day.breaks ?? []), ...globalBreaks];
+      const breaksByAfter = new Map<number, (typeof dayBreaks)[number]>();
+      for (const b of dayBreaks) {
+        const existing = breaksByAfter.get(b.afterPeriod);
+        if (!existing || (existing.applyToAllDays && !b.applyToAllDays)) {
+          breaksByAfter.set(b.afterPeriod, b);
+        }
+      }
+
+      const slots: SchoolScheduleSlotApi[] = [];
+      const breakBefore = breaksByAfter.get(0);
+      if (breakBefore && periods[0]) {
+        const start = formatSlotTime(periods[0].startTime);
+        slots.push({
+          type: "BREAK",
+          id: breakBefore.id,
+          startTime: start,
+          endTime: addMinutesToTime(start, breakBefore.durationMinutes),
+          name: breakBefore.name,
+          breakType: breakBefore.type,
+          afterPeriod: 0,
+          durationMinutes: breakBefore.durationMinutes,
+          icon: breakBefore.icon ?? undefined,
+        });
+      }
+
+      for (const period of periods) {
+        slots.push({
+          type: "PERIOD",
+          id: period.id,
+          periodNumber: period.periodNumber,
+          startTime: period.startTime,
+          endTime: period.endTime,
+          label: period.label ?? undefined,
+        });
+
+        const br = breaksByAfter.get(period.periodNumber);
+        if (br) {
+          const start = formatSlotTime(period.endTime);
+          slots.push({
+            type: "BREAK",
+            id: br.id,
+            startTime: start,
+            endTime: addMinutesToTime(start, br.durationMinutes),
+            name: br.name,
+            breakType: br.type,
+            afterPeriod: br.afterPeriod,
+            durationMinutes: br.durationMinutes,
+            icon: br.icon ?? undefined,
+          });
+        }
+      }
+
+      return {
+        dayTemplate: { dayOfWeek: day.dayOfWeek },
+        slots,
+      };
+    });
+}
+
+// ─── Teacher timetable from getSchoolTimetable (real breaks + periods) ───
+
+export interface SchoolScheduleSlotApi {
+  type: string;
+  id?: string | null;
+  periodNumber?: number | null;
+  startTime: string;
+  endTime: string;
+  label?: string | null;
+  name?: string | null;
+  breakType?: string | null;
+  afterPeriod?: number | null;
+  durationMinutes?: number | null;
+  icon?: string | null;
+  entry?: {
+    id: string;
+    subject?: { id?: string; name?: string } | null;
+    teacher?: { id?: string; name?: string } | null;
+    gradeLevel?: { id?: string; name?: string; shortName?: string } | null;
+    stream?: { id?: string; name?: string } | null;
+    room?: { id?: string; name?: string } | null;
+    isDoublePeriod?: boolean | null;
+  } | null;
+}
+
+export interface SchoolScheduleDayApi {
+  dayTemplate: {
+    dayOfWeek: number;
+    dayName?: string;
+  };
+  slots: SchoolScheduleSlotApi[];
+}
+
+export interface MyTimetableLessonApi {
+  id: string;
+  subjectName: string;
+  gradeLevelName: string;
+  streamName?: string | null;
+  roomName?: string | null;
+  dayOfWeek: number;
+  periodNumber: number;
+  startTime: string;
+  endTime: string;
+}
+
+function buildMyLessonLookup(
+  mySchedule: { dayOfWeek: number; entries: MyTimetableLessonApi[] }[],
+): Map<string, MyTimetableLessonApi> {
+  const map = new Map<string, MyTimetableLessonApi>();
+  for (const day of mySchedule) {
+    for (const e of day.entries ?? []) {
+      map.set(`${e.dayOfWeek}-${e.periodNumber}`, e);
+    }
+  }
+  return map;
+}
+
+function lessonFromMyEntry(
+  my: MyTimetableLessonApi,
+  dayOfWeek: number,
+  periodNumber: number,
+  teacherId: string,
+  teacherName: string,
+): TimetableLesson {
+  const subjectPalette = getSubjectPaletteColor(my.subjectName);
+  const gradeLabel = my.streamName
+    ? `${my.gradeLevelName} · ${my.streamName}`
+    : my.gradeLevelName;
+
+  return {
+    id: my.id,
+    periodNumber,
+    dayOfWeek,
+    subject: {
+      id: my.subjectName,
+      name: my.subjectName,
+      color: subjectPalette.accent,
+    },
+    teacher: { id: teacherId, name: teacherName },
+    room: my.roomName || "",
+    grade: {
+      id: gradeLabel,
+      name: gradeLabel,
+      displayName: gradeLabel,
+      level: 0,
+    },
+    stream: my.streamName ?? undefined,
+    isDoublePeriod: false,
+  };
+}
+
 /**
- * Transform teacher timetable data (from useTeacherTimetable hook)
- * into the unified CompleteTimetable format.
+ * Merge getMyTimetable lessons (source of truth) with getSchoolTimetable
+ * structure (period times + break rows). Works even when school entry.teacher.id is missing.
+ */
+export function transformTeacherTimetableMerged(
+  mySchedule: { dayOfWeek: number; entries: MyTimetableLessonApi[] }[],
+  teacherId: string,
+  teacherName: string,
+  termId: string,
+  termName: string,
+  completedLessonIds: string[] = [],
+  schoolSchedule?: SchoolScheduleDayApi[] | null,
+): CompleteTimetable {
+  const myByDayPeriod = buildMyLessonLookup(mySchedule);
+
+  const periodNumberSet = new Set<number>();
+  for (const my of myByDayPeriod.values()) {
+    periodNumberSet.add(my.periodNumber);
+  }
+
+  let breaks: TimetableBreak[] = [];
+  let timeSlots: TimetableSlot[] = [];
+  const schoolDays =
+    schoolSchedule?.filter(
+      (d) => d.dayTemplate.dayOfWeek >= 1 && d.dayTemplate.dayOfWeek <= 5,
+    ) ?? [];
+
+  if (schoolDays.length > 0) {
+    const refDay =
+      schoolDays.find((d) => d.dayTemplate.dayOfWeek === 1) ?? schoolDays[0];
+
+    for (const s of refDay?.slots ?? []) {
+      if (s.type === "PERIOD" && s.periodNumber != null) {
+        periodNumberSet.add(s.periodNumber);
+      }
+    }
+
+    const periodNumbers = [...periodNumberSet].sort((a, b) => a - b);
+    const refPeriodSlots =
+      refDay?.slots.filter((s) => s.type === "PERIOD") ?? [];
+
+    timeSlots = periodNumbers.map((periodNumber) => {
+      const ref = refPeriodSlots.find((s) => s.periodNumber === periodNumber);
+      const times = slotTimeFields(ref?.startTime, ref?.endTime);
+      const mySample = [...myByDayPeriod.values()].find(
+        (m) => m.periodNumber === periodNumber,
+      );
+      const myTimes = mySample
+        ? slotTimeFields(mySample.startTime, mySample.endTime)
+        : null;
+      return {
+        id: ref?.id ?? `period-${periodNumber}`,
+        periodNumber,
+        startTime: times.startTime || myTimes?.startTime || "",
+        endTime: times.endTime || myTimes?.endTime || "",
+        displayTime:
+          times.displayTime || myTimes?.displayTime || `Period ${periodNumber}`,
+        color: null,
+      };
+    });
+
+    for (const day of schoolDays) {
+      const dayOfWeek = day.dayTemplate.dayOfWeek;
+      for (const slot of day.slots) {
+        if (slot.type !== "BREAK") continue;
+        const times = slotTimeFields(slot.startTime, slot.endTime);
+        breaks.push({
+          id: `${slot.id ?? "break"}-${dayOfWeek}`,
+          name: slot.name || "Break",
+          type: normalizeBreakType(slot.breakType || "BREAK"),
+          afterPeriod: slot.afterPeriod ?? 0,
+          dayOfWeek,
+          durationMinutes: slot.durationMinutes ?? 0,
+          icon: slot.icon || "☕",
+          color: null,
+          startTime: times.startTime,
+          endTime: times.endTime,
+        });
+      }
+    }
+  } else {
+    const periodNumbers = [...periodNumberSet].sort((a, b) => a - b);
+    const periodTimes = new Map<number, { start: string; end: string }>();
+    for (const my of myByDayPeriod.values()) {
+      if (!periodTimes.has(my.periodNumber)) {
+        periodTimes.set(my.periodNumber, {
+          start: formatSlotTime(my.startTime),
+          end: formatSlotTime(my.endTime),
+        });
+      }
+    }
+    timeSlots = periodNumbers.map((periodNumber) => {
+      const times = periodTimes.get(periodNumber);
+      const startTime = times?.start ?? "";
+      const endTime = times?.end ?? "";
+      return {
+        id: `period-${periodNumber}`,
+        periodNumber,
+        startTime,
+        endTime,
+        displayTime:
+          startTime && endTime ? `${startTime} - ${endTime}` : `Period ${periodNumber}`,
+        color: null,
+      };
+    });
+  }
+
+  const periodNumbers = timeSlots
+    .map((s) => s.periodNumber)
+    .sort((a, b) => a - b);
+
+  let totalLessons = 0;
+  let completedCount = 0;
+  const subjectDistribution: Record<string, number> = {};
+  const dayDistribution: Record<string, number> = {};
+  const teacherDistribution: Record<string, number> = {};
+
+  const days: TimetableDay[] = [];
+
+  for (let d = 1; d <= 5; d++) {
+    const cells: (TimetableCell | null)[] = [];
+
+    for (const periodNumber of periodNumbers) {
+      const myLesson = myByDayPeriod.get(`${d}-${periodNumber}`);
+
+      if (myLesson) {
+        const lesson = lessonFromMyEntry(
+          myLesson,
+          d,
+          periodNumber,
+          teacherId,
+          teacherName,
+        );
+        cells.push({ type: "lesson", periodNumber, dayOfWeek: d, lesson });
+        totalLessons++;
+        subjectDistribution[myLesson.subjectName] =
+          (subjectDistribution[myLesson.subjectName] || 0) + 1;
+        dayDistribution[DAY_NAMES[d]] = (dayDistribution[DAY_NAMES[d]] || 0) + 1;
+        teacherDistribution[teacherName] =
+          (teacherDistribution[teacherName] || 0) + 1;
+        if (completedLessonIds.includes(lesson.id)) completedCount++;
+      } else {
+        cells.push(null);
+      }
+    }
+
+    days.push({
+      dayOfWeek: d,
+      dayName: DAY_NAMES[d],
+      shortName: DAY_SHORT_NAMES[d],
+      cells,
+    });
+  }
+
+  const stats: TimetableStats = {
+    totalLessons,
+    completedLessons: completedCount,
+    upcomingLessons: totalLessons - completedCount,
+    totalSubjects: Object.keys(subjectDistribution).length,
+    subjectDistribution,
+    dayDistribution,
+    teacherDistribution,
+    completionPercentage:
+      totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0,
+  };
+
+  return {
+    gradeId: "",
+    gradeName: "My Classes",
+    termId,
+    termName,
+    timeSlots,
+    days,
+    breaks,
+    stats,
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
+/** @deprecated Use transformTeacherTimetableMerged */
+export function transformTeacherTimetableFromSchoolSchedule(
+  schedule: SchoolScheduleDayApi[],
+  teacherId: string,
+  termId: string,
+  termName: string,
+  completedLessonIds: string[] = [],
+): CompleteTimetable {
+  return transformTeacherTimetableMerged(
+    [],
+    teacherId,
+    "",
+    termId,
+    termName,
+    completedLessonIds,
+    schedule,
+  );
+}
+
+/**
+ * Fallback transform from getMyTimetable only (no break rows).
  */
 export function transformTeacherTimetable(
   timeSlots: TeacherTimeSlotInput[],
@@ -313,7 +740,6 @@ export function transformTeacherTimetable(
   termName: string,
   completedLessonIds: string[] = [],
 ): CompleteTimetable {
-  // 1. Transform time slots
   const sortedSlots: TimetableSlot[] = [...timeSlots]
     .sort((a, b) => a.periodNumber - b.periodNumber)
     .map((slot) => ({
@@ -329,6 +755,7 @@ export function transformTeacherTimetable(
   const slotIndexMap = new Map<string, number>();
   sortedSlots.forEach((slot, idx) => {
     slotIndexMap.set(slot.id, idx);
+    slotIndexMap.set(`period-${slot.periodNumber}`, idx);
   });
 
   // 3. Group entries by day
@@ -370,14 +797,16 @@ export function transformTeacherTimetable(
 
       // Take the first entry for this slot (teacher teaches one class per period)
       const entry = slotEntryList[0];
+      const subjectPalette = getSubjectPaletteColor(entry.subject.name);
 
       const lesson: TimetableLesson = {
         id: entry.id,
-        periodNumber: sortedSlots[si].periodNumber,
+        periodNumber: slot.periodNumber,
         dayOfWeek: d,
         subject: {
           id: entry.subject.id,
           name: entry.subject.name,
+          color: subjectPalette.accent,
         },
         teacher: {
           id: entry.teacher.id,
@@ -387,7 +816,7 @@ export function transformTeacherTimetable(
         grade: {
           id: entry.grade.id,
           name: entry.grade.name,
-          displayName: entry.grade.gradeLevel?.name || entry.grade.name,
+          displayName: entry.grade.name,
           level: 0,
         },
       };

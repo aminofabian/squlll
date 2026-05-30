@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { graphqlFetch } from '../utils/graphqlFetch'
+import { schoolScheduleFromWeekTemplates } from '@/lib/timetable/transformers'
 import { useSelectedTerm } from '@/lib/hooks/useSelectedTerm'
-import { useTeacherData } from '@/lib/hooks/useTeacherData'
 
-// Type definitions matching the GraphQL response
 export interface TimeSlot {
   id: string
   periodNumber: number
@@ -76,100 +75,187 @@ export interface TimetableEntry {
   }
 }
 
-export interface SchoolTimetableResponse {
+interface TeacherTimetableEntryApi {
+  id: string
+  subjectName: string
+  subjectColor: string
+  gradeLevelName: string
+  streamName: string | null
+  roomName: string | null
+  dayOfWeek: number
+  dayName: string
+  periodNumber: number
+  startTime: string
+  endTime: string
+}
+
+interface TeacherTimetableDayApi {
+  dayOfWeek: number
+  dayName: string
+  entries: TeacherTimetableEntryApi[]
+}
+
+interface MyTimetableResponse {
+  getMyTimetable: {
+    teacherId: string
+    teacherName: string
+    teacherEmail: string
+    termId: string
+    termName: string
+    totalClasses: number
+    timetablePublishedAt: string | null
+    generatedAt: string
+    schedule: TeacherTimetableDayApi[]
+  }
+}
+
+const GET_WEEK_TEMPLATES_FOR_TEACHER_QUERY = `
+  query GetWeekTemplatesForTeacher($input: GetWeekTemplatesInput!) {
+    getWeekTemplates(input: $input) {
+      id
+      termId
+      dayTemplates {
+        dayOfWeek
+        startTime
+        periods {
+          id
+          periodNumber
+          startTime
+          endTime
+          label
+        }
+        breaks {
+          id
+          name
+          type
+          afterPeriod
+          durationMinutes
+          icon
+          applyToAllDays
+          dayTemplateId
+        }
+      }
+    }
+  }
+`
+
+interface WeekTemplatesForTeacherResponse {
+  getWeekTemplates: Array<{
+    id: string
+    termId: string
+    dayTemplates?: Array<{
+      dayOfWeek: number
+      startTime?: string
+      periods?: Array<{
+        id: string
+        periodNumber: number
+        startTime: string
+        endTime: string
+        label?: string | null
+      }>
+      breaks?: Array<{
+        id: string
+        name: string
+        type: string
+        afterPeriod: number
+        durationMinutes: number
+        icon?: string | null
+        applyToAllDays?: boolean
+        dayTemplateId?: string | null
+      }>
+    }>
+  }>
+}
+
+const GET_SCHOOL_TIMETABLE_FOR_TEACHER_QUERY = `
+  query GetSchoolTimetableForTeacher($input: GetSchoolTimetableInput!) {
+    getSchoolTimetable(input: $input) {
+      termId
+      termName
+      schedule {
+        dayTemplate {
+          dayOfWeek
+          dayName
+        }
+        slots {
+          type
+          id
+          periodNumber
+          startTime
+          endTime
+          label
+          name
+          breakType
+          afterPeriod
+          durationMinutes
+          icon
+          entry {
+            id
+            isDoublePeriod
+            subject {
+              id
+              name
+            }
+            teacher {
+              id
+              name
+            }
+            gradeLevel {
+              id
+              name
+              shortName
+            }
+            stream {
+              id
+              name
+            }
+            room {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
+interface SchoolTimetableResponse {
   getSchoolTimetable: {
     termId: string
     termName: string
-    totalDays: number
-    totalPeriods: number
-    totalOccupiedSlots: number
-    totalFreeSlots: number
-    generatedAt: string
-    timetableByGrade: Array<{
-      gradeLevel: {
-        id: string
-        name: string
-        shortName: string | null
-      }
-      stream: {
-        id: string
-        name: string
-      } | null
-      totalPeriods: number
-      occupiedPeriods: number
-      freePeriods: number
-      days: Array<{
-        dayTemplate: {
-          id: string
-          dayOfWeek: number
-          dayName: string
-          startTime: string
-          endTime: string
-          periodCount: number
-        }
-        periods: Array<{
-          period: {
-            id: string
-            periodNumber: number
-            startTime: string
-            endTime: string
-            label: string | null
-          }
-          entry: {
-            id: string
-            subject: { id: string; name: string }
-            teacher: { id: string; name: string; email: string }
-            gradeLevel: { id: string; name: string }
-            stream: { id: string } | null
-            room: { id: string; name: string } | null
-          } | null
-          isBreak: boolean
-          breakInfo: {
-            id: string
-            name: string
-            type: string
-            durationMinutes: number
-            icon: string | null
-            color: string | null
-          } | null
-        }>
-        gradeLevels: Array<{ id: string; name: string; shortName: string | null }>
-        streams: Array<{ id: string; name: string }>
-        totalPeriods: number
-        occupiedPeriods: number
-        freePeriods: number
-      }>
-    }>
     schedule: Array<{
-      dayTemplate: {
-        id: string
-        dayOfWeek: number
-        dayName: string
+      dayTemplate: { dayOfWeek: number; dayName?: string }
+      slots: Array<{
+        type: string
+        id?: string | null
+        periodNumber?: number | null
         startTime: string
         endTime: string
-      }
-      gradeLevels: Array<{ id: string; name: string }>
-      streams: Array<{ id: string; name: string }>
-      periods: Array<{
-        period: {
-          periodNumber: number
-          startTime: string
-          endTime: string
-        }
-        entry: {
-          subject: { name: string }
-          teacher: { name: string }
-          room: { name: string } | null
-        } | null
-        isBreak: boolean
-        breakInfo: {
-          name: string
-          type: string
-          durationMinutes: number
+        name?: string | null
+        breakType?: string | null
+        afterPeriod?: number | null
+        durationMinutes?: number | null
+        icon?: string | null
+        entry?: {
+          id: string
+          isDoublePeriod?: boolean | null
+          subject?: { id?: string; name?: string } | null
+          teacher?: { id?: string; name?: string } | null
+          gradeLevel?: { id?: string; name?: string; shortName?: string } | null
+          stream?: { id?: string; name?: string } | null
+          room?: { id?: string; name?: string } | null
         } | null
       }>
     }>
   }
+}
+
+export interface TeacherSchoolSchedule {
+  termId: string
+  termName: string
+  teacherId: string
+  schedule: SchoolTimetableResponse['getSchoolTimetable']['schedule']
 }
 
 export interface UseTeacherTimetableResult {
@@ -179,163 +265,197 @@ export interface UseTeacherTimetableResult {
     breaks: TimetableBreak[]
     grades: TimetableGrade[]
     lastUpdated: string
+    teacherName: string
+    teacherId: string
+    totalClasses: number
+    timetablePublishedAt: string | null
+    mySchedule: TeacherTimetableDayApi[]
+    schoolSchedule: TeacherSchoolSchedule | null
   } | null
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
 }
 
-const GET_SCHOOL_TIMETABLE_QUERY = `
-  query GetSchoolTimetable($input: GetSchoolTimetableInput!) {
-    getSchoolTimetable(input: $input) {
+const GET_MY_TIMETABLE_QUERY = `
+  query GetMyTimetable($termId: ID!) {
+    getMyTimetable(termId: $termId) {
+      teacherId
+      teacherName
+      teacherEmail
       termId
       termName
-      totalDays
-      totalPeriods
-      totalOccupiedSlots
-      totalFreeSlots
+      totalClasses
+      timetablePublishedAt
       generatedAt
-      timetableByGrade {
-        gradeLevel {
-          id
-          name
-          shortName
-        }
-        stream {
-          id
-          name
-        }
-        days {
-          dayTemplate {
-            id
-            dayOfWeek
-            dayName
-            startTime
-            endTime
-            periodCount
-          }
-          periods {
-            period {
-              id
-              periodNumber
-              startTime
-              endTime
-              label
-            }
-            entry {
-              id
-              subject {
-                id
-                name
-              }
-              teacher {
-                id
-                name
-                email
-              }
-              gradeLevel {
-                id
-                name
-              }
-              stream {
-                id
-              }
-              room {
-                id
-                name
-              }
-            }
-            isBreak
-            breakInfo {
-              id
-              name
-              type
-              durationMinutes
-              icon
-              color
-            }
-          }
-        }
-      }
       schedule {
-        dayTemplate {
+        dayOfWeek
+        dayName
+        entries {
           id
+          subjectName
+          subjectColor
+          gradeLevelName
+          streamName
+          roomName
           dayOfWeek
           dayName
+          periodNumber
           startTime
           endTime
-        }
-        gradeLevels {
-          id
-          name
-        }
-        streams {
-          id
-          name
-        }
-        periods {
-          period {
-            periodNumber
-            startTime
-            endTime
-          }
-          entry {
-            subject {
-              name
-            }
-            teacher {
-              name
-            }
-            room {
-              name
-            }
-          }
-          isBreak
-          breakInfo {
-            name
-            type
-            durationMinutes
-          }
         }
       }
     }
   }
 `
 
+function myScheduleFromEntries(
+  entries: TimetableEntry[],
+): TeacherTimetableDayApi[] {
+  const byDay = new Map<number, TeacherTimetableEntryApi[]>()
+  for (const e of entries) {
+    const list = byDay.get(e.dayOfWeek) ?? []
+    const [start, end] = e.timeSlot.displayTime.split(' - ')
+    list.push({
+      id: e.id,
+      subjectName: e.subject.name,
+      subjectColor: '',
+      gradeLevelName: e.grade.gradeLevel?.name ?? e.grade.name,
+      streamName: e.grade.name.includes(' · ')
+        ? e.grade.name.split(' · ')[1]
+        : null,
+      roomName: e.roomNumber,
+      dayOfWeek: e.dayOfWeek,
+      dayName: '',
+      periodNumber: e.timeSlot.periodNumber,
+      startTime: start?.trim() ?? '',
+      endTime: end?.trim() ?? '',
+    })
+    byDay.set(e.dayOfWeek, list)
+  }
+  return [...byDay.entries()].map(([dayOfWeek, dayEntries]) => ({
+    dayOfWeek,
+    dayName: '',
+    entries: dayEntries,
+  }))
+}
+
+function formatTime(timeStr: string): string {
+  if (!timeStr) return ''
+  if (timeStr.length === 5) return timeStr
+  if (timeStr.length >= 8) return timeStr.substring(0, 5)
+  return timeStr
+}
+
+function mapMyTimetableToHookData(
+  api: MyTimetableResponse['getMyTimetable'],
+): UseTeacherTimetableResult['data'] {
+  const periodTimes = new Map<number, { start: string; end: string }>()
+  const gradeNames = new Set<string>()
+  const entries: TimetableEntry[] = []
+
+  for (const day of api.schedule ?? []) {
+    for (const e of day.entries ?? []) {
+      if (!periodTimes.has(e.periodNumber)) {
+        periodTimes.set(e.periodNumber, {
+          start: formatTime(e.startTime),
+          end: formatTime(e.endTime),
+        })
+      }
+
+      const gradeLabel = e.streamName
+        ? `${e.gradeLevelName} · ${e.streamName}`
+        : e.gradeLevelName
+      gradeNames.add(gradeLabel)
+
+      const start = formatTime(e.startTime)
+      const end = formatTime(e.endTime)
+      const timeSlotId = `period-${e.periodNumber}`
+      const displayTime = `${start} - ${end}`
+
+      entries.push({
+        id: e.id,
+        gradeId: gradeLabel,
+        subjectId: e.subjectName,
+        teacherId: api.teacherId,
+        timeSlotId,
+        dayOfWeek: e.dayOfWeek,
+        roomNumber: e.roomName,
+        isDoublePeriod: false,
+        grade: {
+          id: gradeLabel,
+          name: gradeLabel,
+          gradeLevel: { name: e.gradeLevelName },
+        },
+        subject: {
+          id: e.subjectName,
+          name: e.subjectName,
+        },
+        teacher: {
+          id: api.teacherId,
+          fullName: api.teacherName,
+          firstName: null,
+          lastName: null,
+          email: api.teacherEmail,
+          phoneNumber: null,
+          gender: null,
+          department: null,
+          role: 'teacher',
+          isActive: true,
+          user: { name: api.teacherName },
+        },
+        timeSlot: {
+          id: timeSlotId,
+          periodNumber: e.periodNumber,
+          displayTime,
+        },
+      })
+    }
+  }
+
+  const timeSlots: TimeSlot[] = Array.from(periodTimes.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([periodNumber, times]) => ({
+      id: `period-${periodNumber}`,
+      periodNumber,
+      displayTime: `${times.start} - ${times.end}`,
+      startTime: times.start,
+      endTime: times.end,
+      color: null,
+    }))
+
+  const grades: TimetableGrade[] = Array.from(gradeNames).map((name, index) => ({
+    id: name,
+    name,
+    displayName: name,
+    level: index,
+  }))
+
+  return {
+    timeSlots,
+    entries,
+    breaks: [],
+    grades,
+    lastUpdated: api.generatedAt || new Date().toISOString(),
+    teacherName: api.teacherName,
+    teacherId: api.teacherId,
+    totalClasses: api.totalClasses,
+    timetablePublishedAt: api.timetablePublishedAt ?? null,
+    mySchedule: api.schedule ?? [],
+    schoolSchedule: null,
+  }
+}
+
 export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResult {
   const { selectedTerm } = useSelectedTerm()
-  const { teacher } = useTeacherData()
-  const [rawData, setRawData] = useState<UseTeacherTimetableResult['data']>(null)
+  const [data, setData] = useState<UseTeacherTimetableResult['data']>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Filter entries by current teacher ID
-  const data = useMemo(() => {
-    if (!rawData || !teacher?.id) {
-      return rawData
-    }
-
-    // Filter entries to only show current teacher's schedule
-    const filteredEntries = (rawData.entries || []).filter(
-      entry => entry.teacherId === teacher.id
-    )
-
-    console.log('Filtered timetable entries:', {
-      totalEntries: rawData.entries?.length || 0,
-      teacherEntries: filteredEntries.length,
-      teacherId: teacher.id
-    })
-
-    return {
-      ...rawData,
-      entries: filteredEntries
-    }
-  }, [rawData, teacher?.id])
 
   const fetchTimetable = async () => {
     if (!selectedTerm?.id) {
       setError('No term selected')
-      setRawData(null)
+      setData(null)
       return
     }
 
@@ -343,125 +463,76 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
     setError(null)
 
     try {
-      // Fetch whole school timetable data
-      const timetableResult = await graphqlFetch<SchoolTimetableResponse>(
-        GET_SCHOOL_TIMETABLE_QUERY,
-        { input: { termId: selectedTerm.id } },
-        subdomain
+      const myResult = await graphqlFetch<MyTimetableResponse>(
+        GET_MY_TIMETABLE_QUERY,
+        { termId: selectedTerm.id },
+        subdomain,
       )
+      const my = myResult.getMyTimetable
+      const mapped = mapMyTimetableToHookData(my)
 
-      const formatTime = (timeStr: string) => {
-        if (!timeStr) return ''
-        // If already in HH:MM format, return as is
-        if (timeStr.length === 5) return timeStr
-        // If in HH:MM:SS format, remove seconds
-        if (timeStr.length === 8) return timeStr.substring(0, 5)
-        return timeStr
+      if (
+        mapped.mySchedule.length === 0 &&
+        mapped.entries.length > 0
+      ) {
+        mapped.mySchedule = myScheduleFromEntries(mapped.entries)
       }
 
-      const timetableData = timetableResult.getSchoolTimetable
-      const timetableByGrade = timetableData.timetableByGrade || []
+      let structureTermId = selectedTerm.id
+      let structureTermName = selectedTerm.name
+      let schedule: SchoolTimetableResponse['getSchoolTimetable']['schedule'] = []
 
-      const timeSlotMap = new Map<string, TimeSlot>()
-      const entries: TimetableEntry[] = []
-
-      // Process all grade levels to find entries for the teacher
-      timetableByGrade.forEach((gradeBlock: any) => {
-        if (!gradeBlock.days || !Array.isArray(gradeBlock.days)) return
-
-        gradeBlock.days.forEach((dayItem: any) => {
-          const dayOfWeek = dayItem.dayTemplate?.dayOfWeek
-          ;(dayItem.periods || []).forEach((p: any) => {
-            const period = p?.period
-            if (period?.id && !timeSlotMap.has(period.id)) {
-              timeSlotMap.set(period.id, {
-                id: period.id,
-                periodNumber: period.periodNumber,
-                displayTime: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
-                startTime: formatTime(period.startTime),
-                endTime: formatTime(period.endTime),
-                color: null,
-              })
-            }
-
-            if (p?.entry && period?.id) {
-              const entry = p.entry
-              const subjectId = entry.subject?.id
-              const teacherId = entry.teacher?.id
-              if (!subjectId || !teacherId) return
-              
-              // Use the entry's actual gradeLevel.id (not the grade block's)
-              // This ensures accuracy even if backend groups entries incorrectly
-              const entryGradeId = entry.gradeLevel?.id || gradeBlock.gradeLevel?.id || ''
-              
-              entries.push({
-                id: entry.id,
-                gradeId: entryGradeId,
-                subjectId,
-                teacherId,
-                timeSlotId: period.id,
-                dayOfWeek: typeof dayOfWeek === 'number' ? dayOfWeek : 1,
-                roomNumber: entry.room?.name || null,
-                isDoublePeriod: false,
-                notes: undefined,
-                grade: {
-                  id: entryGradeId,
-                  name: entry.gradeLevel?.name || gradeBlock.gradeLevel?.name || '',
-                  gradeLevel: {
-                    name: entry.gradeLevel?.name || gradeBlock.gradeLevel?.name || '',
-                  },
-                },
-                subject: {
-                  id: subjectId,
-                  name: entry.subject?.name || '',
-                },
-                teacher: {
-                  id: teacherId,
-                  fullName: entry.teacher?.name || null,
-                  firstName: null,
-                  lastName: null,
-                  email: entry.teacher?.email || null,
-                  phoneNumber: null,
-                  gender: null,
-                  department: null,
-                  role: null,
-                  isActive: null,
-                  user: entry.teacher?.name ? { name: entry.teacher.name } : null,
-                },
-                timeSlot: {
-                  id: period.id,
-                  periodNumber: period.periodNumber,
-                  displayTime: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
-                },
-              })
-            }
-          })
-        })
-      })
-
-      const formattedTimeSlots = Array.from(timeSlotMap.values())
-
-      console.log('Fetched whole school timetable:', {
-        timeSlotsCount: formattedTimeSlots.length,
-        entriesCount: entries.length,
-        gradesCount: timetableByGrade.length
-      })
-
-      const finalData = {
-        ...timetableData,
-        timeSlots: formattedTimeSlots,
-        entries,
-        breaks: [],
-        grades: [],
-        lastUpdated: timetableData.generatedAt || new Date().toISOString(),
+      try {
+        const schoolResult = await graphqlFetch<SchoolTimetableResponse>(
+          GET_SCHOOL_TIMETABLE_FOR_TEACHER_QUERY,
+          {
+            input: { termId: selectedTerm.id },
+          },
+          subdomain,
+        )
+        structureTermId = schoolResult.getSchoolTimetable.termId
+        structureTermName = schoolResult.getSchoolTimetable.termName
+        schedule = schoolResult.getSchoolTimetable.schedule ?? []
+      } catch (schoolErr) {
+        console.warn('School timetable structure unavailable:', schoolErr)
       }
 
-      setRawData(finalData)
+      if (schedule.length === 0) {
+        try {
+          const weekResult = await graphqlFetch<WeekTemplatesForTeacherResponse>(
+            GET_WEEK_TEMPLATES_FOR_TEACHER_QUERY,
+            {
+              input: {
+                termId: selectedTerm.id,
+                includeDetails: true,
+              },
+            },
+            subdomain,
+          )
+          schedule = schoolScheduleFromWeekTemplates(
+            weekResult.getWeekTemplates ?? [],
+          )
+        } catch (weekErr) {
+          console.warn('Week templates (periods/breaks) unavailable:', weekErr)
+        }
+      }
+
+      if (schedule.length > 0) {
+        mapped.schoolSchedule = {
+          termId: structureTermId,
+          termName: structureTermName,
+          teacherId: my.teacherId,
+          schedule,
+        }
+      }
+
+      setData(mapped)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch timetable'
-      console.error('Error fetching whole school timetable:', err)
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to fetch timetable'
+      console.error('Error fetching teacher timetable:', err)
       setError(errorMessage)
-      setRawData(null)
+      setData(null)
     } finally {
       setLoading(false)
     }
@@ -469,7 +540,7 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
 
   useEffect(() => {
     if (selectedTerm?.id && subdomain) {
-      fetchTimetable()
+      void fetchTimetable()
     }
   }, [selectedTerm?.id, subdomain])
 
@@ -480,4 +551,3 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
     refetch: fetchTimetable,
   }
 }
-

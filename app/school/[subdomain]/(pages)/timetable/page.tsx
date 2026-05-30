@@ -18,6 +18,7 @@ import {
 } from "./hooks/useTimetableData";
 import { useAllConflicts } from "./hooks/useTimetableConflictsNew";
 import { useConflictLessonIds } from "./hooks/useConflictLessonIds";
+import { useConflictEntryMap } from "./hooks/useConflictEntryMap";
 import { TimetableConflictsPanel } from "./components/TimetableConflictsPanel";
 import { TimetableStatusBar } from "./components/TimetableStatusBar";
 import { TimetableClassSidebar } from "./components/TimetableClassSidebar";
@@ -29,6 +30,10 @@ import {
   TimetableGridSkeleton,
   TimetableSidebarSkeleton,
 } from "./components/TimetableGridSkeleton";
+import {
+  TimetableGridError,
+  RetryingSpinner,
+} from "./components/TimetableGridError";
 import { TimetableCompletionBanner } from "./components/TimetableCompletionBanner";
 import { TimetablePrintStyles } from "./components/TimetablePrintStyles";
 import { TimetableShareDrawer } from "./components/TimetableShareDrawer";
@@ -93,6 +98,7 @@ import {
   Share2,
   Download,
   Mail,
+  RefreshCw,
 } from "lucide-react";
 import {
   Select,
@@ -122,6 +128,12 @@ import {
   markTimetableWizardComplete,
 } from "@/lib/utils/timetable-setup";
 import { getTenantIdFromCookies } from "@/lib/utils/school-onboarding";
+import {
+  formatLoadError,
+  runWithLoadRetry,
+} from "./utils/timetableLoadHelpers";
+import { useTimetableNetworkStatus } from "./hooks/useTimetableNetworkStatus";
+import { TimetableOfflineBanner } from "./components/TimetableOfflineBanner";
 
 export default function SmartTimetableNew() {
   const { selectedTerm, setSelectedTerm, termsLoading } = useSelectedTerm();
@@ -189,6 +201,9 @@ export default function SmartTimetableNew() {
     [subjectMetaById],
   );
   const { toast } = useToast();
+  const { isOnline, reconnectedAt } = useTimetableNetworkStatus();
+  const routeMountMsRef = useRef(performance.now());
+  const loadMetricsLoggedRef = useRef(false);
 
   useEffect(() => {
     if (selectedTerm?.id && selectedTerm.id !== selectedTermId) {
@@ -206,9 +221,98 @@ export default function SmartTimetableNew() {
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingTimetable, setIsLoadingTimetable] = useState(false);
   const initialGradeScopeKey = useRef<string | null>(null);
+
+  // Per-resource error states (Phase 4b)
+  const [gradesError, setGradesError] = useState<boolean>(false);
+  const [subjectsError, setSubjectsError] = useState<boolean>(false);
+  const [teachersError, setTeachersError] = useState<boolean>(false);
+  const [breaksError, setBreaksError] = useState<boolean>(false);
+  const [timetableError, setTimetableError] = useState<boolean>(false);
+  const [timetableLoadError, setTimetableLoadError] = useState<string | null>(
+    null,
+  );
+  const [refreshLoadFailed, setRefreshLoadFailed] = useState(false);
+  const [isRetrying, setIsRetrying] = useState<boolean>(false);
+  const prevSelectedGradeIdRef = useRef<string | null>(null);
+
+  const clearErrors = useCallback(() => {
+    setGradesError(false);
+    setSubjectsError(false);
+    setTeachersError(false);
+    setBreaksError(false);
+    setTimetableError(false);
+    setTimetableLoadError(null);
+    setRefreshLoadFailed(false);
+  }, []);
+
+  const hasCachedTimetableData = useCallback(() => {
+    const state = useTimetableStore.getState();
+    return state.entries.length > 0 || state.timeSlots.length > 0;
+  }, []);
+
+  const loadTimetableBundle = useCallback(
+    async (scope?: {
+      gradeId?: string | null;
+      streamId?: string | null;
+    }): Promise<{ ok: boolean; usedCache?: boolean }> => {
+      const termId = selectedTerm?.id || selectedTermId;
+      if (!termId) return { ok: true };
+
+      const gradeId = scope?.gradeId ?? selectedGradeId ?? undefined;
+      const streamId =
+        scope?.streamId !== undefined ? scope.streamId : selectedStreamId;
+
+      try {
+        await runWithLoadRetry(async () => {
+          await loadTimeSlots(termId, gradeId || undefined);
+          const result = await loadSchoolTimetable(
+            termId,
+            gradeId ? { gradeLevelId: gradeId, streamId } : undefined,
+          );
+          if (result === null && !hasCachedTimetableData()) {
+            throw new Error("Timetable could not be loaded");
+          }
+        });
+        setTimetableError(false);
+        setTimetableLoadError(null);
+        setRefreshLoadFailed(false);
+        return { ok: true };
+      } catch (error) {
+        const message = formatLoadError(error);
+        setTimetableLoadError(message);
+        console.error("Timetable bundle load failed:", error);
+
+        if (hasCachedTimetableData()) {
+          setRefreshLoadFailed(true);
+          setTimetableError(false);
+          return { ok: false, usedCache: true };
+        }
+
+        setTimetableError(true);
+        setRefreshLoadFailed(false);
+        return { ok: false };
+      }
+    },
+    [
+      selectedTerm?.id,
+      selectedTermId,
+      selectedGradeId,
+      selectedStreamId,
+      loadTimeSlots,
+      loadSchoolTimetable,
+      hasCachedTimetableData,
+    ],
+  );
+
   const isPageLoading =
     isLoadingInitial || termsLoading || academicYearsLoading;
   const isGridLoading = isPageLoading || isLoadingTimetable;
+
+  // A resource is "hard failed" if it errored AND its data is empty (no fallback)
+  const sidebarFailed = gradesError;
+  // Single-class grid failure: timetable for the selected grade failed
+  const classGridFailed =
+    !!selectedGradeId && timetableError && !refreshLoadFailed;
 
   useEffect(() => {
     initialGradeScopeKey.current = null;
@@ -217,44 +321,48 @@ export default function SmartTimetableNew() {
   useEffect(() => {
     let cancelled = false;
     setIsLoadingInitial(true);
+    clearErrors();
     const termId = selectedTerm?.id || selectedTermId;
 
     const loadAll = async () => {
       try {
-        await loadGrades().catch((err) =>
-          console.error("Failed loading grades:", err),
-        );
+        // Load grades first — everything depends on them
+        try {
+          await loadGrades();
+        } catch (err) {
+          console.error("Failed loading grades:", err);
+          if (!cancelled) setGradesError(true);
+        }
 
         if (cancelled) return;
 
         const timetableLoads = termId
           ? [
-              loadTimeSlots(termId, selectedGradeId || undefined).catch((err) =>
-                console.error("Failed loading time slots:", err),
-              ),
-              loadSchoolTimetable(
-                termId,
-                selectedGradeId
-                  ? {
-                      gradeLevelId: selectedGradeId,
-                      streamId: selectedStreamId,
-                    }
-                  : undefined,
-              ).catch((err) =>
-                console.error("Failed loading school timetable:", err),
-              ),
+              loadTimetableBundle({
+                gradeId: selectedGradeId,
+                streamId: selectedStreamId,
+              }),
             ]
           : [];
 
         await Promise.all([
-          loadSubjects().catch((err) =>
-            console.error("Failed loading subjects:", err),
+          Promise.resolve(
+            loadSubjects().catch((err) => {
+              console.error("Failed loading subjects:", err);
+              if (!cancelled) setSubjectsError(true);
+            }),
           ),
-          loadTeachers().catch((err) =>
-            console.error("Failed loading teachers:", err),
+          Promise.resolve(
+            loadTeachers().catch((err) => {
+              console.error("Failed loading teachers:", err);
+              if (!cancelled) setTeachersError(true);
+            }),
           ),
-          loadBreaks().catch((err) =>
-            console.error("Failed loading breaks:", err),
+          Promise.resolve(
+            loadBreaks().catch((err) => {
+              console.error("Failed loading breaks:", err);
+              if (!cancelled) setBreaksError(true);
+            }),
           ),
           ...timetableLoads,
         ]);
@@ -279,15 +387,21 @@ export default function SmartTimetableNew() {
     loadSubjects,
     loadTeachers,
     loadBreaks,
-    loadTimeSlots,
-    loadSchoolTimetable,
+    loadTimetableBundle,
+    clearErrors,
     // Grade/stream on first paint only — grade changes use the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ]);
   useEffect(() => {
     if (selectedGradeId) {
-      loadTeachers().catch(() => {});
-      loadSubjects(selectedGradeId).catch(() => {});
+      loadTeachers().catch((err) => {
+        console.error("Failed loading teachers on grade change:", err);
+        setTeachersError(true);
+      });
+      loadSubjects(selectedGradeId).catch((err) => {
+        console.error("Failed loading subjects on grade change:", err);
+        setSubjectsError(true);
+      });
     }
   }, [selectedGradeId, loadTeachers, loadSubjects]);
 
@@ -303,16 +417,14 @@ export default function SmartTimetableNew() {
 
     let cancelled = false;
     setIsLoadingTimetable(true);
+    setTimetableError(false);
 
     void (async () => {
       try {
-        await Promise.all([
-          loadTimeSlots(termId, selectedGradeId).catch(() => {}),
-          loadSchoolTimetable(termId, {
-            gradeLevelId: selectedGradeId,
-            streamId: selectedStreamId,
-          }).catch(() => {}),
-        ]);
+        await loadTimetableBundle({
+          gradeId: selectedGradeId,
+          streamId: selectedStreamId,
+        });
       } finally {
         if (!cancelled) setIsLoadingTimetable(false);
       }
@@ -326,9 +438,29 @@ export default function SmartTimetableNew() {
     selectedStreamId,
     selectedTerm?.id,
     selectedTermId,
-    loadSchoolTimetable,
-    loadTimeSlots,
+    loadTimetableBundle,
     isLoadingInitial,
+  ]);
+
+  // Returning to whole-school view: reload term-wide timetable and clear class-only errors.
+  useEffect(() => {
+    if (isLoadingInitial) return;
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId) return;
+
+    const prev = prevSelectedGradeIdRef.current;
+    prevSelectedGradeIdRef.current = selectedGradeId;
+
+    if (prev && !selectedGradeId) {
+      setTimetableError(false);
+      void loadTimetableBundle({ gradeId: null, streamId: null });
+    }
+  }, [
+    selectedGradeId,
+    selectedTerm?.id,
+    selectedTermId,
+    isLoadingInitial,
+    loadTimetableBundle,
   ]);
 
   const grid = useTimetableGrid(selectedGradeId);
@@ -342,6 +474,12 @@ export default function SmartTimetableNew() {
     periodNumbers.length > 0 ||
     hasAnyLessons ||
     (timetableSetupComplete && breaks.length > 0);
+  const hasTimetableData =
+    periodNumbers.length > 0 || timeSlots.length > 0 || storeEntries.length > 0;
+
+  // Full-grid error only when load failed and there is nothing to show.
+  const combinedGridFailed =
+    timetableError && !selectedGradeId && hasTimetableData;
   const stats = useGradeStatistics(selectedGradeId);
   const {
     total: conflictCount,
@@ -349,6 +487,7 @@ export default function SmartTimetableNew() {
     room: roomConflicts,
   } = useAllConflicts();
   const conflictLessonIds = useConflictLessonIds();
+  const conflictTooltipMap = useConflictEntryMap();
   const { dayLabels: days, daysPerWeek } = useTimetableWeekDays();
   const lastUpdated = useTimetableStore((state) => state.lastUpdated);
 
@@ -418,49 +557,82 @@ export default function SmartTimetableNew() {
     [breaks],
   );
 
-  const reloadTimetableData = useCallback(async () => {
+  const reloadTimetableData = useCallback(async (): Promise<
+    { ok: boolean; usedCache?: boolean } | undefined
+  > => {
     const termId = selectedTerm?.id || selectedTermId;
-    if (!termId) return;
-    // Load timeSlots first (filtered by grade if selected),
-    // then load entries. Both must run sequentially:
-    // timeSlots sets the period IDs for the correct grade's day templates,
-    // then loadSchoolTimetable loads entries keyed to those period IDs.
-    if (selectedGradeId) {
-      await Promise.all([
-        loadTimeSlots(termId, selectedGradeId).catch((err) =>
-          console.error("reloadTimetableData: loadTimeSlots failed:", err),
-        ),
-        loadSchoolTimetable(termId, {
-          gradeLevelId: selectedGradeId,
-          streamId: selectedStreamId,
-        }).catch((err) =>
-          console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
-        ),
-      ]);
-    } else {
-      await Promise.all([
-        loadTimeSlots(termId).catch((err) =>
-          console.error("reloadTimetableData: loadTimeSlots failed:", err),
-        ),
-        loadSchoolTimetable(termId).catch((err) =>
-          console.error("reloadTimetableData: loadSchoolTimetable failed:", err),
-        ),
-      ]);
-    }
+    if (!termId) return undefined;
+
+    const result = await loadTimetableBundle({
+      gradeId: selectedGradeId,
+      streamId: selectedStreamId,
+    });
+
     await loadBreaks().catch((err) =>
       console.error("reloadTimetableData: loadBreaks failed:", err),
     );
+
+    if (!result.ok && result.usedCache) {
+      toast({
+        title: "Could not refresh timetable",
+        description:
+          "Showing last loaded data. Try again when your connection is stable.",
+        variant: "destructive",
+      });
+    }
+
+    return result;
   }, [
     loadBreaks,
-    loadSchoolTimetable,
-    loadTimeSlots,
+    loadTimetableBundle,
     selectedTerm?.id,
     selectedTermId,
     selectedGradeId,
     selectedStreamId,
+    toast,
+  ]);
+
+  /** Retry after an error: re-run initial load (re-fetches all resources) */
+  const handleRetry = useCallback(async () => {
+    setIsRetrying(true);
+    clearErrors();
+
+    try {
+      await loadGrades();
+    } catch {
+      setGradesError(true);
+    }
+
+    const termId = selectedTerm?.id || selectedTermId;
+    if (termId) {
+      await loadTimetableBundle({
+        gradeId: selectedGradeId,
+        streamId: selectedStreamId,
+      });
+    }
+
+    await Promise.all([
+      loadSubjects().catch(() => setSubjectsError(true)),
+      loadTeachers().catch(() => setTeachersError(true)),
+      loadBreaks().catch(() => setBreaksError(true)),
+    ]);
+
+    setIsRetrying(false);
+  }, [
+    loadGrades,
+    loadSubjects,
+    loadTeachers,
+    loadBreaks,
+    loadTimetableBundle,
+    selectedTerm?.id,
+    selectedTermId,
+    selectedGradeId,
+    selectedStreamId,
+    clearErrors,
   ]);
 
   // State
+  const [showFullSubjectName, setShowFullSubjectName] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any | null>(null);
   const [editingTimeslot, setEditingTimeslot] = useState<any | null>(null);
   const [editingBreak, setEditingBreak] = useState<any | null>(null);
@@ -578,15 +750,7 @@ export default function SmartTimetableNew() {
     if (!termId) return;
 
     periodsRefetchAttemptedRef.current = true;
-    void (async () => {
-      await reloadTimetableData();
-      const state = useTimetableStore.getState();
-      if (state.timeSlots.length > 0) return;
-      if (!state.selectedGradeId && state.grades[0]) {
-        setSelectedGrade(state.grades[0].id);
-      }
-      await loadTimeSlots(termId, state.selectedGradeId || undefined);
-    })();
+    void reloadTimetableData();
   }, [
     isPageLoading,
     hasTimeSlots,
@@ -595,8 +759,6 @@ export default function SmartTimetableNew() {
     selectedTerm?.id,
     selectedTermId,
     reloadTimetableData,
-    loadTimeSlots,
-    setSelectedGrade,
   ]);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -624,6 +786,47 @@ export default function SmartTimetableNew() {
       /* ignore */
     }
   }, []);
+
+  // Phase 7.8: debounced refresh when connectivity returns
+  useEffect(() => {
+    if (!reconnectedAt) return;
+    const termId = selectedTerm?.id || selectedTermId;
+    if (!termId || isPageLoading) return;
+
+    const timer = window.setTimeout(() => {
+      void reloadTimetableData().then((result) => {
+        if (result?.ok) {
+          toast({
+            title: "Back online",
+            description: "Timetable data has been refreshed.",
+          });
+        }
+      });
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    reconnectedAt,
+    selectedTerm?.id,
+    selectedTermId,
+    isPageLoading,
+    reloadTimetableData,
+    toast,
+  ]);
+
+  // Phase 7.9: dev-only load timing (TTI when skeleton hides)
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    if (isGridLoading || loadMetricsLoggedRef.current) return;
+    loadMetricsLoggedRef.current = true;
+    const ttiMs = Math.round(performance.now() - routeMountMsRef.current);
+    console.table([
+      {
+        metric: "Timetable TTI (route mount → grid ready)",
+        ms: ttiMs,
+      },
+    ]);
+  }, [isGridLoading]);
 
   const filteredGrades = useMemo(
     () => filterGradesBySearch(grades, searchTerm),
@@ -1238,10 +1441,6 @@ export default function SmartTimetableNew() {
             onComplete={async () => {
               setShowTimetableWizard(false);
               await reloadTimetableData();
-              const firstGrade = useTimetableStore.getState().grades[0];
-              if (firstGrade && !selectedGradeId) {
-                setSelectedGrade(firstGrade.id);
-              }
             }}
             onFailed={async () => {
               setShowTimetableWizard(false);
@@ -1273,16 +1472,45 @@ export default function SmartTimetableNew() {
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <TimetableClassSidebar
-                grades={sidebarGrades}
-                allGradesCount={grades.length}
-                selectedGradeId={selectedGradeId}
-                pinnedGradeId={pinnedGradeId}
-                onSelectGrade={setSelectedGrade}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                searchInputRef={gradeSearchRef}
-              />
+              {gradesError && grades.length === 0 ? (
+                <div className="p-3">
+                  <TimetableGridError
+                    compact
+                    title="Failed to load classes"
+                    description="Check your connection and try again."
+                    onRetry={isRetrying ? undefined : handleRetry}
+                  />
+                  {isRetrying && (
+                    <RetryingSpinner className="mt-2 justify-center" />
+                  )}
+                </div>
+              ) : (
+                <>
+                  {gradesError && grades.length > 0 && (
+                    <div className="px-3 pt-2">
+                      <TimetableGridError
+                        compact
+                        title="Some classes couldn't be loaded"
+                        onRetry={isRetrying ? undefined : handleRetry}
+                      />
+                      {isRetrying && (
+                        <RetryingSpinner className="mt-1 justify-center" />
+                      )}
+                    </div>
+                  )}
+                  <TimetableClassSidebar
+                    grades={sidebarGrades}
+                    allGradesCount={grades.length}
+                    selectedGradeId={selectedGradeId}
+                    pinnedGradeId={pinnedGradeId}
+                    onSelectAllClasses={() => setSelectedGrade(null)}
+                    onSelectGrade={setSelectedGrade}
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    searchInputRef={gradeSearchRef}
+                  />
+                </>
+              )}
             </div>
           </aside>
         )
@@ -1386,6 +1614,11 @@ export default function SmartTimetableNew() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => reloadTimetableData()}>
+                      <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                      Refresh
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setBulkBreaksOpen(true)}>
                       <Coffee className="h-3.5 w-3.5 mr-2" />
                       Breaks & lunch
@@ -1459,6 +1692,36 @@ export default function SmartTimetableNew() {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                  onClick={() => reloadTimetableData()}
+                  title="Refresh timetable data"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-9 gap-1.5 text-xs",
+                    showFullSubjectName
+                      ? "text-slate-900 dark:text-slate-100"
+                      : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
+                  )}
+                  onClick={() => setShowFullSubjectName(!showFullSubjectName)}
+                  title={
+                    showFullSubjectName
+                      ? "Show subject codes"
+                      : "Show full subject names"
+                  }
+                >
+                  <span className="hidden sm:inline text-[10px] font-mono uppercase tracking-wider">
+                    {showFullSubjectName ? "MAT" : "Math"}
+                  </span>
+                </Button>
                 <Button
                   variant={showConflicts ? "default" : "outline"}
                   size="sm"
@@ -1555,6 +1818,11 @@ export default function SmartTimetableNew() {
                         </DropdownMenuItem>
                       </>
                     )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => reloadTimetableData()}>
+                      <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                      Refresh
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => setShowDeleteAllDialog(true)}
@@ -1680,6 +1948,12 @@ export default function SmartTimetableNew() {
         {/* ── Content ── */}
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
+            {!isOnline && hasScheduleStructure && (
+              <div data-timetable-no-print>
+                <TimetableOfflineBanner />
+              </div>
+            )}
+
             {!hideLiveBanner && hasScheduleStructure && (
               <div
                 className={cn(
@@ -1720,10 +1994,11 @@ export default function SmartTimetableNew() {
                 />
               )}
 
-            {(hasScheduleStructure ||
-              isPageLoading ||
-              selectedGradeId) && (
-              <section data-timetable-print-root className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900">
+            {(hasScheduleStructure || isPageLoading || selectedGradeId) && (
+              <section
+                data-timetable-print-root
+                className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900"
+              >
                 <div className="hidden print:block px-4 lg:px-5 pt-4 border-b border-slate-200">
                   <h2 className="text-lg font-bold text-slate-900">
                     {classDisplayLabel}
@@ -1744,7 +2019,9 @@ export default function SmartTimetableNew() {
                             : "Preview"}
                       </p>
                       <h2 className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {selectedGradeId ? "Weekly timetable" : "Whole-school timetable"}
+                        {selectedGradeId
+                          ? "Weekly timetable"
+                          : "Whole-school timetable"}
                       </h2>
                       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {selectedGradeId
@@ -1774,7 +2051,56 @@ export default function SmartTimetableNew() {
                 </div>
 
                 <div className="bg-zinc-50/30 p-3 dark:bg-zinc-950/30 lg:p-4">
-                  {isGridLoading ? (
+                  {refreshLoadFailed &&
+                  !combinedGridFailed &&
+                  !classGridFailed ? (
+                    <div className="mb-3">
+                      <TimetableGridError
+                        compact
+                        title="Could not refresh — showing last loaded data"
+                        description={
+                          timetableLoadError
+                            ? timetableLoadError
+                            : "Check your connection and try again."
+                        }
+                        onRetry={isRetrying ? undefined : handleRetry}
+                      />
+                      {isRetrying ? (
+                        <RetryingSpinner className="mt-2 justify-center" />
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {!selectedGradeId && combinedGridFailed ? (
+                    <div className="space-y-2">
+                      <TimetableGridError
+                        title="Failed to load timetable"
+                        description={
+                          timetableLoadError
+                            ? `Could not load the whole-school timetable. ${timetableLoadError}`
+                            : "Could not load the whole-school timetable. Check your connection and retry."
+                        }
+                        onRetry={isRetrying ? undefined : handleRetry}
+                      />
+                      {isRetrying ? (
+                        <RetryingSpinner className="justify-center" />
+                      ) : null}
+                    </div>
+                  ) : selectedGradeId && classGridFailed ? (
+                    <div className="space-y-2">
+                      <TimetableGridError
+                        title="Failed to load timetable"
+                        description={
+                          timetableLoadError
+                            ? `Could not load the timetable for this class. ${timetableLoadError}`
+                            : "Could not load the timetable for this class. Check your connection and retry."
+                        }
+                        onRetry={isRetrying ? undefined : handleRetry}
+                      />
+                      {isRetrying ? (
+                        <RetryingSpinner className="justify-center" />
+                      ) : null}
+                    </div>
+                  ) : isGridLoading ? (
                     <TimetableGridSkeleton combined={!selectedGradeId} />
                   ) : !selectedGradeId ? (
                     !hasScheduleStructure ? (
@@ -1796,6 +2122,10 @@ export default function SmartTimetableNew() {
                         conflictLessonIds={
                           showConflicts ? conflictLessonIds : undefined
                         }
+                        conflictTooltipMap={
+                          showConflicts ? conflictTooltipMap : undefined
+                        }
+                        showFullSubjectName={showFullSubjectName}
                         highlightTeacherId={highlightTeacherId}
                         onEditTimeslot={setEditingTimeslot}
                         onEditBreak={setEditingBreak}
@@ -1820,6 +2150,10 @@ export default function SmartTimetableNew() {
                       conflictLessonIds={
                         showConflicts ? conflictLessonIds : undefined
                       }
+                      conflictTooltipMap={
+                        showConflicts ? conflictTooltipMap : undefined
+                      }
+                      showFullSubjectName={showFullSubjectName}
                       highlightTeacherId={highlightTeacherId}
                       onEditTimeslot={setEditingTimeslot}
                       onDeleteTimeslot={setTimeslotToDelete}
@@ -1847,9 +2181,7 @@ export default function SmartTimetableNew() {
                 }
               }}
               onHighlightProblems={handleHighlightProblems}
-              classLabel={
-                selectedGradeId ? classDisplayLabel : "All classes"
-              }
+              classLabel={selectedGradeId ? classDisplayLabel : "All classes"}
               streamName={currentStream?.name}
               filledSlots={
                 selectedGradeId ? stats.filledSlots : termOverview.totalFilled
@@ -1897,7 +2229,6 @@ export default function SmartTimetableNew() {
                 onJumpToLesson={handleJumpToConflictEntry}
               />
             )}
-
           </div>
         </div>
       </main>

@@ -15,9 +15,9 @@ const GET_TEACHERS_BY_TENANT = gql`
   }
 `;
 
-const DELETE_STAFF = gql`
-  mutation DeleteStaff($id: String!, $tenantId: String!) {
-    deleteStaff(id: $id, tenantId: $tenantId)
+const DELETE_TEACHER = gql`
+  mutation DeleteTeacher($id: String!, $tenantId: String!) {
+    deleteTeacher(id: $id, tenantId: $tenantId)
   }
 `;
 
@@ -145,9 +145,9 @@ const createStore = (set: any, get: any) => ({
         
         try {
           // Try to delete using the staff mutation
-          const result = await graphqlClient.request(DELETE_STAFF, {
+          await graphqlClient.request(DELETE_TEACHER, {
             id: teacherId,
-            tenantId: tenantId
+            tenantId: tenantId,
           });
           
           // Remove teacher from store after successful deletion
@@ -157,7 +157,7 @@ const createStore = (set: any, get: any) => ({
             isLoading: false
           });
           
-          console.log('Teacher deleted successfully:', result);
+          console.log('Teacher deleted successfully');
         } catch (error) {
           console.error('Error deleting teacher:', error);
           
