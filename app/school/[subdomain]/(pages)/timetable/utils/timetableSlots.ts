@@ -100,6 +100,45 @@ export function getTimeSlotForDayAndPeriod(
   );
 }
 
+/** Map period id → day of week from getSchoolTimetable schedule blocks. */
+export function buildPeriodDayMapFromTimetableData(timetableData: {
+  schedule?: Array<{
+    dayTemplate?: { dayOfWeek?: number };
+    periods?: Array<{ period?: { id?: string } }>;
+  }>;
+  timetableByGrade?: Array<{
+    days?: Array<{
+      dayTemplate?: { dayOfWeek?: number };
+      periods?: Array<{ period?: { id?: string } }>;
+    }>;
+  }>;
+}): Map<string, number> {
+  const map = new Map<string, number>();
+
+  const addDays = (
+    days: Array<{
+      dayTemplate?: { dayOfWeek?: number };
+      periods?: Array<{ period?: { id?: string } }>;
+    }>,
+  ) => {
+    for (const dayItem of days) {
+      const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;
+      if (typeof dayOfWeek !== "number") continue;
+      for (const p of dayItem.periods || []) {
+        const periodId = p?.period?.id;
+        if (periodId) map.set(periodId, dayOfWeek);
+      }
+    }
+  };
+
+  addDays(timetableData.schedule || []);
+  for (const block of timetableData.timetableByGrade || []) {
+    addDays(block.days || []);
+  }
+
+  return map;
+}
+
 export function uniquePeriodNumbers(timeSlots: TimeSlot[]): number[] {
   const set = new Set<number>();
   for (const s of timeSlots) {

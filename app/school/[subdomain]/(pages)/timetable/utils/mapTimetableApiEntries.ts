@@ -30,6 +30,7 @@ export function mapApiTimetableEntries(
   timeSlots: TimeSlot[],
   masterGradeId?: string,
   streamId?: string | null,
+  periodDayMap?: Map<string, number>,
 ): TimetableEntry[] {
   const mapped: TimetableEntry[] = [];
 
@@ -57,6 +58,7 @@ export function mapApiTimetableEntries(
         row.gradeLevel?.name ||
         undefined,
       dayOfWeek:
+        periodDayMap?.get(periodId) ??
         slot?.dayOfWeek ??
         (row.period?.dayTemplateId
           ? timeSlots.find((ts) => ts.dayTemplateId === row.period?.dayTemplateId)

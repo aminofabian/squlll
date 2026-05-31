@@ -265,7 +265,6 @@ export default function SmartTimetableNew() {
 
       try {
         await runWithLoadRetry(async () => {
-          await loadTimeSlots(termId, gradeId || undefined);
           const result = await loadSchoolTimetable(
             termId,
             gradeId ? { gradeLevelId: gradeId, streamId } : undefined,
@@ -273,6 +272,8 @@ export default function SmartTimetableNew() {
           if (result === null && !hasCachedTimetableData()) {
             throw new Error("Timetable could not be loaded");
           }
+          // Supplement/refine period rows from day templates when available.
+          await loadTimeSlots(termId, gradeId || undefined);
         });
         setTimetableError(false);
         setTimetableLoadError(null);

@@ -16,6 +16,7 @@ import type {
 import { useSchoolConfigStore } from "./useSchoolConfigStore";
 import { breakGraphQLToStoreType } from "@/lib/utils/timetable-break-types";
 import {
+  buildPeriodDayMapFromTimetableData,
   extractTimeSlotsFromTimetableData,
   uniquePeriodNumbers,
 } from "@/app/school/[subdomain]/(pages)/timetable/utils/timetableSlots";
@@ -185,6 +186,13 @@ let entryCounter = 1000;
 let breakCounter = 100;
 const generateId = () => `entry-${++entryCounter}`;
 const generateBreakId = () => `break-${++breakCounter}`;
+
+/** Day templates may belong to a term directly or via their week template. */
+function dayTemplateBelongsToTerm(template: any, termId: string): boolean {
+  return (
+    template?.termId === termId || template?.weekTemplate?.termId === termId
+  );
+}
 
 function recomputeConflicts(state: TimetableData) {
   return computeTimetableConflicts(
@@ -1031,7 +1039,9 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const termId = termIdParam ?? get().selectedTermId ?? undefined;
           if (termId) {
-            templates = templates.filter((t: any) => t.termId === termId);
+            templates = templates.filter((t: any) =>
+              dayTemplateBelongsToTerm(t, termId),
+            );
           }
 
           const templateDayMap = new Map<string, number>();
@@ -1083,13 +1093,9 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           if (templateIds.length === 0) {
-            console.log("No day templates available — clearing timeSlots.");
-            set({
-              timeSlots: [],
-              periodNumbers: [],
-              lessonPeriodsPerDay: 0,
-              lastUpdated: new Date().toISOString(),
-            });
+            console.warn(
+              "No day templates available for this term — skipping period load.",
+            );
             return;
           }
 
@@ -1236,6 +1242,11 @@ export const useTimetableStore = create<TimetableStore>()(
                 id
                 dayOfWeek
                 termId
+                weekTemplateId
+                weekTemplate {
+                  id
+                  termId
+                }
                 tenantId
                 gradeLevels {
                   id
@@ -2377,6 +2388,7 @@ export const useTimetableStore = create<TimetableStore>()(
           }
 
           const timetableData = result.data.getSchoolTimetable;
+          const periodDayMap = buildPeriodDayMapFromTimetableData(timetableData);
 
           const grades = get().grades;
           const timeSlotsSnapshot = get().timeSlots;
@@ -2393,6 +2405,9 @@ export const useTimetableStore = create<TimetableStore>()(
                     rows,
                     grades,
                     timeSlotsSnapshot,
+                    masterGradeId,
+                    streamId,
+                    periodDayMap,
                   );
                 }
               }
@@ -2520,10 +2535,16 @@ export const useTimetableStore = create<TimetableStore>()(
               ? extractTimeSlotsFromTimetableData(timetableData, gradeLevelId)
               : [];
 
-          const slotPeriodNumbers =
-            gradeScopedSlots.length > 0
-              ? uniquePeriodNumbers(gradeScopedSlots)
+          const schoolWideSlots =
+            !gradeLevelId && timetableData
+              ? extractTimeSlotsFromTimetableData(timetableData)
               : [];
+
+          const resolvedSlots =
+            gradeScopedSlots.length > 0 ? gradeScopedSlots : schoolWideSlots;
+
+          const slotPeriodNumbers =
+            resolvedSlots.length > 0 ? uniquePeriodNumbers(resolvedSlots) : [];
           const mergedPeriodNumbers = [
             ...new Set([...slotPeriodNumbers, ...resolvedPeriodNumbers]),
           ].sort((a, b) => a - b);
@@ -2531,8 +2552,8 @@ export const useTimetableStore = create<TimetableStore>()(
             mergedPeriodNumbers.length > 0
               ? Math.max(...mergedPeriodNumbers)
               : 0,
-            gradeScopedSlots.length > 0
-              ? Math.max(...gradeScopedSlots.map((s) => s.periodNumber || 0), 0)
+            resolvedSlots.length > 0
+              ? Math.max(...resolvedSlots.map((s) => s.periodNumber || 0), 0)
               : 0,
             resolvedPeriodNumbers.length > 0
               ? Math.max(...resolvedPeriodNumbers)
@@ -2542,10 +2563,10 @@ export const useTimetableStore = create<TimetableStore>()(
               : 0,
           );
 
-          const gradeSlotUpdate =
-            gradeLevelId && gradeScopedSlots.length > 0
+          const slotUpdate =
+            resolvedSlots.length > 0
               ? {
-                  timeSlots: gradeScopedSlots,
+                  timeSlots: resolvedSlots,
                   ...(mergedPeriodNumbers.length > 0
                     ? {
                         periodNumbers: mergedPeriodNumbers,
@@ -2575,8 +2596,8 @@ export const useTimetableStore = create<TimetableStore>()(
               conflicts: recomputeConflicts({ ...state, entries }),
               knownRoomNumbers: timetableData.knownRoomNumbers || [],
               gradeStats: timetableData.gradeStats || [],
-              ...gradeSlotUpdate,
-              ...(gradeLevelId || gradeScopedSlots.length > 0
+              ...slotUpdate,
+              ...(gradeLevelId || resolvedSlots.length > 0
                 ? {}
                 : {
                     lessonPeriodsPerDay: Math.max(
