@@ -37,6 +37,9 @@ interface StudentSummaryData {
   admissionNumber: string;
   studentName: string;
   gradeLevelName: string;
+  gradeLevelId: string;
+  streamName?: string | null;
+  streamId?: string | null;
   feeSummary: FeeSummary;
 }
 

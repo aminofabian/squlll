@@ -695,42 +695,26 @@ export function SchoolSearchFilter({
                             >
                               <div className="flex w-full items-center justify-between gap-1">
                                 <div className="flex min-w-0 items-center gap-1.5">
-                                  {variant === "default" && (
-                                    <div
+                                  <div
+                                    className={cn(
+                                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition-colors",
+                                      selectedGradeId === grade.id
+                                        ? "bg-white/20"
+                                        : "bg-muted group-hover:bg-primary/10",
+                                    )}
+                                  >
+                                    <GraduationCap
                                       className={cn(
-                                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition-colors",
+                                        "h-2.5 w-2.5 shrink-0",
                                         selectedGradeId === grade.id
-                                          ? "bg-white/20"
-                                          : "bg-muted group-hover:bg-primary/10",
+                                          ? "text-white"
+                                          : "text-muted-foreground group-hover:text-primary",
                                       )}
-                                    >
-                                      <GraduationCap
-                                        className={cn(
-                                          "h-2.5 w-2.5 shrink-0",
-                                          selectedGradeId === grade.id
-                                            ? "text-white"
-                                            : "text-muted-foreground group-hover:text-primary",
-                                        )}
-                                      />
-                                    </div>
-                                  )}
+                                    />
+                                  </div>
                                   <span>{abbreviateGradeShort(grade.name)}</span>
                                 </div>
-                                {grade.streams?.length > 0 &&
-                                  variant === "minimal" && (
-                                    <span
-                                      className={cn(
-                                        "flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums",
-                                        selectedGradeId === grade.id
-                                          ? "bg-slate-300/50 text-slate-700 dark:bg-slate-600 dark:text-slate-200"
-                                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
-                                      )}
-                                    >
-                                      {grade.streams.length}
-                                    </span>
-                                  )}
-                                {grade.streams?.length > 0 &&
-                                  variant === "default" && (
+                                {grade.streams?.length > 0 && (
                                     <span
                                       className={cn(
                                         "text-[10px] tabular-nums",
@@ -745,8 +729,7 @@ export function SchoolSearchFilter({
                               </div>
                             </button>
 
-                            {variant !== "minimal" &&
-                              expandedGrades.has(grade.id) &&
+                            {expandedGrades.has(grade.id) &&
                               grade.streams?.length > 0 && (
                                 <div className="grid grid-cols-2 gap-1 pl-0.5">
                                   {grade.streams.map((stream) => {

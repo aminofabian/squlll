@@ -114,8 +114,7 @@ export function useCurrentStudent(): UseCurrentStudentResult {
       }
 
       const grade = profile.grade as StudentGrade | undefined;
-      const gradeName =
-        grade?.gradeLevel?.name || grade?.name || grade?.shortName || '';
+      const gradeName = grade?.gradeLevel?.name || grade?.name || '';
       const streamId = profile.stream?.id ?? null;
       const streamName = profile.stream?.name ?? null;
       const tenantStreamId = resolveTenantStreamId(grade, streamId);
