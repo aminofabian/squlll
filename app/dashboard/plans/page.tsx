@@ -1,270 +1,154 @@
 "use client";
 
 import { useState } from "react";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
+  AlertCircle,
   CreditCard,
-  CheckCircle,
-  XCircle,
   Plus,
-  Edit3,
-  Users,
-  HardDrive,
-  School,
+  RefreshCw,
 } from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { PlanCard } from "@/components/dashboard/superadmin/PlanCard";
+import { PlanFormDrawer } from "@/components/dashboard/superadmin/PlanFormDrawer";
+import { DashboardErrorBanner } from "@/components/dashboard/superadmin/DashboardStatCards";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import type { PlanRecord } from "@/lib/superadmin/plans";
+import { usePlans } from "@/lib/superadmin/usePlans";
 
-// ─── Types & Mock Data ─────────────────────────────────────────
-
-interface PlanFeature {
-  key: string;
-  label: string;
+function PlansSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="rounded-2xl border border-slate-200/60 bg-white p-6 dark:border-slate-800/60 dark:bg-slate-900/80"
+        >
+          <Skeleton className="mx-auto h-6 w-32" />
+          <Skeleton className="mx-auto mt-3 h-4 w-48" />
+          <Skeleton className="mx-auto mt-6 h-10 w-24" />
+          <div className="mt-6 space-y-3">
+            {Array.from({ length: 6 }).map((__, row) => (
+              <Skeleton key={row} className="h-4 w-full" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-const ALL_FEATURES: PlanFeature[] = [
-  { key: "TIMETABLE", label: "Timetable" },
-  { key: "LIBRARY", label: "Library" },
-  { key: "EXAM_MODULE", label: "Exam Module" },
-  { key: "SMS_ALERTS", label: "SMS Alerts" },
-  { key: "FINANCE", label: "Finance" },
-  { key: "HOSTEL_MANAGEMENT", label: "Hostel Management" },
-  { key: "TRANSPORT", label: "Transport" },
-  { key: "ANALYTICS", label: "Analytics" },
-];
-
-interface Plan {
-  id: number;
-  name: string;
-  description: string;
-  monthlyPrice: number;
-  yearlyPrice: number | null;
-  trialDays: number;
-  graceDays: number;
-  features: Record<string, boolean>;
-  limits: Record<string, number>;
-  isDefault: boolean;
-  isActive: boolean;
-}
-
-const mockPlans: Plan[] = [
-  {
-    id: 1,
-    name: "Starter",
-    description: "Perfect for small schools getting started",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    trialDays: 150,
-    graceDays: 20,
-    features: {
-      TIMETABLE: true,
-      LIBRARY: false,
-      EXAM_MODULE: true,
-      SMS_ALERTS: false,
-      FINANCE: false,
-      HOSTEL_MANAGEMENT: false,
-      TRANSPORT: false,
-      ANALYTICS: false,
-    },
-    limits: { maxStudents: 100, maxTeachers: 10, maxStorage: 1 },
-    isDefault: true,
-    isActive: true,
-  },
-  {
-    id: 2,
-    name: "Standard",
-    description: "For growing schools with advanced needs",
-    monthlyPrice: 99.99,
-    yearlyPrice: 999.99,
-    trialDays: 30,
-    graceDays: 15,
-    features: {
-      TIMETABLE: true,
-      LIBRARY: true,
-      EXAM_MODULE: true,
-      SMS_ALERTS: true,
-      FINANCE: true,
-      HOSTEL_MANAGEMENT: false,
-      TRANSPORT: false,
-      ANALYTICS: true,
-    },
-    limits: { maxStudents: 500, maxTeachers: 50, maxStorage: 10 },
-    isDefault: false,
-    isActive: true,
-  },
-  {
-    id: 3,
-    name: "Premium",
-    description: "Complete solution for large institutions",
-    monthlyPrice: 299.99,
-    yearlyPrice: 2999.99,
-    trialDays: 30,
-    graceDays: 30,
-    features: {
-      TIMETABLE: true,
-      LIBRARY: true,
-      EXAM_MODULE: true,
-      SMS_ALERTS: true,
-      FINANCE: true,
-      HOSTEL_MANAGEMENT: true,
-      TRANSPORT: true,
-      ANALYTICS: true,
-    },
-    limits: { maxStudents: -1, maxTeachers: -1, maxStorage: 100 },
-    isDefault: false,
-    isActive: true,
-  },
-];
-
-function formatPrice(price: number): string {
-  if (price === 0) return "Free";
-  return `$${price.toFixed(2)}`;
-}
-
-function formatLimit(value: number, label: string): string {
-  if (value === -1) return `Unlimited ${label}`;
-  return `${value} ${label}`;
+function PlansEmptyState({ onCreate }: { onCreate: () => void }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-slate-200/80 bg-white px-6 py-16 text-center dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+        <CreditCard className="h-6 w-6 text-slate-400" />
+      </div>
+      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+        No plans yet
+      </h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+        Create your first subscription plan so schools can subscribe to the
+        platform.
+      </p>
+      <Button className="mt-6" onClick={onCreate}>
+        <Plus className="mr-2 h-4 w-4" />
+        Create first plan
+      </Button>
+    </div>
+  );
 }
 
 export default function PlansPage() {
-  const [plans] = useState<Plan[]>(mockPlans);
+  const { plans, loading, saving, error, refresh, savePlan } = usePlans();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<PlanRecord | null>(null);
+
+  const openCreateDrawer = () => {
+    setEditingPlan(null);
+    setDrawerOpen(true);
+  };
+
+  const openEditDrawer = (plan: PlanRecord) => {
+    setEditingPlan(plan);
+    setDrawerOpen(true);
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Header */}
-        <div className="border-b border-slate-200 dark:border-slate-700 pb-6">
-          <div className="flex items-center justify-between">
+        <div className="border-b border-slate-200 pb-6 dark:border-slate-700">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 <CreditCard className="h-6 w-6 text-primary" />
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   Plans
                 </h1>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Manage subscription plans and pricing
+                Manage subscription plans, pricing, and what each school can
+                access
               </p>
             </div>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Plan
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refresh}
+                disabled={loading}
+                className="h-9 gap-2"
+              >
+                <RefreshCw
+                  className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+                />
+                Refresh
+              </Button>
+              <Button size="sm" onClick={openCreateDrawer}>
+                <Plus className="mr-2 h-4 w-4" />
+                New plan
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative border rounded-2xl bg-white dark:bg-slate-900/80 p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                plan.isDefault
-                  ? "border-primary ring-2 ring-primary/20 hover:border-primary"
-                  : "border-slate-200/60 dark:border-slate-800/60 hover:border-slate-300/80 dark:hover:border-slate-700/80"
-              }`}
-            >
-              {/* Default badge */}
-              {plan.isDefault && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground text-[10px] uppercase px-3">
-                    Default
-                  </Badge>
-                </div>
-              )}
+        {error ? (
+          <DashboardErrorBanner message={error} onRetry={refresh} />
+        ) : null}
 
-              {/* Header */}
-              <div className="text-center mb-6 mt-2">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  {plan.name}
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">
-                  {plan.description}
-                </p>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-slate-900 dark:text-slate-100">
-                    {formatPrice(plan.monthlyPrice)}
-                  </span>
-                  {plan.monthlyPrice > 0 && (
-                    <span className="text-sm text-slate-500 ml-1">/mo</span>
-                  )}
-                </div>
-                {plan.yearlyPrice && plan.yearlyPrice > 0 && (
-                  <p className="text-xs text-slate-400 mt-1">
-                    {formatPrice(plan.yearlyPrice)}/year
-                  </p>
-                )}
-              </div>
+        {loading ? (
+          <PlansSkeleton />
+        ) : plans.length === 0 ? (
+          <PlansEmptyState onCreate={openCreateDrawer} />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {plans.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} onEdit={openEditDrawer} />
+            ))}
+          </div>
+        )}
 
-              {/* Trial & Grace */}
-              <div className="flex justify-center gap-4 mb-6 text-xs text-slate-500">
-                <span>{plan.trialDays} day trial</span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
-                <span>{plan.graceDays} day grace</span>
-              </div>
-
-              {/* Features */}
-              <div className="space-y-3 mb-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Features
-                </p>
-                {ALL_FEATURES.map((feature) => (
-                  <div
-                    key={feature.key}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-sm text-slate-700 dark:text-slate-300">
-                      {feature.label}
-                    </span>
-                    {plan.features[feature.key] ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-slate-300 dark:text-slate-600" />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Limits */}
-              <div className="space-y-3 mb-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Limits
-                </p>
-                {Object.entries(plan.limits).map(([key, value]) => {
-                  const labelMap: Record<string, string> = {
-                    maxStudents: "Students",
-                    maxTeachers: "Teachers",
-                    maxStorage: "GB Storage",
-                  };
-                  return (
-                    <div
-                      key={key}
-                      className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
-                    >
-                      {key === "maxStudents" && (
-                        <Users className="h-4 w-4 text-slate-400" />
-                      )}
-                      {key === "maxTeachers" && (
-                        <School className="h-4 w-4 text-slate-400" />
-                      )}
-                      {key === "maxStorage" && (
-                        <HardDrive className="h-4 w-4 text-slate-400" />
-                      )}
-                      <span>{formatLimit(value, labelMap[key] || key)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Actions */}
-              <Button variant="outline" className="w-full" size="sm">
-                <Edit3 className="mr-2 h-4 w-4" />
-                Edit Plan
-              </Button>
-            </div>
-          ))}
-        </div>
+        {!loading && plans.length > 0 ? (
+          <div className="flex items-start gap-3 rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <p>
+              The default plan is assigned to new schools automatically. Use
+              edit to change pricing, features, or limits.
+            </p>
+          </div>
+        ) : null}
       </div>
+
+      <PlanFormDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        plan={editingPlan}
+        saving={saving}
+        onSubmit={async (values) => {
+          await savePlan(values, editingPlan?.id);
+        }}
+      />
     </DashboardLayout>
   );
 }
