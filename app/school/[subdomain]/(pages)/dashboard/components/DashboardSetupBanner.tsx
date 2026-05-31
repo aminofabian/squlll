@@ -2,53 +2,15 @@
 
 import Link from "next/link";
 import {
-  BookOpen,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
-  Circle,
-  ClipboardList,
-  GraduationCap,
-  School,
-  UserPlus,
+  Loader2,
   X,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-const SETUP_STEPS = [
-  {
-    id: "classes",
-    label: "Classes",
-    icon: BookOpen,
-    path: "/classes",
-  },
-  {
-    id: "students",
-    label: "Students",
-    icon: UserPlus,
-    path: "/students?action=add",
-  },
-  {
-    id: "teachers",
-    label: "Teachers",
-    icon: GraduationCap,
-    path: "/teachers?action=add",
-  },
-  {
-    id: "subjects",
-    label: "Subjects",
-    icon: ClipboardList,
-    path: "/classes?tab=subjects",
-  },
-  {
-    id: "school-details",
-    label: "School profile",
-    icon: School,
-    path: "/onboarding",
-  },
-] as const;
-
-const COMPLETED_STEPS = 2;
+import { useSchoolSetupProgress } from "@/lib/hooks/useSchoolSetupProgress";
 
 interface DashboardSetupBannerProps {
   className?: string;
@@ -56,83 +18,118 @@ interface DashboardSetupBannerProps {
 
 export function DashboardSetupBanner({ className }: DashboardSetupBannerProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const { steps, completedCount, totalCount, nextStep, isComplete, isLoading } =
+    useSchoolSetupProgress();
 
-  if (dismissed || COMPLETED_STEPS >= SETUP_STEPS.length) return null;
+  if (dismissed || isComplete) return null;
 
-  const nextStep = SETUP_STEPS[COMPLETED_STEPS];
-  const pendingCount = SETUP_STEPS.length - COMPLETED_STEPS;
+  if (isLoading) {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-[11px] text-slate-400 dark:border-slate-800 dark:bg-slate-900/40",
+          className,
+        )}
+      >
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Checking setup…
+      </div>
+    );
+  }
+
+  if (!nextStep) return null;
+
+  const progressPercent = Math.round((completedCount / totalCount) * 100);
 
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border border-[#246a59]/20 bg-gradient-to-r from-[#246a59]/8 to-[#246a59]/3 px-4 py-3 dark:from-[#246a59]/15 dark:to-[#246a59]/5",
+        "relative rounded-lg border border-[#246a59]/20 bg-[#246a59]/5 px-3 py-2.5 dark:bg-[#246a59]/10",
         className,
       )}
+      role="region"
+      aria-label="School setup progress"
     >
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="absolute right-3 top-3 rounded-md p-1 text-slate-400 hover:bg-white/60 hover:text-slate-600 dark:hover:bg-slate-800/60"
+        className="absolute right-2 top-2 rounded p-0.5 text-slate-400 hover:text-slate-600"
         aria-label="Dismiss setup banner"
       >
         <X className="h-3.5 w-3.5" />
       </button>
 
-      <div className="pr-8">
-        <p className="text-xs font-medium text-[#246a59]">
-          Finish setting up your school · {COMPLETED_STEPS}/{SETUP_STEPS.length}{" "}
-          done · {pendingCount} pending
-        </p>
-        <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-          Next: {nextStep.label}
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Green steps are complete. Grey steps are still pending.
-        </p>
+      <div className="pr-6">
+        <div className="flex items-center justify-between gap-2 text-[11px]">
+          <span className="font-medium text-[#246a59]">
+            Setup {completedCount}/{totalCount}
+          </span>
+          <span className="text-slate-400">{progressPercent}%</span>
+        </div>
+        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#246a59]/15">
+          <div
+            className="h-full rounded-full bg-[#246a59] transition-all"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <p className="truncate text-xs font-medium text-slate-800 dark:text-slate-100">
+            Next: {nextStep.label}
+          </p>
+          <Link
+            href={nextStep.path}
+            className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[#246a59]"
+          >
+            Continue
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {SETUP_STEPS.map((step, index) => {
-          const isComplete = index < COMPLETED_STEPS;
-          const isNext = index === COMPLETED_STEPS;
-          const isPending = !isComplete && !isNext;
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        className="mt-2 flex w-full items-center justify-center gap-1 text-[10px] font-medium text-slate-500 sm:hidden"
+        aria-expanded={expanded}
+      >
+        {expanded ? "Hide steps" : "View all steps"}
+        <ChevronDown
+          className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")}
+        />
+      </button>
 
+      <div
+        className={cn(
+          "mt-2 flex flex-wrap gap-1.5",
+          !expanded && "hidden sm:flex",
+        )}
+      >
+        {steps.map((step) => {
+          const isNext = step.id === nextStep.id;
           return (
             <Link
               key={step.id}
               href={step.path}
-              aria-label={`${step.label}${isComplete ? ", complete" : isNext ? ", next step" : ", pending"}`}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
-                isComplete &&
-                  "border-emerald-200/80 bg-emerald-50/80 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300",
+                "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium",
+                step.isComplete &&
+                  "border-emerald-200/80 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300",
                 isNext &&
-                  "border-[#246a59] bg-white text-[#246a59] ring-1 ring-[#246a59]/20 shadow-sm dark:bg-slate-900",
-                isPending &&
-                  "border-slate-200/80 bg-slate-50/80 text-slate-400 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-500",
+                  !step.isComplete &&
+                  "border-[#246a59]/40 bg-white text-[#246a59] dark:bg-slate-900",
+                !step.isComplete &&
+                  !isNext &&
+                  "border-slate-200/80 text-slate-400 dark:border-slate-700",
               )}
             >
-              {isComplete ? (
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              ) : isPending ? (
-                <Circle className="h-3 w-3 shrink-0 stroke-[1.5]" />
-              ) : (
-                <ChevronRight className="h-3 w-3 shrink-0" />
-              )}
+              {step.isComplete ? (
+                <CheckCircle2 className="h-3 w-3 shrink-0" />
+              ) : null}
               {step.label}
-              {isPending && (
-                <span className="sr-only"> (pending)</span>
-              )}
             </Link>
           );
         })}
-        <Link
-          href={nextStep.path}
-          className="ml-auto inline-flex items-center gap-0.5 text-xs font-medium text-[#246a59] hover:underline"
-        >
-          Continue
-          <ChevronRight className="h-3 w-3" />
-        </Link>
       </div>
     </div>
   );

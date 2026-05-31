@@ -9,6 +9,7 @@ import { debugAuth } from '@/lib/utils'
 import { TermsDropdown } from './components/TermsDropdown'
 import { TermProvider } from './contexts/TermContext'
 import { SchoolNavbar } from './components/SchoolNavbar'
+import { SchoolMobileBottomNav } from './components/SchoolMobileBottomNav'
 import {
   getTenantIdFromCookies,
   isSchoolOnboardingComplete,
@@ -260,9 +261,14 @@ function SchoolLayoutContent({
         />
         
         {/* Main content area with scrolling */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
           {children}
         </main>
+
+        {/* Mobile bottom navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
+          <SchoolMobileBottomNav />
+        </div>
       </div>
     </div>
     </TermProvider>

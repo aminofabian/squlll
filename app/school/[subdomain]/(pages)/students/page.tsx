@@ -395,7 +395,6 @@ export default function StudentsPage() {
                       gradeName={selectedGrade.displayName}
                       streamName={selectedGrade.streamName}
                       onClear={clearFilters}
-                      actions={[]}
                     />
                     <GradeDetailsView
                       grade={selectedGrade.grade}

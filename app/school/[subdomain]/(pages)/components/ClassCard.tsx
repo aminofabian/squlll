@@ -120,9 +120,9 @@ export function ClassCard({
           <button
             type="button"
             onClick={() => setShowSubjects(!showSubjects)}
-            className="flex w-full items-center justify-between px-4 py-3 text-left"
+            className="flex w-full items-center justify-between px-3 py-2.5 text-left sm:px-4"
           >
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-100">
+            <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">
               Subjects
               {!showSubjects && filteredSubjects.length > 0 && (
                 <span className="ml-1.5 font-normal text-slate-400">
@@ -138,7 +138,7 @@ export function ClassCard({
           </button>
 
           {showSubjects && (
-            <div className="space-y-3 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
+            <div className="space-y-3 border-t border-slate-100 px-2.5 py-2.5 dark:border-slate-800 sm:px-4 sm:py-3">
               {filteredSubjects.length === 0 ? (
                 <p className="py-4 text-center text-xs text-slate-400">No subjects</p>
               ) : (
@@ -328,53 +328,63 @@ function SubjectList({
         </p>
       </div>
       <ul className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
-          {subjects.map((s) => (
-            <li
-              key={s.id}
-              className="group flex items-center gap-2 border-b border-slate-100 px-3 py-2 last:border-b-0 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-800/40"
-            >
-              <span
-                className="min-w-0 flex-1 truncate text-xs font-medium text-slate-800 dark:text-slate-100"
-                title={s.name}
-              >
-                {s.name}
-              </span>
-              <SubjectTeacherBadge
-                teacherName={getTeacherForSubject(s.tenantSubjectIds)}
-                onAssign={onAssignTeacher}
+          {subjects.map((s) => {
+            const actionButtons = (
+              <ClassActionBar
+                layout="icons"
+                actions={[
+                  {
+                    id: "edit",
+                    label: "Edit subject",
+                    tooltip: "Edit subject settings",
+                    icon: Edit,
+                    onClick: () => onEdit(s),
+                  },
+                  {
+                    id: "copy",
+                    label: "Copy code",
+                    tooltip: s.code
+                      ? `Copy subject code (${s.code})`
+                      : "Copy subject code",
+                    icon: Copy,
+                    onClick: () => {
+                      if (s.code) {
+                        navigator.clipboard.writeText(s.code);
+                        toast.success("Subject code copied");
+                      }
+                    },
+                    disabled: !s.code,
+                    disabledReason: "This subject has no code",
+                  },
+                ]}
               />
-              <div className="flex shrink-0 items-center">
-                <ClassActionBar
-                  layout="icons"
-                  actions={[
-                    {
-                      id: "edit",
-                      label: "Edit subject",
-                      tooltip: "Edit subject settings",
-                      icon: Edit,
-                      onClick: () => onEdit(s),
-                    },
-                    {
-                      id: "copy",
-                      label: "Copy code",
-                      tooltip: s.code
-                        ? `Copy subject code (${s.code})`
-                        : "Copy subject code",
-                      icon: Copy,
-                      onClick: () => {
-                        if (s.code) {
-                          navigator.clipboard.writeText(s.code);
-                          toast.success("Subject code copied");
-                        }
-                      },
-                      disabled: !s.code,
-                      disabledReason: "This subject has no code",
-                    },
-                  ]}
-                />
-              </div>
-            </li>
-          ))}
+            );
+
+            return (
+              <li
+                key={s.id}
+                className="border-b border-slate-100 px-2.5 py-2 last:border-b-0 dark:border-slate-800 sm:flex sm:items-center sm:gap-2 sm:px-3"
+              >
+                <div className="flex items-start justify-between gap-2 sm:min-w-0 sm:flex-1">
+                  <span
+                    className="min-w-0 flex-1 text-xs font-medium leading-snug text-slate-800 dark:text-slate-100 sm:truncate"
+                    title={s.name}
+                  >
+                    {s.name}
+                  </span>
+                  <div className="shrink-0 sm:hidden">{actionButtons}</div>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-2 sm:mt-0 sm:shrink-0">
+                  <SubjectTeacherBadge
+                    teacherName={getTeacherForSubject(s.tenantSubjectIds)}
+                    onAssign={onAssignTeacher}
+                    className="max-w-full sm:max-w-[5.5rem]"
+                  />
+                  <div className="hidden sm:block">{actionButtons}</div>
+                </div>
+              </li>
+            );
+          })}
         </ul>
     </section>
   );

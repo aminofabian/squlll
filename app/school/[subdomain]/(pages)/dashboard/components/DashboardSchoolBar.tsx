@@ -10,9 +10,77 @@ interface DashboardSchoolBarProps {
   attendanceRate?: number | null;
   academicProgress?: number | null;
   isLoading?: boolean;
+  compact?: boolean;
 }
 
 type EmptyKind = "students" | "teachers" | "streams";
+
+function StatCell({
+  label,
+  value,
+  emptyKind,
+  hasStudents,
+  attendanceRate,
+  compact,
+}: {
+  label: string;
+  value: string;
+  emptyKind: EmptyKind | null;
+  hasStudents: boolean;
+  attendanceRate?: number | null;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col justify-center rounded-md bg-slate-50/80 px-2 py-1.5 dark:bg-slate-800/30",
+        compact ? "min-h-[3.25rem]" : "px-3 py-2.5",
+      )}
+    >
+      <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+      {emptyKind === "students" ? (
+        <Link
+          href="/students?action=add"
+          className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400"
+        >
+          Add →
+        </Link>
+      ) : emptyKind === "teachers" ? (
+        <Link
+          href="/teachers?action=add"
+          className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400"
+        >
+          Add →
+        </Link>
+      ) : emptyKind === "streams" ? (
+        <Link
+          href="/classes"
+          className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400"
+        >
+          Set up →
+        </Link>
+      ) : label === "Attendance" && hasStudents && attendanceRate == null ? (
+        <Link
+          href="/attendance"
+          className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400"
+        >
+          Mark →
+        </Link>
+      ) : (
+        <p
+          className={cn(
+            "mt-0.5 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100",
+            value === "—" && "text-base font-normal text-slate-400",
+          )}
+        >
+          {value}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function DashboardSchoolBar({
   studentCount,
@@ -21,6 +89,7 @@ export function DashboardSchoolBar({
   attendanceRate,
   academicProgress,
   isLoading,
+  compact = false,
 }: DashboardSchoolBarProps) {
   const hasStudents = studentCount > 0;
   const resolvedTeachers = teacherCount ?? 0;
@@ -28,44 +97,41 @@ export function DashboardSchoolBar({
 
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="grid grid-cols-2 gap-px bg-slate-100 dark:bg-slate-800 lg:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white px-4 py-3 dark:bg-slate-900/40">
-              <div className="h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
-              <div className="mt-2 h-4 w-20 animate-pulse rounded bg-slate-50 dark:bg-slate-800/60" />
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+        {Array.from({ length: compact ? 3 : 5 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-[3.25rem] animate-pulse rounded-md bg-slate-100 dark:bg-slate-800"
+          />
+        ))}
       </div>
     );
   }
 
-  const statItems: Array<{
-    label: string;
-    value: string;
-    emptyKind: EmptyKind | null;
-  }> = [
+  const primaryStats = [
     {
       label: "Students",
       value: String(studentCount),
-      emptyKind: hasStudents ? null : "students",
+      emptyKind: (hasStudents ? null : "students") as EmptyKind | null,
     },
     {
       label: "Teachers",
       value: String(resolvedTeachers),
-      emptyKind: resolvedTeachers > 0 ? null : "teachers",
+      emptyKind: (resolvedTeachers > 0 ? null : "teachers") as EmptyKind | null,
     },
     {
       label: "Streams",
       value: String(resolvedStreams),
-      emptyKind: resolvedStreams > 0 ? null : "streams",
+      emptyKind: (resolvedStreams > 0 ? null : "streams") as EmptyKind | null,
     },
+  ];
+
+  const secondaryStats = [
     {
       label: "Attendance",
       value:
         hasStudents && attendanceRate != null ? `${attendanceRate}%` : "—",
-      emptyKind: null,
+      emptyKind: null as EmptyKind | null,
     },
     {
       label: "Progress",
@@ -73,85 +139,32 @@ export function DashboardSchoolBar({
         hasStudents && academicProgress != null
           ? `${academicProgress}%`
           : "—",
-      emptyKind: null,
+      emptyKind: null as EmptyKind | null,
     },
   ];
 
+  const stats = compact ? primaryStats : [...primaryStats, ...secondaryStats];
+
   return (
     <div
-      className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40"
+      className={cn(
+        "grid gap-1.5",
+        compact ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-5",
+      )}
       role="group"
       aria-label="School statistics"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-800 lg:grid-cols-5">
-        {statItems.map(({ label, value, emptyKind }) => (
-          <div key={label} className="px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              {label}
-            </p>
-            {emptyKind === "students" ? (
-              <div className="mt-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  No students enrolled yet.
-                </p>
-                <Link
-                  href="/students?action=add"
-                  className="mt-1 inline-flex text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                  Add students →
-                </Link>
-              </div>
-            ) : emptyKind === "teachers" ? (
-              <div className="mt-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  No teachers added yet.
-                </p>
-                <Link
-                  href="/teachers?action=add"
-                  className="mt-1 inline-flex text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                  Add teachers →
-                </Link>
-              </div>
-            ) : emptyKind === "streams" ? (
-              <div className="mt-1">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  No classes set up yet.
-                </p>
-                <Link
-                  href="/classes"
-                  className="mt-1 inline-flex text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                  Set up classes →
-                </Link>
-              </div>
-            ) : label === "Attendance" && hasStudents && attendanceRate == null ? (
-              <div className="mt-1">
-                <Link
-                  href="/attendance"
-                  className="inline-flex text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                  Mark attendance →
-                </Link>
-              </div>
-            ) : (
-              <p
-                className={cn(
-                  "mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100",
-                  (label === "Attendance" || label === "Progress") &&
-                    value === "—" &&
-                    "text-slate-400",
-                  (label === "Attendance" || label === "Progress") &&
-                    value !== "—" &&
-                    "tabular-nums",
-                )}
-              >
-                {value}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
+      {stats.map(({ label, value, emptyKind }) => (
+        <StatCell
+          key={label}
+          label={label}
+          value={value}
+          emptyKind={emptyKind}
+          hasStudents={hasStudents}
+          attendanceRate={attendanceRate}
+          compact={compact}
+        />
+      ))}
     </div>
   );
 }

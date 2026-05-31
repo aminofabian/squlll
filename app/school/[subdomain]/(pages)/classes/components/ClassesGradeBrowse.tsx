@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Search, Users, X } from "lucide-react";
+import { BookOpen, Search, X } from "lucide-react";
 import type { GradeLevel, SchoolConfiguration } from "@/lib/types/school-config";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -11,26 +10,19 @@ import {
   getGradeSortOrder,
 } from "@/lib/utils/grade-display";
 
-interface StudentLike {
-  grade?: {
-    gradeLevel?: { id?: string; name?: string };
-  } | string;
-}
-
 interface LevelGroup {
   levelId: string;
   levelName: string;
+  subjectCount: number;
   grades: Array<
     GradeLevel & {
       levelId: string;
-      studentCount: number;
     }
   >;
 }
 
-interface DashboardOverviewProps {
+interface ClassesGradeBrowseProps {
   config: SchoolConfiguration | null;
-  students: StudentLike[];
   isLoading?: boolean;
   selectedGradeId?: string;
   selectedStreamId?: string;
@@ -44,49 +36,32 @@ function sortGrades<T extends { name: string }>(grades: T[]): T[] {
   );
 }
 
-export function DashboardOverview({
+export function ClassesGradeBrowse({
   config,
-  students,
   isLoading,
   selectedGradeId = "",
   selectedStreamId = "",
   onGradeSelect,
   onStreamSelect,
-}: DashboardOverviewProps) {
+}: ClassesGradeBrowseProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedGradeId, setExpandedGradeId] = useState<string | null>(null);
-
-  const studentCountByGradeId = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const student of students) {
-      if (typeof student.grade === "string" || !student.grade?.gradeLevel?.id) {
-        continue;
-      }
-      const id = student.grade.gradeLevel.id;
-      counts.set(id, (counts.get(id) ?? 0) + 1);
-    }
-    return counts;
-  }, [students]);
 
   const levelGroups: LevelGroup[] = useMemo(() => {
     if (!config?.selectedLevels) return [];
 
     return config.selectedLevels
-      .map((level) => {
-        const grades = sortGrades(level.gradeLevels ?? []).map((grade) => ({
+      .map((level) => ({
+        levelId: level.id,
+        levelName: level.name,
+        subjectCount: level.subjects?.length ?? 0,
+        grades: sortGrades(level.gradeLevels ?? []).map((grade) => ({
           ...grade,
           levelId: level.id,
-          studentCount: studentCountByGradeId.get(grade.id) ?? 0,
-        }));
-
-        return {
-          levelId: level.id,
-          levelName: level.name,
-          grades,
-        };
-      })
+        })),
+      }))
       .filter((group) => group.grades.length > 0);
-  }, [config?.selectedLevels, studentCountByGradeId]);
+  }, [config?.selectedLevels]);
 
   const filteredGroups = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -113,7 +88,7 @@ export function DashboardOverview({
     if (!id) return null;
     for (const group of levelGroups) {
       const grade = group.grades.find((item) => item.id === id);
-      if (grade) return grade;
+      if (grade) return { ...grade, subjectCount: group.subjectCount };
     }
     return null;
   }, [expandedGradeId, selectedGradeId, levelGroups]);
@@ -144,15 +119,15 @@ export function DashboardOverview({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-9 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
+        <div className="h-8 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
         {Array.from({ length: 2 }).map((_, index) => (
           <div key={index} className="space-y-2">
             <div className="h-3 w-24 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5">
               {Array.from({ length: 6 }).map((_, chipIndex) => (
                 <div
                   key={chipIndex}
-                  className="h-10 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                  className="h-11 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
                 />
               ))}
             </div>
@@ -166,12 +141,9 @@ export function DashboardOverview({
     return (
       <div className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center dark:border-slate-700">
         <p className="text-xs text-slate-500">No grades configured yet.</p>
-        <Link
-          href="/classes"
-          className="mt-2 inline-block text-xs font-medium text-[#246a59] hover:underline"
-        >
-          Set up classes →
-        </Link>
+        <p className="mt-1 text-[11px] text-slate-400">
+          Complete school setup to add class levels.
+        </p>
       </div>
     );
   }
@@ -209,8 +181,11 @@ export function DashboardOverview({
               <h3 className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 {group.levelName}
               </h3>
-              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <span className="shrink-0 text-[10px] tabular-nums text-slate-400">
                 {group.grades.length} grade{group.grades.length !== 1 ? "s" : ""}
+                {group.subjectCount > 0
+                  ? ` · ${group.subjectCount} subject${group.subjectCount !== 1 ? "s" : ""}`
+                  : ""}
               </span>
             </div>
 
@@ -218,8 +193,7 @@ export function DashboardOverview({
               <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5">
                 {group.grades.map((grade) => {
                   const isExpanded = expandedGradeId === grade.id;
-                  const isActive =
-                    selectedGradeId === grade.id || isExpanded;
+                  const isActive = selectedGradeId === grade.id || isExpanded;
                   const streamCount = grade.streams?.length ?? 0;
 
                   return (
@@ -227,12 +201,11 @@ export function DashboardOverview({
                       key={grade.id}
                       type="button"
                       onClick={() => handleGradeClick(grade)}
-                      aria-expanded={streamCount > 0 ? isExpanded : undefined}
                       className={cn(
                         "relative flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-center transition-colors active:scale-[0.98]",
                         isActive
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "bg-white text-slate-700 hover:bg-white/90 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-900/90",
+                          : "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200",
                       )}
                     >
                       <span className="text-[13px] font-semibold leading-none">
@@ -240,26 +213,22 @@ export function DashboardOverview({
                       </span>
                       <span
                         className={cn(
-                          "flex items-center gap-1 text-[9px] leading-none",
+                          "flex items-center gap-0.5 text-[9px] leading-none",
                           isActive
                             ? "text-white/75 dark:text-slate-600"
                             : "text-slate-400",
                         )}
                       >
                         {streamCount > 0 ? (
-                          <span>{streamCount} stream{streamCount !== 1 ? "s" : ""}</span>
-                        ) : null}
-                        {streamCount > 0 && grade.studentCount > 0 ? (
-                          <span>·</span>
-                        ) : null}
-                        {grade.studentCount > 0 ? (
-                          <span className="inline-flex items-center gap-0.5">
-                            <Users className="h-2.5 w-2.5" />
-                            {grade.studentCount}
+                          <span>
+                            {streamCount} stream{streamCount !== 1 ? "s" : ""}
                           </span>
-                        ) : streamCount === 0 ? (
-                          <span>No students</span>
-                        ) : null}
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5">
+                            <BookOpen className="h-2.5 w-2.5" />
+                            {group.subjectCount || "No subjects"}
+                          </span>
+                        )}
                       </span>
                       {streamCount > 0 ? (
                         <span
@@ -318,7 +287,7 @@ export function DashboardOverview({
             }}
             className="mt-2 text-[11px] font-medium text-[#246a59] hover:underline"
           >
-            View whole grade →
+            Manage whole grade →
           </button>
         </div>
       ) : null}
