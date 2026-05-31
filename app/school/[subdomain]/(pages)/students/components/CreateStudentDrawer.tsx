@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -60,6 +60,7 @@ const studentFormSchema = z.object({
   admission_number: z.string().min(1, "Admission number is required"),
   gender: z.enum(["male", "female"]),
   grade: z.string().min(1, "Grade is required"),
+  stream: z.string().optional(),
   date_of_birth: z.string().min(1, "Date of birth is required").refine((dateString) => {
     const birthDate = new Date(dateString);
     const today = new Date();
@@ -253,6 +254,7 @@ export function CreateStudentDrawer({
       admission_number: "",
       gender: "male",
       grade: "",
+      stream: "",
       date_of_birth: "",
       age: 0,
       admission_date: "",
@@ -317,6 +319,31 @@ export function CreateStudentDrawer({
   
   // Watch form values for dynamic updates
   const watchedGrade = form.watch('grade')
+  const watchedStream = form.watch('stream')
+
+  const selectedGradeData = sortedTenantGrades.find((tg) => tg.id === watchedGrade)
+  const availableStreams = useMemo(
+    () =>
+      selectedGradeData?.tenantStreams
+        .map((ts) => ts.stream)
+        .filter((stream): stream is { id: string; name: string } => Boolean(stream)) ?? [],
+    [selectedGradeData],
+  )
+  const requiresStream = availableStreams.length > 0
+
+  useEffect(() => {
+    if (!watchedGrade) {
+      form.setValue('stream', '')
+      return
+    }
+
+    if (availableStreams.length === 1) {
+      form.setValue('stream', availableStreams[0].id)
+      return
+    }
+
+    form.setValue('stream', '')
+  }, [watchedGrade, availableStreams, form])
 
   // Function to generate email from name
   const generateEmailFromName = () => {
@@ -356,8 +383,16 @@ export function CreateStudentDrawer({
 
   // Submit handler
   const onSubmit = async (data: StudentFormData) => {
+    if (requiresStream && !data.stream) {
+      form.setError('stream', {
+        message: 'Please select a stream for this grade',
+      })
+      return
+    }
+
     console.log('CreateStudentDrawer - Form submission data:', {
       selectedGradeId: data.grade,
+      selectedStreamId: data.stream,
       allAvailableGrades: sortedTenantGrades.map(tg => ({ id: tg.id, name: tg.gradeLevel.name })),
       formData: data
     })
@@ -669,7 +704,10 @@ export function CreateStudentDrawer({
                       <FormItem className="space-y-2 md:col-span-2">
                         <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Grade *</FormLabel>
                         <Select 
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            form.setValue('stream', '')
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -705,6 +743,42 @@ export function CreateStudentDrawer({
                       </FormItem>
                     )}
                   />
+                  {requiresStream && (
+                    <FormField
+                      control={form.control}
+                      name="stream"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2 md:col-span-2">
+                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Stream *
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || watchedStream || undefined}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select stream" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableStreams.map((stream) => (
+                                <SelectItem key={stream.id} value={stream.id}>
+                                  {stream.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {availableStreams.length > 1
+                              ? 'This grade has multiple streams — pick one for the student.'
+                              : 'Stream assigned automatically for this grade.'}
+                          </p>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="admission_date"

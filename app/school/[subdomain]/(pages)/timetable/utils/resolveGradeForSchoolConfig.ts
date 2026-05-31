@@ -22,6 +22,44 @@ export function resolveSchoolConfigGradeId(
   return timetableGrade?.tenantGradeLevelId ?? gradeId;
 }
 
+/** Tenant stream id required by timetable GraphQL mutations. */
+export function resolveTenantStreamIdForApi(
+  streamId: string | null | undefined,
+  gradeId: string | null | undefined,
+  grades: Grade[],
+): string | null {
+  if (!streamId) return null;
+
+  const grade = grades.find(
+    (g) => g.id === gradeId || g.tenantGradeLevelId === gradeId,
+  );
+  if (!grade?.streams?.length) return streamId;
+
+  const match = grade.streams.find(
+    (s) => s.tenantStreamId === streamId || s.streamId === streamId,
+  );
+  return match?.tenantStreamId ?? streamId;
+}
+
+/** Map tenant stream id → school-config Stream.id for sidebar highlighting. */
+export function resolveStreamEntityIdForSidebar(
+  streamId: string | null | undefined,
+  gradeId: string | null | undefined,
+  grades: Grade[],
+): string {
+  if (!streamId) return "";
+
+  const grade = grades.find(
+    (g) => g.id === gradeId || g.tenantGradeLevelId === gradeId,
+  );
+  if (!grade?.streams?.length) return streamId;
+
+  const match = grade.streams.find(
+    (s) => s.tenantStreamId === streamId || s.streamId === streamId,
+  );
+  return match?.streamId ?? streamId;
+}
+
 /** Tenant grade level id required by timetable GraphQL mutations. */
 export const resolveTenantGradeLevelIdForApi = resolveSchoolConfigGradeId;
 

@@ -29,6 +29,7 @@ export interface GraphQLStudent {
   isActive: boolean;
   updatedAt: string;
   streamId: string | null;
+  streamName?: string | null;
   phone: string;
   grade: string | {
     id: string;
@@ -61,6 +62,9 @@ export interface StudentSummaryData {
   admissionNumber: string;
   studentName: string;
   gradeLevelName: string;
+  gradeLevelId: string;
+  streamName?: string | null;
+  streamId?: string | null;
   feeSummary: FeeSummary;
 }
 
@@ -87,8 +91,10 @@ export interface StudentDetailSummary {
   gender: string;
   schoolType: string;
   gradeLevelName: string;
+  gradeLevelId: string;
   curriculumName: string;
   streamName: string | null;
+  streamId?: string | null;
   feeSummary: DetailedFeeSummary;
   isActive: boolean;
   createdAt: string;

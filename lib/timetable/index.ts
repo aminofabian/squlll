@@ -87,6 +87,14 @@ export {
 } from "./utils";
 export type { LessonStyleClasses } from "./utils";
 
+export {
+  getSubjectShortCode,
+  getGradeShortCode,
+  formatCombinedLessonShortcode,
+  formatCombinedGradeLabel,
+  parseLessonShortcode,
+} from "./lessonShortcodes";
+
 // Hooks
 export { useTimetableCore } from "./useTimetableCore";
 

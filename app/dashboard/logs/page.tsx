@@ -1,362 +1,419 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from 'react'
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
-import { Sidebar } from "@/components/dashboard/Sidebar"
-import { SearchFilter } from "@/components/dashboard/SearchFilter"
-import { MobileNav } from "@/components/dashboard/MobileNav"
-import { Activity, CheckCircle, XCircle, Clock } from "lucide-react"
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Activity,
+  UserPlus,
+  UserX,
+  ToggleLeft,
+  CreditCard,
+  Shield,
+  Search,
+  Clock,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface Log {
-  id: number
-  store_name: string
-  provider: 'GAMEROOM' | 'GAMEVAULT'
-  operation: string
-  status: 'success' | 'failed'
-  timestamp: string
-  request_id: string
-  request_data: {
-    user_id: string
-    amount?: number
-    currency?: string
-    [key: string]: string | number | undefined
-  }
-  response_data: {
-    balance?: number
-    error?: string
-    [key: string]: string | number | undefined
-  }
-  duration_ms: number
+// ─── Types ─────────────────────────────────────────────────────
+
+interface AuditEntry {
+  id: string;
+  message: string;
+  source: string;
+  level: string;
+  metadata: any;
+  timestamp: string;
 }
 
-// Mock logs data with more details
-const mockLogs: { [key: number]: Log } = {
-  1: {
-    id: 1,
-    store_name: "GameStore Alpha",
-    provider: "GAMEROOM",
-    operation: "get_user_balance",
-    status: "success",
-    timestamp: "2024-01-15T10:30:00Z",
-    request_id: "req_abc123",
-    request_data: {
-      user_id: "user_123",
-      currency: "USD"
-    },
-    response_data: {
-      balance: 150.50
-    },
-    duration_ms: 245
-  },
-  2: {
-    id: 2,
-    store_name: "BetaCasino",
-    provider: "GAMEVAULT",
-    operation: "recharge",
-    status: "failed",
-    timestamp: "2024-01-15T10:35:00Z",
-    request_id: "req_def456",
-    request_data: {
-      user_id: "user_456",
-      amount: 100,
-      currency: "EUR"
-    },
-    response_data: {
-      error: "Insufficient funds"
-    },
-    duration_ms: 189
-  }
+// ─── GraphQL ───────────────────────────────────────────────────
+
+async function fetchAuditLogs(): Promise<AuditEntry[]> {
+  const res = await fetch("/api/graphql", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: `
+        query GetAuditLogs {
+          getAuditLogs {
+            id
+            message
+            source
+            level
+            metadata
+            timestamp
+          }
+        }
+      `,
+    }),
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0]?.message || "GraphQL error");
+  return json.data.getAuditLogs;
 }
 
-const logStats = [
-  {
-    title: "Total Requests",
-    value: "45.2K",
-    change: "+12% vs last month",
-    icon: Activity,
-    color: "text-blue-600"
-  },
-  {
-    title: "Success Rate",
-    value: "99.2%",
-    change: "+0.3% improvement",
-    icon: CheckCircle,
-    color: "text-green-600"
-  },
-  {
-    title: "Avg Response",
-    value: "156ms",
-    change: "-23ms from baseline",
-    icon: Clock,
-    color: "text-purple-600"
-  },
-  {
-    title: "Error Rate",
-    value: "0.8%",
-    change: "Within SLA",
-    icon: XCircle,
-    color: "text-red-600"
-  }
-]
+// ─── Helpers ───────────────────────────────────────────────────
 
-export default function LogsPage() {
-  const [selectedLog, setSelectedLog] = useState<string>('all')
-  const [searchTerm, setSearchTerm] = useState('')
+function getActionMeta(entry: AuditEntry): {
+  label: string;
+  icon: typeof Activity;
+  color: string;
+  bg: string;
+} {
+  const msg = entry.message || "";
+  if (msg.includes("CREATE_USER"))
+    return {
+      label: "User Created",
+      icon: UserPlus,
+      color: "text-green-600",
+      bg: "bg-green-100 dark:bg-green-900/30",
+    };
+  if (msg.includes("DELETE_USER"))
+    return {
+      label: "User Deleted",
+      icon: UserX,
+      color: "text-red-600",
+      bg: "bg-red-100 dark:bg-red-900/30",
+    };
+  if (msg.includes("CHANGE_STATUS"))
+    return {
+      label: "Status Changed",
+      icon: ToggleLeft,
+      color: "text-amber-600",
+      bg: "bg-amber-100 dark:bg-amber-900/30",
+    };
+  if (msg.includes("SUBSCRIPTION") || msg.includes("PLAN"))
+    return {
+      label: "Plan Change",
+      icon: CreditCard,
+      color: "text-purple-600",
+      bg: "bg-purple-100 dark:bg-purple-900/30",
+    };
+  return {
+    label: msg,
+    icon: Shield,
+    color: "text-slate-600",
+    bg: "bg-slate-100 dark:bg-slate-800/50",
+  };
+}
 
-  const filteredLogs = useMemo(() => {
-    if (!searchTerm) return Object.values(mockLogs)
-    return Object.values(mockLogs).filter(log => 
-      log.store_name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [searchTerm])
+function formatTimestamp(ts: string): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
-  const handleLogSelect = (logId: string) => {
-    setSelectedLog(logId)
-  }
+function extractTarget(entry: AuditEntry): string {
+  const meta = entry.metadata;
+  if (meta?.email) return meta.email;
+  if (meta?.userId) return meta.userId;
+  if (meta?.role) return `${meta.role}`;
+  return "—";
+}
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    setSelectedLog('all')
-  }
+// ─── Skeletons ────────────────────────────────────────────────
 
-  // Get the selected log details
-  const currentLog = selectedLog !== 'all' ? mockLogs[parseInt(selectedLog)] : null
+function LogSkeleton() {
+  return (
+    <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
+      <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+        <Skeleton className="h-4 w-32" />
+      </div>
+      <div className="p-5 space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex items-start gap-4">
+            <Skeleton className="h-10 w-10 rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-64" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ──────────────────────────────────────────────────────
+
+export default function AuditLogsPage() {
+  const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const loadLogs = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchAuditLogs();
+      setLogs(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load logs");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
+
+  const filtered = useMemo(() => {
+    if (!searchTerm) return logs;
+    const term = searchTerm.toLowerCase();
+    return logs.filter(
+      (entry) =>
+        entry.message.toLowerCase().includes(term) ||
+        entry.source.toLowerCase().includes(term) ||
+        JSON.stringify(entry.metadata).toLowerCase().includes(term),
+    );
+  }, [logs, searchTerm]);
 
   return (
-    <DashboardLayout
-      sidebar={<Sidebar />}
-      searchFilter={
-        <SearchFilter 
-          type="logs" 
-          onStoreSelect={handleLogSelect}
-          onSearch={handleSearch}
-        />
-      }
-      mobileNav={<MobileNav />}
-    >
+    <DashboardLayout>
       <div className="space-y-8">
-        {/* Page Header */}
-        <div className="border-b-2 border-slate-200 dark:border-slate-700 pb-8">
-          <div className="flex flex-col gap-2">
-            <div className="inline-block w-fit px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600">
-              <span className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                System Logs
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-mono font-bold tracking-wide text-slate-900 dark:text-slate-100">
-                Request Logs
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Activity className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                Audit Logs
               </h1>
+              {!loading && (
+                <span className="text-sm font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full">
+                  {logs.length}
+                </span>
+              )}
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-              Monitor and analyze API requests and responses
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Superadmin actions recorded across the platform
             </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadLogs}
+            disabled={loading}
+            className="h-9 gap-2"
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+            />
+            <span className="text-xs font-medium">Refresh</span>
+          </Button>
         </div>
 
-        {/* Show overview when no log is selected */}
-        {!currentLog && (
-          <div className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {logStats.map((stat) => (
-                <div key={stat.title} className="border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`${stat.color}`}>
-                      <stat.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                        {stat.title}
-                      </p>
-                      <p className="text-2xl font-mono font-bold mt-1">{stat.value}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        {stat.change}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recent Errors */}
-              <div className="border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="p-4 border-b-2 border-slate-200 dark:border-slate-700">
-                  <h2 className="font-mono font-bold">Recent Errors</h2>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-4">
-                    {Object.values(mockLogs)
-                      .filter(log => log.status === 'failed')
-                      .map(log => (
-                        <div key={log.id} className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded">
-                          <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono font-medium">{log.store_name}</span>
-                              <span className="text-xs text-slate-500">•</span>
-                              <span className="text-xs font-mono">{log.operation}</span>
-                            </div>
-                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                              {log.response_data.error}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs font-mono text-slate-500">{log.request_id}</span>
-                              <span className="text-xs text-slate-500">•</span>
-                              <span className="text-xs font-mono text-slate-500">
-                                {new Date(log.timestamp).toLocaleTimeString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Response Time Breakdown */}
-              <div className="border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-                <div className="p-4 border-b-2 border-slate-200 dark:border-slate-700">
-                  <h2 className="font-mono font-bold">Response Time Breakdown</h2>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono">GAMEROOM</span>
-                        <span className="text-xs font-mono">145ms avg</span>
-                      </div>
-                      <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full w-3/4 bg-blue-500 rounded-full" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono">GAMEVAULT</span>
-                        <span className="text-xs font-mono">167ms avg</span>
-                      </div>
-                      <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full w-2/3 bg-purple-500 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t-2 border-slate-200 dark:border-slate-700">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs font-mono uppercase text-slate-500">Fastest Response</p>
-                        <p className="font-mono font-bold mt-1">89ms</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-mono uppercase text-slate-500">Slowest Response</p>
-                        <p className="font-mono font-bold mt-1">892ms</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Show message when no log is selected */}
-        {!currentLog && (
-          <div className="text-center py-12 text-slate-600 dark:text-slate-400">
-            <p className="font-mono">Select a log from the list to view details</p>
-          </div>
-        )}
-
-        {/* Show log details when one is selected */}
-        {currentLog && (
-          <div className="space-y-6">
-            {/* Log Overview */}
-            <div className="p-6 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-mono font-bold">{currentLog.store_name}</h2>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-xs font-mono rounded">
-                      {currentLog.provider}
-                    </div>
-                    <div className="text-xs font-mono">{currentLog.operation}</div>
-                  </div>
-                </div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+          {[
+            {
+              label: "Total Actions",
+              value: String(logs.length),
+              change: "From database",
+              icon: Activity,
+              color: "text-blue-600",
+              gradient: "from-blue-500/10 to-blue-500/5",
+            },
+            {
+              label: "User Actions",
+              value: String(
+                logs.filter((l) => l.message.includes("USER")).length,
+              ),
+              change: "Creations & changes",
+              icon: UserPlus,
+              color: "text-green-600",
+              gradient: "from-green-500/10 to-green-500/5",
+            },
+            {
+              label: "Plan Changes",
+              value: String(
+                logs.filter(
+                  (l) =>
+                    l.message.includes("PLAN") ||
+                    l.message.includes("SUBSCRIPTION"),
+                ).length,
+              ),
+              change: "Plan updates",
+              icon: CreditCard,
+              color: "text-purple-600",
+              gradient: "from-purple-500/10 to-purple-500/5",
+            },
+            {
+              label: "System",
+              value: String(
+                logs.filter(
+                  (l) =>
+                    !l.message.includes("USER") &&
+                    !l.message.includes("PLAN") &&
+                    !l.message.includes("SUBSCRIPTION"),
+                ).length,
+              ),
+              change: "Other actions",
+              icon: Shield,
+              color: "text-amber-600",
+              gradient: "from-amber-500/10 to-amber-500/5",
+            },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className={cn(
+                  "relative overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm bg-gradient-to-br dark:from-slate-900 dark:to-slate-900/80",
+                  stat.gradient,
+                )}
+              >
                 <div className="flex items-center gap-3">
-                  {currentLog.status === 'success' ? (
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-slate-400" />
-                    <span className="text-sm font-mono">{currentLog.duration_ms}ms</span>
+                  <div className="w-10 h-10 rounded-xl bg-white/80 dark:bg-slate-800/80 shadow-sm flex items-center justify-center">
+                    <Icon className={cn("h-5 w-5", stat.color)} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400">
+                      {stat.label}
+                    </p>
+                    <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 mt-0.5">
+                      {stat.value}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                      {stat.change}
+                    </p>
                   </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Request Details */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-mono uppercase text-slate-500">Request</h3>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border-2 border-slate-200 dark:border-slate-700">
-                    <pre className="text-xs font-mono whitespace-pre-wrap">
-                      {JSON.stringify(currentLog.request_data, null, 2)}
-                    </pre>
-                  </div>
-                </div>
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            placeholder="Search logs..."
+            className="w-full h-10 pl-10 pr-4 text-sm rounded-xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-slate-900/80 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-                {/* Response Details */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-mono uppercase text-slate-500">Response</h3>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border-2 border-slate-200 dark:border-slate-700">
-                    <pre className="text-xs font-mono whitespace-pre-wrap">
-                      {JSON.stringify(currentLog.response_data, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metadata */}
-              <div className="mt-6 pt-6 border-t-2 border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-xs font-mono uppercase text-slate-500">Request ID</label>
-                    <div className="font-mono text-sm mt-1">{currentLog.request_id}</div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-slate-500">Timestamp</label>
-                    <div className="font-mono text-sm mt-1">
-                      {new Date(currentLog.timestamp).toLocaleString()}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-slate-500">Status</label>
-                    <div className="font-mono text-sm mt-1">{currentLog.status}</div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-mono uppercase text-slate-500">Duration</label>
-                    <div className="font-mono text-sm mt-1">{currentLog.duration_ms}ms</div>
-                  </div>
-                </div>
-              </div>
+        {/* Error */}
+        {error && (
+          <div className="flex items-start gap-4 p-5 bg-red-50/80 dark:bg-red-950/30 border border-red-200/60 dark:border-red-800/40 rounded-2xl shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-500" />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-red-800 dark:text-red-300">
+                Failed to load audit logs
+              </p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                {error}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadLogs}
+              className="h-8 text-xs border-red-200 text-red-600 hover:bg-red-50"
+            >
+              Retry
+            </Button>
           </div>
         )}
 
-        {/* Use filteredLogs when rendering the logs list */}
-        <div className="space-y-4">
-          {filteredLogs.map(log => (
-            <div key={log.id} className="p-4 border-2 border-slate-200 dark:border-slate-700 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="font-mono">{log.store_name}</span>
-                <span className="text-sm text-slate-500">{new Date(log.timestamp).toLocaleString()}</span>
+        {/* Loading */}
+        {loading && !error && <LogSkeleton />}
+
+        {/* Logs */}
+        {!loading && !error && (
+          <div className="space-y-3">
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-10 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                  <Activity className="h-6 w-6 text-slate-400" />
+                </div>
+                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  {searchTerm
+                    ? "No logs match your search"
+                    : "No audit logs yet"}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {searchTerm
+                    ? "Try a different search term"
+                    : "Logs will appear here as superadmin actions are performed"}
+                </p>
               </div>
-            </div>
-          ))}
-        </div>
+            ) : (
+              filtered.map((entry) => {
+                const meta = getActionMeta(entry);
+                const Icon = meta.icon;
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex items-start gap-4 p-4 border border-slate-200/60 dark:border-slate-700/60 rounded-xl bg-white dark:bg-slate-900/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors shadow-sm"
+                  >
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                        meta.bg,
+                      )}
+                    >
+                      <Icon className={cn("h-5 w-5", meta.color)} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {meta.label}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-mono uppercase flex-shrink-0"
+                          >
+                            {entry.source}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-slate-400 flex-shrink-0">
+                          <Clock className="h-3 w-3" />
+                          {formatTimestamp(entry.timestamp)}
+                        </div>
+                      </div>
+                      {entry.metadata && (
+                        <p className="text-xs text-slate-500 mt-1.5 font-mono bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700/50 overflow-x-auto">
+                          {JSON.stringify(entry.metadata, null, 2)}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400">
+                        <span className="font-medium">Target:</span>{" "}
+                        {extractTarget(entry)}
+                        <span className="text-slate-300 dark:text-slate-600">
+                          ·
+                        </span>
+                        <span>Level: {entry.level}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
-  )
-} 
+  );
+}

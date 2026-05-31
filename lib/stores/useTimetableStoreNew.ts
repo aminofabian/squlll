@@ -24,6 +24,7 @@ import {
   entryMatchesGradeScope,
   resolveCanonicalGradeId,
   resolveTenantGradeLevelIdForApi,
+  resolveTenantStreamIdForApi,
 } from "@/app/school/[subdomain]/(pages)/timetable/utils/resolveGradeForSchoolConfig";
 import {
   GET_TIMETABLE_ENTRIES_QUERY,
@@ -1500,10 +1501,16 @@ export const useTimetableStore = create<TimetableStore>()(
                   (ts: { id?: string; stream?: { name?: string } }) =>
                     ts.id && ts.stream?.name,
                 )
-                .map((ts: { id: string; stream: { name: string } }) => ({
-                  tenantStreamId: ts.id,
-                  name: ts.stream.name,
-                }));
+                .map(
+                  (ts: {
+                    id: string;
+                    stream: { id: string; name: string };
+                  }) => ({
+                    tenantStreamId: ts.id,
+                    streamId: ts.stream.id,
+                    name: ts.stream.name,
+                  }),
+                );
 
               return {
                 // Use gradeLevel.id to match entries which use entry.gradeLevel.id
@@ -1527,10 +1534,23 @@ export const useTimetableStore = create<TimetableStore>()(
             })),
           });
 
-          set((state) => ({
-            grades: fetchedGrades,
-            lastUpdated: new Date().toISOString(),
-          }));
+          set((state) => {
+            const next: Partial<typeof state> = {
+              grades: fetchedGrades,
+              lastUpdated: new Date().toISOString(),
+            };
+            if (state.selectedStreamId && state.selectedGradeId) {
+              const normalized = resolveTenantStreamIdForApi(
+                state.selectedStreamId,
+                state.selectedGradeId,
+                fetchedGrades,
+              );
+              if (normalized && normalized !== state.selectedStreamId) {
+                next.selectedStreamId = normalized;
+              }
+            }
+            return next;
+          });
         } catch (error) {
           console.error("Error loading grades:", error);
           throw error;
@@ -1835,6 +1855,8 @@ export const useTimetableStore = create<TimetableStore>()(
                 totalPeriods
                 totalOccupiedSlots
                 totalFreeSlots
+                daysPerWeek
+                periodNumbers
                 generatedAt
                 timetableByGrade {
                   gradeLevel {
@@ -2194,10 +2216,13 @@ export const useTimetableStore = create<TimetableStore>()(
                 ?.tenantGradeLevelId ?? rawGradeLevelId)
             : undefined;
           const masterGradeId = rawGradeLevelId;
-          const streamId =
+          const streamId = resolveTenantStreamIdForApi(
             options?.streamId !== undefined
               ? options.streamId
-              : get().selectedStreamId;
+              : get().selectedStreamId,
+            rawGradeLevelId ?? null,
+            get().grades,
+          );
 
           console.log("Loading school timetable for term:", termId, {
             gradeLevelId,
@@ -2213,6 +2238,8 @@ export const useTimetableStore = create<TimetableStore>()(
                 totalPeriods
                 totalOccupiedSlots
                 totalFreeSlots
+                daysPerWeek
+                periodNumbers
                 generatedAt
                 timetableByGrade {
                   gradeLevel {
@@ -2526,11 +2553,6 @@ export const useTimetableStore = create<TimetableStore>()(
                     ].sort((a, b) => a - b)
                   : [];
 
-          const resolvedDaysPerWeek =
-            timetableData.daysPerWeek ||
-            timetableData.totalDays ||
-            (timetableData.timetableByGrade?.[0]?.days?.length ?? 5);
-
           const gradeScopedSlots =
             gradeLevelId && timetableData
               ? extractTimeSlotsFromTimetableData(
@@ -2543,6 +2565,32 @@ export const useTimetableStore = create<TimetableStore>()(
           const schoolWideSlots = timetableData
             ? extractTimeSlotsFromTimetableData(timetableData)
             : [];
+
+          const slotsForDayCount =
+            gradeScopedSlots.length > 0 ? gradeScopedSlots : schoolWideSlots;
+
+          const inferredDaysFromSlots = (() => {
+            let maxDay = 0;
+            for (const slot of slotsForDayCount) {
+              if (
+                typeof slot.dayOfWeek === "number" &&
+                slot.dayOfWeek >= 1 &&
+                slot.dayOfWeek <= 7
+              ) {
+                maxDay = Math.max(maxDay, slot.dayOfWeek);
+              }
+            }
+            return maxDay > 0 ? maxDay : null;
+          })();
+
+          // totalDays is the number of day templates in the term — not school days per week.
+          const resolvedDaysPerWeek =
+            inferredDaysFromSlots ??
+            (typeof timetableData.daysPerWeek === "number" &&
+            timetableData.daysPerWeek >= 1
+              ? timetableData.daysPerWeek
+              : null) ??
+            5;
 
           const existingSlots = get().timeSlots;
           const resolvedSlots =
@@ -3312,17 +3360,31 @@ export const useTimetableStore = create<TimetableStore>()(
           });
           return;
         }
-        const grade = get().grades.find((g) => g.id === gradeId);
+        const grade = get().grades.find(
+          (g) => g.id === gradeId || g.tenantGradeLevelId === gradeId,
+        );
+        const canonicalGradeId = grade?.id ?? gradeId;
         const firstStream = grade?.streams?.[0]?.tenantStreamId ?? null;
         set({
-          selectedGradeId: gradeId,
+          selectedGradeId: canonicalGradeId,
           selectedStreamId: grade?.streams?.length ? firstStream : null,
           timeSlots: [],
           periodNumbers: [],
           lessonPeriodsPerDay: 0,
         });
       },
-      setSelectedStream: (streamId) => set({ selectedStreamId: streamId }),
+      setSelectedStream: (streamId) => {
+        if (!streamId) {
+          set({ selectedStreamId: null });
+          return;
+        }
+        const resolved = resolveTenantStreamIdForApi(
+          streamId,
+          get().selectedGradeId,
+          get().grades,
+        );
+        set({ selectedStreamId: resolved });
+      },
       setSelectedTerm: (termId) => set({ selectedTermId: termId }),
       setSearchTerm: (term) => set({ searchTerm: term }),
       toggleConflicts: () =>

@@ -46,11 +46,24 @@ interface GraphQLCell {
   entryData: GraphQLEntryData | null;
 }
 
+interface GraphQLBreakRow {
+  id: string;
+  name: string;
+  type: string;
+  afterPeriod: number;
+  durationMinutes: number;
+  icon: string;
+  dayOfWeek: number;
+  startTime?: string;
+  endTime?: string;
+}
+
 interface GraphQLTimetable {
   gradeId: string;
   gradeName: string;
   timeSlots: GraphQLTimeSlot[];
   cells: GraphQLCell[];
+  breaks?: GraphQLBreakRow[];
 }
 
 /** Parse "7:30 AM – 8:15 AM" into { startTime: "07:30", endTime: "08:15" } */
@@ -130,12 +143,19 @@ export function transformStudentTimetable(
     };
   });
 
-  // 2. Collect all breaks
-  const breaksMap = new Map<string, TimetableBreak>();
-  const breakCellPositions: Map<
-    string,
-    { dayOfWeek: number; periodNumber: number }
-  > = new Map();
+  // 2. Break rows (separate bands after periods — not lesson cells)
+  const breaks: TimetableBreak[] = (graphqlData.breaks ?? []).map((b) => ({
+    id: b.id,
+    name: b.name || "Break",
+    type: normalizeBreakType(b.type),
+    afterPeriod: b.afterPeriod,
+    durationMinutes: b.durationMinutes,
+    dayOfWeek: b.dayOfWeek,
+    applyToAllDays: false,
+    icon: b.icon || "☕",
+    startTime: b.startTime,
+    endTime: b.endTime,
+  }));
 
   // 3. Group cells by day
   const dayCellsMap = new Map<number, Map<number, GraphQLCell>>();
@@ -169,29 +189,8 @@ export function transformStudentTimetable(
       }
 
       if (gqlCell.isBreak && gqlCell.breakData) {
-        // Break
-        const breakType = normalizeBreakType(gqlCell.breakData.type);
-        const breakId = gqlCell.breakData.id;
-
-        if (!breaksMap.has(breakId)) {
-          breaksMap.set(breakId, {
-            id: breakId,
-            name: gqlCell.breakData.name || "Break",
-            type: breakType,
-            afterPeriod: gqlCell.periodNumber,
-            durationMinutes: gqlCell.breakData.durationMinutes,
-            dayOfWeek: gqlCell.dayOfWeek,
-            applyToAllDays: false,
-            icon: gqlCell.breakData.icon || "☕",
-          });
-        }
-
-        cells.push({
-          type: "break",
-          periodNumber: slot.periodNumber,
-          dayOfWeek: d,
-          break: breaksMap.get(breakId)!,
-        });
+        // Legacy: breaks belonged in row bands, not period cells
+        cells.push(null);
       } else if (gqlCell.entryData) {
         // Lesson
         const lesson: TimetableLesson = {
@@ -268,7 +267,7 @@ export function transformStudentTimetable(
     termName,
     timeSlots,
     days,
-    breaks: Array.from(breaksMap.values()),
+    breaks,
     stats,
     lastUpdated: new Date().toISOString(),
   };

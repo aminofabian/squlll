@@ -559,6 +559,67 @@ export function useGradeStatistics(gradeId: string | null) {
   ]);
 }
 
+export type TeacherWeeklyLesson = {
+  teacherId: string;
+  name: string;
+  lessonCount: number;
+};
+
+/**
+ * Weekly lesson counts per teacher for the current view (whole school or one grade).
+ */
+export function useTeacherWeeklyLessons(
+  gradeId: string | null,
+): TeacherWeeklyLesson[] {
+  const store = useTimetableStore();
+
+  return useMemo(() => {
+    const scopedEntries = gradeId
+      ? store.entries.filter((entry) =>
+          entryMatchesGradeScope(
+            entry,
+            gradeId,
+            store.selectedStreamId,
+            store.grades,
+          ),
+        )
+      : store.entries;
+
+    const counts = new Map<string, TeacherWeeklyLesson>();
+
+    for (const entry of scopedEntries) {
+      if (!entry.teacherId) continue;
+      const teacher = store.teachers.find((t) => t.id === entry.teacherId);
+      const name =
+        teacher?.fullName?.trim() ||
+        teacher?.name?.trim() ||
+        "Unknown teacher";
+      const existing = counts.get(entry.teacherId);
+      if (existing) {
+        existing.lessonCount += 1;
+      } else {
+        counts.set(entry.teacherId, {
+          teacherId: entry.teacherId,
+          name,
+          lessonCount: 1,
+        });
+      }
+    }
+
+    return [...counts.values()].sort(
+      (a, b) =>
+        b.lessonCount - a.lessonCount ||
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+  }, [
+    gradeId,
+    store.entries,
+    store.teachers,
+    store.selectedStreamId,
+    store.grades,
+  ]);
+}
+
 /**
  * Get teacher's full schedule across all grades
  */

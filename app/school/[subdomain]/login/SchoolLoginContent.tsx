@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
 import { GraduationCap, Shield, BookOpen, Users, Building2, Star, ArrowRight, Globe, CheckCircle2 } from "lucide-react"
 import { debugAuth, checkAuthStatus } from "@/lib/utils"
@@ -53,6 +53,7 @@ export default function SchoolLoginContent() {
   const [error, setError] = useState("")
   const [schoolName, setSchoolName] = useState("School Portal")
   const [registeredBanner, setRegisteredBanner] = useState(false)
+  const submitInFlight = useRef(false)
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
@@ -77,6 +78,9 @@ export default function SchoolLoginContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitInFlight.current) return
+
+    submitInFlight.current = true
     setIsLoading(true)
     setError("")
 
@@ -124,6 +128,7 @@ export default function SchoolLoginContent() {
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred during sign in')
     } finally {
+      submitInFlight.current = false
       setIsLoading(false)
     }
   }

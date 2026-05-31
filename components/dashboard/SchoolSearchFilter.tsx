@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, GraduationCap, X, School, BookOpen, Users, Award } from "lucide-react"
+import { Search, GraduationCap, X, School, BookOpen, Users, Award, LayoutGrid, Check } from "lucide-react"
 import { useEffect, useState, useMemo } from 'react'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { Level, GradeLevel, Stream } from '@/lib/types/school-config'
@@ -50,24 +50,30 @@ interface SchoolSearchFilterProps {
   className?: string
   type?: 'grades' | 'classes' | 'students'
   variant?: 'default' | 'minimal'
+  surface?: 'sidebar' | 'drawer'
   onSearch?: (term: string) => void
   onGradeSelect?: (gradeId: string, levelId: string) => void
   onStreamSelect?: (streamId: string, gradeId: string, levelId: string) => void
   isLoading?: boolean
   selectedGradeId?: string
   selectedStreamId?: string
+  allClassesSelected?: boolean
+  onSelectAllClasses?: () => void
 }
 
 export function SchoolSearchFilter({ 
   className, 
   type = 'grades',
   variant = 'default',
+  surface = 'sidebar',
   onSearch,
   onGradeSelect,
   onStreamSelect,
   isLoading = false,
   selectedGradeId: parentSelectedGradeId,
-  selectedStreamId: parentSelectedStreamId
+  selectedStreamId: parentSelectedStreamId,
+  allClassesSelected = false,
+  onSelectAllClasses,
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
@@ -419,42 +425,88 @@ export function SchoolSearchFilter({
     }
   };
 
+  const isMinimal = variant === "minimal";
+  const isMobileDrawer = isMinimal && surface === "drawer";
+
+  const gradeButtonClass = (selected: boolean) => {
+    if (!isMinimal) {
+      return cn(
+        "relative h-8 w-full rounded-lg border px-2.5 text-xs font-medium transition-all",
+        selected
+          ? "border-primary bg-primary text-white shadow-sm"
+          : "border-input bg-background hover:border-primary/30 hover:bg-primary/5 hover:text-primary",
+      );
+    }
+
+    return cn(
+      "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold transition-colors active:scale-[0.98]",
+      selected
+        ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+        : "bg-slate-100 text-slate-700 active:bg-slate-200 dark:bg-slate-800 dark:text-slate-200",
+    );
+  };
+
+  const streamButtonClass = (selected: boolean) => {
+    if (isMinimal) {
+      return cn(
+        "flex-1 rounded-lg py-2 text-center text-[13px] font-semibold transition-all active:scale-[0.98]",
+        selected
+          ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-50"
+          : "text-slate-500 dark:text-slate-400",
+      );
+    }
+
+    return cn(
+      "inline-flex items-center justify-center rounded-lg px-3 text-xs font-medium transition-colors active:opacity-80",
+      "h-8 min-w-[2.25rem]",
+      selected
+        ? "bg-slate-200/80 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+        : "text-slate-600 hover:bg-slate-100/80 dark:text-slate-400",
+    );
+  };
+
   return (
     <div className={cn("flex flex-col h-full", className)}>
       <div
         className={cn(
-          "flex flex-col space-y-3",
-          variant === "minimal" ? "pb-3" : "p-4 border-b",
+          "flex flex-col",
+          isMinimal
+            ? isMobileDrawer
+              ? "gap-3 pb-1"
+              : "gap-3 pb-3"
+            : "space-y-3 p-4 border-b",
         )}
       >
-        <div className="flex items-center justify-between gap-2">
-          <h3
-            className={cn(
-              variant === "minimal"
-                ? "text-[11px] font-semibold uppercase tracking-wide text-slate-400"
-                : "text-lg font-semibold",
-            )}
-          >
-            {variant === "minimal" ? "Browse grades" : "Grade Levels"}
-          </h3>
-          <div className="flex items-center gap-1">
-            {searchTerm && (
-              <Button
-                variant="ghost"
-                size="sm"
+        {isMinimal ? (
+          <div className="flex items-center justify-between gap-2 px-0.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+              Browse grades
+            </p>
+            {searchTerm ? (
+              <button
+                type="button"
                 onClick={clearSearch}
-                className={cn(
-                  "h-7 px-2",
-                  variant === "minimal"
-                    ? "text-xs text-slate-400 hover:text-slate-600"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                className="text-xs font-semibold text-primary active:opacity-60"
               >
                 Clear
-                <X className="ml-1 h-3.5 w-3.5" />
-              </Button>
-            )}
-            {variant === "default" && (
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-lg font-semibold">Grade Levels</h3>
+            <div className="flex items-center gap-1">
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSearch}
+                  className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                  <X className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -463,36 +515,80 @@ export function SchoolSearchFilter({
               >
                 Refresh
               </Button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="relative">
-          <Search
+        {isMinimal && onSelectAllClasses ? (
+          <button
+            type="button"
+            onClick={onSelectAllClasses}
             className={cn(
-              "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
-              variant === "minimal" ? "text-slate-400" : "text-muted-foreground",
+              "flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors active:scale-[0.99]",
+              "bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900",
+              allClassesSelected && "ring-2 ring-slate-900/10 dark:ring-slate-100/10",
             )}
-          />
-          <Input
-            placeholder="Search grades..."
-            className={cn(
-              "pl-9",
-              variant === "minimal"
-                ? "h-9 border-slate-200 bg-white text-sm dark:border-slate-700 dark:bg-slate-900"
-                : "h-10",
-            )}
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
+          >
+            <span
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                allClassesSelected
+                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+                All classes
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                Whole-school overview
+              </span>
+            </span>
+            {allClassesSelected ? (
+              <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />
+            ) : null}
+          </button>
+        ) : null}
+
+        <div
+          className={cn(
+            isMinimal &&
+              "overflow-hidden rounded-2xl bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900",
+          )}
+        >
+          <div className={cn("relative", isMinimal ? "flex items-center px-3" : "")}>
+            <Search
+              className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <Input
+              placeholder="Search grades..."
+              className={cn(
+                "pl-9",
+                isMinimal
+                  ? "h-11 border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 dark:bg-transparent"
+                  : "h-10",
+              )}
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
         </div>
       </div>
       
       {/* Grades List */}
-      <ScrollArea className={cn("flex-1", variant === "minimal" ? "" : "px-4")}>
-        <div className={cn(variant === "minimal" ? "space-y-4 py-1" : "space-y-6 py-4")}>
+      <ScrollArea
+        className={cn("flex-1", isMinimal ? "px-1" : "px-4")}
+      >
+        <div
+          className={cn(
+            isMinimal ? "space-y-3 py-2" : "space-y-6 py-4",
+          )}
+        >
           {isLoading ? (
-            <div className="grid grid-cols-2 gap-2 py-2">
+            <div className={cn("grid gap-2 py-2", isMinimal ? "grid-cols-3" : "grid-cols-2")}>
               {[...Array(12)].map((_, j) => (
                 <div
                   key={j}
@@ -517,17 +613,10 @@ export function SchoolSearchFilter({
               <p className="text-xs text-slate-400">No grades found</p>
             </div>
           ) : (
-            <div className={cn(variant === "minimal" ? "space-y-4 py-1" : "space-y-6 py-2")}>
+            <div className={cn(isMinimal ? "space-y-3 py-1" : "space-y-6 py-2")}>
               {(() => {
-                const levelDivider = (
-                  <div
-                    className={cn(
-                      "h-px",
-                      variant === "minimal"
-                        ? "bg-slate-100 dark:bg-slate-800"
-                        : "bg-gradient-to-r from-transparent via-primary/20 to-transparent my-2",
-                    )}
-                  />
+                const levelDivider = isMinimal ? null : (
+                  <div className="my-2 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
                 );
 
                 const renderGradeGroup = (
@@ -537,50 +626,71 @@ export function SchoolSearchFilter({
                   if (grades.length === 0) return null;
 
                   const activeGrade =
-                    variant === "minimal" && selectedGradeId
+                    isMinimal && selectedGradeId
                       ? grades.find((grade) => grade.id === selectedGradeId)
                       : null;
 
                   return (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 px-0.5">
-                        {variant === "default" && (
+                      <div className="flex items-center justify-between gap-2 px-0.5">
+                        {!isMinimal && (
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                         )}
                         <h4
                           className={cn(
-                            variant === "minimal"
-                              ? "text-[11px] font-semibold uppercase tracking-wide text-slate-400"
-                              : "text-xs font-semibold text-primary/80 uppercase tracking-wider px-2",
+                            isMinimal
+                              ? "text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500"
+                              : "px-2 text-xs font-semibold uppercase tracking-wider text-primary/80",
                           )}
                         >
                           {groupTitle}
                         </h4>
-                        {variant === "default" && (
+                        {!isMinimal && (
                           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
                         )}
-                        {variant === "minimal" && (
-                          <span className="ml-auto rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-slate-400 dark:bg-slate-800">
+                        {isMinimal && (
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900 dark:text-slate-400">
                             {grades.length}
                           </span>
                         )}
                       </div>
 
+                      {isMinimal ? (
+                        <div className="overflow-hidden rounded-2xl bg-white p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900">
+                          <div className="grid grid-cols-3 gap-2">
+                            {grades.map((grade) => (
+                              <button
+                                key={grade.id}
+                                type="button"
+                                className={gradeButtonClass(
+                                  selectedGradeId === grade.id,
+                                )}
+                                onClick={() => handleGradeClick(grade)}
+                              >
+                                <span>{abbreviateGradeShort(grade.name)}</span>
+                                {grade.streams?.length > 0 ? (
+                                  <span
+                                    className={cn(
+                                      "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold tabular-nums",
+                                      selectedGradeId === grade.id
+                                        ? "bg-white/20 text-white"
+                                        : "bg-white text-slate-500 dark:bg-slate-700 dark:text-slate-300",
+                                    )}
+                                  >
+                                    {grade.streams.length}
+                                  </span>
+                                ) : null}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
                       <div className="grid grid-cols-2 gap-1.5">
                         {grades.map((grade) => (
                           <div key={grade.id} className="flex flex-col gap-1">
                             <button
                               type="button"
-                              className={cn(
-                                "h-8 px-2.5 transition-all text-xs relative w-full rounded-lg border font-medium",
-                                selectedGradeId === grade.id
-                                  ? variant === "minimal"
-                                    ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                                    : "bg-primary text-white border-primary shadow-sm"
-                                  : variant === "minimal"
-                                    ? "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                                    : "border-input bg-background hover:bg-primary/5 hover:text-primary hover:border-primary/30",
-                              )}
+                              className={gradeButtonClass(selectedGradeId === grade.id)}
                               onClick={() => handleGradeClick(grade)}
                             >
                               <div className="flex w-full items-center justify-between gap-1">
@@ -612,7 +722,7 @@ export function SchoolSearchFilter({
                                       className={cn(
                                         "flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums",
                                         selectedGradeId === grade.id
-                                          ? "bg-white/20 text-white dark:bg-slate-900/15 dark:text-slate-600"
+                                          ? "bg-slate-300/50 text-slate-700 dark:bg-slate-600 dark:text-slate-200"
                                           : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
                                       )}
                                     >
@@ -670,13 +780,26 @@ export function SchoolSearchFilter({
                           </div>
                         ))}
                       </div>
+                      )}
 
                       {activeGrade && activeGrade.streams?.length > 0 && (
-                        <div className="space-y-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
-                          <p className="text-[10px] font-medium text-slate-400">
+                        <div
+                          className={cn(
+                            isMinimal
+                              ? "space-y-2 rounded-2xl bg-white p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900"
+                              : "space-y-2 border-t border-slate-100 pt-3 dark:border-slate-800",
+                          )}
+                        >
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
                             Streams in {abbreviateGradeShort(activeGrade.name)}
                           </p>
-                          <div className="flex flex-wrap gap-1.5">
+                          <div
+                            className={cn(
+                              isMinimal
+                                ? "flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+                                : "flex flex-wrap gap-2",
+                            )}
+                          >
                             {activeGrade.streams.map((stream) => {
                               const isSelected = selectedStreamId === stream.id;
 
@@ -684,12 +807,7 @@ export function SchoolSearchFilter({
                                 <button
                                   key={stream.id}
                                   type="button"
-                                  className={cn(
-                                    "flex h-8 min-w-[2.25rem] items-center justify-center rounded-lg border px-3 text-xs font-medium transition-colors",
-                                    isSelected
-                                      ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
-                                  )}
+                                  className={streamButtonClass(isSelected)}
                                   onClick={() =>
                                     handleStreamClick(
                                       stream.id,

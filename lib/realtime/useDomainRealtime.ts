@@ -15,6 +15,7 @@ import type {
   ParentInvitationAcceptedPayload,
   RealtimeEnvelope,
   TimetablePublishedPayload,
+  TimetableEntryChangedPayload,
 } from './types'
 
 import type {
@@ -27,6 +28,7 @@ import type {
 export interface DomainRealtimeHandlers {
   onTimetablePublished?: (payload: TimetablePublishedPayload) => void
   onTimetableUnpublished?: (payload: TimetablePublishedPayload) => void
+  onTimetableEntryChanged?: (payload: TimetableEntryChangedPayload) => void
   onLessonCompleted?: (payload: LessonCompletedPayload) => void
   onFeePaymentUpdated?: (payload: FeePaymentUpdatedPayload) => void
   onInvitationSent?: (payload: InvitationPayload) => void
@@ -80,6 +82,10 @@ export function useDomainRealtime(handlers: DomainRealtimeHandlers): void {
       bind<TimetablePublishedPayload>(
         'timetable.unpublished',
         (p) => handlersRef.current.onTimetableUnpublished?.(p),
+      ),
+      bind<TimetableEntryChangedPayload>(
+        'timetable.entry_changed',
+        (p) => handlersRef.current.onTimetableEntryChanged?.(p),
       ),
       bind<LessonCompletedPayload>(
         'lesson.completed',

@@ -84,6 +84,7 @@ export function getGraphqlFailureMessage(
     if (res?.status === 401) return 'Please sign in again.';
     if (res?.status === 403) return 'You do not have permission to view this school.';
     if (res?.status === 404) return 'School setup is not complete yet.';
+    if (res?.status === 503) return getGraphqlConnectionMessage();
   }
   if (error instanceof Error && error.message.trim()) {
     return error.message.trim();
@@ -92,6 +93,38 @@ export function getGraphqlFailureMessage(
     return error.trim();
   }
   return fallback;
+}
+
+/** User-facing message when Nest/GraphQL on :3001 is unreachable. */
+export function getGraphqlConnectionMessage(): string {
+  return 'Cannot reach the API server. Make sure the backend is running (port 3001).';
+}
+
+export function isGraphqlConnectionError(
+  error: unknown,
+  message?: string,
+): boolean {
+  const text = (
+    message ??
+    getGraphqlFailureMessage(error, '')
+  ).toLowerCase();
+
+  if (
+    text.includes('failed to connect to graphql') ||
+    text.includes('fetch failed') ||
+    text.includes('network_error') ||
+    text.includes('econnrefused') ||
+    text.includes('cannot reach the api server')
+  ) {
+    return true;
+  }
+
+  if (error && typeof error === 'object' && 'response' in error) {
+    const status = (error as { response?: { status?: number } }).response?.status;
+    if (status === 503 || status === 502) return true;
+  }
+
+  return false;
 }
 
 /**

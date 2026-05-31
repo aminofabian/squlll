@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCurrentAcademicYear } from './useAcademicYears';
+import { TERM_LIST_SELECTION } from '../graphql/term-fields';
 
 interface Term {
   id: string;
@@ -7,9 +8,19 @@ interface Term {
   startDate: string;
   endDate: string;
   isActive: boolean;
+  isCurrent: boolean;
   academicYear: {
     name: string;
   };
+}
+
+function pickSchoolCurrentTerm(terms: Term[]): Term | null {
+  return (
+    terms.find((t) => t.isCurrent) ||
+    terms.find((t) => t.isActive) ||
+    terms[0] ||
+    null
+  );
 }
 
 interface UseActiveTermResult {
@@ -20,8 +31,9 @@ interface UseActiveTermResult {
 }
 
 /**
- * Hook to fetch the active term for the current academic year
- * This doesn't require TermProvider, so it can be used in student/parent pages
+ * Hook to fetch the school's current term for the active academic year.
+ * Uses the same selection as admin (isCurrent), then isActive, then first term.
+ * Usable on student/parent pages without TermProvider.
  */
 export function useActiveTerm(): UseActiveTermResult {
   const [activeTerm, setActiveTerm] = useState<Term | null>(null);
@@ -51,14 +63,7 @@ export function useActiveTerm(): UseActiveTermResult {
           query: `
             query GetTermsForAcademicYear($academicYearId: ID!) {
               termsByAcademicYear(academicYearId: $academicYearId) {
-                id
-                name
-                startDate
-                endDate
-                isActive
-                academicYear {
-                  name
-                }
+                ${TERM_LIST_SELECTION}
               }
             }
           `,
@@ -72,12 +77,8 @@ export function useActiveTerm(): UseActiveTermResult {
         throw new Error(data.errors[0]?.message || 'GraphQL error');
       }
 
-      const terms = data.data?.termsByAcademicYear || [];
-      
-      // Find active term, or fall back to first term
-      const term = terms.find((t: Term) => t.isActive) || terms[0] || null;
-      
-      setActiveTerm(term);
+      const terms = (data.data?.termsByAcademicYear || []) as Term[];
+      setActiveTerm(pickSchoolCurrentTerm(terms));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch active term';
       setError(errorMessage);

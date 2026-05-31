@@ -18,6 +18,7 @@ import type {
   TimetableBreak,
   TimetableViewType,
 } from '@/lib/timetable/types';
+import { getSubjectShortCode } from '@/lib/timetable/lessonShortcodes';
 import {
   getSubjectPaletteColor,
   normalizeSubjectName,
@@ -30,6 +31,7 @@ import {
   TeacherMobileDayPill,
   countDayLessons,
 } from './TeacherMobileDayView';
+import { TeacherMobileWeekTable } from './TeacherMobileWeekTable';
 
 const WEEKDAY_NUMBERS = [1, 2, 3, 4, 5] as const;
 
@@ -135,14 +137,14 @@ export function TimetableGrid({
   }, [days]);
 
   const isTeacherCompact = compact && viewType === 'teacher';
-
+  const isStudentCompact = compact && viewType === 'student';
+  const useMobileTimeline = isTeacherCompact || isStudentCompact;
+  const isCompactGrid = compact;
   const thPad = compact ? 'px-2 py-1.5' : 'p-2.5';
   const tdPad = compact ? 'px-1 py-0.5' : 'p-1.5';
-  const timeMinW = isTeacherCompact
+  const timeMinW = isCompactGrid
     ? 'min-w-[92px] w-[92px]'
-    : compact
-      ? 'min-w-[108px] w-[108px]'
-      : 'min-w-[150px] w-[150px]';
+    : 'min-w-[150px] w-[150px]';
 
   const scrollToDayIndex = useCallback((index: number, behavior: ScrollBehavior = 'smooth') => {
     const clamped = Math.min(4, Math.max(0, index));
@@ -176,6 +178,7 @@ export function TimetableGrid({
     breaks,
     compact,
     isTeacherCompact,
+    isCompactGrid,
     currentDayOfWeek,
     currentPeriodIndex,
     completedLessonIds,
@@ -194,26 +197,29 @@ export function TimetableGrid({
   return (
     <div className={cn(
       'overflow-hidden',
-      isTeacherCompact
+      isCompactGrid
         ? 'bg-transparent'
         : 'rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800',
-      compact && !isTeacherCompact && 'shadow-sm',
+      compact && !isCompactGrid && 'shadow-sm',
+      isStudentCompact && isMobile && 'flex min-h-0 min-w-0 w-full max-w-full flex-col',
       className,
     )}>
-      {isMobile && (
+      {isMobile && !isStudentCompact && (
         <div
           className={cn(
             'border-b px-2 py-2.5',
             isTeacherCompact
               ? 'border-slate-200/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:border-slate-700/60 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900'
-              : 'border-slate-200 bg-slate-50 px-1.5 py-1.5 dark:border-slate-700 dark:bg-slate-800/50',
+              : useMobileTimeline
+                ? 'border-slate-200/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:border-slate-700/60 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900'
+                : 'border-slate-200 bg-slate-50 px-1.5 py-1.5 dark:border-slate-700 dark:bg-slate-800/50',
           )}
           role="tablist"
           aria-label="Day of week"
         >
           <div className="flex items-center gap-1">
             {WEEKDAY_NUMBERS.map((dayNum, idx) =>
-              isTeacherCompact ? (
+              useMobileTimeline ? (
                 <TeacherMobileDayPill
                   key={dayNum}
                   label={DAY_SHORT_NAMES[dayNum]}
@@ -241,15 +247,31 @@ export function TimetableGrid({
               ),
             )}
           </div>
-          {isTeacherCompact && (
+          {useMobileTimeline && (
             <p className="mt-2 px-1 text-center text-[10px] text-slate-400 dark:text-slate-500">
-              Swipe for other days · tap a class to mark taught
+              {viewType === 'student'
+                ? 'Swipe for other days · tap a lesson to mark complete'
+                : 'Swipe for other days · tap a class to mark taught'}
             </p>
           )}
         </div>
       )}
 
       {isMobile ? (
+        isStudentCompact ? (
+          <div className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden">
+            <TeacherMobileWeekTable
+              dayMap={dayMap}
+              timeSlots={timeSlots}
+              breaks={breaks}
+              currentDayOfWeek={currentDayOfWeek}
+              currentPeriodIndex={currentPeriodIndex}
+              completedLessonIds={completedLessonIds}
+              viewType="student"
+              onLessonClick={onLessonClick}
+            />
+          </div>
+        ) : (
         <div
           ref={carouselRef}
           onScroll={handleCarouselScroll}
@@ -261,7 +283,7 @@ export function TimetableGrid({
               key={dayOfWeek}
               className="w-full shrink-0 snap-start snap-always"
             >
-              {isTeacherCompact ? (
+              {useMobileTimeline ? (
                 <TeacherMobileTimeline
                   dayOfWeek={dayOfWeek}
                   dayMap={dayMap}
@@ -270,6 +292,7 @@ export function TimetableGrid({
                   currentDayOfWeek={currentDayOfWeek}
                   currentPeriodIndex={currentPeriodIndex}
                   completedLessonIds={completedLessonIds}
+                  viewType={viewType}
                   onLessonClick={onLessonClick}
                 />
               ) : (
@@ -284,6 +307,7 @@ export function TimetableGrid({
             </div>
           ))}
         </div>
+        )
       ) : (
         <div className="overflow-x-auto">
           <TimetableGridTable
@@ -303,6 +327,7 @@ type TimetableGridTableProps = {
   breaks: TimetableBreak[];
   compact: boolean;
   isTeacherCompact: boolean;
+  isCompactGrid: boolean;
   currentDayOfWeek: number | null;
   currentPeriodIndex: number;
   completedLessonIds: string[];
@@ -326,6 +351,7 @@ function TimetableGridTable({
   breaks,
   compact,
   isTeacherCompact,
+  isCompactGrid,
   currentDayOfWeek,
   currentPeriodIndex,
   completedLessonIds,
@@ -356,7 +382,7 @@ function TimetableGridTable({
                   ? 'bg-white dark:bg-slate-800'
                   : cn(
                       'sticky top-0 z-10',
-                      isTeacherCompact
+                      isTeacherCompact || isCompactGrid
                         ? 'bg-slate-50/95 backdrop-blur-sm dark:bg-slate-800/95'
                         : 'border-b-2 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700',
                     ),
@@ -369,7 +395,7 @@ function TimetableGridTable({
                     ? cn(STICKY_TIME_CELL, 'sticky top-0 z-40', thPad, timeMinW)
                     : cn(
                         'sticky left-0 z-20 border-r',
-                        isTeacherCompact
+                        isTeacherCompact || isCompactGrid
                           ? 'border-slate-200/90 bg-slate-100/95 dark:border-slate-700 dark:bg-slate-900/95'
                           : 'border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 dark:border-slate-600 dark:from-slate-800 dark:to-slate-700',
                         timeMinW,
@@ -381,10 +407,10 @@ function TimetableGridTable({
                 <span
                   className={cn(
                     'font-semibold text-slate-500 dark:text-slate-400',
-                    isTeacherCompact ? 'text-[10px]' : 'text-xs uppercase tracking-wide',
+                    isTeacherCompact || isCompactGrid ? 'text-[10px]' : 'text-xs uppercase tracking-wide',
                   )}
                 >
-                  {isTeacherCompact ? 'When' : 'Time'}
+                  {isTeacherCompact || isCompactGrid ? 'When' : 'Time'}
                 </span>
               </th>
               {daysToShow.map(dayOfWeek => (
@@ -396,13 +422,13 @@ function TimetableGridTable({
                       'sticky top-0 z-20 bg-white dark:bg-slate-800',
                     mobileLayout
                       ? 'p-1.5 text-[10px]'
-                      : isTeacherCompact
+                      : isTeacherCompact || isCompactGrid
                         ? 'min-w-0 p-1.5 text-[11px] font-semibold'
                         : compact
                           ? 'min-w-[88px] p-1.5 text-[10px] font-bold uppercase tracking-wide'
                           : 'min-w-[120px] p-2.5 text-xs font-bold uppercase tracking-wide',
                     currentDayOfWeek === dayOfWeek
-                      ? isTeacherCompact
+                      ? isTeacherCompact || isCompactGrid
                         ? 'bg-primary/[0.08] text-primary dark:bg-primary/12'
                         : 'text-primary dark:text-primary-foreground bg-primary/5 dark:bg-primary/10'
                       : 'text-slate-600 dark:text-slate-300',
@@ -410,12 +436,12 @@ function TimetableGridTable({
                 >
                   <div className="flex flex-col items-center gap-0.5">
                     <span>{DAY_SHORT_NAMES[dayOfWeek]}</span>
-                    {currentDayOfWeek === dayOfWeek && isTeacherCompact && (
+                    {currentDayOfWeek === dayOfWeek && (isTeacherCompact || isCompactGrid) && (
                       <span className="text-[8px] font-medium text-primary/80">
                         Today
                       </span>
                     )}
-                    {currentDayOfWeek === dayOfWeek && !isTeacherCompact && (
+                    {currentDayOfWeek === dayOfWeek && !isTeacherCompact && !isCompactGrid && (
                       <div className="h-0.5 w-6 rounded-full bg-primary" />
                     )}
                   </div>
@@ -432,7 +458,7 @@ function TimetableGridTable({
                 compact={compact}
                 timeMinW={timeMinW}
                 tdPad={tdPad}
-                isTeacherCompact={isTeacherCompact}
+                isCompactGrid={isCompactGrid}
                 mobileLayout={mobileLayout}
               />
             )}
@@ -448,7 +474,7 @@ function TimetableGridTable({
                   <tr
                     className={cn(
                       'group transition-colors',
-                      isTeacherCompact
+                      isTeacherCompact || isCompactGrid
                         ? isCurrentPeriod
                           ? 'bg-primary/[0.04] dark:bg-primary/[0.08]'
                           : isEven
@@ -470,7 +496,7 @@ function TimetableGridTable({
                           : 'sticky left-0 z-10 border-r',
                       )}
                     >
-                      {isTeacherCompact ? (
+                      {isCompactGrid ? (
                         <PeriodTimeRail
                           slot={slot}
                           isCurrent={isCurrentPeriod}
@@ -525,7 +551,7 @@ function TimetableGridTable({
                             tdPad,
                             connectsDoubleBelow && 'pb-0',
                             isDoubleContinuation && 'pt-0',
-                            isTeacherCompact && currentDayOfWeek === dayOfWeek && 'bg-primary/[0.03]',
+                            (isTeacherCompact || isCompactGrid) && currentDayOfWeek === dayOfWeek && 'bg-primary/[0.03]',
                           )}
                         >
                           {lesson ? (
@@ -566,7 +592,7 @@ function TimetableGridTable({
                       compact={compact}
                       timeMinW={timeMinW}
                       tdPad={tdPad}
-                      isTeacherCompact={isTeacherCompact}
+                      isCompactGrid={isCompactGrid}
                       mobileLayout={mobileLayout}
                     />
                   )}
@@ -602,13 +628,19 @@ function LessonCell({
   onClick?: () => void;
 }) {
   const palette = getSubjectPaletteColor(normalizeSubjectName(lesson.subject.name));
+  const isStudentView = viewType === 'student';
+  const subjectLabel = isStudentView
+    ? getSubjectShortCode(lesson.subject.name, lesson.subject.code)
+    : lesson.subject.name;
   const classLabel =
     viewType === 'teacher'
       ? lesson.grade.displayName || lesson.grade.name
       : lesson.teacher.name;
-  const showRoom = lesson.room && !(compact && viewType === 'teacher');
+  const showRoom =
+    !!lesson.room && !isStudentView && !(compact && viewType === 'teacher');
 
   const isTeacherCompact = compact && viewType === 'teacher';
+  const isStudentCompact = compact && viewType === 'student';
   const isDoubleStart =
     !!lesson.isDoublePeriod && !lesson.isDoubleContinuation;
   const isDoubleContinuation = !!lesson.isDoubleContinuation;
@@ -619,8 +651,10 @@ function LessonCell({
       onClick={onClick}
       className={cn(
         'relative group/lesson cursor-pointer transition-all duration-200',
-        compact ? 'min-h-[36px] rounded-sm p-1' : 'min-h-[52px] rounded-md border-l-[3px] p-2',
-        !isTeacherCompact && palette.border,
+        compact
+          ? cn('min-h-[36px] p-1', isStudentCompact ? 'rounded-none' : 'rounded-sm')
+          : 'min-h-[52px] rounded-md border-l-[3px] p-2',
+        !isTeacherCompact && !isStudentCompact && palette.border,
         isCurrent
           ? 'bg-primary text-white ring-1 ring-primary/20'
           : isCompleted
@@ -651,9 +685,10 @@ function LessonCell({
     >
       <div className={cn(
         'flex items-start gap-1 min-w-0',
+        isStudentCompact && 'items-center justify-center',
         compact ? '' : 'mb-0.5',
       )}>
-        {!isCurrent && (
+        {!isCurrent && !isStudentCompact && (
           <span
             className={cn('mt-0.5 shrink-0 rounded-full', compact ? 'h-1.5 w-1.5' : 'h-2 w-2')}
             style={{ backgroundColor: palette.accent }}
@@ -661,12 +696,14 @@ function LessonCell({
           />
         )}
         <div className={cn(
-          'min-w-0 flex-1 font-semibold leading-tight truncate',
+          'min-w-0 flex-1 break-words font-semibold leading-snug',
+          isStudentCompact && 'flex-none text-center',
           compact ? 'text-[10px]' : 'text-xs font-bold',
+          isStudentView && 'uppercase tracking-wide',
           isCurrent ? 'text-white' : 'text-slate-900 dark:text-slate-100',
           isCompleted && 'line-through decoration-slate-400',
         )}>
-        {lesson.subject.name}
+        {subjectLabel}
         {lesson.isDoublePeriod && !lesson.isDoubleContinuation && (
           <span className="ml-0.5 text-[9px] font-medium text-violet-600/80 dark:text-violet-400/80">
             2×
@@ -680,20 +717,22 @@ function LessonCell({
         </div>
       </div>
 
-      <div className={cn(
-        'flex items-center gap-0.5 truncate',
-        isTeacherCompact && 'pl-2',
-        compact ? 'text-[9px]' : 'text-[11px] gap-1',
-        isCurrent ? 'text-white/80' : 'text-slate-600 dark:text-slate-400',
-      )}>
-        {!compact && <Users className="h-3 w-3 flex-shrink-0" />}
-        <span className="truncate">
-          {classLabel}
-          {lesson.isSubstitution && viewType !== 'teacher' && (
-            <span className="text-[10px] text-amber-400 font-medium ml-0.5">Sub</span>
-          )}
-        </span>
-      </div>
+      {!isStudentView && (
+        <div className={cn(
+          'flex items-center gap-0.5 truncate',
+          isTeacherCompact && 'pl-2',
+          compact ? 'text-[9px]' : 'text-[11px] gap-1',
+          isCurrent ? 'text-white/80' : 'text-slate-600 dark:text-slate-400',
+        )}>
+          {!compact && <Users className="h-3 w-3 flex-shrink-0" />}
+          <span className="truncate">
+            {classLabel}
+            {lesson.isSubstitution && viewType !== 'teacher' && (
+              <span className="text-[10px] text-amber-400 font-medium ml-0.5">Sub</span>
+            )}
+          </span>
+        </div>
+      )}
 
       {showRoom && (
         <div className={cn(
@@ -926,7 +965,7 @@ function TimetableBreakRow({
   compact,
   timeMinW,
   tdPad,
-  isTeacherCompact,
+  isCompactGrid,
   mobileLayout,
 }: {
   afterPeriod: number;
@@ -935,7 +974,7 @@ function TimetableBreakRow({
   compact?: boolean;
   timeMinW: string;
   tdPad: string;
-  isTeacherCompact?: boolean;
+  isCompactGrid?: boolean;
   mobileLayout?: boolean;
 }) {
   const rowBreaks = breaks.filter((b) => b.afterPeriod === afterPeriod);
@@ -962,7 +1001,7 @@ function TimetableBreakRow({
             : 'sticky left-0 z-10 border-r',
         )}
       >
-        {isTeacherCompact ? (
+        {isCompactGrid ? (
           <BreakTimeRail
             label={label}
             timeLabel={timeLabel}

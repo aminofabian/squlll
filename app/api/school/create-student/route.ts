@@ -19,14 +19,18 @@ export async function POST(request: Request) {
     }
 
     // Map form data to match the exact GraphQL createStudentInput structure
-    const createStudentInput = {
+    const createStudentInput: Record<string, string> = {
       name: studentData.name,
-      email: studentData.student_email, // Email is now auto-generated on frontend if not provided
+      email: studentData.student_email,
       admission_number: studentData.admission_number,
-      phone: studentData.guardian_phone, // Using guardian phone as primary contact
+      phone: studentData.guardian_phone,
       tenantGradeLevelId: studentData.grade,
-      gender: studentData.gender.toUpperCase()
+      gender: studentData.gender.toUpperCase(),
     };
+
+    if (studentData.stream) {
+      createStudentInput.streamId = studentData.stream;
+    }
 
     console.log('Create Student Debug:', {
       submittedGradeId: studentData.grade,

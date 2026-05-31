@@ -10,6 +10,12 @@ export interface SubjectAccentStyle {
   text: string;
 }
 
+export interface GradeStreamAccentStyle {
+  background: string;
+  text: string;
+  stripe: string;
+}
+
 const PALETTE: SubjectAccentStyle[] = [
   {
     accent: "#5b6eae",
@@ -59,6 +65,18 @@ const PALETTE: SubjectAccentStyle[] = [
     border: "rgba(154, 90, 106, 0.22)",
     text: "#784552",
   },
+];
+
+/** Stable class (grade + stream) tints for whole-school combined cells. */
+const GRADE_STREAM_PALETTE: GradeStreamAccentStyle[] = [
+  { background: "rgba(59, 130, 246, 0.12)", text: "#1d4ed8", stripe: "#3b82f6" },
+  { background: "rgba(16, 185, 129, 0.12)", text: "#047857", stripe: "#10b981" },
+  { background: "rgba(245, 158, 11, 0.14)", text: "#b45309", stripe: "#f59e0b" },
+  { background: "rgba(139, 92, 246, 0.12)", text: "#6d28d9", stripe: "#8b5cf6" },
+  { background: "rgba(236, 72, 153, 0.12)", text: "#be185d", stripe: "#ec4899" },
+  { background: "rgba(6, 182, 212, 0.12)", text: "#0e7490", stripe: "#06b6d4" },
+  { background: "rgba(234, 88, 12, 0.12)", text: "#c2410c", stripe: "#ea580c" },
+  { background: "rgba(99, 102, 241, 0.12)", text: "#4338ca", stripe: "#6366f1" },
 ];
 
 const DEPARTMENT_HINTS: Record<string, number> = {
@@ -128,4 +146,13 @@ export function getSubjectAccent(
   const key = subjectId || subjectName;
   const idx = hashString(key) % PALETTE.length;
   return PALETTE[idx];
+}
+
+export function getGradeStreamAccent(
+  gradeId: string,
+  streamId?: string | null,
+): GradeStreamAccentStyle {
+  const key = `${gradeId}:${streamId ?? "default"}`;
+  const idx = hashString(key) % GRADE_STREAM_PALETTE.length;
+  return GRADE_STREAM_PALETTE[idx];
 }

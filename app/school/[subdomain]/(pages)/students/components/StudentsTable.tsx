@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface StudentRow {
@@ -12,7 +12,10 @@ export interface StudentRow {
   name: string;
   admissionNumber: string;
   grade: string;
+  gradeId?: string;
   stream: string;
+  streamId?: string | null;
+  missingStream?: boolean;
   status: string;
 }
 
@@ -20,6 +23,7 @@ interface StudentsTableProps {
   students: StudentRow[];
   isLoading?: boolean;
   onStudentClick?: (studentId: string) => void;
+  onAssignClass?: (student: StudentRow) => void;
   title?: string;
   description?: string;
   searchTerm?: string;
@@ -35,6 +39,7 @@ export function StudentsTable({
   students,
   isLoading,
   onStudentClick,
+  onAssignClass,
   title = "All students",
   description,
   searchTerm = "",
@@ -138,6 +143,11 @@ export function StudentsTable({
                   <th className="px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">
                     Status
                   </th>
+                  {onAssignClass && (
+                    <th className="px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                      Class
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -162,8 +172,16 @@ export function StudentsTable({
                         {student.grade}
                       </td>
                     )}
-                    <td className="hidden px-4 py-2.5 text-xs text-slate-500 md:table-cell">
-                      {student.stream}
+                    <td className="hidden px-4 py-2.5 text-xs md:table-cell">
+                      <span
+                        className={cn(
+                          student.missingStream
+                            ? "font-medium text-amber-700 dark:text-amber-400"
+                            : "text-slate-500",
+                        )}
+                      >
+                        {student.stream}
+                      </span>
                     </td>
                     <td className="px-4 py-2.5">
                       <span
@@ -177,6 +195,23 @@ export function StudentsTable({
                         {student.status}
                       </span>
                     </td>
+                    {onAssignClass && (
+                      <td className="px-4 py-2.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-xs text-slate-600 hover:text-emerald-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignClass(student);
+                          }}
+                        >
+                          <GraduationCap className="h-3.5 w-3.5" />
+                          {student.missingStream ? "Assign" : "Change"}
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

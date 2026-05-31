@@ -7,7 +7,8 @@ import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { CreateStudentDrawer } from "./components/CreateStudentDrawer";
 import { StudentDetailsView } from "./components/StudentDetailsView";
 import { StudentsOverviewBar } from "./components/StudentsOverviewBar";
-import { StudentsTable } from "./components/StudentsTable";
+import { StudentsTable, type StudentRow } from "./components/StudentsTable";
+import { AssignGradeStreamDialog } from "./components/AssignGradeStreamDialog";
 import { StudentsContextBar } from "./components/StudentsContextBar";
 import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { ClassesStats } from "../classes/components/ClassesStats";
@@ -25,7 +26,9 @@ function resolveStreamName(
   config: SchoolConfiguration | null,
   gradeId: string | undefined,
   streamId: string | null | undefined,
+  streamName?: string | null,
 ): string {
+  if (streamName) return streamName;
   if (!streamId || !gradeId || !config?.selectedLevels) return "—";
   for (const level of config.selectedLevels) {
     const grade = level.gradeLevels?.find((g) => g.id === gradeId);
@@ -33,6 +36,18 @@ function resolveStreamName(
     if (stream) return stream.name;
   }
   return "—";
+}
+
+function gradeHasStreams(
+  config: SchoolConfiguration | null,
+  gradeId: string | undefined,
+): boolean {
+  if (!gradeId || !config?.selectedLevels) return false;
+  for (const level of config.selectedLevels) {
+    const grade = level.gradeLevels?.find((g) => g.id === gradeId);
+    if (grade) return (grade.streams?.length ?? 0) > 0;
+  }
+  return false;
 }
 
 function mapGraphQLStudent(
@@ -52,10 +67,18 @@ function mapGraphQLStudent(
 
   const gradeId =
     typeof student.grade === "object"
-      ? student.grade?.gradeLevel?.id
+      ? student.grade?.id || student.grade?.gradeLevel?.id
       : undefined;
 
   const streamId = student.streamId;
+  const resolvedStream = resolveStreamName(
+    config,
+    gradeId,
+    streamId,
+    student.streamName,
+  );
+  const missingStream =
+    gradeHasStreams(config, gradeId) && resolvedStream === "—";
 
   return {
     id: student.id,
@@ -63,8 +86,9 @@ function mapGraphQLStudent(
     admissionNumber: student.admission_number,
     grade: formatGradeDisplayName(gradeName),
     gradeId,
-    stream: resolveStreamName(config, gradeId, streamId),
+    stream: missingStream ? "Not assigned" : resolvedStream,
     streamId,
+    missingStream,
     status: student.isActive ? ("active" as const) : ("inactive" as const),
   };
 }
@@ -81,6 +105,7 @@ export default function StudentsPage() {
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<StudentRow | null>(null);
 
   const {
     students: graphqlStudents,
@@ -340,6 +365,7 @@ export default function StudentsPage() {
                   onClose={() => setSelectedStudentId(null)}
                   schoolConfig={config}
                   embedded
+                  onEnrollmentUpdated={() => refetch()}
                 />
               </>
             ) : (
@@ -412,6 +438,7 @@ export default function StudentsPage() {
                   students={filteredStudents}
                   isLoading={pageLoading}
                   onStudentClick={setSelectedStudentId}
+                  onAssignClass={setAssignTarget}
                   title={tableTitle}
                   description={tableDescription}
                   searchTerm={searchTerm}
@@ -425,6 +452,20 @@ export default function StudentsPage() {
           </div>
         </div>
       </div>
+
+      {assignTarget && (
+        <AssignGradeStreamDialog
+          studentId={assignTarget.id}
+          studentName={assignTarget.name}
+          currentGradeLevelId={assignTarget.gradeId}
+          currentStreamId={assignTarget.streamId}
+          open={Boolean(assignTarget)}
+          onOpenChange={(open) => {
+            if (!open) setAssignTarget(null);
+          }}
+          onSuccess={() => refetch()}
+        />
+      )}
     </div>
   );
 }

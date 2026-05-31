@@ -12,6 +12,9 @@ const GET_STUDENTS = gql`
       admissionNumber
       studentName
       gradeLevelName
+      gradeLevelId
+      streamName
+      streamId
       feeSummary {
         totalOwed
         totalPaid
@@ -48,19 +51,20 @@ const fetchStudents = async (): Promise<StudentsResponse> => {
   const students = response.allStudentsSummary.map((student) => ({
     id: student.id,
     admission_number: student.admissionNumber,
-    user_id: '', // Not provided in new API
+    user_id: '',
     feesOwed: student.feeSummary.balance,
-    gender: '', // Not provided in new API
+    gender: '',
     totalFeesPaid: student.feeSummary.totalPaid,
     createdAt: '',
     isActive: true,
     updatedAt: '',
-    streamId: null,
+    streamId: student.streamId ?? null,
+    streamName: student.streamName ?? null,
     phone: '',
     grade: {
-      id: '',
+      id: student.gradeLevelId,
       gradeLevel: {
-        id: '',
+        id: student.gradeLevelId,
         name: student.gradeLevelName,
       },
     },

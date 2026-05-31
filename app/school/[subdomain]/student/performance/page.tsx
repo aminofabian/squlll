@@ -24,7 +24,7 @@ export default function StudentPerformancePage() {
         ? params.subdomain[0]
         : ''
 
-  const { reportCard, ranking, academicYear, term, loading, error, refetch } =
+  const { reportCard, ranking, academicYear, termName, loading, error, refetch } =
     useStudentPerformance(subdomain)
 
   return (
@@ -39,7 +39,11 @@ export default function StudentPerformancePage() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold">Track Performance</h1>
             <p className="text-sm text-muted-foreground">
-              {academicYear ? `${academicYear} · Term ${term}` : 'Current term'}
+              {academicYear && termName
+                ? `${academicYear} · ${termName}`
+                : academicYear
+                  ? academicYear
+                  : 'Current term'}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={loading}>

@@ -49,8 +49,10 @@ export function useStudentDetailSummary(studentId: string): UseStudentDetailSumm
                 gender
                 schoolType
                 gradeLevelName
+                gradeLevelId
                 curriculumName
                 streamName
+                streamId
                 feeSummary {
                   totalOwed
                   totalPaid

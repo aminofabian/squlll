@@ -59,6 +59,8 @@ export interface Teacher {
 
 export interface GradeStream {
   tenantStreamId: string;
+  /** Master Stream entity id (school config sidebar uses this). */
+  streamId?: string;
   name: string;
 }
 

@@ -29,6 +29,7 @@ import { TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getBreakTypeOption } from "@/lib/utils/timetable-break-types";
 import {
+  getGradeStreamAccent,
   getSubjectAccent,
   type SubjectAccentStyle,
 } from "../utils/timetableSubjectColors";
@@ -38,9 +39,17 @@ const T_CELL_SM = "text-[10px] leading-tight";
 const ROW_H = "h-9 min-h-[36px]";
 const LESSON_CELL_MIN = "min-h-[36px] py-1";
 const DOUBLE_ROW_H = "min-h-[72px]";
-const TIME_COL_W = "w-[96px] md:w-[108px]";
+const TIME_COL_W = "w-[108px] md:w-[120px]";
 const TIME_RAIL_MIN = "min-h-[36px]";
 const TD_PAD = "p-0.5";
+
+const BREAK_ROW_H = "min-h-[36px]";
+const BREAK_LABEL =
+  "text-[10px] font-semibold uppercase tracking-[0.12em] leading-none";
+const BREAK_TIME =
+  "text-[10px] font-medium font-mono tabular-nums leading-none tracking-tight opacity-60";
+const BREAK_CHANNEL =
+  "max-lg:py-2 max-lg:px-0 dark:max-lg:bg-transparent";
 
 const LINK_ACTION =
   "inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:pointer-events-none disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200";
@@ -48,10 +57,11 @@ const LINK_ACTION =
 type BreakVisual = {
   Icon: LucideIcon;
   label: string;
-  rowBg: string;
-  rowBorder: string;
   cellBg: string;
   cellBorder: string;
+  rowBand: string;
+  rowBorder: string;
+  divider: string;
   iconWrap: string;
   iconColor: string;
   text: string;
@@ -75,13 +85,14 @@ function resolveBreakVisual(
   if (haystack.includes("assembly")) {
     return base({
       Icon: Building2,
-      rowBg: "bg-violet-50/90 dark:bg-violet-950/25",
-      rowBorder: "border-violet-200/80 dark:border-violet-800/60",
-      cellBg: "bg-violet-100/60 dark:bg-violet-900/30",
-      cellBorder: "border-violet-200/90 dark:border-violet-700/70",
-      iconWrap: "bg-violet-200/70 dark:bg-violet-800/50",
-      iconColor: "text-violet-700 dark:text-violet-200",
-      text: "text-violet-800 dark:text-violet-100",
+      cellBg: "bg-white dark:bg-violet-950/40",
+      cellBorder: "border-violet-200/75 dark:border-violet-800/45",
+      rowBand: "bg-violet-50/90 dark:bg-violet-950/25",
+      rowBorder: "lg:border-violet-200/80 dark:lg:border-violet-800/50",
+      divider: "border-violet-200/70 dark:border-violet-800/35",
+      iconWrap: "bg-violet-50 ring-1 ring-violet-100 dark:bg-violet-900/40 dark:ring-violet-800/50",
+      iconColor: "text-violet-600 dark:text-violet-300",
+      text: "text-violet-900 dark:text-violet-100",
       label: "Assembly",
     });
   }
@@ -89,12 +100,13 @@ function resolveBreakVisual(
   if (haystack.includes("lunch")) {
     return base({
       Icon: UtensilsCrossed,
-      rowBg: "bg-amber-50/90 dark:bg-amber-950/25",
-      rowBorder: "border-amber-200/80 dark:border-amber-800/60",
-      cellBg: "bg-amber-100/60 dark:bg-amber-900/30",
-      cellBorder: "border-amber-200/90 dark:border-amber-700/70",
-      iconWrap: "bg-amber-200/70 dark:bg-amber-800/50",
-      iconColor: "text-amber-800 dark:text-amber-100",
+      cellBg: "bg-white dark:bg-amber-950/40",
+      cellBorder: "border-amber-200/75 dark:border-amber-800/45",
+      rowBand: "bg-amber-50/90 dark:bg-amber-950/25",
+      rowBorder: "lg:border-amber-200/80 dark:lg:border-amber-800/50",
+      divider: "border-amber-200/70 dark:border-amber-800/35",
+      iconWrap: "bg-amber-50 ring-1 ring-amber-100 dark:bg-amber-900/40 dark:ring-amber-800/50",
+      iconColor: "text-amber-700 dark:text-amber-300",
       text: "text-amber-900 dark:text-amber-100",
       label: "Lunch",
     });
@@ -108,13 +120,14 @@ function resolveBreakVisual(
     const isTea = haystack.includes("tea");
     return base({
       Icon: isTea ? CupSoda : Coffee,
-      rowBg: "bg-sky-50/90 dark:bg-sky-950/25",
-      rowBorder: "border-sky-200/80 dark:border-sky-800/60",
-      cellBg: "bg-sky-100/60 dark:bg-sky-900/30",
-      cellBorder: "border-sky-200/90 dark:border-sky-700/70",
-      iconWrap: "bg-sky-200/70 dark:bg-sky-800/50",
-      iconColor: "text-sky-700 dark:text-sky-200",
-      text: "text-sky-800 dark:text-sky-100",
+      cellBg: "bg-white dark:bg-sky-950/40",
+      cellBorder: "border-sky-200/75 dark:border-sky-800/45",
+      rowBand: "bg-sky-50/90 dark:bg-sky-950/25",
+      rowBorder: "lg:border-sky-200/80 dark:lg:border-sky-800/50",
+      divider: "border-sky-200/70 dark:border-sky-800/35",
+      iconWrap: "bg-sky-50 ring-1 ring-sky-100 dark:bg-sky-900/40 dark:ring-sky-800/50",
+      iconColor: "text-sky-600 dark:text-sky-300",
+      text: "text-sky-900 dark:text-sky-100",
       label: isTea
         ? "Tea break"
         : haystack.includes("snack")
@@ -126,26 +139,28 @@ function resolveBreakVisual(
   if (haystack.includes("game") || haystack.includes("sport")) {
     return base({
       Icon: Trophy,
-      rowBg: "bg-emerald-50/90 dark:bg-emerald-950/25",
-      rowBorder: "border-emerald-200/80 dark:border-emerald-800/60",
-      cellBg: "bg-emerald-100/60 dark:bg-emerald-900/30",
-      cellBorder: "border-emerald-200/90 dark:border-emerald-700/70",
-      iconWrap: "bg-emerald-200/70 dark:bg-emerald-800/50",
-      iconColor: "text-emerald-700 dark:text-emerald-200",
-      text: "text-emerald-800 dark:text-emerald-100",
+      cellBg: "bg-white dark:bg-emerald-950/40",
+      cellBorder: "border-emerald-200/75 dark:border-emerald-800/45",
+      rowBand: "bg-emerald-50/90 dark:bg-emerald-950/25",
+      rowBorder: "lg:border-emerald-200/80 dark:lg:border-emerald-800/50",
+      divider: "border-emerald-200/70 dark:border-emerald-800/35",
+      iconWrap: "bg-emerald-50 ring-1 ring-emerald-100 dark:bg-emerald-900/40 dark:ring-emerald-800/50",
+      iconColor: "text-emerald-600 dark:text-emerald-300",
+      text: "text-emerald-900 dark:text-emerald-100",
     });
   }
 
   if (haystack.includes("recess")) {
     return base({
       Icon: Apple,
-      rowBg: "bg-green-50/90 dark:bg-green-950/25",
-      rowBorder: "border-green-200/80 dark:border-green-800/60",
-      cellBg: "bg-green-100/60 dark:bg-green-900/30",
-      cellBorder: "border-green-200/90 dark:border-green-700/70",
-      iconWrap: "bg-green-200/70 dark:bg-green-800/50",
-      iconColor: "text-green-700 dark:text-green-200",
-      text: "text-green-800 dark:text-green-100",
+      cellBg: "bg-white dark:bg-green-950/40",
+      cellBorder: "border-green-200/75 dark:border-green-800/45",
+      rowBand: "bg-green-50/90 dark:bg-green-950/25",
+      rowBorder: "lg:border-green-200/80 dark:lg:border-green-800/50",
+      divider: "border-green-200/70 dark:border-green-800/35",
+      iconWrap: "bg-green-50 ring-1 ring-green-100 dark:bg-green-900/40 dark:ring-green-800/50",
+      iconColor: "text-green-600 dark:text-green-300",
+      text: "text-green-900 dark:text-green-100",
       label: "Recess",
     });
   }
@@ -153,24 +168,26 @@ function resolveBreakVisual(
   if (haystack.includes("long")) {
     return base({
       Icon: Clock,
-      rowBg: "bg-cyan-50/90 dark:bg-cyan-950/25",
-      rowBorder: "border-cyan-200/80 dark:border-cyan-800/60",
-      cellBg: "bg-cyan-100/60 dark:bg-cyan-900/30",
-      cellBorder: "border-cyan-200/90 dark:border-cyan-700/70",
-      iconWrap: "bg-cyan-200/70 dark:bg-cyan-800/50",
-      iconColor: "text-cyan-700 dark:text-cyan-200",
-      text: "text-cyan-800 dark:text-cyan-100",
+      cellBg: "bg-white dark:bg-cyan-950/40",
+      cellBorder: "border-cyan-200/75 dark:border-cyan-800/45",
+      rowBand: "bg-cyan-50/90 dark:bg-cyan-950/25",
+      rowBorder: "lg:border-cyan-200/80 dark:lg:border-cyan-800/50",
+      divider: "border-cyan-200/70 dark:border-cyan-800/35",
+      iconWrap: "bg-cyan-50 ring-1 ring-cyan-100 dark:bg-cyan-900/40 dark:ring-cyan-800/50",
+      iconColor: "text-cyan-600 dark:text-cyan-300",
+      text: "text-cyan-900 dark:text-cyan-100",
       label: "Long break",
     });
   }
 
   return base({
     Icon: Pause,
-    rowBg: "bg-slate-100/90 dark:bg-slate-800/40",
-    rowBorder: "border-slate-200/80 dark:border-slate-700/60",
-    cellBg: "bg-slate-100/80 dark:bg-slate-800/50",
-    cellBorder: "border-slate-200/90 dark:border-slate-600/70",
-    iconWrap: "bg-slate-200/70 dark:bg-slate-700/50",
+    cellBg: "bg-white dark:bg-slate-900/50",
+    cellBorder: "border-slate-200/75 dark:border-slate-700/45",
+    rowBand: "bg-slate-100/90 dark:bg-slate-800/35",
+    rowBorder: "lg:border-slate-200/80 dark:lg:border-slate-700/50",
+    divider: "border-slate-200/70 dark:border-slate-700/35",
+    iconWrap: "bg-slate-50 ring-1 ring-slate-100 dark:bg-slate-800/40 dark:ring-slate-700/50",
     iconColor: "text-slate-600 dark:text-slate-300",
     text: "text-slate-700 dark:text-slate-200",
   });
@@ -892,10 +909,8 @@ function TimeColumnCell({
         "flex flex-col justify-center gap-0.5 px-1.5 py-1",
         TIME_COL_W,
         isDoubleBlockRow ? DOUBLE_ROW_H : TIME_RAIL_MIN,
-        "border-l-[3px] border-l-slate-300 dark:border-l-slate-600",
         isDoubleBlockRow &&
           "bg-gradient-to-b from-violet-50/80 to-transparent dark:from-violet-950/20",
-        isDoubleContinuation && "border-l-violet-300 dark:border-l-violet-700",
       )}
     >
       <button
@@ -969,17 +984,22 @@ function CombinedLessonCell({
   const dense = entries.length >= 6;
   const twoColumn = entries.length > 1;
   const manyEntries = entries.length >= 15;
+  const multiClass = entries.length > 1;
   const [expanded, setExpanded] = useState(false);
 
   return (
     <TooltipProvider delayDuration={250}>
       <div
         className={cn(
-          "grid min-h-[36px] grid-cols-2 overscroll-contain",
+          "grid min-h-[36px] overscroll-contain",
+          multiClass
+            ? "gap-1 max-lg:rounded-lg max-lg:bg-zinc-100/50 max-lg:p-1 max-lg:ring-1 max-lg:ring-inset max-lg:ring-zinc-200/60 dark:max-lg:bg-zinc-900/30 dark:max-lg:ring-zinc-700/50"
+            : "",
+          twoColumn ? "grid-cols-2" : "grid-cols-1",
           manyEntries && !expanded
             ? "overflow-y-auto max-h-56"
             : "overflow-y-visible",
-          dense ? "gap-0.5" : "gap-1",
+          dense && multiClass ? "gap-0.5" : multiClass ? "gap-1" : "",
         )}
       >
         {entries.map((entry) => (
@@ -1087,6 +1107,7 @@ function CombinedShortcodeChip({
   const isDoubleStart =
     !isEmpty && entry.isDoublePeriod && !entry.isDoubleContinuation;
   const isDoubleCont = !isEmpty && entry.isDoubleContinuation === true;
+  const classAccent = getGradeStreamAccent(entry.gradeId ?? entry.id, entry.streamId);
 
   const chipLabel = useMemo(() => {
     const parts = [displayGrade];
@@ -1117,12 +1138,12 @@ function CombinedShortcodeChip({
       onClick={onSelect}
       aria-label={chipLabel}
       className={cn(
-        "group/chip relative flex min-w-0 items-center overflow-hidden rounded border text-left",
+        "group/chip relative flex min-w-0 items-stretch overflow-hidden rounded-md border text-left",
         "transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50",
-        compact ? "min-h-[28px]" : "min-h-[34px]",
+        compact ? "min-h-[30px]" : "min-h-[34px]",
         isEmpty
-          ? "border-dashed border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 dark:border-zinc-700/70 dark:bg-zinc-900/20"
+          ? "border-dashed border-slate-200/90 bg-slate-50/60 hover:bg-slate-50 dark:border-zinc-700/70 dark:bg-zinc-900/25"
           : cn(
               "shadow-[0_1px_0_rgba(15,23,42,0.04)] hover:-translate-y-px hover:shadow-sm",
               isTeacherDimmed && "opacity-35 saturate-50",
@@ -1134,15 +1155,18 @@ function CombinedShortcodeChip({
               }),
               hasConflict
                 ? "border-red-300/80 bg-gradient-to-r from-red-50 to-red-50/40 dark:border-red-900/60 dark:from-red-950/40 dark:to-red-950/10"
-                : "border-slate-200/80 bg-white/90 dark:border-zinc-700/50 dark:bg-zinc-900/40",
+                : "bg-white/95 dark:bg-zinc-900/50",
             ),
       )}
       style={
-        isEmpty || hasConflict
-          ? undefined
-          : {
-              background: `linear-gradient(135deg, ${accent.background} 0%, rgba(255,255,255,0.97) 70%)`,
-            }
+        isEmpty
+          ? { borderColor: `${classAccent.stripe}55` }
+          : hasConflict
+            ? undefined
+            : {
+                borderColor: accent.border,
+                backgroundColor: accent.background,
+              }
       }
     >
       <div
@@ -1152,16 +1176,16 @@ function CombinedShortcodeChip({
           (isDoubleStart || isDoubleCont) && "pr-4",
         )}
       >
-        <div className="flex min-w-0 items-baseline gap-1 leading-none">
+        <div className="flex min-w-0 items-center gap-1 leading-none">
           <span
             className={cn(
-              "shrink-0 font-semibold uppercase tracking-wide",
-              compact ? "text-[9px]" : "text-[10px]",
-              isEmpty
-                ? "text-slate-400 dark:text-slate-500"
-                : "text-slate-800 dark:text-slate-100",
-              hasConflict && "text-red-700 dark:text-red-400",
+              "inline-flex shrink-0 items-center rounded px-1 py-px font-semibold uppercase tracking-wide",
+              compact ? "text-[8px]" : "text-[9px]",
             )}
+            style={{
+              backgroundColor: classAccent.background,
+              color: classAccent.text,
+            }}
           >
             {displayGrade}
           </span>
@@ -1175,7 +1199,7 @@ function CombinedShortcodeChip({
                   : "text-slate-500 dark:text-slate-400",
               )}
             >
-              · {displayStream}
+              {displayStream}
             </span>
           ) : null}
         </div>
@@ -1187,7 +1211,7 @@ function CombinedShortcodeChip({
               compact ? "text-[8px]" : "text-[9px]",
             )}
           >
-            —
+            No lesson
           </span>
         ) : subjectCode ? (
           <span
@@ -1310,11 +1334,6 @@ function AdminLessonCell({
         }
       }}
     >
-      <span
-        className="mt-1 h-1.5 w-px shrink-0 rounded-full"
-        style={{ backgroundColor: hasConflict ? "#dc2626" : accent.accent }}
-        aria-hidden
-      />
       <p
         className={cn(
           T_CELL,
@@ -1372,159 +1391,121 @@ function BreakRow({
   const isMoving = !!primary.id && movingBreakId === primary.id;
   const canMoveUp = afterPeriod > 0 && !isMoving;
   const canMoveDown = afterPeriod < maxPeriod && !isMoving;
+  const appliesAllDays = !!primary.applyToAllDays;
+  const colSpan = 1 + visibleDayIndices.length;
 
   return (
-    <tr className={cn("group/break border-y", visual.rowBorder, visual.rowBg)}>
+    <tr className={cn("group/break", visual.rowBand)}>
       <td
+        colSpan={colSpan}
         className={cn(
-          "sticky left-0 z-10 border-r p-0",
-          visual.rowBorder,
-          visual.rowBg,
-          TIME_COL_W,
+          "relative p-0",
+          BREAK_CHANNEL,
+          visual.rowBand,
         )}
       >
-        <div className="relative flex min-h-[36px] items-center px-1.5">
-          <button
-            type="button"
-            onClick={() => onEditBreak?.(primary)}
-            className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1 text-left transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
-            title={`Edit ${visual.label}`}
-            aria-label={`Edit ${visual.label}`}
-          >
-            <div
-              className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                visual.iconWrap,
-              )}
-            >
-              <Icon className={cn("h-4 w-4", visual.iconColor)} aria-hidden />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <p
-                className={cn(
-                  T_CELL,
-                  "whitespace-nowrap font-semibold",
-                  visual.text,
-                )}
-              >
-                {visual.label}
-              </p>
-              {timeLabel ? (
-                <p
-                  className={cn(
-                    T_CELL_SM,
-                    "whitespace-nowrap font-mono tabular-nums opacity-80",
-                    visual.text,
-                  )}
-                >
-                  {timeLabel}
-                </p>
-              ) : null}
-            </div>
-          </button>
-
-          {primary.id && onMoveBreak ? (
-            <div className="ml-0.5 flex shrink-0 flex-col opacity-0 transition-opacity group-hover/break:opacity-100 focus-within:opacity-100 max-sm:opacity-100">
-              <button
-                type="button"
-                disabled={!canMoveUp}
-                onClick={() => onMoveBreak(primary, -1)}
-                className={cn(
-                  "rounded p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
-                  visual.iconColor,
-                )}
-                title="Move break earlier in the day"
-                aria-label="Move break earlier in the day"
-              >
-                {isMoving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                )}
-              </button>
-              <button
-                type="button"
-                disabled={!canMoveDown}
-                onClick={() => onMoveBreak(primary, 1)}
-                className={cn(
-                  "rounded p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
-                  visual.iconColor,
-                )}
-                title="Move break later in the day"
-                aria-label="Move break later in the day"
-              >
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
-            </div>
+        <button
+          type="button"
+          onClick={() => onEditBreak?.(primary)}
+          className={cn(
+            BREAK_ROW_H,
+            "flex w-full items-center justify-center gap-2 px-4 py-2.5 text-center transition-colors",
+            "hover:bg-black/[0.03] dark:hover:bg-white/[0.04]",
+            primary.id && onMoveBreak ? "lg:pr-10" : undefined,
+          )}
+          title={`Edit ${visual.label}`}
+          aria-label={`Edit ${visual.label}${timeLabel ? `, ${timeLabel}` : ""}`}
+        >
+          <Icon
+            className={cn("h-4 w-4 shrink-0 opacity-80", visual.iconColor)}
+            aria-hidden
+          />
+          <span className={cn(BREAK_LABEL, visual.text)}>{visual.label}</span>
+          {timeLabel ? (
+            <>
+              <span className={cn("opacity-40", visual.text)} aria-hidden>
+                ·
+              </span>
+              <span className={cn(BREAK_TIME, visual.text)}>{timeLabel}</span>
+            </>
           ) : null}
-        </div>
-      </td>
-      {visibleDayIndices.map((dayIndex) => {
-        const dayBreak = breaks.find(
-          (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1,
-        );
-        const cellVisual = dayBreak
-          ? resolveBreakVisual(dayBreak, cleanName)
-          : visual;
-        const CellIcon = cellVisual.Icon;
+        </button>
 
-        return (
-          <td
-            key={dayIndex}
-            className={cn(
-              "border-r p-0 align-middle last:border-r-0",
-              visual.rowBorder,
-            )}
-          >
-            {dayBreak ? (
-              <button
-                type="button"
-                onClick={() => onEditBreak?.(dayBreak)}
-                className={cn(
-                  ROW_H,
-                  "flex w-full items-center justify-center transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]",
-                )}
-                title={cleanName(dayBreak.name)}
-                aria-label={`Edit ${cellVisual.label}`}
-              >
-                <div
+        {primary.id && onMoveBreak ? (
+          <div className="pointer-events-none absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col opacity-0 transition-opacity group-hover/break:opacity-100 focus-within:opacity-100">
+            <button
+              type="button"
+              disabled={!canMoveUp}
+              onClick={() => onMoveBreak(primary, -1)}
+              className={cn(
+                "pointer-events-auto rounded p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
+                visual.iconColor,
+              )}
+              title="Move break earlier in the day"
+              aria-label="Move break earlier in the day"
+            >
+              {isMoving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ChevronUp className="h-3.5 w-3.5" />
+              )}
+            </button>
+            <button
+              type="button"
+              disabled={!canMoveDown}
+              onClick={() => onMoveBreak(primary, 1)}
+              className={cn(
+                "pointer-events-auto rounded p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
+                visual.iconColor,
+              )}
+              title="Move break later in the day"
+              aria-label="Move break later in the day"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : null}
+
+        {!appliesAllDays &&
+        visibleDayIndices.some(
+          (dayIndex) =>
+            !breaks.find(
+              (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1,
+            ),
+        ) ? (
+          <div className="flex flex-wrap items-center justify-center gap-2 px-3 pb-2 pt-0">
+            {visibleDayIndices.map((dayIndex) => {
+              const dayBreak = breaks.find(
+                (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1,
+              );
+              if (dayBreak) return null;
+              return (
+                <button
+                  key={dayIndex}
+                  type="button"
+                  onClick={() =>
+                    onEditBreak?.({
+                      isNew: true,
+                      afterPeriod: breaks[0]?.afterPeriod || 0,
+                      dayOfWeek: dayIndex + 1,
+                      name: "Break",
+                      type: "BREAK",
+                      durationMinutes: 20,
+                    })
+                  }
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-lg",
-                    cellVisual.iconWrap,
+                    "rounded-full px-2.5 py-1 text-[10px] font-medium text-slate-500 transition-colors",
+                    "hover:bg-black/[0.04] hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
                   )}
+                  title={`Add ${visual.label} on this day`}
                 >
-                  <CellIcon
-                    className={cn("h-4 w-4", cellVisual.iconColor)}
-                    aria-hidden
-                  />
-                </div>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() =>
-                  onEditBreak?.({
-                    isNew: true,
-                    afterPeriod: breaks[0]?.afterPeriod || 0,
-                    dayOfWeek: dayIndex + 1,
-                    name: "Break",
-                    type: "BREAK",
-                    durationMinutes: 20,
-                  })
-                }
-                className={cn(
-                  ROW_H,
-                  "flex w-full items-center justify-center gap-1 border border-dashed border-zinc-300/70 bg-white/50 text-zinc-400 transition-colors hover:border-zinc-400 hover:bg-white hover:text-zinc-600 dark:border-zinc-600 dark:bg-zinc-900/20 dark:hover:border-zinc-500",
-                )}
-                title={`Add ${visual.label} on this day`}
-                aria-label={`Add ${visual.label} on this day`}
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </td>
-        );
-      })}
+                  + Add
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </td>
     </tr>
   );
 }

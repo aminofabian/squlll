@@ -43,7 +43,8 @@ import {
   Check,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  GraduationCap,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,6 +56,7 @@ import { StudentLedger } from './StudentLedger';
 import { useStudentLedger } from '@/lib/hooks/use-student-ledger';
 import { useStudentCredentials } from '@/lib/hooks/useStudentCredentials';
 import { cn } from '@/lib/utils';
+import { AssignGradeStreamDialog } from './AssignGradeStreamDialog';
 
 interface StudentDetailsViewProps {
   studentId: string;
@@ -62,6 +64,7 @@ interface StudentDetailsViewProps {
   schoolConfig?: any;
   /** When true, hides back navigation — parent provides context bar */
   embedded?: boolean;
+  onEnrollmentUpdated?: () => void;
 }
 
 export function StudentDetailsView({
@@ -69,11 +72,13 @@ export function StudentDetailsView({
   onClose,
   schoolConfig,
   embedded = false,
+  onEnrollmentUpdated,
 }: StudentDetailsViewProps) {
   const { toast } = useToast();
   const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [showAssignClassDialog, setShowAssignClassDialog] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { studentDetail, loading, error, refetch } = useStudentDetailSummary(studentId);
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
@@ -304,9 +309,25 @@ export function StudentDetailsView({
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
               <span>{student.admissionNumber}</span>
               <span>{student.gradeLevelName}</span>
-              {student.streamName && <span>{student.streamName}</span>}
+              {student.streamName ? (
+                <span>{student.streamName}</span>
+              ) : (
+                <span className="text-amber-600 dark:text-amber-400">
+                  No stream
+                </span>
+              )}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setShowAssignClassDialog(true)}
+              >
+                <GraduationCap className="h-3.5 w-3.5" />
+                {student.gradeLevelId ? "Change class" : "Assign class"}
+              </Button>
               <Badge
                 variant="outline"
                 className={cn(
@@ -443,8 +464,20 @@ export function StudentDetailsView({
                 </div>
 
                 <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6 md:col-span-2">
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Academic Information</h3>
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md">
+                      <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Academic Information</h3>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs shrink-0"
+                      onClick={() => setShowAssignClassDialog(true)}
+                    >
+                      <GraduationCap className="h-3.5 w-3.5" />
+                      {student.gradeLevelId ? "Change class" : "Assign class"}
+                    </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
@@ -455,12 +488,17 @@ export function StudentDetailsView({
                       <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Curriculum</div>
                       <div className="font-mono text-sm text-[var(--color-text)]">{student.curriculumName}</div>
                     </div>
-                    {student.streamName && (
-                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Stream</div>
-                        <div className="font-mono text-sm text-[var(--color-text)]">{student.streamName}</div>
+                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
+                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Stream</div>
+                      <div className={cn(
+                        "font-mono text-sm",
+                        student.streamName
+                          ? "text-[var(--color-text)]"
+                          : "text-amber-600 dark:text-amber-400",
+                      )}>
+                        {student.streamName || "Not assigned"}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1055,6 +1093,19 @@ export function StudentDetailsView({
 
       {/* Toast Notifications */}
       <Toaster />
+
+      <AssignGradeStreamDialog
+        studentId={studentId}
+        studentName={student.studentName}
+        currentGradeLevelId={student.gradeLevelId}
+        currentStreamId={student.streamId}
+        open={showAssignClassDialog}
+        onOpenChange={setShowAssignClassDialog}
+        onSuccess={() => {
+          refetch();
+          onEnrollmentUpdated?.();
+        }}
+      />
     </div>
   );
 } 

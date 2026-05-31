@@ -7,12 +7,38 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Clock, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NextLessonInfo } from '@/lib/timetable/types';
 import { getSubjectPaletteColor, normalizeSubjectName } from '@/lib/timetable/constants';
+import { getCountdownParts, getSecondsUntil } from '@/lib/timetable';
 import { NextLessonCountdown } from './NextLessonCountdown';
+
+function MinimalCountdownText({ startsAt }: { startsAt: string }) {
+  const [totalSeconds, setTotalSeconds] = useState(() => getSecondsUntil(startsAt));
+
+  useEffect(() => {
+    const tick = () => setTotalSeconds(getSecondsUntil(startsAt));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startsAt]);
+
+  const parts = getCountdownParts(totalSeconds);
+  const label =
+    parts.days > 0
+      ? `${parts.days}d ${parts.hours}h`
+      : parts.hours > 0
+        ? `${parts.hours}h ${parts.minutes}m`
+        : `${parts.minutes}m`;
+
+  return (
+    <span className="shrink-0 pt-0.5 font-mono text-[11px] font-semibold tabular-nums text-primary">
+      {label}
+    </span>
+  );
+}
 
 interface NextLessonPreviewProps {
   nextLesson: NextLessonInfo | null;
@@ -20,6 +46,10 @@ interface NextLessonPreviewProps {
   dense?: boolean;
   /** Bold gradient card for mobile teacher home */
   mobileHero?: boolean;
+  /** Single compact strip — student timetable */
+  minimal?: boolean;
+  /** Flat strip with separator only (mobile student timetable) */
+  flat?: boolean;
   className?: string;
 }
 
@@ -28,12 +58,28 @@ export function NextLessonPreview({
   viewType,
   dense = false,
   mobileHero = false,
+  minimal = false,
+  flat = false,
   className,
 }: NextLessonPreviewProps) {
   const isTeacherDense = viewType === 'teacher' && dense;
-  const isMobileHero = mobileHero && viewType === 'teacher' && nextLesson;
+  const isMobileHero = mobileHero && nextLesson && !minimal;
 
   if (!nextLesson) {
+    if (minimal) {
+      return (
+        <p
+          className={cn(
+            flat
+              ? 'bg-white px-3 py-2.5 text-[10px] text-slate-400 dark:bg-slate-950 dark:text-slate-500'
+              : 'py-1 text-[11px] text-slate-400 dark:text-slate-500',
+            className,
+          )}
+        >
+          Nothing scheduled this week
+        </p>
+      );
+    }
     return (
       <div className={cn(
         'rounded-md border border-dashed border-slate-200/80 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/40',
@@ -51,6 +97,67 @@ export function NextLessonPreview({
   );
   const gradeLabel = nextLesson.lesson.grade.displayName || nextLesson.lesson.grade.name;
 
+  if (minimal) {
+    const meta = [
+      viewType === 'student' ? nextLesson.lesson.teacher.name : gradeLabel,
+      nextLesson.dayLabel,
+      nextLesson.time.replace(/\s*[-–—]\s*/g, '–'),
+    ]
+      .filter(Boolean)
+      .join(' · ');
+
+    if (flat) {
+      return (
+        <div
+          className={cn(
+            'flex w-full min-w-0 max-w-full items-start gap-2.5 bg-white px-3 py-2.5 dark:bg-slate-950',
+            className,
+          )}
+        >
+          <span
+            className="mt-1.5 h-2 w-2 shrink-0 rotate-45"
+            style={{ backgroundColor: palette.accent }}
+            aria-hidden
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="min-w-0 flex-1 break-words text-[12px] font-semibold leading-snug text-slate-900 dark:text-slate-100">
+                {nextLesson.lesson.subject.name}
+              </p>
+              <MinimalCountdownText startsAt={nextLesson.startsAt} />
+            </div>
+            <p className="mt-0.5 break-words text-[10px] leading-snug text-slate-500 dark:text-slate-400">
+              {meta}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className={cn(
+          'flex w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded border border-slate-200/70 bg-white/90 px-2 py-1.5 dark:border-slate-700/70 dark:bg-slate-800/90',
+          className,
+        )}
+      >
+        <span
+          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          style={{ backgroundColor: palette.accent }}
+          aria-hidden
+        />
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <p className="truncate text-[11px] font-semibold leading-snug text-slate-900 dark:text-slate-100">
+            {nextLesson.lesson.subject.name}
+          </p>
+          <p className="truncate text-[10px] leading-snug text-slate-500 dark:text-slate-400">
+            {meta}
+          </p>
+        </div>
+        <MinimalCountdownText startsAt={nextLesson.startsAt} />
+      </div>
+    );
+  }
   if (isMobileHero) {
     const subjectName = nextLesson.lesson.subject.name;
     const parts = subjectName.trim().split(/\s+/);
@@ -92,7 +199,11 @@ export function NextLessonPreview({
               <p className="mt-1.5 text-lg font-bold leading-tight tracking-tight">
                 {nextLesson.lesson.subject.name}
               </p>
-              <p className="mt-0.5 text-sm text-white/85">{gradeLabel}</p>
+              <p className="mt-0.5 text-sm text-white/85">
+                {viewType === 'student'
+                  ? nextLesson.lesson.teacher.name
+                  : gradeLabel}
+              </p>
             </div>
           </div>
           <div className="relative mt-4 flex items-end justify-between gap-3 rounded-xl bg-black/15 px-3 py-2.5 backdrop-blur-sm">
@@ -148,7 +259,7 @@ export function NextLessonPreview({
               )}
             </div>
 
-            <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-50">
+            <p className="break-words text-sm font-bold text-slate-900 dark:text-slate-50">
               {nextLesson.lesson.subject.name}
             </p>
 

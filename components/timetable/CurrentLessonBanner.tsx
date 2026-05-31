@@ -21,6 +21,8 @@ interface CurrentLessonBannerProps {
   viewType: 'student' | 'teacher';
   /** Hide the large live clock (recommended for teacher timetable) */
   showClock?: boolean;
+  /** Dense layout for mobile dashboards */
+  compact?: boolean;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export function CurrentLessonBanner({
   formattedTime,
   viewType,
   showClock = true,
+  compact = false,
   className,
 }: CurrentLessonBannerProps) {
   const colors = STATUS_COLORS[status.status];
@@ -38,10 +41,13 @@ export function CurrentLessonBanner({
   return (
     <div
       className={cn(
-        'relative overflow-hidden border-l-2 shadow-sm transition-all duration-500 rounded-md',
-        colors.border,
-        colors.bg,
-        isTeacher && 'border-slate-200/80 dark:border-slate-600/80',
+        'relative overflow-hidden shadow-sm transition-all duration-500',
+        compact
+          ? 'rounded-lg border border-slate-200/80 dark:border-slate-700/80'
+          : cn('rounded-md border-l-2', colors.border, colors.bg),
+        !compact && colors.bg,
+        compact && 'bg-white dark:bg-slate-900',
+        isTeacher && !compact && 'border-slate-200/80 dark:border-slate-600/80',
         className,
       )}
     >
@@ -55,47 +61,62 @@ export function CurrentLessonBanner({
         </div>
       )}
 
-      <div className={cn(isTeacher ? 'px-3 py-3' : 'px-4 py-4 sm:px-6 sm:py-5')}>
-        <div className="flex items-start justify-between gap-4">
+      <div className={cn(
+        compact ? 'px-2.5 py-2' : isTeacher ? 'px-3 py-3' : 'px-4 py-4 sm:px-6 sm:py-5',
+      )}>
+        <div className={cn(
+          'flex items-start justify-between gap-2',
+          compact && 'gap-2',
+        )}>
           {/* Left: Status info */}
-          <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="flex-1 min-w-0 space-y-1">
             {/* Status header */}
-            <div className="flex items-center gap-2">
-              <div className={cn('h-2 w-2 shrink-0 rounded-full animate-pulse', colors.dot)} />
-              <StatusTitle status={status.status} isTeacher={isTeacher} />
+            <div className="flex items-center gap-1.5">
+              <div className={cn('h-1.5 w-1.5 shrink-0 rounded-full animate-pulse', colors.dot)} />
+              <StatusTitle status={status.status} isTeacher={isTeacher} compact={compact} />
             </div>
 
             {/* Lesson/break details */}
             {status.status === 'lesson' && status.lesson && (
-              <LessonDetails lesson={status.lesson} viewType={viewType} />
+              <LessonDetails lesson={status.lesson} viewType={viewType} compact={compact} />
             )}
 
             {status.status === 'break' && status.break && (
               <BreakDetails
                 breakItem={status.break}
                 remainingMinutes={status.remainingMinutes}
+                compact={compact}
               />
             )}
 
             {status.status === 'free' && (
-              <FreePeriodDetails remainingMinutes={status.remainingMinutes} />
+              <FreePeriodDetails remainingMinutes={status.remainingMinutes} compact={compact} />
             )}
 
             {(status.status === 'weekend' || status.status === 'outside') && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className={cn(
+                'text-gray-600 dark:text-gray-400',
+                compact ? 'text-[11px] leading-snug' : 'text-sm',
+              )}>
                 {status.message}
               </p>
             )}
 
             {/* Remaining time */}
-            {status.remainingMinutes > 0 && status.status !== 'weekend' && status.status !== 'outside' && (
+            {status.remainingMinutes > 0 && status.status !== 'weekend' && status.status !== 'outside' && !compact && (
               <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 {status.remainingMinutes} min remaining
               </p>
             )}
           </div>
 
-          {showClock && (
+          {compact ? (
+            <span className="shrink-0 font-mono text-[11px] font-semibold tabular-nums text-slate-600 dark:text-slate-300">
+              {formattedTime}
+            </span>
+          ) : null}
+
+          {showClock && !compact && (
             <div className="text-right flex-shrink-0">
               <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 tabular-nums">
                 {formattedTime}
@@ -115,9 +136,11 @@ export function CurrentLessonBanner({
 function StatusTitle({
   status,
   isTeacher,
+  compact = false,
 }: {
   status: CurrentLessonStatus['status'];
   isTeacher: boolean;
+  compact?: boolean;
 }) {
   const labels: Record<CurrentLessonStatus['status'], { icon: React.ReactNode; text: string }> = {
     lesson: { icon: <Radio className="h-3.5 w-3.5 text-red-500" />, text: 'Live now' },
@@ -130,8 +153,12 @@ function StatusTitle({
 
   return (
     <h3 className={cn(
-      'flex items-center gap-1.5 font-bold text-gray-900 dark:text-gray-100',
-      isTeacher ? 'text-xs uppercase tracking-wide' : 'text-sm uppercase tracking-wide',
+      'flex items-center gap-1 font-bold text-gray-900 dark:text-gray-100',
+      compact
+        ? 'text-[10px] uppercase tracking-wide'
+        : isTeacher
+          ? 'text-xs uppercase tracking-wide'
+          : 'text-sm uppercase tracking-wide',
     )}>
       {icon}
       {text}
@@ -142,16 +169,22 @@ function StatusTitle({
 function LessonDetails({
   lesson,
   viewType,
+  compact = false,
 }: {
   lesson: TimetableLesson;
   viewType: 'student' | 'teacher';
+  compact?: boolean;
 }) {
   return (
-    <div className="space-y-1">
-      <p className="text-base font-semibold text-gray-900 dark:text-gray-100 sm:text-lg">
+    <div className="space-y-0.5">
+      <p className={cn(
+        'font-semibold text-gray-900 dark:text-gray-100',
+        compact ? 'text-[12px] leading-snug line-clamp-2' : 'text-base sm:text-lg',
+      )}>
         {lesson.subject.name}
       </p>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      {!compact && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {viewType !== 'teacher' && (
           <span className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
             <Users className="h-3.5 w-3.5" />
@@ -183,6 +216,13 @@ function LessonDetails({
           </>
         )}
       </div>
+      )}
+      {compact && viewType !== 'teacher' && (
+        <p className="truncate text-[10px] text-gray-600 dark:text-gray-400">
+          {lesson.teacher.name}
+          {lesson.room ? ` · Rm ${lesson.room}` : ''}
+        </p>
+      )}
     </div>
   );
 }
@@ -191,9 +231,11 @@ function LessonDetails({
 function BreakDetails({
   breakItem,
   remainingMinutes,
+  compact = false,
 }: {
   breakItem: { type: string; name: string; icon: string; durationMinutes: number };
   remainingMinutes: number;
+  compact?: boolean;
 }) {
   const config = BREAK_TYPE_CONFIG[breakItem.type as BreakType] || BREAK_TYPE_CONFIG.BREAK;
 
@@ -203,25 +245,39 @@ function BreakDetails({
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
-    <div className="space-y-1">
-      <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+    <div className="space-y-0.5">
+      <p className={cn(
+        'font-semibold text-gray-900 dark:text-gray-100',
+        compact ? 'text-[12px]' : 'text-base',
+      )}>
         {label}
       </p>
-      <p className="text-xs text-gray-500">
-        {breakItem.durationMinutes} min total • {remainingMinutes} min remaining
+      <p className={cn('text-gray-500', compact ? 'text-[10px]' : 'text-xs')}>
+        {compact
+          ? `${remainingMinutes}m left`
+          : `${breakItem.durationMinutes} min total • ${remainingMinutes} min remaining`}
       </p>
     </div>
   );
 }
 
 /** Sub-component: Free period details */
-function FreePeriodDetails({ remainingMinutes }: { remainingMinutes: number }) {
+function FreePeriodDetails({
+  remainingMinutes,
+  compact = false,
+}: {
+  remainingMinutes: number;
+  compact?: boolean;
+}) {
   return (
-    <div className="space-y-1">
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        No class scheduled for this period
+    <div className="space-y-0.5">
+      <p className={cn(
+        'text-gray-600 dark:text-gray-400',
+        compact ? 'text-[11px] leading-snug' : 'text-sm',
+      )}>
+        {compact ? 'Free period' : 'No class scheduled for this period'}
       </p>
-      {remainingMinutes > 0 && (
+      {remainingMinutes > 0 && !compact && (
         <p className="text-xs text-gray-500">
           {remainingMinutes} min until next period
         </p>

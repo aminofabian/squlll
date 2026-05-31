@@ -38,6 +38,7 @@ import {
 import {
   resolveGradeForSchoolConfig,
   resolveTenantGradeLevelIdForApi,
+  resolveTenantStreamIdForApi,
   subjectsForTimetableGrade,
 } from "../utils/resolveGradeForSchoolConfig";
 import { subjectsForSelectedTeacher } from "../utils/subjectsForSelectedTeacher";
@@ -96,6 +97,20 @@ interface LessonEditDialogProps {
   onClose: () => void;
 }
 
+function useIsLgDown() {
+  const [isLgDown, setIsLgDown] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const update = () => setIsLgDown(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isLgDown;
+}
+
 export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   const {
     subjects,
@@ -118,6 +133,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
   const { getSubjectsByLevelId, getGradeById } = useSchoolConfigStore();
   const { toast } = useToast();
   const params = useParams();
+  const isLgDown = useIsLgDown();
   const subdomain = params?.subdomain as string | undefined;
   const knownRooms = useKnownRoomNumbers();
   const [isSaving, setIsSaving] = useState(false);
@@ -281,6 +297,12 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           return;
         }
 
+        const tenantStreamId = resolveTenantStreamIdForApi(
+          selectedStreamId,
+          lesson.gradeId ?? selectedGradeId,
+          grades,
+        );
+
         const clickedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
         if (!clickedSlot) {
           toast({
@@ -389,7 +411,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
           gradeLevelId: tenantGradeLevelId,
-          streamId: selectedStreamId ?? null,
+          streamId: tenantStreamId,
           termId: termId,
           isDoublePeriod: formData.isDoublePeriod ?? false,
         };
@@ -750,7 +772,7 @@ Check the browser console for detailed input information.`;
         upsertEntry({
           id: createdEntry.id,
           gradeId: lesson.gradeId,
-          streamId: selectedStreamId ?? null,
+          streamId: tenantStreamId,
           subjectId: formData.subjectId,
           teacherId: formData.teacherId,
           timeSlotId: dayTemplatePeriodId,
@@ -855,7 +877,7 @@ Check the browser console for detailed input information.`;
           upsertEntry({
             id: lesson.id,
             gradeId: lesson.gradeId,
-            streamId: selectedStreamId ?? null,
+            streamId: tenantStreamId,
             subjectId: formData.subjectId,
             teacherId: formData.teacherId,
             timeSlotId: targetSlot.id,
@@ -1329,33 +1351,78 @@ Check the browser console for detailed input information.`;
   };
 
   return (
-    <Drawer open={!!lesson} onOpenChange={onClose} direction="right">
+    <Drawer
+      open={!!lesson}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      direction={isLgDown ? "bottom" : "right"}
+    >
       <DrawerContent
-        className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col bg-white dark:bg-slate-950"
-        data-vaul-drawer-direction="right"
+        className={cn(
+          "flex flex-col bg-white dark:bg-slate-950",
+          isLgDown
+            ? "max-h-[min(92dvh,720px)] rounded-t-[1.25rem] border-t border-slate-100 dark:border-slate-800"
+            : "ml-auto h-[100dvh] max-h-[100dvh] w-full max-w-md",
+        )}
+        data-vaul-drawer-direction={isLgDown ? "bottom" : "right"}
       >
-        <DrawerHeader className="shrink-0 space-y-0 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <DrawerHeader
+          className={cn(
+            "shrink-0 space-y-0 border-b border-slate-100 dark:border-slate-800",
+            isLgDown ? "px-5 py-4" : "px-4 py-3",
+          )}
+        >
           <div className="flex items-start gap-2">
-            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            {!isLgDown ? (
+              <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            ) : null}
             <div className="min-w-0 flex-1">
-              <DrawerTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <DrawerTitle
+                className={cn(
+                  "font-semibold text-slate-900 dark:text-slate-100",
+                  isLgDown ? "text-[15px] tracking-tight" : "text-sm",
+                )}
+              >
                 {isNew ? "Add lesson" : "Edit lesson"}
               </DrawerTitle>
-              <p className="mt-0.5 text-[11px] text-slate-500">{slotTitle}</p>
+              <p
+                className={cn(
+                  "text-slate-500",
+                  isLgDown ? "mt-1 text-xs" : "mt-0.5 text-[11px]",
+                )}
+              >
+                {slotTitle}
+              </p>
             </div>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0 text-slate-400"
+              className={cn(
+                "shrink-0 text-slate-400",
+                isLgDown ? "h-10 w-10 rounded-full" : "h-7 w-7",
+              )}
               onClick={onClose}
               aria-label="Close"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className={isLgDown ? "h-4 w-4" : "h-3.5 w-3.5"} />
             </Button>
           </div>
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <div
+            className={cn(
+              "flex flex-wrap gap-1.5",
+              isLgDown ? "mt-3 gap-2" : "mt-2.5",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+                isLgDown
+                  ? "rounded-full bg-slate-100 px-3 py-1 text-xs"
+                  : "rounded-md bg-slate-100 px-2 py-0.5 text-[11px]",
+              )}
+            >
               <Clock className="h-3 w-3 text-slate-400" />
               {dayNameFromNumber(lesson.dayOfWeek)}
               {timeSlot
@@ -1363,7 +1430,14 @@ Check the browser console for detailed input information.`;
                 : ""}
             </span>
             {grade ? (
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <span
+                className={cn(
+                  "font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+                  isLgDown
+                    ? "rounded-full bg-slate-100 px-3 py-1 text-xs"
+                    : "rounded-md bg-slate-100 px-2 py-0.5 text-[11px]",
+                )}
+              >
                 {grade.displayName || grade.name}
                 {sectionName ? ` · ${sectionName}` : ""}
               </span>
@@ -1371,7 +1445,12 @@ Check the browser console for detailed input information.`;
           </div>
         </DrawerHeader>
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto",
+            isLgDown ? "space-y-5 px-5 py-5" : "space-y-4 px-4 py-4",
+          )}
+        >
           {scheduleConflict ? (
             <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/50 dark:bg-red-950/40">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
@@ -1583,14 +1662,24 @@ Check the browser console for detailed input information.`;
           </label>
         </div>
 
-        <DrawerFooter className="shrink-0 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
-          <div className="flex w-full gap-2">
+        <DrawerFooter
+          className={cn(
+            "shrink-0 border-t border-slate-100 dark:border-slate-800",
+            isLgDown
+              ? "px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              : "px-4 py-3",
+          )}
+        >
+          <div className={cn("flex w-full gap-2", isLgDown && "gap-3")}>
             {!isNew ? (
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={handleDelete}
-                className="h-9 shrink-0 px-3 text-xs"
+                className={cn(
+                  "h-9 shrink-0 px-3 text-xs",
+                  isLgDown && "h-11 text-sm",
+                )}
               >
                 Delete
               </Button>
@@ -1600,7 +1689,7 @@ Check the browser console for detailed input information.`;
               size="sm"
               onClick={onClose}
               disabled={isSaving}
-              className="h-9 flex-1 text-xs"
+              className={cn("h-9 flex-1 text-xs", isLgDown && "h-11 text-sm")}
             >
               Cancel
             </Button>
@@ -1613,7 +1702,10 @@ Check the browser console for detailed input information.`;
                 isSaving ||
                 !!scheduleConflict
               }
-              className="h-9 flex-1 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className={cn(
+                "h-9 flex-1 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200",
+                isLgDown && "h-11 text-sm",
+              )}
             >
               {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save"}
             </Button>

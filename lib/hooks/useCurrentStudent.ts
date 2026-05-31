@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { getCookie } from '../utils';
+import { useState, useEffect, useCallback } from 'react';
 
 interface StudentGrade {
   id: string;
@@ -8,6 +7,13 @@ interface StudentGrade {
     id: string;
     name: string;
   };
+  tenantStreams?: Array<{
+    id: string;
+    stream?: {
+      id: string;
+      name: string;
+    } | null;
+  }>;
 }
 
 interface CurrentStudent {
@@ -17,13 +23,28 @@ interface CurrentStudent {
   admissionNumber: string;
   grade: StudentGrade | string;
   gradeId: string | null;
+  tenantStreamId: string | null;
+  streamName: string | null;
 }
+
+export type { CurrentStudent };
 
 interface UseCurrentStudentResult {
   student: CurrentStudent | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
+}
+
+function resolveTenantStreamId(
+  grade: StudentGrade | undefined,
+  streamId: string | null | undefined,
+): string | null {
+  if (!streamId || !grade?.tenantStreams?.length) return null;
+
+  return (
+    grade.tenantStreams.find((ts) => ts.stream?.id === streamId)?.id ?? null
+  );
 }
 
 /**
@@ -39,19 +60,6 @@ export function useCurrentStudent(): UseCurrentStudentResult {
       setLoading(true);
       setError(null);
 
-      // Get userName from cookies (set during login)
-      const userName = getCookie('userName');
-      const tenantId = getCookie('tenantId');
-      
-      if (!userName) {
-        throw new Error('User name not found in cookies. Please log in again.');
-      }
-
-      if (!tenantId) {
-        throw new Error('Tenant ID not found in cookies. Please log in again.');
-      }
-
-      // Use searchStudentsByName - this is a search query that students can use
       const response = await fetch('/api/graphql', {
         method: 'POST',
         headers: {
@@ -60,21 +68,37 @@ export function useCurrentStudent(): UseCurrentStudentResult {
         credentials: 'include',
         body: JSON.stringify({
           query: `
-            query SearchCurrentStudent($name: String!, $tenantId: String!) {
-              searchStudentsByName(name: $name, tenantId: $tenantId) {
+            query MyStudentProfile {
+              myStudentProfile {
                 id
-                name
-                admissionNumber
-                grade
-                phone
-                streamId
+                admission_number
+                grade {
+                  id
+                  name
+                  shortName
+                  gradeLevel {
+                    id
+                    name
+                  }
+                  tenantStreams {
+                    id
+                    stream {
+                      id
+                      name
+                    }
+                  }
+                }
+                stream {
+                  id
+                  name
+                }
+                user {
+                  name
+                  email
+                }
               }
             }
           `,
-          variables: {
-            name: userName,
-            tenantId,
-          },
         }),
       });
 
@@ -84,72 +108,27 @@ export function useCurrentStudent(): UseCurrentStudentResult {
         throw new Error(data.errors[0]?.message || 'GraphQL error');
       }
 
-      // searchStudentsByName returns an array - find exact match by name
-      const students = data.data?.searchStudentsByName || [];
-      const currentStudent = students.find((s: any) => 
-        s.name?.toLowerCase() === userName.toLowerCase()
-      );
-
-      if (!currentStudent) {
-        throw new Error(`Student not found for name: ${userName}`);
+      const profile = data.data?.myStudentProfile;
+      if (!profile) {
+        throw new Error('Student profile not found');
       }
 
-      // The grade field might be a name or ID - check if it's a UUID
-      const gradeString = currentStudent.grade || '';
-      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(gradeString);
-      let gradeId: string | null = isUUID ? gradeString : null;
-
-      // If grade is not a UUID, resolve it by querying grades
-      if (!isUUID && gradeString) {
-        try {
-          const gradesResponse = await fetch('/api/graphql', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              query: `
-                query GetGradeLevels {
-                  gradeLevelsForSchoolType {
-                    id
-                    shortName
-                    gradeLevel {
-                      id
-                      name
-                    }
-                  }
-                }
-              `,
-            }),
-          });
-
-          const gradesData = await gradesResponse.json();
-          if (!gradesData.errors && gradesData.data?.gradeLevelsForSchoolType) {
-            const matchedGrade = gradesData.data.gradeLevelsForSchoolType.find((gl: any) =>
-              gl.gradeLevel?.name === gradeString || 
-              gl.shortName === gradeString ||
-              gl.gradeLevel?.name?.toLowerCase() === gradeString?.toLowerCase()
-            );
-            
-            if (matchedGrade) {
-              gradeId = matchedGrade.id;
-            } else {
-              console.warn('Could not resolve grade name to ID:', gradeString);
-            }
-          }
-        } catch (gradeError) {
-          console.warn('Failed to resolve grade ID:', gradeError);
-        }
-      }
+      const grade = profile.grade as StudentGrade | undefined;
+      const gradeName =
+        grade?.gradeLevel?.name || grade?.name || grade?.shortName || '';
+      const streamId = profile.stream?.id ?? null;
+      const streamName = profile.stream?.name ?? null;
+      const tenantStreamId = resolveTenantStreamId(grade, streamId);
 
       setStudent({
-        id: currentStudent.id,
-        name: currentStudent.name || '',
-        email: '', // Not available in searchStudentsByName
-        admissionNumber: currentStudent.admissionNumber,
-        grade: gradeString,
-        gradeId,
+        id: profile.id,
+        name: profile.user?.name || '',
+        email: profile.user?.email || '',
+        admissionNumber: profile.admission_number,
+        grade: gradeName,
+        gradeId: grade?.id || null,
+        tenantStreamId,
+        streamName,
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch student information';
@@ -171,4 +150,3 @@ export function useCurrentStudent(): UseCurrentStudentResult {
     refetch: fetchStudent,
   };
 }
-

@@ -2,6 +2,10 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { TimetableGridSkeleton } from "@/app/school/[subdomain]/(pages)/timetable/components/TimetableGridSkeleton";
+import {
+  TimetableNextLessonBarSkeleton,
+  TimetableMobileStatsBarSkeleton,
+} from "@/components/timetable";
 
 function HeroSkeleton() {
   return (
@@ -47,26 +51,23 @@ function SidebarSkeleton() {
   );
 }
 
-function MobileSkeleton() {
+function ScheduleGridSkeleton({ flex = false }: { flex?: boolean }) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden">
-      <div className="flex shrink-0 justify-end">
-        <Skeleton className="h-7 w-28 rounded-md" />
-      </div>
-      <div className="shrink-0 rounded-lg border border-slate-200/80 bg-white px-3.5 py-3 dark:border-slate-700 dark:bg-slate-800/90">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="mt-2 h-5 w-4/5" />
-        <Skeleton className="mt-2 h-3 w-full" />
-      </div>
-      <div className="grid shrink-0 grid-cols-3 gap-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-lg" />
-        ))}
-      </div>
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200/80 bg-white dark:border-slate-700 dark:bg-slate-800/90">
-        <TimetableGridSkeleton className="h-full min-h-0 flex-1 rounded-none border-0 bg-transparent" />
-      </section>
-    </div>
+    <section
+      className={
+        flex
+          ? "flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-slate-950"
+          : "overflow-hidden rounded-lg border border-slate-200/80 bg-white dark:border-slate-700 dark:bg-slate-800/90"
+      }
+    >
+      <TimetableGridSkeleton
+        className={
+          flex
+            ? "h-full min-h-0 flex-1 rounded-none border-0 bg-transparent"
+            : "rounded-none border-0 bg-transparent"
+        }
+      />
+    </section>
   );
 }
 
@@ -77,9 +78,11 @@ export function TeacherTimetableSkeleton() {
       aria-busy
       aria-label="Loading timetable"
     >
-      <div className="container mx-auto max-w-7xl px-4 py-4 max-lg:overflow-x-hidden max-lg:p-0">
-        <div className="flex h-[calc(100dvh-9.75rem)] max-h-[calc(100dvh-9.75rem)] w-full max-w-full flex-col overflow-hidden bg-[#f2f2f7] px-3 pt-2 pb-2 lg:hidden">
-          <MobileSkeleton />
+      <div className="mx-auto max-w-7xl max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5">
+        <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
+          <TimetableNextLessonBarSkeleton viewType="teacher" />
+          <ScheduleGridSkeleton flex />
+          <TimetableMobileStatsBarSkeleton viewType="teacher" />
         </div>
 
         <div className="hidden flex-col gap-4 lg:flex">

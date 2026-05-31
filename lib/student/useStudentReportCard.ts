@@ -125,6 +125,7 @@ export function useStudentPerformance(subdomain: string) {
     ranking,
     academicYear,
     term,
+    termName: activeTerm?.name ?? null,
     loading: studentLoading || yearLoading || termLoading || loading,
     error: studentError ?? error,
     refetch: load,

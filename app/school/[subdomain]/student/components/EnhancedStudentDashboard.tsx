@@ -67,6 +67,33 @@ import { useStudentExamResults } from '@/lib/student/useStudentExamResults';
 import { useStudentTests } from '@/lib/student/useStudentTests';
 import { useStudentNextClass } from '@/lib/student/useStudentNextClass';
 import { useChatUnreadTotal } from '@/lib/chat/ChatProvider';
+import { cn } from '@/lib/utils';
+import {
+  formatStudentClassLabel,
+  getStudentDisplayName,
+} from '@/lib/student/studentDisplay';
+import {
+  StatCellSkeleton,
+  StudentDashboardMobileSkeleton,
+  StudentProfileBannerSkeleton,
+  StudentQuickActionsSkeleton,
+  StudentStatsGridSkeleton,
+  StudentWelcomeSkeleton,
+} from './StudentDashboardSkeleton';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const MOBILE_ACTION_LABELS: Record<string, string> = {
+  'submit-assignment': 'Assign',
+  'view-timetable': 'Schedule',
+  'check-exam-results': 'Results',
+  'download-notes': 'Notes',
+  'read-school-message': 'Messages',
+  'view-attendance': 'Attend',
+  'track-performance': 'Perf',
+  'view-upcoming-tests': 'Tests',
+  'contact-class-teacher': 'Contact',
+  'download-report-card': 'Reports',
+};
 
 interface Action {
   id: string;
@@ -84,11 +111,14 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
   useStudentExamLiveUpdates();
   useStudentAssignmentLiveUpdates();
   useStudentNotesLiveUpdates();
-  const { student } = useCurrentStudent();
-  const { summary: attendanceSummary } = useStudentAttendanceSummary(subdomain);
-  const { sessions: examSessions } = useStudentExamResults(subdomain);
-  const { pendingCount, upcomingCount } = useStudentTests(subdomain);
-  const { nextLesson } = useStudentNextClass();
+  const { student, loading: studentLoading } = useCurrentStudent();
+  const { summary: attendanceSummary, loading: attendanceLoading } =
+    useStudentAttendanceSummary(subdomain);
+  const { sessions: examSessions, loading: examLoading } =
+    useStudentExamResults(subdomain);
+  const { pendingCount, upcomingCount, loading: testsLoading } =
+    useStudentTests(subdomain);
+  const { nextLesson, loading: nextClassLoading } = useStudentNextClass();
   const chatUnread = useChatUnreadTotal();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'timetable' | 'examResults' | 'downloadNotes' | 'messages' | 'attendance' | 'contactTeacher'>('dashboard');
@@ -125,6 +155,16 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
     }
   }, []);
 
+  useEffect(() => {
+    if (student?.name) {
+      setStudentName(student.name);
+    }
+  }, [student?.name]);
+
+  const displayName = getStudentDisplayName(student, studentName);
+  const classLabel = formatStudentClassLabel(student);
+  const dashboardLoading = studentLoading;
+
   const handleActionClick = (actionId: string) => {
     console.log(`Action ${actionId} clicked`);
     
@@ -134,7 +174,7 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         setCurrentView('assignments');
         break;
       case 'view-timetable':
-        setCurrentView('timetable');
+        router.push('/student/timetable');
         break;
       case 'check-exam-results':
         setCurrentView('examResults');
@@ -143,7 +183,7 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         setCurrentView('downloadNotes');
         break;
       case 'read-school-message':
-        setCurrentView('messages');
+        router.push('/student/messages');
         break;
       case 'view-attendance':
         setCurrentView('attendance');
@@ -254,24 +294,53 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
     },
   ];
 
-  const renderQuickActions = () => (
-    <div className="mb-2">
-      <div className="flex items-center gap-3 mb-8 justify-center">
-        <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
-      </div>
-      <div className="flex justify-center">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-4xl w-full">
+  const renderQuickActions = (mobile = false) => (
+    <div className={mobile ? 'mb-1' : 'mb-2'}>
+      {!mobile && (
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <h2 className="text-2xl font-bold text-foreground">Quick Actions</h2>
+        </div>
+      )}
+      {mobile && (
+        <p className="mb-1.5 px-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Quick actions
+        </p>
+      )}
+      <div className={mobile ? '' : 'flex justify-center'}>
+        <div className={cn(
+          'w-full',
+          mobile
+            ? 'grid grid-cols-4 gap-1.5'
+            : 'mx-auto grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+        )}>
           {quickActions.map((action) => (
             <button
               key={action.id}
+              type="button"
               onClick={action.onClick}
-              className="group flex flex-col items-center justify-center w-32 h-32 bg-card border border-primary/20 shadow-sm hover:shadow-md transition-all duration-150 hover:bg-primary/5 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary active:scale-95 select-none rounded-none cursor-pointer"
+              className={cn(
+                'group flex cursor-pointer flex-col items-center justify-center select-none border border-primary/20 bg-card text-center transition-all duration-150 hover:border-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary active:scale-95',
+                mobile
+                  ? 'rounded-lg bg-white px-1 py-2 shadow-sm dark:bg-slate-900'
+                  : 'h-32 w-32 rounded-none shadow-sm hover:shadow-md',
+              )}
             >
-              <span className={`flex items-center justify-center w-12 h-12 mb-2 ${action.bgClass} text-white shadow-md rounded transition-all duration-200 cursor-pointer group-hover:scale-110 group-hover:ring-2 group-hover:ring-primary/20`}>
-                {action.icon}
+              <span className={cn(
+                'flex items-center justify-center text-white transition-all duration-200',
+                action.bgClass,
+                mobile
+                  ? 'mb-1 h-8 w-8 rounded-md'
+                  : 'mb-2 h-12 w-12 rounded shadow-md group-hover:scale-110 group-hover:ring-2 group-hover:ring-primary/20',
+              )}>
+                {React.cloneElement(action.icon as React.ReactElement<{ className?: string }>, {
+                  className: mobile ? 'h-4 w-4' : 'w-6 h-6',
+                })}
               </span>
-              <span className="text-xs font-semibold text-foreground text-center leading-tight">
-                {action.title}
+              <span className={cn(
+                'font-semibold leading-tight text-foreground',
+                mobile ? 'text-[9px] line-clamp-2' : 'text-xs',
+              )}>
+                {mobile ? MOBILE_ACTION_LABELS[action.id] ?? action.title : action.title}
               </span>
             </button>
           ))}
@@ -311,67 +380,191 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         ? `${Math.round(attendanceSummary.percentage)}%`
         : '—',
       averageScore,
-      currentGrade:
-        typeof student?.grade === 'string'
-          ? student.grade
-          : student?.grade?.name ?? '—',
+      classLabel,
     };
-  }, [attendanceSummary, chatUnread, examSessions, nextLesson, pendingCount, upcomingCount, student?.grade]);
+  }, [
+    attendanceSummary,
+    chatUnread,
+    examSessions,
+    nextLesson,
+    pendingCount,
+    upcomingCount,
+    student,
+  ]);
 
-  const renderStudentStats = () => (
-    <>
-      {studentName && (
-        <div className="flex justify-center mb-6">
-          <div className="w-full max-w-3xl bg-gradient-to-r from-primary/20 via-background to-primary/20 shadow-md border border-primary/20 rounded-lg py-4 px-6 relative">
-            {/* Student profile content */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              {/* Left side - Student info */}
-              <div className="flex items-center gap-4">
-                {/* Profile avatar */}
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <UserCircle className="w-7 h-7 text-primary" />
+  const renderStudentStats = (mobile = false) => {
+    const statsLoading = {
+      next: nextClassLoading,
+      assign: testsLoading,
+      tests: testsLoading,
+      msgs: false,
+      attend: attendanceLoading,
+      avg: examLoading,
+    };
+
+    if (mobile) {
+      const cells = [
+        {
+          key: 'next',
+          icon: Calendar,
+          label: 'Next class',
+          value: studentStats.nextClass.subject,
+          sub: studentStats.nextClass.countdown,
+          meta: studentStats.nextClass.time,
+          wide: true,
+          loading: statsLoading.next,
+        },
+        {
+          key: 'assign',
+          icon: BookOpen,
+          label: 'Pending',
+          value: String(studentStats.pendingAssignments),
+          loading: statsLoading.assign,
+        },
+        {
+          key: 'tests',
+          icon: ClipboardList,
+          label: 'Tests',
+          value: String(studentStats.upcomingTests),
+          loading: statsLoading.tests,
+        },
+        {
+          key: 'msgs',
+          icon: Inbox,
+          label: 'Unread',
+          value: String(studentStats.unreadMessages),
+          loading: statsLoading.msgs,
+        },
+        {
+          key: 'attend',
+          icon: UserCheck,
+          label: 'Attend',
+          value: studentStats.attendanceRate,
+          loading: statsLoading.attend,
+        },
+        {
+          key: 'avg',
+          icon: BarChart3,
+          label: 'Average',
+          value: studentStats.averageScore,
+          loading: statsLoading.avg,
+        },
+      ];
+
+      return (
+        <div className="grid grid-cols-3 gap-1.5">
+          {cells.map((cell) => {
+            if (cell.loading) {
+              return <StatCellSkeleton key={cell.key} wide={cell.wide} />;
+            }
+
+            const Icon = cell.icon;
+            return (
+              <div
+                key={cell.key}
+                className={cn(
+                  'flex flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white px-1 py-2 text-center dark:border-slate-700 dark:bg-slate-900',
+                  cell.wide && 'col-span-3 flex-row items-center gap-2 px-2.5 py-2 text-left',
+                )}
+              >
+                <Icon className={cn('shrink-0 text-primary', cell.wide ? 'h-4 w-4' : 'mb-0.5 h-3.5 w-3.5')} />
+                <div className={cn('min-w-0', cell.wide && 'flex-1')}>
+                  {cell.wide ? (
+                    <>
+                      <p className="truncate text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                        {cell.value}
+                      </p>
+                      <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+                        {'meta' in cell ? cell.meta : ''}
+                        {cell.sub ? ` · ${cell.sub}` : ''}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold leading-none text-slate-900 dark:text-slate-100">
+                        {cell.value}
+                      </p>
+                      <p className="mt-0.5 text-[9px] leading-tight text-slate-500 dark:text-slate-400">
+                        {cell.label}
+                      </p>
+                    </>
+                  )}
                 </div>
-                
-                {/* Student name */}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (studentLoading) {
+      return (
+        <>
+          <StudentProfileBannerSkeleton />
+          <StudentStatsGridSkeleton mobile={false} />
+        </>
+      );
+    }
+
+    return (
+    <>
+      {displayName ? (
+        <div className="mb-6 flex justify-center">
+          <div className="relative w-full max-w-3xl rounded-lg border border-primary/20 bg-gradient-to-r from-primary/20 via-background to-primary/20 px-6 py-4 shadow-md">
+            <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <UserCircle className="h-7 w-7 text-primary" />
+                </div>
                 <div>
                   <div className="flex items-baseline">
                     <span className="text-md font-medium text-muted-foreground">Welcome,</span>
-                    <span className="text-xl font-bold ml-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                      {studentName}
+                    <span className="ml-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-xl font-bold text-transparent">
+                      {displayName}
                     </span>
                   </div>
-                  {studentStats.currentGrade && (
-                    <div className="flex items-center mt-1">
-                      <GraduationCap className="w-4 h-4 text-primary mr-1" />
-                      <span className="text-sm font-medium">Class: <span className="font-semibold text-foreground">{studentStats.currentGrade}</span></span>
+                  {studentStats.classLabel !== '—' && (
+                    <div className="mt-1 flex items-center">
+                      <GraduationCap className="mr-1 h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        Class:{' '}
+                        <span className="font-semibold text-foreground">
+                          {studentStats.classLabel}
+                        </span>
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
-              
-              {/* Right side - Stats */}
               <div className="flex items-center gap-5">
                 <div className="flex flex-col items-center border-r border-primary/20 pr-5">
                   <span className="text-xs text-muted-foreground">Attendance</span>
                   <div className="flex items-center">
-                    <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{studentStats.attendanceRate}</span>
-                    <UserCheck className="w-4 h-4 text-primary ml-1" />
+                    <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-lg font-bold text-transparent">{studentStats.attendanceRate}</span>
+                    <UserCheck className="ml-1 h-4 w-4 text-primary" />
                   </div>
                 </div>
                 <div className="flex flex-col items-center">
                   <span className="text-xs text-muted-foreground">Average Score</span>
                   <div className="flex items-center">
-                    <span className="text-lg font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{studentStats.averageScore}</span>
-                    <BarChart3 className="w-4 h-4 text-primary ml-1" />
+                    <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-lg font-bold text-transparent">{studentStats.averageScore}</span>
+                    <BarChart3 className="ml-1 h-4 w-4 text-primary" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      )}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8 w-full max-w-5xl mx-auto">
+      ) : null}
+      <div className="mx-auto mb-8 grid w-full max-w-5xl grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
       {/* Next Class */}
+      {nextClassLoading ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+          <Skeleton className="mb-2 h-5 w-5 rounded-full" />
+          <Skeleton className="mb-1 h-3 w-16" />
+          <Skeleton className="h-6 w-20" />
+        </div>
+      ) : (
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
           <Calendar className="w-5 h-5 text-primary" />
@@ -380,18 +573,35 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         <div className="text-sm font-bold text-foreground text-center">{studentStats.nextClass.subject}</div>
         <div className="text-xs text-muted-foreground">{studentStats.nextClass.time} <span className="text-primary">({studentStats.nextClass.countdown})</span></div>
       </div>
+      )}
       {/* Pending Assignments */}
+      {testsLoading ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+          <Skeleton className="mb-2 h-5 w-5 rounded-full" />
+          <Skeleton className="mb-1 h-3 w-16" />
+          <Skeleton className="h-6 w-8" />
+        </div>
+      ) : (
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <BookOpen className="w-5 h-5 text-primary mb-1" />
         <span className="text-xs font-semibold text-foreground">Pending Assignments</span>
         <span className="text-xl font-bold text-foreground">{studentStats.pendingAssignments}</span>
       </div>
+      )}
       {/* Upcoming Tests */}
+      {testsLoading ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+          <Skeleton className="mb-2 h-5 w-5 rounded-full" />
+          <Skeleton className="mb-1 h-3 w-16" />
+          <Skeleton className="h-6 w-8" />
+        </div>
+      ) : (
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <ClipboardList className="w-5 h-5 text-primary mb-1" />
         <span className="text-xs font-semibold text-foreground">Upcoming Tests</span>
         <span className="text-xl font-bold text-foreground">{studentStats.upcomingTests}</span>
       </div>
+      )}
       {/* Unread Messages */}
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <Inbox className="w-5 h-5 text-primary mb-1" />
@@ -399,25 +609,42 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         <span className="text-xl font-bold text-foreground">{studentStats.unreadMessages}</span>
       </div>
       {/* Attendance Rate */}
+      {attendanceLoading ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+          <Skeleton className="mb-2 h-5 w-5 rounded-full" />
+          <Skeleton className="mb-1 h-3 w-16" />
+          <Skeleton className="h-6 w-10" />
+        </div>
+      ) : (
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <UserCheck className="w-5 h-5 text-primary mb-1" />
         <span className="text-xs font-semibold text-foreground">Attendance Rate</span>
         <span className="text-xl font-bold text-foreground">{studentStats.attendanceRate}</span>
       </div>
+      )}
       {/* Average Score */}
+      {examLoading ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200/80 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
+          <Skeleton className="mb-2 h-5 w-5 rounded-full" />
+          <Skeleton className="mb-1 h-3 w-16" />
+          <Skeleton className="h-6 w-10" />
+        </div>
+      ) : (
       <div className="flex flex-col items-center justify-center bg-card border border-primary/20 p-3 shadow-sm">
         <BarChart3 className="w-5 h-5 text-primary mb-1" />
         <span className="text-xs font-semibold text-foreground">Average Score</span>
         <span className="text-xl font-bold text-foreground">{studentStats.averageScore}</span>
       </div>
+      )}
     </div>
     </>
-  );
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-white to-primary/5">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-card/95 via-white/90 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-primary/20 sticky top-0 z-50 shadow-sm">
+    <div className="min-h-0 bg-[#f2f2f7] lg:min-h-screen lg:bg-gradient-to-br lg:from-background lg:via-white lg:to-primary/5">
+      {/* Desktop header */}
+      <div className="hidden bg-gradient-to-r from-card/95 via-white/90 to-primary/10 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-primary/20 lg:sticky lg:top-0 lg:z-50 lg:shadow-sm">
         <div className="px-6 py-6 lg:px-10 lg:py-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -425,16 +652,23 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                 <GraduationCap className="w-6 h-6 text-primary-foreground text-white" />
               </div>
               <div className="space-y-1">
-                {studentName ? (
+                {studentLoading ? (
                   <>
-                    <h1 className="text-2xl lg:text-3xl font-bold">
+                    <Skeleton className="h-8 w-56" />
+                    <Skeleton className="h-4 w-40" />
+                  </>
+                ) : displayName ? (
+                  <>
+                    <h1 className="text-2xl font-bold lg:text-3xl">
                       <span className="flex items-center gap-2">
                         <span className="text-foreground">Welcome,</span>
-                        <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent font-bold">{studentName}</span>
+                        <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text font-bold text-transparent">{displayName}</span>
                       </span>
                     </h1>
-                    <p className="text-sm text-muted-foreground/90 font-medium">
-                      Stay organized with your studies today
+                    <p className="text-sm font-medium text-muted-foreground/90">
+                      {studentStats.classLabel !== '—'
+                        ? studentStats.classLabel
+                        : 'Stay organized with your studies today'}
                     </p>
                   </>
                 ) : (
@@ -454,18 +688,63 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-6 lg:px-8 lg:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="w-full flex justify-center py-6">
+      <div className="px-2 py-2 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="hidden w-full justify-center py-6 lg:flex">
             <DynamicLogo subdomain={subdomain} size="lg" showText={true} />
           </div>
           {currentView === 'dashboard' ? (
             <>
-              <div className="mb-8">
-                <StudentLiveLessonStatus />
+              {dashboardLoading ? (
+                <>
+                  <StudentDashboardMobileSkeleton />
+                  <div className="hidden lg:block space-y-8">
+                    <Skeleton className="h-24 w-full rounded-md" />
+                    <StudentProfileBannerSkeleton />
+                    <StudentStatsGridSkeleton mobile={false} />
+                    <StudentQuickActionsSkeleton />
+                  </div>
+                </>
+              ) : (
+                <>
+              {/* Mobile — compact app home */}
+              <div className="space-y-2 lg:hidden">
+                {displayName || studentLoading ? (
+                  studentLoading ? (
+                    <StudentWelcomeSkeleton />
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-white px-2.5 py-2 dark:border-slate-700 dark:bg-slate-900">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        <UserCircle className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {displayName}
+                        </p>
+                        {studentStats.classLabel !== '—' ? (
+                          <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+                            {studentStats.classLabel}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  )
+                ) : null}
+                <StudentLiveLessonStatus compact />
+                {renderStudentStats(true)}
+                {renderQuickActions(true)}
               </div>
-              {renderStudentStats()}
-              {renderQuickActions()}
+
+              {/* Desktop */}
+              <div className="hidden lg:block">
+                <div className="mb-8">
+                  <StudentLiveLessonStatus />
+                </div>
+                {renderStudentStats()}
+                {renderQuickActions()}
+              </div>
+                </>
+              )}
             </>
           ) : currentView === 'assignments' ? (
             <PendingAssignmentsComponent subdomain={subdomain} onBack={handleBackToDashboard} />

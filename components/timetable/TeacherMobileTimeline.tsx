@@ -183,6 +183,7 @@ export type TeacherMobileTimelineProps = {
   currentDayOfWeek: number | null;
   currentPeriodIndex: number;
   completedLessonIds: string[];
+  viewType?: 'student' | 'teacher';
   fillHeight?: boolean;
   onLessonClick?: (
     lesson: TimetableLesson,
@@ -199,6 +200,7 @@ export function TeacherMobileTimeline({
   currentDayOfWeek,
   currentPeriodIndex,
   completedLessonIds,
+  viewType = 'teacher',
   fillHeight = false,
   onLessonClick,
 }: TeacherMobileTimelineProps) {
@@ -256,6 +258,7 @@ export function TeacherMobileTimeline({
           key={row.key}
           row={row}
           dayOfWeek={dayOfWeek}
+          viewType={viewType}
           fillHeight={fillHeight}
           onLessonClick={onLessonClick}
         />
@@ -267,11 +270,13 @@ export function TeacherMobileTimeline({
 function ScheduleRow({
   row,
   dayOfWeek,
+  viewType = 'teacher',
   fillHeight,
   onLessonClick,
 }: {
   row: RowItem;
   dayOfWeek: number;
+  viewType?: 'student' | 'teacher';
   fillHeight?: boolean;
   onLessonClick?: TeacherMobileTimelineProps['onLessonClick'];
 }) {
@@ -321,6 +326,17 @@ function ScheduleRow({
     stream && !gradeLabel.toLowerCase().includes(stream.toLowerCase())
       ? `${gradeLabel} · ${stream}`
       : gradeLabel;
+  const subtitle =
+    viewType === 'student'
+      ? [lesson.teacher.name, lesson.room ? `Room ${lesson.room}` : null]
+          .filter(Boolean)
+          .join(' · ')
+      : classLine;
+  const statusLabel = isCompleted
+    ? 'Done'
+    : viewType === 'student'
+      ? 'Mark'
+      : 'Taught';
 
   return (
     <div className={shell}>
@@ -346,7 +362,7 @@ function ScheduleRow({
             >
               {lesson.subject.name}
             </p>
-            <p className="truncate text-[10px] text-slate-500">{classLine}</p>
+            <p className="truncate text-[10px] text-slate-500">{subtitle}</p>
           </div>
           <span
             className={cn(
@@ -359,7 +375,7 @@ function ScheduleRow({
             )}
           >
             <Check className="h-3 w-3" strokeWidth={2.5} />
-            {isCompleted ? 'Done' : 'Taught'}
+            {statusLabel}
           </span>
         </button>
       </div>

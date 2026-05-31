@@ -4,94 +4,25 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  BookOpen, 
-  GraduationCap,
-  ClipboardList,
-  BookMarked,
-  MessageSquare,
+  LogOut,
   User,
   Settings,
-  LogOut,
-  FileText,
-  BarChart3,
-  Download,
-  UserCheck,
-  TrendingUp,
-  CalendarCheck,
-  Phone,
-  Printer
 } from "lucide-react"
 import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
 import { useParams } from 'next/navigation';
 import { useSignout } from "@/lib/hooks/useSignout";
+import {
+  isStudentNavActive,
+  STUDENT_SIDEBAR_ITEMS,
+} from "@/lib/student/studentNavConfig";
 
 interface SidebarProps {
   className?: string
 }
 
-const navigation = [
-  {
-    title: "Dashboard",
-    href: "/student",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Timetable",
-    href: "/student/timetable",
-    icon: CalendarDays,
-  },
-  {
-    title: "Assignments",
-    href: "/student/assignments",
-    icon: BookOpen,
-  },
-  {
-    title: "Exam Results",
-    href: "/student/exam-results",
-    icon: BarChart3,
-  },
-  {
-    title: "Notes",
-    href: "/student/notes",
-    icon: FileText,
-  },
-  {
-    title: "Attendance",
-    href: "/student/attendance",
-    icon: UserCheck,
-  },
-  {
-    title: "Performance",
-    href: "/student/performance",
-    icon: TrendingUp,
-  },
-  {
-    title: "Upcoming Tests",
-    href: "/student/upcoming-tests",
-    icon: CalendarCheck,
-  },
-  {
-    title: "Contact Teachers",
-    href: "/student/contact-teachers",
-    icon: Phone,
-  },
-  {
-    title: "Report Cards",
-    href: "/student/report-cards",
-    icon: Printer,
-  },
-  {
-    title: "Messages",
-    href: "/student/messages",
-    icon: MessageSquare,
-    count: "3"
-  },
-]
+const navigation = STUDENT_SIDEBAR_ITEMS;
 
 export function StudentSidebar({ className }: SidebarProps) {
   const pathname = usePathname();
@@ -113,8 +44,7 @@ export function StudentSidebar({ className }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
         {navigation.map((item, index) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || 
-            (item.href !== "/student/dashboard" && pathname.startsWith(item.href))
+          const isActive = isStudentNavActive(pathname, item.href)
           
           return (
             <motion.div 
@@ -149,20 +79,6 @@ export function StudentSidebar({ className }: SidebarProps) {
                     </div>
                     <span className="font-medium">{item.title}</span>
                   </div>
-                  
-                  {item.count && (
-                    <Badge 
-                      variant={isActive ? "outline" : "secondary"}
-                      className={cn(
-                        "ml-auto text-[10px] h-5 px-1.5 transition-all duration-300",
-                        isActive
-                          ? "border-white/40 text-white bg-white/10 hover:bg-white/20"
-                          : "border-dashed hover:border-primary/50"
-                      )}
-                    >
-                      {item.count}
-                    </Badge>
-                  )}
                   
                   {isActive && (
                     <motion.div 

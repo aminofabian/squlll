@@ -1,157 +1,176 @@
-"use client"
+"use client";
 
-import { ReactNode, useState } from "react"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react"
-import { DynamicLogo } from "@/app/school/[subdomain]/parent/components/DynamicLogo"
+import type { ReactNode } from "react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { MobileNav } from "@/components/dashboard/MobileNav";
 
 interface DashboardLayoutProps {
-  sidebar?: ReactNode
-  searchFilter?: ReactNode
-  children: ReactNode
-  showMobileNav?: boolean
-  mobileNav?: ReactNode
-  subdomain?: string
+  children: ReactNode;
+  showMobileNav?: boolean;
+  // Backward-compat props for school subdomain layouts
+  sidebar?: ReactNode;
+  searchFilter?: ReactNode;
+  mobileNav?: ReactNode;
+  mobileHeader?: ReactNode;
+  hideMobileSidebarTrigger?: boolean;
+  mainClassName?: string;
+  shellClassName?: string;
+  bottomNavClassName?: string;
+  subdomain?: string;
 }
 
-export function DashboardLayout({ 
-  sidebar, 
-  searchFilter, 
-  children, 
+export function DashboardLayout({
+  children,
   showMobileNav = true,
-  mobileNav,
-  subdomain: subdomainProp
+  sidebar: _sidebar,
+  searchFilter: _searchFilter,
+  mobileNav: _mobileNav,
+  mobileHeader: _mobileHeader,
+  hideMobileSidebarTrigger: _hideMobileSidebarTrigger,
+  mainClassName: _mainClassName,
+  shellClassName: _shellClassName,
+  bottomNavClassName: _bottomNavClassName,
+  subdomain: _subdomain,
 }: DashboardLayoutProps) {
-  const params = useParams()
-  // Get subdomain from URL params first, then fall back to prop, then 'admin'
-  const subdomain = typeof params.subdomain === 'string' 
-    ? params.subdomain 
-    : Array.isArray(params.subdomain) 
-      ? params.subdomain[0] 
-      : subdomainProp || 'admin'
-  
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [isFilterMinimized, setIsFilterMinimized] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-        <div className="flex items-center gap-3 px-4 py-3">
-          {sidebar && (
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 shrink-0">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Open sidebar</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-72">
-                {sidebar}
-              </SheetContent>
-            </Sheet>
-          )}
-          
-          <div className="flex items-center justify-center flex-1 min-w-0">
-            <DynamicLogo subdomain={subdomain} size="sm" showText={true} />
-          </div>
-          
-          {searchFilter && (
-            <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 md:hidden shrink-0">
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z" />
-                  </svg>
-                  <span className="sr-only">Open filters</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="p-0 w-80">
-                {searchFilter}
-              </SheetContent>
-            </Sheet>
+  // If old-style sidebar prop is provided, render the old layout for backward compat
+  if (_sidebar) {
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [isFilterMinimized, setIsFilterMinimized] = useState(false);
+    return (
+      <div className={cn("min-h-screen bg-background", _shellClassName)}>
+        <div className="lg:hidden sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+          {_mobileHeader ?? (
+            <div className="flex items-center gap-3 px-4 py-3">
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetContent side="left" className="p-0 w-72">
+                  {_sidebar}
+                </SheetContent>
+              </Sheet>
+              <div className="flex-1 text-center font-semibold text-sm">
+                SQUL
+              </div>
+            </div>
           )}
         </div>
-      </div>
-
-      <div className="flex">
-        {/* Desktop Sidebar */}
-        {sidebar && (
-          <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-40">
-            <div className="flex flex-col flex-grow border-r border-border bg-card overflow-y-auto">
-              {sidebar}
-            </div>
+        <div className="flex">
+          <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-40 border-r border-border bg-card">
+            {_sidebar}
           </aside>
-        )}
-
-        {/* Main content area */}
-        <div className={`flex-1 ${sidebar ? 'lg:pl-64' : ''}`}>
-          <div className="flex">
-            {/* Desktop Search/Filter Column */}
-            {searchFilter && (
-              <div className={`hidden md:block border-r border-border bg-card/50 transition-all duration-300 ease-in-out ${
-                isFilterMinimized ? 'md:w-16' : (sidebar ? 'md:w-80' : 'md:w-96')
-              }`}>
-                <div className="sticky top-0 h-screen overflow-y-auto relative">
-                  {/* Toggle button for minimize/expand */}
-                  <div className={`p-2 ${isFilterMinimized ? 'flex justify-center' : 'flex justify-end'}`}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsFilterMinimized(!isFilterMinimized)}
-                      className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
-                      title={isFilterMinimized ? "Expand sidebar" : "Minimize sidebar"}
+          <div className="flex-1 lg:pl-64">
+            <div className="flex">
+              {_searchFilter && (
+                <div
+                  className={`hidden md:block border-r border-border bg-card/50 transition-all ${isFilterMinimized ? "md:w-16" : "md:w-80"}`}
+                >
+                  <div className="sticky top-0 h-screen overflow-y-auto">
+                    <div
+                      className={`p-2 ${isFilterMinimized ? "flex justify-center" : "flex justify-end"}`}
                     >
-                      {isFilterMinimized ? (
-                        <PanelLeftOpen className="h-4 w-4" />
-                      ) : (
-                        <PanelLeftClose className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                  
-                  {!isFilterMinimized && (
-                    <div className="px-2">
-                      {searchFilter}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsFilterMinimized(!isFilterMinimized)}
+                      >
+                        {isFilterMinimized ? (
+                          <PanelLeftOpen className="h-4 w-4" />
+                        ) : (
+                          <PanelLeftClose className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Main Content */}
-            <main className="flex-1 min-w-0 relative">
-              {/* Floating toggle button when filter is minimized */}
-              {searchFilter && isFilterMinimized && (
-                <div className="absolute top-6 left-6 z-10">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsFilterMinimized(false)}
-                    className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
-                    title="Expand sidebar"
-                  >
-                    <PanelLeftOpen className="h-4 w-4" />
-                  </Button>
+                    {!isFilterMinimized && (
+                      <div className="px-2">{_searchFilter}</div>
+                    )}
+                  </div>
                 </div>
               )}
-              <div className="p-4 md:p-6 pb-20 lg:pb-6">
+              <main
+                className={cn(
+                  "flex-1 min-w-0 p-4 md:p-6 pb-20 lg:pb-6",
+                  _mainClassName,
+                )}
+              >
                 {children}
-              </div>
-            </main>
+              </main>
+            </div>
           </div>
+        </div>
+        {showMobileNav && (
+          <div
+            className={cn(
+              "lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur",
+              _bottomNavClassName,
+            )}
+          >
+            {_mobileNav}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default: superadmin dashboard layout
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-gradient-to-r from-primary via-primary-light to-primary dark:from-primary-dark dark:via-primary dark:to-primary-light" />
+
+      <div className="lg:hidden sticky top-0.5 z-40 border-b border-slate-200/70 dark:border-slate-800/70 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-4 h-14">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(true)}
+            className="h-9 w-9 p-0 -ml-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm shadow-primary/20">
+              <span className="text-white font-bold text-[11px]">SA</span>
+            </div>
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              Super Admin
+            </span>
+          </div>
+          <div className="w-9" />
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-72">
+          <Sidebar onNavClick={() => setSidebarOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      <div className="flex">
+        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 z-30 top-0.5">
+          <Sidebar />
+        </aside>
+        <div className="flex-1 lg:pl-64">
+          <main
+            className={cn(
+              "p-4 md:p-8 lg:p-10",
+              showMobileNav && "pb-24 lg:pb-10",
+            )}
+          >
+            <div className="max-w-7xl mx-auto">{children}</div>
+          </main>
+        </div>
+      </div>
+
       {showMobileNav && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border">
-          {mobileNav}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/70 dark:border-slate-800/70 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl">
+          <MobileNav />
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

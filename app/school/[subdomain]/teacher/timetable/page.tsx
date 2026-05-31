@@ -6,7 +6,6 @@ import { CalendarDays, Users, BookOpen, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeacherTimetable } from "../hooks/useTeacherTimetable";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
-import { Button } from "@/components/ui/button";
 
 import {
   useTimetableCore,
@@ -15,6 +14,7 @@ import {
   DAY_NAMES,
   type CompleteTimetable,
   type TimetableStats,
+  type TimetableLesson,
 } from "@/lib/timetable";
 
 import {
@@ -22,12 +22,17 @@ import {
   TimetableGrid,
   NextLessonPreview,
   TeacherMobileSchedule,
+  TimetablePrintStyles,
 } from "@/components/timetable";
 import {
   TeacherTimetableHero,
   StatusNote,
 } from "./components/TeacherTimetableHero";
 import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
+import {
+  TeacherLessonDetailSheet,
+  type TeacherLessonSelection,
+} from "./components/TeacherLessonDetailSheet";
 import { getWeekStartDate } from "@/lib/timetable/week";
 import {
   fetchMyLessonCompletions,
@@ -53,6 +58,8 @@ const TeacherTimetable = () => {
   } = useTeacherTimetable(subdomain);
 
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
+  const [selectedLesson, setSelectedLesson] =
+    useState<TeacherLessonSelection | null>(null);
   const termId = selectedTerm?.id;
 
   useEffect(() => {
@@ -77,6 +84,9 @@ const TeacherTimetable = () => {
 
   useDomainRealtime({
     onTimetablePublished: (payload) => {
+      if (payload.termId === termId) void refetch();
+    },
+    onTimetableEntryChanged: (payload) => {
       if (payload.termId === termId) void refetch();
     },
     onLessonCompleted: (payload) => {
@@ -121,6 +131,13 @@ const TeacherTimetable = () => {
       }
     },
     [subdomain, termId, completedLessonIds],
+  );
+
+  const handleLessonClick = useCallback(
+    (lesson: TimetableLesson, dayOfWeek: number, periodNumber: number) => {
+      setSelectedLesson({ lesson, dayOfWeek, periodNumber });
+    },
+    [],
   );
 
   const unifiedTimetable = useMemo<CompleteTimetable | null>(() => {
@@ -173,6 +190,20 @@ const TeacherTimetable = () => {
     core.currentStatus.status === "break" ||
     core.currentStatus.status === "free";
 
+  const hasNoLessons =
+    !loading &&
+    !error &&
+    graphqlData != null &&
+    (graphqlData.totalClasses ?? 0) === 0 &&
+    (graphqlData.entries?.length ?? 0) === 0;
+
+  const canPrint = Boolean(unifiedTimetable && !hasNoLessons);
+
+  const handlePrint = useCallback(() => {
+    if (!canPrint) return;
+    window.print();
+  }, [canPrint]);
+
   if (core.isLoading) {
     return <TeacherTimetableSkeleton />;
   }
@@ -202,13 +233,6 @@ const TeacherTimetable = () => {
       </div>
     );
   }
-
-  const hasNoLessons =
-    !loading &&
-    !error &&
-    graphqlData != null &&
-    (graphqlData.totalClasses ?? 0) === 0 &&
-    (graphqlData.entries?.length ?? 0) === 0;
 
   const classesToday =
     !isWeekend && stats
@@ -242,7 +266,7 @@ const TeacherTimetable = () => {
                   Weekly schedule
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Tap a lesson to mark it taught
+                  Tap a lesson for details
                 </p>
               </div>
               <div className="flex items-center gap-3 text-[10px] text-slate-500">
@@ -267,9 +291,7 @@ const TeacherTimetable = () => {
             currentDayOfWeek={core.currentDayOfWeek}
             currentPeriodIndex={core.currentPeriodIndex}
             completedLessonIds={core.completedLessonIds}
-            onLessonClick={(lesson) => {
-              core.toggleLessonComplete(lesson.id);
-            }}
+            onLessonClick={handleLessonClick}
           />
         </section>
       </>
@@ -309,39 +331,36 @@ const TeacherTimetable = () => {
       </>
     ) : null;
 
-  const secondaryBelow = (
-    <div className="space-y-3">
-      <TeacherTimetableHero
-        formattedDate={core.formattedDate}
-        termName={selectedTerm?.name}
-        completionPercent={completionPercent}
-        completedCount={stats?.completedLessons ?? 0}
-        totalLessons={stats?.totalLessons ?? 0}
-      />
-      {core.currentStatus.status === "outside" && !isWeekend && (
-        <StatusNote>
-          Outside school hours — your next class is in Up Next above.
-        </StatusNote>
-      )}
-      {showLiveBanner && (
-        <CurrentLessonBanner
-          status={core.currentStatus}
-          formattedTime={core.formattedTime}
-          viewType="teacher"
-          showClock={false}
-        />
-      )}
-      {statsBlock}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f2f2f7] lg:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] lg:from-primary/[0.06] lg:via-slate-50 lg:to-white dark:lg:from-primary/10 dark:lg:via-slate-900 dark:lg:to-slate-950">
-      <div className="container mx-auto max-w-7xl px-4 py-4 max-lg:overflow-x-hidden max-lg:p-0">
-        {/* Mobile — fit viewport, scroll only inside timetable card */}
-        <div className="flex h-[calc(100dvh-9.75rem)] max-h-[calc(100dvh-9.75rem)] w-full max-w-full flex-col overflow-hidden bg-[#f2f2f7] px-3 pt-2 pb-2 lg:hidden">
+    <>
+      <TimetablePrintStyles />
+      <TeacherLessonDetailSheet
+        selection={selectedLesson}
+        timeSlots={core.sortedTimeSlots}
+        open={selectedLesson != null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedLesson(null);
+        }}
+        isCompleted={
+          selectedLesson
+            ? completedLessonIds.includes(selectedLesson.lesson.id)
+            : false
+        }
+        onToggleComplete={(lessonId) => {
+          void handleToggleComplete(lessonId);
+        }}
+      />
+      <div
+        className="min-h-screen overflow-x-hidden bg-[#f2f2f7] lg:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] lg:from-primary/[0.06] lg:via-slate-50 lg:to-white dark:lg:from-primary/10 dark:lg:via-slate-900 dark:lg:to-slate-950"
+        data-timetable-no-print
+      >
+      <div className="mx-auto w-full max-w-7xl max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5">
+        {/* Mobile — full-bleed between header and tab bar */}
+        <div className="flex h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] max-h-[calc(100dvh-3.25rem-4.75rem-env(safe-area-inset-bottom))] w-full min-w-0 max-w-full flex-col overflow-hidden bg-white lg:hidden dark:bg-slate-950">
           {hasNoLessons ? (
-            <div className="flex min-h-[50dvh] items-center justify-center">{emptyLessons}</div>
+            <div className="flex min-h-[50dvh] items-center justify-center px-4">
+              {emptyLessons}
+            </div>
           ) : unifiedTimetable ? (
             <TeacherMobileSchedule
               days={unifiedTimetable.days}
@@ -352,8 +371,10 @@ const TeacherTimetable = () => {
               completedLessonIds={core.completedLessonIds}
               nextLesson={core.nextLesson}
               stats={stats}
-              formattedDate={core.formattedDate}
-              onLessonClick={(lesson) => core.toggleLessonComplete(lesson.id)}
+              classesToday={classesToday}
+              isWeekend={isWeekend}
+              onRefresh={() => refetch()}
+              onLessonClick={handleLessonClick}
             />
           ) : null}
         </div>
@@ -366,6 +387,8 @@ const TeacherTimetable = () => {
             completionPercent={completionPercent}
             completedCount={stats?.completedLessons ?? 0}
             totalLessons={stats?.totalLessons ?? 0}
+            showPrint={canPrint}
+            onPrint={handlePrint}
           />
           {core.currentStatus.status === "outside" && !isWeekend && (
             <StatusNote>
@@ -395,7 +418,33 @@ const TeacherTimetable = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      {canPrint && unifiedTimetable ? (
+        <div className="hidden print:block" data-timetable-print-root>
+          <div className="mb-4 border-b border-slate-200 pb-3">
+            <h1 className="text-lg font-bold text-slate-900">
+              {graphqlData?.teacherName ?? "My"} teaching schedule
+            </h1>
+            <p className="mt-0.5 text-sm text-slate-600">
+              {selectedTerm?.name ? `${selectedTerm.name} · ` : ""}
+              {core.formattedDate}
+            </p>
+          </div>
+          <TimetableGrid
+            days={unifiedTimetable.days}
+            timeSlots={core.sortedTimeSlots}
+            breaks={unifiedTimetable.breaks}
+            viewType="teacher"
+            compact
+            currentDayOfWeek={core.currentDayOfWeek}
+            currentPeriodIndex={core.currentPeriodIndex}
+            completedLessonIds={core.completedLessonIds}
+            className="rounded-none border border-slate-200 bg-white shadow-none"
+          />
+        </div>
+      ) : null}
+    </>
   );
 };
 

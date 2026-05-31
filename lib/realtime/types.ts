@@ -11,6 +11,14 @@ export interface TimetablePublishedPayload {
   publishedAt: string | null
 }
 
+export interface TimetableEntryChangedPayload {
+  termId: string
+  gradeLevelId: string
+  streamId?: string | null
+  entryId: string
+  action: 'created' | 'updated' | 'deleted'
+}
+
 export interface FeePaymentUpdatedPayload {
   paymentId: string
   studentId: string

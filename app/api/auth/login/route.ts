@@ -92,9 +92,6 @@ export async function POST(request: Request) {
 
     const data = await response.json()
 
-    // Debug: Log the raw GraphQL response
-    console.log('GraphQL response:', JSON.stringify(data, null, 2))
-
     // Check for GraphQL errors
     if (data.errors) {
       console.error('GraphQL errors:', data.errors)
@@ -105,15 +102,6 @@ export async function POST(request: Request) {
     }
 
     const userData = data.data.signIn
-    
-    // Debug logging
-    console.log('Login response data:', {
-      user: userData.user,
-      membership: userData.membership,
-      tenant: userData.membership.tenant,
-      subdomainUrl: userData.subdomainUrl
-    })
-    
     // Validate required data
     if (!userData.membership?.tenant?.id || !userData.membership?.tenant?.name) {
       console.error('Missing tenant data in login response:', userData)
@@ -261,6 +249,25 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Sign in error:', error)
+
+    const cause =
+      error instanceof Error && error.cause && typeof error.cause === 'object'
+        ? (error.cause as { code?: string })
+        : null
+
+    if (
+      cause?.code === 'ECONNREFUSED' ||
+      (error instanceof TypeError && error.message === 'fetch failed')
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Cannot reach the API server. Make sure the backend is running (port 3001).',
+        },
+        { status: 503 },
+      )
+    }
+
     return NextResponse.json(
       { error: 'An error occurred during sign in' },
       { status: 500 }

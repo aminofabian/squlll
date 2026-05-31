@@ -9,51 +9,45 @@ export function useGraphQLErrorHandler() {
     const originalFetch = window.fetch
     
     window.fetch = async (...args) => {
-      try {
-        const response = await originalFetch(...args)
-        
-        // Check if it's a GraphQL API call that returned 401
-        if (response.url.includes('/api/graphql') && response.status === 401) {
-          const data = await response.json()
-          
-          // Check if it's an authentication error that should redirect to login
-          if (data.errors?.some((error: any) => 
-            error.extensions?.code === 'AUTHENTICATION_REQUIRED' ||
-            error.extensions?.redirectToLogin === true
-          )) {
-            console.log('Authentication error detected, redirecting to login...')
-            
-            // Clear any existing authentication cookies
-            const cookiesToClear = [
-              'accessToken',
-              'refreshToken', 
-              'userId',
-              'email',
-              'userName',
-              'membershipId',
-              'userRole',
-              'tenantId',
-              'tenantName',
-              'subdomainUrl',
-              'schoolUrl',
-              'tenantSubdomain'
-            ]
-            
-            cookiesToClear.forEach(cookieName => {
-              document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
-            })
-            
-            // Redirect to login
-            router.push('/login')
-            return response
-          }
+      const response = await originalFetch(...args)
+
+      // Check if it's a GraphQL API call that returned 401
+      if (response.url.includes('/api/graphql') && response.status === 401) {
+        const data = await response.clone().json()
+
+        // Check if it's an authentication error that should redirect to login
+        if (data.errors?.some((error: any) =>
+          error.extensions?.code === 'AUTHENTICATION_REQUIRED' ||
+          error.extensions?.redirectToLogin === true
+        )) {
+          console.log('Authentication error detected, redirecting to login...')
+
+          // Clear any existing authentication cookies
+          const cookiesToClear = [
+            'accessToken',
+            'refreshToken',
+            'userId',
+            'email',
+            'userName',
+            'membershipId',
+            'userRole',
+            'tenantId',
+            'tenantName',
+            'subdomainUrl',
+            'schoolUrl',
+            'tenantSubdomain'
+          ]
+
+          cookiesToClear.forEach(cookieName => {
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+          })
+
+          // Redirect to login
+          router.push('/login')
         }
-        
-        return response
-      } catch (error) {
-        console.error('Fetch error:', error)
-        return originalFetch(...args)
       }
+
+      return response
     }
     
     // Cleanup function to restore original fetch

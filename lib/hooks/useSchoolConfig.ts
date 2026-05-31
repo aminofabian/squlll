@@ -4,8 +4,10 @@ import { SchoolConfiguration } from '../types/school-config';
 import { useState } from 'react';
 import {
   getGraphqlFailureMessage,
+  getGraphqlConnectionMessage,
   handleAuthenticationError,
   isAuthenticationError,
+  isGraphqlConnectionError,
 } from '@/lib/utils/auth-redirect';
 
 function shouldRedirectToSchoolSetup(pathname: string): boolean {
@@ -183,7 +185,18 @@ export function useSchoolConfig(enabled: boolean = true) {
           err,
           'Could not load school configuration',
         );
-        console.error('useSchoolConfig error:', message);
+        const connectionError = isGraphqlConnectionError(err, message);
+        const displayMessage = connectionError
+          ? getGraphqlConnectionMessage()
+          : message;
+
+        if (connectionError) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('useSchoolConfig: API unreachable —', displayMessage);
+          }
+        } else {
+          console.error('useSchoolConfig error:', message);
+        }
 
         if (
           isMissingSchoolConfigMessage(message) &&
@@ -198,7 +211,7 @@ export function useSchoolConfig(enabled: boolean = true) {
           return null;
         }
 
-        setError(message);
+        setError(displayMessage);
         return null;
       } finally {
         setLoading(false);
@@ -208,6 +221,7 @@ export function useSchoolConfig(enabled: boolean = true) {
       if (isAuthenticationError(err)) return false;
       const message = getGraphqlFailureMessage(err, '');
       if (isMissingSchoolConfigMessage(message)) return false;
+      if (isGraphqlConnectionError(err, message)) return false;
       return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),

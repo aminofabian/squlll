@@ -15,6 +15,7 @@ import {
   useGradeStatistics,
   usePeriodSlots,
   useSchoolCombinedEntries,
+  useTeacherWeeklyLessons,
 } from "./hooks/useTimetableData";
 import { useAllConflicts } from "./hooks/useTimetableConflictsNew";
 import { useConflictLessonIds } from "./hooks/useConflictLessonIds";
@@ -48,6 +49,10 @@ import {
   downloadTextFile,
 } from "./utils/timetableSummaryText";
 import { getTimeSlotForDayAndPeriod } from "./utils/timetableSlots";
+import {
+  resolveSchoolConfigGradeId,
+  resolveStreamEntityIdForSidebar,
+} from "./utils/resolveGradeForSchoolConfig";
 import { formatBreakTypeLabel } from "@/lib/utils/timetable-user-messages";
 import { LessonEditDialog } from "./components/LessonEditDialog";
 import { TimeslotEditDialog } from "./components/TimeslotEditDialog";
@@ -58,6 +63,7 @@ import { BulkLessonEntryDrawer } from "./components/BulkLessonEntryDrawer";
 import { AdminTimetableGrid } from "./components/AdminTimetableGrid";
 import { getSubjectAccent } from "./utils/timetableSubjectColors";
 import { tt } from "./utils/timetableTheme";
+import { ttMenu } from "./utils/timetableActionMenuStyles";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
@@ -115,6 +121,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -131,7 +138,17 @@ import {
 } from "./utils/timetableLoadHelpers";
 import { useTimetableNetworkStatus } from "./hooks/useTimetableNetworkStatus";
 import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
+import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
 import { TimetableOfflineBanner } from "./components/TimetableOfflineBanner";
+import { TimetableClassDrawer } from "./components/TimetableClassDrawer";
+import {
+  TimetableMobileActionStrip,
+} from "./components/TimetableMobileToolbar";
+import { AdminMobileClassBar } from "@/components/timetable/AdminMobileClassBar";
+import { AdminMobileSchedule } from "@/components/timetable/AdminMobileSchedule";
+import { buildAdminMobileTimetable } from "./utils/buildAdminMobileTimetable";
+import { useTimetableCore } from "@/lib/timetable";
+import type { TimetableLesson } from "@/lib/timetable/types";
 
 export default function SmartTimetableNew() {
   const { selectedTerm, setSelectedTerm, termsLoading } = useSelectedTerm();
@@ -516,6 +533,7 @@ export default function SmartTimetableNew() {
   const combinedGridFailed =
     timetableError && !selectedGradeId && !refreshLoadFailed;
   const stats = useGradeStatistics(selectedGradeId);
+  const teacherLessons = useTeacherWeeklyLessons(selectedGradeId);
   const {
     total: conflictCount,
     teacher: teacherConflicts,
@@ -682,6 +700,7 @@ export default function SmartTimetableNew() {
   const [bulkLessonEntryOpen, setBulkLessonEntryOpen] = useState(false);
   const [addingPeriods, setAddingPeriods] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isClassDrawerOpen, setIsClassDrawerOpen] = useState(false);
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [dayTemplates, setDayTemplates] = useState<any[]>([]);
@@ -710,6 +729,9 @@ export default function SmartTimetableNew() {
   const [highlightTeacherId, setHighlightTeacherId] = useState<string | null>(
     null,
   );
+  const handleTeacherHighlightClick = useCallback((teacherId: string) => {
+    setHighlightTeacherId((prev) => (prev === teacherId ? null : teacherId));
+  }, []);
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
   const periodsRefetchAttemptedRef = useRef(false);
 
@@ -733,6 +755,10 @@ export default function SmartTimetableNew() {
     onTimetableUnpublished: (payload) => {
       if (payload.termId !== termIdForShare) return;
       void refetchAcademicYears();
+    },
+    onTimetableEntryChanged: (payload) => {
+      if (payload.termId !== termIdForShare) return;
+      void reloadTimetableData();
     },
   });
 
@@ -804,17 +830,6 @@ export default function SmartTimetableNew() {
     reloadTimetableData,
   ]);
 
-  const [hideLiveBanner, setHideLiveBanner] = useState(false);
-  useEffect(() => {
-    try {
-      if (localStorage.getItem("timetable-hide-live-banner") === "1") {
-        setHideLiveBanner(true);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   // Phase 7.8: debounced refresh when connectivity returns
   useEffect(() => {
     if (!reconnectedAt) return;
@@ -868,9 +883,27 @@ export default function SmartTimetableNew() {
     [currentStreams, selectedStreamId],
   );
 
+  const sidebarSelectedGradeId = useMemo(
+    () => resolveSchoolConfigGradeId(selectedGradeId ?? undefined, grades) ?? "",
+    [selectedGradeId, grades],
+  );
+
+  const sidebarSelectedStreamId = useMemo(
+    () =>
+      resolveStreamEntityIdForSidebar(
+        selectedStreamId,
+        selectedGradeId,
+        grades,
+      ),
+    [selectedStreamId, selectedGradeId, grades],
+  );
+
   // Handlers
   const handleGradeSelect = useCallback(
-    (gradeId: string, _levelId: string) => setSelectedGrade(gradeId),
+    (gradeId: string, _levelId: string) => {
+      setSelectedGrade(gradeId);
+      setIsClassDrawerOpen(false);
+    },
     [setSelectedGrade],
   );
   const handleStreamSelect = useCallback(
@@ -879,9 +912,30 @@ export default function SmartTimetableNew() {
         setSelectedGrade(gradeId);
       }
       setSelectedStream(streamId);
+      setIsClassDrawerOpen(false);
     },
     [selectedGradeId, setSelectedGrade, setSelectedStream],
   );
+
+  const openClassSidebar = useCallback(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+      setIsSidebarMinimized(false);
+    } else {
+      setIsClassDrawerOpen(true);
+    }
+  }, []);
+
+  const closeClassSidebar = useCallback(() => {
+    setIsClassDrawerOpen(false);
+  }, []);
+
+  const toggleClassSidebar = useCallback(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+      setIsSidebarMinimized((prev) => !prev);
+    } else {
+      setIsClassDrawerOpen((prev) => !prev);
+    }
+  }, []);
   const handleJumpToConflictEntry = useCallback(
     (entryId: string) => {
       const state = useTimetableStore.getState();
@@ -1150,10 +1204,10 @@ export default function SmartTimetableNew() {
   const handleAddLesson = useCallback(
     (dayOfWeek: number, timeSlotId: string, daySlotId?: string) => {
       if (!selectedGradeId) {
+        openClassSidebar();
         toast({
-          title: "Select a class first",
-          description: "Choose a class above before adding a lesson.",
-          variant: "destructive",
+          title: "Choose a class first",
+          description: "Pick a grade and stream, then add your lesson.",
         });
         return;
       }
@@ -1174,7 +1228,7 @@ export default function SmartTimetableNew() {
         isNew: true,
       });
     },
-    [selectedGradeId, toast],
+    [selectedGradeId, toast, openClassSidebar],
   );
 
   const handleEditLesson = useCallback(
@@ -1201,6 +1255,118 @@ export default function SmartTimetableNew() {
     },
     [selectedGradeEntries],
   );
+
+  const handleAdminMobileLessonClick = useCallback(
+    (lesson: TimetableLesson) => {
+      handleEditLesson({
+        id: lesson.id,
+        subject: {
+          id: lesson.subject.id,
+          name: lesson.subject.name,
+        },
+        teacher: {
+          id: lesson.teacher.id,
+          name: lesson.teacher.name,
+        },
+        roomNumber: lesson.room,
+        gradeId: lesson.grade.id,
+        isDoublePeriod: lesson.isDoublePeriod,
+      });
+    },
+    [handleEditLesson],
+  );
+
+  const handleAdminMobileEmptyCellClick = useCallback(
+    (dayOfWeek: number, periodNumber: number) => {
+      const daySlot = getSlotFor(dayOfWeek - 1, periodNumber);
+      if (!daySlot?.id) {
+        toast({
+          title: "Period not found",
+          description:
+            "Could not find a time slot for this cell. Try refreshing the timetable.",
+          variant: "destructive",
+        });
+        return;
+      }
+      handleAddLesson(dayOfWeek, daySlot.id, daySlot.id);
+    },
+    [getSlotFor, handleAddLesson, toast],
+  );
+
+  const adminMobileTimetableData = useMemo(() => {
+    if (!selectedGradeId || showGridSkeleton || classGridFailed) return null;
+    return buildAdminMobileTimetable({
+      daysPerWeek,
+      dayLabels: days,
+      periodNumbers,
+      getSlotFor: (dayIndex, period) => getSlotFor(dayIndex, period) ?? null,
+      getEntryFor,
+      getBreaksAfterPeriod,
+      getBreaksBeforeFirstPeriod,
+      getCleanBreakName,
+      grade: currentGrade ?? null,
+    });
+  }, [
+    selectedGradeId,
+    showGridSkeleton,
+    classGridFailed,
+    daysPerWeek,
+    days,
+    periodNumbers,
+    getSlotFor,
+    getEntryFor,
+    getBreaksAfterPeriod,
+    getBreaksBeforeFirstPeriod,
+    getCleanBreakName,
+    currentGrade,
+  ]);
+
+  const adminMobileComplete = useMemo(() => {
+    if (!adminMobileTimetableData || !selectedGradeId || !selectedTerm) {
+      return null;
+    }
+
+    return {
+      gradeId: selectedGradeId,
+      gradeName: classDisplayLabel,
+      termId: selectedTerm.id,
+      termName: selectedTerm.name,
+      timeSlots: adminMobileTimetableData.timeSlots,
+      days: adminMobileTimetableData.days,
+      breaks: adminMobileTimetableData.breaks,
+      stats: {
+        totalLessons: stats.totalLessons,
+        completedLessons: 0,
+        upcomingLessons: stats.totalLessons,
+        totalSubjects: Object.keys(stats.subjectDistribution).length,
+        subjectDistribution: stats.subjectDistribution,
+        dayDistribution: {},
+        completionPercentage: stats.completionPercentage,
+      },
+      lastUpdated: lastUpdated ?? new Date().toISOString(),
+    };
+  }, [
+    adminMobileTimetableData,
+    selectedGradeId,
+    selectedTerm,
+    classDisplayLabel,
+    stats,
+    lastUpdated,
+  ]);
+
+  const adminMobileCore = useTimetableCore({
+    viewType: "admin",
+    timetableData: adminMobileComplete,
+    isLoading: showGridSkeleton,
+    error: null,
+    refetch: () => {
+      void reloadTimetableData();
+    },
+  });
+
+  const adminSubjectCount = Object.keys(stats.subjectDistribution).length;
+  const showAdminMobilePanel =
+    !!selectedGradeId && hasScheduleStructure && !classGridFailed;
 
   const handleAddBreak = useCallback(
     (afterPeriod: number, dayOfWeek?: number) => {
@@ -1445,6 +1611,114 @@ export default function SmartTimetableNew() {
     }
   };
 
+  const renderMobileOverflowMenu = (trigger: React.ReactNode) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className={ttMenu.content}>
+        <DropdownMenuItem
+          onClick={() => reloadTimetableData()}
+          className={ttMenu.item}
+        >
+          <RefreshCw />
+          Refresh
+        </DropdownMenuItem>
+        {selectedGradeId && hasScheduleStructure ? (
+          <DropdownMenuItem
+            onClick={() => setShowFullSubjectName(!showFullSubjectName)}
+            className={ttMenu.item}
+          >
+            <LayoutGrid />
+            {showFullSubjectName ? "Show subject codes" : "Show full names"}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuSeparator className={ttMenu.separator} />
+        <DropdownMenuItem
+          onClick={() => setBulkBreaksOpen(true)}
+          className={ttMenu.item}
+        >
+          <Coffee />
+          Breaks & lunch
+        </DropdownMenuItem>
+        {hasScheduleStructure ? (
+          <DropdownMenuItem onClick={openClassSidebar} className={ttMenu.item}>
+            <PanelLeftOpen />
+            Class list
+          </DropdownMenuItem>
+        ) : null}
+        {hasScheduleStructure && selectedTerm ? (
+          <DropdownMenuItem
+            title="Saves apply immediately. Use this to publish for teachers."
+            onClick={() => setShareDrawerOpen(true)}
+            className={ttMenu.item}
+          >
+            <Share2 />
+            Publish for teachers
+          </DropdownMenuItem>
+        ) : null}
+        {selectedGradeId &&
+        hasScheduleStructure &&
+        sortedTeachers.length > 0 ? (
+          <>
+            <DropdownMenuSeparator className={ttMenu.separator} />
+            <DropdownMenuLabel className={ttMenu.label}>Highlight</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => setHighlightTeacherId(null)}
+              className={ttMenu.item}
+            >
+              <Users />
+              All teachers
+            </DropdownMenuItem>
+            {sortedTeachers.map((t) => (
+              <DropdownMenuItem
+                key={t.id}
+                onClick={() => setHighlightTeacherId(t.id)}
+                className={ttMenu.item}
+              >
+                <Users className="opacity-60" />
+                {t.name}
+              </DropdownMenuItem>
+            ))}
+          </>
+        ) : null}
+        <DropdownMenuSeparator className={ttMenu.separator} />
+        <DropdownMenuLabel className={ttMenu.label}>Export</DropdownMenuLabel>
+        <DropdownMenuItem onClick={handleCopyTermSummary} className={ttMenu.item}>
+          <Copy />
+          Copy term summary
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleExportTermCsv} className={ttMenu.item}>
+          <Download />
+          Download term CSV
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleEmailStaffSummary} className={ttMenu.item}>
+          <Mail />
+          Email staff summary
+        </DropdownMenuItem>
+        {selectedGradeId ? (
+          <>
+            <DropdownMenuSeparator className={ttMenu.separator} />
+            <DropdownMenuLabel className={ttMenu.label}>Class</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={handlePrintClassTimetable}
+              className={ttMenu.item}
+            >
+              <Printer />
+              Print
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExportClassCsv} className={ttMenu.item}>
+              <Download />
+              Download CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleCopyClassSummary} className={ttMenu.item}>
+              <Copy />
+              Copy summary
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="relative flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
       <TimetablePrintStyles />
@@ -1466,37 +1740,19 @@ export default function SmartTimetableNew() {
       {/* ── Sidebar ── */}
       {hasScheduleStructure &&
         (isPageLoading && !isSidebarMinimized ? (
-          <TimetableSidebarSkeleton />
+          <div className="hidden shrink-0 lg:block">
+            <TimetableSidebarSkeleton />
+          </div>
         ) : (
-          <div
-            data-timetable-no-print
-            className={cn(
-              "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
-              "md:relative md:translate-x-0",
-              isSidebarMinimized ? "w-14" : "w-64",
-            )}
-          >
-            <div
-              className={cn(
-                "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
-                isSidebarMinimized ? "justify-center" : "justify-end",
-              )}
+          <>
+            <TimetableClassDrawer
+              open={isClassDrawerOpen}
+              onClose={closeClassSidebar}
+              desktopMinimized={isSidebarMinimized}
+              onToggleDesktop={toggleClassSidebar}
             >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-              >
-                {isSidebarMinimized ? (
-                  <PanelLeftOpen className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            {!isSidebarMinimized && (
-              <div className="flex flex-1 flex-col overflow-hidden px-3 pb-3">
+            {!isSidebarMinimized || isClassDrawerOpen ? (
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 max-lg:px-4 max-lg:pb-4">
                 {gradesError && grades.length === 0 ? (
                   <div className="pt-2">
                     <TimetableGridError
@@ -1523,33 +1779,28 @@ export default function SmartTimetableNew() {
                         )}
                       </div>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedGrade(null)}
-                      className={cn(
-                        "mb-3 mt-1 h-8 w-full rounded-lg border px-2.5 text-xs font-medium transition-all",
-                        selectedGradeId === null
-                          ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
-                      )}
-                    >
-                      All classes
-                    </button>
                     <SchoolSearchFilter
                       className="min-h-0 flex-1"
                       variant="minimal"
+                      surface={isClassDrawerOpen ? "drawer" : "sidebar"}
                       type="grades"
                       onGradeSelect={handleGradeSelect}
                       onStreamSelect={handleStreamSelect}
                       isLoading={isSchoolConfigLoading}
-                      selectedGradeId={selectedGradeId ?? ""}
-                      selectedStreamId={selectedStreamId ?? ""}
+                      selectedGradeId={sidebarSelectedGradeId}
+                      selectedStreamId={sidebarSelectedStreamId}
+                      allClassesSelected={selectedGradeId === null}
+                      onSelectAllClasses={() => {
+                        setSelectedGrade(null);
+                        setIsClassDrawerOpen(false);
+                      }}
                     />
                   </>
                 )}
               </div>
-            )}
-          </div>
+            ) : null}
+            </TimetableClassDrawer>
+          </>
         ))}
 
       {/* ── Main ── */}
@@ -1557,14 +1808,15 @@ export default function SmartTimetableNew() {
         {/* ── Toolbar ── */}
         <header
           data-timetable-no-print
-          className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6"
+          className="hidden shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6 lg:block"
         >
           <div className="mx-auto flex max-w-5xl flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
+              <div className="min-w-0 flex flex-wrap items-center gap-2">
                 <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                   Timetable
                 </h1>
+                <RealtimeLiveIndicator />
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap">
@@ -1572,8 +1824,8 @@ export default function SmartTimetableNew() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                    onClick={() => setIsSidebarMinimized(false)}
+                    className="hidden h-8 w-8 p-0 text-slate-400 hover:text-slate-600 lg:inline-flex"
+                    onClick={openClassSidebar}
                   >
                     <PanelLeftOpen className="h-4 w-4" />
                   </Button>
@@ -1581,12 +1833,11 @@ export default function SmartTimetableNew() {
                 {selectedGradeId && hasScheduleStructure && (
                   <Button
                     size="sm"
-                    className="h-9 gap-1.5 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900"
+                    className="hidden h-9 gap-1.5 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 lg:inline-flex"
                     onClick={() => setBulkLessonEntryOpen(true)}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Bulk add</span>
-                    <span className="sm:hidden">Add lessons</span>
+                    Bulk add
                   </Button>
                 )}
                 {selectedGradeId &&
@@ -1622,6 +1873,7 @@ export default function SmartTimetableNew() {
                     variant="outline"
                     size="sm"
                     className="hidden h-9 gap-1.5 border-zinc-200 text-xs lg:inline-flex dark:border-zinc-700"
+                    title="Saves apply immediately. Use this to publish for teachers."
                     onClick={() => setShareDrawerOpen(true)}
                   >
                     <Share2 className="h-3.5 w-3.5" />
@@ -1632,96 +1884,6 @@ export default function SmartTimetableNew() {
                         : "Publish"}
                   </Button>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 gap-1.5 border-zinc-200 text-xs lg:hidden dark:border-zinc-700"
-                    >
-                      <MoreHorizontal className="h-3.5 w-3.5" />
-                      More
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => reloadTimetableData()}>
-                      <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                      Refresh
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setBulkBreaksOpen(true)}>
-                      <Coffee className="h-3.5 w-3.5 mr-2" />
-                      Breaks & lunch
-                    </DropdownMenuItem>
-                    {hasScheduleStructure && isSidebarMinimized && (
-                      <DropdownMenuItem
-                        onClick={() => setIsSidebarMinimized(false)}
-                      >
-                        <PanelLeftOpen className="h-3.5 w-3.5 mr-2" />
-                        Class list
-                      </DropdownMenuItem>
-                    )}
-                    {hasScheduleStructure && selectedTerm && (
-                      <DropdownMenuItem
-                        onClick={() => setShareDrawerOpen(true)}
-                      >
-                        <Share2 className="h-3.5 w-3.5 mr-2" />
-                        Publish for teachers
-                      </DropdownMenuItem>
-                    )}
-                    {selectedGradeId &&
-                      hasScheduleStructure &&
-                      sortedTeachers.length > 0 && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setHighlightTeacherId(null)}
-                          >
-                            <Users className="h-3.5 w-3.5 mr-2" />
-                            All teachers on grid
-                          </DropdownMenuItem>
-                          {sortedTeachers.map((t) => (
-                            <DropdownMenuItem
-                              key={t.id}
-                              onClick={() => setHighlightTeacherId(t.id)}
-                            >
-                              <Users className="h-3.5 w-3.5 mr-2 opacity-60" />
-                              Highlight {t.name}
-                            </DropdownMenuItem>
-                          ))}
-                        </>
-                      )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleCopyTermSummary}>
-                      <Copy className="h-3.5 w-3.5 mr-2" />
-                      Copy term summary
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportTermCsv}>
-                      <Download className="h-3.5 w-3.5 mr-2" />
-                      Download term CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEmailStaffSummary}>
-                      <Mail className="h-3.5 w-3.5 mr-2" />
-                      Email staff summary
-                    </DropdownMenuItem>
-                    {selectedGradeId && (
-                      <>
-                        <DropdownMenuItem onClick={handlePrintClassTimetable}>
-                          <Printer className="h-3.5 w-3.5 mr-2" />
-                          Print this class
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExportClassCsv}>
-                          <Download className="h-3.5 w-3.5 mr-2" />
-                          Download class CSV
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleCopyClassSummary}>
-                          <Copy className="h-3.5 w-3.5 mr-2" />
-                          Copy class summary
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1779,101 +1941,114 @@ export default function SmartTimetableNew() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="hidden lg:inline-flex h-9 w-9"
+                      className="hidden h-8 w-8 text-slate-400 hover:text-slate-600 lg:inline-flex"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuContent align="end" className={ttMenu.content}>
+                    <DropdownMenuLabel className={ttMenu.label}>Setup</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => setShowTimetableWizard(true)}
+                      className={ttMenu.item}
                     >
-                      <Sparkles className="h-3.5 w-3.5 mr-2" />
-                      Guided setup again
+                      <Sparkles />
+                      Guided setup
                     </DropdownMenuItem>
                     {hasScheduleStructure && (
                       <DropdownMenuItem
                         onClick={requestOpenAdvancedSchedule}
-                        className="text-amber-800 dark:text-amber-200"
+                        className={cn(ttMenu.item, ttMenu.itemWarn)}
                       >
-                        <LayoutGrid className="h-3.5 w-3.5 mr-2" />
-                        Edit lesson times…
+                        <LayoutGrid />
+                        Edit lesson times
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className={ttMenu.separator} />
+                    <DropdownMenuLabel className={ttMenu.label}>Schedule</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => setPeriodsDrawerOpen(true)}
+                      className={ttMenu.item}
                     >
-                      <Clock className="h-3.5 w-3.5 mr-2" />
-                      Lesson times list
+                      <Clock />
+                      Lesson times
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setBreaksDrawerOpen(true)}>
-                      <Coffee className="h-3.5 w-3.5 mr-2" />
+                    <DropdownMenuItem
+                      onClick={() => setBreaksDrawerOpen(true)}
+                      className={ttMenu.item}
+                    >
+                      <Coffee />
                       Breaks & lunch
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleCopyTermSummary}>
-                      <Copy className="h-3.5 w-3.5 mr-2" />
+                    <DropdownMenuSeparator className={ttMenu.separator} />
+                    <DropdownMenuLabel className={ttMenu.label}>Export</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={handleCopyTermSummary} className={ttMenu.item}>
+                      <Copy />
                       Copy term summary
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportTermCsv}>
-                      <Download className="h-3.5 w-3.5 mr-2" />
+                    <DropdownMenuItem onClick={handleExportTermCsv} className={ttMenu.item}>
+                      <Download />
                       Download term CSV
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleEmailStaffSummary}>
-                      <Mail className="h-3.5 w-3.5 mr-2" />
-                      Email staff summary
+                    <DropdownMenuItem onClick={handleEmailStaffSummary} className={ttMenu.item}>
+                      <Mail />
+                      Email staff
                     </DropdownMenuItem>
                     {hasScheduleStructure && selectedTerm && (
                       <DropdownMenuItem
+                        title="Saves apply immediately. Use this to publish for teachers."
                         onClick={() => setShareDrawerOpen(true)}
+                        className={ttMenu.item}
                       >
-                        <Share2 className="h-3.5 w-3.5 mr-2" />
-                        Share with staff…
+                        <Share2 />
+                        Publish for teachers
                       </DropdownMenuItem>
                     )}
                     {selectedGradeId && (
                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handlePrintClassTimetable}>
-                          <Printer className="h-3.5 w-3.5 mr-2" />
-                          Print this class
+                        <DropdownMenuSeparator className={ttMenu.separator} />
+                        <DropdownMenuLabel className={ttMenu.label}>Class</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={handlePrintClassTimetable} className={ttMenu.item}>
+                          <Printer />
+                          Print
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleExportClassCsv}>
-                          <Download className="h-3.5 w-3.5 mr-2" />
-                          Download class CSV
+                        <DropdownMenuItem onClick={handleExportClassCsv} className={ttMenu.item}>
+                          <Download />
+                          Download CSV
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleCopyClassSummary}>
-                          <Copy className="h-3.5 w-3.5 mr-2" />
-                          Copy class summary
+                        <DropdownMenuItem onClick={handleCopyClassSummary} className={ttMenu.item}>
+                          <Copy />
+                          Copy summary
                         </DropdownMenuItem>
                       </>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => reloadTimetableData()}>
-                      <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                    <DropdownMenuSeparator className={ttMenu.separator} />
+                    <DropdownMenuItem onClick={() => reloadTimetableData()} className={ttMenu.item}>
+                      <RefreshCw />
                       Refresh
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className={ttMenu.separator} />
+                    <DropdownMenuLabel className={ttMenu.label}>Danger</DropdownMenuLabel>
                     <DropdownMenuItem
                       onClick={() => setShowDeleteAllDialog(true)}
-                      className="text-red-600"
+                      className={cn(ttMenu.item, ttMenu.itemDestructive)}
                     >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      <Trash2 />
                       Reset lesson times
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setShowDeleteAllEntriesDialog(true)}
-                      className="text-red-600"
+                      className={cn(ttMenu.item, ttMenu.itemDestructive)}
                     >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      <Trash2 />
                       Clear all lessons
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setShowDeleteTimetableDialog(true)}
-                      className="text-red-600"
+                      className={cn(ttMenu.item, ttMenu.itemDestructive)}
                     >
-                      <Trash2 className="h-3.5 w-3.5 mr-2" />
-                      Delete entire timetable
+                      <Trash2 />
+                      Delete timetable
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1882,44 +2057,116 @@ export default function SmartTimetableNew() {
           </div>
         </header>
 
+        {hasScheduleStructure && !showAdminMobilePanel ? (
+          <AdminMobileClassBar
+            className="lg:hidden"
+            classLabel="All classes"
+            streamName={
+              grades.length > 0
+                ? `${grades.length} classes`
+                : "Whole-school overview"
+            }
+            termName={selectedTerm?.name}
+            filledSlots={termOverview.totalFilled}
+            totalSlots={termOverview.totalSlots}
+            onRefresh={() => {
+              void reloadTimetableData();
+            }}
+            onClassPickerClick={openClassSidebar}
+          />
+        ) : null}
+
+        {showAdminMobilePanel && (
+          <div className="fixed inset-x-0 top-[4.3125rem] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-0 flex flex-col overflow-hidden lg:hidden">
+            {showGridSkeleton ? (
+              <div className="flex flex-1 flex-col overflow-hidden bg-white p-2 dark:bg-slate-950">
+                <TimetableGridSkeleton combined={false} />
+              </div>
+            ) : showEmptyScheduleState ? (
+              <div className="flex flex-1 items-center justify-center px-4 py-10 text-center">
+                <div className="max-w-xs space-y-3">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    No lesson times yet
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Set up lesson times, then add subjects to this class grid.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowTimetableWizard(true)}
+                    className="gap-1.5"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Set up lesson times
+                  </Button>
+                </div>
+              </div>
+            ) : adminMobileTimetableData ? (
+              <AdminMobileSchedule
+                classLabel={classDisplayLabel}
+                streamName={currentStream?.name}
+                termName={selectedTerm?.name}
+                filledSlots={stats.filledSlots}
+                totalSlots={stats.totalSlots}
+                totalLessons={stats.totalLessons}
+                subjectCount={adminSubjectCount}
+                conflictCount={conflictCount}
+                fillPercent={stats.completionPercentage}
+                days={adminMobileTimetableData.days}
+                timeSlots={adminMobileTimetableData.timeSlots}
+                breaks={adminMobileTimetableData.breaks}
+                weekDays={adminMobileTimetableData.weekDays}
+                dayShortNames={adminMobileTimetableData.dayShortNames}
+                currentDayOfWeek={adminMobileCore.currentDayOfWeek}
+                currentPeriodIndex={adminMobileCore.currentPeriodIndex}
+                conflictLessonIds={
+                  showConflicts ? conflictLessonIds : undefined
+                }
+                onRefresh={() => {
+                  void reloadTimetableData();
+                }}
+                onClassPickerClick={openClassSidebar}
+                onLessonClick={handleAdminMobileLessonClick}
+                onEmptyCellClick={handleAdminMobileEmptyCellClick}
+                teacherLessons={teacherLessons}
+                highlightTeacherId={highlightTeacherId}
+                onTeacherClick={handleTeacherHighlightClick}
+                actionStrip={
+                  <TimetableMobileActionStrip
+                    onAddLessons={() => setBulkLessonEntryOpen(true)}
+                    showConflicts={showConflicts}
+                    conflictCount={conflictCount}
+                    onToggleConflicts={toggleConflicts}
+                    moreMenu={renderMobileOverflowMenu(
+                      <button
+                        type="button"
+                        className="flex h-full w-full items-center justify-center gap-2 py-4 text-[13px] font-medium text-slate-600 transition-colors active:bg-slate-50 dark:text-slate-400 dark:active:bg-slate-900"
+                      >
+                        <MoreHorizontal
+                          className="h-4 w-4 opacity-80"
+                          strokeWidth={1.75}
+                        />
+                        More
+                      </button>
+                    )}
+                  />
+                }
+              />
+            ) : null}
+          </div>
+        )}
+
         {/* ── Content ── */}
-        <div className="flex-1 overflow-y-auto">
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto",
+            showAdminMobilePanel && "hidden lg:block",
+          )}
+        >
           <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
             {!isOnline && hasScheduleStructure && (
               <div data-timetable-no-print>
                 <TimetableOfflineBanner />
-              </div>
-            )}
-
-            {!hideLiveBanner && hasScheduleStructure && (
-              <div
-                className={cn(
-                  tt.panelMuted,
-                  "flex items-start justify-between gap-3 px-4 py-2.5",
-                )}
-              >
-                <span className={tt.caption}>
-                  <strong className="font-semibold text-zinc-700 dark:text-zinc-200">
-                    Saves apply immediately.
-                  </strong>{" "}
-                  Use Share with staff to publish for teachers.
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs shrink-0"
-                  onClick={() => {
-                    try {
-                      localStorage.setItem("timetable-hide-live-banner", "1");
-                    } catch {
-                      /* ignore */
-                    }
-                    setHideLiveBanner(true);
-                  }}
-                >
-                  Dismiss
-                </Button>
               </div>
             )}
 
@@ -1944,7 +2191,7 @@ export default function SmartTimetableNew() {
                 </div>
                 <div
                   data-timetable-no-print
-                  className="border-b border-zinc-100 px-4 py-2 dark:border-zinc-800 lg:px-5"
+                  className="hidden border-b border-zinc-100 px-4 py-2 dark:border-zinc-800 lg:block lg:px-5"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -2049,6 +2296,7 @@ export default function SmartTimetableNew() {
                         onCreateSchedule={() => setShowTimetableWizard(true)}
                       />
                   ) : (
+                    <div className="hidden lg:block">
                     <AdminTimetableGrid
                       periodNumbers={periodNumbers}
                       days={days}
@@ -2078,6 +2326,7 @@ export default function SmartTimetableNew() {
                       movingBreakId={movingBreakId}
                       onCreateSchedule={() => setShowTimetableWizard(true)}
                     />
+                    </div>
                   )}
                 </div>
               </section>
@@ -2106,6 +2355,9 @@ export default function SmartTimetableNew() {
               }
               periodCount={periodNumbers.length}
               lastUpdatedIso={lastUpdated}
+              teacherLessons={teacherLessons}
+              highlightTeacherId={highlightTeacherId}
+              onTeacherClick={handleTeacherHighlightClick}
             />
 
             {selectedGradeId &&

@@ -32,7 +32,12 @@ export function useStudentNextClass(): {
     loading: timetableLoading,
     error: timetableError,
     refetch: refetchTimetable,
-  } = useStudentTimetable(activeTerm?.id || null, student?.gradeId || null)
+  } = useStudentTimetable(
+    activeTerm?.id || null,
+    student?.gradeId || null,
+    student?.tenantStreamId || null,
+    student?.streamName || null,
+  )
 
   const unifiedTimetable = useMemo(() => {
     if (!rawTimetable) return null
