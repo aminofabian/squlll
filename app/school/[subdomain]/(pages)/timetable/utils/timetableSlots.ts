@@ -50,11 +50,19 @@ export function extractTimeSlotsFromTimetableData(
       !tenantGradeLevelId || block.gradeLevel?.id === tenantGradeLevelId,
   );
 
-  const dayItems = tenantGradeLevelId
-    ? matchingGradeBlocks.flatMap((block) => block.days || [])
-    : timetableData.schedule && timetableData.schedule.length > 0
+  const gradeDays = matchingGradeBlocks.flatMap((block) => block.days || []);
+  const scheduleDays =
+    timetableData.schedule && timetableData.schedule.length > 0
       ? timetableData.schedule
-      : matchingGradeBlocks.flatMap((block) => block.days || []);
+      : (timetableData.timetableByGrade || []).flatMap(
+          (block) => block.days || [],
+        );
+
+  const dayItems = tenantGradeLevelId
+    ? gradeDays.length > 0
+      ? gradeDays
+      : scheduleDays
+    : scheduleDays;
 
   for (const dayItem of dayItems) {
     const dayOfWeek = dayItem.dayTemplate?.dayOfWeek;

@@ -1064,7 +1064,8 @@ export const useTimetableStore = create<TimetableStore>()(
                 ?.tenantGradeLevelId ?? gradeIdParam;
             const gradeTemplates = templates.filter((t: any) =>
               (t.gradeLevels || []).some(
-                (gl: any) => gl.id === tenantGradeLevelId,
+                (gl: any) =>
+                  gl.id === tenantGradeLevelId || gl.id === gradeIdParam,
               ),
             );
             if (gradeTemplates.length > 0) {
@@ -1080,14 +1081,8 @@ export const useTimetableStore = create<TimetableStore>()(
               templateIds = templates.map((t: any) => t.id).filter(Boolean);
             } else {
               console.warn(
-                `No day templates for grade ${gradeIdParam} in term ${termId ?? "any"}`,
+                `No day templates for grade ${gradeIdParam} in term ${termId ?? "any"} — keeping existing schedule.`,
               );
-              set({
-                timeSlots: [],
-                periodNumbers: [],
-                lessonPeriodsPerDay: 0,
-                lastUpdated: new Date().toISOString(),
-              });
               return;
             }
           }
@@ -1307,8 +1302,14 @@ export const useTimetableStore = create<TimetableStore>()(
 
       loadTimeSlots: async (termIdParam?: string, gradeIdParam?: string) => {
         try {
-          const gradeId = gradeIdParam ?? get().selectedGradeId ?? undefined;
-          const termId = termIdParam ?? get().selectedTermId ?? undefined;
+          const state = get();
+          // getSchoolTimetable already populated the grid structure — only
+          // supplement from day-template periods when the store is still empty.
+          if (state.timeSlots.length > 0 && state.periodNumbers.length > 0) {
+            return;
+          }
+          const gradeId = gradeIdParam ?? state.selectedGradeId ?? undefined;
+          const termId = termIdParam ?? state.selectedTermId ?? undefined;
           await get().loadDayTemplatePeriods(undefined, gradeId, termId);
         } catch (error) {
           console.error("Error loading time slots:", error);
@@ -2344,8 +2345,8 @@ export const useTimetableStore = create<TimetableStore>()(
                 variables: {
                   input: {
                     termId,
-                    ...(gradeLevelId ? { gradeLevelId } : {}),
-                    // Stream filter is applied client-side so grade-wide blocks still load.
+                    // Grade/stream filters are applied client-side so the bell
+                    // schedule always loads even when a class isn't linked yet.
                   },
                 },
               }),
@@ -2535,10 +2536,9 @@ export const useTimetableStore = create<TimetableStore>()(
               ? extractTimeSlotsFromTimetableData(timetableData, gradeLevelId)
               : [];
 
-          const schoolWideSlots =
-            !gradeLevelId && timetableData
-              ? extractTimeSlotsFromTimetableData(timetableData)
-              : [];
+          const schoolWideSlots = timetableData
+            ? extractTimeSlotsFromTimetableData(timetableData)
+            : [];
 
           const resolvedSlots =
             gradeScopedSlots.length > 0 ? gradeScopedSlots : schoolWideSlots;
@@ -2574,7 +2574,12 @@ export const useTimetableStore = create<TimetableStore>()(
                       }
                     : {}),
                 }
-              : {};
+              : mergedPeriodNumbers.length > 0
+                ? {
+                    periodNumbers: mergedPeriodNumbers,
+                    lessonPeriodsPerDay: mergedLessonPeriodsPerDay,
+                  }
+                : {};
 
           // Keep full term entries in the store; grid hooks filter by grade/stream.
           set((state) => {

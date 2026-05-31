@@ -25,7 +25,6 @@ import { TimetableClassSidebar } from "./components/TimetableClassSidebar";
 import { TimetableOnboarding } from "./components/TimetableOnboarding";
 import { TimetableFillProgress } from "./components/TimetableFillProgress";
 import { TimetableSubjectInsights } from "./components/TimetableSubjectInsights";
-import { TimetableGhostGrid } from "./components/TimetableGhostGrid";
 import {
   TimetableGridSkeleton,
   TimetableSidebarSkeleton,
@@ -471,11 +470,18 @@ export default function SmartTimetableNew() {
   const timetableSetupComplete = isTimetableWizardComplete(
     getTenantIdFromCookies(),
   );
+  const daysPerWeekFromStore = useTimetableStore((state) => state.daysPerWeek);
+  const lessonPeriodsPerDay = useTimetableStore(
+    (state) => state.lessonPeriodsPerDay,
+  );
   const hasScheduleStructure =
     hasTimeSlots ||
     periodNumbers.length > 0 ||
     hasAnyLessons ||
-    (timetableSetupComplete && breaks.length > 0);
+    (timetableSetupComplete && breaks.length > 0) ||
+    (!isGridLoading &&
+      !!selectedTerm &&
+      ((lessonPeriodsPerDay ?? 0) > 0 || daysPerWeekFromStore > 0));
   const hasTimetableData =
     periodNumbers.length > 0 || timeSlots.length > 0 || storeEntries.length > 0;
 
@@ -2117,9 +2123,6 @@ export default function SmartTimetableNew() {
                   ) : isGridLoading ? (
                     <TimetableGridSkeleton combined={!selectedGradeId} />
                   ) : !selectedGradeId ? (
-                    !hasScheduleStructure ? (
-                      <TimetableGhostGrid className="opacity-60" />
-                    ) : (
                       <AdminTimetableGrid
                         schoolCombined
                         periodNumbers={periodNumbers}
@@ -2130,7 +2133,9 @@ export default function SmartTimetableNew() {
                         onCombinedLessonClick={handleCombinedLessonClick}
                         getBreaksAfterPeriod={getBreaksAfterPeriod}
                         getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                        hasNoTimeSlots={!hasScheduleStructure}
+                        hasNoTimeSlots={
+                          periodNumbers.length === 0 && timeSlots.length === 0
+                        }
                         getCleanBreakName={getCleanBreakName}
                         getSubjectAccent={getSubjectAccentForGrid}
                         conflictLessonIds={
@@ -2147,9 +2152,6 @@ export default function SmartTimetableNew() {
                         movingBreakId={movingBreakId}
                         onCreateSchedule={() => setShowTimetableWizard(true)}
                       />
-                    )
-                  ) : !hasScheduleStructure ? (
-                    <TimetableGhostGrid className="opacity-60" />
                   ) : (
                     <AdminTimetableGrid
                       periodNumbers={periodNumbers}
@@ -2158,7 +2160,9 @@ export default function SmartTimetableNew() {
                       getEntryFor={getEntryFor}
                       getBreaksAfterPeriod={getBreaksAfterPeriod}
                       getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                      hasNoTimeSlots={!hasScheduleStructure}
+                      hasNoTimeSlots={
+                        periodNumbers.length === 0 && timeSlots.length === 0
+                      }
                       getCleanBreakName={getCleanBreakName}
                       getSubjectAccent={getSubjectAccentForGrid}
                       conflictLessonIds={
