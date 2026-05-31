@@ -1,4 +1,5 @@
 import { Outfit } from "next/font/google"
+import { RealtimeWrapper } from "./RealtimeWrapper"
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -12,7 +13,7 @@ export default function SubdomainLayout({
 }) {
   return (
     <div className={`${outfit.variable} font-sans min-h-screen`}>
-      {children}
+      <RealtimeWrapper>{children}</RealtimeWrapper>
     </div>
   )
 } 

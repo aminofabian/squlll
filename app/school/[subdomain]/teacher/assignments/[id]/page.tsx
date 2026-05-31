@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { TeacherTestSubmissionsPanel } from "../../components/TeacherTestSubmissionsPanel";
 
 // TypeScript interfaces for the assignment detail data - matching the actual API schema
 interface AssignmentDetail {
@@ -681,6 +682,11 @@ export default function AssignmentDetailPage() {
                     ))}
                 </CardContent>
               </Card>
+
+              <TeacherTestSubmissionsPanel
+                testId={assignment.id}
+                maxMarks={assignment.totalMarks}
+              />
             </div>
 
             {/* Sidebar */}

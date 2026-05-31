@@ -2,6 +2,14 @@
 
 import React from 'react';
 import { PaymentsSection } from './PaymentsSection';
+import { ParentFeeLiveCard } from './ParentFeeLiveCard';
+import { ParentAttendanceSection } from './ParentAttendanceSection';
+import { ParentGradesSection } from './ParentGradesSection';
+import { ParentNotesSection } from './ParentNotesSection';
+import { ParentReportCardSection } from './ParentReportCardSection';
+import { ParentScheduleSection } from './ParentScheduleSection';
+import { ParentMessagesSection } from './ParentMessagesSection';
+import type { ParentFeeBalance, ParentPortalChild } from '@/lib/parent/types';
 
 interface ScheduleItem {
   time: string;
@@ -19,17 +27,8 @@ interface Grade {
   date: string;
 }
 
-interface TeacherMessage {
-  id: number;
-  teacher: string;
-  subject: string;
-  message: string;
-  time: string;
-  avatar: string;
-}
-
 interface Notification {
-  id: number;
+  id: string | number;
   type: string;
   message: string;
   time: string;
@@ -38,6 +37,7 @@ interface Notification {
 
 interface Child {
   id: number;
+  studentId?: string;
   name: string;
   grade: string;
   class: string;
@@ -49,11 +49,15 @@ interface Child {
 
 interface ContentRendererProps {
   activeTab: string;
+  subdomain: string;
   todaySchedule: ScheduleItem[];
-  teacherMessages: TeacherMessage[];
   notifications: Notification[];
   children?: Child[];
   selectedChild?: number;
+  feeBalance?: ParentFeeBalance | null;
+  feeLoading?: boolean;
+  onFeeRefresh?: () => void;
+  portalError?: string | null;
 }
 
 const getStatusColor = (status: string) => {
@@ -73,42 +77,17 @@ const getGradeColor = (grade: string) => {
 };
 
 export const ContentRenderer = ({ 
-  activeTab, 
+  activeTab,
+  subdomain,
   todaySchedule, 
-  teacherMessages, 
   notifications,
   children,
-  selectedChild = 0
+  selectedChild = 0,
+  feeBalance = null,
+  feeLoading = false,
+  onFeeRefresh,
+  portalError = null,
 }: ContentRendererProps) => {
-  const renderMessages = () => (
-    <div className="space-y-4 md:space-y-6">
-      <div className="bg-white border-2 border-primary/20 rounded-2xl shadow-xl">
-        <div className="p-4 md:p-6 border-b-2 border-primary/20">
-          <h2 className="text-lg md:text-xl font-black text-primary">Messages from Teachers</h2>
-        </div>
-        <div className="divide-y-2 divide-primary/20">
-          {teacherMessages.map((message) => (
-            <div key={message.id} className="p-4 md:p-6 hover:bg-primary/5 transition-colors">
-              <div className="flex items-start space-x-3 md:space-x-4">
-                <span className="text-xl md:text-2xl flex-shrink-0">{message.avatar}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <span className="font-black text-slate-800 text-sm md:text-base">{message.teacher}</span>
-                      <span className="text-xs md:text-sm text-slate-600 sm:ml-2">• {message.subject}</span>
-                    </div>
-                    <span className="text-xs md:text-sm text-slate-600">{message.time}</span>
-                  </div>
-                  <p className="text-slate-700 text-sm md:text-base leading-relaxed">{message.message}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderNotifications = () => (
     <div className="space-y-4 md:space-y-6">
       <div className="bg-white border-2 border-primary/20 rounded-2xl shadow-xl">
@@ -314,17 +293,65 @@ export const ContentRenderer = ({
 
   switch (activeTab) {
     case 'messages':
-      return renderMessages();
+      return <ParentMessagesSection />;
     case 'notifications':
       return renderNotifications();
     case 'schedule':
-      return renderSchedule();
+      return children ? (
+        <ParentScheduleSection
+          child={children[selectedChild] as ParentPortalChild | undefined}
+        />
+      ) : (
+        renderSchedule()
+      );
     case 'grades':
-      return renderGrades();
+      return children ? (
+        <ParentGradesSection
+          subdomain={subdomain}
+          child={children[selectedChild] as ParentPortalChild | undefined}
+        />
+      ) : (
+        renderGrades()
+      );
+    case 'attendance':
+      return children ? (
+        <ParentAttendanceSection
+          subdomain={subdomain}
+          child={children[selectedChild] as ParentPortalChild | undefined}
+        />
+      ) : null;
     case 'payments':
-      return children ? <PaymentsSection children={children} selectedChild={selectedChild} /> : null;
+      return children ? (
+        <>
+          {portalError ? (
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+              {portalError}
+            </p>
+          ) : null}
+          <ParentFeeLiveCard
+            balance={feeBalance}
+            childName={children[selectedChild]?.name}
+            loading={feeLoading}
+            onRefresh={onFeeRefresh}
+          />
+          <PaymentsSection children={children} selectedChild={selectedChild} />
+        </>
+      ) : null;
     case 'reports':
-      return renderReports();
+      return children ? (
+        <div className="space-y-8">
+          <ParentReportCardSection
+            subdomain={subdomain}
+            child={children[selectedChild] as ParentPortalChild | undefined}
+          />
+          <ParentNotesSection
+            subdomain={subdomain}
+            child={children[selectedChild] as ParentPortalChild | undefined}
+          />
+        </div>
+      ) : (
+        renderReports()
+      );
     default:
       return (
         <div className="text-center py-8 md:py-12 px-4">

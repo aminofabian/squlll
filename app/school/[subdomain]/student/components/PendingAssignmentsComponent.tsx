@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -11,111 +11,56 @@ import {
   CheckCircle,
   XCircle,
   BookOpen,
-  User
+  User,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useStudentTests } from '@/lib/student/useStudentTests';
+import type { StudentAssignmentItem } from '@/lib/student/types';
+import { submitMyTest } from '@/lib/student/studentTests';
+import { uploadMultipleFiles } from '@/lib/services/upload';
+import { toast } from 'sonner';
 import SubmitAssignmentModal from './SubmitAssignmentModal';
-
-interface Assignment {
-  id: string;
-  subject: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  status: 'pending' | 'overdue' | 'submitted';
-  teacher: string;
-  maxScore: number;
-  attachments?: string[];
-}
-
-// Mock assignments data
-const mockAssignments: Assignment[] = [
-  {
-    id: "1",
-    subject: "Mathematics",
-    title: "Algebra Problem Set",
-    description: "Complete problems 1-20 in Chapter 5. Show all work and solutions.",
-    dueDate: "2024-01-25",
-    status: "pending",
-    teacher: "Mr. Johnson",
-    maxScore: 100,
-    attachments: ["algebra_chapter5.pdf"]
-  },
-  {
-    id: "2",
-    subject: "English Literature",
-    title: "Essay on Shakespeare",
-    description: "Write a 1000-word essay analyzing the themes in Hamlet.",
-    dueDate: "2024-01-20",
-    status: "overdue",
-    teacher: "Ms. Smith",
-    maxScore: 50,
-    attachments: ["hamlet_analysis_guide.pdf"]
-  },
-  {
-    id: "3",
-    subject: "Science",
-    title: "Lab Report - Chemical Reactions",
-    description: "Complete the lab report for the chemical reactions experiment.",
-    dueDate: "2024-01-28",
-    status: "pending",
-    teacher: "Dr. Brown",
-    maxScore: 75,
-    attachments: ["lab_manual.pdf", "safety_guidelines.pdf"]
-  },
-  {
-    id: "4",
-    subject: "History",
-    title: "Research Paper - World War II",
-    description: "Research and write a 1500-word paper on a specific aspect of WWII.",
-    dueDate: "2024-01-30",
-    status: "pending",
-    teacher: "Mr. Davis",
-    maxScore: 100,
-    attachments: ["research_guidelines.pdf", "citation_guide.pdf"]
-  }
-];
+import { StudentTestDetailModal } from './StudentTestDetailModal';
 
 interface PendingAssignmentsComponentProps {
+  subdomain: string;
   onBack: () => void;
 }
 
-export default function PendingAssignmentsComponent({ onBack }: PendingAssignmentsComponentProps) {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+export default function PendingAssignmentsComponent({ subdomain, onBack }: PendingAssignmentsComponentProps) {
+  const { assignments, loading, error, refetch } = useStudentTests(subdomain);
+  const [selectedAssignment, setSelectedAssignment] = useState<StudentAssignmentItem | null>(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [detailTestId, setDetailTestId] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Simulate API call to fetch assignments
-    setTimeout(() => {
-      setAssignments(mockAssignments);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleSubmitAssignment = (assignment: Assignment) => {
+  const handleSubmitAssignment = (assignment: StudentAssignmentItem) => {
     setSelectedAssignment(assignment);
     setShowSubmitModal(true);
   };
 
   const handleSubmitAssignmentSubmit = async (assignmentId: string, files: File[], comments: string) => {
-    // Simulate API call to submit assignment
-    console.log('Submitting assignment:', { assignmentId, files, comments });
-    
-    // Update the assignment status in the local state
-    setAssignments(prev => prev.map(assignment => 
-      assignment.id === assignmentId 
-        ? { ...assignment, status: 'submitted' as const }
-        : assignment
-    ));
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    alert('Assignment submitted successfully!');
+    try {
+      let fileUrl: string | undefined
+      if (files.length > 0) {
+        const uploads = await uploadMultipleFiles(files, 'submission', assignmentId, comments)
+        fileUrl = uploads.map((u) => u.url).join(',')
+      }
+
+      await submitMyTest(subdomain, {
+        testId: assignmentId,
+        fileUrl,
+        comments: comments.trim() || undefined,
+      })
+
+      await refetch()
+      toast.success('Assignment submitted successfully!')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to submit assignment')
+      throw err
+    }
   };
 
   const getStatusBadge = (status: string, dueDate: string) => {
@@ -123,8 +68,10 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
     const due = new Date(dueDate);
     const isOverdue = due < today && status === 'pending';
 
-    if (isOverdue) {
+    if (isOverdue || status === 'overdue') {
       return <Badge variant="destructive" className="bg-red-500">Overdue</Badge>;
+    } else if (status === 'graded') {
+      return <Badge variant="default" className="bg-purple-600">Graded</Badge>;
     } else if (status === 'submitted') {
       return <Badge variant="default" className="bg-green-500">Submitted</Badge>;
     } else {
@@ -160,6 +107,26 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
     );
   }
 
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onBack} className="p-2 hover:bg-primary/10">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-2xl font-bold">Pending Assignments</h2>
+        </div>
+        <Card className="bg-card border border-destructive/20">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button className="mt-4" onClick={() => void refetch()}>Try again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -178,7 +145,7 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
               Pending Assignments
             </h2>
             <p className="text-sm text-muted-foreground/90 font-medium">
-              {assignments.length} assignments to complete
+              {assignments.filter(a => a.status !== 'submitted').length} assignments to complete
             </p>
           </div>
         </div>
@@ -215,7 +182,7 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
               <span className="text-sm font-semibold">Overdue</span>
             </div>
             <div className="text-2xl font-bold mt-2">
-              {assignments.filter(a => a.status === 'pending' && new Date(a.dueDate) < new Date()).length}
+              {assignments.filter(a => a.status === 'overdue' || (a.status === 'pending' && new Date(a.dueDate) < new Date())).length}
             </div>
           </CardContent>
         </Card>
@@ -227,7 +194,7 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
               <span className="text-sm font-semibold">Submitted</span>
             </div>
             <div className="text-2xl font-bold mt-2">
-              {assignments.filter(a => a.status === 'submitted').length}
+              {assignments.filter(a => a.status === 'submitted' || a.status === 'graded').length}
             </div>
           </CardContent>
         </Card>
@@ -262,7 +229,9 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
                       {getStatusBadge(assignment.status, assignment.dueDate)}
                     </div>
                     
-                    <p className="text-muted-foreground mb-4">{assignment.description}</p>
+                    {assignment.description ? (
+                      <p className="text-muted-foreground mb-4">{assignment.description}</p>
+                    ) : null}
                     
                     <div className="flex flex-wrap items-center gap-4 text-sm">
                       <div className="flex items-center gap-2">
@@ -297,9 +266,33 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
                         </div>
                       </div>
                     )}
+
+                    {assignment.status === 'graded' && assignment.grade != null && (
+                      <div className="mt-4 rounded-lg border border-purple-200 bg-purple-50 p-4 space-y-2">
+                        <div className="flex items-center gap-2 text-purple-800 font-semibold">
+                          <Award className="w-4 h-4" />
+                          Score: {assignment.grade}/{assignment.maxScore}
+                          {assignment.gradedAt ? (
+                            <span className="text-xs font-normal text-purple-600">
+                              · Graded {new Date(assignment.gradedAt).toLocaleDateString()}
+                            </span>
+                          ) : null}
+                        </div>
+                        {assignment.feedback ? (
+                          <p className="text-sm text-purple-900">{assignment.feedback}</p>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex flex-col gap-2 min-w-[120px]">
+                    <Button
+                      variant="outline"
+                      onClick={() => setDetailTestId(assignment.id)}
+                      className="w-full"
+                    >
+                      View details
+                    </Button>
                     {assignment.status === 'pending' && (
                       <Button
                         onClick={() => handleSubmitAssignment(assignment)}
@@ -312,10 +305,16 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
                     {assignment.status === 'submitted' && (
                       <Button variant="outline" className="w-full" disabled>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Submitted
+                        Awaiting grade
                       </Button>
                     )}
-                    {assignment.status === 'pending' && new Date(assignment.dueDate) < new Date() && (
+                    {assignment.status === 'graded' && (
+                      <Button variant="outline" className="w-full" disabled>
+                        <Award className="w-4 h-4 mr-2" />
+                        {assignment.grade}/{assignment.maxScore}
+                      </Button>
+                    )}
+                    {(assignment.status === 'overdue' || (assignment.status === 'pending' && new Date(assignment.dueDate) < new Date())) && (
                       <Button variant="destructive" className="w-full">
                         <XCircle className="w-4 h-4 mr-2" />
                         Overdue
@@ -328,6 +327,27 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
           ))
         )}
       </div>
+
+      {/* Test detail modal */}
+      <StudentTestDetailModal
+        subdomain={subdomain}
+        testId={detailTestId}
+        isOpen={Boolean(detailTestId)}
+        onClose={() => setDetailTestId(null)}
+        showSubmit={
+          Boolean(
+            detailTestId &&
+              assignments.find((a) => a.id === detailTestId)?.status === 'pending',
+          )
+        }
+        onSubmit={() => {
+          const assignment = assignments.find((a) => a.id === detailTestId)
+          if (assignment) {
+            setDetailTestId(null)
+            handleSubmitAssignment(assignment)
+          }
+        }}
+      />
 
       {/* Submit Assignment Modal */}
       {selectedAssignment && (
@@ -343,4 +363,4 @@ export default function PendingAssignmentsComponent({ onBack }: PendingAssignmen
       )}
     </div>
   );
-} 
+}

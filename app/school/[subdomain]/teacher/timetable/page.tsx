@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { CalendarDays, Users, BookOpen, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,12 @@ import {
   TeacherTimetableHero,
   StatusNote,
 } from "./components/TeacherTimetableHero";
+import { getWeekStartDate } from "@/lib/timetable/week";
+import {
+  fetchMyLessonCompletions,
+  setLessonCompletion,
+} from "@/lib/teacher/lessonCompletion";
+import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 
 const TeacherTimetable = () => {
   const params = useParams();
@@ -46,6 +52,75 @@ const TeacherTimetable = () => {
   } = useTeacherTimetable(subdomain);
 
   const [completedLessonIds, setCompletedLessonIds] = useState<string[]>([]);
+  const termId = selectedTerm?.id;
+
+  useEffect(() => {
+    if (!subdomain || !termId) {
+      setCompletedLessonIds([]);
+      return;
+    }
+
+    let cancelled = false;
+    void fetchMyLessonCompletions(subdomain, termId, getWeekStartDate())
+      .then((ids) => {
+        if (!cancelled) setCompletedLessonIds(ids);
+      })
+      .catch(() => {
+        if (!cancelled) setCompletedLessonIds([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subdomain, termId]);
+
+  useDomainRealtime({
+    onTimetablePublished: (payload) => {
+      if (payload.termId === termId) void refetch();
+    },
+    onLessonCompleted: (payload) => {
+      if (payload.termId !== termId) return;
+      setCompletedLessonIds((prev) => {
+        if (payload.completed) {
+          return prev.includes(payload.timetableEntryId)
+            ? prev
+            : [...prev, payload.timetableEntryId];
+        }
+        return prev.filter((id) => id !== payload.timetableEntryId);
+      });
+    },
+  });
+
+  const handleToggleComplete = useCallback(
+    async (lessonId: string) => {
+      if (!subdomain || !termId) return;
+
+      const wasCompleted = completedLessonIds.includes(lessonId);
+      const nextCompleted = !wasCompleted;
+
+      setCompletedLessonIds((prev) =>
+        nextCompleted
+          ? [...prev, lessonId]
+          : prev.filter((id) => id !== lessonId),
+      );
+
+      try {
+        await setLessonCompletion(subdomain, {
+          timetableEntryId: lessonId,
+          termId,
+          weekStartDate: getWeekStartDate(),
+          completed: nextCompleted,
+        });
+      } catch {
+        setCompletedLessonIds((prev) =>
+          wasCompleted
+            ? [...prev, lessonId]
+            : prev.filter((id) => id !== lessonId),
+        );
+      }
+    },
+    [subdomain, termId, completedLessonIds],
+  );
 
   const unifiedTimetable = useMemo<CompleteTimetable | null>(() => {
     if (!graphqlData) return null;
@@ -86,11 +161,7 @@ const TeacherTimetable = () => {
     refetch,
     completedLessonIds,
     onToggleComplete: (lessonId) => {
-      setCompletedLessonIds((prev) =>
-        prev.includes(lessonId)
-          ? prev.filter((id) => id !== lessonId)
-          : [...prev, lessonId],
-      );
+      void handleToggleComplete(lessonId);
     },
   });
 

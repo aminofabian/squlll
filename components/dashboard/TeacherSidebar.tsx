@@ -21,6 +21,7 @@ import {
 import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/DynamicLogo';
 import { useParams } from 'next/navigation';
 import { useSignout } from "@/lib/hooks/useSignout";
+import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
 
 interface SidebarProps {
   className?: string
@@ -61,7 +62,6 @@ const navigation = [
     title: "Messages",
     href: "/teacher/messages",
     icon: MessageSquare,
-    count: "5"
   },
 ]
 
@@ -70,6 +70,7 @@ export function Sidebar({ className }: SidebarProps) {
   const params = useParams();
   const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
   const { signOut, isSigningOut } = useSignout();
+  const unreadTotal = useChatUnreadTotal();
 
   return (
     <div className={cn(
@@ -87,6 +88,10 @@ export function Sidebar({ className }: SidebarProps) {
           const Icon = item.icon
           const isActive = pathname === item.href || 
             (item.href !== "/teacher/dashboard" && pathname.startsWith(item.href))
+          const badgeCount =
+            item.href === '/teacher/messages' && unreadTotal > 0
+              ? String(unreadTotal > 99 ? '99+' : unreadTotal)
+              : undefined
           
           return (
             <motion.div 
@@ -122,7 +127,7 @@ export function Sidebar({ className }: SidebarProps) {
                     <span className="font-medium">{item.title}</span>
                   </div>
                   
-                  {item.count && (
+                  {badgeCount && (
                     <Badge 
                       variant={isActive ? "outline" : "secondary"}
                       className={cn(
@@ -132,7 +137,7 @@ export function Sidebar({ className }: SidebarProps) {
                           : "border-dashed hover:border-primary/50"
                       )}
                     >
-                      {item.count}
+                      {badgeCount}
                     </Badge>
                   )}
                   

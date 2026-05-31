@@ -31,7 +31,7 @@ interface Grade {
 }
 
 interface Notification {
-  id: number;
+  id: string | number;
   type: string;
   message: string;
   time: string;
@@ -46,6 +46,8 @@ interface MobileDashboardProps {
   recentGrades: Grade[];
   notifications: Notification[];
   subdomain: string;
+  averageGpa?: number | null;
+  dashboardLoading?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -71,8 +73,11 @@ export const MobileDashboard = ({
   todaySchedule, 
   recentGrades, 
   notifications, 
-  subdomain 
+  subdomain,
+  averageGpa = null,
+  dashboardLoading = false,
 }: MobileDashboardProps) => {
+  const displayGpa = averageGpa ?? children[selectedChild].currentGPA;
   return (
     <div className="min-h-screen bg-white">
       {/* Student Profile Header */}
@@ -144,7 +149,7 @@ export const MobileDashboard = ({
             <div className="w-px bg-primary/20 h-12 self-center" />
             <div className="text-center group">
               <div className="text-3xl font-black text-primary group-hover:scale-110 transition-transform duration-300">
-                {children[selectedChild].currentGPA}
+                {displayGpa}
               </div>
               <div className="text-xs text-slate-600 font-medium tracking-wider uppercase">
                 GPA
@@ -175,7 +180,12 @@ export const MobileDashboard = ({
             <button className="text-primary text-sm font-bold hover:scale-105 transition-transform">View All</button>
           </div>
           <div className="space-y-3">
-            {todaySchedule.slice(0, 2).map((item, index) => (
+            {dashboardLoading && todaySchedule.length === 0 ? (
+              <p className="text-sm text-slate-500">Loading schedule…</p>
+            ) : todaySchedule.length === 0 ? (
+              <p className="text-sm text-slate-500">No lessons today.</p>
+            ) : (
+              todaySchedule.slice(0, 2).map((item, index) => (
               <div key={index} className="flex items-center space-x-4 p-4 bg-primary/5 rounded-2xl hover:bg-primary/10 transition-all duration-300 group">
                 <div className="text-sm font-bold text-slate-600 w-16">{item.time}</div>
                 <div className="flex-1">
@@ -188,7 +198,8 @@ export const MobileDashboard = ({
                   {item.status}
                 </span>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
 
@@ -202,7 +213,12 @@ export const MobileDashboard = ({
             <button className="text-primary text-sm font-bold hover:scale-105 transition-transform">View All</button>
           </div>
           <div className="space-y-3">
-            {recentGrades.slice(0, 2).map((grade, index) => (
+            {dashboardLoading && recentGrades.length === 0 ? (
+              <p className="text-sm text-slate-500">Loading grades…</p>
+            ) : recentGrades.length === 0 ? (
+              <p className="text-sm text-slate-500">No grades yet.</p>
+            ) : (
+              recentGrades.slice(0, 2).map((grade, index) => (
               <div key={index} className="flex items-center justify-between p-4 bg-primary/5 rounded-2xl hover:bg-primary/10 transition-all duration-300 group">
                 <div>
                   <div className="font-bold text-slate-800 text-sm group-hover:scale-105 transition-transform">
@@ -214,7 +230,8 @@ export const MobileDashboard = ({
                   {grade.grade}
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
 

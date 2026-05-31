@@ -44,210 +44,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Mock data for notes
-interface Note {
-  id: string;
-  title: string;
-  subject: string;
-  teacher: string;
-  description: string;
-  fileType: 'pdf' | 'docx' | 'pptx' | 'xlsx' | 'jpg' | 'png' | 'mp4' | 'mp3' | 'zip';
-  fileSize: string;
-  uploadDate: string;
-  downloadCount: number;
-  isFavorite: boolean;
-  tags: string[];
-  grade: string;
-  chapter?: string;
-  topic?: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  lastUpdated: string;
-}
-
-const mockNotes: Note[] = [
-  {
-    id: "1",
-    title: "Algebra Fundamentals - Chapter 1",
-    subject: "Mathematics",
-    teacher: "Mr. Johnson",
-    description: "Complete notes covering basic algebraic concepts, equations, and problem-solving techniques.",
-    fileType: "pdf",
-    fileSize: "2.4 MB",
-    uploadDate: "2024-01-15",
-    downloadCount: 45,
-    isFavorite: true,
-    tags: ["algebra", "equations", "fundamentals"],
-    grade: "Grade 10",
-    chapter: "Chapter 1",
-    topic: "Linear Equations",
-    difficulty: "beginner",
-    lastUpdated: "2024-01-20"
-  },
-  {
-    id: "2",
-    title: "Shakespeare's Hamlet Analysis",
-    subject: "English Literature",
-    teacher: "Ms. Smith",
-    description: "Comprehensive analysis of Hamlet including character studies, themes, and literary devices.",
-    fileType: "docx",
-    fileSize: "1.8 MB",
-    uploadDate: "2024-01-10",
-    downloadCount: 32,
-    isFavorite: false,
-    tags: ["shakespeare", "hamlet", "drama"],
-    grade: "Grade 10",
-    chapter: "Unit 3",
-    topic: "Elizabethan Drama",
-    difficulty: "intermediate",
-    lastUpdated: "2024-01-18"
-  },
-  {
-    id: "3",
-    title: "Chemical Reactions Lab Guide",
-    subject: "Chemistry",
-    teacher: "Dr. Brown",
-    description: "Step-by-step laboratory guide for chemical reactions experiment with safety protocols.",
-    fileType: "pdf",
-    fileSize: "3.2 MB",
-    uploadDate: "2024-01-12",
-    downloadCount: 28,
-    isFavorite: true,
-    tags: ["chemistry", "lab", "reactions"],
-    grade: "Grade 10",
-    chapter: "Chapter 4",
-    topic: "Chemical Bonding",
-    difficulty: "intermediate",
-    lastUpdated: "2024-01-16"
-  },
-  {
-    id: "4",
-    title: "World War II Timeline",
-    subject: "History",
-    teacher: "Mr. Davis",
-    description: "Comprehensive timeline of World War II events with key dates and historical context.",
-    fileType: "pptx",
-    fileSize: "5.1 MB",
-    uploadDate: "2024-01-08",
-    downloadCount: 56,
-    isFavorite: false,
-    tags: ["wwii", "timeline", "history"],
-    grade: "Grade 10",
-    chapter: "Unit 2",
-    topic: "Modern History",
-    difficulty: "beginner",
-    lastUpdated: "2024-01-14"
-  },
-  {
-    id: "5",
-    title: "Photosynthesis Process",
-    subject: "Biology",
-    teacher: "Mrs. Wilson",
-    description: "Detailed explanation of photosynthesis with diagrams and process flowcharts.",
-    fileType: "pdf",
-    fileSize: "4.7 MB",
-    uploadDate: "2024-01-05",
-    downloadCount: 38,
-    isFavorite: true,
-    tags: ["biology", "photosynthesis", "plants"],
-    grade: "Grade 10",
-    chapter: "Chapter 6",
-    topic: "Plant Biology",
-    difficulty: "intermediate",
-    lastUpdated: "2024-01-12"
-  },
-  {
-    id: "6",
-    title: "French Grammar Rules",
-    subject: "French",
-    teacher: "Mme. Dubois",
-    description: "Complete French grammar guide covering tenses, conjugations, and sentence structure.",
-    fileType: "docx",
-    fileSize: "2.1 MB",
-    uploadDate: "2024-01-03",
-    downloadCount: 25,
-    isFavorite: false,
-    tags: ["french", "grammar", "language"],
-    grade: "Grade 10",
-    chapter: "Unit 1",
-    topic: "Basic Grammar",
-    difficulty: "beginner",
-    lastUpdated: "2024-01-10"
-  },
-  {
-    id: "7",
-    title: "Physics Formulas Sheet",
-    subject: "Physics",
-    teacher: "Mr. Thompson",
-    description: "Comprehensive collection of physics formulas for mechanics, electricity, and waves.",
-    fileType: "pdf",
-    fileSize: "1.5 MB",
-    uploadDate: "2024-01-01",
-    downloadCount: 67,
-    isFavorite: true,
-    tags: ["physics", "formulas", "reference"],
-    grade: "Grade 10",
-    chapter: "All Chapters",
-    topic: "Formula Reference",
-    difficulty: "advanced",
-    lastUpdated: "2024-01-08"
-  },
-  {
-    id: "8",
-    title: "Geography Climate Zones",
-    subject: "Geography",
-    teacher: "Ms. Rodriguez",
-    description: "Interactive presentation on world climate zones with maps and climate data.",
-    fileType: "pptx",
-    fileSize: "6.8 MB",
-    uploadDate: "2024-01-06",
-    downloadCount: 42,
-    isFavorite: false,
-    tags: ["geography", "climate", "maps"],
-    grade: "Grade 10",
-    chapter: "Chapter 3",
-    topic: "Climate Systems",
-    difficulty: "intermediate",
-    lastUpdated: "2024-01-15"
-  }
-];
-
-const subjects = [
-  "All Subjects",
-  "Mathematics",
-  "English Literature",
-  "Chemistry",
-  "History",
-  "Biology",
-  "French",
-  "Physics",
-  "Geography"
-];
-
-const difficulties = [
-  "All Levels",
-  "beginner",
-  "intermediate",
-  "advanced"
-];
+import { useStudentNotes } from '@/lib/student/useStudentNotes';
+import type { StudentNoteItem, StudentNoteFileType } from '@/lib/student/types';
 
 interface DownloadNotesComponentProps {
+  subdomain: string;
   onBack: () => void;
 }
 
-export default function DownloadNotesComponent({ onBack }: DownloadNotesComponentProps) {
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
-  const [filteredNotes, setFilteredNotes] = useState<Note[]>(mockNotes);
+export default function DownloadNotesComponent({ subdomain, onBack }: DownloadNotesComponentProps) {
+  const { notes: fetchedNotes, subjects, loading, error, refetch } = useStudentNotes(subdomain);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [filteredNotes, setFilteredNotes] = useState<StudentNoteItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All Subjects");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("All Levels");
   const [sortBy, setSortBy] = useState("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
 
-  const getFileIcon = (fileType: string) => {
+  const notes = fetchedNotes.map((note) => ({
+    ...note,
+    isFavorite: favoriteIds.has(note.id),
+  }));
+
+  const getFileIcon = (fileType: StudentNoteFileType) => {
     switch (fileType) {
       case 'pdf':
         return <FilePdf className="w-5 h-5 text-red-500" />;
@@ -271,18 +93,21 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
     }
   };
 
-  const handleDownload = (note: Note) => {
-    // Simulate download
-    console.log(`Downloading: ${note.title}`);
-    alert(`Downloading ${note.title}...`);
+  const handleDownload = (note: StudentNoteItem) => {
+    if (note.links.length > 0) {
+      window.open(note.links[0], '_blank', 'noopener,noreferrer');
+      return;
+    }
+    alert(note.description.slice(0, 2000));
   };
 
   const handleToggleFavorite = (noteId: string) => {
-    setNotes(prevNotes =>
-      prevNotes.map(note =>
-        note.id === noteId ? { ...note, isFavorite: !note.isFavorite } : note
-      )
-    );
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(noteId)) next.delete(noteId);
+      else next.add(noteId);
+      return next;
+    });
   };
 
   const handleSearch = (term: string) => {
@@ -291,10 +116,6 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
 
   const handleSubjectFilter = (subject: string) => {
     setSelectedSubject(subject);
-  };
-
-  const handleDifficultyFilter = (difficulty: string) => {
-    setSelectedDifficulty(difficulty);
   };
 
   const handleSort = (sortField: string) => {
@@ -323,11 +144,6 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
     // Subject filter
     if (selectedSubject !== "All Subjects") {
       filtered = filtered.filter(note => note.subject === selectedSubject);
-    }
-
-    // Difficulty filter
-    if (selectedDifficulty !== "All Levels") {
-      filtered = filtered.filter(note => note.difficulty === selectedDifficulty);
     }
 
     // Favorites filter
@@ -373,9 +189,40 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
     });
 
     setFilteredNotes(filtered);
-  }, [notes, searchTerm, selectedSubject, selectedDifficulty, sortBy, sortOrder, favoritesOnly]);
+  }, [notes, searchTerm, selectedSubject, sortBy, sortOrder, favoritesOnly]);
 
-  const renderGridItem = (note: Note) => (
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading notes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={onBack} className="p-2 hover:bg-primary/10">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-2xl font-bold">Download Notes</h2>
+        </div>
+        <Card className="border-destructive/20">
+          <CardContent className="p-8 text-center space-y-4">
+            <AlertCircle className="w-10 h-10 text-destructive mx-auto" />
+            <p className="text-muted-foreground">{error}</p>
+            <Button onClick={() => void refetch()}>Try again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const renderGridItem = (note: StudentNoteItem) => (
     <Card key={note.id} className="group hover:shadow-lg transition-all duration-200 border-primary/20 hover:border-primary/40">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
@@ -416,9 +263,11 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
           <Badge variant="secondary" className="text-xs">
             {note.grade}
           </Badge>
-          <Badge variant="outline" className="text-xs">
-            {note.difficulty}
-          </Badge>
+          {note.tags.slice(0, 2).map((tag) => (
+            <Badge key={tag} variant="outline" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
         </div>
 
         <div className="flex items-center justify-between">
@@ -439,7 +288,7 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
     </Card>
   );
 
-  const renderListItem = (note: Note) => (
+  const renderListItem = (note: StudentNoteItem) => (
     <Card key={note.id} className="group hover:shadow-md transition-all duration-200 border-primary/20 hover:border-primary/40">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
@@ -463,9 +312,6 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
                 {note.grade}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {note.difficulty}
               </Badge>
             </div>
           </div>
@@ -590,21 +436,7 @@ export default function DownloadNotesComponent({ onBack }: DownloadNotesComponen
         {/* Advanced Filters */}
         {showFilters && (
           <div className="mt-4 p-4 bg-card border border-primary/20 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Select value={selectedDifficulty} onValueChange={handleDifficultyFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Difficulty Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {difficulties.map((difficulty) => (
-                    <SelectItem key={difficulty} value={difficulty}>
-                      {difficulty === "All Levels" ? "All Levels" : 
-                       difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"

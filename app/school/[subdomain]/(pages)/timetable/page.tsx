@@ -133,6 +133,7 @@ import {
   runWithLoadRetry,
 } from "./utils/timetableLoadHelpers";
 import { useTimetableNetworkStatus } from "./hooks/useTimetableNetworkStatus";
+import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 import { TimetableOfflineBanner } from "./components/TimetableOfflineBanner";
 
 export default function SmartTimetableNew() {
@@ -691,6 +692,18 @@ export default function SmartTimetableNew() {
   const { markShared, hasChangesSinceShare, sharedAt } =
     useTimetableShareStatus(termIdForShare, selectedTerm?.timetablePublishedAt);
   const changesSinceShare = hasChangesSinceShare(lastUpdated);
+
+  useDomainRealtime({
+    onTimetablePublished: (payload) => {
+      if (payload.termId !== termIdForShare) return;
+      void refetchAcademicYears();
+      if (selectedTermId) void loadSchoolTimetable(selectedTermId);
+    },
+    onTimetableUnpublished: (payload) => {
+      if (payload.termId !== termIdForShare) return;
+      void refetchAcademicYears();
+    },
+  });
 
   const sortedTeachers = useMemo(
     () =>

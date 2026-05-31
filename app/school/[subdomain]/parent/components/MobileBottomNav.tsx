@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Home, Calendar, GraduationCap, MessageCircle, Bell, MoreHorizontal, Settings, FileText, DollarSign, Users } from 'lucide-react';
+import { Home, Calendar, GraduationCap, MessageCircle, Bell, MoreHorizontal, Settings, FileText, DollarSign, Users, Clock } from 'lucide-react';
+import { useChatUnreadTotal } from '@/lib/chat/ChatProvider';
 
 interface BottomNavItem {
   icon: any;
@@ -17,6 +18,7 @@ interface MobileBottomNavProps {
 
 export const MobileBottomNav = ({ activeTab, setActiveTab, notifications }: MobileBottomNavProps) => {
   const [showMore, setShowMore] = useState(false);
+  const chatUnread = useChatUnreadTotal();
   
   const bottomNavItems: BottomNavItem[] = [
     { icon: Calendar, label: 'Schedule', key: 'schedule' },
@@ -26,6 +28,7 @@ export const MobileBottomNav = ({ activeTab, setActiveTab, notifications }: Mobi
   ];
 
   const moreMenuItems: BottomNavItem[] = [
+    { icon: Clock, label: 'Attendance', key: 'attendance' },
     { icon: DollarSign, label: 'Payments', key: 'payments' },
     { icon: FileText, label: 'Reports', key: 'reports' },
     { icon: Users, label: 'Staff', key: 'staff' },
@@ -168,6 +171,11 @@ export const MobileBottomNav = ({ activeTab, setActiveTab, notifications }: Mobi
                   {item.key === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
                     <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-black animate-pulse border-2 border-white">
                       {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                  {item.key === 'messages' && chatUnread > 0 && (
+                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-black animate-pulse border-2 border-white">
+                      {chatUnread > 99 ? '99+' : chatUnread}
                     </span>
                   )}
                 </div>

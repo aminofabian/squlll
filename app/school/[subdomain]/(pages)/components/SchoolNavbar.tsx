@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button'
 import { useRouter, usePathname } from 'next/navigation'
 import { 
-  Bell, 
   Menu, 
   ChevronDown,
   Plus,
@@ -31,6 +30,7 @@ import {
 import { TermsDropdown } from './TermsDropdown'
 import { useSignout } from '@/lib/hooks/useSignout'
 import { cn } from '@/lib/utils'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 interface SchoolNavbarProps {
   userName: string
@@ -365,50 +365,7 @@ export function SchoolNavbar({
 
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn(iconButtonClass, 'relative bg-white/60 dark:bg-slate-950/40')}
-                >
-                  <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                  <span className="absolute top-2 right-2 flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900" />
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                className="w-80 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl rounded-2xl p-2"
-              >
-                <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                  Notifications
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                <DropdownMenuItem className="flex flex-col items-start px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer rounded-xl">
-                  <div className="flex items-start gap-3 w-full">
-                    <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">New Student Registration</span>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sarah Johnson has submitted enrollment forms</p>
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">2 minutes ago</span>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex flex-col items-start px-3 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer rounded-xl">
-                  <div className="flex items-start gap-3 w-full">
-                    <div className="mt-1.5 h-2 w-2 rounded-full bg-orange-500 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">Attendance Alert</span>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">3 students marked absent in Class 10A</p>
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">1 hour ago</span>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <NotificationBell messagesHref="/communication" iconButtonClass={iconButtonClass} />
           </div>
 
           {/* Profile */}

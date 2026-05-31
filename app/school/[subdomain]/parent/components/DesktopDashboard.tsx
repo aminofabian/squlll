@@ -38,7 +38,7 @@ interface Event {
 }
 
 interface Notification {
-  id: number;
+  id: string | number;
   type: string;
   message: string;
   time: string;
@@ -53,6 +53,9 @@ interface DesktopDashboardProps {
   recentGrades: Grade[];
   upcomingEvents: Event[];
   notifications: Notification[];
+  parentName?: string;
+  averageGpa?: number | null;
+  dashboardLoading?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -78,8 +81,12 @@ export const DesktopDashboard = ({
   todaySchedule, 
   recentGrades, 
   upcomingEvents, 
-  notifications 
+  notifications,
+  parentName = 'Parent',
+  averageGpa = null,
+  dashboardLoading = false,
 }: DesktopDashboardProps) => {
+  const displayGpa = averageGpa ?? children[selectedChild].currentGPA;
   return (
     <div className="space-y-8">
       {/* Enhanced Welcome Section */}
@@ -114,7 +121,7 @@ export const DesktopDashboard = ({
               </span>
             </h1>
             <h2 className="text-4xl font-black tracking-tight text-primary">
-              Sarah Johnson!
+              {parentName}!
             </h2>
           </div>
           
@@ -184,7 +191,7 @@ export const DesktopDashboard = ({
             <div>
               <p className="text-sm text-slate-600 font-medium uppercase tracking-wider">Current GPA</p>
               <p className="text-3xl font-black text-primary group-hover:scale-110 transition-transform duration-300">
-                {children[selectedChild].currentGPA}
+                {displayGpa}
               </p>
             </div>
             <Award className="w-10 h-10 text-primary group-hover:rotate-12 transition-transform" />
@@ -222,7 +229,12 @@ export const DesktopDashboard = ({
             Today's Schedule
           </h2>
           <div className="space-y-4">
-            {todaySchedule.slice(0, 4).map((item, index) => (
+            {dashboardLoading && todaySchedule.length === 0 ? (
+              <p className="text-sm text-slate-500">Loading today&apos;s schedule…</p>
+            ) : todaySchedule.length === 0 ? (
+              <p className="text-sm text-slate-500">No lessons scheduled for today.</p>
+            ) : (
+              todaySchedule.slice(0, 4).map((item, index) => (
               <div key={index} className="flex items-center space-x-6 p-4 hover:bg-primary/5 rounded-xl transition-all duration-300 group">
                 <div className="text-sm font-bold text-slate-600 w-24">{item.time}</div>
                 <div className="flex-1">
@@ -235,7 +247,8 @@ export const DesktopDashboard = ({
                   {item.status}
                 </span>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
 
@@ -246,7 +259,12 @@ export const DesktopDashboard = ({
             Recent Grades
           </h2>
           <div className="space-y-4">
-            {recentGrades.slice(0, 4).map((grade, index) => (
+            {dashboardLoading && recentGrades.length === 0 ? (
+              <p className="text-sm text-slate-500">Loading grades…</p>
+            ) : recentGrades.length === 0 ? (
+              <p className="text-sm text-slate-500">No graded assessments yet.</p>
+            ) : (
+              recentGrades.slice(0, 4).map((grade, index) => (
               <div key={index} className="flex items-center justify-between p-4 hover:bg-primary/5 rounded-xl transition-all duration-300 group">
                 <div>
                   <div className="font-black text-slate-800 text-lg group-hover:scale-105 transition-transform">
@@ -258,12 +276,14 @@ export const DesktopDashboard = ({
                   {grade.grade}
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </div>
 
       {/* Enhanced Upcoming Events */}
+      {upcomingEvents.length > 0 ? (
       <div className="bg-white border-2 border-primary/20 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300">
         <h2 className="text-2xl font-black mb-6 flex items-center text-primary">
           <Calendar className="w-7 h-7 mr-3 text-primary" />
@@ -289,6 +309,7 @@ export const DesktopDashboard = ({
           ))}
         </div>
       </div>
+      ) : null}
     </div>
   );
 }; 

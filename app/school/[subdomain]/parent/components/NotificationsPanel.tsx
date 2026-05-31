@@ -4,7 +4,7 @@ import React from 'react';
 import { Bell, ChevronLeft } from 'lucide-react';
 
 interface Notification {
-  id: number;
+  id: string | number;
   type: string;
   message: string;
   time: string;

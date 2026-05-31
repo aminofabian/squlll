@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 import { 
   BookOpen, 
@@ -54,93 +54,19 @@ import PendingAssignmentsComponent from './PendingAssignmentsComponent';
 import StudentTimetableComponent from './StudentTimetableComponent';
 import StudentExamResultsComponent from './StudentExamResultsComponent';
 import DownloadNotesComponent from './DownloadNotesComponent';
-import ReadSchoolMessageComponent from './ReadSchoolMessageComponent';
-import ViewAttendanceComponent from './ViewAttendanceComponent';
-import CurrentLessonStatus from './CurrentLessonStatus';
-
-// Mock data for demonstration
-const mockData = {
-  assignments: [
-    { id: 1, title: "Math Homework", subject: "Mathematics", dueDate: "2024-01-15", submitted: true },
-    { id: 2, title: "Science Project", subject: "Science", dueDate: "2024-01-20", submitted: false }
-  ],
-  exams: [
-    { id: 1, title: "Mid-term Exam", subject: "Mathematics", date: "2024-01-18", score: 85 },
-    { id: 2, title: "Science Quiz", subject: "Science", date: "2024-01-22", score: 92 }
-  ],
-  attendance: {
-    thisMonth: { present: 18, absent: 2, total: 20 },
-    thisWeek: { present: 4, absent: 1, total: 5 }
-  },
-  upcomingTests: [
-    { id: 1, title: "English Test", subject: "English", date: "2024-01-25", time: "10:00 AM" },
-    { id: 2, title: "History Quiz", subject: "History", date: "2024-01-28", time: "2:00 PM" }
-  ],
-  messages: [
-    { id: 1, from: "Class Teacher", subject: "Assignment Reminder", unread: true, time: "2 hours ago" },
-    { id: 2, from: "School Admin", subject: "Parent Meeting", unread: false, time: "1 day ago" }
-  ]
-};
-
-interface Assignment {
-  id: string;
-  subject: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  status: 'pending' | 'overdue' | 'submitted';
-  teacher: string;
-  maxScore: number;
-  attachments?: string[];
-}
-
-// Mock assignments data
-const mockAssignments: Assignment[] = [
-  {
-    id: "1",
-    subject: "Mathematics",
-    title: "Algebra Problem Set",
-    description: "Complete problems 1-20 in Chapter 5. Show all work and solutions.",
-    dueDate: "2024-01-25",
-    status: "pending",
-    teacher: "Mr. Johnson",
-    maxScore: 100,
-    attachments: ["algebra_chapter5.pdf"]
-  },
-  {
-    id: "2",
-    subject: "English Literature",
-    title: "Essay on Shakespeare",
-    description: "Write a 1000-word essay analyzing the themes in Hamlet.",
-    dueDate: "2024-01-20",
-    status: "overdue",
-    teacher: "Ms. Smith",
-    maxScore: 50,
-    attachments: ["hamlet_analysis_guide.pdf"]
-  },
-  {
-    id: "3",
-    subject: "Science",
-    title: "Lab Report - Chemical Reactions",
-    description: "Complete the lab report for the chemical reactions experiment.",
-    dueDate: "2024-01-28",
-    status: "pending",
-    teacher: "Dr. Brown",
-    maxScore: 75,
-    attachments: ["lab_manual.pdf", "safety_guidelines.pdf"]
-  },
-  {
-    id: "4",
-    subject: "History",
-    title: "Research Paper - World War II",
-    description: "Research and write a 1500-word paper on a specific aspect of WWII.",
-    dueDate: "2024-01-30",
-    status: "pending",
-    teacher: "Mr. Davis",
-    maxScore: 100,
-    attachments: ["research_guidelines.pdf", "citation_guide.pdf"]
-  }
-];
+import { StudentMessagesSection } from './StudentMessagesSection';
+import { StudentAttendanceSection } from './StudentAttendanceSection';
+import { StudentLiveLessonStatus } from './StudentLiveLessonStatus';
+import { StudentContactTeacherSection } from './StudentContactTeacherSection';
+import { useStudentExamLiveUpdates } from '@/lib/realtime/useStudentExamLiveUpdates';
+import { useStudentAssignmentLiveUpdates } from '@/lib/realtime/useStudentAssignmentLiveUpdates';
+import { useStudentNotesLiveUpdates } from '@/lib/realtime/useStudentNotesLiveUpdates';
+import { useCurrentStudent } from '@/lib/hooks/useCurrentStudent';
+import { useStudentAttendanceSummary } from '@/lib/student/useStudentAttendanceSummary';
+import { useStudentExamResults } from '@/lib/student/useStudentExamResults';
+import { useStudentTests } from '@/lib/student/useStudentTests';
+import { useStudentNextClass } from '@/lib/student/useStudentNextClass';
+import { useChatUnreadTotal } from '@/lib/chat/ChatProvider';
 
 interface Action {
   id: string;
@@ -155,13 +81,20 @@ interface EnhancedStudentDashboardProps {
 }
 
 export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentDashboardProps) {
+  useStudentExamLiveUpdates();
+  useStudentAssignmentLiveUpdates();
+  useStudentNotesLiveUpdates();
+  const { student } = useCurrentStudent();
+  const { summary: attendanceSummary } = useStudentAttendanceSummary(subdomain);
+  const { sessions: examSessions } = useStudentExamResults(subdomain);
+  const { pendingCount, upcomingCount } = useStudentTests(subdomain);
+  const { nextLesson } = useStudentNextClass();
+  const chatUnread = useChatUnreadTotal();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'timetable' | 'examResults' | 'downloadNotes' | 'messages' | 'attendance'>('dashboard');
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
-  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'timetable' | 'examResults' | 'downloadNotes' | 'messages' | 'attendance' | 'contactTeacher'>('dashboard');
   const [studentName, setStudentName] = useState<string>('');
+  const [preferredTeacherUserId, setPreferredTeacherUserId] = useState<string | null>(null);
+  const [preferredTeacherName, setPreferredTeacherName] = useState<string | null>(null);
   const router = useRouter();
   
   // Fetch username from cookies when component mounts
@@ -222,10 +155,13 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         router.push(`/school/${subdomain}/student/upcoming-tests`);
         break;
       case 'view-exam-timetable':
-        router.push(`view exam timetable`);
+        router.push(`/school/${subdomain}/student/exam-timetable`);
         break;
       case 'download-report-card':
         router.push(`/school/${subdomain}/student/report-cards`);
+        break;
+      case 'contact-class-teacher':
+        setCurrentView('contactTeacher');
         break;
       default:
         console.log(`Action ${actionId} not implemented yet`);
@@ -233,7 +169,15 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
   };
 
   const handleBackToDashboard = () => {
+    setPreferredTeacherUserId(null);
+    setPreferredTeacherName(null);
     setCurrentView('dashboard');
+  };
+
+  const handleOpenTeacherMessages = (teacherUserId: string, teacherName: string) => {
+    setPreferredTeacherUserId(teacherUserId);
+    setPreferredTeacherName(teacherName);
+    setCurrentView('messages');
   };
 
   // Student quick actions with the specified items
@@ -336,21 +280,43 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
     </div>
   );
 
-  // Mock data for student stats
-  const studentStats = {
-    nextClass: {
-      subject: 'Mathematics',
-      teacher: 'Mr. Johnson',
-      time: '10:30 AM',
-      countdown: 'in 18 min',
-    },
-    pendingAssignments: 2,
-    upcomingTests: 3,
-    unreadMessages: 1,
-    attendanceRate: '90%',
-    averageScore: '85.5%',
-    currentGrade: 'Grade 10A',
-  };
+  // Live stats for dashboard header cards
+  const studentStats = useMemo(() => {
+    const marks = examSessions.flatMap((s) => s.results);
+    const averageScore =
+      marks.length > 0
+        ? `${Math.round(marks.reduce((sum, m) => sum + m.percentage, 0) / marks.length)}%`
+        : '—';
+
+    const nextClass = nextLesson
+      ? {
+          subject: nextLesson.lesson.subject.name,
+          teacher: nextLesson.lesson.teacher.name,
+          time: nextLesson.time,
+          countdown: nextLesson.startsInFormatted,
+        }
+      : {
+          subject: '—',
+          teacher: '—',
+          time: '—',
+          countdown: 'See timetable',
+        };
+
+    return {
+      nextClass,
+      pendingAssignments: pendingCount,
+      upcomingTests: upcomingCount,
+      unreadMessages: chatUnread,
+      attendanceRate: attendanceSummary
+        ? `${Math.round(attendanceSummary.percentage)}%`
+        : '—',
+      averageScore,
+      currentGrade:
+        typeof student?.grade === 'string'
+          ? student.grade
+          : student?.grade?.name ?? '—',
+    };
+  }, [attendanceSummary, chatUnread, examSessions, nextLesson, pendingCount, upcomingCount, student?.grade]);
 
   const renderStudentStats = () => (
     <>
@@ -496,23 +462,33 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
           {currentView === 'dashboard' ? (
             <>
               <div className="mb-8">
-                <CurrentLessonStatus selectedGrade="Grade 1" />
+                <StudentLiveLessonStatus />
               </div>
               {renderStudentStats()}
               {renderQuickActions()}
             </>
           ) : currentView === 'assignments' ? (
-            <PendingAssignmentsComponent onBack={handleBackToDashboard} />
+            <PendingAssignmentsComponent subdomain={subdomain} onBack={handleBackToDashboard} />
           ) : currentView === 'timetable' ? (
             <StudentTimetableComponent onBack={handleBackToDashboard} />
           ) : currentView === 'examResults' ? (
-            <StudentExamResultsComponent onBack={handleBackToDashboard} />
+            <StudentExamResultsComponent subdomain={subdomain} onBack={handleBackToDashboard} />
           ) : currentView === 'downloadNotes' ? (
-            <DownloadNotesComponent onBack={handleBackToDashboard} />
+            <DownloadNotesComponent subdomain={subdomain} onBack={handleBackToDashboard} />
           ) : currentView === 'messages' ? (
-            <ReadSchoolMessageComponent onBack={handleBackToDashboard} />
+            <StudentMessagesSection
+              onBack={handleBackToDashboard}
+              preferredParticipantId={preferredTeacherUserId}
+              preferredParticipantLabel={preferredTeacherName}
+            />
+          ) : currentView === 'contactTeacher' ? (
+            <StudentContactTeacherSection
+              subdomain={subdomain}
+              onBack={handleBackToDashboard}
+              onOpenMessages={handleOpenTeacherMessages}
+            />
           ) : currentView === 'attendance' ? (
-            <ViewAttendanceComponent onBack={handleBackToDashboard} />
+            <StudentAttendanceSection subdomain={subdomain} onBack={handleBackToDashboard} />
           ) : null}
         </div>
       </div>

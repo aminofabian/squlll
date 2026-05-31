@@ -22,6 +22,7 @@ import { useGetTeachers } from "@/lib/hooks/useTeachers";
 import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
 import { getTenantInfo } from "@/lib/utils";
 import { mapGraphqlTeacherToListItem } from "./utils/mapGraphqlTeacher";
+import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 
 function TeachersPage() {
   const tenantInfo = getTenantInfo();
@@ -69,6 +70,21 @@ function TeachersPage() {
       fetchPendingInvitations(tenantId);
     }
   }, [tenantId, fetchPendingInvitations]);
+
+  useDomainRealtime({
+    onInvitationSent: () => {
+      if (tenantId) void fetchPendingInvitations(tenantId);
+    },
+    onInvitationAccepted: () => {
+      if (tenantId) {
+        void fetchPendingInvitations(tenantId);
+        void refetchTeachers();
+      }
+    },
+    onInvitationRevoked: () => {
+      if (tenantId) void fetchPendingInvitations(tenantId);
+    },
+  });
 
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {

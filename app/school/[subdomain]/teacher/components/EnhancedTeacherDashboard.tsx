@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import CreateTestSection from "./CreateTestSection";
 import MarkRegisterSection from "./MarkRegisterSection";
-import SendMessageSection from "./SendMessageSection";
+import { SchoolBroadcastSection } from "@/components/chat/SchoolBroadcastSection";
 import IndividualSearchSection from "./IndividualSearchSection";
 import ShareResourcesSection from "./ShareResourcesSection";
 import AssignHomeworkSection from "./AssignHomeworkSection";
@@ -382,7 +382,7 @@ export default function EnhancedTeacherDashboard({ subdomain }: EnhancedTeacherD
           ) : showMarkRegister ? (
             <MarkRegisterSection subdomain={subdomain} onBack={() => setShowMarkRegister(false)} />
           ) : showSendMessage ? (
-            <SendMessageSection subdomain={subdomain} onBack={() => setShowSendMessage(false)} />
+            <SchoolBroadcastSection subdomain={subdomain} onBack={() => setShowSendMessage(false)} />
           ) : showIndividualSearch ? (
             <IndividualSearchSection subdomain={subdomain} onBack={() => setShowIndividualSearch(false)} />
           ) : showShareResources ? (

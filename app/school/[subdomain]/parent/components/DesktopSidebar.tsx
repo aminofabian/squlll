@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { 
   Home, 
-  Calendar, 
+  Calendar,
+  Clock, 
   GraduationCap, 
   DollarSign, 
   MessageCircle, 
@@ -27,7 +28,6 @@ import {
   Gift,
   Coffee,
   BookOpen,
-  Clock,
   CheckCircle,
   AlertCircle,
   Plus,
@@ -35,6 +35,7 @@ import {
   Download
 } from 'lucide-react';
 import { DynamicLogo } from './DynamicLogo';
+import { useChatUnreadTotal } from '@/lib/chat/ChatProvider';
 
 interface SidebarItem {
   icon: any;
@@ -64,6 +65,7 @@ interface DesktopSidebarProps {
 }
 
 export const DesktopSidebar = ({ activeTab, setActiveTab, subdomain, notifications }: DesktopSidebarProps) => {
+  const chatUnread = useChatUnreadTotal();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isLogoHovered, setIsLogoHovered] = useState(false);
   const [showAssignments, setShowAssignments] = useState(true);
@@ -125,6 +127,15 @@ export const DesktopSidebar = ({ activeTab, setActiveTab, subdomain, notificatio
       description: 'Class Timetables'
     },
     { 
+      icon: Clock, 
+      label: 'Attendance', 
+      key: 'attendance',
+      category: 'Academic',
+      color: 'from-teal-500 to-cyan-500',
+      gradient: 'from-teal-400 via-cyan-400 to-teal-600',
+      description: 'Daily attendance records'
+    },
+    { 
       icon: GraduationCap, 
       label: 'Grades', 
       key: 'grades',
@@ -151,7 +162,7 @@ export const DesktopSidebar = ({ activeTab, setActiveTab, subdomain, notificatio
       color: 'from-red-500 to-rose-500',
       gradient: 'from-red-400 via-rose-400 to-red-600',
       description: 'Teacher Communication',
-      badge: `${notifications.filter(n => !n.read).length}`
+      badge: chatUnread > 0 ? `${chatUnread}` : undefined
     },
     { 
       icon: FileText, 

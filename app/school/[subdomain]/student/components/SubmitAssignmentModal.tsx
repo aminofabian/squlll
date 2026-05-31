@@ -18,21 +18,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
-interface Assignment {
-  id: string;
-  subject: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  status: "pending" | "overdue" | "submitted";
-  teacher: string;
-  maxScore: number;
-  attachments?: string[];
-}
+import type { StudentAssignmentItem } from '@/lib/student/types';
 
 interface SubmitAssignmentModalProps {
-  assignment: Assignment;
+  assignment: StudentAssignmentItem;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (
@@ -82,8 +71,8 @@ export default function SubmitAssignmentModal({
   };
 
   const handleSubmit = async () => {
-    if (selectedFiles.length === 0) {
-      toast.error("Please select at least one file to submit.");
+    if (selectedFiles.length === 0 && !comments.trim()) {
+      toast.error("Please add a file or comments to submit.");
       return;
     }
 

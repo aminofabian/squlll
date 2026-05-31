@@ -21,6 +21,8 @@ import { ClassesStats } from "../classes/components/ClassesStats";
 import { DashboardSchoolBar } from "./components/DashboardSchoolBar";
 import { DashboardOverview } from "./components/DashboardOverview";
 import { DashboardSetupBanner } from "./components/DashboardSetupBanner";
+import { DashboardBroadcastSheet } from "./components/DashboardBroadcastSheet";
+import { DashboardLiveActivity } from "./components/DashboardLiveActivity";
 import { ClassesContextBar } from "../classes/components/ClassesContextBar";
 import { GradeDetailsView } from "../classes/components/GradeDetailsView";
 import {
@@ -325,6 +327,10 @@ export default function SchoolDashboard() {
                   ·
                 </span>
                 <ClassActionBar actions={headerActions} layout="links" />
+                <span className="select-none text-slate-300 dark:text-slate-600">
+                  ·
+                </span>
+                <DashboardBroadcastSheet subdomain={subdomain} />
               </div>
             )}
           </div>
@@ -338,6 +344,7 @@ export default function SchoolDashboard() {
             )}
           >
             <DashboardSetupBanner />
+            <DashboardLiveActivity />
 
             {!selectedGrade && (
               <ClassesStats

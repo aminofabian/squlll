@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   BookOpen,
   Calendar,
@@ -17,7 +17,6 @@ import {
   Search,
   ArrowUpDown,
 } from "lucide-react";
-import { graphqlClient } from "@/lib/graphql-client";
 import { DynamicLogo } from "../../parent/components/DynamicLogo";
 import {
   Table,
@@ -40,98 +39,8 @@ import {
 } from "@/components/ui/select";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-// TypeScript interfaces for the assignment data based on the myAssignMents API response structure
-interface Assignment {
-  id: string;
-  title: string;
-  subject: {
-    id: string;
-    subject: {
-      name: string;
-    };
-  };
-  gradeLevels: Array<{
-    id: string;
-    gradeLevel: {
-      name: string;
-    };
-  }>;
-  date: string;
-  startTime: string | null;
-  duration: number;
-  totalMarks: number;
-  status: "draft" | "published" | "completed";
-  questions: Array<{
-    id: string;
-    text: string;
-    marks: number;
-    type: "multiple_choice" | "short_answer" | "true_false";
-    options: Array<{
-      id: string;
-      text: string;
-      isCorrect: boolean;
-    }>;
-  }>;
-  referenceMaterials: Array<{
-    id: string;
-    fileUrl: string;
-    fileType: string;
-    fileSize: number;
-  }>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface AssignmentsResponse {
-  myAssignMents: Assignment[];
-}
-
-// GraphQL query to get assignments for the current teacher
-const GET_MY_ASSIGNMENTS_QUERY = `
-  query MyAssignMents {
-    myAssignMents {
-      id
-      title
-      subject {
-        id
-        subject {
-          name
-        }
-      }
-      gradeLevels {
-        id
-        gradeLevel {
-          name
-        }
-      }
-      date
-      startTime
-      duration
-      totalMarks
-      status
-      questions {
-        id
-        text
-        marks
-        type
-        options {
-          id
-          text
-          isCorrect
-        }
-      }
-      referenceMaterials {
-        id
-        fileUrl
-        fileType
-        fileSize
-      }
-      createdAt
-      updatedAt
-    }
-  }
-`;
+import { useTeacherAssignments } from "@/lib/teacher/useTeacherAssignments";
+import type { TeacherAssignment } from "@/lib/teacher/teacherAssignments";
 
 export default function AssignmentsPage() {
   const params = useParams();
@@ -144,9 +53,7 @@ export default function AssignmentsPage() {
         : "";
 
   // State management
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { assignments, loading, error, refetch } = useTeacherAssignments();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGrade, setSelectedGrade] = useState<string>("all");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
@@ -155,26 +62,6 @@ export default function AssignmentsPage() {
     "date",
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-
-  // Fetch assignments on component mount
-  useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        setLoading(true);
-        const response = await graphqlClient.request<AssignmentsResponse>(
-          GET_MY_ASSIGNMENTS_QUERY,
-        );
-        setAssignments(response.myAssignMents || []);
-      } catch (err) {
-        console.error("Error fetching assignments:", err);
-        setError("Failed to load assignments. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssignments();
-  }, []);
 
   // Get unique values for filters
   const uniqueGrades = Array.from(
@@ -265,7 +152,7 @@ export default function AssignmentsPage() {
       });
       return groups;
     },
-    {} as Record<string, Assignment[]>,
+    {} as Record<string, TeacherAssignment[]>,
   );
 
   const handleSort = (newSortBy: typeof sortBy) => {
@@ -321,13 +208,7 @@ export default function AssignmentsPage() {
               Error Loading Assignments
             </h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button
-              onClick={() => {
-                setError(null);
-                setLoading(true);
-              }}
-              variant="outline"
-            >
+            <Button onClick={() => void refetch()} variant="outline">
               Try Again
             </Button>
           </CardContent>
@@ -513,6 +394,7 @@ export default function AssignmentsPage() {
                       </TableHead>
                       <TableHead>Duration</TableHead>
                       <TableHead>Total Marks</TableHead>
+                      <TableHead>Submissions</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Questions</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -521,7 +403,7 @@ export default function AssignmentsPage() {
                   <TableBody>
                     {sortedAssignments.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8">
+                        <TableCell colSpan={10} className="text-center py-8">
                           <div className="flex flex-col items-center gap-2">
                             <FileText className="w-12 h-12 text-muted-foreground/50" />
                             <p className="text-muted-foreground">
@@ -599,6 +481,22 @@ export default function AssignmentsPage() {
                           <TableCell>
                             <div className="text-sm font-medium">
                               {assignment.totalMarks} pts
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <span className="font-medium text-foreground">
+                                {assignment.submissionCount}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {' '}
+                                submitted
+                              </span>
+                              {assignment.submissionCount > 0 ? (
+                                <div className="text-xs text-muted-foreground">
+                                  {assignment.gradedCount} graded
+                                </div>
+                              ) : null}
                             </div>
                           </TableCell>
                           <TableCell>
