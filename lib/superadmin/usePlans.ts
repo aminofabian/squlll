@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createPlan, fetchPlans, updatePlan } from "./plansApi";
+import { createPlan, deletePlan, fetchPlans, updatePlan } from "./plansApi";
 import type { PlanFormValues, PlanRecord } from "./plans";
 
 export function usePlans() {
   const [plans, setPlans] = useState<PlanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -59,12 +60,30 @@ export function usePlans() {
     [],
   );
 
+  const deactivatePlan = useCallback(async (planId: string) => {
+    setDeletingId(planId);
+    setError(null);
+    try {
+      await deletePlan(Number(planId));
+      setPlans((current) => current.filter((plan) => plan.id !== planId));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to deactivate plan";
+      setError(message);
+      throw err;
+    } finally {
+      setDeletingId(null);
+    }
+  }, []);
+
   return {
     plans,
     loading,
     saving,
+    deletingId,
     error,
     refresh,
     savePlan,
+    deactivatePlan,
   };
 }

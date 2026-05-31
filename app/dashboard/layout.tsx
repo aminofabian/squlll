@@ -1,14 +1,18 @@
-import type { Metadata } from "next"
+import type { Metadata } from "next";
+import { SuperAdminAuthGuard } from "@/components/dashboard/superadmin/SuperAdminAuthGuard";
 
 export const metadata: Metadata = {
-  title: "Dashboard | Super Admin",
+  title: {
+    default: "Dashboard",
+    template: "%s | Super Admin",
+  },
   description: "Platform overview for schools, subscriptions, and users",
-}
+};
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  return children
-} 
+  return <SuperAdminAuthGuard>{children}</SuperAdminAuthGuard>;
+}

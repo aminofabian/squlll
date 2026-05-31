@@ -4,13 +4,22 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardActivityFeed } from "@/components/dashboard/superadmin/DashboardActivityFeed";
 import { DashboardExpiringList } from "@/components/dashboard/superadmin/DashboardExpiringList";
 import { DashboardGrowthChart } from "@/components/dashboard/superadmin/DashboardGrowthChart";
-import { DashboardHeader } from "@/components/dashboard/superadmin/DashboardHeader";
 import { DashboardQuickActions } from "@/components/dashboard/superadmin/DashboardQuickActions";
+import { AdminPageHeader } from "@/components/dashboard/superadmin/AdminPageChrome";
 import {
   DashboardErrorBanner,
   DashboardStatCards,
 } from "@/components/dashboard/superadmin/DashboardStatCards";
 import { useSuperAdminDashboard } from "@/lib/superadmin/useSuperAdminDashboard";
+import { LayoutDashboard } from "lucide-react";
+
+function formatLastUpdated(date?: Date): string {
+  if (!date) return "";
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 export default function DashboardPage() {
   const {
@@ -28,13 +37,19 @@ export default function DashboardPage() {
   } = useSuperAdminDashboard();
 
   const showContent = !error || stats.length > 0;
+  const description =
+    !loading && lastUpdated
+      ? `Overview of schools, subscriptions, and platform activity · Updated ${formatLastUpdated(lastUpdated)}`
+      : "Overview of schools, subscriptions, and platform activity";
 
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <DashboardHeader
+        <AdminPageHeader
+          icon={LayoutDashboard}
+          title="Dashboard"
+          description={description}
           loading={loading}
-          lastUpdated={lastUpdated}
           onRefresh={refresh}
         />
 

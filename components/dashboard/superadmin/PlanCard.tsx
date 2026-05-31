@@ -15,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -29,9 +30,11 @@ import {
 interface PlanCardProps {
   plan: PlanRecord;
   onEdit: (plan: PlanRecord) => void;
+  onDeactivate?: (plan: PlanRecord) => void;
+  deactivating?: boolean;
 }
 
-export function PlanCard({ plan, onEdit }: PlanCardProps) {
+export function PlanCard({ plan, onEdit, onDeactivate, deactivating }: PlanCardProps) {
   return (
     <div
       className={cn(
@@ -54,6 +57,18 @@ export function PlanCard({ plan, onEdit }: PlanCardProps) {
             <DropdownMenuItem onClick={() => onEdit(plan)}>
               Edit plan
             </DropdownMenuItem>
+            {!plan.isDefault && onDeactivate ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-red-600 focus:text-red-600"
+                  disabled={deactivating}
+                  onClick={() => onDeactivate(plan)}
+                >
+                  Deactivate plan
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

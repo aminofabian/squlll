@@ -34,6 +34,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Protect super admin dashboard routes
+  if (url.pathname.startsWith('/dashboard')) {
+    const userRole = request.cookies.get('userRole')?.value
+    const accessToken = request.cookies.get('accessToken')?.value
+
+    if (!accessToken || userRole !== 'SUPER_ADMIN') {
+      const loginUrl = new URL('/superadmin/login', request.url)
+      loginUrl.searchParams.set('next', url.pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
   // Check if this is a subdomain (excluding www)
   const isSubdomain = hostname.includes(isProd ? '.squl.co.ke' : '.localhost:3000') &&
     !hostname.startsWith('www.') &&

@@ -23,6 +23,12 @@ export interface SubscriptionRecord {
   status: SubscriptionStatus;
   startDate: string;
   endDate: string;
+  trialEndDate?: string | null;
+  graceEndDate?: string | null;
+  autoRenew?: boolean;
+  cancellationReason?: string | null;
+  cancelledAt?: string | null;
+  createdAt?: string;
   tenant?: { id: string; name: string };
   plan?: { id: number; name: string; monthlyPrice?: number };
 }
@@ -32,6 +38,26 @@ export interface UserRecord {
   email: string;
   name: string;
   createdAt: string;
+}
+
+export interface MembershipInfo {
+  id: string;
+  role: string;
+  status: string;
+  tenantId: string;
+  tenantName: string;
+  tenantSubdomain: string;
+  joinedAt: string | null;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string;
+  isGlobalAdmin: boolean;
+  globalRole: string;
+  createdAt: string;
+  memberships: MembershipInfo[];
 }
 
 export interface AuditLogRecord {
@@ -44,6 +70,15 @@ export interface AuditLogRecord {
 }
 
 export type ActivityType = "tenant" | "subscription" | "user" | "plan" | "system";
+
+export interface DashboardStatsRecord {
+  totalTenants: number;
+  activeSubscriptions: number;
+  totalUsers: number;
+  estimatedMonthlyRevenue: number;
+  tenantsCreatedThisMonth: number;
+  usersCreatedThisWeek: number;
+}
 
 export interface DashboardStat {
   id: string;

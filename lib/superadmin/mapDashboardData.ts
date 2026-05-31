@@ -5,6 +5,10 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import {
+  extractAuditTarget,
+  formatAuditTimestamp,
+} from "./auditLogs";
 import type {
   AuditLogRecord,
   DashboardActivityItem,
@@ -12,42 +16,15 @@ import type {
   DashboardGrowthPoint,
   DashboardQuickAction,
   DashboardStat,
+  DashboardStatsRecord,
   ActivityType,
   SubscriptionRecord,
   SuperAdminDashboardData,
   TenantRecord,
-  UserRecord,
 } from "./types";
 
 const EXPIRING_WINDOW_DAYS = 30;
 const GROWTH_MONTHS = 6;
-
-function parseMetadata(metadata: unknown): Record<string, unknown> | null {
-  if (!metadata) return null;
-  if (typeof metadata === "object") return metadata as Record<string, unknown>;
-  if (typeof metadata === "string") {
-    try {
-      return JSON.parse(metadata) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-function formatRelativeTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  const diffMs = Date.now() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 function formatShortDate(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -79,6 +56,9 @@ function classifyAuditAction(message: string): {
   label: string;
 } {
   const msg = message.toUpperCase();
+  if (msg.includes("CREATE_TENANT")) {
+    return { type: "tenant", label: "School created" };
+  }
   if (msg.includes("TENANT")) {
     return { type: "tenant", label: "School updated" };
   }
@@ -94,17 +74,6 @@ function classifyAuditAction(message: string): {
   return { type: "system", label: message.replace(/_/g, " ").toLowerCase() };
 }
 
-function extractAuditTarget(entry: AuditLogRecord): string {
-  const meta = parseMetadata(entry.metadata);
-  if (meta?.email && typeof meta.email === "string") return meta.email;
-  if (meta?.tenantName && typeof meta.tenantName === "string") {
-    return meta.tenantName;
-  }
-  if (meta?.name && typeof meta.name === "string") return meta.name;
-  if (meta?.userId && typeof meta.userId === "string") return meta.userId;
-  return entry.message.replace(/_/g, " ");
-}
-
 export function mapAuditLogsToActivity(
   logs: AuditLogRecord[],
   limit = 8,
@@ -115,7 +84,7 @@ export function mapAuditLogsToActivity(
       id: entry.id,
       action: label,
       target: extractAuditTarget(entry),
-      timestamp: formatRelativeTime(entry.timestamp),
+      timestamp: formatAuditTimestamp(entry.timestamp),
       type,
     };
   });
@@ -143,7 +112,7 @@ export function mapExpiringSubscriptions(
         plan: sub.plan?.name ?? "Unknown plan",
         expires: formatShortDate(end),
         daysLeft,
-        href: "/dashboard/subscriptions",
+        href: `/dashboard/subscriptions?manage=${sub.id}`,
       };
     })
     .sort((a, b) => a.daysLeft - b.daysLeft)
@@ -214,49 +183,40 @@ function countTenantsInRange(
   }).length;
 }
 
-function countUsersInRange(
-  users: UserRecord[],
-  start: Date,
-  end: Date,
-): number {
-  return users.filter((user) => {
-    const created = new Date(user.createdAt);
-    return created >= start && created < end;
-  }).length;
-}
 
 export function buildDashboardStats(
   tenants: TenantRecord[],
   subscriptions: SubscriptionRecord[],
-  users: UserRecord[],
-  usersHasMore: boolean,
+  stats?: DashboardStatsRecord | null,
 ): DashboardStat[] {
   const now = new Date();
   const thisMonthStart = startOfMonth(now);
   const weekAgo = new Date(now);
   weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const totalTenants = tenants.length;
-  const tenantsThisMonth = countTenantsInRange(
-    tenants,
-    thisMonthStart,
-    now,
-  );
+  const totalTenants = stats?.totalTenants ?? tenants.length;
+  const tenantsThisMonth =
+    stats?.tenantsCreatedThisMonth ??
+    countTenantsInRange(tenants, thisMonthStart, now);
+
   const activeSubscriptionList = subscriptions.filter(
     (sub) => sub.status.toUpperCase() === "ACTIVE",
   );
-  const activeSubscriptions = activeSubscriptionList.length;
+  const activeSubscriptions =
+    stats?.activeSubscriptions ?? activeSubscriptionList.length;
   const subscriptionRate =
     totalTenants > 0
       ? Math.round((activeSubscriptions / totalTenants) * 100)
       : 0;
 
-  const totalUsers = users.length;
-  const usersThisWeek = countUsersInRange(users, weekAgo, now);
+  const totalUsers = stats?.totalUsers ?? 0;
+  const usersThisWeek = stats?.usersCreatedThisWeek ?? 0;
 
-  const monthlyRevenue = activeSubscriptionList.reduce((sum, sub) => {
-    return sum + (sub.plan?.monthlyPrice ?? 0);
-  }, 0);
+  const monthlyRevenue =
+    stats?.estimatedMonthlyRevenue ??
+    activeSubscriptionList.reduce((sum, sub) => {
+      return sum + (sub.plan?.monthlyPrice ?? 0);
+    }, 0);
 
   return [
     {
@@ -293,10 +253,10 @@ export function buildDashboardStats(
     {
       id: "users",
       label: "Platform users",
-      value: usersHasMore ? `${formatCount(totalUsers)}+` : formatCount(totalUsers),
-      helperText: usersHasMore
-        ? "Showing recent users — open Users for full list"
-        : "Across all schools",
+      value: stats ? formatCount(totalUsers) : "—",
+      helperText: stats
+        ? "Across all schools"
+        : "User count unavailable",
       trend:
         usersThisWeek > 0
           ? { direction: "up", value: `+${usersThisWeek} this week` }
@@ -324,7 +284,7 @@ export const DASHBOARD_QUICK_ACTIONS: DashboardQuickAction[] = [
     id: "add-tenant",
     label: "Add school",
     description: "Register a new school on the platform",
-    href: "/dashboard/tenants",
+    href: "/dashboard/tenants?create=1",
     icon: Building2,
     variant: "primary",
   },
@@ -332,7 +292,7 @@ export const DASHBOARD_QUICK_ACTIONS: DashboardQuickAction[] = [
     id: "create-user",
     label: "Create user",
     description: "Add staff or admin access",
-    href: "/dashboard/users",
+    href: "/dashboard/users?create=1",
     icon: Users,
   },
   {
@@ -354,8 +314,7 @@ export const DASHBOARD_QUICK_ACTIONS: DashboardQuickAction[] = [
 export function buildDashboardData(input: {
   tenants: TenantRecord[];
   subscriptions: SubscriptionRecord[];
-  users: UserRecord[];
-  usersHasMore: boolean;
+  stats?: DashboardStatsRecord | null;
   auditLogs: AuditLogRecord[];
 }): SuperAdminDashboardData {
   const { points, periodLabel } = mapTenantGrowth(input.tenants);
@@ -364,8 +323,7 @@ export function buildDashboardData(input: {
     stats: buildDashboardStats(
       input.tenants,
       input.subscriptions,
-      input.users,
-      input.usersHasMore,
+      input.stats,
     ),
     activity: mapAuditLogsToActivity(input.auditLogs),
     expiring: mapExpiringSubscriptions(input.subscriptions),

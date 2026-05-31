@@ -19,6 +19,10 @@ interface PlanMutationResult {
     message?: string;
     plan?: PlanRecord;
   };
+  deletePlan?: {
+    success: boolean;
+    message?: string;
+  };
 }
 
 const PLANS_QUERY = `
@@ -149,4 +153,23 @@ export async function updatePlan(
   }
 
   return result.plan;
+}
+
+export async function deletePlan(id: number): Promise<void> {
+  const data = await superAdminGraphqlRequest<PlanMutationResult>(
+    `
+      mutation DeletePlan($id: Int!) {
+        deletePlan(id: $id) {
+          success
+          message
+        }
+      }
+    `,
+    { id },
+  );
+
+  const result = data.deletePlan;
+  if (!result?.success) {
+    throw new Error(result?.message || "Failed to deactivate plan");
+  }
 }
