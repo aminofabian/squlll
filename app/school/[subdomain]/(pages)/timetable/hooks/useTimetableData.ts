@@ -590,10 +590,7 @@ export function useTeacherWeeklyLessons(
     for (const entry of scopedEntries) {
       if (!entry.teacherId) continue;
       const teacher = store.teachers.find((t) => t.id === entry.teacherId);
-      const name =
-        teacher?.fullName?.trim() ||
-        teacher?.name?.trim() ||
-        "Unknown teacher";
+      const name = teacher?.name?.trim() || "Unknown teacher";
       const existing = counts.get(entry.teacherId);
       if (existing) {
         existing.lessonCount += 1;

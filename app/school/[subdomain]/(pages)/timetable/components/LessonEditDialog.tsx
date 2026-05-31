@@ -265,6 +265,12 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
     );
 
     try {
+      const tenantStreamId = resolveTenantStreamIdForApi(
+        selectedStreamId,
+        lesson.gradeId ?? selectedGradeId,
+        grades,
+      );
+
       if (lesson.isNew) {
         // Validate all required IDs are present
         if (
@@ -296,12 +302,6 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           setIsSaving(false);
           return;
         }
-
-        const tenantStreamId = resolveTenantStreamIdForApi(
-          selectedStreamId,
-          lesson.gradeId ?? selectedGradeId,
-          grades,
-        );
 
         const clickedSlot = timeSlots.find((ts) => ts.id === lesson.timeSlotId);
         if (!clickedSlot) {
