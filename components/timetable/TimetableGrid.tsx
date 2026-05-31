@@ -501,25 +501,44 @@ function TimetableGridTable({
                         ? (conflictLessonIds?.has(cell.lesson.id) ?? false)
                         : false;
 
+                      const lesson = cell?.type === 'lesson' ? cell.lesson : null;
+                      const prevCell =
+                        slotIndex > 0 ? day?.cells[slotIndex - 1] : null;
+                      const nextCell =
+                        slotIndex < timeSlots.length - 1
+                          ? day?.cells[slotIndex + 1]
+                          : null;
+                      const isDoubleContinuation =
+                        !!lesson?.isDoubleContinuation;
+                      const connectsDoubleBelow =
+                        !!lesson?.isDoublePeriod &&
+                        !isDoubleContinuation &&
+                        nextCell?.type === 'lesson' &&
+                        nextCell.lesson?.id === lesson.id &&
+                        !!nextCell.lesson?.isDoubleContinuation;
+
                       return (
                         <td
                           key={dayOfWeek}
                           className={cn(
                             'border-r border-b border-slate-200/80 dark:border-slate-700/80 last:border-r-0 align-top',
                             tdPad,
+                            connectsDoubleBelow && 'pb-0',
+                            isDoubleContinuation && 'pt-0',
                             isTeacherCompact && currentDayOfWeek === dayOfWeek && 'bg-primary/[0.03]',
                           )}
                         >
-                          {cell?.type === 'lesson' && cell.lesson ? (
+                          {lesson ? (
                             <LessonCell
-                              lesson={cell.lesson}
+                              lesson={lesson}
                               isCurrent={isCurrentCell}
                               isCompleted={isCompleted}
                               isNext={isNextLesson}
                               hasConflict={hasConflict}
                               viewType={viewType}
                               compact={compact}
-                              onClick={() => onLessonClick?.(cell.lesson!, dayOfWeek, slot.periodNumber)}
+                              connectsDoubleBelow={connectsDoubleBelow}
+                              onClick={() => onLessonClick?.(lesson, dayOfWeek, slot.periodNumber)}
                             />
                           ) : cell?.type === 'break' && cell.break ? (
                             <BreakCell
@@ -569,6 +588,7 @@ function LessonCell({
   hasConflict,
   viewType,
   compact,
+  connectsDoubleBelow,
   onClick,
 }: {
   lesson: TimetableLesson;
@@ -578,6 +598,7 @@ function LessonCell({
   hasConflict: boolean;
   viewType: TimetableViewType;
   compact?: boolean;
+  connectsDoubleBelow?: boolean;
   onClick?: () => void;
 }) {
   const palette = getSubjectPaletteColor(normalizeSubjectName(lesson.subject.name));
@@ -588,6 +609,10 @@ function LessonCell({
   const showRoom = lesson.room && !(compact && viewType === 'teacher');
 
   const isTeacherCompact = compact && viewType === 'teacher';
+  const isDoubleStart =
+    !!lesson.isDoublePeriod && !lesson.isDoubleContinuation;
+  const isDoubleContinuation = !!lesson.isDoubleContinuation;
+  const isDoubleBlock = isDoubleStart || isDoubleContinuation;
 
   return (
     <div
@@ -604,11 +629,24 @@ function LessonCell({
               ? `${palette.bg} ring-1 ring-primary/20`
               : palette.bg,
         hasConflict && 'ring-2 ring-red-400',
+        !hasConflict &&
+          isDoubleBlock &&
+          !isCurrent &&
+          'ring-1 ring-inset ring-violet-200/40 dark:ring-violet-800/30',
+        !hasConflict &&
+          connectsDoubleBelow &&
+          !isCurrent &&
+          'rounded-b-none border-b-0',
+        !hasConflict &&
+          isDoubleContinuation &&
+          !isCurrent &&
+          'rounded-t-none border-t-0',
         isTeacherCompact && !isCurrent && 'hover:bg-opacity-90',
         !isTeacherCompact && !isCurrent && 'hover:shadow-sm',
         !compact && !isCurrent && 'hover:scale-[1.01]',
         isCurrent && !compact && 'scale-[1.02] shadow-md',
         (isCompleted || isCurrent) && 'pr-5',
+        isDoubleBlock && !isCurrent && 'pr-5',
       )}
     >
       <div className={cn(
@@ -629,8 +667,15 @@ function LessonCell({
           isCompleted && 'line-through decoration-slate-400',
         )}>
         {lesson.subject.name}
-        {lesson.isDoublePeriod && (
-          <span className="ml-0.5 opacity-60">(2×)</span>
+        {lesson.isDoublePeriod && !lesson.isDoubleContinuation && (
+          <span className="ml-0.5 text-[9px] font-medium text-violet-600/80 dark:text-violet-400/80">
+            2×
+          </span>
+        )}
+        {lesson.isDoubleContinuation && (
+          <span className="ml-0.5 text-[9px] font-normal text-violet-500/70 dark:text-violet-400/60">
+            2/2
+          </span>
         )}
         </div>
       </div>

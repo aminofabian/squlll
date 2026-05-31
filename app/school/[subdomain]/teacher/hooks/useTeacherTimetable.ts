@@ -87,6 +87,7 @@ interface TeacherTimetableEntryApi {
   periodNumber: number
   startTime: string
   endTime: string
+  isDoublePeriod?: boolean
 }
 
 interface TeacherTimetableDayApi {
@@ -305,6 +306,7 @@ const GET_MY_TIMETABLE_QUERY = `
           periodNumber
           startTime
           endTime
+          isDoublePeriod
         }
       }
     }
@@ -332,6 +334,7 @@ function myScheduleFromEntries(
       periodNumber: e.timeSlot.periodNumber,
       startTime: start?.trim() ?? '',
       endTime: end?.trim() ?? '',
+      isDoublePeriod: e.isDoublePeriod ?? false,
     })
     byDay.set(e.dayOfWeek, list)
   }
@@ -383,7 +386,7 @@ function mapMyTimetableToHookData(
         timeSlotId,
         dayOfWeek: e.dayOfWeek,
         roomNumber: e.roomName,
-        isDoublePeriod: false,
+        isDoublePeriod: e.isDoublePeriod ?? false,
         grade: {
           id: gradeLabel,
           name: gradeLabel,
@@ -449,7 +452,7 @@ function mapMyTimetableToHookData(
 }
 
 export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResult {
-  const { selectedTerm } = useSelectedTerm()
+  const { selectedTerm, termsLoading } = useSelectedTerm()
   const [data, setData] = useState<UseTeacherTimetableResult['data']>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -458,6 +461,7 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
     if (!selectedTerm?.id) {
       setError('No term selected')
       setData(null)
+      setLoading(false)
       return
     }
 
@@ -541,15 +545,24 @@ export function useTeacherTimetable(subdomain: string): UseTeacherTimetableResul
   }
 
   useEffect(() => {
+    if (termsLoading) return
+
     if (selectedTerm?.id && subdomain) {
       void fetchTimetable()
+      return
     }
-  }, [selectedTerm?.id, subdomain])
+
+    if (!selectedTerm?.id) {
+      setError('No term selected')
+      setData(null)
+      setLoading(false)
+    }
+  }, [selectedTerm?.id, subdomain, termsLoading])
 
   return {
     data,
-    loading,
-    error,
+    loading: loading || termsLoading,
+    error: termsLoading ? null : error,
     refetch: fetchTimetable,
   }
 }

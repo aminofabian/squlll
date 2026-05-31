@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   useCurrentAcademicYear,
@@ -83,13 +83,23 @@ async function fetchTermsForYear(
 }
 
 /**
- * Picks the active term (or first) for the current school year when none is selected.
- * Uses nested academic-year terms immediately, then refreshes from the API.
+ * Picks the admin's current term (isCurrent) when none is selected.
+ * Waits for the terms API so nested year stubs do not win over isCurrent.
  */
 export function useEnsureSelectedTerm(
   selectedTerm: SelectedTerm | null,
-  setSelectedTerm: (term: SelectedTerm | null) => void,
+  setSelectedTermState: (term: SelectedTerm | null) => void,
 ) {
+  const userPickedRef = useRef(false);
+
+  const setSelectedTerm = useCallback(
+    (term: SelectedTerm | null) => {
+      userPickedRef.current = term !== null;
+      setSelectedTermState(term);
+    },
+    [setSelectedTermState],
+  );
+
   const { academicYears, loading: yearsLoading } = useCurrentAcademicYear();
 
   const activeYear = resolveAcademicYear(academicYears);
@@ -111,21 +121,41 @@ export function useEnsureSelectedTerm(
 
   useEffect(() => {
     if (yearsLoading) return;
+    if (!activeYear?.id) return;
 
-    if (availableTerms.length === 0) return;
+    const hasFetched = !!(fetchedTerms && fetchedTerms.length > 0);
+    if (termsLoading && !hasFetched) return;
 
-    // Keep a valid user selection; only auto-select when none is set
-    if (selectedTerm && availableTerms.some((t) => t.id === selectedTerm.id)) {
+    const termsToUse = hasFetched ? fetchedTerms! : nestedTerms;
+    if (termsToUse.length === 0) return;
+
+    const defaultTerm = pickDefaultTerm(termsToUse);
+
+    if (userPickedRef.current) {
+      if (selectedTerm && !termsToUse.some((t) => t.id === selectedTerm.id)) {
+        setSelectedTermState(defaultTerm);
+      }
       return;
     }
 
-    setSelectedTerm(pickDefaultTerm(availableTerms));
-  }, [selectedTerm, yearsLoading, availableTerms, setSelectedTerm]);
+    if (!selectedTerm || selectedTerm.id !== defaultTerm.id) {
+      setSelectedTermState(defaultTerm);
+    }
+  }, [
+    selectedTerm,
+    yearsLoading,
+    termsLoading,
+    fetchedTerms,
+    nestedTerms,
+    activeYear?.id,
+    setSelectedTermState,
+  ]);
 
   return {
     activeYear,
     availableTerms,
     termsLoading: yearsLoading || (!!activeYear?.id && termsLoading),
     hasTerms: availableTerms.length > 0,
+    setSelectedTerm,
   };
 }

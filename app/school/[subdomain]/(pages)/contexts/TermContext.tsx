@@ -20,11 +20,13 @@ interface TermContextType {
 const TermContext = createContext<TermContextType | undefined>(undefined)
 
 export function TermProvider({ children }: { children: ReactNode }) {
-  const [selectedTerm, setSelectedTerm] = useState<Term | null>(null)
-  const { availableTerms, termsLoading, hasTerms } = useEnsureSelectedTerm(
-    selectedTerm,
+  const [selectedTerm, setSelectedTermState] = useState<Term | null>(null)
+  const {
+    availableTerms,
+    termsLoading,
+    hasTerms,
     setSelectedTerm,
-  )
+  } = useEnsureSelectedTerm(selectedTerm, setSelectedTermState)
 
   return (
     <TermContext.Provider

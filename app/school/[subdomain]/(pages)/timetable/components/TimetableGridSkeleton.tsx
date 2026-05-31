@@ -85,19 +85,19 @@ export function TimetableGridSkeleton({
 
 export function TimetableSidebarSkeleton() {
   return (
-    <aside className="flex w-64 flex-shrink-0 flex-col border-r border-zinc-200/90 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:w-72">
-      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800">
-        <Skeleton className="h-3 w-14" />
-        <Skeleton className="h-8 w-8 rounded-full" />
+    <div className="flex w-64 flex-shrink-0 flex-col border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex shrink-0 justify-end border-b border-slate-200/80 px-2 py-2 dark:border-slate-800">
+        <Skeleton className="h-8 w-8 rounded-md" />
       </div>
-      <div className="space-y-3 p-4">
+      <div className="flex flex-1 flex-col space-y-3 px-3 pb-3 pt-1">
+        <Skeleton className="h-8 w-full rounded-lg" />
         <Skeleton className="h-9 w-full rounded-lg" />
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-full rounded-lg" />
+        <div className="grid grid-cols-2 gap-1.5">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full rounded-lg" />
           ))}
         </div>
       </div>
-    </aside>
+    </div>
   );
 }

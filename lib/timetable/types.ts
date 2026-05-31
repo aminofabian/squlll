@@ -82,6 +82,7 @@ export interface TimetableLesson {
 
   // Advanced flags for real-world scenarios
   isDoublePeriod?: boolean;
+  isDoubleContinuation?: boolean;
   isSubstitution?: boolean;
   originalTeacher?: string;
   isCancelled?: boolean;

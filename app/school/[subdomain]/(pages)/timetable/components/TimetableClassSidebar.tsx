@@ -83,7 +83,7 @@ export function TimetableClassSidebar({
                     : "text-zinc-400",
                 )}
               >
-                Whole-school timetable
+                All classes
               </span>
             </button>
           </li>

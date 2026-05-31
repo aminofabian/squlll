@@ -21,7 +21,8 @@ import { useConflictLessonIds } from "./hooks/useConflictLessonIds";
 import { useConflictEntryMap } from "./hooks/useConflictEntryMap";
 import { TimetableConflictsPanel } from "./components/TimetableConflictsPanel";
 import { TimetableStatusBar } from "./components/TimetableStatusBar";
-import { TimetableClassSidebar } from "./components/TimetableClassSidebar";
+import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
+import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { TimetableOnboarding } from "./components/TimetableOnboarding";
 import { TimetableFillProgress } from "./components/TimetableFillProgress";
 import { TimetableSubjectInsights } from "./components/TimetableSubjectInsights";
@@ -58,8 +59,6 @@ import { AdminTimetableGrid } from "./components/AdminTimetableGrid";
 import { getSubjectAccent } from "./utils/timetableSubjectColors";
 import { tt } from "./utils/timetableTheme";
 import { cn } from "@/lib/utils";
-import { filterGradesBySearch } from "./utils/filterGradesBySearch";
-import { GradeClassSearch } from "./components/GradeClassSearch";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -90,7 +89,6 @@ import {
   Eye,
   EyeOff,
   Sparkles,
-  ChevronRight,
   Users,
   Printer,
   Copy,
@@ -137,6 +135,7 @@ import { TimetableOfflineBanner } from "./components/TimetableOfflineBanner";
 
 export default function SmartTimetableNew() {
   const { selectedTerm, setSelectedTerm, termsLoading } = useSelectedTerm();
+  const { isLoading: isSchoolConfigLoading } = useSchoolConfig();
   const {
     academicYears,
     loading: academicYearsLoading,
@@ -307,12 +306,9 @@ export default function SmartTimetableNew() {
 
   const isPageLoading =
     isLoadingInitial || termsLoading || academicYearsLoading;
-  const showGridSkeleton =
-    (isPageLoading || isLoadingTimetable) && !hasCachedTimetableData();
   const isGridLoading = isPageLoading || isLoadingTimetable;
 
   // A resource is "hard failed" if it errored AND its data is empty (no fallback)
-  const sidebarFailed = gradesError;
   // Single-class grid failure: timetable for the selected grade failed
   const classGridFailed =
     !!selectedGradeId && timetableError && !refreshLoadFailed;
@@ -489,12 +485,36 @@ export default function SmartTimetableNew() {
     (!isGridLoading &&
       !!selectedTerm &&
       ((lessonPeriodsPerDay ?? 0) > 0 || daysPerWeekFromStore > 0));
-  const hasTimetableData =
-    periodNumbers.length > 0 || timeSlots.length > 0 || storeEntries.length > 0;
+  const hasScheduleSlots = hasTimeSlots || periodNumbers.length > 0;
 
-  // Full-grid error only when load failed and there is nothing to show.
+  /** Slots not in store yet but schedule data suggests a template exists */
+  const slotsStillPending =
+    !hasScheduleSlots &&
+    !timetableError &&
+    !!selectedTerm &&
+    (hasAnyLessons ||
+      breaks.length > 0 ||
+      timetableSetupComplete ||
+      isGridLoading ||
+      isLoadingTimetable ||
+      isRetrying);
+
+  const showGridSkeleton =
+    !!selectedTerm &&
+    !timetableError &&
+    (isGridLoading || isLoadingTimetable || isRetrying || slotsStillPending);
+
+  /** Empty “set up lesson times” — only after load settles with no template */
+  const showEmptyScheduleState =
+    !showGridSkeleton &&
+    !hasScheduleSlots &&
+    !timetableError &&
+    !hasAnyLessons &&
+    breaks.length === 0;
+
+  // Whole-school grid failed hard (not a stale-cache refresh).
   const combinedGridFailed =
-    timetableError && !selectedGradeId && hasTimetableData;
+    timetableError && !selectedGradeId && !refreshLoadFailed;
   const stats = useGradeStatistics(selectedGradeId);
   const {
     total: conflictCount,
@@ -661,10 +681,7 @@ export default function SmartTimetableNew() {
   const [bulkBreaksOpen, setBulkBreaksOpen] = useState(false);
   const [bulkLessonEntryOpen, setBulkLessonEntryOpen] = useState(false);
   const [addingPeriods, setAddingPeriods] = useState(false);
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 1023px)").matches;
-  });
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [templatesDrawerOpen, setTemplatesDrawerOpen] = useState(false);
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [dayTemplates, setDayTemplates] = useState<any[]>([]);
@@ -728,15 +745,6 @@ export default function SmartTimetableNew() {
   );
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1023px)");
-    const onChange = () => {
-      if (mq.matches) setIsSidebarMinimized(true);
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  useEffect(() => {
     if (isGridLoading || academicYearsLoading || termsLoading) return;
 
     const termId = selectedTerm?.id || selectedTermId;
@@ -776,8 +784,16 @@ export default function SmartTimetableNew() {
     const termId = selectedTerm?.id || selectedTermId;
     if (!termId) return;
 
+    let cancelled = false;
     periodsRefetchAttemptedRef.current = true;
-    void reloadTimetableData();
+    setIsLoadingTimetable(true);
+    void reloadTimetableData().finally(() => {
+      if (!cancelled) setIsLoadingTimetable(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     isPageLoading,
     hasTimeSlots,
@@ -788,22 +804,7 @@ export default function SmartTimetableNew() {
     reloadTimetableData,
   ]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const gradeSearchRef = useRef<HTMLInputElement>(null);
   const [hideLiveBanner, setHideLiveBanner] = useState(false);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const tag = document.activeElement?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      e.preventDefault();
-      gradeSearchRef.current?.focus();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
   useEffect(() => {
     try {
       if (localStorage.getItem("timetable-hide-live-banner") === "1") {
@@ -855,30 +856,6 @@ export default function SmartTimetableNew() {
     ]);
   }, [isGridLoading]);
 
-  const filteredGrades = useMemo(
-    () => filterGradesBySearch(grades, searchTerm),
-    [grades, searchTerm],
-  );
-
-  /** Keep the active class visible in the list even when the search filter would hide it. */
-  const sidebarGrades = useMemo(() => {
-    if (!selectedGradeId) return filteredGrades;
-    if (filteredGrades.some((g) => g.id === selectedGradeId)) {
-      return filteredGrades;
-    }
-    const selected = grades.find((g) => g.id === selectedGradeId);
-    if (!selected) return filteredGrades;
-    return [selected, ...filteredGrades];
-  }, [filteredGrades, grades, selectedGradeId]);
-
-  const chipGrades = sidebarGrades;
-
-  const pinnedGradeId = useMemo(() => {
-    if (!selectedGradeId || !searchTerm.trim()) return null;
-    if (filteredGrades.some((g) => g.id === selectedGradeId)) return null;
-    return selectedGradeId;
-  }, [filteredGrades, searchTerm, selectedGradeId]);
-
   const currentGrade = useMemo(
     () => grades.find((g) => g.id === selectedGradeId),
     [grades, selectedGradeId],
@@ -893,8 +870,17 @@ export default function SmartTimetableNew() {
 
   // Handlers
   const handleGradeSelect = useCallback(
-    (gradeId: string, _levelId?: string) => setSelectedGrade(gradeId),
+    (gradeId: string, _levelId: string) => setSelectedGrade(gradeId),
     [setSelectedGrade],
+  );
+  const handleStreamSelect = useCallback(
+    (streamId: string, gradeId: string, _levelId: string) => {
+      if (gradeId !== selectedGradeId) {
+        setSelectedGrade(gradeId);
+      }
+      setSelectedStream(streamId);
+    },
+    [selectedGradeId, setSelectedGrade, setSelectedStream],
   );
   const handleJumpToConflictEntry = useCallback(
     (entryId: string) => {
@@ -1478,70 +1464,93 @@ export default function SmartTimetableNew() {
         </div>
       )}
       {/* ── Sidebar ── */}
-      {isPageLoading && !isSidebarMinimized ? (
-        <TimetableSidebarSkeleton />
-      ) : (
-        hasScheduleStructure &&
-        !isSidebarMinimized && (
-          <aside
+      {hasScheduleStructure &&
+        (isPageLoading && !isSidebarMinimized ? (
+          <TimetableSidebarSkeleton />
+        ) : (
+          <div
             data-timetable-no-print
-            className="flex w-64 flex-shrink-0 flex-col border-r border-zinc-200/90 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:w-72"
+            className={cn(
+              "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+              "md:relative md:translate-x-0",
+              isSidebarMinimized ? "w-14" : "w-64",
+            )}
           >
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800">
-              <span className={tt.label}>Classes</span>
+            <div
+              className={cn(
+                "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+                isSidebarMinimized ? "justify-center" : "justify-end",
+              )}
+            >
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                onClick={() => setIsSidebarMinimized(true)}
+                size="sm"
+                className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+                onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
               >
-                <PanelLeftClose className="h-3.5 w-3.5" />
+                {isSidebarMinimized ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {gradesError && grades.length === 0 ? (
-                <div className="p-3">
-                  <TimetableGridError
-                    compact
-                    title="Failed to load classes"
-                    description="Check your connection and try again."
-                    onRetry={isRetrying ? undefined : handleRetry}
-                  />
-                  {isRetrying && (
-                    <RetryingSpinner className="mt-2 justify-center" />
-                  )}
-                </div>
-              ) : (
-                <>
-                  {gradesError && grades.length > 0 && (
-                    <div className="px-3 pt-2">
-                      <TimetableGridError
-                        compact
-                        title="Some classes couldn't be loaded"
-                        onRetry={isRetrying ? undefined : handleRetry}
-                      />
-                      {isRetrying && (
-                        <RetryingSpinner className="mt-1 justify-center" />
+            {!isSidebarMinimized && (
+              <div className="flex flex-1 flex-col overflow-hidden px-3 pb-3">
+                {gradesError && grades.length === 0 ? (
+                  <div className="pt-2">
+                    <TimetableGridError
+                      compact
+                      title="Failed to load classes"
+                      description="Check your connection and try again."
+                      onRetry={isRetrying ? undefined : handleRetry}
+                    />
+                    {isRetrying && (
+                      <RetryingSpinner className="mt-2 justify-center" />
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {gradesError && grades.length > 0 && (
+                      <div className="pt-2">
+                        <TimetableGridError
+                          compact
+                          title="Some classes couldn't be loaded"
+                          onRetry={isRetrying ? undefined : handleRetry}
+                        />
+                        {isRetrying && (
+                          <RetryingSpinner className="mt-1 justify-center" />
+                        )}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGrade(null)}
+                      className={cn(
+                        "mb-3 mt-1 h-8 w-full rounded-lg border px-2.5 text-xs font-medium transition-all",
+                        selectedGradeId === null
+                          ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
                       )}
-                    </div>
-                  )}
-                  <TimetableClassSidebar
-                    grades={sidebarGrades}
-                    allGradesCount={grades.length}
-                    selectedGradeId={selectedGradeId}
-                    pinnedGradeId={pinnedGradeId}
-                    onSelectAllClasses={() => setSelectedGrade(null)}
-                    onSelectGrade={setSelectedGrade}
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    searchInputRef={gradeSearchRef}
-                  />
-                </>
-              )}
-            </div>
-          </aside>
-        )
-      )}
+                    >
+                      All classes
+                    </button>
+                    <SchoolSearchFilter
+                      className="min-h-0 flex-1"
+                      variant="minimal"
+                      type="grades"
+                      onGradeSelect={handleGradeSelect}
+                      onStreamSelect={handleStreamSelect}
+                      isLoading={isSchoolConfigLoading}
+                      selectedGradeId={selectedGradeId ?? ""}
+                      selectedStreamId={selectedStreamId ?? ""}
+                    />
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
 
       {/* ── Main ── */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -1556,21 +1565,17 @@ export default function SmartTimetableNew() {
                 <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                   Timetable
                 </h1>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Build your weekly schedule.
-                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 lg:flex-nowrap">
                 {hasScheduleStructure && isSidebarMinimized && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="h-9 gap-1.5 border-zinc-200 text-xs dark:border-zinc-700"
+                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
                     onClick={() => setIsSidebarMinimized(false)}
                   >
-                    <PanelLeftOpen className="h-3.5 w-3.5" />
-                    Classes
+                    <PanelLeftOpen className="h-4 w-4" />
                   </Button>
                 )}
                 {selectedGradeId && hasScheduleStructure && (
@@ -1580,9 +1585,7 @@ export default function SmartTimetableNew() {
                     onClick={() => setBulkLessonEntryOpen(true)}
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">
-                      Add several lessons
-                    </span>
+                    <span className="hidden sm:inline">Bulk add</span>
                     <span className="sm:hidden">Add lessons</span>
                   </Button>
                 )}
@@ -1876,99 +1879,6 @@ export default function SmartTimetableNew() {
                 </DropdownMenu>
               </div>
             </div>
-
-            <div className="space-y-2.5 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/40">
-              {hasScheduleStructure && isSidebarMinimized && (
-                <GradeClassSearch
-                  ref={gradeSearchRef}
-                  id="timetable-grade-search-toolbar"
-                  value={searchTerm}
-                  onChange={setSearchTerm}
-                  resultCount={filteredGrades.length}
-                  totalCount={grades.length}
-                  className="max-w-md pb-0.5"
-                />
-              )}
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-                {!selectedGradeId && chipGrades.length > 0 && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="h-8 shrink-0 rounded-full text-xs whitespace-nowrap"
-                    onClick={() => setSelectedGrade(chipGrades[0].id)}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mr-1" />
-                    Start with {chipGrades[0].displayName || chipGrades[0].name}
-                  </Button>
-                )}
-                {chipGrades.length === 0 && searchTerm.trim() ? (
-                  <p className="px-1 py-1.5 text-[12px] text-zinc-500">
-                    No classes match &ldquo;{searchTerm.trim()}&rdquo;.{" "}
-                    <button
-                      type="button"
-                      className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
-                      onClick={() => setSearchTerm("")}
-                    >
-                      Clear search
-                    </button>
-                  </p>
-                ) : (
-                  chipGrades.map((g) => {
-                    const hiddenBySearch =
-                      searchTerm.trim().length > 0 &&
-                      !filteredGrades.some((f) => f.id === g.id);
-                    return (
-                      <button
-                        key={g.id}
-                        type="button"
-                        onClick={() => setSelectedGrade(g.id)}
-                        className={cn(
-                          "flex max-w-[11rem] flex-shrink-0 items-center gap-1 truncate rounded-lg border px-2.5 py-1.5 text-[12px] font-medium tracking-tight transition-colors",
-                          selectedGradeId === g.id
-                            ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                            : "border-transparent bg-white text-zinc-600 hover:border-zinc-200 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-zinc-600",
-                          hiddenBySearch &&
-                            selectedGradeId !== g.id &&
-                            "opacity-60",
-                        )}
-                        title={
-                          hiddenBySearch
-                            ? `${g.displayName || g.name} (current selection — clear search to browse all)`
-                            : g.displayName || g.name
-                        }
-                      >
-                        <span className="truncate">
-                          {g.displayName || g.name}
-                        </span>
-                        {selectedGradeId === g.id && (
-                          <ChevronRight className="h-3 w-3 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-              {selectedGradeId && currentStreams.length > 0 && (
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 border-t border-slate-200/80 dark:border-slate-700/80">
-                  <span className={cn(tt.label, "shrink-0 pr-1")}>Section</span>
-                  {currentStreams.map((s) => (
-                    <button
-                      key={s.tenantStreamId}
-                      type="button"
-                      onClick={() => setSelectedStream(s.tenantStreamId)}
-                      className={cn(
-                        "flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors",
-                        selectedStreamId === s.tenantStreamId
-                          ? "border-zinc-700 bg-zinc-700 text-white dark:border-zinc-300 dark:bg-zinc-300 dark:text-zinc-900"
-                          : "border-zinc-200/80 bg-white text-zinc-500 hover:text-zinc-800 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:text-zinc-200",
-                      )}
-                    >
-                      {s.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         </header>
 
@@ -2034,35 +1944,16 @@ export default function SmartTimetableNew() {
                 </div>
                 <div
                   data-timetable-no-print
-                  className="border-b border-zinc-100 px-4 py-3.5 dark:border-zinc-800 lg:px-5"
+                  className="border-b border-zinc-100 px-4 py-2 dark:border-zinc-800 lg:px-5"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                        {selectedGradeId
-                          ? "Schedule"
-                          : hasScheduleStructure
-                            ? "All classes"
-                            : "Preview"}
-                      </p>
-                      <h2 className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {selectedGradeId
-                          ? "Weekly timetable"
-                          : "Whole-school timetable"}
-                      </h2>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        {selectedGradeId
-                          ? "Tap an empty cell to add a lesson. Tap a filled cell to edit."
-                          : hasScheduleStructure
-                            ? "Every class and stream in each slot — filled cells show the lesson; empty cells are open. Tap to open a class."
-                            : "Complete step 1 above to see the schedule here."}
-                        {highlightTeacherId && (
-                          <span className="mt-1 block text-slate-600 dark:text-slate-300">
-                            Dimmed cells are taught by other teachers.
-                          </span>
-                        )}
-                      </p>
-                    </div>
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {selectedGradeId
+                        ? `${classDisplayLabel}${currentStream ? ` · ${currentStream.name}` : ""}`
+                        : hasScheduleStructure
+                          ? "All classes"
+                          : "Preview"}
+                    </h2>
                     {hasScheduleStructure && (
                       <Button
                         size="sm"
@@ -2077,7 +1968,7 @@ export default function SmartTimetableNew() {
                   </div>
                 </div>
 
-                <div className="bg-zinc-50/30 p-3 dark:bg-zinc-950/30 lg:p-4">
+                <div className="bg-zinc-50/30 p-2 dark:bg-zinc-950/30 lg:p-3">
                   {refreshLoadFailed &&
                   !combinedGridFailed &&
                   !classGridFailed ? (
@@ -2140,9 +2031,7 @@ export default function SmartTimetableNew() {
                         onCombinedLessonClick={handleCombinedLessonClick}
                         getBreaksAfterPeriod={getBreaksAfterPeriod}
                         getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                        hasNoTimeSlots={
-                          periodNumbers.length === 0 && timeSlots.length === 0
-                        }
+                        hasNoTimeSlots={showEmptyScheduleState}
                         getCleanBreakName={getCleanBreakName}
                         getSubjectAccent={getSubjectAccentForGrid}
                         conflictLessonIds={
@@ -2167,9 +2056,7 @@ export default function SmartTimetableNew() {
                       getEntryFor={getEntryFor}
                       getBreaksAfterPeriod={getBreaksAfterPeriod}
                       getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
-                      hasNoTimeSlots={
-                        periodNumbers.length === 0 && timeSlots.length === 0
-                      }
+                      hasNoTimeSlots={showEmptyScheduleState}
                       getCleanBreakName={getCleanBreakName}
                       getSubjectAccent={getSubjectAccentForGrid}
                       conflictLessonIds={
@@ -2227,8 +2114,6 @@ export default function SmartTimetableNew() {
                 <TimetableFillProgress
                   filled={stats.filledSlots}
                   total={stats.totalSlots}
-                  onAddSeveralLessons={() => setBulkLessonEntryOpen(true)}
-                  onDuplicateDay={() => setBulkLessonEntryOpen(true)}
                 />
               )}
 

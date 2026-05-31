@@ -27,6 +27,7 @@ import {
   TeacherTimetableHero,
   StatusNote,
 } from "./components/TeacherTimetableHero";
+import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
 import { getWeekStartDate } from "@/lib/timetable/week";
 import {
   fetchMyLessonCompletions,
@@ -173,18 +174,7 @@ const TeacherTimetable = () => {
     core.currentStatus.status === "free";
 
   if (core.isLoading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="w-full max-w-md space-y-3 px-4">
-          <div className="h-20 animate-pulse rounded-lg bg-slate-200/80 dark:bg-slate-700/80" />
-          <div className="grid gap-3 lg:grid-cols-2">
-            <div className="h-32 animate-pulse rounded-md bg-slate-200/60 dark:bg-slate-700/60" />
-            <div className="h-48 animate-pulse rounded-lg bg-slate-200/60 dark:bg-slate-700/60" />
-          </div>
-          <p className="text-center text-sm text-slate-500">Loading your schedule…</p>
-        </div>
-      </div>
-    );
+    return <TeacherTimetableSkeleton />;
   }
 
   if (core.error) {

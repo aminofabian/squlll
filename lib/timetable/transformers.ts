@@ -293,6 +293,7 @@ interface TeacherEntryInput {
   timeSlotId: string;
   dayOfWeek: number;
   roomNumber: string | null;
+  isDoublePeriod?: boolean;
   grade: { id: string; name: string; gradeLevel: { name: string } };
   subject: { id: string; name: string };
   teacher: {
@@ -484,17 +485,65 @@ export interface MyTimetableLessonApi {
   periodNumber: number;
   startTime: string;
   endTime: string;
+  isDoublePeriod?: boolean;
+}
+
+interface ExpandedMyLesson {
+  lesson: MyTimetableLessonApi;
+  isDoublePeriod: boolean;
+  isDoubleContinuation: boolean;
+}
+
+function breakBlocksDoubleSpan(
+  breaks: TimetableBreak[],
+  dayOfWeek: number,
+  afterPeriod: number,
+): boolean {
+  return breaks.some(
+    (b) =>
+      b.afterPeriod === afterPeriod &&
+      (b.applyToAllDays || b.dayOfWeek === dayOfWeek),
+  );
 }
 
 function buildMyLessonLookup(
   mySchedule: { dayOfWeek: number; entries: MyTimetableLessonApi[] }[],
-): Map<string, MyTimetableLessonApi> {
-  const map = new Map<string, MyTimetableLessonApi>();
+  periodNumbers: number[],
+  breaks: TimetableBreak[] = [],
+): Map<string, ExpandedMyLesson> {
+  const map = new Map<string, ExpandedMyLesson>();
+
   for (const day of mySchedule) {
     for (const e of day.entries ?? []) {
-      map.set(`${e.dayOfWeek}-${e.periodNumber}`, e);
+      map.set(`${e.dayOfWeek}-${e.periodNumber}`, {
+        lesson: e,
+        isDoublePeriod: !!e.isDoublePeriod,
+        isDoubleContinuation: false,
+      });
     }
   }
+
+  for (const day of mySchedule) {
+    for (const e of day.entries ?? []) {
+      if (!e.isDoublePeriod) continue;
+
+      const periodIndex = periodNumbers.indexOf(e.periodNumber);
+      if (periodIndex < 0 || periodIndex >= periodNumbers.length - 1) continue;
+
+      const nextPeriod = periodNumbers[periodIndex + 1];
+      if (breakBlocksDoubleSpan(breaks, e.dayOfWeek, e.periodNumber)) continue;
+
+      const key = `${e.dayOfWeek}-${nextPeriod}`;
+      if (map.has(key)) continue;
+
+      map.set(key, {
+        lesson: { ...e, periodNumber: nextPeriod },
+        isDoublePeriod: true,
+        isDoubleContinuation: true,
+      });
+    }
+  }
+
   return map;
 }
 
@@ -504,6 +553,7 @@ function lessonFromMyEntry(
   periodNumber: number,
   teacherId: string,
   teacherName: string,
+  flags?: { isDoublePeriod?: boolean; isDoubleContinuation?: boolean },
 ): TimetableLesson {
   const subjectPalette = getSubjectPaletteColor(my.subjectName);
   const gradeLabel = my.streamName
@@ -528,8 +578,37 @@ function lessonFromMyEntry(
       level: 0,
     },
     stream: my.streamName ?? undefined,
-    isDoublePeriod: false,
+    isDoublePeriod: flags?.isDoublePeriod ?? !!my.isDoublePeriod,
+    isDoubleContinuation: flags?.isDoubleContinuation ?? false,
   };
+}
+
+function applyDoublePeriodFlagsFromSchoolSchedule(
+  mySchedule: { dayOfWeek: number; entries: MyTimetableLessonApi[] }[],
+  schoolSchedule: SchoolScheduleDayApi[] | null | undefined,
+  teacherId: string,
+): { dayOfWeek: number; entries: MyTimetableLessonApi[] }[] {
+  if (!schoolSchedule?.length) return mySchedule;
+
+  const doubleIds = new Set<string>();
+  for (const day of schoolSchedule) {
+    for (const slot of day.slots) {
+      const entry = slot.entry;
+      if (!entry?.isDoublePeriod || !entry.id) continue;
+      if (entry.teacher?.id && entry.teacher.id !== teacherId) continue;
+      doubleIds.add(entry.id);
+    }
+  }
+
+  if (doubleIds.size === 0) return mySchedule;
+
+  return mySchedule.map((day) => ({
+    ...day,
+    entries: (day.entries ?? []).map((e) => ({
+      ...e,
+      isDoublePeriod: !!e.isDoublePeriod || doubleIds.has(e.id),
+    })),
+  }));
 }
 
 /**
@@ -545,11 +624,17 @@ export function transformTeacherTimetableMerged(
   completedLessonIds: string[] = [],
   schoolSchedule?: SchoolScheduleDayApi[] | null,
 ): CompleteTimetable {
-  const myByDayPeriod = buildMyLessonLookup(mySchedule);
+  const scheduleWithDoubles = applyDoublePeriodFlagsFromSchoolSchedule(
+    mySchedule,
+    schoolSchedule,
+    teacherId,
+  );
 
   const periodNumberSet = new Set<number>();
-  for (const my of myByDayPeriod.values()) {
-    periodNumberSet.add(my.periodNumber);
+  for (const day of scheduleWithDoubles) {
+    for (const e of day.entries ?? []) {
+      periodNumberSet.add(e.periodNumber);
+    }
   }
 
   let breaks: TimetableBreak[] = [];
@@ -558,6 +643,8 @@ export function transformTeacherTimetableMerged(
     schoolSchedule?.filter(
       (d) => d.dayTemplate.dayOfWeek >= 1 && d.dayTemplate.dayOfWeek <= 5,
     ) ?? [];
+
+  const flatMyEntries = scheduleWithDoubles.flatMap((d) => d.entries ?? []);
 
   if (schoolDays.length > 0) {
     const refDay =
@@ -576,9 +663,7 @@ export function transformTeacherTimetableMerged(
     timeSlots = periodNumbers.map((periodNumber) => {
       const ref = refPeriodSlots.find((s) => s.periodNumber === periodNumber);
       const times = slotTimeFields(ref?.startTime, ref?.endTime);
-      const mySample = [...myByDayPeriod.values()].find(
-        (m) => m.periodNumber === periodNumber,
-      );
+      const mySample = flatMyEntries.find((m) => m.periodNumber === periodNumber);
       const myTimes = mySample
         ? slotTimeFields(mySample.startTime, mySample.endTime)
         : null;
@@ -615,7 +700,7 @@ export function transformTeacherTimetableMerged(
   } else {
     const periodNumbers = [...periodNumberSet].sort((a, b) => a - b);
     const periodTimes = new Map<number, { start: string; end: string }>();
-    for (const my of myByDayPeriod.values()) {
+    for (const my of flatMyEntries) {
       if (!periodTimes.has(my.periodNumber)) {
         periodTimes.set(my.periodNumber, {
           start: formatSlotTime(my.startTime),
@@ -643,6 +728,12 @@ export function transformTeacherTimetableMerged(
     .map((s) => s.periodNumber)
     .sort((a, b) => a - b);
 
+  const myByDayPeriod = buildMyLessonLookup(
+    scheduleWithDoubles,
+    periodNumbers,
+    breaks,
+  );
+
   let totalLessons = 0;
   let completedCount = 0;
   const subjectDistribution: Record<string, number> = {};
@@ -655,15 +746,20 @@ export function transformTeacherTimetableMerged(
     const cells: (TimetableCell | null)[] = [];
 
     for (const periodNumber of periodNumbers) {
-      const myLesson = myByDayPeriod.get(`${d}-${periodNumber}`);
+      const expanded = myByDayPeriod.get(`${d}-${periodNumber}`);
 
-      if (myLesson) {
+      if (expanded) {
+        const { lesson: myLesson } = expanded;
         const lesson = lessonFromMyEntry(
           myLesson,
           d,
           periodNumber,
           teacherId,
           teacherName,
+          {
+            isDoublePeriod: expanded.isDoublePeriod,
+            isDoubleContinuation: expanded.isDoubleContinuation,
+          },
         );
         cells.push({ type: "lesson", periodNumber, dayOfWeek: d, lesson });
         totalLessons++;
@@ -789,7 +885,16 @@ export function transformTeacherTimetable(
 
     for (let si = 0; si < sortedSlots.length; si++) {
       const slot = sortedSlots[si];
-      const slotEntryList = dayEntryMap.get(si);
+      let slotEntryList = dayEntryMap.get(si);
+      let isDoubleContinuation = false;
+
+      if ((!slotEntryList || slotEntryList.length === 0) && si > 0) {
+        const prevEntry = dayEntryMap.get(si - 1)?.[0];
+        if (prevEntry?.isDoublePeriod) {
+          slotEntryList = [prevEntry];
+          isDoubleContinuation = true;
+        }
+      }
 
       if (!slotEntryList || slotEntryList.length === 0) {
         cells.push(null);
@@ -820,6 +925,8 @@ export function transformTeacherTimetable(
           displayName: entry.grade.name,
           level: 0,
         },
+        isDoublePeriod: !!entry.isDoublePeriod,
+        isDoubleContinuation,
       };
 
       cells.push({
