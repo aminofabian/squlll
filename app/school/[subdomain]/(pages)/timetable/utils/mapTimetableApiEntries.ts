@@ -19,7 +19,7 @@ type ApiTimetableEntryRow = {
   period?: {
     id?: string;
     periodNumber?: number;
-    dayTemplate?: { dayOfWeek?: number };
+    dayTemplateId?: string;
   };
   room?: { name?: string | null } | null;
 };
@@ -57,7 +57,12 @@ export function mapApiTimetableEntries(
         row.gradeLevel?.name ||
         undefined,
       dayOfWeek:
-        row.period?.dayTemplate?.dayOfWeek ?? slot?.dayOfWeek ?? 1,
+        slot?.dayOfWeek ??
+        (row.period?.dayTemplateId
+          ? timeSlots.find((ts) => ts.dayTemplateId === row.period?.dayTemplateId)
+              ?.dayOfWeek
+          : undefined) ??
+        1,
       roomNumber: row.room?.name || undefined,
       isDoublePeriod: row.isDoublePeriod ?? false,
     };
@@ -94,9 +99,7 @@ export const GET_TIMETABLE_ENTRIES_QUERY = `
       period {
         id
         periodNumber
-        dayTemplate {
-          dayOfWeek
-        }
+        dayTemplateId
       }
       room {
         name
