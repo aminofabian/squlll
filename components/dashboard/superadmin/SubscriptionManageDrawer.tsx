@@ -41,8 +41,11 @@ interface SubscriptionManageDrawerProps {
     planId?: number;
     status?: string;
     autoRenew?: boolean;
-  }) => Promise<void>;
-  onCancel: (values: { subscriptionId: string; reason?: string }) => Promise<void>;
+  }) => Promise<unknown>;
+  onCancel: (values: {
+    subscriptionId: string;
+    reason?: string;
+  }) => Promise<unknown>;
 }
 
 export function SubscriptionManageDrawer({
