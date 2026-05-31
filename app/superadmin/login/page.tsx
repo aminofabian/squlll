@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +26,6 @@ function SuperAdminLoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/dashboard";
 
@@ -39,6 +38,7 @@ function SuperAdminLoginForm() {
       const response = await fetch("/api/auth/superadmin-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ email, password }),
       });
 
@@ -48,7 +48,10 @@ function SuperAdminLoginForm() {
         throw new Error(data.error || "Sign in failed");
       }
 
-      router.push(nextPath.startsWith("/dashboard") ? nextPath : "/dashboard");
+      const destination = nextPath.startsWith("/dashboard")
+        ? nextPath
+        : "/dashboard";
+      window.location.assign(destination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
