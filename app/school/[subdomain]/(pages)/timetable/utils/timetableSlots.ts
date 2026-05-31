@@ -25,6 +25,7 @@ export function extractTimeSlotsFromTimetableData(
     }>;
     timetableByGrade?: Array<{
       gradeLevel?: { id?: string };
+      stream?: { id?: string };
       days?: Array<{
         dayTemplate?: { id?: string; dayOfWeek?: number };
         periods?: Array<{
