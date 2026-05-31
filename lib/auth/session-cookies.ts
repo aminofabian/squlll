@@ -1,10 +1,22 @@
-import type { RequestCookies } from "next/dist/compiled/@edge-runtime/cookies";
+import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 export interface SessionCookieOptions {
   domain?: string;
   sameSite: "lax" | "none";
   secure: boolean;
 }
+
+type CookieSetOptions = {
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: "lax" | "none" | "strict";
+  maxAge?: number;
+  path?: string;
+  domain?: string;
+};
+
+/** Next.js route handler cookie store from `cookies()`. */
+export type CookieStore = ReadonlyRequestCookies;
 
 const SESSION_COOKIE_NAMES = [
   "accessToken",
@@ -44,17 +56,6 @@ export function getSessionCookieOptions(requestUrl: URL): SessionCookieOptions {
     secure: false,
   };
 }
-
-type CookieStore = Pick<RequestCookies, "set" | "delete">;
-
-type CookieSetOptions = {
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: "lax" | "none";
-  maxAge?: number;
-  path?: string;
-  domain?: string;
-};
 
 export function clearSessionCookies(
   cookieStore: CookieStore,
