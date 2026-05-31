@@ -10,6 +10,16 @@ export const ADMIN_CHANGE_USER_PASSWORD_MUTATION = `
   }
 `;
 
+export const ACTIVATE_TEACHER_MUTATION = `
+  mutation ActivateTeacher($input: ActivateTeacherInput!) {
+    activateTeacher(input: $input) {
+      success
+      message
+      email
+    }
+  }
+`;
+
 export async function graphqlRequest<T>(
   query: string,
   variables?: Record<string, unknown>,

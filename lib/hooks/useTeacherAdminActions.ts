@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import {
   ADMIN_CHANGE_USER_PASSWORD_MUTATION,
+  ACTIVATE_TEACHER_MUTATION,
   DELETE_TEACHER_MUTATION,
   graphqlRequest,
 } from "@/lib/graphql/teacherAdmin";
@@ -10,6 +11,7 @@ import {
 export function useTeacherAdminActions() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [isActivating, setIsActivating] = useState(false);
 
   const deleteTeacherRecord = useCallback(
     async (teacherId: string, tenantId: string) => {
@@ -61,10 +63,37 @@ export function useTeacherAdminActions() {
     [],
   );
 
+  const activateTeacherRecord = useCallback(async (teacherId: string) => {
+    if (!teacherId?.trim()) {
+      throw new Error("Teacher ID is required");
+    }
+
+    setIsActivating(true);
+    try {
+      const data = await graphqlRequest<{
+        activateTeacher: { success: boolean; message: string; email?: string };
+      }>(ACTIVATE_TEACHER_MUTATION, {
+        input: { teacherId: teacherId.trim() },
+      });
+
+      if (!data.activateTeacher?.success) {
+        throw new Error(
+          data.activateTeacher?.message || "Failed to activate teacher",
+        );
+      }
+
+      return data.activateTeacher;
+    } finally {
+      setIsActivating(false);
+    }
+  }, []);
+
   return {
     deleteTeacherRecord,
     setTeacherPassword,
+    activateTeacherRecord,
     isDeleting,
     isSettingPassword,
+    isActivating,
   };
 }

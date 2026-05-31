@@ -1,25 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { teachersPanel, teachersTableHead, teachersTh } from "./teachers-ui";
+import { teachersPanel, teachersTh } from "./teachers-ui";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { 
-  Mail,
-  Info,
-  InfoIcon,
-  Loader2,
-  RefreshCw,
-  X,
-  CheckCircle
-} from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Mail } from "lucide-react";
 import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 import { PendingInvitation } from "@/lib/stores/usePendingInvitationsStore";
 
@@ -38,6 +34,185 @@ interface PendingInvitationsProps {
   onInvitationResent?: (invitationId: string) => void;
   onInvitationRevoked?: (invitationId: string) => void;
   onTeacherActivated?: (invitationId: string) => void;
+}
+
+function formatDateTime(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+interface InvitationRowProps {
+  invitation: PendingInvitation;
+  resendingIds: Set<string>;
+  revokingIds: Set<string>;
+  activatingEmails: Set<string>;
+  onResend: (id: string) => void;
+  onRevoke: (id: string) => void;
+  onActivate: (invitation: PendingInvitation) => void;
+}
+
+function InvitationTableRow({
+  invitation,
+  resendingIds,
+  revokingIds,
+  activatingEmails,
+  onResend,
+  onRevoke,
+  onActivate,
+}: InvitationRowProps) {
+  const [confirmRevokeOpen, setConfirmRevokeOpen] = useState(false);
+  const isResending = resendingIds.has(invitation.id);
+  const isRevoking = revokingIds.has(invitation.id);
+  const isActivating = activatingEmails.has(invitation.email);
+  const isPending = invitation.status === "PENDING";
+  const isAccepted = invitation.status === "ACCEPTED";
+  const expiresAt = invitation.expiresAt;
+  const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+
+  return (
+    <>
+      <tr className="text-slate-700 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-800/40">
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <Mail className="h-3.5 w-3.5 text-slate-400" />
+            </div>
+            <p
+              className="truncate font-medium text-slate-800 dark:text-slate-100"
+              title={invitation.email}
+            >
+              {invitation.email}
+            </p>
+          </div>
+        </td>
+        <td className="px-4 py-3">
+          <Badge
+            variant="outline"
+            className="border-sky-200 bg-sky-50 text-[10px] font-normal capitalize text-sky-700"
+          >
+            {invitation.role.toLowerCase()}
+          </Badge>
+        </td>
+        <td className="px-4 py-3">
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-[10px] font-normal capitalize",
+              invitation.status === "PENDING"
+                ? "border-amber-200 bg-amber-50 text-amber-700"
+                : invitation.status === "ACCEPTED"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-slate-50 text-slate-600",
+            )}
+          >
+            {invitation.status.toLowerCase()}
+          </Badge>
+        </td>
+        <td className="hidden px-4 py-3 sm:table-cell">
+          {invitation.invitedBy ? (
+            <div className="min-w-0 max-w-[180px]">
+              <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
+                {invitation.invitedBy.name}
+              </p>
+              <p className="truncate text-[11px] text-slate-400" title={invitation.invitedBy.email}>
+                {invitation.invitedBy.email}
+              </p>
+            </div>
+          ) : (
+            <span className="text-xs text-slate-400">System</span>
+          )}
+        </td>
+        <td className="hidden px-4 py-3 text-xs text-slate-500 md:table-cell">
+          {formatDateTime(invitation.createdAt)}
+        </td>
+        <td className="hidden px-4 py-3 text-xs text-slate-500 lg:table-cell">
+          {expiresAt ? (
+            <span className={isExpired ? "font-medium text-red-600" : undefined}>
+              {formatDate(expiresAt)}
+            </span>
+          ) : (
+            "Never"
+          )}
+        </td>
+        <td className="px-4 py-3">
+          {(isPending || isAccepted) && (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              {isPending && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onResend(invitation.id)}
+                    disabled={isResending}
+                    className="text-xs text-slate-500 hover:text-slate-800 disabled:opacity-50"
+                  >
+                    {isResending ? "Sending…" : "Resend"}
+                  </button>
+                  <span className="text-slate-200">·</span>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmRevokeOpen(true)}
+                    disabled={isRevoking}
+                    className="text-xs text-slate-500 hover:text-red-600 disabled:opacity-50"
+                  >
+                    {isRevoking ? "Revoking…" : "Revoke"}
+                  </button>
+                  <span className="text-slate-200">·</span>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => onActivate(invitation)}
+                disabled={isActivating}
+                className="text-xs font-medium text-emerald-700 hover:text-emerald-900 disabled:opacity-50"
+              >
+                {isActivating ? "Activating…" : "Activate"}
+              </button>
+            </div>
+          )}
+        </td>
+      </tr>
+
+      <AlertDialog open={confirmRevokeOpen} onOpenChange={setConfirmRevokeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel the invitation for{" "}
+              <span className="font-medium text-slate-700 dark:text-slate-300">
+                {invitation.email}
+              </span>
+              . They will no longer be able to accept it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep invitation</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                setConfirmRevokeOpen(false);
+                onRevoke(invitation.id);
+              }}
+            >
+              Revoke invitation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
 }
 
 export function PendingInvitations({ invitations, isLoading, error, onInvitationResent, onInvitationRevoked, onTeacherActivated }: PendingInvitationsProps) {
@@ -381,634 +556,80 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
     }
   };
 
-  return (
-    <div className={`${teachersPanel} overflow-hidden`}>
-      <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Pending invitations
-          </h2>
-          <p className="text-xs text-slate-400">
-            {isLoading
-              ? "Loading…"
-              : `${invitations.length} awaiting response`}
-          </p>
+  if (!isLoading && !error && invitations.length === 0) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className={teachersPanel}>
+        <div className="flex items-center justify-center px-4 py-10">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
         </div>
-        {error && (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            Error loading invitations
-          </Badge>
-        )}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={teachersPanel}>
+        <div className="px-4 py-4 text-sm text-red-600">
+          Error loading invitations: {error}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={teachersPanel}>
+      <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-40" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              </span>
+              <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                Pending invitations
+              </h2>
+            </div>
+            <p className="mt-0.5 pl-4 text-xs text-slate-400">
+              {invitations.length} awaiting response — resend or activate when ready
+            </p>
+          </div>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex flex-col items-center gap-2 px-4 py-12 text-sm text-slate-400">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          Loading invitations…
-        </div>
-      ) : error ? (
-        <div className="px-4 py-12 text-center">
-          <Info className="mx-auto mb-3 h-8 w-8 text-red-400" />
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Error loading invitations
-          </p>
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        </div>
-      ) : invitations.length === 0 ? (
-        <div className="px-4 py-10 text-center">
-          <Mail className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-          <p className="text-sm text-slate-500">No pending invitations</p>
-        </div>
-      ) : (
-        <div className="overflow-hidden">
-            {/* Mobile Card Layout - Small screens only */}
-            <div className="grid gap-6 p-4 sm:hidden">
-              {invitations.map((invitation, index) => (
-                <div key={invitation.id} className="space-y-3 rounded-xl border border-slate-200/80 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
-                        {invitation.email}
-                      </span>
-                    </div>
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                      {invitation.role}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        invitation.status === 'PENDING' ? 'bg-yellow-500' : 
-                        invitation.status === 'ACCEPTED' ? 'bg-green-500' : 
-                        invitation.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'
-                      }`} />
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1">
-                              <Badge variant="outline" className={`
-                                text-xs ${
-                                  invitation.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                                  invitation.status === 'ACCEPTED' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                  invitation.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 
-                                  'bg-gray-50 text-gray-700 border-gray-200'
-                                }
-                              `}>
-                                {invitation.status}
-                              </Badge>
-                              <InfoIcon className="h-3.5 w-3.5 text-slate-400" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                            <p className="text-xs">
-                              {invitation.status === 'PENDING' ? 
-                                'This invitation is awaiting the teacher to accept and create their account.' : 
-                                invitation.status === 'ACCEPTED' ? 
-                                'The teacher has accepted this invitation and created an account.' : 
-                                invitation.status === 'REJECTED' ? 
-                                'This invitation has been rejected by the teacher.' : 
-                                'Status unknown.'}
-                              {invitation.expiresAt && (
-                                <>
-                                  <br/>
-                                  {new Date(invitation.expiresAt) < new Date() ? 
-                                    'This invitation has expired and can no longer be used.' : 
-                                    `Expires on ${new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}`}
-                                </>
-                              )}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    
-                    {invitation.status === 'PENDING' && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => resendInvitation(invitation.id)}
-                          disabled={resendingIds.has(invitation.id)}
-                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 shadow-sm"
-                        >
-                          {resendingIds.has(invitation.id) ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-3 w-3" />
-                          )}
-                          {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => revokeInvitation(invitation.id)}
-                          disabled={revokingIds.has(invitation.id)}
-                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-red-50 hover:border-red-200 hover:text-red-700 shadow-sm"
-                        >
-                          {revokingIds.has(invitation.id) ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <X className="h-3 w-3" />
-                          )}
-                          {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => activateTeacher(invitation)}
-                          disabled={activatingEmails.has(invitation.email)}
-                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
-                        >
-                          {activatingEmails.has(invitation.email) ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <CheckCircle className="h-3 w-3" />
-                          )}
-                          {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
-                        </Button>
-                      </div>
-                    )}
-                    {invitation.status === 'ACCEPTED' && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => activateTeacher(invitation)}
-                          disabled={activatingEmails.has(invitation.email)}
-                          className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
-                        >
-                          {activatingEmails.has(invitation.email) ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <CheckCircle className="h-3 w-3" />
-                          )}
-                          {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="text-xs text-slate-500 space-y-1">
-                    <div>
-                      <span className="font-medium">Invited by:</span>{' '}
-                      {invitation.invitedBy ? (
-                        <span>{invitation.invitedBy.name} ({invitation.invitedBy.email})</span>
-                      ) : (
-                        <span>System</span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="font-medium">Created:</span>{' '}
-                      {new Date(invitation.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </div>
-                    {invitation.expiresAt && (
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Expires:</span>{' '}
-                        <span className={`
-                          ${new Date(invitation.expiresAt) < new Date() ? 'text-red-600 font-medium' : 
-                           new Date(invitation.expiresAt) < new Date(Date.now() + 24 * 60 * 60 * 1000) ? 'text-orange-600 font-medium' : 
-                           ''}
-                        `}>
-                          {new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </span>
-                        {new Date(invitation.expiresAt) < new Date() && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
-                            Expired
-                          </Badge>
-                        )}
-                        {new Date(invitation.expiresAt) < new Date(Date.now() + 24 * 60 * 60 * 1000) && 
-                          new Date(invitation.expiresAt) > new Date() && (
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
-                              Soon
-                            </Badge>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Medium Device 2-Row Layout - Up to 17 inch screens */}
-            <div className="hidden sm:block 2xl:hidden">
-              <div className="space-y-6 p-4">
-                {invitations.map((invitation, index) => (
-                  <div
-                    key={invitation.id}
-                    className="rounded-xl border border-slate-200/80 p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                  >
-                    {/* First Row */}
-                    <div className="grid grid-cols-12 gap-4 mb-4">
-                      <div className="col-span-6 flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
-                          {invitation.email}
-                        </span>
-                      </div>
-                      <div className="col-span-2">
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                          {invitation.role}
-                        </Badge>
-                      </div>
-                      <div className="col-span-2 flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          invitation.status === 'PENDING' ? 'bg-yellow-500' : 
-                          invitation.status === 'ACCEPTED' ? 'bg-green-500' : 
-                          invitation.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'
-                        }`} />
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-1">
-                                <Badge variant="outline" className={`
-                                  text-xs ${
-                                    invitation.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                                    invitation.status === 'ACCEPTED' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                    invitation.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 
-                                    'bg-gray-50 text-gray-700 border-gray-200'
-                                  }
-                                `}>
-                                  {invitation.status}
-                                </Badge>
-                                <InfoIcon className="h-3.5 w-3.5 text-slate-400" />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs">
-                              <p className="text-xs">
-                                {invitation.status === 'PENDING' ? 
-                                  'This invitation is awaiting the teacher to accept and create their account.' : 
-                                  invitation.status === 'ACCEPTED' ? 
-                                  'The teacher has accepted this invitation and created an account.' : 
-                                  invitation.status === 'REJECTED' ? 
-                                  'This invitation has been rejected by the teacher.' : 
-                                  'Status unknown.'}
-                                {invitation.expiresAt && (
-                                  <>
-                                    <br/>
-                                    {new Date(invitation.expiresAt) < new Date() ? 
-                                      'This invitation has expired and can no longer be used.' : 
-                                      `Expires on ${new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}`}
-                                  </>
-                                )}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <div className="col-span-2 flex justify-end gap-2">
-                        {invitation.status === 'PENDING' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => resendInvitation(invitation.id)}
-                              disabled={resendingIds.has(invitation.id)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 shadow-sm"
-                            >
-                              {resendingIds.has(invitation.id) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <RefreshCw className="h-3 w-3" />
-                              )}
-                              {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => revokeInvitation(invitation.id)}
-                              disabled={revokingIds.has(invitation.id)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-red-50 hover:border-red-200 hover:text-red-700 shadow-sm"
-                            >
-                              {revokingIds.has(invitation.id) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <X className="h-3 w-3" />
-                              )}
-                              {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => activateTeacher(invitation)}
-                              disabled={activatingEmails.has(invitation.email)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
-                            >
-                              {activatingEmails.has(invitation.email) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-3 w-3" />
-                              )}
-                              {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
-                            </Button>
-                          </>
-                        )}
-                        {invitation.status === 'ACCEPTED' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => activateTeacher(invitation)}
-                            disabled={activatingEmails.has(invitation.email)}
-                            className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
-                          >
-                            {activatingEmails.has(invitation.email) ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <CheckCircle className="h-3 w-3" />
-                            )}
-                            {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Second Row */}
-                    <div className="grid grid-cols-3 gap-4 text-xs text-slate-500">
-                      <div>
-                        <span className="font-medium">Invited by:</span>{' '}
-                        {invitation.invitedBy ? (
-                          <span className="break-all">{invitation.invitedBy.name} ({invitation.invitedBy.email})</span>
-                        ) : (
-                          <span>System</span>
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-medium">Created:</span>{' '}
-                        {new Date(invitation.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </div>
-                      {invitation.expiresAt && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Expires:</span>{' '}
-                          <span className={`
-                            ${new Date(invitation.expiresAt) < new Date() ? 'text-red-600 font-medium' : 
-                             new Date(invitation.expiresAt) < new Date(Date.now() + 24 * 60 * 60 * 1000) ? 'text-orange-600 font-medium' : 
-                             ''}
-                          `}>
-                            {new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </span>
-                          {new Date(invitation.expiresAt) < new Date() && (
-                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
-                              Expired
-                            </Badge>
-                          )}
-                          {new Date(invitation.expiresAt) < new Date(Date.now() + 24 * 60 * 60 * 1000) && 
-                            new Date(invitation.expiresAt) > new Date() && (
-                              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
-                                Soon
-                              </Badge>
-                            )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Desktop Table Layout - 17+ inch screens */}
-            <div className="hidden 2xl:block">
-              <table className="w-full">
-                <thead className={teachersTableHead}>
-                  <tr>
-                    <th className={teachersTh}>Email</th>
-                    <th className={teachersTh}>Role</th>
-                    <th className={teachersTh}>Status</th>
-                    <th className={teachersTh}>Invited by</th>
-                    <th className={teachersTh}>Created</th>
-                    <th className={teachersTh}>Expires</th>
-                    <th className={`${teachersTh} text-right`}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {invitations.map((invitation, index) => (
-                    <tr key={invitation.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                              <Mail className="h-4 w-4 text-slate-500" />
-                            </div>
-                          </div>
-                          <div className="ml-3 min-w-0 flex-1">
-                            <div className="text-sm font-medium text-slate-900 dark:text-slate-100 break-all">
-                              {invitation.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-200" variant="outline">
-                          {invitation.role}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className={`w-2 h-2 rounded-full ${
-                            invitation.status === 'PENDING' ? 'bg-yellow-500' : 
-                            invitation.status === 'ACCEPTED' ? 'bg-green-500' : 
-                            invitation.status === 'REJECTED' ? 'bg-red-500' : 'bg-gray-400'
-                          }`} />
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-1">
-                                  <Badge variant="outline" className={`
-                                    text-xs ${
-                                      invitation.status === 'PENDING' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                                      invitation.status === 'ACCEPTED' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                      invitation.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 
-                                      'bg-gray-50 text-gray-700 border-gray-200'
-                                    }
-                                  `}>
-                                    {invitation.status}
-                                  </Badge>
-                                  <InfoIcon className="h-3.5 w-3.5 text-slate-400" />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">
-                                  {invitation.status === 'PENDING' ? 
-                                    'This invitation is awaiting the teacher to accept and create their account.' : 
-                                    invitation.status === 'ACCEPTED' ? 
-                                    'The teacher has accepted this invitation and created an account.' : 
-                                    invitation.status === 'REJECTED' ? 
-                                    'This invitation has been rejected by the teacher.' : 
-                                    'Status unknown.'}
-                                  {invitation.expiresAt && (
-                                    <>
-                                      <br/>
-                                      {new Date(invitation.expiresAt) < new Date() ? 
-                                        'This invitation has expired and can no longer be used.' : 
-                                        `Expires on ${new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                                          year: 'numeric',
-                                          month: 'long',
-                                          day: 'numeric',
-                                          hour: '2-digit',
-                                          minute: '2-digit'
-                                        })}`}
-                                    </>
-                                  )}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
-                        {invitation.invitedBy ? (
-                          <div className="min-w-0">
-                            <div className="font-medium break-words">{invitation.invitedBy.name}</div>
-                            <div className="text-slate-500 break-all text-xs">{invitation.invitedBy.email}</div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">System</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
-                        {new Date(invitation.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
-                        {invitation.expiresAt ? (
-                          <div className="flex items-center gap-2">
-                            <span className={`
-                              ${new Date(invitation.expiresAt) < new Date() ? 'text-red-600' : 
-                               new Date(invitation.expiresAt) < new Date(Date.now() + 24 * 60 * 60 * 1000) ? 'text-orange-600' : 
-                               'text-slate-700 dark:text-slate-300'}
-                            `}>
-                              {new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </span>
-                            {new Date(invitation.expiresAt) < new Date() && (
-                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs">
-                                Expired
-                              </Badge>
-                            )}
-                            {new Date(invitation.expiresAt) < new Date(Date.now() + 24 * 60 * 60 * 1000) && 
-                              new Date(invitation.expiresAt) > new Date() && (
-                                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 text-xs">
-                                  Soon
-                                </Badge>
-                              )}
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">Never</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-right">
-                        {invitation.status === 'PENDING' && (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => resendInvitation(invitation.id)}
-                              disabled={resendingIds.has(invitation.id)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 shadow-sm"
-                            >
-                              {resendingIds.has(invitation.id) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <RefreshCw className="h-3 w-3" />
-                              )}
-                              {resendingIds.has(invitation.id) ? 'Sending...' : 'Resend'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => revokeInvitation(invitation.id)}
-                              disabled={revokingIds.has(invitation.id)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-red-50 hover:border-red-200 hover:text-red-700 shadow-sm"
-                            >
-                              {revokingIds.has(invitation.id) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <X className="h-3 w-3" />
-                              )}
-                              {revokingIds.has(invitation.id) ? 'Revoking...' : 'Revoke'}
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => activateTeacher(invitation)}
-                              disabled={activatingEmails.has(invitation.email)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
-                            >
-                              {activatingEmails.has(invitation.email) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-3 w-3" />
-                              )}
-                              {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
-                            </Button>
-                          </div>
-                        )}
-                        {invitation.status === 'ACCEPTED' && (
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => activateTeacher(invitation)}
-                              disabled={activatingEmails.has(invitation.email)}
-                              className="flex items-center gap-2 text-xs bg-white dark:bg-slate-800 hover:bg-green-50 hover:border-green-200 hover:text-green-700 shadow-sm"
-                            >
-                              {activatingEmails.has(invitation.email) ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-3 w-3" />
-                              )}
-                              {activatingEmails.has(invitation.email) ? 'Activating...' : 'Activate'}
-                            </Button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 bg-slate-50/80 text-left dark:border-slate-800 dark:bg-slate-900/60">
+              <th className={teachersTh}>Email</th>
+              <th className={teachersTh}>Role</th>
+              <th className={teachersTh}>Status</th>
+              <th className={cn(teachersTh, "hidden sm:table-cell")}>Invited by</th>
+              <th className={cn(teachersTh, "hidden md:table-cell")}>Created</th>
+              <th className={cn(teachersTh, "hidden lg:table-cell")}>Expires</th>
+              <th className={teachersTh}>Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {invitations.map((invitation) => (
+              <InvitationTableRow
+                key={invitation.id}
+                invitation={invitation}
+                resendingIds={resendingIds}
+                revokingIds={revokingIds}
+                activatingEmails={activatingEmails}
+                onResend={resendInvitation}
+                onRevoke={revokeInvitation}
+                onActivate={activateTeacher}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

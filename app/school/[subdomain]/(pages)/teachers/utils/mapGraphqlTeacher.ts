@@ -9,7 +9,7 @@ export type TeachersListItem = {
   dateOfBirth: string;
   joinDate: string;
   employeeId: string;
-  status: "active" | "on leave" | "former" | "substitute" | "retired";
+  status: "active" | "inactive" | "on leave" | "former" | "substitute" | "retired";
   designation: string;
   department: string;
   subjects: string[];
@@ -58,10 +58,11 @@ export function mapGraphqlTeacherToListItem(
     userId: teacher.user?.id ?? "",
     name,
     employeeId: `TCH/${new Date().getFullYear()}/${teacher.id.slice(-6).toUpperCase()}`,
-    gender: "male",
+    gender:
+      teacher.gender?.toLowerCase() === "female" ? "female" : "male",
     dateOfBirth: "1980-01-01",
     joinDate: new Date().toISOString().split("T")[0],
-    status: teacher.isActive ? "active" : "former",
+    status: teacher.isActive ? "active" : "inactive",
     designation: teacher.role || "teacher",
     department: teacher.department || "General",
     subjects: subjects.length > 0 ? subjects : ["General"],

@@ -9,6 +9,7 @@ import {
   PanelLeftOpen,
   CheckCircle,
   Loader2,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateTeacherDrawer } from "./components/CreateTeacherDrawer";
@@ -16,7 +17,9 @@ import { TeachersSearchSidebar } from "./components/TeachersSearchSidebar";
 import { TeacherDetailView } from "./components/TeacherDetailView";
 import { TeachersStats } from "./components/TeachersStats";
 import { TeachersTable } from "./components/TeachersTable";
+import { TeachersFilterBar } from "./components/TeachersFilterBar";
 import { PendingInvitations } from "./components/PendingInvitations";
+import { matchesStaffFilter, type StaffFilter } from "./utils/teachers-utils";
 import { usePendingInvitationsStore } from "@/lib/stores/usePendingInvitationsStore";
 import { useGetTeachers } from "@/lib/hooks/useTeachers";
 import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
@@ -54,6 +57,7 @@ function TeachersPage() {
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [displayedTeachersCount, setDisplayedTeachersCount] = useState(10);
   const [teacherCreated, setTeacherCreated] = useState(false);
+  const [staffFilter, setStaffFilter] = useState<StaffFilter>("all");
   const searchParams = useSearchParams();
   const openAddTeacher = searchParams.get("action") === "add";
 
@@ -88,7 +92,9 @@ function TeachersPage() {
 
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
+      if (!matchesStaffFilter(teacher.status, staffFilter)) return false;
       const q = searchTerm.toLowerCase();
+      if (!q) return true;
       return (
         teacher.name.toLowerCase().includes(q) ||
         teacher.employeeId.toLowerCase().includes(q) ||
@@ -96,7 +102,21 @@ function TeachersPage() {
         teacher.subjects.some((subject) => subject.toLowerCase().includes(q))
       );
     });
-  }, [teachers, searchTerm]);
+  }, [teachers, searchTerm, staffFilter]);
+
+  const filterCounts = useMemo(
+    () => ({
+      all: teachers.length,
+      active: teachers.filter((t) => t.status === "active").length,
+      needsSetup: teachers.filter((t) => t.status === "inactive").length,
+    }),
+    [teachers],
+  );
+
+  const selectedTeacher = useMemo(
+    () => teachers.find((t) => t.id === selectedTeacherId) ?? null,
+    [teachers, selectedTeacherId],
+  );
 
   const handleTeacherCreated = () => {
     setTeacherCreated(true);
@@ -123,33 +143,40 @@ function TeachersPage() {
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
           "md:relative md:translate-x-0",
-          isSidebarMinimized ? "w-0 overflow-hidden border-r-0 md:w-0" : "w-64",
+          isSidebarMinimized ? "w-14" : "w-64",
         )}
       >
+        <div
+          className={cn(
+            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+            isSidebarMinimized ? "justify-center" : "justify-end",
+          )}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
         {!isSidebarMinimized && (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex shrink-0 justify-end border-b border-slate-200/80 px-2 py-2 dark:border-slate-800">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                onClick={() => setIsSidebarMinimized(true)}
-              >
-                <PanelLeftClose className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex-1 overflow-hidden px-3 pb-3">
-              <TeachersSearchSidebar
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                selectedTeacherId={selectedTeacherId}
-                onTeacherSelect={setSelectedTeacherId}
-                displayedTeachersCount={displayedTeachersCount}
-                onLoadMore={() =>
-                  setDisplayedTeachersCount((prev) => prev + 10)
-                }
-              />
-            </div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3">
+            <TeachersSearchSidebar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedTeacherId={selectedTeacherId}
+              onTeacherSelect={setSelectedTeacherId}
+              displayedTeachersCount={displayedTeachersCount}
+              onLoadMore={() =>
+                setDisplayedTeachersCount((prev) => prev + 10)
+              }
+            />
           </div>
         )}
       </div>
@@ -161,25 +188,17 @@ function TeachersPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  {selectedTeacherId ? "Teacher details" : "Teachers"}
+                  {selectedTeacher
+                    ? selectedTeacher.name
+                    : "Teachers"}
                 </h1>
-                {!selectedTeacherId && (
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    Manage staff, invitations, and assignments.
-                  </p>
-                )}
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {selectedTeacher
+                    ? `${selectedTeacher.department} · ${selectedTeacher.status === "active" ? "Active" : "Not activated"}`
+                    : "Manage staff, invitations, and assignments"}
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                {isSidebarMinimized && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                    onClick={() => setIsSidebarMinimized(false)}
-                  >
-                    <PanelLeftOpen className="h-4 w-4" />
-                  </Button>
-                )}
                 {!selectedTeacherId && (
                   <CreateTeacherDrawer
                     onTeacherCreated={handleTeacherCreated}
@@ -240,14 +259,58 @@ function TeachersPage() {
                   void refetchTeachers();
                   setSelectedTeacherId(null);
                 }}
+                onTeacherUpdated={() => {
+                  void refetchTeachers();
+                }}
               />
+            ) : teachers.length === 0 && !teachersLoading ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center dark:border-slate-800 dark:bg-slate-900/40">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                  <Users className="h-6 w-6 text-slate-400" />
+                </div>
+                <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  No teachers yet
+                </h2>
+                <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
+                  Invite your first teacher to get started. They&apos;ll receive an
+                  email to set up their account.
+                </p>
+                <div className="mt-5 flex justify-center">
+                  <CreateTeacherDrawer
+                    onTeacherCreated={handleTeacherCreated}
+                    defaultOpen={openAddTeacher}
+                  />
+                </div>
+              </div>
             ) : (
-              <>
+              <div className="space-y-5">
                 <TeachersStats
                   teachers={teachers}
                   pendingCount={invitations.length}
                   isLoading={teachersLoading}
                 />
+
+                {!teachersLoading && teachers.length > 0 && (
+                  <TeachersFilterBar
+                    filter={staffFilter}
+                    onFilterChange={setStaffFilter}
+                    counts={filterCounts}
+                  />
+                )}
+
+                {searchTerm && !selectedTeacherId && (
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Filtering by</span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900"
+                    >
+                      &ldquo;{searchTerm}&rdquo;
+                      <span className="text-slate-400">×</span>
+                    </button>
+                  </div>
+                )}
 
                 <PendingInvitations
                   invitations={invitations}
@@ -272,7 +335,7 @@ function TeachersPage() {
                   onTeacherSelect={setSelectedTeacherId}
                   onTeacherDelete={handleTeacherDelete}
                 />
-              </>
+              </div>
             )}
           </div>
         </div>

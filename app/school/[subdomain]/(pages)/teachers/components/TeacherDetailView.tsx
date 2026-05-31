@@ -16,46 +16,71 @@ import {
 import { SetTeacherPasswordDialog } from "./SetTeacherPasswordDialog";
 import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
 import { toast } from "sonner";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  User, 
-  Phone,
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  User,
   Mail,
-  MapPin,
   GraduationCap,
   Award,
-  Calendar,
   School,
   BookOpen,
-  Info,
   Copy,
   RefreshCw,
   Loader2,
   AlertCircle,
   KeyRound,
   Trash2,
+  CheckCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { useTeacherDetailSummary } from "@/lib/hooks/useTeacherDetailSummary";
 import { TeacherAcademicEditor } from "./TeacherAcademicEditor";
-import { teachersPanel, teachersPanelMuted } from "./teachers-ui";
+import { teachersPanel } from "./teachers-ui";
+import { TeacherAvatar } from "./TeacherAvatar";
+import { cn } from "@/lib/utils";
 
 interface TeacherDetailViewProps {
   teacherId: string;
   tenantId?: string | null;
   onClose?: () => void;
   onTeacherRemoved?: () => void;
+  onTeacherUpdated?: () => void;
+}
+
+function formatGender(gender?: string) {
+  if (!gender?.trim()) return null;
+  return gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
+}
+
+function InfoSection({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-800">
+      <h3 className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        <Icon className="h-3 w-3 shrink-0" />
+        {title}
+      </h3>
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">{children}</div>
+    </section>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5 first:pt-0 last:pb-0">
+      <span className="shrink-0 text-[11px] text-slate-400">{label}</span>
+      <span className="min-w-0 text-right text-xs font-medium text-slate-700 dark:text-slate-200">
+        {value}
+      </span>
+    </div>
+  );
 }
 
 export function TeacherDetailView({
@@ -63,18 +88,21 @@ export function TeacherDetailView({
   tenantId,
   onClose,
   onTeacherRemoved,
+  onTeacherUpdated,
 }: TeacherDetailViewProps) {
-  const { teacherDetail, loading, error, refetch } = useTeacherDetailSummary(teacherId);
+  const { teacherDetail, loading, error, refetch } =
+    useTeacherDetailSummary(teacherId);
   const {
     deleteTeacherRecord,
     setTeacherPassword,
+    activateTeacherRecord,
     isDeleting,
     isSettingPassword,
+    isActivating,
   } = useTeacherAdminActions();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
-  // Show loading state
   if (loading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
@@ -103,7 +131,12 @@ export function TeacherDetailView({
 
   const teacher = teacherDetail;
   const displayName = teacher.fullName || teacher.user.name;
+  const email = teacher.email || teacher.user.email;
+  const gender = formatGender(teacher.gender);
   const userId = teacher.user?.id;
+  const grades = teacher.tenantGradeLevels
+    .map((g) => g.gradeLevel?.name || "Unknown")
+    .join(", ");
 
   const handleRemove = async () => {
     if (!tenantId) {
@@ -123,91 +156,111 @@ export function TeacherDetailView({
     }
   };
 
+  const handleActivate = async () => {
+    try {
+      const result = await activateTeacherRecord(teacher.id);
+      toast.success(result.message || `${displayName} has been activated`);
+      await refetch();
+      onTeacherUpdated?.();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to activate teacher",
+      );
+    }
+  };
+
   return (
     <div className="space-y-5">
       {onClose && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
+          type="button"
           onClick={onClose}
-          className="h-8 px-2 text-xs text-slate-500 hover:text-slate-800"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
         >
-          ← Back to list
-        </Button>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to list
+        </button>
       )}
 
       <div className={`${teachersPanel} p-5`}>
-        <div className="flex flex-col gap-5 md:flex-row">
-          <div className="shrink-0">
-            <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-slate-200/80">
-              <div className="flex h-full w-full items-center justify-center bg-slate-100">
-                <User className="h-10 w-10 text-slate-400" />
-              </div>
-              <div
-                className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white ${
-                  teacher.isActive ? "bg-emerald-500" : "bg-slate-300"
-                }`}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-between">
-            <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-4">
+            <TeacherAvatar name={displayName} size="lg" />
+            <div className="min-w-0">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {teacher.fullName || teacher.user.name}
+                {displayName}
               </h2>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 {teacher.department && (
-                  <div className="flex items-center gap-1">
-                    <Award className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{teacher.department}</span>
-                  </div>
+                  <span className="inline-flex items-center gap-1 capitalize">
+                    <Award className="h-3 w-3 text-slate-400" />
+                    {teacher.department}
+                  </span>
                 )}
                 {teacher.role && (
-                  <div className="flex items-center gap-1">
-                    <User className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{teacher.role}</span>
-                  </div>
+                  <Badge
+                    variant="outline"
+                    className="border-sky-200 bg-sky-50 text-[10px] font-normal capitalize text-sky-700"
+                  >
+                    {teacher.role}
+                  </Badge>
                 )}
-                {teacher.tenantGradeLevels.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{teacher.tenantGradeLevels.map(g => g.gradeLevel?.name || 'Unknown').join(', ')}</span>
-                  </div>
+                {grades && (
+                  <span className="inline-flex items-center gap-1">
+                    <GraduationCap className="h-3 w-3 text-slate-400" />
+                    {grades}
+                  </span>
                 )}
                 {teacher.tenantSubjects.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{teacher.tenantSubjects.length} Subject{teacher.tenantSubjects.length !== 1 ? 's' : ''}</span>
-                  </div>
+                  <span className="inline-flex items-center gap-1">
+                    <BookOpen className="h-3 w-3 text-slate-400" />
+                    {teacher.tenantSubjects.length} subject
+                    {teacher.tenantSubjects.length !== 1 ? "s" : ""}
+                  </span>
                 )}
               </div>
-            </div>
-            
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge
-                variant="outline"
-                className={`text-xs capitalize ${
-                  teacher.isActive
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-slate-200 bg-slate-50 text-slate-600"
-                }`}
-              >
-                {teacher.isActive ? 'Active' : 'Inactive'}
-              </Badge>
+              <div className="mt-2">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] font-normal",
+                    teacher.isActive
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-amber-200 bg-amber-50 text-amber-700",
+                  )}
+                >
+                  {teacher.isActive ? "Active" : "Not activated"}
+                </Badge>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 md:justify-end">
+          <div className="flex flex-wrap gap-2">
+            {!teacher.isActive && (
+              <Button
+                type="button"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => void handleActivate()}
+                disabled={isActivating}
+              >
+                {isActivating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-3.5 w-3.5" />
+                )}
+                {isActivating ? "Activating…" : "Activate"}
+              </Button>
+            )}
             {userId ? (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs"
+                className="h-8 gap-1.5 text-xs"
                 onClick={() => setPasswordDialogOpen(true)}
               >
-                <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+                <KeyRound className="h-3.5 w-3.5" />
                 Set password
               </Button>
             ) : null}
@@ -215,11 +268,11 @@ export function TeacherDetailView({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 border-red-200 text-xs text-red-700 hover:bg-red-50 hover:text-red-800"
+              className="h-8 gap-1.5 border-red-200 text-xs text-red-700 hover:bg-red-50"
               onClick={() => setRemoveDialogOpen(true)}
-              disabled={isDeleting}
+              disabled={isDeleting || !tenantId}
             >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              <Trash2 className="h-3.5 w-3.5" />
               Remove
             </Button>
           </div>
@@ -263,272 +316,269 @@ export function TeacherDetailView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-      {/* Teacher details tabs */}
+
       <Tabs defaultValue="details">
         <TabsList className="mb-4 grid h-9 grid-cols-3 rounded-lg border border-slate-200/80 bg-slate-50/80 p-0.5 dark:border-slate-800">
-          <TabsTrigger value="details" className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">Details</TabsTrigger>
-          <TabsTrigger value="academic" className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">Academic</TabsTrigger>
-          <TabsTrigger value="assignments" className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm">Assignments</TabsTrigger>
+          <TabsTrigger
+            value="details"
+            className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Details
+          </TabsTrigger>
+          <TabsTrigger
+            value="academic"
+            className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Academic
+          </TabsTrigger>
+          <TabsTrigger
+            value="assignments"
+            className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Assignments
+          </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="details">
-          <Card className={`${teachersPanel} overflow-hidden`}>
-            <CardHeader className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Teacher Information</CardTitle>
-              <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Detailed personal information about {teacher.fullName || teacher.user.name}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Personal Information */}
-                <div className={`${teachersPanelMuted} p-5`}>
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
-                      <User className="h-3 w-3" />
-                      Personal Information
-                    </h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Full Name</div>
-                      <div className="font-mono text-sm text-[var(--color-text)] text-right">{teacher.fullName || teacher.user.name}</div>
-                    </div>
-                    {teacher.gender && (
-                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Gender</div>
-                        <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.gender.toLowerCase()}</div>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center py-2">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Status</div>
-                      <Badge className={`font-mono text-xs capitalize ${
-                        teacher.isActive 
-                          ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' 
-                          : 'bg-[var(--color-textSecondary)]/10 text-[var(--color-textSecondary)] border-[var(--color-textSecondary)]/20'
-                      }`}>
-                        {teacher.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Professional Information */}
-                <div className={`${teachersPanelMuted} p-5`}>
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
-                      <Award className="h-3 w-3" />
-                      Professional Information
-                    </h3>
-                  </div>
-                  <div className="space-y-3">
-                    {teacher.department && (
-                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Department</div>
-                        <div className="font-mono text-sm text-[var(--color-text)]">{teacher.department}</div>
-                      </div>
-                    )}
-                    {teacher.role && (
-                      <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Role</div>
-                        <div className="font-mono text-sm text-[var(--color-text)] capitalize">{teacher.role}</div>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center py-2">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">School</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{teacher.tenant.name}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Contact Information */}
-                <div className={`${teachersPanelMuted} p-5`}>
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center gap-2">
-                      <Mail className="h-3 w-3" />
-                      Contact Information
-                    </h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-start py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)] flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        Email
-                      </div>
-                      <div className="flex items-center gap-2 max-w-[60%]">
-                        <div className="font-mono text-sm text-[var(--color-text)] text-right break-all">{teacher.email || teacher.user.email}</div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10 shrink-0"
-                          onClick={() => navigator.clipboard.writeText(teacher.email || teacher.user.email)}
+        <TabsContent value="details">
+          <div className={`${teachersPanel} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
+              <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                Teacher information
+              </h3>
+              <p className="text-[10px] text-slate-400">
+                Personal and contact details for {displayName}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-3">
+              <InfoSection title="Personal information" icon={User}>
+                <InfoRow label="Full name" value={displayName} />
+                {gender && <InfoRow label="Gender" value={gender} />}
+                <InfoRow
+                  label="Status"
+                  value={
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px] font-normal",
+                        teacher.isActive
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-amber-200 bg-amber-50 text-amber-700",
+                      )}
+                    >
+                      {teacher.isActive ? "Active" : "Not activated"}
+                    </Badge>
+                  }
+                />
+              </InfoSection>
+
+              <InfoSection title="Professional information" icon={Award}>
+                {teacher.department && (
+                  <InfoRow
+                    label="Department"
+                    value={
+                      <span className="capitalize">{teacher.department}</span>
+                    }
+                  />
+                )}
+                {teacher.role && (
+                  <InfoRow
+                    label="Role"
+                    value={
+                      <Badge
+                        variant="outline"
+                        className="border-sky-200 bg-sky-50 text-[10px] font-normal capitalize text-sky-700"
+                      >
+                        {teacher.role}
+                      </Badge>
+                    }
+                  />
+                )}
+                <InfoRow label="School" value={teacher.tenant.name} />
+              </InfoSection>
+
+              <InfoSection title="Contact information" icon={Mail}>
+                <InfoRow
+                  label="Email"
+                  value={
+                    email ? (
+                      <span className="inline-flex items-center gap-1">
+                        <a
+                          href={`mailto:${email}`}
+                          className="break-all text-emerald-700 hover:underline dark:text-emerald-400"
+                        >
+                          {email}
+                        </a>
+                        <button
+                          type="button"
+                          className="shrink-0 text-slate-400 hover:text-slate-600"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(email);
+                            toast.success("Email copied");
+                          }}
                         >
                           <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    {teacher.phoneNumber && (
-                      <div className="flex justify-between items-center py-2">
-                        <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)] flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          Phone
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="font-mono text-sm text-[var(--color-text)]">{teacher.phoneNumber}</div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10"
-                            onClick={() => navigator.clipboard.writeText(teacher.phoneNumber || '')}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    {!teacher.phoneNumber && (
-                      <div className="text-xs font-mono text-[var(--color-textSecondary)] italic py-2">
-                        No phone number provided
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="academic">
-          <Card className={`${teachersPanel} overflow-hidden`}>
-            <CardHeader className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Academic Information</CardTitle>
-                  <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                    Subjects, grade levels, and streams assigned to {teacher.fullName || teacher.user.name}
-                  </CardDescription>
-                </div>
-                <TeacherAcademicEditor
-                  teacherId={teacher.id}
-                  teacherName={teacher.fullName || teacher.user.name}
-                  initialSubjectIds={teacher.tenantSubjects.map((s) => s.id)}
-                  initialGradeLevelIds={teacher.tenantGradeLevels.map((g) => g.id)}
-                  initialStreamIds={teacher.tenantStreams.map((s) => s.id)}
-                  tenantSubjects={teacher.tenantSubjects}
-                  tenantGradeLevels={teacher.tenantGradeLevels}
-                  tenantStreams={teacher.tenantStreams}
-                  onSaved={refetch}
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">Not provided</span>
+                    )
+                  }
                 />
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                {/* Subjects Section */}
-                <div className={`${teachersPanelMuted} p-5`}>
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                      <BookOpen className="h-3 w-3 mr-2" />
-                      Subjects Taught
-                    </h3>
-                  </div>
-                  {teacher.tenantSubjects.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {teacher.tenantSubjects.map((subject) => (
-                        <Badge key={subject.id} variant="outline" className="bg-green-50 text-green-700 border-green-200 font-mono text-xs">
-                          {subject.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm font-mono text-[var(--color-textSecondary)]">
-                      No subjects assigned yet. Use &quot;Edit subjects &amp; classes&quot; to add them.
-                    </p>
-                  )}
-                </div>
-
-                {/* Grade Levels Section */}
-                <div className={`${teachersPanelMuted} p-5`}>
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                      <GraduationCap className="h-3 w-3 mr-2" />
-                      Grade Levels
-                    </h3>
-                  </div>
-                  {teacher.tenantGradeLevels.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {teacher.tenantGradeLevels.map((gradeLevel) => (
-                        <Badge key={gradeLevel.id} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 font-mono text-xs">
-                          {gradeLevel.gradeLevel?.name || 'Unknown Grade Level'}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm font-mono text-[var(--color-textSecondary)]">
-                      No grade levels assigned yet.
-                    </p>
-                  )}
-                </div>
-
-                {/* Streams Section */}
-                <div className={`${teachersPanelMuted} p-5`}>
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                      <School className="h-3 w-3 mr-2" />
-                      Streams / Classes
-                    </h3>
-                  </div>
-                  {teacher.tenantStreams.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {teacher.tenantStreams.map((stream) => (
-                        <Badge key={stream.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-mono text-xs">
-                          {stream.stream?.name || "Stream"}
-                          {stream.tenantGradeLevel?.gradeLevel?.name
-                            ? ` · ${stream.tenantGradeLevel.gradeLevel.name}`
-                            : ""}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm font-mono text-[var(--color-textSecondary)]">
-                      No streams assigned. Streams are optional — if none are picked, all streams for the selected grades apply.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <InfoRow
+                  label="Phone"
+                  value={
+                    teacher.phoneNumber ? (
+                      <span className="inline-flex items-center gap-1">
+                        <a
+                          href={`tel:${teacher.phoneNumber}`}
+                          className="text-slate-800 hover:underline dark:text-slate-200"
+                        >
+                          {teacher.phoneNumber}
+                        </a>
+                        <button
+                          type="button"
+                          className="shrink-0 text-slate-400 hover:text-slate-600"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(
+                              teacher.phoneNumber || "",
+                            );
+                            toast.success("Phone copied");
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">Not provided</span>
+                    )
+                  }
+                />
+              </InfoSection>
+            </div>
+          </div>
         </TabsContent>
-        
+
+        <TabsContent value="academic">
+          <div className={`${teachersPanel} overflow-hidden`}>
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <div>
+                <h3 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  Academic information
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Subjects, grades, and streams for {displayName}
+                </p>
+              </div>
+              <TeacherAcademicEditor
+                teacherId={teacher.id}
+                teacherName={displayName}
+                initialSubjectIds={teacher.tenantSubjects.map((s) => s.id)}
+                initialGradeLevelIds={teacher.tenantGradeLevels.map((g) => g.id)}
+                initialStreamIds={teacher.tenantStreams.map((s) => s.id)}
+                tenantSubjects={teacher.tenantSubjects}
+                tenantGradeLevels={teacher.tenantGradeLevels}
+                tenantStreams={teacher.tenantStreams}
+                onSaved={refetch}
+              />
+            </div>
+            <div className="space-y-4 p-4">
+              <InfoSection title="Subjects taught" icon={BookOpen}>
+                {teacher.tenantSubjects.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {teacher.tenantSubjects.map((subject) => (
+                      <Badge
+                        key={subject.id}
+                        variant="outline"
+                        className="border-emerald-200 bg-emerald-50 text-[10px] font-normal text-emerald-700"
+                      >
+                        {subject.name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    No subjects assigned yet.
+                  </p>
+                )}
+              </InfoSection>
+
+              <InfoSection title="Grade levels" icon={GraduationCap}>
+                {teacher.tenantGradeLevels.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {teacher.tenantGradeLevels.map((gradeLevel) => (
+                      <Badge
+                        key={gradeLevel.id}
+                        variant="outline"
+                        className="border-violet-200 bg-violet-50 text-[10px] font-normal text-violet-700"
+                      >
+                        {gradeLevel.gradeLevel?.name || "Unknown"}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    No grade levels assigned yet.
+                  </p>
+                )}
+              </InfoSection>
+
+              <InfoSection title="Streams / classes" icon={School}>
+                {teacher.tenantStreams.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {teacher.tenantStreams.map((stream) => (
+                      <Badge
+                        key={stream.id}
+                        variant="outline"
+                        className="border-sky-200 bg-sky-50 text-[10px] font-normal text-sky-700"
+                      >
+                        {stream.stream?.name || "Stream"}
+                        {stream.tenantGradeLevel?.gradeLevel?.name
+                          ? ` · ${stream.tenantGradeLevel.gradeLevel.name}`
+                          : ""}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    No streams assigned.
+                  </p>
+                )}
+              </InfoSection>
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="assignments">
-          <Card className={`${teachersPanel} overflow-hidden`}>
-            <CardHeader className="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Class Teacher Assignments</CardTitle>
-              <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Classes where {teacher.fullName || teacher.user.name} serves as class teacher
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
+          <div className={`${teachersPanel} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+              <h3 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                Class teacher assignments
+              </h3>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Classes where {displayName} is the class teacher
+              </p>
+            </div>
+            <div className="p-4">
               {teacher.classTeacherAssignments.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {teacher.classTeacherAssignments.map((assignment) => (
-                    <div key={assignment.id} className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-4">
-                      <div className="flex items-center gap-2">
-                        <School className="h-4 w-4 text-[var(--color-primary)]" />
-                        <div className="font-mono text-sm text-[var(--color-text)]">
-                          {assignment.gradeLevel?.gradeLevel?.name || 'Unknown Grade Level'}
-                        </div>
-                      </div>
+                    <div
+                      key={assignment.id}
+                      className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50/50 px-3 py-2.5 text-sm dark:border-slate-800"
+                    >
+                      <School className="h-4 w-4 text-slate-400" />
+                      {assignment.gradeLevel?.gradeLevel?.name ||
+                        "Unknown grade"}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center p-8 text-[var(--color-textSecondary)] font-mono text-sm">
-                  No class teacher assignments found
-                </div>
+                <p className="py-8 text-center text-xs text-slate-400">
+                  No class teacher assignments
+                </p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

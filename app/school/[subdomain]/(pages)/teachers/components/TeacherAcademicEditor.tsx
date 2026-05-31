@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Drawer,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -15,7 +13,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useTenantSubjects } from "@/lib/hooks/useTenantSubjects";
 import { useGradeLevelsForSchoolType } from "@/lib/hooks/useGradeLevelsForSchoolType";
-import { BookOpen, GraduationCap, Loader2, Pencil, School } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { BookOpen, Loader2, Pencil, X } from "lucide-react";
 
 type TeacherSubject = { id: string; name: string };
 type TeacherGrade = {
@@ -48,6 +47,67 @@ const UPDATE_TEACHER_ASSIGNMENTS = `
   }
 `;
 
+function Section({
+  title,
+  count,
+  children,
+  muted,
+}: {
+  title: string;
+  count?: number;
+  children: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <section className={cn(muted && "opacity-50 pointer-events-none")}>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {title}
+        </h3>
+        {count !== undefined && (
+          <span className="text-[10px] tabular-nums text-slate-400">{count}</span>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SelectRow({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  hint?: string;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors",
+        checked
+          ? "border-emerald-200 bg-emerald-50/60"
+          : "border-transparent hover:border-slate-200 hover:bg-slate-50",
+      )}
+    >
+      <Checkbox
+        checked={checked}
+        onCheckedChange={onChange}
+        className="h-3.5 w-3.5"
+      />
+      <span className="min-w-0 flex-1 text-xs leading-tight text-slate-700">
+        {label}
+        {hint && (
+          <span className="ml-1 text-[10px] text-slate-400">({hint})</span>
+        )}
+      </span>
+    </label>
+  );
+}
+
 export function TeacherAcademicEditor({
   teacherId,
   teacherName,
@@ -78,6 +138,16 @@ export function TeacherAcademicEditor({
     [gradeLevelsData],
   );
 
+  const gradesByCurriculum = useMemo(() => {
+    const groups = new Map<string, typeof flatGrades>();
+    for (const grade of flatGrades) {
+      const list = groups.get(grade.curriculum) ?? [];
+      list.push(grade);
+      groups.set(grade.curriculum, list);
+    }
+    return Array.from(groups.entries());
+  }, [flatGrades]);
+
   const allSubjects = useMemo(
     () =>
       tenantSubjects.map((ts) => ({
@@ -87,6 +157,16 @@ export function TeacherAcademicEditor({
       })),
     [tenantSubjects],
   );
+
+  const subjectsByCurriculum = useMemo(() => {
+    const groups = new Map<string, typeof allSubjects>();
+    for (const subject of allSubjects) {
+      const list = groups.get(subject.curriculum) ?? [];
+      list.push(subject);
+      groups.set(subject.curriculum, list);
+    }
+    return Array.from(groups.entries());
+  }, [allSubjects]);
 
   const availableStreams = useMemo(
     () =>
@@ -106,6 +186,16 @@ export function TeacherAcademicEditor({
       availableStreams.filter((s) => selectedGradeIds.includes(s.gradeId)),
     [availableStreams, selectedGradeIds],
   );
+
+  const streamsByGrade = useMemo(() => {
+    const groups = new Map<string, typeof streamsForSelectedGrades>();
+    for (const stream of streamsForSelectedGrades) {
+      const list = groups.get(stream.gradeName) ?? [];
+      list.push(stream);
+      groups.set(stream.gradeName, list);
+    }
+    return Array.from(groups.entries());
+  }, [streamsForSelectedGrades]);
 
   useEffect(() => {
     if (!open) return;
@@ -204,6 +294,9 @@ export function TeacherAcademicEditor({
   };
 
   const loading = subjectsLoading || gradesLoading;
+  const gradesDone = selectedGradeIds.length > 0;
+  const subjectsDone = selectedSubjectIds.length > 0;
+  const canSave = gradesDone && subjectsDone && !loading && !saving;
 
   return (
     <>
@@ -212,143 +305,195 @@ export function TeacherAcademicEditor({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2 font-mono text-xs border-[var(--color-border)]"
+        className="h-7 gap-1 px-2.5 text-xs"
       >
-        <Pencil className="h-3.5 w-3.5" />
-        Edit subjects & classes
+        <Pencil className="h-3 w-3" />
+        Edit
       </Button>
 
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent className="max-h-[92vh]">
-          <DrawerHeader className="border-b border-slate-200 dark:border-slate-700">
-            <DrawerTitle className="font-mono">
-              Teaching assignments
-            </DrawerTitle>
-            <DrawerDescription>
-              Set subjects, grade levels, and streams for {teacherName}.
-            </DrawerDescription>
+      <Drawer open={open} onOpenChange={setOpen} direction="right">
+        <DrawerContent
+          className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-white dark:bg-slate-950 sm:max-w-xl lg:max-w-2xl"
+          data-vaul-drawer-direction="right"
+        >
+          <DrawerHeader className="shrink-0 space-y-0 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 shrink-0 text-slate-400" />
+              <div className="min-w-0 flex-1">
+                <DrawerTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Assignments
+                </DrawerTitle>
+                <p className="truncate text-[11px] text-slate-500">{teacherName}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 text-slate-400"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {!loading && (
+              <p className="mt-2 text-[10px] text-slate-400">
+                {selectedGradeIds.length} grades · {selectedSubjectIds.length}{" "}
+                subjects · {selectedStreamIds.length} streams
+              </p>
+            )}
           </DrawerHeader>
 
-          <div className="overflow-y-auto px-6 py-5 space-y-8">
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             {loading ? (
-              <div className="flex items-center justify-center py-12 text-slate-500">
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                Loading school data…
+              <div className="flex items-center justify-center gap-2 py-10 text-xs text-slate-400">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading…
               </div>
             ) : (
-              <>
-                <section>
-                  <div className="mb-3 flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-primary" />
-                    <Label className="text-sm font-semibold">Grade levels</Label>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    {flatGrades.map((grade) => (
-                      <label
-                        key={grade.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700"
-                      >
-                        <Checkbox
-                          checked={selectedGradeIds.includes(grade.id)}
-                          onCheckedChange={(checked) =>
-                            handleGradeToggle(grade.id, checked === true)
-                          }
-                        />
-                        <span>{grade.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </section>
-
-                {selectedGradeIds.length > 0 && (
-                  <section>
-                    <div className="mb-3 flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-semibold">Subjects</Label>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                      {allSubjects.map((subject) => (
-                        <label
-                          key={subject.id}
-                          className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700"
-                        >
-                          <Checkbox
-                            checked={selectedSubjectIds.includes(subject.id)}
-                            onCheckedChange={() =>
-                              toggleId(
-                                subject.id,
-                                selectedSubjectIds,
-                                setSelectedSubjectIds,
-                              )
-                            }
-                          />
-                          <span>{subject.name}</span>
-                        </label>
+              <div className="space-y-4">
+                <Section title="Grades" count={selectedGradeIds.length}>
+                  {flatGrades.length === 0 ? (
+                    <p className="text-[11px] text-slate-400">No grades configured.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {gradesByCurriculum.map(([curriculum, grades]) => (
+                        <div key={curriculum}>
+                          <p className="mb-1 px-1 text-[10px] font-medium text-slate-400">
+                            {curriculum}
+                          </p>
+                          <div className="grid grid-cols-3 gap-x-2 gap-y-0.5">
+                            {grades.map((grade) => (
+                              <SelectRow
+                                key={grade.id}
+                                checked={selectedGradeIds.includes(grade.id)}
+                                onChange={() =>
+                                  handleGradeToggle(
+                                    grade.id,
+                                    !selectedGradeIds.includes(grade.id),
+                                  )
+                                }
+                                label={grade.name}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  </section>
-                )}
+                  )}
+                </Section>
 
-                {selectedGradeIds.length > 0 && (
-                  <section>
-                    <div className="mb-3 flex items-center gap-2">
-                      <School className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-semibold">
-                        Streams / classes
-                      </Label>
+                <Section
+                  title="Subjects"
+                  count={selectedSubjectIds.length}
+                  muted={!gradesDone}
+                >
+                  {!gradesDone ? (
+                    <p className="px-1 text-[11px] text-slate-400">
+                      Select grades first.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {subjectsByCurriculum.map(([curriculum, subjects]) => (
+                        <div key={curriculum}>
+                          <p className="mb-1 px-1 text-[10px] font-medium text-slate-400">
+                            {curriculum}
+                          </p>
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                            {subjects.map((subject) => (
+                              <SelectRow
+                                key={subject.id}
+                                checked={selectedSubjectIds.includes(subject.id)}
+                                onChange={() =>
+                                  toggleId(
+                                    subject.id,
+                                    selectedSubjectIds,
+                                    setSelectedSubjectIds,
+                                  )
+                                }
+                                label={subject.name}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {streamsForSelectedGrades.length === 0 ? (
-                      <p className="text-sm text-slate-500 rounded-lg border border-dashed border-slate-200 p-4">
-                        No streams configured for the selected grades. Leave
-                        empty to include all streams when grades are saved.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        {streamsForSelectedGrades.map((stream) => (
-                          <label
-                            key={stream.id}
-                            className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700"
-                          >
-                            <Checkbox
-                              checked={selectedStreamIds.includes(stream.id)}
-                              onCheckedChange={() =>
-                                toggleId(
-                                  stream.id,
-                                  selectedStreamIds,
-                                  setSelectedStreamIds,
-                                )
-                              }
-                            />
-                            <span>
-                              {stream.name}{" "}
-                              <span className="text-slate-400">
-                                ({stream.gradeName})
-                              </span>
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                )}
-              </>
+                  )}
+                </Section>
+
+                <Section
+                  title="Streams (optional)"
+                  count={selectedStreamIds.length}
+                  muted={!gradesDone || !subjectsDone}
+                >
+                  {!gradesDone || !subjectsDone ? (
+                    <p className="px-1 text-[11px] text-slate-400">
+                      Complete grades & subjects first.
+                    </p>
+                  ) : streamsForSelectedGrades.length === 0 ? (
+                    <p className="px-1 text-[11px] text-slate-400">
+                      No streams — all streams apply.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {streamsByGrade.map(([gradeName, streams]) => (
+                        <div key={gradeName}>
+                          <p className="mb-1 px-1 text-[10px] font-medium text-slate-400">
+                            {gradeName}
+                          </p>
+                          <div className="grid grid-cols-3 gap-x-2 gap-y-0.5">
+                            {streams.map((stream) => (
+                              <SelectRow
+                                key={stream.id}
+                                checked={selectedStreamIds.includes(stream.id)}
+                                onChange={() =>
+                                  toggleId(
+                                    stream.id,
+                                    selectedStreamIds,
+                                    setSelectedStreamIds,
+                                  )
+                                }
+                                label={stream.name}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Section>
+              </div>
             )}
           </div>
 
-          <DrawerFooter className="border-t border-slate-200 dark:border-slate-700">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={saving || loading}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                "Save assignments"
-              )}
-            </Button>
+          <DrawerFooter className="shrink-0 border-t border-slate-100 px-3 py-2.5 dark:border-slate-800">
+            <div className="flex w-full gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setOpen(false)}
+                disabled={saving}
+                className="h-8 flex-1 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={!canSave}
+                className="h-8 flex-[2] text-xs"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </div>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
