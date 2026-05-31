@@ -34,8 +34,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Protect super admin dashboard routes
-  if (url.pathname.startsWith('/dashboard')) {
+  // Check if this is a subdomain (excluding www)
+  const isSubdomain = hostname.includes(isProd ? '.squl.co.ke' : '.localhost:3000') &&
+    !hostname.startsWith('www.') &&
+    hostname !== (isProd ? 'squl.co.ke' : 'localhost:3000')
+
+  // Protect super admin dashboard routes on the apex domain only.
+  // School subdomains also use /dashboard but rewrite to /school/[subdomain]/dashboard.
+  if (url.pathname.startsWith('/dashboard') && !isSubdomain) {
     const userRole = request.cookies.get('userRole')?.value
     const accessToken = request.cookies.get('accessToken')?.value
 
@@ -45,11 +51,6 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
   }
-
-  // Check if this is a subdomain (excluding www)
-  const isSubdomain = hostname.includes(isProd ? '.squl.co.ke' : '.localhost:3000') &&
-    !hostname.startsWith('www.') &&
-    hostname !== (isProd ? 'squl.co.ke' : 'localhost:3000')
 
   console.log('Middleware - Subdomain check:', {
     isSubdomain,
