@@ -168,9 +168,10 @@ export function usePeriodSlots() {
         ...(periodNumbersFromSlots.length === 0
           ? store.periodNumbers || []
           : []),
-        ...(store.timeSlots.length > 0 &&
+        ...(periodNumbersFromSlots.length === 0 &&
         store.lessonPeriodsPerDay &&
-        store.lessonPeriodsPerDay > 0
+        store.lessonPeriodsPerDay > 0 &&
+        store.lessonPeriodsPerDay <= 16
           ? Array.from(
               { length: store.lessonPeriodsPerDay },
               (_, i) => i + 1,

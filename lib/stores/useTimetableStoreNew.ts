@@ -2533,15 +2533,24 @@ export const useTimetableStore = create<TimetableStore>()(
 
           const gradeScopedSlots =
             gradeLevelId && timetableData
-              ? extractTimeSlotsFromTimetableData(timetableData, gradeLevelId)
+              ? extractTimeSlotsFromTimetableData(
+                  timetableData,
+                  gradeLevelId,
+                  streamId ?? null,
+                )
               : [];
 
           const schoolWideSlots = timetableData
             ? extractTimeSlotsFromTimetableData(timetableData)
             : [];
 
+          const existingSlots = get().timeSlots;
           const resolvedSlots =
-            gradeScopedSlots.length > 0 ? gradeScopedSlots : schoolWideSlots;
+            gradeScopedSlots.length > 0
+              ? gradeScopedSlots
+              : schoolWideSlots.length > 0
+                ? schoolWideSlots
+                : existingSlots;
 
           const slotPeriodNumbers =
             resolvedSlots.length > 0 ? uniquePeriodNumbers(resolvedSlots) : [];
@@ -2557,9 +2566,6 @@ export const useTimetableStore = create<TimetableStore>()(
               : 0,
             resolvedPeriodNumbers.length > 0
               ? Math.max(...resolvedPeriodNumbers)
-              : 0,
-            typeof timetableData.totalPeriods === "number"
-              ? timetableData.totalPeriods
               : 0,
           );
 

@@ -516,7 +516,14 @@ export function AdminTimetableGrid({
                     },
                     null,
                   );
-                  if (!baseSlot) return null;
+                  const rowSlot: TimeSlotInfo =
+                    baseSlot ?? {
+                      id: `period-${period}`,
+                      periodNumber: period,
+                      time: `Period ${period}`,
+                      startTime: "",
+                      endTime: "",
+                    };
 
                   const breaksAfter = getBreaksAfterPeriod(period);
                   const prevPeriodNumber =
@@ -558,7 +565,7 @@ export function AdminTimetableGrid({
                       >
                         <td className="sticky left-0 z-10 border-r border-zinc-200/90 bg-white p-0 align-middle dark:border-zinc-800 dark:bg-zinc-900">
                           <TimeColumnCell
-                            slot={baseSlot}
+                            slot={rowSlot}
                             period={period}
                             isDoubleBlockRow={rowHasDoubleBlock}
                             isDoubleContinuation={rowIsDoubleContinuation}

@@ -307,6 +307,8 @@ export default function SmartTimetableNew() {
 
   const isPageLoading =
     isLoadingInitial || termsLoading || academicYearsLoading;
+  const showGridSkeleton =
+    (isPageLoading || isLoadingTimetable) && !hasCachedTimetableData();
   const isGridLoading = isPageLoading || isLoadingTimetable;
 
   // A resource is "hard failed" if it errored AND its data is empty (no fallback)
@@ -417,7 +419,10 @@ export default function SmartTimetableNew() {
     }
 
     let cancelled = false;
-    setIsLoadingTimetable(true);
+    const hadCachedSchedule = hasCachedTimetableData();
+    if (!hadCachedSchedule) {
+      setIsLoadingTimetable(true);
+    }
     setTimetableError(false);
 
     void (async () => {
@@ -433,6 +438,7 @@ export default function SmartTimetableNew() {
 
     return () => {
       cancelled = true;
+      setIsLoadingTimetable(false);
     };
   }, [
     selectedGradeId,
@@ -441,6 +447,7 @@ export default function SmartTimetableNew() {
     selectedTermId,
     loadTimetableBundle,
     isLoadingInitial,
+    hasCachedTimetableData,
   ]);
 
   // Returning to whole-school view: reload term-wide timetable and clear class-only errors.
@@ -2120,7 +2127,7 @@ export default function SmartTimetableNew() {
                         <RetryingSpinner className="justify-center" />
                       ) : null}
                     </div>
-                  ) : isGridLoading ? (
+                  ) : showGridSkeleton ? (
                     <TimetableGridSkeleton combined={!selectedGradeId} />
                   ) : !selectedGradeId ? (
                       <AdminTimetableGrid

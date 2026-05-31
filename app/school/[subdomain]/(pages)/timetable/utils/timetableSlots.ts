@@ -41,16 +41,34 @@ export function extractTimeSlotsFromTimetableData(
     }>;
   },
   tenantGradeLevelId?: string,
+  streamId?: string | null,
 ): TimeSlot[] {
   const slots: TimeSlot[] = [];
   const seenIds = new Set<string>();
 
   const matchingGradeBlocks = (timetableData.timetableByGrade || []).filter(
-    (block) =>
-      !tenantGradeLevelId || block.gradeLevel?.id === tenantGradeLevelId,
+    (block) => {
+      if (
+        tenantGradeLevelId &&
+        block.gradeLevel?.id !== tenantGradeLevelId
+      ) {
+        return false;
+      }
+      if (streamId && block.stream?.id !== streamId) {
+        return false;
+      }
+      return true;
+    },
   );
 
-  const gradeDays = matchingGradeBlocks.flatMap((block) => block.days || []);
+  const gradeOnlyBlocks =
+    tenantGradeLevelId && streamId && matchingGradeBlocks.length === 0
+      ? (timetableData.timetableByGrade || []).filter(
+          (block) => block.gradeLevel?.id === tenantGradeLevelId,
+        )
+      : matchingGradeBlocks;
+
+  const gradeDays = gradeOnlyBlocks.flatMap((block) => block.days || []);
   const scheduleDays =
     timetableData.schedule && timetableData.schedule.length > 0
       ? timetableData.schedule
