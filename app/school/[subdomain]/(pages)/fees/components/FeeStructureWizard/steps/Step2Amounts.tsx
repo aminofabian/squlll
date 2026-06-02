@@ -33,6 +33,8 @@ interface BucketAmount {
     name: string
     amount: number
     isMandatory: boolean
+    /** Optional GraphQL item id (used when updating existing bucket items) */
+    itemId?: string
 }
 
 interface Step2AmountsProps {

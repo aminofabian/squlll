@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, type ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -54,6 +54,9 @@ interface StudentDetailsViewProps {
   embedded?: boolean;
   onEnrollmentUpdated?: () => void;
 }
+
+type ReportCardProps = ComponentProps<typeof SchoolReportCard>
+type Subject = ReportCardProps["subjects"][number]
 
 function DetailField({
   label,
@@ -697,9 +700,10 @@ export function StudentDetailsView({
                             schoolConfig?.tenant?.subdomain || "school",
                         }}
                         subjects={
-                          schoolConfig?.selectedLevels?.flatMap(
-                            (level) => (level as { subjects?: unknown[] }).subjects ?? [],
-                          ) || []
+                          (schoolConfig?.selectedLevels?.flatMap(
+                            (level) =>
+                              (level as { subjects?: unknown[] }).subjects ?? [],
+                          ) || []) as Subject[]
                         }
                         term="1"
                         year="2024"

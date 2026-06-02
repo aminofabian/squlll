@@ -122,9 +122,18 @@ export function useWizardTermAmounts(
     const persistDraftFromForm = useCallback(
         (splitsOverride?: Record<string, number>) => {
             if (!setupDraft || !onSetupDraftChange) return
-            const next = syncWizardFormToSetupDraft(setupDraft, formData, {
-                categorySplits: splitsOverride ?? getSplitsForDistribution(),
-            })
+            const next = syncWizardFormToSetupDraft(
+                setupDraft,
+                {
+                    terms: formData.terms ?? [],
+                    termBucketAmounts: formData.termBucketAmounts,
+                    selectedGrades: formData.selectedGrades ?? [],
+                    previewGrade: formData.previewGrade ?? "",
+                },
+                {
+                    categorySplits: splitsOverride ?? getSplitsForDistribution(),
+                },
+            )
             onSetupDraftChange(next)
         },
         [setupDraft, onSetupDraftChange, formData, getSplitsForDistribution],

@@ -275,6 +275,7 @@ export interface FeeStructureForm {
   };
   paymentModes?: {
     bankAccounts: BankAccount[];
+    includePostalMoneyOrder?: boolean;
     postalAddress: string;
     notes: string[];
   };
