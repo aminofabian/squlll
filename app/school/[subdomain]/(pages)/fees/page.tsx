@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,26 +20,95 @@ import {
 } from "@/components/ui/dialog";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
-import { Download } from "lucide-react";
+import { getDisplayErrorMessage } from "@/lib/utils/graphql-errors";
+import { cn } from "@/lib/utils";
+import {
+  FEE_PLAN_QUERY,
+  findFeePlanBySlug,
+} from "./lib/feePlanSlug";
+import {
+  FEE_BALANCE_CLASS_QUERY,
+  FEE_SECTION_QUERY,
+  buildFeesHref,
+  feesPlansHref,
+  parseFeesSection,
+} from "./lib/feesRoutes";
+import { buildFeePlanCollectionByPlanId } from "./lib/feePlanCollection";
+import {
+  groupFeeStructuresByPlan,
+  dedupeTermsById,
+  getPlanDisplayName,
+} from "./lib/feePlanGrouping";
+import {
+  isPlanExpired,
+  resolvePlanEndDate,
+  isFeePlanEditable,
+} from "./lib/feePlanLifecycle";
+import { FEES_BRAND, FEES_LAYOUT, FEES_MOBILE } from "./lib/fees-ui";
+import {
+  buildLinkedClassCountByPlanId,
+  countStudentsForPlan,
+  findPlanForStructureId,
+  getLinkedClassesForPlan,
+} from "./lib/feePlanLinkage";
+import { Download, FileStack, Upload } from "lucide-react";
 
 // Import modular components and hooks
-import { StudentSearchBar } from "./components/StudentSearchBar";
+import { FeesPageShell } from "./components/FeesPageShell";
+import { FeesPageChrome } from "./components/FeesPageChrome";
+import { hasMeaningfulFeeMetrics } from "./lib/feesWorkflow";
+import { FeesPanel } from "./components/FeesPanel";
+import { FeesOverviewBoard } from "./components/FeesOverviewBoard";
 import { OverviewStatsCards } from "./components/OverviewStatsCards";
 import { FiltersSection } from "./components/FiltersSection";
 import { FeesDataTable } from "./components/FeesDataTable";
+import { ArrearsSummaryPanel } from "./components/ArrearsSummaryPanel";
 import { StudentInvoicesTable } from "./components/StudentInvoicesTable";
 import { FeeStructureDrawer } from "./components/FeeStructureDrawer";
 import RecordPaymentDrawer from "./components/RecordPaymentDrawer";
+import { PaymentReceiptDialog } from "./components/PaymentReceiptDialog";
+import { BulkPaymentImportDialog } from "./components/BulkPaymentImportDialog";
 import StudentPayments from "./components/StudentPayments";
 import { FeeStructureManager } from "./components/FeeStructureManager";
 import { BulkInvoiceGenerator } from "./components/BulkInvoiceGenerator";
 import { FeeSummaryCard } from "./components/FeeSummaryCard";
 import NewInvoiceDrawer from "./components/NewInvoiceDrawer";
-import { StudentDetailsDrawer } from "./components/StudentDetailsDrawer";
+import { StudentFeeProfileDrawer } from "./components/StudentFeeProfileDrawer";
+import { useBursarDashboardMetrics, BALANCE_ALERT_KES } from "./hooks/useBursarDashboardMetrics";
+import {
+  FeesSetupWizardDialog,
+  type FeesSetupWizardResult,
+} from "./components/FeesSetupWizardDialog";
+import { saveFeesSetupDraft } from "./lib/feesSetupDraft";
+import {
+  hasValidSetupDraft,
+  type FeePlanSetupIntent,
+} from "./lib/feePlanCreationFlow";
 import { WorkflowGuidance } from "./components/WorkflowGuidance";
-import { FeesActionDashboard } from "./components/FeesActionDashboard";
+import type { FeesSection } from "./components/FeesSectionTabs";
+import { FeeAssignmentsView } from "./components/FeeAssignmentsView";
+import PaymentReminderDrawer from "./components/PaymentReminderDrawer";
 import { FeeStructuresTab } from "./components/FeeStructureManager/FeeStructuresTab";
 import { AssignFeeStructureModal } from "./components/AssignFeeStructureModal";
+import { useFeeAssignments } from "./hooks/useFeeAssignments";
+import { useFeeReminderLog } from "./hooks/useFeeReminderLog";
+import { useFeesAccess } from "./hooks/useFeesAccess";
+import { useFeeAuditLog } from "./hooks/useFeeAuditLog";
+import { FeesReportsPanel } from "./components/FeesReportsPanel";
+import {
+  FeeAdjustmentDrawer,
+  type FeeAdjustmentForm,
+} from "./components/FeeAdjustmentDrawer";
+import { downloadCsv } from "./lib/exportCsv";
+import {
+  computeBalancesAfterPayment,
+  type PaymentReceiptData,
+} from "./lib/paymentReceipt";
+import { schoolNameFromSubdomain } from "./lib/feesDocumentDefaults";
+import {
+  mapAdjustmentType,
+  useGraphQLFeeAdjustments,
+} from "./hooks/useGraphQLFeeAdjustments";
 import { useFeesData } from "./hooks/useFeesData";
 import { useFormHandlers } from "./hooks/useFormHandlers";
 import { useFeeStructures } from "./hooks/useFeeStructures";
@@ -50,6 +120,7 @@ import { useGradeData } from "./hooks/useGradeData";
 import { useStudentSummary } from "./hooks/useStudentSummary";
 import { useStudentDetailSummary } from "@/lib/hooks/useStudentDetailSummary";
 import { useAllStudentsSummary } from "./hooks/useAllStudentsSummary";
+import { useSchoolArrearsSummary } from "./hooks/useSchoolArrearsSummary";
 import {
   FeeInvoice,
   FeeStructure,
@@ -75,12 +146,49 @@ const getStatusColor = (status: string) => {
 };
 
 export default function FeesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const planSlugFromUrl = searchParams.get(FEE_PLAN_QUERY);
+  const receiptSchoolName = schoolNameFromSubdomain(
+    typeof params?.subdomain === "string" ? params.subdomain : undefined,
+  );
+
+  const feesAccess = useFeesAccess();
+  const { applyFeeAdjustment, isApplying: isApplyingAdjustment } =
+    useGraphQLFeeAdjustments();
+
+  const feesSection = useMemo((): FeesSection => {
+    if (planSlugFromUrl) return "plans";
+    return parseFeesSection(searchParams.get(FEE_SECTION_QUERY));
+  }, [planSlugFromUrl, searchParams]);
+
+  const navigateToFeesSection = useCallback(
+    (section: FeesSection, opts?: { replace?: boolean }) => {
+      const href = buildFeesHref({ section });
+      if (opts?.replace) {
+        router.replace(href, { scroll: false });
+      } else {
+        router.push(href, { scroll: false });
+      }
+    },
+    [router],
+  );
+
   const [currentView, setCurrentView] = useState<
     "dashboard" | "structures" | "invoices"
   >("dashboard");
-  const [showFeeStructuresInDashboard, setShowFeeStructuresInDashboard] =
-    useState(false);
-  const [showInvoicesInDashboard, setShowInvoicesInDashboard] = useState(false);
+  const [showFeesSetupWizard, setShowFeesSetupWizard] = useState(false);
+  const [showAdjustmentDrawer, setShowAdjustmentDrawer] = useState(false);
+  const [adjustmentForm, setAdjustmentForm] = useState<FeeAdjustmentForm>({
+    type: "discount",
+    amount: "",
+    reason: "",
+    studentFeeItemId: "",
+  });
+
+  const { entries: auditEntries, append: appendAudit, refresh: refreshAudit } =
+    useFeeAuditLog();
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<FeeInvoice | null>(
     null,
@@ -94,10 +202,21 @@ export default function FeesPage() {
   const [showStudentDetailsDrawer, setShowStudentDetailsDrawer] =
     useState(false);
   const [balancesStatusFilter, setBalancesStatusFilter] = useState("all");
+  const [paymentReceipt, setPaymentReceipt] = useState<PaymentReceiptData | null>(
+    null,
+  );
+  const [showPaymentReceipt, setShowPaymentReceipt] = useState(false);
+  const [showBulkPaymentImport, setShowBulkPaymentImport] = useState(false);
 
   // Fee Structure states
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  /** Bumps when guided setup saves so the plan drawer reloads buckets/amounts */
+  const [feeDraftSyncKey, setFeeDraftSyncKey] = useState(0);
+  /** Re-open fee plan drawer after closing setup (edit setup from plan) */
+  const [feePlanResumeAfterSetup, setFeePlanResumeAfterSetup] = useState(false);
+  const [feePlanSetupIntent, setFeePlanSetupIntent] =
+    useState<FeePlanSetupIntent>("initial");
   const [showInvoiceGenerator, setShowInvoiceGenerator] = useState(false);
   const [selectedStructure, setSelectedStructure] =
     useState<FeeStructure | null>(null);
@@ -178,32 +297,18 @@ export default function FeesPage() {
     fetchGradeData,
   } = useGradeData();
 
-  // Process GraphQL structures for display - Group by academic year
+  // Process GraphQL structures for display - Group by base plan name + academic year
   const processedFeeStructures = useMemo(() => {
     if (!graphQLStructures || graphQLStructures.length === 0) return [];
 
-    // Group structures by base name (removing " - Term X" suffix) and academic year
-    const groupedStructures = new Map<string, any[]>();
-
-    graphQLStructures.forEach((structure) => {
-      // Extract base name by removing " - Term X" pattern
-      const baseName = structure.name
-        .replace(/\s*-\s*Term\s+\d+\s*$/i, "")
-        .trim();
-      const academicYearId = structure.academicYear?.id || "";
-      const groupKey = `${baseName}__${academicYearId}`;
-
-      if (!groupedStructures.has(groupKey)) {
-        groupedStructures.set(groupKey, []);
-      }
-      groupedStructures.get(groupKey)!.push(structure);
-    });
+    const groupedStructures = groupFeeStructuresByPlan(graphQLStructures);
 
     // Process each group
     return Array.from(groupedStructures.entries()).map(
       ([groupKey, structures]) => {
-        // Combine all terms from grouped structures
-        const allTerms = structures.flatMap((s) => s.terms || []);
+        const allTerms = dedupeTermsById(
+          structures.flatMap((s) => s.terms || []),
+        );
 
         // Combine all grade levels (unique)
         const gradeLevelMap = new Map();
@@ -250,20 +355,14 @@ export default function FeesPage() {
             buckets.push(...Array.from(bucketMap.values()));
           }
 
-          // Map buckets to each term in this structure
-          // If a term already has buckets, merge them (don't overwrite)
-          structureTerms.forEach((term: any) => {
-            const existingBuckets = termFeesMap.get(term.id) || [];
+          const applyBucketsToTerm = (termId: string) => {
+            const existingBuckets = termFeesMap.get(termId) || [];
+            const mergedBucketMap = new Map<string, (typeof buckets)[0]>();
 
-            // Merge buckets: if same bucket ID exists, combine amounts; otherwise add new bucket
-            const mergedBucketMap = new Map();
-
-            // Add existing buckets
             existingBuckets.forEach((bucket) => {
               mergedBucketMap.set(bucket.feeBucketId, { ...bucket });
             });
 
-            // Merge new buckets
             buckets.forEach((bucket) => {
               const existing = mergedBucketMap.get(bucket.feeBucketId);
               if (existing) {
@@ -274,23 +373,39 @@ export default function FeesPage() {
               }
             });
 
-            termFeesMap.set(term.id, Array.from(mergedBucketMap.values()));
-          });
+            termFeesMap.set(termId, Array.from(mergedBucketMap.values()));
+          };
+
+          if (structureTerms.length === 1) {
+            applyBucketsToTerm(structureTerms[0].id);
+          } else {
+            structureTerms.forEach((term: { id: string }) => {
+              applyBucketsToTerm(term.id);
+            });
+          }
         });
 
         // Use the first structure as the base
         const baseStructure = structures[0];
-        const baseName = baseStructure.name
-          .replace(/\s*-\s*Term\s+\d+\s*$/i, "")
-          .trim();
+        const planDisplayName = getPlanDisplayName(baseStructure);
 
         // Get buckets for first term (default display)
         const defaultTermId = allTerms[0]?.id || "";
         const defaultBuckets = termFeesMap.get(defaultTermId) || [];
+        const academicYearEndDate =
+          baseStructure.academicYear?.endDate ?? null;
+        const validUntilDate = resolvePlanEndDate(
+          baseStructure.academicYear,
+          allTerms,
+        );
+        const planExpired = isPlanExpired(validUntilDate);
+        const planIsActive =
+          structures.some((s) => s.isActive) && !planExpired;
 
         return {
           structureId: baseStructure.id,
-          structureName: baseName,
+          structureName: planDisplayName,
+          planLabel: baseStructure.planLabel ?? planDisplayName,
           academicYear: baseStructure.academicYear?.name || "N/A",
           academicYearId: baseStructure.academicYear?.id || "",
           termName: allTerms.length > 0 ? allTerms[0].name : "N/A",
@@ -300,7 +415,10 @@ export default function FeesPage() {
           buckets: defaultBuckets, // Default to first term's buckets
           termFeesMap: Object.fromEntries(termFeesMap), // Store all term-specific fees
           allStructures: structures, // Store original structures for reference
-          isActive: structures.some((s) => s.isActive),
+          isActive: planIsActive,
+          isExpired: planExpired,
+          validUntil: validUntilDate?.toISOString() ?? null,
+          academicYearEndDate,
           createdAt: baseStructure.createdAt,
           updatedAt: structures.reduce((latest, s) => {
             return s.updatedAt > latest ? s.updatedAt : latest;
@@ -310,32 +428,160 @@ export default function FeesPage() {
     );
   }, [graphQLStructures]);
 
-  const getAssignedGrades = (feeStructureId: string) => {
-    return grades.filter(
-      (grade: any) => grade.feeStructureId === feeStructureId,
-    );
+  const backToFeePlanList = useCallback(() => {
+    router.push(feesPlansHref(), { scroll: false });
+  }, [router]);
+
+  useEffect(() => {
+    if (currentView !== "dashboard") return;
+
+    const sectionParam = searchParams.get(FEE_SECTION_QUERY);
+
+    if (planSlugFromUrl && sectionParam !== "plans") {
+      router.replace(
+        buildFeesHref({ section: "plans", plan: planSlugFromUrl }),
+        { scroll: false },
+      );
+      return;
+    }
+
+    if (!planSlugFromUrl && !sectionParam) {
+      router.replace(feesPlansHref(), { scroll: false });
+    }
+  }, [currentView, planSlugFromUrl, router, searchParams]);
+
+  useEffect(() => {
+    const classFromUrl = searchParams.get(FEE_BALANCE_CLASS_QUERY);
+    if (classFromUrl && feesSection === "balances") {
+      setSelectedClass(decodeURIComponent(classFromUrl));
+    }
+  }, [searchParams, feesSection, setSelectedClass]);
+
+  const { data: feeAssignmentsData, refetch: refetchFeeAssignments } =
+    useFeeAssignments();
+
+  const tenantGradeLabelMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const g of grades) {
+      map.set(g.tenantGradeLevelId, g.name);
+      if (g.id !== g.tenantGradeLevelId) map.set(g.id, g.name);
+    }
+    return map;
+  }, [grades]);
+
+  const schoolGradesForLinkage = useMemo(() => {
+    const byId = new Map<string, { id: string; name: string }>();
+    for (const g of grades) {
+      if (!g.tenantGradeLevelId) continue;
+      if (!byId.has(g.tenantGradeLevelId)) {
+        byId.set(g.tenantGradeLevelId, {
+          id: g.tenantGradeLevelId,
+          name: g.name,
+        });
+      }
+    }
+    return [...byId.values()];
+  }, [grades]);
+
+  const linkedClassCountByPlan = useMemo(
+    () =>
+      buildLinkedClassCountByPlanId(
+        processedFeeStructures,
+        feeAssignmentsData?.feeAssignments,
+      ),
+    [processedFeeStructures, feeAssignmentsData?.feeAssignments],
+  );
+
+  const getLinkedClassCount = useCallback(
+    (feeStructureId: string) =>
+      linkedClassCountByPlan.get(feeStructureId) ?? 0,
+    [linkedClassCountByPlan],
+  );
+
+  const getLinkedClasses = useCallback(
+    (feeStructureId: string) => {
+      const plan = findPlanForStructureId(
+        processedFeeStructures,
+        feeStructureId,
+      );
+      if (!plan) return [];
+      return getLinkedClassesForPlan(
+        plan,
+        feeAssignmentsData?.feeAssignments,
+        tenantGradeLabelMap,
+      );
+    },
+    [
+      processedFeeStructures,
+      feeAssignmentsData?.feeAssignments,
+      tenantGradeLabelMap,
+    ],
+  );
+
+  const getTotalStudents = useCallback(
+    (feeStructureId: string) => {
+      const plan = findPlanForStructureId(
+        processedFeeStructures,
+        feeStructureId,
+      );
+      if (!plan) return 0;
+      return countStudentsForPlan(
+        plan,
+        feeAssignmentsData?.feeAssignments,
+      );
+    },
+    [processedFeeStructures, feeAssignmentsData?.feeAssignments],
+  );
+
+  const handleUpdateFeeItem = () => {
+    /* Inline bucket edit removed — use Edit on the fee plan card */
   };
 
-  const getTotalStudents = (feeStructureId: string) => {
-    return getAssignedGrades(feeStructureId).reduce(
-      (sum: number, grade: any) => sum + grade.studentCount,
-      0,
-    );
-  };
 
-  const handleUpdateFeeItem = (
-    itemId: string,
-    amount: number,
-    isMandatory: boolean,
-    bucketName: string,
-    feeStructureName: string,
-    bucketId?: string,
+  const openBulkInvoiceGenerator = (
+    structureId?: string,
+    term?: string,
   ) => {
-    // TODO: Implement fee item update via GraphQL mutation
-    toast({
-      title: "Coming Soon",
-      description: `Editing "${bucketName}" (${feeStructureName}) is not yet available.`,
-    });
+    if (!feesAccess.canBillStudents) {
+      toast({ title: "View only", description: "Your role cannot bill students." });
+      return;
+    }
+    if (processedFeeStructures.length === 0) {
+      toast({
+        title: "Create a fee plan first",
+        description: "Add a fee plan before billing students.",
+      });
+      handleCreateNew();
+      return;
+    }
+
+    const targetId =
+      structureId || processedFeeStructures[0]?.structureId || "";
+    if (targetId && getLinkedClassCount(targetId) === 0) {
+      toast({
+        title: "Link plan to classes first",
+        description:
+          "Apply this fee plan to grades or classes before generating bills.",
+        variant: "destructive",
+      });
+      handleAssignToGrade(targetId);
+      return;
+    }
+
+    if (assignedClassCount === 0) {
+      toast({
+        title: "Link plan to classes first",
+        description:
+          "Apply a fee plan to your classes before billing students.",
+        variant: "destructive",
+      });
+      handleAssignToGradeAction();
+      return;
+    }
+
+    if (structureId) setPreselectedStructureId(structureId);
+    if (term) setPreselectedTerm(term);
+    setShowInvoiceGenerator(true);
   };
 
   // Auto-fetch fee structures on mount (only once)
@@ -361,7 +607,7 @@ export default function FeesPage() {
     // 4. We're not currently fetching (prevent flood)
     // 5. We've already done the initial mount fetch
     if (
-      showFeeStructuresInDashboard &&
+      feesSection === "plans" &&
       graphQLStructures.length === 0 &&
       !structuresLoading &&
       !structuresError &&
@@ -378,7 +624,7 @@ export default function FeesPage() {
           isFetchingRef.current = false;
         });
     }
-  }, [showFeeStructuresInDashboard]); // Only depend on showFeeStructuresInDashboard to prevent loops
+  }, [feesSection, graphQLStructures.length, structuresLoading, structuresError, fetchFeeStructures]);
 
   // Student Summary hook for detailed student data
   const {
@@ -408,23 +654,52 @@ export default function FeesPage() {
     refetch: refetchStudents,
   } = useAllStudentsSummary();
 
+  const {
+    summary: schoolArrearsSummary,
+    loading: arrearsSummaryLoading,
+    error: arrearsSummaryError,
+    refetch: refetchArrearsSummary,
+  } = useSchoolArrearsSummary();
+
+  const collectionByPlanId = useMemo(
+    () =>
+      buildFeePlanCollectionByPlanId(
+        processedFeeStructures,
+        feeAssignmentsData?.feeAssignments,
+        allStudentsSummary,
+      ),
+    [
+      processedFeeStructures,
+      feeAssignmentsData?.feeAssignments,
+      allStudentsSummary,
+    ],
+  );
+
   const finalRefetch = () => {
     refetchStudentData();
     refetchFallback();
     refetchStudents();
+    refetchArrearsSummary();
   };
 
   const forcePageRefresh = () => {
     finalRefetch();
   };
 
+  const { append: appendReminderLog, refresh: refreshReminderLog } =
+    useFeeReminderLog();
+
   const {
     showNewInvoiceDrawer,
     setShowNewInvoiceDrawer,
+    showPaymentReminderDrawer,
+    setShowPaymentReminderDrawer,
     showRecordPaymentDrawer,
     setShowRecordPaymentDrawer,
     newInvoiceForm,
     setNewInvoiceForm,
+    reminderForm,
+    setReminderForm,
     paymentForm,
     setPaymentForm,
     handleNewInvoice,
@@ -432,15 +707,115 @@ export default function FeesPage() {
     handleRecordPayment,
     handleCreatePaymentPlan,
     handleSubmitPayment,
+    handleSubmitReminder,
     handleSubmitInvoice,
     isGeneratingInvoices,
-  } = useFormHandlers(selectedStudent, filteredInvoices, forcePageRefresh);
+  } = useFormHandlers(
+    selectedStudent,
+    filteredInvoices,
+    forcePageRefresh,
+    (entry) => {
+      appendReminderLog(entry);
+      refreshReminderLog();
+      appendAudit({
+        action: "reminder_queued",
+        summary: `Reminder queued (${entry.channel}) for ${entry.studentIds.length} student(s)`,
+      });
+    },
+    (payment) => {
+      const studentSummary = allStudentsSummary.find(
+        (s) => s.id === payment.studentId,
+      );
+      const priorArrears = studentSummary?.feeSummary.balance ?? 0;
+      const priorCredit = studentSummary?.feeSummary.creditBalance ?? 0;
+      const { remainingBalance, creditBalance } = computeBalancesAfterPayment(
+        priorArrears,
+        priorCredit,
+        payment.amount,
+      );
 
-  const assignedClassCount = useMemo(
+      const apiStudent = payment.payment.student;
+      const gradeLevelName =
+        apiStudent.grade?.gradeLevel?.name ??
+        studentSummary?.gradeLevelName ??
+        "—";
+
+      setPaymentReceipt({
+        paymentId: payment.payment.id,
+        receiptNumber: payment.payment.receiptNumber,
+        amount: payment.payment.amount,
+        paymentMethod: payment.payment.paymentMethod,
+        transactionReference: payment.payment.transactionReference,
+        paymentDate: payment.payment.paymentDate,
+        notes: payment.payment.notes,
+        receivedBy: payment.payment.receivedByUser?.name,
+        student: {
+          id: apiStudent.id,
+          name: apiStudent.user.name,
+          admissionNumber: apiStudent.admission_number,
+          gradeLevelName,
+          streamName: apiStudent.stream?.name,
+          email: apiStudent.user.email,
+        },
+        invoice: {
+          id: payment.payment.invoice.id,
+          invoiceNumber: payment.payment.invoice.invoiceNumber,
+          totalAmount: payment.payment.invoice.totalAmount,
+          paidAmount: payment.payment.invoice.paidAmount,
+          balanceAmount: payment.payment.invoice.balanceAmount,
+          termName: payment.payment.invoice.term?.name,
+          academicYearName: payment.payment.invoice.academicYear?.name,
+        },
+        remainingBalance,
+        creditBalance,
+      });
+      setShowPaymentReceipt(true);
+
+      appendAudit({
+        action: "payment_recorded",
+        summary: `Payment KES ${payment.amount.toLocaleString()} recorded${payment.receiptNumber ? ` · ${payment.receiptNumber}` : ""}`,
+        meta: { studentId: payment.studentId },
+      });
+    },
+  );
+
+  useEffect(() => {
+    refreshAudit();
+  }, [refreshAudit]);
+
+  const bursarMetrics = useBursarDashboardMetrics(allStudentsSummary);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!feesAccess.canManagePlans || currentView !== "dashboard") return;
+    const dismissed = localStorage.getItem("fees-setup-wizard-dismissed");
+    const needsSetup =
+      processedFeeStructures.length === 0 && graphQLStructures.length === 0;
+    if (needsSetup && !dismissed) {
+      router.replace(feesPlansHref(), { scroll: false });
+      setShowFeesSetupWizard(true);
+    }
+  }, [
+    processedFeeStructures.length,
+    graphQLStructures.length,
+    currentView,
+    feesAccess.canManagePlans,
+    router,
+  ]);
+
+  const assignedClassCount = useMemo(() => {
+    let total = 0;
+    linkedClassCountByPlan.forEach((n) => {
+      total += n;
+    });
+    return total;
+  }, [linkedClassCountByPlan]);
+
+  const billingStarted = useMemo(
     () =>
-      grades.filter((g: { feeStructureId?: string }) => g.feeStructureId)
-        .length,
-    [grades],
+      allStudentsSummary.some((s) => s.feeSummary.numberOfFeeItems > 0) ||
+      Number(summaryStats?.totalCollected ?? 0) > 0,
+    [allStudentsSummary, summaryStats?.totalCollected],
   );
 
   const feeWorkflowCompleted = useMemo(() => {
@@ -451,9 +826,6 @@ export default function FeesPage() {
       feeStructures.length;
     if (planCount > 0) steps.push(0);
     if (assignedClassCount > 0) steps.push(1);
-    const billingStarted = allStudentsSummary.some(
-      (s) => s.feeSummary.numberOfFeeItems > 0,
-    );
     if (billingStarted) steps.push(2);
     if (Number(summaryStats?.totalCollected ?? 0) > 0) steps.push(3);
     return steps;
@@ -462,7 +834,7 @@ export default function FeesPage() {
     graphQLStructures.length,
     feeStructures.length,
     assignedClassCount,
-    allStudentsSummary,
+    billingStarted,
     summaryStats?.totalCollected,
   ]);
 
@@ -487,17 +859,28 @@ export default function FeesPage() {
   }, [allStudentsSummary]);
 
   const displayedStudentsForBalances = useMemo(() => {
-    if (balancesStatusFilter === "all") return filteredStudentsForBalances;
-    return filteredStudentsForBalances.filter((s) => {
+    let list = filteredStudentsForBalances;
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.studentName.toLowerCase().includes(q) ||
+          s.admissionNumber.toLowerCase().includes(q),
+      );
+    }
+    if (balancesStatusFilter === "all") return list;
+    return list.filter((s) => {
       const { balance, totalPaid, numberOfFeeItems } = s.feeSummary;
       if (balancesStatusFilter === "owing") return balance > 0;
+      if (balancesStatusFilter === "high")
+        return balance >= BALANCE_ALERT_KES;
       if (balancesStatusFilter === "paid")
         return balance === 0 && totalPaid > 0;
       if (balancesStatusFilter === "pending")
         return balance === 0 && totalPaid === 0 && numberOfFeeItems === 0;
       return true;
     });
-  }, [filteredStudentsForBalances, balancesStatusFilter]);
+  }, [filteredStudentsForBalances, balancesStatusFilter, searchTerm]);
 
   // Access the toast function
   const { toast } = useToast();
@@ -564,18 +947,61 @@ export default function FeesPage() {
   };
 
   // Fee Structure handlers
-  const handleCreateNew = () => {
+  /** Single path: configure (setup) → publish (fee plan drawer) */
+  const startCreateFeePlan = useCallback(() => {
+    if (!feesAccess.canManagePlans) {
+      toast({
+        title: "View only",
+        description: "Your role cannot create fee plans.",
+      });
+      return;
+    }
     setSelectedStructure(null);
-    setShowCreateForm(true);
-  };
+    navigateToFeesSection("plans");
+    setFeePlanResumeAfterSetup(false);
+    if (hasValidSetupDraft()) {
+      setShowFeesSetupWizard(false);
+      setShowCreateForm(true);
+      return;
+    }
+    setShowCreateForm(false);
+    setFeePlanSetupIntent("initial");
+    setShowFeesSetupWizard(true);
+  }, [feesAccess.canManagePlans, toast, navigateToFeesSection]);
+
+  const openGuidedSetup = useCallback(() => {
+    if (!feesAccess.canManagePlans) {
+      toast({
+        title: "View only",
+        description: "Your role cannot create fee plans.",
+      });
+      return;
+    }
+    setSelectedStructure(null);
+    navigateToFeesSection("plans");
+    setFeePlanResumeAfterSetup(false);
+    setShowCreateForm(false);
+    setFeePlanSetupIntent("initial");
+    setShowFeesSetupWizard(true);
+  }, [feesAccess.canManagePlans, toast, navigateToFeesSection]);
+
+  const handleCreateNew = startCreateFeePlan;
 
   const handleEdit = (feeStructure: FeeStructure) => {
-    // Find the processed structure which has all terms grouped
     const processedStructure = processedFeeStructures.find(
       (s) => s.structureId === feeStructure.id,
     );
 
-    // Find the full GraphQL structure data (use first one from the group if available)
+    if (processedStructure && !isFeePlanEditable(processedStructure)) {
+      toast({
+        title: "Plan is inactive",
+        description:
+          "Expired fee plans are read-only. Existing balances can still be collected from Balances.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const graphQLStructure =
       processedStructure?.allStructures?.[0] ||
       graphQLStructures.find((s) => s.id === feeStructure.id);
@@ -624,6 +1050,13 @@ export default function FeesPage() {
           // Don't show error to user since deletion succeeded
         }
 
+        appendAudit({
+          action: "fee_plan_deleted",
+          summary: structureName
+            ? `Fee plan "${structureName}" deleted`
+            : "Fee plan deleted",
+        });
+
         toast({
           title: "Fee plan deleted",
           description: structureName
@@ -631,6 +1064,14 @@ export default function FeesPage() {
             : "The fee plan has been successfully deleted.",
           variant: "default",
         });
+
+        const deletedWasOpen =
+          planSlugFromUrl &&
+          findFeePlanBySlug(processedFeeStructures, planSlugFromUrl)
+            ?.structureId === feeStructureId;
+        if (deletedWasOpen) {
+          backToFeePlanList();
+        }
       } else {
         const errorMsg =
           deleteError ||
@@ -673,31 +1114,33 @@ export default function FeesPage() {
         result = (formData as any).id;
         await fetchFeeStructures();
       } else if (selectedStructure) {
-        const currentStructure = graphQLStructures.find(
-          (s) => s.id === selectedStructure.id,
-        );
-        const gradeLevelIds =
-          currentStructure?.gradeLevels?.map((gl) => gl.id) || [];
-
-        // Build update input with new format
-        const updateInput: UpdateFeeStructureInput = {
-          name: formData.name,
-          isActive: true,
-          // Include gradeLevelIds if available, otherwise keep existing ones
-          gradeLevelIds: gradeLevelIds.length > 0 ? gradeLevelIds : undefined,
-        };
-
-        result = await graphqlUpdateFeeStructure(
-          selectedStructure.id,
-          updateInput,
-        );
-        if (!result) {
-          throw new Error(
-            `GraphQL update failed: ${updateError || "Unknown error"}`,
+        // FeeStructureWizard already persisted metadata + line-item amounts in edit mode
+        if ((formData as { id?: string }).id) {
+          result = (formData as { id: string }).id;
+        } else {
+          const currentStructure = graphQLStructures.find(
+            (s) => s.id === selectedStructure.id,
           );
+          const gradeLevelIds =
+            currentStructure?.gradeLevels?.map((gl) => gl.id) || [];
+
+          const updateInput: UpdateFeeStructureInput = {
+            name: formData.name,
+            isActive: true,
+            gradeLevelIds: gradeLevelIds.length > 0 ? gradeLevelIds : undefined,
+          };
+
+          result = await graphqlUpdateFeeStructure(
+            selectedStructure.id,
+            updateInput,
+          );
+          if (!result) {
+            throw new Error(
+              `GraphQL update failed: ${updateError || "Unknown error"}`,
+            );
+          }
         }
 
-        // Refresh the list after update
         await fetchFeeStructures();
       } else {
         // For create mode, use the local function (only if termStructures exists)
@@ -727,6 +1170,15 @@ export default function FeesPage() {
         variant: "default",
       });
 
+      if (result) {
+        appendAudit({
+          action: "fee_plan_created",
+          summary: wasCreate
+            ? `Fee plan "${(formData as { name?: string }).name || "New plan"}" created`
+            : `Fee plan updated`,
+        });
+      }
+
       if (wasCreate && result) {
         const name =
           (formData as { name?: string }).name ||
@@ -742,14 +1194,12 @@ export default function FeesPage() {
 
       return result;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage = getDisplayErrorMessage(error);
       console.error("Error saving fee plan:", error);
 
-      // Show error toast
       toast({
-        title: "Error",
-        description: `Failed to ${selectedStructure ? "update" : "create"} fee plan: ${errorMessage}`,
+        title: selectedStructure ? "Could not update fee plan" : "Could not create fee plan",
+        description: errorMessage,
         variant: "destructive",
       });
 
@@ -758,14 +1208,31 @@ export default function FeesPage() {
   };
 
   const handleGenerateInvoices = (feeStructureId: string, term: string) => {
-    setPreselectedStructureId(feeStructureId);
-    setPreselectedTerm(term);
-    setShowInvoiceGenerator(true);
+    const structure = processedFeeStructures.find(
+      (s) => s.structureId === feeStructureId,
+    );
+
+    if (structure && !isFeePlanEditable(structure)) {
+      toast({
+        title: "Plan is inactive",
+        description:
+          "Cannot generate new invoices from an expired fee plan. Collect against existing balances instead.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    openBulkInvoiceGenerator(feeStructureId, term);
   };
 
   const handleBulkGeneration = (generation: BulkInvoiceGeneration) => {
     try {
       const newInvoices = generateBulkInvoices(generation);
+
+      appendAudit({
+        action: "invoices_generated",
+        summary: `Generated ${newInvoices.length} invoice${newInvoices.length !== 1 ? "s" : ""}`,
+      });
 
       toast({
         title: "Success",
@@ -794,6 +1261,16 @@ export default function FeesPage() {
       (s) => s.structureId === feeStructureId,
     );
 
+    if (structure && !isFeePlanEditable(structure)) {
+      toast({
+        title: "Plan is inactive",
+        description:
+          "Cannot link classes or create new assignments from an expired fee plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (structure) {
       setFeeStructureToAssign({
         id: structure.structureId,
@@ -815,7 +1292,15 @@ export default function FeesPage() {
 
   // Handle assignment success
   const handleAssignmentSuccess = (assignmentResult: any) => {
-    Promise.all([fetchFeeStructures(), fetchGradeData()]).catch((err) => {
+    appendAudit({
+      action: "plan_assigned",
+      summary: `Fee plan linked to classes`,
+    });
+    Promise.all([
+      fetchFeeStructures(),
+      fetchGradeData(),
+      refetchFeeAssignments(),
+    ]).catch((err) => {
       console.error("Failed to refresh data after assignment:", err);
       toast({
         title: "Warning",
@@ -826,25 +1311,176 @@ export default function FeesPage() {
     });
   };
 
-  // Action handlers for dashboard
-  const handleViewStructures = () => {
-    setShowFeeStructuresInDashboard(true);
-    setShowInvoicesInDashboard(false);
+  const handleSendRemindersFromSelection = () => {
+    if (!feesAccess.canSendReminders) return;
+    const ids =
+      selectedStudentsForTable.length > 0
+        ? selectedStudentsForTable
+        : displayedStudentsForBalances
+            .filter((s) => s.feeSummary.balance > 0)
+            .map((s) => s.id);
+
+    if (ids.length === 0) {
+      toast({
+        title: "No students selected",
+        description:
+          "Select students on the balances tab, or filter to students who owe fees.",
+      });
+      navigateToFeesSection("balances");
+      return;
+    }
+
+    setReminderForm((prev) => ({ ...prev, studentIds: ids }));
+    setShowPaymentReminderDrawer(true);
   };
 
-  const handleBackToOverview = () => {
-    setShowFeeStructuresInDashboard(false);
-    setShowInvoicesInDashboard(false);
+  // Action handlers for dashboard
+  const handleViewStructures = () => {
+    navigateToFeesSection("plans");
   };
 
   const handleViewInvoices = () => {
-    setShowInvoicesInDashboard(true);
-    setShowFeeStructuresInDashboard(false);
+    navigateToFeesSection("balances");
+  };
+
+  const handleViewAssignments = () => {
+    navigateToFeesSection("assignments");
+  };
+
+  const handleFeesSetupComplete = (result: FeesSetupWizardResult) => {
+    saveFeesSetupDraft(result);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fees-setup-wizard-dismissed", "1");
+    }
+    setShowFeesSetupWizard(false);
+    navigateToFeesSection("plans");
+    setSelectedStructure(null);
+    setFeeDraftSyncKey((k) => k + 1);
+    setFeePlanResumeAfterSetup(false);
+    setShowCreateForm(true);
+  };
+
+  const handleEditFeesSetupFromPlan = useCallback(() => {
+    if (!feesAccess.canManagePlans) return;
+    setFeePlanResumeAfterSetup(true);
+    setFeePlanSetupIntent("revise");
+    setShowCreateForm(false);
+    setShowFeesSetupWizard(true);
+  }, [feesAccess.canManagePlans]);
+
+  const handleSetupWizardOpenChange = useCallback(
+    (open: boolean) => {
+      setShowFeesSetupWizard(open);
+      if (!open) {
+        if (feePlanResumeAfterSetup) {
+          setShowCreateForm(true);
+          setFeePlanResumeAfterSetup(false);
+        } else if (
+          typeof window !== "undefined" &&
+          !showCreateForm &&
+          !showEditForm
+        ) {
+          localStorage.setItem("fees-setup-wizard-dismissed", "1");
+        }
+      }
+    },
+    [feePlanResumeAfterSetup, showCreateForm, showEditForm],
+  );
+
+  const handleViewHighBalances = () => {
+    navigateToFeesSection("balances");
+    setBalancesStatusFilter("high");
+  };
+
+  const handleReminderForStudent = (studentId: string) => {
+    if (!feesAccess.canSendReminders) return;
+    setReminderForm((prev) => ({ ...prev, studentIds: [studentId] }));
+    setShowPaymentReminderDrawer(true);
+  };
+
+  const handleLogAdjustment = () => {
+    if (!feesAccess.canAdjustFees) {
+      toast({ title: "View only", description: "Your role cannot log adjustments." });
+      return;
+    }
+    setShowAdjustmentDrawer(true);
+  };
+
+  const handleSubmitAdjustment = async () => {
+    if (!finalStudentData || !adjustmentForm.reason.trim()) return;
+    const amount = Number(adjustmentForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast({
+        title: "Enter an amount",
+        description: "Adjustment amount must be greater than zero.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = await applyFeeAdjustment({
+      studentId: finalStudentData.id,
+      type: mapAdjustmentType(adjustmentForm.type),
+      amount,
+      reason: adjustmentForm.reason.trim(),
+      studentFeeItemId: adjustmentForm.studentFeeItemId || undefined,
+    });
+
+    if (!result) {
+      toast({
+        title: "Adjustment failed",
+        description: "Could not apply the fee adjustment. Try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    appendAudit({
+      action: "adjustment_applied",
+      summary: `${adjustmentForm.type} of KES ${result.amount.toLocaleString()} for ${finalStudentData.studentName}: ${adjustmentForm.reason.trim()}`,
+      meta: { studentId: finalStudentData.id, adjustmentId: result.id },
+    });
+    toast({
+      title: "Adjustment applied",
+      description: "Student balance updated. Entry saved to audit trail.",
+    });
+    setShowAdjustmentDrawer(false);
+    setAdjustmentForm({
+      type: "discount",
+      amount: "",
+      reason: "",
+      studentFeeItemId: "",
+    });
+    forcePageRefresh();
+  };
+
+  const exportBalancesCsv = () => {
+    if (!feesAccess.canExport) return;
+    downloadCsv(`student-balances-${new Date().toISOString().split("T")[0]}.csv`, [
+      ["Name", "Admission", "Class", "Total owed", "Paid", "Balance"],
+      ...displayedStudentsForBalances.map((s) => [
+        s.studentName,
+        s.admissionNumber,
+        s.gradeLevelName,
+        String(s.feeSummary.totalOwed),
+        String(s.feeSummary.totalPaid),
+        String(s.feeSummary.balance),
+      ]),
+    ]);
+  };
+
+  const handlePaymentVoided = (paymentId: string, reason: string) => {
+    appendAudit({
+      action: "payment_voided",
+      summary: `Payment reversed: ${reason}`,
+      meta: { paymentId },
+    });
+    toast({ title: "Payment reversed", description: "Balances will refresh." });
+    forcePageRefresh();
   };
 
   const handleAssignToGradeAction = () => {
-    setShowFeeStructuresInDashboard(true);
-    setShowInvoicesInDashboard(false);
+    navigateToFeesSection("plans");
 
     if (processedFeeStructures.length === 0) {
       toast({
@@ -870,16 +1506,19 @@ export default function FeesPage() {
   const handleFeeWorkflowStep = (step: number) => {
     switch (step) {
       case 0:
+        navigateToFeesSection("plans");
         handleCreateNew();
         break;
       case 1:
         handleAssignToGradeAction();
         break;
       case 2:
-        setShowInvoiceGenerator(true);
+        navigateToFeesSection("overview");
+        openBulkInvoiceGenerator();
         break;
       case 3:
-        handleViewInvoices();
+        navigateToFeesSection("overview");
+        openRecordPayment();
         break;
       default:
         break;
@@ -887,6 +1526,13 @@ export default function FeesPage() {
   };
 
   const openRecordPayment = (studentId?: string) => {
+    if (!feesAccess.canRecordPayments) {
+      toast({
+        title: "View only",
+        description: "Your role cannot record payments on this page.",
+      });
+      return;
+    }
     const id = studentId || selectedStudent || null;
     if (id) {
       setSelectedStudent(id);
@@ -907,7 +1553,7 @@ export default function FeesPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full">
         {/* Header with Back Button when not on dashboard */}
@@ -925,68 +1571,128 @@ export default function FeesPage() {
 
         {/* Content Based on Current View */}
         {currentView === "dashboard" ? (
-          <div className="flex-1 p-3">
-            <div className="max-w-7xl mx-auto space-y-5">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">
-                  School fees
-                </h1>
-                <p className="text-sm text-slate-600 mt-1">
-                  Set up fee plans, bill students each term, and record
-                  payments.
+          <FeesPageShell>
+            <div className="flex min-h-0 flex-1 flex-col">
+              <FeesPageChrome
+                feesSection={feesSection}
+                planDetailMode={
+                  !!planSlugFromUrl && feesSection === "plans"
+                }
+                assignmentCount={
+                  feeAssignmentsData?.totalFeeAssignments ?? undefined
+                }
+                hideReports={!feesAccess.canViewReports}
+                isReadOnly={feesAccess.isReadOnly}
+                onNavigateReports={() => navigateToFeesSection("reports")}
+                header={{
+                  collectionRate: bursarMetrics.collectionRate,
+                  totalExpected: bursarMetrics.totalExpected,
+                  totalCollected: bursarMetrics.totalCollected,
+                  todayPaymentCount: bursarMetrics.todayPaymentCount,
+                  overviewSetupMode:
+                    feesSection === "overview" &&
+                    !hasMeaningfulFeeMetrics({
+                      totalExpected: bursarMetrics.totalExpected,
+                      totalCollected: bursarMetrics.totalCollected,
+                      todayPaymentCount: bursarMetrics.todayPaymentCount,
+                    }),
+                  isReadOnly: feesAccess.isReadOnly,
+                  selectedStudent: selectedStudent,
+                  searchTerm,
+                  setSearchTerm,
+                  filteredStudents,
+                  onStudentSelect: handleStudentSelect,
+                  onClearSelection: handleClearStudentSelection,
+                  selectedGrade: selectedClass || "all",
+                  onGradeChange: setSelectedClass,
+                  gradeOptions: balanceClassOptions,
+                }}
+              />
+
+              <div
+                className={cn(
+                  "flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden",
+                  FEES_MOBILE.stack,
+                )}
+              >
+              {feesSection === "overview" && (
+                <FeesOverviewBoard
+                  metrics={bursarMetrics}
+                  completedSteps={feeWorkflowCompleted}
+                  onStepClick={handleFeeWorkflowStep}
+                  onViewBalances={handleViewInvoices}
+                  onViewHighBalances={handleViewHighBalances}
+                  onGenerateInvoices={() => openBulkInvoiceGenerator()}
+                  onRecordPayment={() => openRecordPayment()}
+                  onGuidedSetup={
+                    feesAccess.canManagePlans ? openGuidedSetup : undefined
+                  }
+                  onSendReminders={
+                    feesAccess.canSendReminders
+                      ? handleSendRemindersFromSelection
+                      : undefined
+                  }
+                />
+              )}
+
+              {feesSection === "reports" && feesAccess.canViewReports && (
+                <FeesPanel
+                  dense
+                  noPadding
+                  className="flex min-h-0 flex-1 flex-col"
+                  action={
+                    !feesAccess.isReadOnly ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => openBulkInvoiceGenerator()}
+                      >
+                        <FileStack className="mr-1 h-3.5 w-3.5" />
+                        Term invoices
+                      </Button>
+                    ) : undefined
+                  }
+                >
+                <div className="flex min-h-0 flex-1 flex-col overflow-auto p-3">
+                <FeesReportsPanel
+                  embedded
+                  students={allStudentsSummary}
+                  auditEntries={auditEntries}
+                  canExport={feesAccess.canExport}
+                />
+                </div>
+                </FeesPanel>
+              )}
+
+              {feesSection === "plans" && !feesAccess.canManagePlans && (
+                <FeesPanel>
+                <p className="text-sm text-slate-600">
+                  Your role cannot edit fee plans. Open Reports or Student
+                  balances instead.
                 </p>
-              </div>
+                </FeesPanel>
+              )}
 
-              <StudentSearchBar
-                selectedStudent={selectedStudent}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filteredStudents={filteredStudents}
-                onStudentSelect={handleStudentSelect}
-                onClearSelection={handleClearStudentSelection}
-              />
-
-              <WorkflowGuidance
-                completedSteps={feeWorkflowCompleted}
-                onStepClick={handleFeeWorkflowStep}
-              />
-
-              <FeesActionDashboard
-                onViewStructures={handleViewStructures}
-                onCreateStructure={handleCreateNew}
-                onGenerateInvoices={() => {
-                  setShowInvoiceGenerator(true);
-                }}
-                onViewInvoices={handleViewInvoices}
-                onAssignToGrade={handleAssignToGradeAction}
-                onRecordPayment={() => openRecordPayment()}
-                stats={{
-                  feeStructures:
-                    processedFeeStructures.length ||
-                    graphQLStructures.length ||
-                    feeStructures?.length ||
-                    0,
-                  students:
-                    filteredStudents?.length || allStudentsSummary?.length || 0,
-                  invoices: filteredInvoices?.length || 0,
-                  totalRevenue: summaryStats?.totalCollected || 0,
-                }}
-                setupStatus={{
-                  plansReady:
-                    processedFeeStructures.length > 0 ||
-                    graphQLStructures.length > 0,
-                  planCount:
-                    processedFeeStructures.length || graphQLStructures.length,
-                  classesLinked: assignedClassCount > 0,
-                  assignedClassCount,
-                  billingStarted: allStudentsSummary.some(
-                    (s) => s.feeSummary.numberOfFeeItems > 0,
-                  ),
-                }}
-                showFeeStructures={showFeeStructuresInDashboard}
-                showInvoices={showInvoicesInDashboard}
-                onBackToOverview={handleBackToOverview}
-                feeStructuresContent={
+              {feesSection === "plans" && feesAccess.canManagePlans && (
+                <FeesPanel
+                  dense
+                  noPadding
+                  className="flex min-h-0 flex-1 flex-col border-0 bg-transparent shadow-none"
+                >
+                  <div
+                    className={cn(
+                      "min-h-0 flex-1 overflow-auto",
+                      planSlugFromUrl
+                        ? "max-md:p-0 md:p-2 md:sm:p-3"
+                        : "p-2",
+                    )}
+                    style={
+                      planSlugFromUrl
+                        ? { backgroundColor: FEES_BRAND.surface }
+                        : undefined
+                    }
+                  >
                   <FeeStructuresTab
                     isLoading={structuresLoading}
                     error={structuresError}
@@ -1000,78 +1706,149 @@ export default function FeesPage() {
                     onUpdateFeeItem={handleUpdateFeeItem}
                     onCreateNew={handleCreateNew}
                     fetchFeeStructures={fetchFeeStructures}
-                    getAssignedGrades={getAssignedGrades}
+                    getLinkedClassCount={getLinkedClassCount}
+                    getLinkedClasses={getLinkedClasses}
                     getTotalStudents={getTotalStudents}
+                    collectionByPlanId={collectionByPlanId}
+                    feeAssignments={feeAssignmentsData?.feeAssignments}
+                    schoolGrades={schoolGradesForLinkage}
+                    onGuidedSetup={openGuidedSetup}
                     hasFetched={!!lastFetchTime}
                     isDeleting={isDeleting}
+                    selectedPlanSlug={planSlugFromUrl}
+                    onBackToPlanList={backToFeePlanList}
+                    canManage={feesAccess.canManagePlans}
+                    canBill={feesAccess.canBillStudents}
                   />
-                }
-                invoicesContent={
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap items-end gap-3">
-                      <div className="space-y-1 min-w-[140px]">
-                        <Label className="text-xs font-medium text-slate-500">
-                          Class
-                        </Label>
-                        <Select
-                          value={selectedClass || "all"}
-                          onValueChange={setSelectedClass}
-                        >
-                          <SelectTrigger className="h-9 border-slate-200 bg-white text-sm">
-                            <SelectValue placeholder="All classes" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All classes</SelectItem>
-                            {balanceClassOptions.map((cls) => (
-                              <SelectItem key={cls} value={cls}>
-                                {cls}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1 min-w-[140px]">
-                        <Label className="text-xs font-medium text-slate-500">
-                          Balance
-                        </Label>
-                        <Select
-                          value={balancesStatusFilter}
-                          onValueChange={setBalancesStatusFilter}
-                        >
-                          <SelectTrigger className="h-9 border-slate-200 bg-white text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All students</SelectItem>
-                            <SelectItem value="owing">Amount due</SelectItem>
-                            <SelectItem value="paid">Paid up</SelectItem>
-                            <SelectItem value="pending">No fees yet</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <FeesDataTable
-                      students={displayedStudentsForBalances}
-                      loading={studentsLoading}
-                      error={studentsError}
-                      selectedStudents={selectedStudentsForTable}
-                      onSelectStudent={handleSelectStudent}
-                      onSelectAll={handleSelectAllStudents}
-                      onViewStudent={handleViewStudent}
-                    />
                   </div>
-                }
-              />
+                </FeesPanel>
+              )}
+
+              {feesSection === "balances" && (
+                <FeesPanel
+                  dense
+                  noPadding
+                  title={`${displayedStudentsForBalances.length} students`}
+                  description={
+                    balancesStatusFilter === "all"
+                      ? "Sorted by balance"
+                      : `Showing: ${balancesStatusFilter.replace(/_/g, " ")}`
+                  }
+                  className={cn(
+                    "flex min-h-0 flex-1 flex-col",
+                    FEES_MOBILE.panelGhost,
+                  )}
+                  action={
+                    <div
+                      className={cn(
+                        FEES_LAYOUT.panelActions,
+                        "min-[480px]:items-stretch max-md:[&_button]:h-11 max-md:[&_button]:rounded-xl",
+                      )}
+                    >
+                      <Select
+                        value={balancesStatusFilter}
+                        onValueChange={setBalancesStatusFilter}
+                      >
+                        <SelectTrigger className="h-9 w-full border-slate-200 bg-white text-xs min-[480px]:h-8 min-[480px]:w-[10.5rem]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All students</SelectItem>
+                          <SelectItem value="owing">Amount due</SelectItem>
+                          <SelectItem value="high">
+                            Above KES {BALANCE_ALERT_KES.toLocaleString()}
+                          </SelectItem>
+                          <SelectItem value="paid">Paid up</SelectItem>
+                          <SelectItem value="pending">No fees yet</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {feesAccess.canRecordPayments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 w-full text-xs min-[480px]:h-8 min-[480px]:w-auto"
+                          onClick={() => setShowBulkPaymentImport(true)}
+                        >
+                          <Upload className="mr-1 h-3.5 w-3.5" />
+                          Bulk import
+                        </Button>
+                      )}
+                      {feesAccess.canExport && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 w-full text-xs min-[480px]:h-8 min-[480px]:w-auto"
+                          onClick={exportBalancesCsv}
+                        >
+                          <Download className="mr-1 h-3.5 w-3.5" />
+                          Export
+                        </Button>
+                      )}
+                      {feesAccess.canSendReminders && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 w-full text-xs min-[480px]:h-8 min-[480px]:w-auto"
+                          onClick={handleSendRemindersFromSelection}
+                          disabled={
+                            selectedStudentsForTable.length === 0 &&
+                            !displayedStudentsForBalances.some(
+                              (s) => s.feeSummary.balance > 0,
+                            )
+                          }
+                        >
+                          Remind
+                        </Button>
+                      )}
+                    </div>
+                  }
+                >
+                  <ArrearsSummaryPanel
+                    summary={schoolArrearsSummary}
+                    loading={arrearsSummaryLoading}
+                    error={arrearsSummaryError}
+                    selectedGrade={selectedClass || "all"}
+                    onGradeSelect={setSelectedClass}
+                  />
+                  <div className="min-h-0 flex-1 overflow-auto max-md:p-0 sm:p-3">
+                  <FeesDataTable
+                    embedded
+                    students={displayedStudentsForBalances}
+                    loading={studentsLoading}
+                    error={studentsError}
+                    selectedStudents={selectedStudentsForTable}
+                    onSelectStudent={handleSelectStudent}
+                    onSelectAll={handleSelectAllStudents}
+                    onViewStudent={handleViewStudent}
+                  />
+                  </div>
+                </FeesPanel>
+              )}
+
+              {feesSection === "assignments" && (
+                <FeesPanel
+                  dense
+                  noPadding
+                  className="flex min-h-0 flex-1 flex-col overflow-auto"
+                >
+                  <div className="p-2 sm:p-3">
+                    <FeeAssignmentsView />
+                  </div>
+                </FeesPanel>
+              )}
+              </div>
             </div>
-          </div>
+          </FeesPageShell>
         ) : currentView === "structures" ? (
-          <div className="flex-1 p-4 sm:p-6">
-            <div className="mx-auto max-w-7xl space-y-5">
+          <FeesPageShell>
+            <div className="space-y-6">
               <WorkflowGuidance
                 completedSteps={feeWorkflowCompleted}
                 onStepClick={handleFeeWorkflowStep}
               />
 
+              <FeesPanel title="Manage fee plans" noPadding>
+                <div className="p-5 sm:p-6">
               <FeeStructureManager
                 onCreateNew={handleCreateNew}
                 onEdit={handleEdit}
@@ -1079,8 +1856,10 @@ export default function FeesPage() {
                 onAssignToGrade={handleAssignToGrade}
                 onDelete={handleDelete}
               />
+                </div>
+              </FeesPanel>
             </div>
-          </div>
+          </FeesPageShell>
         ) : (
           <div className="flex-1 flex flex-col">
             {/* Main Content Area */}
@@ -1266,6 +2045,8 @@ export default function FeesPage() {
       {/* Fee Structure Drawer */}
       <FeeStructureDrawer
         isOpen={showCreateForm || showEditForm}
+        draftSyncKey={feeDraftSyncKey}
+        onEditSetup={handleEditFeesSetupFromPlan}
         onClose={() => {
           setShowCreateForm(false);
           setShowEditForm(false);
@@ -1324,6 +2105,17 @@ export default function FeesPage() {
         onGenerate={handleBulkGeneration}
         preselectedStructureId={preselectedStructureId}
         preselectedTerm={preselectedTerm}
+        getLinkedClassCount={getLinkedClassCount}
+        onNeedClassAssignment={handleAssignToGrade}
+      />
+
+      <PaymentReminderDrawer
+        isOpen={showPaymentReminderDrawer}
+        onClose={() => setShowPaymentReminderDrawer(false)}
+        form={reminderForm}
+        setForm={setReminderForm}
+        onSubmit={handleSubmitReminder}
+        students={allStudentsSummary}
       />
 
       {/* Record Payment Drawer */}
@@ -1345,6 +2137,23 @@ export default function FeesPage() {
             : undefined
         }
         onPaymentSuccess={forcePageRefresh}
+        canOverrideAllocation={feesAccess.canRecordPayments}
+      />
+
+      <PaymentReceiptDialog
+        receipt={paymentReceipt}
+        open={showPaymentReceipt}
+        onClose={() => {
+          setShowPaymentReceipt(false);
+          setPaymentReceipt(null);
+        }}
+        schoolName={receiptSchoolName}
+      />
+
+      <BulkPaymentImportDialog
+        open={showBulkPaymentImport}
+        onClose={() => setShowBulkPaymentImport(false)}
+        onComplete={forcePageRefresh}
       />
 
       {/* New Invoice Drawer */}
@@ -1359,17 +2168,44 @@ export default function FeesPage() {
         isGenerating={isGeneratingInvoices}
       />
 
-      {/* Student Details Drawer */}
-      {finalStudentData && (
-        <StudentDetailsDrawer
-          isOpen={showStudentDetailsDrawer}
-          onClose={() => setShowStudentDetailsDrawer(false)}
-          studentData={finalStudentData}
-          loading={finalLoading}
-          error={finalError}
-          onRefresh={finalRefetch}
-        />
-      )}
+      <StudentFeeProfileDrawer
+        isOpen={showStudentDetailsDrawer}
+        onClose={() => {
+          setShowStudentDetailsDrawer(false);
+          setViewingStudent(null);
+        }}
+        studentId={selectedStudent}
+        studentData={finalStudentData}
+        loading={finalLoading}
+        error={finalError}
+        onRefresh={finalRefetch}
+        onRecordPayment={() => {
+          if (selectedStudent) openRecordPayment(selectedStudent);
+        }}
+        onSendReminder={() => {
+          if (selectedStudent) handleReminderForStudent(selectedStudent);
+        }}
+        onLogAdjustment={handleLogAdjustment}
+        canVoidPayments={feesAccess.canRecordPayments}
+        onPaymentVoided={handlePaymentVoided}
+      />
+
+      <FeeAdjustmentDrawer
+        isOpen={showAdjustmentDrawer}
+        onClose={() => setShowAdjustmentDrawer(false)}
+        student={finalStudentData}
+        form={adjustmentForm}
+        setForm={setAdjustmentForm}
+        onSubmit={handleSubmitAdjustment}
+        isSubmitting={isApplyingAdjustment}
+      />
+
+      <FeesSetupWizardDialog
+        open={showFeesSetupWizard}
+        setupIntent={feePlanSetupIntent}
+        onOpenChange={handleSetupWizardOpenChange}
+        onComplete={handleFeesSetupComplete}
+      />
 
       {/* Assign Fee Structure to Grades Modal */}
       <AssignFeeStructureModal

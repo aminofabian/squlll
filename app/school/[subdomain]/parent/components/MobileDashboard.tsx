@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Clock, GraduationCap, MessageCircle, Calendar, Bell, ChevronRight } from 'lucide-react';
+import { ParentConsolidatedFeeCard } from './ParentConsolidatedFeeCard';
+import type { ParentConsolidatedFees } from '@/lib/parent/parentFees';
 
 interface Child {
   id: number;
@@ -48,6 +50,10 @@ interface MobileDashboardProps {
   subdomain: string;
   averageGpa?: number | null;
   dashboardLoading?: boolean;
+  consolidatedFees?: ParentConsolidatedFees | null;
+  feesLoading?: boolean;
+  onFeesRefresh?: () => void;
+  onSelectChildByStudentId?: (studentId: string) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -76,6 +82,10 @@ export const MobileDashboard = ({
   subdomain,
   averageGpa = null,
   dashboardLoading = false,
+  consolidatedFees = null,
+  feesLoading = false,
+  onFeesRefresh,
+  onSelectChildByStudentId,
 }: MobileDashboardProps) => {
   const displayGpa = averageGpa ?? children[selectedChild].currentGPA;
   return (
@@ -134,6 +144,15 @@ export const MobileDashboard = ({
             <p className="text-slate-600 font-medium tracking-wide">
               {children[selectedChild].grade} • {children[selectedChild].class}
             </p>
+          </div>
+
+          <div className="mb-6 text-left">
+            <ParentConsolidatedFeeCard
+              summary={consolidatedFees}
+              loading={feesLoading}
+              onRefresh={onFeesRefresh}
+              onSelectChild={onSelectChildByStudentId}
+            />
           </div>
           
           {/* Enhanced Quick Stats Row */}

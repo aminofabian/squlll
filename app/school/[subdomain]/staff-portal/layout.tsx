@@ -10,7 +10,7 @@ export default function StaffPortalLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="font-outfit">
+    <div className="font-sans">
       <DashboardLayout
         sidebar={<StaffSidebar />}
         mobileNav={<MobileNav />}

@@ -31,6 +31,8 @@ interface BulkInvoiceGeneratorProps {
   onGenerate: (generation: BulkInvoiceGeneration) => void
   preselectedStructureId?: string
   preselectedTerm?: string
+  getLinkedClassCount?: (feeStructureId: string) => number
+  onNeedClassAssignment?: (feeStructureId: string) => void
 }
 
 export const BulkInvoiceGenerator = ({
@@ -38,7 +40,9 @@ export const BulkInvoiceGenerator = ({
   onClose,
   onGenerate,
   preselectedStructureId,
-  preselectedTerm
+  preselectedTerm,
+  getLinkedClassCount,
+  onNeedClassAssignment,
 }: BulkInvoiceGeneratorProps) => {
   const { structures: graphQLFeeStructures, isLoading: isLoadingStructures, fetchFeeStructures } = useGraphQLFeeStructures()
   const { grades: graphQLGrades, isLoading: isLoadingGrades, fetchGradeData } = useGradeData()
@@ -235,6 +239,16 @@ export const BulkInvoiceGenerator = ({
   }
 
   const handleGenerate = async () => {
+    if (!formData.feeStructureId) {
+      return
+    }
+
+    const linked = getLinkedClassCount?.(formData.feeStructureId) ?? -1
+    if (linked === 0) {
+      onNeedClassAssignment?.(formData.feeStructureId)
+      return
+    }
+
     setIsGenerating(true)
     setGenerationProgress(0)
 

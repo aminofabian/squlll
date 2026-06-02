@@ -11,6 +11,9 @@ interface TeacherUser {
 interface TenantSubject {
   id: string;
   name: string;
+  subjectType?: string;
+  customSubject?: { name?: string } | null;
+  subject?: { name?: string } | null;
 }
 
 interface TenantGradeLevel {
@@ -33,15 +36,32 @@ interface TenantStream {
   };
 }
 
-interface GradeLevel {
-  gradeLevel: {
-    name: string;
-  };
-}
-
 interface ClassTeacherAssignment {
   id: string;
-  gradeLevel: GradeLevel;
+  active?: boolean;
+  startDate?: string;
+  endDate?: string;
+  stream?: {
+    id: string;
+    stream?: {
+      id: string;
+      name: string;
+    };
+    tenantGradeLevel?: {
+      id: string;
+      gradeLevel?: {
+        id: string;
+        name: string;
+      };
+    };
+  };
+  gradeLevel?: {
+    id: string;
+    gradeLevel?: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 interface Tenant {
@@ -60,6 +80,13 @@ interface TeacherDetail {
   department?: string;
   role?: string;
   isActive?: boolean;
+  employeeId?: string;
+  dateOfBirth?: string;
+  address?: string;
+  qualifications?: string;
+  hasCompletedProfile?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   user: TeacherUser;
   tenantSubjects: TenantSubject[];
   tenantGradeLevels: TenantGradeLevel[];
@@ -87,6 +114,13 @@ const GET_TEACHERS_QUERY = `
       gender
       department
       role
+      employeeId
+      dateOfBirth
+      address
+      qualifications
+      hasCompletedProfile
+      createdAt
+      updatedAt
       user {
         id
         name
@@ -95,6 +129,13 @@ const GET_TEACHERS_QUERY = `
       tenantSubjects {
         id
         name
+        subjectType
+        customSubject {
+          name
+        }
+        subject {
+          name
+        }
       }
       tenantGradeLevels {
         id
@@ -116,8 +157,27 @@ const GET_TEACHERS_QUERY = `
       }
       classTeacherAssignments {
         id
+        active
+        startDate
+        endDate
+        stream {
+          id
+          stream {
+            id
+            name
+          }
+          tenantGradeLevel {
+            id
+            gradeLevel {
+              id
+              name
+            }
+          }
+        }
         gradeLevel {
+          id
           gradeLevel {
+            id
             name
           }
         }
@@ -143,6 +203,13 @@ const GET_TEACHER_BY_ID_QUERY = `
       department
       role
       isActive
+      employeeId
+      dateOfBirth
+      address
+      qualifications
+      hasCompletedProfile
+      createdAt
+      updatedAt
       user {
         id
         name
@@ -151,6 +218,13 @@ const GET_TEACHER_BY_ID_QUERY = `
       tenantSubjects {
         id
         name
+        subjectType
+        customSubject {
+          name
+        }
+        subject {
+          name
+        }
       }
       tenantGradeLevels {
         id
@@ -172,8 +246,27 @@ const GET_TEACHER_BY_ID_QUERY = `
       }
       classTeacherAssignments {
         id
+        active
+        startDate
+        endDate
+        stream {
+          id
+          stream {
+            id
+            name
+          }
+          tenantGradeLevel {
+            id
+            gradeLevel {
+              id
+              name
+            }
+          }
+        }
         gradeLevel {
+          id
           gradeLevel {
+            id
             name
           }
         }

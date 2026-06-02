@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Check, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Check, Loader2, Settings2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGradeLevelsForSchoolType } from '@/lib/hooks/useGradeLevelsForSchoolType'
+import { FeesWizardSection } from '../FeesWizardLayout'
 
 interface Step1QuickSetupProps {
     formData: {
@@ -18,10 +20,18 @@ interface Step1QuickSetupProps {
     }
     onChange: (field: string, value: any) => void
     errors?: Record<string, string>
+    /** Grades/year already chosen in guided setup — show summary only */
+    guidedFromSetup?: boolean
+    onEditSetup?: () => void
 }
 
-export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupProps) => {
-    const currentYear = new Date().getFullYear()
+export const Step1QuickSetup = ({
+    formData,
+    onChange,
+    errors,
+    guidedFromSetup = false,
+    onEditSetup,
+}: Step1QuickSetupProps) => {
     const [academicYears, setAcademicYears] = useState<Array<{ id: string; name: string; terms: Array<{ id: string; name: string }> }>>([])
     const [isLoadingYears, setIsLoadingYears] = useState(false)
     
@@ -32,7 +42,6 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
         .map((gl) => gl.gradeLevel?.name || gl.shortName || '')
         .filter((name): name is string => Boolean(name?.trim()))
 
-    // Fetch academic years with terms
     useEffect(() => {
         const fetchAcademicYears = async () => {
             setIsLoadingYears(true)
@@ -46,10 +55,7 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
                                 academicYears {
                                     id
                                     name
-                                    terms {
-                                        id
-                                        name
-                                    }
+                                    terms { id name }
                                 }
                             }
                         `
@@ -63,8 +69,11 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
 
                 setAcademicYears(result.data.academicYears)
                 
-                // Auto-select first academic year if none selected
-                if (!formData.academicYearId && result.data.academicYears.length > 0) {
+                if (
+                    !guidedFromSetup &&
+                    !formData.academicYearId &&
+                    result.data.academicYears.length > 0
+                ) {
                     const firstYear = result.data.academicYears[0]
                     onChange('academicYear', firstYear.name)
                     onChange('academicYearId', firstYear.id)
@@ -78,9 +87,8 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
         }
 
         fetchAcademicYears()
-    }, [])
+    }, [guidedFromSetup])
 
-    // Update terms when academic year changes
     const handleAcademicYearChange = (yearName: string) => {
         onChange('academicYear', yearName)
         const selectedYear = academicYears.find(ay => ay.name === yearName)
@@ -90,139 +98,159 @@ export const Step1QuickSetup = ({ formData, onChange, errors }: Step1QuickSetupP
         }
     }
 
-    const toggleGrade = (grade: string) => {
-        const selected = formData.selectedGrades || []
-        const newSelected = selected.includes(grade)
-            ? selected.filter(g => g !== grade)
-            : [...selected, grade]
-        onChange('selectedGrades', newSelected)
-    }
+    const selectedGrades = formData.selectedGrades || []
+    const selectedCount = selectedGrades.length
+    const termLabels =
+        formData.terms?.map((t) => t.name).join(' · ') || '—'
 
     return (
-        <div className="space-y-6">
-            {/* Structure Name */}
-            <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">
-                    Structure Name
-                </label>
-                <Input
-                    value={formData.name}
-                    onChange={(e) => onChange('name', e.target.value)}
-                    placeholder="e.g., Primary Day Students 2024"
-                    className={cn("h-11", errors?.name && "border-red-500")}
-                />
-                {errors?.name && (
-                    <p className="text-sm text-red-600 mt-1">{errors.name}</p>
-                )}
-            </div>
-
-            {/* Academic Year & Boarding Type */}
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="text-sm font-medium text-slate-700 mb-2 block">
-                        Academic Year
-                    </label>
-                    {isLoadingYears ? (
-                        <div className="h-11 flex items-center gap-2 text-sm text-slate-500">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading...
-                        </div>
-                    ) : (
-                        <Select value={formData.academicYear} onValueChange={handleAcademicYearChange}>
-                            <SelectTrigger className="h-11">
-                                <SelectValue placeholder="Select academic year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {academicYears.map(ay => (
-                                    <SelectItem key={ay.id} value={ay.name}>
-                                        {ay.name} {ay.terms.length > 0 && `(${ay.terms.length} terms)`}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
-                    {formData.terms && formData.terms.length > 0 && (
-                        <p className="text-xs text-slate-500 mt-1">
-                            {formData.terms.length} term{formData.terms.length !== 1 ? 's' : ''} available: {formData.terms.map(t => t.name).join(', ')}
-                        </p>
-                    )}
+        <div className="space-y-5">
+            {guidedFromSetup && onEditSetup ? (
+                <div className="flex justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 border-emerald-200 text-emerald-900"
+                        onClick={onEditSetup}
+                    >
+                        <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+                        Edit categories & grade amounts
+                    </Button>
                 </div>
+            ) : null}
 
-                <div>
-                    <label className="text-sm font-medium text-slate-700 mb-2 block">
-                        Student Type
-                    </label>
-                    <Select value={formData.boardingType} onValueChange={(v) => onChange('boardingType', v as any)}>
-                        <SelectTrigger className="h-11">
-                            <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="day">🏫 Day Students</SelectItem>
-                            <SelectItem value="boarding">🏠 Boarding Students</SelectItem>
-                            <SelectItem value="both">🎯 Day & Boarding</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            {/* Multi-Grade Selection */}
-            <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">
-                    Select Grades <span className="text-slate-500">(select one or more)</span>
-                </label>
-                {gradesLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-500 py-4">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading classes from your school…
+            <FeesWizardSection title="Basics">
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1.5 block">
+                            Plan name
+                        </label>
+                        <Input
+                            value={formData.name}
+                            onChange={(e) => onChange('name', e.target.value)}
+                            placeholder="e.g. 2027-2028 · All grades · Day & boarding"
+                            className={cn('h-10', errors?.name && 'border-red-500')}
+                        />
+                        {errors?.name && (
+                            <p className="text-xs text-red-600 mt-1">{errors.name}</p>
+                        )}
                     </div>
-                ) : gradeOptions.length === 0 ? (
-                    <p className="text-sm text-slate-500 py-2">
-                        No classes found. Complete school setup first, then return here.
-                    </p>
-                ) : (
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                    {gradeOptions.map((grade) => {
-                        const isSelected = (formData.selectedGrades || []).includes(grade)
 
-                        return (
-                            <button
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1.5 block">
+                                Academic year
+                            </label>
+                            {guidedFromSetup ? (
+                                <p className="h-10 flex items-center text-sm font-medium text-slate-800">
+                                    {formData.academicYear || '—'}
+                                    {formData.terms?.length ? (
+                                        <span className="ml-2 text-slate-500 font-normal">
+                                            · {termLabels}
+                                        </span>
+                                    ) : null}
+                                </p>
+                            ) : isLoadingYears ? (
+                                <div className="h-10 flex items-center gap-2 text-sm text-slate-500">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Loading…
+                                </div>
+                            ) : (
+                                <Select value={formData.academicYear} onValueChange={handleAcademicYearChange}>
+                                    <SelectTrigger className="h-10">
+                                        <SelectValue placeholder="Select year" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {academicYears.map(ay => (
+                                            <SelectItem key={ay.id} value={ay.name}>
+                                                {ay.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1.5 block">
+                                Student type
+                            </label>
+                            <Select value={formData.boardingType} onValueChange={(v) => onChange('boardingType', v as 'day' | 'boarding' | 'both')}>
+                                <SelectTrigger className="h-10">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="day">Day</SelectItem>
+                                    <SelectItem value="boarding">Boarding</SelectItem>
+                                    <SelectItem value="both">Day & boarding</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+            </FeesWizardSection>
+
+            <FeesWizardSection
+                title={
+                    guidedFromSetup
+                        ? `Grades · ${selectedCount}`
+                        : `Grades${selectedCount > 0 ? ` · ${selectedCount} selected` : ''}`
+                }
+            >
+                {guidedFromSetup ? (
+                    <div className="flex flex-wrap gap-1.5">
+                        {selectedGrades.map((grade) => (
+                            <span
                                 key={grade}
-                                type="button"
-                                onClick={() => toggleGrade(grade)}
-                                className={cn(
-                                    "relative h-11 rounded-lg border-2 transition-all font-medium text-sm flex items-center justify-center gap-2",
-                                    isSelected
-                                        ? "border-primary bg-primary text-white"
-                                        : "border-slate-200 hover:border-primary/50 text-slate-700"
-                                )}
+                                className="inline-flex items-center rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-sm font-medium text-slate-800"
                             >
                                 {grade}
-                                {isSelected && (
-                                    <Check className="h-4 w-4" />
-                                )}
-                            </button>
-                        )
-                    })}
-                </div>
-                )}
-                {errors?.selectedGrades && (
-                    <p className="text-sm text-red-600 mt-2">{errors.selectedGrades}</p>
-                )}
-            </div>
-
-            {/* Selected Summary */}
-            {formData.selectedGrades?.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                        <div className="text-sm font-medium text-blue-900">
-                            {formData.selectedGrades.length} {formData.selectedGrades.length === 1 ? 'grade' : 'grades'} selected
-                        </div>
-                        <div className="text-sm text-blue-700">
-                            • {formData.selectedGrades.join(', ')}
-                        </div>
+                            </span>
+                        ))}
                     </div>
-                </div>
-            )}
+                ) : gradesLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading…
+                    </div>
+                ) : gradeOptions.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                        No grades found. Complete school setup first.
+                    </p>
+                ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {gradeOptions.map((grade) => {
+                            const isSelected = selectedGrades.includes(grade)
+
+                            return (
+                                <button
+                                    key={grade}
+                                    type="button"
+                                    onClick={() => {
+                                        const newSelected = isSelected
+                                            ? selectedGrades.filter((g) => g !== grade)
+                                            : [...selectedGrades, grade]
+                                        onChange('selectedGrades', newSelected)
+                                    }}
+                                    className={cn(
+                                        'h-9 rounded-lg border text-sm font-medium transition-colors flex items-center justify-center gap-1',
+                                        isSelected
+                                            ? 'border-primary bg-primary text-white shadow-sm'
+                                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
+                                    )}
+                                >
+                                    {grade}
+                                    {isSelected && <Check className="h-3.5 w-3.5" />}
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
+                {!guidedFromSetup && errors?.selectedGrades ? (
+                    <p className="text-xs text-red-600 mt-3">{errors.selectedGrades}</p>
+                ) : null}
+            </FeesWizardSection>
         </div>
     )
 }

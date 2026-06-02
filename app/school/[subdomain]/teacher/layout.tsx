@@ -13,7 +13,7 @@ export default function TeacherLayout({
 }) {
   return (
     <TermProvider>
-      <div className="font-outfit">
+      <div className="font-sans">
         <DashboardLayout
           sidebar={<Sidebar />}
           mobileNav={<TeacherMobileBottomNav />}

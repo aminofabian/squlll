@@ -14,6 +14,7 @@ const GET_STUDENTS_SUMMARY = gql`
         totalOwed
         totalPaid
         balance
+        creditBalance
         numberOfFeeItems
       }
     }
@@ -24,6 +25,7 @@ export interface FeeSummary {
   totalOwed: number;
   totalPaid: number;
   balance: number;
+  creditBalance?: number;
   numberOfFeeItems: number;
 }
 

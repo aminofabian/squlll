@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Grade } from '../types';
 import { mockGrades } from '../data/mockData';
+import { tenantGradeLevelsToGrades } from '../lib/gradeLevelsDisplay';
 
 // Define TypeScript interfaces for the GraphQL response
 export interface GraphQLGradeLevel {
@@ -97,45 +98,13 @@ export const useGradeData = () => {
       if (result.data && result.data.gradeLevelsForSchoolType && Array.isArray(result.data.gradeLevelsForSchoolType)) {
         console.log(`Received ${result.data.gradeLevelsForSchoolType.length} grade levels from API`);
         
-        // Extract all streams from all grade levels and transform them to Grade objects
-        const transformedGrades: Grade[] = [];
-        
-        result.data.gradeLevelsForSchoolType.forEach((tenantGradeLevel: any) => {
-          // Get the grade level name from the gradeLevel object
-          const gradeLevelName = tenantGradeLevel.gradeLevel?.name || 'Unknown Grade';
-          
-          // Process tenant streams if they exist
-          if (tenantGradeLevel.tenantStreams && Array.isArray(tenantGradeLevel.tenantStreams)) {
-            tenantGradeLevel.tenantStreams.forEach((tenantStream: any) => {
-              const streamName = tenantStream.stream?.name || '';
-              
-              transformedGrades.push({
-                id: tenantStream.id,
-                name: `${gradeLevelName} ${streamName}`.trim(),
-                level: 0, // We don't have this in the API response
-                section: streamName || 'A',
-                boardingType: 'day', // Default since we don't have this in the API
-                feeStructureId: '', // This needs to be set elsewhere
-                studentCount: 0, // We don't have this information from the API
-                isActive: tenantGradeLevel.isActive !== false // default to true if not specified
-              });
-            });
-          } else {
-            // If there are no streams, create a single grade for this grade level
-            transformedGrades.push({
-              id: tenantGradeLevel.id,
-              name: gradeLevelName,
-              level: 0, // Default level
-              section: 'A', // Default section
-              boardingType: 'day',
-              feeStructureId: '',
-              studentCount: 0,
-              isActive: tenantGradeLevel.isActive !== false
-            });
-          }
-        });
-        
-        console.log(`Transformed ${transformedGrades.length} tenant streams into grades`);
+        const transformedGrades = tenantGradeLevelsToGrades(
+          result.data.gradeLevelsForSchoolType,
+        );
+
+        console.log(
+          `Transformed ${transformedGrades.length} grade/stream cards (${new Set(transformedGrades.map((g) => g.tenantGradeLevelId)).size} tenant grade levels)`,
+        );
         setGrades(transformedGrades);
         setLastFetchTime(new Date());
         setUsedFallback(false);

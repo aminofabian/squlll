@@ -2,14 +2,22 @@
 
 import { useState, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { FeeStructure } from '../../types'
 import { ProcessedFeeStructure } from './types'
-import { Loader2, Plus, RefreshCw, Search, X } from 'lucide-react'
-import { FeeStructureCard } from './FeeStructureCard'
+import { Loader2, RefreshCw, Search, X } from 'lucide-react'
+import { FeePlansTable } from './FeePlansTable'
+import { FeePlansListNextSteps } from './FeePlansListNextSteps'
+import { FeePlansListAlerts } from './FeePlansListAlerts'
+import { FeePlansToolbar } from './FeePlansToolbar'
+import { FeePlanDetailView } from './FeePlanDetailView'
+import { FeePlanDetailSkeleton } from './FeePlanDetailSkeleton'
 import { FeeStructureEmptyState } from '../FeeStructureEmptyState'
-import { cn } from '@/lib/utils'
+import { findFeePlanBySlug } from '../../lib/feePlanSlug'
+import { computeFeePlansListStats } from '../../lib/feePlanStats'
+import type { FeePlanCollectionStats } from '../../lib/feePlanCollection'
+import type { LinkedClassEntry } from '../../lib/feePlanLinkage'
+import type { FeeAssignmentGroup } from '../../types'
+import type { SchoolGradeRef } from '../../lib/feePlanYearLinkage'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useQuery } from '@tanstack/react-query'
 
@@ -26,10 +34,20 @@ interface FeeStructuresTabProps {
   onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => void
   onCreateNew: () => void
   fetchFeeStructures: () => Promise<any>
-  getAssignedGrades: (feeStructureId: string) => any[]
+  getLinkedClassCount: (feeStructureId: string) => number
+  getLinkedClasses: (feeStructureId: string) => LinkedClassEntry[]
   getTotalStudents: (feeStructureId: string) => number
+  onGuidedSetup?: () => void
   hasFetched?: boolean
   isDeleting?: boolean
+  /** From URL ?plan= — when set, show single-plan detail */
+  selectedPlanSlug?: string | null
+  onBackToPlanList?: () => void
+  collectionByPlanId?: Map<string, FeePlanCollectionStats>
+  feeAssignments?: FeeAssignmentGroup[]
+  schoolGrades?: SchoolGradeRef[]
+  canManage?: boolean
+  canBill?: boolean
 }
 
 export const FeeStructuresTab = ({
@@ -45,10 +63,19 @@ export const FeeStructuresTab = ({
   onUpdateFeeItem,
   onCreateNew,
   fetchFeeStructures,
-  getAssignedGrades,
+  getLinkedClassCount,
+  getLinkedClasses,
   getTotalStudents,
+  onGuidedSetup,
   hasFetched = false,
-  isDeleting = false
+  isDeleting = false,
+  selectedPlanSlug = null,
+  onBackToPlanList,
+  collectionByPlanId,
+  feeAssignments,
+  schoolGrades = [],
+  canManage = true,
+  canBill = true,
 }: FeeStructuresTabProps) => {
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const [searchQuery, setSearchQuery] = useState('')
@@ -131,6 +158,11 @@ export const FeeStructuresTab = ({
     })
   }, [graphQLStructures, searchQuery, statusFilter, academicYearFilter])
 
+  const activePlan = useMemo(
+    () => findFeePlanBySlug(graphQLStructures, selectedPlanSlug),
+    [graphQLStructures, selectedPlanSlug],
+  )
+
   // Use academicYearsForFilter for the filter dropdown
   const academicYears = academicYearsForFilter
 
@@ -186,158 +218,118 @@ export const FeeStructuresTab = ({
 
   // Show real data if available
   if (graphQLStructures && graphQLStructures.length > 0) {
+    if (selectedPlanSlug && !activePlan && hasFetched) {
+      return (
+        <div className="space-y-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+          <p className="text-sm font-medium text-slate-800">Fee plan not found</p>
+          <p className="mt-1 text-xs text-slate-500">
+            It may have been deleted or renamed.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={onBackToPlanList}
+          >
+            Back to all plans
+          </Button>
+        </div>
+      );
+    }
+
+    if (selectedPlanSlug && !activePlan) {
+      return <FeePlanDetailSkeleton />;
+    }
+
+    if (selectedPlanSlug && activePlan) {
+      const linkedClasses = getLinkedClasses(activePlan.structureId)
+      const students = getTotalStudents(activePlan.structureId)
+      const collection = collectionByPlanId?.get(activePlan.structureId)
+      return (
+        <FeePlanDetailView
+          structure={activePlan}
+          planSlug={selectedPlanSlug!}
+          linkedClasses={linkedClasses}
+          totalStudents={students}
+          collection={collection}
+          canManage={canManage}
+          canBill={canBill}
+          onEdit={onEdit}
+          onAssignToGrade={onAssignToGrade}
+          onGenerateInvoices={onGenerateInvoices}
+          onDelete={canManage ? onDelete : undefined}
+          onUpdateFeeItem={onUpdateFeeItem}
+          isDeleting={isDeleting}
+        />
+      )
+    }
+
+    const listStats = computeFeePlansListStats(
+      graphQLStructures,
+      getLinkedClassCount,
+    )
+
     return (
       <div className="space-y-3">
-        {/* Compact Header with Filters and Actions */}
-        <div className="bg-white border border-slate-200 rounded-lg p-2.5 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-2.5 lg:items-center">
-            {/* Left: Search and Filters */}
-            <div className="flex-1 flex flex-col sm:flex-row gap-2.5 min-w-0">
-              {/* Search */}
-              <div className="flex-1 relative min-w-0">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none z-10" />
-                <Input
-                  type="text"
-                  placeholder="Search structures..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-8 h-8 text-xs border-slate-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors z-10"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+        <FeePlansListAlerts stats={listStats} />
+        <FeePlansToolbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          academicYearFilter={academicYearFilter}
+          onAcademicYearFilterChange={setAcademicYearFilter}
+          academicYears={academicYears}
+          filteredCount={filteredStructures.length}
+          totalCount={graphQLStructures.length}
+          onRefresh={() => fetchFeeStructures()}
+          onCreateNew={onCreateNew}
+          canCreate={canCreateFeeStructure}
+        />
 
-              {/* Status Filter - Compact Pills */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {(['all', 'active', 'inactive'] as const).map((status) => (
-                  <Button
-                    key={status}
-                    variant={statusFilter === status ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setStatusFilter(status)}
-                    className={cn(
-                      "h-8 px-2.5 text-[10px] font-medium capitalize transition-all",
-                      statusFilter === status 
-                        ? 'bg-primary text-white shadow-sm' 
-                        : 'border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400'
-                    )}
-                  >
-                    {status === 'all' ? 'All' : status}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Academic Year Filter - Compact Dropdown */}
-              {academicYears.length > 0 && (
-                <select
-                  value={academicYearFilter}
-                  onChange={(e) => setAcademicYearFilter(e.target.value)}
-                  className="h-8 px-2.5 text-[10px] border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary rounded-md transition-all min-w-[100px]"
-                >
-                  <option value="all">All Years</option>
-                  {academicYears.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            {/* Right: Actions and Count */}
-            <div className="flex items-center gap-2 flex-shrink-0 border-l border-slate-200 pl-2.5 lg:pl-3">
-              <div className="hidden sm:block text-[10px] text-slate-500 font-medium whitespace-nowrap">
-                {filteredStructures.length}/{graphQLStructures.length}
-              </div>
-              <Button
-                onClick={() => fetchFeeStructures()}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                title="Refresh"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                onClick={onCreateNew}
-                disabled={!canCreateFeeStructure}
-                size="sm"
-                className="h-8 px-2.5 text-[10px] font-medium bg-primary hover:bg-primary/90 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                title={!canCreateFeeStructure ? 'Please create an academic year and terms first' : 'Create new fee structure'}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                New
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Fee Structure Cards - Compact Grid */}
         {filteredStructures.length > 0 ? (
-          <div className="space-y-2">
-            {filteredStructures.map((structure, index) => {
-              const assignedGrades = getAssignedGrades(structure.structureId)
-              const totalStudents = getTotalStudents(structure.structureId)
-
-              return (
-                <FeeStructureCard
-                  key={structure.structureId}
-                  structure={structure}
-                  index={index + 1}
-                  onEdit={() => {
-                    onEdit({
-                      id: structure.structureId,
-                      name: structure.structureName,
-                      isActive: structure.isActive,
-                      academicYear: structure.academicYear,
-                      grade: '',
-                      boardingType: 'day',
-                      createdDate: structure.createdAt || '',
-                      lastModified: structure.updatedAt || '',
-                      termStructures: []
-                    })
-                  }}
-                  onDelete={() => {
-                    if (onDelete) {
-                      onDelete(structure.structureId, structure.structureName)
-                    }
-                  }}
-                  onAssignToGrade={onAssignToGrade}
-                  onGenerateInvoices={() => {
-                    onGenerateInvoices(structure.structureId, structure.termName)
-                  }}
-                  onUpdateFeeItem={onUpdateFeeItem}
-                  isDeleting={isDeleting}
-                />
-              )
-            })}
-          </div>
+          <>
+            <FeePlansTable
+              structures={filteredStructures}
+              getLinkedClassCount={getLinkedClassCount}
+              collectionByPlanId={collectionByPlanId}
+              assignments={feeAssignments}
+              schoolGrades={schoolGrades}
+            />
+            <FeePlansListNextSteps
+              planCount={filteredStructures.length}
+              hasUnbilledPlans={filteredStructures.some(
+                (s) => !collectionByPlanId?.get(s.structureId)?.hasBilling,
+              )}
+              onCreateNew={onCreateNew}
+              canCreate={canCreateFeeStructure}
+            />
+          </>
         ) : (
-          <div className="bg-white border border-dashed border-slate-300 rounded-lg p-8 text-center">
-            <div className="max-w-md mx-auto">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto max-w-sm">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
                 <Search className="h-6 w-6 text-slate-400" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-1">No structures found</h3>
-              <p className="text-xs text-slate-600 mb-3">
-                Try adjusting your search or filter criteria
+              <h3 className="text-sm font-semibold text-slate-900">
+                No plans match your filters
+              </h3>
+              <p className="mt-1 text-xs text-slate-600">
+                Try a different search or clear filters to see all plans.
               </p>
               {(searchQuery || statusFilter !== 'all' || academicYearFilter !== 'all') && (
                 <Button
                   variant="outline"
                   size="sm"
+                  className="mt-4 h-8 text-xs"
                   onClick={() => {
                     setSearchQuery('')
                     setStatusFilter('all')
                     setAcademicYearFilter('all')
                   }}
-                  className="h-8 text-xs border-slate-300 text-slate-700"
                 >
-                  <X className="h-3 w-3 mr-1.5" />
+                  <X className="mr-1.5 h-3 w-3" />
                   Clear filters
                 </Button>
               )}
@@ -352,6 +344,7 @@ export const FeeStructuresTab = ({
   return (
     <FeeStructureEmptyState
       onCreateNew={onCreateNew}
+      onGuidedSetup={onGuidedSetup}
       onViewSample={() => {
         // Could implement a sample structure view
         console.log('Show sample structure')

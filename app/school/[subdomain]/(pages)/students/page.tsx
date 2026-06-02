@@ -3,17 +3,16 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Loader2, X } from "lucide-react";
 import { CreateStudentDrawer } from "./components/CreateStudentDrawer";
+import { StudentsEmptyHero } from "./components/StudentsEmptyHero";
 import { StudentDetailsView } from "./components/StudentDetailsView";
 import { StudentsOverviewBar } from "./components/StudentsOverviewBar";
 import { StudentsTable, type StudentRow } from "./components/StudentsTable";
 import { AssignGradeStreamDialog } from "./components/AssignGradeStreamDialog";
-import { StudentsContextBar } from "./components/StudentsContextBar";
-import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
-import { ClassesStats } from "../classes/components/ClassesStats";
-import { ClassesContextBar } from "../classes/components/ClassesContextBar";
-import { GradeDetailsView } from "../classes/components/GradeDetailsView";
+import { StudentsDirectorySidebar } from "./components/StudentsDirectorySidebar";
+import { StudentsFilterBar } from "./components/StudentsFilterBar";
+import { StudentsBulkActions } from "./components/StudentsBulkActions";
 import { useStudents, useStudentsFromStore } from "@/lib/hooks/useStudents";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
@@ -21,6 +20,16 @@ import { GraphQLStudent } from "@/types/student";
 import { formatGradeDisplayName } from "@/lib/utils/grade-display";
 import { cn } from "@/lib/utils";
 import type { SchoolConfiguration } from "@/lib/types/school-config";
+import {
+  matchesStudentFilter,
+  type StudentFilter,
+} from "./utils/students-utils";
+import {
+  studentsControlDivider,
+  studentsControlShell,
+  studentsIconButton,
+  studentsSearchChip,
+} from "./components/students-ui";
 
 function resolveStreamName(
   config: SchoolConfiguration | null,
@@ -53,7 +62,7 @@ function gradeHasStreams(
 function mapGraphQLStudent(
   student: GraphQLStudent,
   config: SchoolConfiguration | null,
-) {
+): StudentRow {
   const name =
     student.user?.name ||
     (student.user?.email
@@ -96,15 +105,16 @@ function mapGraphQLStudent(
 export default function StudentsPage() {
   const searchParams = useSearchParams();
   const openAddStudent = searchParams.get("action") === "add";
+  const deepLinkStudentId = searchParams.get("studentId");
 
-  const [selectedGradeId, setSelectedGradeId] = useState("");
-  const [selectedLevelId, setSelectedLevelId] = useState("");
-  const [selectedStreamId, setSelectedStreamId] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
     null,
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [displayedStudentsCount, setDisplayedStudentsCount] = useState(10);
+  const [studentFilter, setStudentFilter] = useState<StudentFilter>("all");
+  const [gradeFilter, setGradeFilter] = useState("all");
   const [assignTarget, setAssignTarget] = useState<StudentRow | null>(null);
 
   const {
@@ -122,55 +132,63 @@ export default function StudentsPage() {
       .map((s) => mapGraphQLStudent(s, config));
   }, [graphqlStudents, config]);
 
-  const selectedGrade = useMemo(() => {
-    if (!selectedGradeId || !config) return null;
-    for (const level of config.selectedLevels) {
-      const grade = level.gradeLevels?.find((g) => g.id === selectedGradeId);
-      if (grade) {
-        const stream = selectedStreamId
-          ? grade.streams?.find((s) => s.id === selectedStreamId)
-          : null;
-        return {
-          name: grade.name,
-          displayName: formatGradeDisplayName(grade.name),
-          levelName: level.name,
-          streamName: stream?.name,
-          grade,
-          level,
-        };
+  const grades = useMemo(() => {
+    const unique = new Set<string>();
+    for (const student of students) {
+      if (student.grade && student.grade !== "—") {
+        unique.add(student.grade);
       }
     }
-    return null;
-  }, [selectedGradeId, selectedStreamId, config]);
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [students]);
 
   const selectedStudent = useMemo(
     () => students.find((s) => s.id === selectedStudentId) ?? null,
     [students, selectedStudentId],
   );
 
+  useEffect(() => {
+    if (
+      deepLinkStudentId &&
+      students.some((s) => s.id === deepLinkStudentId) &&
+      selectedStudentId !== deepLinkStudentId
+    ) {
+      setSelectedStudentId(deepLinkStudentId);
+    }
+  }, [deepLinkStudentId, students, selectedStudentId]);
+
   const filteredStudents = useMemo(() => {
     let result = [...students];
 
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter(
-        (s) =>
-          s.name.toLowerCase().includes(q) ||
-          s.admissionNumber.toLowerCase().includes(q),
-      );
+    if (gradeFilter !== "all") {
+      result = result.filter((s) => s.grade === gradeFilter);
     }
 
-    if (selectedGradeId) {
-      result = result.filter((s) => s.gradeId === selectedGradeId);
-    }
-
-    if (selectedStreamId) {
-      result = result.filter((s) => s.streamId === selectedStreamId);
-    }
-
+    result = result.filter((s) => matchesStudentFilter(s, studentFilter));
     result.sort((a, b) => a.name.localeCompare(b.name));
     return result;
-  }, [students, searchTerm, selectedGradeId, selectedStreamId]);
+  }, [students, gradeFilter, studentFilter]);
+
+  const tableStudents = useMemo(() => {
+    if (!searchTerm.trim()) return filteredStudents;
+    const q = searchTerm.toLowerCase();
+    return filteredStudents.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.admissionNumber.toLowerCase().includes(q) ||
+        s.grade.toLowerCase().includes(q),
+    );
+  }, [filteredStudents, searchTerm]);
+
+  const filterCounts = useMemo(
+    () => ({
+      all: students.length,
+      active: students.filter((s) => s.status === "active").length,
+      inactive: students.filter((s) => s.status === "inactive").length,
+      missingClass: students.filter((s) => s.missingStream).length,
+    }),
+    [students],
+  );
 
   const gradesWithStudents = useMemo(() => {
     const ids = new Set<string>();
@@ -183,66 +201,19 @@ export default function StudentsPage() {
   const activeCount = students.filter((s) => s.status === "active").length;
   const inactiveCount = students.length - activeCount;
 
-  const handleGradeSelect = useCallback((gradeId: string, levelId: string) => {
-    setSelectedGradeId(gradeId);
-    setSelectedLevelId(levelId);
-    setSelectedStreamId("");
-    setSelectedStudentId(null);
-    setSearchTerm("");
-  }, []);
-
-  const handleStreamSelect = useCallback(
-    (streamId: string, gradeId: string, levelId: string) => {
-      setSelectedStreamId(streamId);
-      setSelectedStudentId(null);
-      if (gradeId !== selectedGradeId || levelId !== selectedLevelId) {
-        setSelectedGradeId(gradeId);
-        setSelectedLevelId(levelId);
-      }
-    },
-    [selectedGradeId, selectedLevelId],
-  );
-
   const clearFilters = useCallback(() => {
-    setSelectedGradeId("");
-    setSelectedLevelId("");
-    setSelectedStreamId("");
     setSearchTerm("");
     setSelectedStudentId(null);
-  }, []);
-
-  useEffect(() => {
-    const handle = () => {
-      const w = window.innerWidth;
-      if (w >= 768 && w < 1200) setIsSidebarMinimized(true);
-      else if (w >= 1200) setIsSidebarMinimized(false);
-    };
-    handle();
-    window.addEventListener("resize", handle);
-    return () => window.removeEventListener("resize", handle);
+    setStudentFilter("all");
+    setGradeFilter("all");
   }, []);
 
   const pageError = error || configError;
   const pageLoading = isLoading || configLoading;
-  const isGradeView = !!selectedGradeId && !selectedStudentId;
-  const isOverview = !selectedGradeId && !selectedStudentId;
 
-  const tableTitle = selectedGrade
-    ? selectedGrade.streamName
-      ? `${selectedGrade.displayName} · ${selectedGrade.streamName}`
-      : selectedGrade.displayName
-    : "All students";
-
-  const tableDescription = isOverview
-    ? "Select a row to view student details."
-    : filteredStudents.length === 0
-      ? "No students enrolled in this grade yet."
-      : `${filteredStudents.length} enrolled`;
-
-  const emptyMessage = selectedGradeId
-    ? "No students in this grade yet"
-    : searchTerm
-      ? "No students match your search"
+  const emptyMessage =
+    searchTerm || gradeFilter !== "all" || studentFilter !== "all"
+      ? "No students match your filters"
       : "No students yet";
 
   if (pageError) {
@@ -262,7 +233,6 @@ export default function StudentsPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
-      {/* Sidebar */}
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
@@ -279,7 +249,7 @@ export default function StudentsPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+            className={studentsIconButton}
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           >
             {isSidebarMinimized ? (
@@ -289,49 +259,40 @@ export default function StudentsPage() {
             )}
           </Button>
         </div>
-        {!isSidebarMinimized && (
-          <div className="flex-1 overflow-hidden px-3 pb-3">
-            <SchoolSearchFilter
-              className="h-full"
-              variant="minimal"
-              type="grades"
-              onGradeSelect={handleGradeSelect}
-              onStreamSelect={handleStreamSelect}
+        {!isSidebarMinimized ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3">
+            <StudentsDirectorySidebar
+              students={filteredStudents}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedStudentId={selectedStudentId}
+              onStudentSelect={setSelectedStudentId}
+              displayedStudentsCount={displayedStudentsCount}
+              onLoadMore={() =>
+                setDisplayedStudentsCount((prev) => prev + 10)
+              }
               isLoading={pageLoading}
-              selectedGradeId={selectedGradeId}
-              selectedStreamId={selectedStreamId}
             />
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+        <div className="shrink-0 border-b border-slate-200/50 bg-slate-50/80 px-4 py-3 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-950/80 sm:px-6">
           <div className="mx-auto max-w-5xl">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Students
+                  {selectedStudent ? selectedStudent.name : "Students"}
                 </h1>
-                {isOverview && (
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    Browse and enroll students by grade.
-                  </p>
-                )}
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {selectedStudent
+                    ? `${selectedStudent.grade} · ${selectedStudent.admissionNumber} · ${selectedStudent.status === "active" ? "Active" : "Inactive"}`
+                    : "Browse, enroll, and manage enrolled students"}
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                {isSidebarMinimized && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
-                    onClick={() => setIsSidebarMinimized(false)}
-                  >
-                    <PanelLeftOpen className="h-4 w-4" />
-                  </Button>
-                )}
-                {!selectedStudentId && (
+                {!selectedStudentId ? (
                   <CreateStudentDrawer
                     defaultOpen={openAddStudent}
                     onStudentCreated={() => {
@@ -339,120 +300,124 @@ export default function StudentsPage() {
                       clearFilters();
                     }}
                   />
-                )}
+                ) : null}
               </div>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div
-            className={cn(
-              "mx-auto max-w-5xl p-4 sm:p-6",
-              selectedStudentId || selectedGradeId ? "space-y-4" : "space-y-5",
-            )}
-          >
+          <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+            {pageLoading && students.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading students…
+              </div>
+            ) : null}
+
             {selectedStudent ? (
-              <>
-                <StudentsContextBar
-                  gradeName={selectedStudent.grade}
-                  studentName={selectedStudent.name}
-                  admissionNumber={selectedStudent.admissionNumber}
-                  onClear={() => setSelectedStudentId(null)}
-                />
-                <StudentDetailsView
-                  studentId={selectedStudent.id}
-                  onClose={() => setSelectedStudentId(null)}
-                  schoolConfig={config}
-                  embedded
-                  onEnrollmentUpdated={() => refetch()}
-                />
-              </>
+              <StudentDetailsView
+                studentId={selectedStudent.id}
+                onClose={() => setSelectedStudentId(null)}
+                schoolConfig={config ?? undefined}
+                embedded
+                onEnrollmentUpdated={() => refetch()}
+              />
+            ) : students.length === 0 && !pageLoading ? (
+              <StudentsEmptyHero
+                defaultOpen={openAddStudent}
+                onStudentCreated={() => {
+                  refetch();
+                  clearFilters();
+                }}
+              />
             ) : (
-              <>
-                {isOverview && (
-                  <>
-                    <ClassesStats
-                      config={config}
-                      isLoading={pageLoading}
-                      studentCount={students.length}
-                      studentsLoading={pageLoading}
-                    />
-                    <StudentsOverviewBar
-                      total={students.length}
-                      active={activeCount}
-                      inactive={inactiveCount}
-                      gradeCount={gradesWithStudents}
-                      isLoading={pageLoading}
-                    />
-                  </>
-                )}
+              <div className="space-y-5">
+                <StudentsOverviewBar
+                  total={students.length}
+                  active={activeCount}
+                  inactive={inactiveCount}
+                  gradeCount={gradesWithStudents}
+                  isLoading={pageLoading}
+                />
 
-                {selectedGrade && (
-                  <>
-                    <ClassesContextBar
-                      levelName={selectedGrade.levelName}
-                      gradeName={selectedGrade.displayName}
-                      streamName={selectedGrade.streamName}
-                      onClear={clearFilters}
+                {!pageLoading && students.length > 0 ? (
+                  <div className={studentsControlShell}>
+                    <StudentsFilterBar
+                      filter={studentFilter}
+                      onFilterChange={setStudentFilter}
+                      counts={filterCounts}
+                      grades={grades}
+                      gradeFilter={gradeFilter}
+                      onGradeFilterChange={setGradeFilter}
                     />
-                    <GradeDetailsView
-                      grade={selectedGrade.grade}
-                      selectedStreamId={selectedStreamId || undefined}
-                      onStreamSelect={(streamId) =>
-                        handleStreamSelect(
-                          streamId,
-                          selectedGrade.grade.id,
-                          selectedGrade.level.id,
-                        )
-                      }
-                    />
-                  </>
-                )}
 
-                {searchTerm && isOverview && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                      Search results
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm("")}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                    >
-                      &ldquo;{searchTerm}&rdquo;
-                      <X className="h-3 w-3 text-slate-400" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm("")}
-                      className="text-xs text-slate-400 hover:text-slate-600"
-                    >
-                      Clear search
-                    </button>
+                    {searchTerm || tableStudents.length > 0 ? (
+                      <div
+                        className={cn(
+                          studentsControlDivider,
+                          "flex flex-wrap items-center justify-between gap-2",
+                        )}
+                      >
+                        {searchTerm && !selectedStudentId ? (
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>Filtering by</span>
+                            <button
+                              type="button"
+                              onClick={() => setSearchTerm("")}
+                              className={studentsSearchChip}
+                            >
+                              &ldquo;{searchTerm}&rdquo;
+                              <X className="h-3 w-3 text-slate-400" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span />
+                        )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StudentsBulkActions students={tableStudents} />
+                          <CreateStudentDrawer
+                            triggerVariant="toolbar"
+                            onStudentCreated={() => {
+                              refetch();
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          studentsControlDivider,
+                          "flex justify-end",
+                        )}
+                      >
+                        <CreateStudentDrawer
+                          triggerVariant="toolbar"
+                          onStudentCreated={() => {
+                            refetch();
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
+                ) : null}
 
                 <StudentsTable
-                  students={filteredStudents}
+                  students={tableStudents}
                   isLoading={pageLoading}
                   onStudentClick={setSelectedStudentId}
                   onAssignClass={setAssignTarget}
-                  title={tableTitle}
-                  description={tableDescription}
-                  searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  hideGradeColumn={isGradeView}
+                  title="All students"
                   emptyMessage={emptyMessage}
-                  showAddAction={filteredStudents.length === 0}
+                  showAddAction={tableStudents.length === 0}
                 />
-              </>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {assignTarget && (
+      {assignTarget ? (
         <AssignGradeStreamDialog
           studentId={assignTarget.id}
           studentName={assignTarget.name}
@@ -464,7 +429,7 @@ export default function StudentsPage() {
           }}
           onSuccess={() => refetch()}
         />
-      )}
+      ) : null}
     </div>
   );
 }

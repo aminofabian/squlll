@@ -22,6 +22,10 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
 import { Grade } from '../types'
 import { useGradeLevels } from '../hooks/useGradeLevels'
+import {
+  tenantGradeLevelsToGrades,
+  resolveTenantGradeLevelIds,
+} from '../lib/gradeLevelsDisplay'
 
 interface FeeStructure {
   id: string
@@ -53,6 +57,8 @@ export const AssignFeeStructureModal = ({
   const [error, setError] = useState<string | null>(null)
   const [filteredGradeLevels, setFilteredGradeLevels] = useState<string[]>([])
   const [isLoadingFilteredStructure, setIsLoadingFilteredStructure] = useState<boolean>(false)
+  const [eligibleStudentCount, setEligibleStudentCount] = useState<number | null>(null)
+  const [eligibilityLoading, setEligibilityLoading] = useState(false)
   const { toast } = useToast()
   
   // Fetch grade levels as fallback when no classes are available
@@ -132,22 +138,17 @@ export const AssignFeeStructureModal = ({
     return 999
   }
   
-  // Transform grade levels into Grade format for display
-  const gradeLevelsAsGrades: Grade[] = gradeLevels.map(gl => ({
-    id: gl.id,
-    name: gl.gradeLevel.name,
-    section: gl.shortName || '',
-    studentCount: 0,
-    feeStructureId: '',
-    level: 0,
-    boardingType: 'day' as const,
-    isActive: gl.isActive !== false
-  }))
-  
-  // Filter grade levels by term if filteredGradeLevels is available
-  const allAvailableGrades = availableGrades.length > 0 ? availableGrades : gradeLevelsAsGrades
+  const gradeLevelsAsGrades = tenantGradeLevelsToGrades(gradeLevels)
+
+  // Prefer API grade levels (correct tenantGradeLevelId); page `grades` may use stream ids
+  const allAvailableGrades =
+    gradeLevelsAsGrades.length > 0 ? gradeLevelsAsGrades : availableGrades
   const filteredGrades = filteredGradeLevels.length > 0
-    ? allAvailableGrades.filter(grade => filteredGradeLevels.includes(grade.id))
+    ? allAvailableGrades.filter(
+        (grade) =>
+          filteredGradeLevels.includes(grade.tenantGradeLevelId) ||
+          filteredGradeLevels.includes(grade.id),
+      )
     : allAvailableGrades
   
   // Sort and prepare display items
@@ -256,6 +257,72 @@ export const AssignFeeStructureModal = ({
     }
   }, [isOpen, feeStructure, availableGrades])
 
+  useEffect(() => {
+    if (!isOpen || !feeStructure || selectedGradeIds.length === 0) {
+      setEligibleStudentCount(null)
+      return
+    }
+
+    const tenantGradeLevelIds = resolveTenantGradeLevelIds(
+      selectedGradeIds,
+      displayItems,
+    )
+
+    if (tenantGradeLevelIds.length === 0) {
+      setEligibleStudentCount(null)
+      return
+    }
+
+    let cancelled = false
+    setEligibilityLoading(true)
+
+    fetch('/api/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `
+          query FeePlanGradeEligibilityPreview(
+            $feeStructureId: ID!
+            $tenantGradeLevelIds: [ID!]!
+          ) {
+            feePlanGradeEligibilityPreview(
+              feeStructureId: $feeStructureId
+              tenantGradeLevelIds: $tenantGradeLevelIds
+            ) {
+              eligibleStudentCount
+              gradeCount
+            }
+          }
+        `,
+        variables: {
+          feeStructureId: feeStructure.id,
+          tenantGradeLevelIds,
+        },
+      }),
+    })
+      .then((res) => res.json())
+      .then((result) => {
+        if (cancelled) return
+        if (result.errors?.length) {
+          setEligibleStudentCount(null)
+          return
+        }
+        setEligibleStudentCount(
+          result.data?.feePlanGradeEligibilityPreview?.eligibleStudentCount ?? null,
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setEligibleStudentCount(null)
+      })
+      .finally(() => {
+        if (!cancelled) setEligibilityLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, feeStructure, selectedGradeIds, displayItems])
+
   
   const handleGradeToggle = (gradeId: string) => {
     setSelectedGradeIds(prev => 
@@ -299,7 +366,15 @@ export const AssignFeeStructureModal = ({
       return
     }
     
-    const tenantGradeLevelIds = selectedGradeIds
+    const tenantGradeLevelIds = resolveTenantGradeLevelIds(
+      selectedGradeIds,
+      displayItems,
+    )
+
+    if (tenantGradeLevelIds.length === 0) {
+      setError("Could not resolve grade levels for assignment. Refresh and try again.")
+      return
+    }
     
     setIsSubmitting(true)
     setError(null)
@@ -319,6 +394,7 @@ export const AssignFeeStructureModal = ({
                 assignedBy
                 description
                 isActive
+                studentsAssignedCount
                 createdAt
                 feeStructure {
                   id
@@ -367,11 +443,14 @@ export const AssignFeeStructureModal = ({
       
       // Handle successful assignment
       const assignmentResult = result.data.createFeeAssignment
+      const studentsAssigned = assignmentResult?.studentsAssignedCount ?? 0
       
-      // Show success toast
       toast({
-        title: "Success",
-        description: `Fee structure assigned to ${tenantGradeLevelIds.length} grade level${tenantGradeLevelIds.length !== 1 ? 's' : ''} successfully`,
+        title: "Fee plan linked to grades",
+        description:
+          studentsAssigned > 0
+            ? `Linked ${tenantGradeLevelIds.length} grade${tenantGradeLevelIds.length !== 1 ? 's' : ''} and assigned ${studentsAssigned} student${studentsAssigned !== 1 ? 's' : ''}. New admissions will inherit automatically.`
+            : `Linked ${tenantGradeLevelIds.length} grade level${tenantGradeLevelIds.length !== 1 ? 's' : ''}. Students will be assigned as they enroll.`,
         variant: "default",
       })
       
@@ -411,7 +490,7 @@ export const AssignFeeStructureModal = ({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-slate-900 leading-tight">
-                Assign Fee Structure
+                Link fee plan to grades
               </span>
               {feeStructure && (
                 <span className="text-xs text-slate-600 font-medium truncate max-w-md">
@@ -420,13 +499,22 @@ export const AssignFeeStructureModal = ({
               )}
             </div>
           </DrawerTitle>
-          <DrawerDescription className="mt-2 text-xs text-slate-600">
+          <DrawerDescription className="mt-2 space-y-2 text-xs text-slate-600">
             {feeStructure ? (
-              <span>
-                Select grade levels or classes to assign <span className="font-semibold text-slate-900">{feeStructure.name}</span>
-              </span>
+              <>
+                <span>
+                  Fee plans apply at the <span className="font-semibold text-slate-900">grade level</span>.
+                  All students currently in the selected grades will receive{" "}
+                  <span className="font-semibold text-slate-900">{feeStructure.name}</span>,
+                  unless they have a custom fee structure or exemption.
+                </span>
+                <span className="block text-slate-500">
+                  New admissions and grade transfers inherit the active plan automatically.
+                  Students who leave a grade keep their historical balances.
+                </span>
+              </>
             ) : (
-              'Select grades to assign this fee structure'
+              'Select grades to link this fee plan'
             )}
           </DrawerDescription>
         </DrawerHeader>
@@ -445,6 +533,26 @@ export const AssignFeeStructureModal = ({
                   className="border-slate-300 focus:border-primary focus:ring-primary/20 h-9"
                 />
               </div>
+
+              {selectedGradeIds.length > 0 ? (
+                <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2.5 text-xs text-emerald-900">
+                  {eligibilityLoading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Counting eligible students…
+                    </span>
+                  ) : eligibleStudentCount != null ? (
+                    <span>
+                      <span className="font-semibold tabular-nums">
+                        {eligibleStudentCount.toLocaleString()}
+                      </span>{" "}
+                      student{eligibleStudentCount !== 1 ? 's' : ''} in the selected
+                      grade{selectedGradeIds.length !== 1 ? 's' : ''} will receive this
+                      plan now (excluding exemptions and custom assignments).
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
               
               <div className="space-y-2">
                     <div className="flex items-center justify-between">

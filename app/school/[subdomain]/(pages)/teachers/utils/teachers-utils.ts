@@ -24,13 +24,66 @@ export function getAvatarPalette(seed: string) {
   return AVATAR_PALETTES[Math.abs(hash) % AVATAR_PALETTES.length];
 }
 
-export type StaffFilter = "all" | "active" | "needs-setup";
+import { isTeacherProfileIncomplete } from "./mapGraphqlTeacher";
+
+export type StaffFilter = "all" | "active" | "needs-setup" | "incomplete";
 
 export function matchesStaffFilter(
-  status: "active" | "inactive" | "on leave" | "former" | "substitute" | "retired",
+  teacher: {
+    status:
+      | "active"
+      | "inactive"
+      | "on leave"
+      | "former"
+      | "substitute"
+      | "retired";
+    employeeId?: string | null;
+    dateOfBirth?: string | null;
+    qualifications?: string | null;
+    hasCompletedProfile?: boolean;
+    contacts?: { phone?: string; email?: string };
+  },
   filter: StaffFilter,
 ) {
   if (filter === "all") return true;
-  if (filter === "active") return status === "active";
-  return status === "inactive";
+  if (filter === "active") return teacher.status === "active";
+  if (filter === "needs-setup") return teacher.status === "inactive";
+  if (filter === "incomplete") return isTeacherProfileIncomplete(teacher);
+  return true;
+}
+
+export function formatTeacherDate(
+  date?: string | Date | null,
+): string | null {
+  if (!date) return null;
+  try {
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return null;
+  }
+}
+
+export function formatSubjectTypeLabel(subjectType?: string | null): string {
+  if (!subjectType) return "Core";
+  const normalized = subjectType.toLowerCase();
+  if (normalized === "elective") return "Elective";
+  if (normalized === "core") return "Core";
+  if (normalized === "custom") return "Custom";
+  return subjectType.charAt(0).toUpperCase() + subjectType.slice(1);
+}
+
+export function formatTenantSubjectLabel(subject: {
+  name?: string | null;
+  subjectType?: string | null;
+  customSubject?: { name?: string | null } | null;
+}): string {
+  const name =
+    subject.name?.trim() ||
+    subject.customSubject?.name?.trim() ||
+    "Unknown subject";
+  return `${name} (${formatSubjectTypeLabel(subject.subjectType)})`;
 }

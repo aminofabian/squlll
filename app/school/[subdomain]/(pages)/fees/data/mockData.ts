@@ -449,6 +449,7 @@ export const mockFeeStructures: FeeStructure[] = [
 export const mockGrades: Grade[] = [
   {
     id: "GR-001",
+    tenantGradeLevelId: "GR-001",
     name: "Grade 1",
     level: 1,
     section: "A",
@@ -459,6 +460,7 @@ export const mockGrades: Grade[] = [
   },
   {
     id: "GR-002",
+    tenantGradeLevelId: "GR-002",
     name: "Grade 1",
     level: 1,
     section: "B",
@@ -469,6 +471,7 @@ export const mockGrades: Grade[] = [
   },
   {
     id: "GR-003",
+    tenantGradeLevelId: "GR-003",
     name: "Form 2",
     level: 10,
     section: "A",
@@ -479,6 +482,7 @@ export const mockGrades: Grade[] = [
   },
   {
     id: "GR-004",
+    tenantGradeLevelId: "GR-004",
     name: "Form 2",
     level: 10,
     section: "B",
@@ -489,6 +493,7 @@ export const mockGrades: Grade[] = [
   },
   {
     id: "GR-005",
+    tenantGradeLevelId: "GR-005",
     name: "Form 4",
     level: 12,
     section: "A",

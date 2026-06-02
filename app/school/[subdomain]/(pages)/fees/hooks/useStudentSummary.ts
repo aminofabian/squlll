@@ -24,6 +24,8 @@ const GET_STUDENT_SUMMARY = `
           id
           feeBucketName
           amount
+          amountPaid
+          balance
           isMandatory
           feeStructureName
           academicYearName

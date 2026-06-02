@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Clock, GraduationCap, Calendar, MapPin, TrendingUp, Award, CheckCircle, Bell } from 'lucide-react';
+import { ParentConsolidatedFeeCard } from './ParentConsolidatedFeeCard';
+import type { ParentConsolidatedFees } from '@/lib/parent/parentFees';
 
 interface Child {
   id: number;
@@ -56,6 +58,10 @@ interface DesktopDashboardProps {
   parentName?: string;
   averageGpa?: number | null;
   dashboardLoading?: boolean;
+  consolidatedFees?: ParentConsolidatedFees | null;
+  feesLoading?: boolean;
+  onFeesRefresh?: () => void;
+  onSelectChildByStudentId?: (studentId: string) => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -85,6 +91,10 @@ export const DesktopDashboard = ({
   parentName = 'Parent',
   averageGpa = null,
   dashboardLoading = false,
+  consolidatedFees = null,
+  feesLoading = false,
+  onFeesRefresh,
+  onSelectChildByStudentId,
 }: DesktopDashboardProps) => {
   const displayGpa = averageGpa ?? children[selectedChild].currentGPA;
   return (
@@ -144,6 +154,13 @@ export const DesktopDashboard = ({
         {/* Bottom Decorative Line */}
         <div className="absolute bottom-6 left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
       </div>
+
+      <ParentConsolidatedFeeCard
+        summary={consolidatedFees}
+        loading={feesLoading}
+        onRefresh={onFeesRefresh}
+        onSelectChild={onSelectChildByStudentId}
+      />
 
       {/* Enhanced Child Selector */}
       <div className="flex space-x-6 mb-8">

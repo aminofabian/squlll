@@ -9,11 +9,25 @@ import {
 } from '../types'
 import { useGraphQLPayments } from './useGraphQLPayments'
 import { useGraphQLInvoices } from './useGraphQLInvoices'
+import { roundToNearestTen } from '../lib/feesAmounts'
+import type { CreatePaymentResponse } from './useGraphQLPayments'
 
 export const useFormHandlers = (
   selectedStudent: string | null, 
   filteredInvoices: FeeInvoice[],
-  onDataChange?: () => void
+  onDataChange?: () => void,
+  onReminderLogged?: (entry: {
+    studentIds: string[]
+    channel: string
+    message: string
+  }) => void,
+  onPaymentRecorded?: (entry: {
+    amount: number
+    method: string
+    receiptNumber?: string
+    studentId: string
+    payment: CreatePaymentResponse
+  }) => void,
 ) => {
   const { toast } = useToast()
   const { createPayment, error: paymentError } = useGraphQLPayments()
@@ -53,7 +67,10 @@ export const useFormHandlers = (
     paymentDate: '',
     referenceNumber: '',
     notes: '',
-    partialPayment: false
+    partialPayment: false,
+    applyCreditBalance: false,
+    useManualAllocation: false,
+    allocations: {},
   })
 
   // Payment Plan Form State
@@ -116,8 +133,44 @@ export const useFormHandlers = (
     setShowPaymentReminderDrawer(true)
   }
 
-  const handleSubmitReminder = () => {
-    console.log('Sending reminder:', reminderForm)
+  const handleSubmitReminder = (studentIdsOverride?: string[]) => {
+    const studentIds = studentIdsOverride ?? reminderForm.studentIds
+    if (studentIds.length === 0) {
+      toast({
+        title: 'Select students first',
+        description: 'Choose one or more students from the balances list.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!reminderForm.message.trim()) {
+      toast({
+        title: 'Add a message',
+        description: 'Write the reminder text parents will receive.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const channel =
+      reminderForm.reminderType === 'sms'
+        ? 'SMS'
+        : reminderForm.reminderType === 'whatsapp'
+          ? 'WhatsApp'
+          : 'email'
+
+    onReminderLogged?.({
+      studentIds,
+      channel: reminderForm.reminderType,
+      message: reminderForm.message,
+    })
+
+    toast({
+      title: 'Reminder queued',
+      description: `${studentIds.length} ${channel} reminder(s) will send when messaging is connected for your school.`,
+    })
+
     setShowPaymentReminderDrawer(false)
     setReminderForm({
       studentIds: [],
@@ -164,7 +217,7 @@ export const useFormHandlers = (
       return
     }
 
-    const amount = Number(paymentForm.amountPaid)
+    const amount = roundToNearestTen(Number(paymentForm.amountPaid))
     if (!Number.isFinite(amount) || amount <= 0) {
       toast({
         title: 'Invalid amount',
@@ -181,16 +234,28 @@ export const useFormHandlers = (
       transactionReference: paymentForm.referenceNumber || undefined,
       paymentDate: new Date(paymentForm.paymentDate).toISOString(),
       notes: paymentForm.notes || undefined,
+      applyCreditBalance: paymentForm.applyCreditBalance || undefined,
+      allocations:
+        paymentForm.useManualAllocation && paymentForm.allocations
+          ? Object.entries(paymentForm.allocations)
+              .map(([studentFeeItemId, value]) => ({
+                studentFeeItemId,
+                amount: Number(value),
+              }))
+              .filter((row) => Number.isFinite(row.amount) && row.amount > 0)
+          : undefined,
     }
 
     const result = await createPayment(input)
     if (result) {
-      toast({
-        title: 'Payment recorded',
-        description: result.receiptNumber
-          ? `Receipt ${result.receiptNumber} saved.`
-          : 'The payment was saved successfully.',
+      onPaymentRecorded?.({
+        amount,
+        method: paymentForm.paymentMethod,
+        receiptNumber: result.receiptNumber,
+        studentId: paymentForm.studentId,
+        payment: result,
       })
+
       setShowRecordPaymentDrawer(false)
       setPaymentForm({
         invoiceId: '',
@@ -200,7 +265,10 @@ export const useFormHandlers = (
         paymentDate: '',
         referenceNumber: '',
         notes: '',
-        partialPayment: false
+        partialPayment: false,
+        applyCreditBalance: false,
+        useManualAllocation: false,
+        allocations: {},
       })
 
       if (onDataChange) {

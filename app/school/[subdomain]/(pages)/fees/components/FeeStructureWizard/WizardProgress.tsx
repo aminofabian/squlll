@@ -2,58 +2,62 @@
 
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { FEES_BRAND } from '../../lib/fees-ui'
 
 interface WizardProgressProps {
     currentStep: number
     steps: { number: number; title: string }[]
+    /** Step number auto-completed when user skips it (e.g. guided setup skips Amounts) */
+    skippedStep?: number
 }
 
-export const WizardProgress = ({ currentStep, steps }: WizardProgressProps) => {
-    const progress = ((currentStep - 1) / (steps.length - 1)) * 100
-
-    return (
-        <div className="relative pb-6">
-            {/* Progress Line */}
-            <div className="absolute top-5 left-0 right-0 h-0.5 bg-slate-200">
-                <div
-                    className="h-full bg-primary transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                />
-            </div>
-
-            {/* Steps */}
-            <div className="relative flex justify-between">
-                {steps.map((step) => {
-                    const isCompleted = step.number < currentStep
-                    const isCurrent = step.number === currentStep
-
-                    return (
-                        <div key={step.number} className="flex flex-col items-center">
-                            <div
-                                className={cn(
-                                    "w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all font-semibold text-sm z-10",
-                                    isCompleted && "bg-primary border-primary text-white",
-                                    isCurrent && "bg-white border-primary text-primary ring-4 ring-primary/10",
-                                    !isCompleted && !isCurrent && "bg-white border-slate-300 text-slate-400"
-                                )}
-                            >
-                                {isCompleted ? <Check className="h-5 w-5" /> : step.number}
-                            </div>
-
-                            <div
-                                className={cn(
-                                    "mt-2 text-xs font-medium",
-                                    isCurrent && "text-primary",
-                                    isCompleted && "text-slate-700",
-                                    !isCompleted && !isCurrent && "text-slate-400"
-                                )}
-                            >
-                                {step.title}
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-        </div>
-    )
-}
+export const WizardProgress = ({
+    currentStep,
+    steps,
+    skippedStep,
+}: WizardProgressProps) => (
+    <ol className="flex items-center justify-between gap-1 rounded-xl border border-slate-200 bg-white p-2">
+        {steps.map((step) => {
+            const done =
+                step.number < currentStep ||
+                (skippedStep != null &&
+                    step.number === skippedStep &&
+                    currentStep > skippedStep)
+            const current = step.number === currentStep
+            return (
+                <li
+                    key={step.number}
+                    className={cn(
+                        'flex flex-1 min-w-0 items-center justify-center gap-2 rounded-lg px-2 py-2 transition-colors',
+                        current && 'bg-emerald-50',
+                        !current && !done && 'opacity-60',
+                    )}
+                >
+                    <span
+                        className={cn(
+                            'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                            done && 'bg-emerald-600 text-white',
+                            current && 'text-white',
+                            !done && !current && 'bg-slate-100 text-slate-500',
+                        )}
+                        style={
+                            current
+                                ? { backgroundColor: FEES_BRAND.primary }
+                                : undefined
+                        }
+                    >
+                        {done ? <Check className="h-3.5 w-3.5" /> : step.number}
+                    </span>
+                    <span
+                        className={cn(
+                            'hidden truncate text-xs font-medium sm:inline',
+                            current ? 'text-emerald-900' : 'text-slate-600',
+                        )}
+                    >
+                        {step.title}
+                    </span>
+                </li>
+            )
+        })}
+    </ol>
+)

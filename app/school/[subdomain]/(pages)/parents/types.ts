@@ -4,6 +4,7 @@ export interface ParentInvitation {
   role: string;
   status: string;
   createdAt: string;
+  expiresAt?: string;
   invitedBy?: {
     id: string;
     name: string;

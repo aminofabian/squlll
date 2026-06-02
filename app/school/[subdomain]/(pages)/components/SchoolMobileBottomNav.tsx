@@ -61,7 +61,7 @@ export function SchoolMobileBottomNav() {
                   className={cn(
                     "flex flex-col items-center gap-1.5 rounded-lg px-2 py-3 text-center transition-colors",
                     active
-                      ? "bg-[#246a59]/10 text-[#246a59]"
+                      ? "bg-[#0073ea]/10 text-[#0073ea]"
                       : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800",
                   )}
                 >
@@ -101,21 +101,21 @@ export function SchoolMobileBottomNav() {
             className={cn(
               "relative flex min-w-[4.25rem] flex-col items-center gap-0.5 px-2 py-1.5",
               moreOpen || isMoreActive
-                ? "text-[#246a59]"
+                ? "text-[#0073ea]"
                 : "text-slate-500 dark:text-slate-400",
             )}
           >
             <span
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-                moreOpen || isMoreActive ? "bg-[#246a59]/10" : "bg-transparent",
+                moreOpen || isMoreActive ? "bg-[#0073ea]/10" : "bg-transparent",
               )}
             >
               <MoreHorizontal className="h-5 w-5" />
             </span>
             <span className="text-[10px] font-medium">More</span>
             {isMoreActive && !moreOpen ? (
-              <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#246a59]" />
+              <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#0073ea]" />
             ) : null}
           </button>
         </div>
@@ -143,8 +143,8 @@ function TabLink({
           className={cn(
             "flex h-14 w-14 items-center justify-center rounded-full border shadow-md transition-transform active:scale-95",
             active
-              ? "border-[#246a59] bg-[#246a59] text-white shadow-[#246a59]/25"
-              : "border-slate-200/80 bg-white text-[#246a59] dark:border-slate-700 dark:bg-slate-900",
+              ? "border-[#0073ea] bg-[#0073ea] text-white shadow-[#0073ea]/25"
+              : "border-slate-200/80 bg-white text-[#0073ea] dark:border-slate-700 dark:bg-slate-900",
           )}
         >
           <Icon className="h-6 w-6" />
@@ -152,7 +152,7 @@ function TabLink({
         <span
           className={cn(
             "text-[10px] font-semibold",
-            active ? "text-[#246a59]" : "text-slate-500 dark:text-slate-400",
+            active ? "text-[#0073ea]" : "text-slate-500 dark:text-slate-400",
           )}
         >
           {item.title}
@@ -166,20 +166,20 @@ function TabLink({
       href={item.href}
       className={cn(
         "relative flex min-w-[4.25rem] flex-col items-center gap-0.5 px-2 py-1.5",
-        active ? "text-[#246a59]" : "text-slate-500 dark:text-slate-400",
+        active ? "text-[#0073ea]" : "text-slate-500 dark:text-slate-400",
       )}
     >
       <span
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
-          active ? "bg-[#246a59]/10" : "bg-transparent",
+          active ? "bg-[#0073ea]/10" : "bg-transparent",
         )}
       >
         <Icon className="h-5 w-5" />
       </span>
       <span className="text-[10px] font-medium">{item.title}</span>
       {active ? (
-        <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#246a59]" />
+        <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#0073ea]" />
       ) : null}
     </Link>
   );

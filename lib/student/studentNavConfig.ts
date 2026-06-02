@@ -14,6 +14,7 @@ import {
   TrendingUp,
   User,
   UserCheck,
+  Wallet,
 } from "lucide-react";
 
 export type StudentNavItem = {
@@ -57,6 +58,7 @@ export const STUDENT_PAGE_TITLES: Record<string, string> = {
   "/student/exam-timetable": "Exam Timetable",
   "/student/profile": "Profile",
   "/student/settings": "Settings",
+  "/student/fees": "My Fees",
 };
 
 export function getStudentPageTitle(pathname: string): string {
@@ -109,6 +111,12 @@ export const STUDENT_NAV_ITEMS: StudentNavItem[] = [
     title: "Attendance",
     href: "/student/attendance",
     icon: UserCheck,
+    tab: "more",
+  },
+  {
+    title: "My Fees",
+    href: "/student/fees",
+    icon: Wallet,
     tab: "more",
   },
   {

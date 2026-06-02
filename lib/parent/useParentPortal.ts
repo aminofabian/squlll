@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   fetchChildAttendanceRate,
-  fetchChildFeeBalance,
   fetchMyChildren,
   getLast30DaysRange,
 } from './parentPortal'
+import { fetchMyChildrenFeeSummary } from './parentFees'
+import type { ParentConsolidatedFees } from './parentFees'
 import { mapApiChildToPortalChild } from './mapParentChild'
-import type { ParentFeeBalance, ParentPortalChild } from './types'
+import type { ParentPortalChild } from './types'
 import { useParentLiveUpdates } from '@/lib/realtime/useParentLiveUpdates'
 
 export function useParentPortal(subdomain: string, selectedChildIndex: number) {
@@ -18,7 +19,8 @@ export function useParentPortal(subdomain: string, selectedChildIndex: number) {
   const [attendanceByStudentId, setAttendanceByStudentId] = useState<
     Record<string, number>
   >({})
-  const [feeBalance, setFeeBalance] = useState<ParentFeeBalance | null>(null)
+  const [consolidatedFees, setConsolidatedFees] =
+    useState<ParentConsolidatedFees | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,23 +78,20 @@ export function useParentPortal(subdomain: string, selectedChildIndex: number) {
     }
   }, [subdomain])
 
-  const loadFeeBalance = useCallback(async () => {
-    if (!subdomain || !selectedStudentId) {
-      setFeeBalance(null)
-      return
-    }
+  const loadConsolidatedFees = useCallback(async () => {
+    if (!subdomain) return
     try {
-      const balance = await fetchChildFeeBalance(subdomain, selectedStudentId)
-      setFeeBalance(balance)
+      const summary = await fetchMyChildrenFeeSummary(subdomain)
+      setConsolidatedFees(summary)
     } catch {
-      setFeeBalance(null)
+      setConsolidatedFees(null)
     }
-  }, [subdomain, selectedStudentId])
+  }, [subdomain])
 
   const refetchAll = useCallback(async () => {
     await loadChildren()
-    await loadFeeBalance()
-  }, [loadChildren, loadFeeBalance])
+    await loadConsolidatedFees()
+  }, [loadChildren, loadConsolidatedFees])
 
   useEffect(() => {
     let cancelled = false
@@ -106,8 +105,8 @@ export function useParentPortal(subdomain: string, selectedChildIndex: number) {
   }, [loadChildren])
 
   useEffect(() => {
-    void loadFeeBalance()
-  }, [loadFeeBalance])
+    void loadConsolidatedFees()
+  }, [loadConsolidatedFees])
 
   useParentLiveUpdates({
     studentIds,
@@ -118,7 +117,7 @@ export function useParentPortal(subdomain: string, selectedChildIndex: number) {
 
   return {
     portalChildren,
-    feeBalance,
+    consolidatedFees,
     loading,
     error,
     refetchAll,

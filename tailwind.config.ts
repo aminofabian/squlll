@@ -21,8 +21,8 @@ const config: Config = {
         destructive: 'var(--destructive)',
       },
       fontFamily: {
-        'outfit': ['var(--font-outfit)', 'sans-serif'],
-        'sans': ['var(--font-outfit)', 'var(--font-geist-sans)', 'sans-serif'],
+        sans: ['var(--font-figtree)', 'sans-serif'],
+        mono: ['var(--font-figtree)', 'sans-serif'],
       },
     },
   },

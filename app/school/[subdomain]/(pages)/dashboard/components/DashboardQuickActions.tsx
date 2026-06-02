@@ -83,7 +83,7 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
             className={cn(
               "flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center transition-colors active:scale-[0.98]",
               isPrimary
-                ? "border-[#246a59]/30 bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/15"
+                ? "border-[#0073ea]/30 bg-[#0073ea]/10 text-[#0073ea] dark:bg-[#0073ea]/15"
                 : "border-slate-200/80 bg-slate-50/50 text-slate-700 active:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/30 dark:text-slate-200 dark:active:bg-slate-800",
             )}
           >

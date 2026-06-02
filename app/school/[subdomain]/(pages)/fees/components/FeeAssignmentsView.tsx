@@ -47,13 +47,14 @@ interface ViewHeaderProps {
 }
 
 const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
-  <div className="flex justify-between items-center">
+  <div className="flex flex-wrap justify-between items-start gap-4">
     <div>
-      <h2 className="text-2xl font-mono font-bold text-slate-800">
-        Fee Structure Assignments
+      <h2 className="text-lg font-semibold text-slate-900">
+        Who is assigned
       </h2>
-      <p className="text-sm font-mono text-slate-600 mt-1">
-        View and manage fee structure assignments to students
+      <p className="text-sm text-slate-600 mt-1">
+        See which fee plans are linked to students and verify wiring before
+        billing.
       </p>
     </div>
     
@@ -63,7 +64,6 @@ const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
         size="sm"
         onClick={onRefresh}
         disabled={isLoading}
-        className="font-mono"
       >
         <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
         Refresh
@@ -73,7 +73,6 @@ const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
         variant="outline"
         size="sm"
         onClick={onExport}
-        className="font-mono"
       >
         <Download className="h-4 w-4 mr-2" />
         Export
@@ -82,7 +81,6 @@ const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
       <Button
         variant="outline"
         size="sm"
-        className="font-mono"
       >
         <Filter className="h-4 w-4 mr-2" />
         Filter
@@ -92,20 +90,11 @@ const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
 )
 
 const ErrorAlert = ({ error }: { error: string }) => (
-  <div className="border-2 border-red-200 bg-red-50 p-4">
-    <div className="flex items-start">
-      <div className="flex-1">
-        <h3 className="font-mono font-semibold text-red-800 mb-1">
-          Error Loading Fee Assignments
-        </h3>
-        <p className="font-mono text-sm text-red-700 mb-2">
-          {error}
-        </p>
-        <p className="font-mono text-xs text-red-600">
-          Check the browser console for more details. Make sure the GraphQL endpoint is accessible and the query matches your schema.
-        </p>
-      </div>
-    </div>
+  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+    <h3 className="font-semibold text-red-800 mb-1">
+      Could not load assignments
+    </h3>
+    <p className="text-sm text-red-700">{error}</p>
   </div>
 )
 
@@ -181,9 +170,9 @@ const SummaryCard = ({ label, value, color }: SummaryCardProps) => {
   }
 
   return (
-    <div className={`border-2 ${colorClasses[color]} p-4`}>
-      <p className="font-mono text-xs text-slate-600 mb-1">{label}</p>
-      <p className={`font-mono text-2xl font-bold ${textColorClasses[color]}`}>
+    <div className={`rounded-xl border p-4 ${colorClasses[color]}`}>
+      <p className="text-xs text-slate-600 mb-1">{label}</p>
+      <p className={`text-2xl font-bold tabular-nums ${textColorClasses[color]}`}>
         {value}
       </p>
     </div>

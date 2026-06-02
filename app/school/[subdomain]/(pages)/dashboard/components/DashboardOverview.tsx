@@ -168,7 +168,7 @@ export function DashboardOverview({
         <p className="text-xs text-slate-500">No grades configured yet.</p>
         <Link
           href="/classes"
-          className="mt-2 inline-block text-xs font-medium text-[#246a59] hover:underline"
+          className="mt-2 inline-block text-xs font-medium text-[#0073ea] hover:underline"
         >
           Set up classes →
         </Link>
@@ -301,7 +301,7 @@ export function DashboardOverview({
                   className={cn(
                     "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                     isSelected
-                      ? "bg-[#246a59] text-white"
+                      ? "bg-[#0073ea] text-white"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700",
                   )}
                 >
@@ -316,7 +316,7 @@ export function DashboardOverview({
               setExpandedGradeId(null);
               onGradeSelect?.(activeGrade.id, activeGrade.levelId);
             }}
-            className="mt-2 text-[11px] font-medium text-[#246a59] hover:underline"
+            className="mt-2 text-[11px] font-medium text-[#0073ea] hover:underline"
           >
             View whole grade →
           </button>

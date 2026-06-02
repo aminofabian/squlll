@@ -22,7 +22,7 @@ export function DashboardSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-lg border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40",
+        "overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40",
         className,
       )}
     >

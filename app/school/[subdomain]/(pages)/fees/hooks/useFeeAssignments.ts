@@ -35,6 +35,18 @@ export const useFeeAssignments = (): UseFeeAssignmentsResult => {
                 feeStructureId
                 description
                 studentsAssignedCount
+                tenantGradeLevelIds
+                gradeLevels {
+                  tenantGradeLevelId
+                  tenantGradeLevel {
+                    id
+                    shortName
+                    name
+                    gradeLevel {
+                      name
+                    }
+                  }
+                }
                 isActive
                 createdAt
                 updatedAt

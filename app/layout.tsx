@@ -1,20 +1,16 @@
 // Polyfill localStorage for SSR before anything else
 import "@/lib/polyfills/localStorage";
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 import { QueryClientWrapper } from "./QueryClientWrapper";
 import { ApolloWrapper } from "./ApolloWrapper";
 import { ErrorHandler } from "@/components/ErrorHandler";
 
-const geistSans = Geist({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: '--font-geist-sans',
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: '--font-geist-mono',
+  variable: "--font-figtree",
+  display: "swap",
 });
 
 // Server component root layout
@@ -31,9 +27,7 @@ export default function RootLayout({
           <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         )}
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${figtree.variable} font-sans antialiased`}>
         <QueryClientWrapper>
           <ApolloWrapper>
             <ErrorHandler />

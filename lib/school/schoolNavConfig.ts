@@ -1,159 +1,171 @@
-import type { LucideIcon } from "lucide-react";
 import {
-  BookMarked,
-  Briefcase,
+  LayoutDashboard,
   Building2,
-  CalendarCheck,
-  CheckSquare,
   Clock,
+  Users2,
+  GraduationCap,
+  Users,
+  Briefcase,
   CreditCard,
   FileCheck,
+  BookMarked,
+  CalendarCheck,
   FileText,
-  GraduationCap,
-  LayoutDashboard,
-  Medal,
-  MessageCircle,
   PieChart,
-  Trophy,
   UserRoundPlus,
-  Users,
-  Users2,
+  Medal,
+  CheckSquare,
+  Trophy,
+  MessageCircle,
+  Settings,
+  LayoutGrid,
+  type LucideIcon,
 } from "lucide-react";
 
-export type SchoolNavItem = {
+export interface SchoolNavItem {
   title: string;
   href: string;
   icon: LucideIcon;
-  tab?: "primary" | "more";
   center?: boolean;
-};
-
-/** Normalize `/school/{subdomain}/dashboard` → `/dashboard` */
-export function getSchoolAdminPath(pathname: string): string {
-  const schoolMatch = pathname.match(/^\/school\/[^/]+(\/.*)?$/);
-  if (schoolMatch) {
-    const rest = schoolMatch[1] ?? "/dashboard";
-    if (rest === "/" || rest === "") return "/dashboard";
-    return rest.replace(/\/$/, "") || "/dashboard";
-  }
-  if (pathname === "/" || pathname === "") return "/dashboard";
-  return pathname.replace(/\/$/, "") || "/dashboard";
+  /** Short label for the icon rail (defaults to title) */
+  shortLabel?: string;
 }
 
-export function isSchoolNavActive(pathname: string, href: string): boolean {
-  const current = getSchoolAdminPath(pathname);
-  if (href === "/dashboard") {
-    return current === "/dashboard";
-  }
-  return current === href || current.startsWith(`${href}/`);
+export interface SchoolNavGroup {
+  items: SchoolNavItem[];
 }
 
-export const SCHOOL_PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/classes": "Classes",
-  "/timetable": "Timetable",
-  "/students": "Students",
-  "/teachers": "Teachers",
-  "/parents": "Parents",
-  "/staff": "Staff",
-  "/fees": "Fees & Invoices",
-  "/exams": "Exams",
-  "/curriculum": "Curriculum",
-  "/school-years": "School Years",
-  "/reports": "Reports",
-  "/analytics": "Analytics",
-  "/admissions/applications": "Applications",
-  "/enrollment": "Enrollment",
-  "/attendances": "Attendances",
-  "/grading": "Grading",
-  "/communication": "Communication",
-};
-
-export function getSchoolPageTitle(pathname: string): string {
-  const path = getSchoolAdminPath(pathname);
-  if (SCHOOL_PAGE_TITLES[path]) return SCHOOL_PAGE_TITLES[path];
-
-  const match = Object.entries(SCHOOL_PAGE_TITLES)
-    .filter(([href]) => href !== "/dashboard")
-    .sort((a, b) => b[0].length - a[0].length)
-    .find(([href]) => path.startsWith(`${href}/`));
-
-  return match?.[1] ?? "School";
-}
-
-export const SCHOOL_NAV_ITEMS: SchoolNavItem[] = [
+/** Icon rail groups — slim sidebar with icon + short label */
+export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
   {
-    title: "Classes",
-    href: "/classes",
-    icon: Building2,
-    tab: "primary",
+    items: [
+      { title: "Dashboard", shortLabel: "Home", href: "/dashboard", icon: LayoutGrid },
+      { title: "Students", shortLabel: "Students", href: "/students", icon: Users2 },
+      { title: "Classes", shortLabel: "Classes", href: "/classes", icon: Building2 },
+      { title: "Teachers", shortLabel: "Teachers", href: "/teachers", icon: GraduationCap },
+    ],
   },
   {
-    title: "Students",
-    href: "/students",
-    icon: Users2,
-    tab: "primary",
+    items: [
+      { title: "Timetable", shortLabel: "Schedule", href: "/timetable", icon: Clock },
+      { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees?section=plans", icon: CreditCard },
+      { title: "Exams", shortLabel: "Exams", href: "/exams", icon: FileCheck },
+    ],
   },
   {
-    title: "Home",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    tab: "primary",
-    center: true,
-  },
-  {
-    title: "Teachers",
-    href: "/teachers",
-    icon: GraduationCap,
-    tab: "primary",
-  },
-  {
-    title: "Timetable",
-    href: "/timetable",
-    icon: Clock,
-    tab: "primary",
-  },
-  { title: "Parents", href: "/parents", icon: Users, tab: "more" },
-  { title: "Staff", href: "/staff", icon: Briefcase, tab: "more" },
-  { title: "Fees", href: "/fees", icon: CreditCard, tab: "more" },
-  { title: "Exams", href: "/exams", icon: FileCheck, tab: "more" },
-  { title: "Curriculum", href: "/curriculum", icon: BookMarked, tab: "more" },
-  {
-    title: "School Years",
-    href: "/school-years",
-    icon: CalendarCheck,
-    tab: "more",
-  },
-  { title: "Reports", href: "/reports", icon: FileText, tab: "more" },
-  { title: "Analytics", href: "/analytics", icon: PieChart, tab: "more" },
-  {
-    title: "Applications",
-    href: "/admissions/applications",
-    icon: UserRoundPlus,
-    tab: "more",
-  },
-  { title: "Enrollment", href: "/enrollment", icon: Medal, tab: "more" },
-  {
-    title: "Attendance",
-    href: "/attendances",
-    icon: CheckSquare,
-    tab: "more",
-  },
-  { title: "Grading", href: "/grading", icon: Trophy, tab: "more" },
-  {
-    title: "Messages",
-    href: "/communication",
-    icon: MessageCircle,
-    tab: "more",
+    items: [
+      { title: "Settings", shortLabel: "Settings", href: "/settings", icon: Settings },
+    ],
   },
 ];
 
-export const SCHOOL_PRIMARY_TABS = SCHOOL_NAV_ITEMS.filter(
-  (item) => item.tab === "primary",
-);
+/** Daily-use pages — shown in expanded panel */
+export const SCHOOL_PRIMARY_NAV: SchoolNavItem[] = [
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Classes", href: "/classes", icon: Building2 },
+  { title: "Students", href: "/students", icon: Users2 },
+  { title: "Teachers", href: "/teachers", icon: GraduationCap },
+  { title: "Timetable", href: "/timetable", icon: Clock },
+  { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
+  { title: "Exams", href: "/exams", icon: FileCheck },
+];
 
-export const SCHOOL_MORE_ITEMS = SCHOOL_NAV_ITEMS.filter(
-  (item) => item.tab === "more",
-);
+/** Less frequent pages — tucked under "More" */
+export const SCHOOL_SECONDARY_NAV: SchoolNavItem[] = [
+  { title: "Parents", href: "/parents", icon: Users },
+  { title: "Staff", href: "/staff", icon: Briefcase },
+  { title: "Attendances", href: "/attendances", icon: CheckSquare },
+  { title: "Grading", href: "/grading", icon: Trophy },
+  { title: "Curriculum", href: "/curriculum", icon: BookMarked },
+  { title: "School Years", href: "/school-years", icon: CalendarCheck },
+  { title: "Reports", href: "/reports", icon: FileText },
+  { title: "Analytics", href: "/analytics", icon: PieChart },
+  { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
+  { title: "Enrollment", href: "/enrollment", icon: Medal },
+  { title: "Communication", href: "/communication", icon: MessageCircle },
+];
 
-export const SCHOOL_HOME_TAB = SCHOOL_NAV_ITEMS.find((item) => item.center)!;
+export interface SchoolNavSection {
+  id: string;
+  label: string;
+  items: SchoolNavItem[];
+}
+
+/** Grouped nav for workspace home "Content" tab */
+export const SCHOOL_NAV_SECTIONS: SchoolNavSection[] = [
+  {
+    id: "academic",
+    label: "Academic",
+    items: [
+      { title: "Classes", href: "/classes", icon: Building2 },
+      { title: "Timetable", href: "/timetable", icon: Clock },
+      { title: "Curriculum", href: "/curriculum", icon: BookMarked },
+      { title: "Exams", href: "/exams", icon: FileCheck },
+      { title: "Grading", href: "/grading", icon: Trophy },
+    ],
+  },
+  {
+    id: "people",
+    label: "People",
+    items: [
+      { title: "Students", href: "/students", icon: Users2 },
+      { title: "Teachers", href: "/teachers", icon: GraduationCap },
+      { title: "Parents", href: "/parents", icon: Users },
+      { title: "Staff", href: "/staff", icon: Briefcase },
+    ],
+  },
+  {
+    id: "administration",
+    label: "Administration",
+    items: [
+      { title: "Fees & Invoices", href: "/fees?section=plans", icon: CreditCard },
+      { title: "Attendances", href: "/attendances", icon: CheckSquare },
+      { title: "School Years", href: "/school-years", icon: CalendarCheck },
+      { title: "Reports", href: "/reports", icon: FileText },
+      { title: "Analytics", href: "/analytics", icon: PieChart },
+      { title: "Applications", href: "/admissions/applications", icon: UserRoundPlus },
+      { title: "Enrollment", href: "/enrollment", icon: Medal },
+      { title: "Communication", href: "/communication", icon: MessageCircle },
+    ],
+  },
+];
+
+export function isSchoolNavActive(pathname: string, href: string): boolean {
+  const path = href.split("?")[0];
+  const normalized = pathname.split("?")[0];
+
+  if (path === "/dashboard") {
+    return (
+      normalized === "/dashboard" ||
+      normalized.endsWith("/dashboard")
+    );
+  }
+
+  return (
+    normalized === path ||
+    normalized.endsWith(path) ||
+    normalized.includes(`${path}/`)
+  );
+}
+
+/** Mobile bottom nav — center home tab */
+export const SCHOOL_HOME_TAB: SchoolNavItem = {
+  title: "Home",
+  href: "/dashboard",
+  icon: LayoutDashboard,
+  center: true,
+};
+
+/** Mobile bottom nav — primary tabs (excluding center home) */
+export const SCHOOL_PRIMARY_TABS: SchoolNavItem[] = [
+  { title: "Students", href: "/students", icon: Users2 },
+  { title: "Classes", href: "/classes", icon: Building2 },
+  { title: "Teachers", href: "/teachers", icon: GraduationCap },
+  { title: "Timetable", href: "/timetable", icon: Clock },
+];
+
+/** Mobile bottom nav — overflow items shown in "More" sheet */
+export const SCHOOL_MORE_ITEMS: SchoolNavItem[] = [
+  ...SCHOOL_SECONDARY_NAV,
+  { title: "Settings", href: "/settings", icon: Settings },
+];

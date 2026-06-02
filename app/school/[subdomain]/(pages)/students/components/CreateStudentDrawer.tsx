@@ -50,6 +50,7 @@ import {
 } from "lucide-react"
 import { toast } from 'sonner'
 import { StudentSuccessModal } from './StudentSuccessModal'
+import { StudentsEnrollTrigger, type EnrollTriggerVariant } from './StudentsEnrollTrigger'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { useGradeLevelsForSchoolType } from '@/lib/hooks/useGradeLevelsForSchoolType'
@@ -95,11 +96,13 @@ interface CreateStudentDrawerProps {
   onStudentCreated: (studentName?: string) => void
   onStudentCreatedWithId?: (studentId: string, studentName?: string) => void
   defaultOpen?: boolean
+  triggerVariant?: EnrollTriggerVariant
 }
 
 export function CreateStudentDrawer({
   onStudentCreated,
   defaultOpen = false,
+  triggerVariant = 'header',
 }: CreateStudentDrawerProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultOpen)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -403,29 +406,29 @@ export function CreateStudentDrawer({
     <>
     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
-        <Button
-          size="sm"
-          className="flex items-center gap-1.5 bg-[#246a59] hover:bg-[#1a4d42]"
-          disabled={createStudentMutation.isPending || gradesLoading}
-        >
-          <UserPlus className="h-3.5 w-3.5" />
-          {gradesLoading ? "Loading…" : "Add student"}
-        </Button>
+        <StudentsEnrollTrigger
+          variant={triggerVariant}
+          loading={createStudentMutation.isPending || gradesLoading}
+          loadingLabel={gradesLoading ? 'Loading…' : 'Creating…'}
+        />
       </DrawerTrigger>
-      <DrawerContent className="h-full w-full md:w-1/2 bg-white dark:bg-slate-900 flex flex-col" data-vaul-drawer-direction="right">
-        <DrawerHeader className="border-b border-slate-200 dark:border-slate-700 pb-4 pt-5 px-6 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <DrawerTitle className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                Add New Student
+      <DrawerContent className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-slate-50 dark:bg-slate-950 sm:max-w-xl md:max-w-2xl" data-vaul-drawer-direction="right">
+        <DrawerHeader className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <DrawerTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Enroll a student
               </DrawerTitle>
-              <DrawerDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Fill in the details below to register a student
+              <DrawerDescription className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Register a new student and assign their grade
               </DrawerDescription>
             </div>
           </div>
         </DrawerHeader>
-        <div className="flex-1 overflow-y-auto px-6 py-5 relative">
+        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 relative">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               
@@ -998,29 +1001,29 @@ export function CreateStudentDrawer({
                 </div>
               </div>
 
-              <DrawerFooter className="border-t border-slate-200 dark:border-slate-700 pt-4 pb-4 px-6 flex-shrink-0 gap-3">
+              <DrawerFooter className="shrink-0 gap-2 border-t border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6 sm:flex-row">
                 <Button 
                   type="submit" 
                   disabled={createStudentMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 text-white gap-2 h-10 transition-colors disabled:opacity-50 flex-1"
+                  className="h-10 flex-1 gap-2 rounded-full bg-primary text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-dark hover:text-white disabled:opacity-50"
                 >
                   {createStudentMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Creating Student...
+                      Enrolling…
                     </>
                   ) : (
                     <>
                       <UserPlus className="h-4 w-4" />
-                      Register Student
+                      Complete enrollment
                     </>
                   )}
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   onClick={() => setIsDrawerOpen(false)}
                   disabled={createStudentMutation.isPending}
-                  className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 h-10 transition-colors disabled:opacity-50"
+                  className="h-10 rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-50 sm:flex-none sm:px-5"
                 >
                   Cancel
                 </Button>

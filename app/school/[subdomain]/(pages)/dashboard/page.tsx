@@ -142,11 +142,11 @@ export default function SchoolDashboard() {
   if (!config?.selectedLevels?.length) return null;
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-full flex-col bg-white dark:bg-slate-950">
       <div className="flex min-w-0 flex-1">
         <aside
           className={cn(
-            "hidden shrink-0 flex-col border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950 lg:flex",
+            "hidden shrink-0 flex-col border-r border-slate-200/60 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-900 lg:flex",
             isGradePanelOpen ? "w-56" : "w-0 overflow-hidden border-r-0",
           )}
           aria-label="Grade navigation"
@@ -182,7 +182,7 @@ export default function SchoolDashboard() {
           />
 
           <div className="flex-1">
-            <div className="mx-auto max-w-5xl space-y-3 p-3 sm:space-y-3.5 sm:p-4">
+            <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
               {!selectedGrade ? (
                 <>
                   <DashboardSetupBanner />

@@ -45,7 +45,7 @@ export function DashboardSetupBanner({ className }: DashboardSetupBannerProps) {
   return (
     <div
       className={cn(
-        "relative rounded-lg border border-[#246a59]/20 bg-[#246a59]/5 px-3 py-2.5 dark:bg-[#246a59]/10",
+        "relative rounded-xl border border-[#0073ea]/15 bg-[#0073ea]/5 px-3 py-2.5 dark:bg-[#0073ea]/10",
         className,
       )}
       role="region"
@@ -62,14 +62,14 @@ export function DashboardSetupBanner({ className }: DashboardSetupBannerProps) {
 
       <div className="pr-6">
         <div className="flex items-center justify-between gap-2 text-[11px]">
-          <span className="font-medium text-[#246a59]">
+          <span className="font-medium text-[#0073ea]">
             Setup {completedCount}/{totalCount}
           </span>
           <span className="text-slate-400">{progressPercent}%</span>
         </div>
-        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#246a59]/15">
+        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[#0073ea]/15">
           <div
-            className="h-full rounded-full bg-[#246a59] transition-all"
+            className="h-full rounded-full bg-[#0073ea] transition-all"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -79,7 +79,7 @@ export function DashboardSetupBanner({ className }: DashboardSetupBannerProps) {
           </p>
           <Link
             href={nextStep.path}
-            className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[#246a59]"
+            className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[#0073ea]"
           >
             Continue
             <ChevronRight className="h-3 w-3" />
@@ -117,7 +117,7 @@ export function DashboardSetupBanner({ className }: DashboardSetupBannerProps) {
                   "border-emerald-200/80 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300",
                 isNext &&
                   !step.isComplete &&
-                  "border-[#246a59]/40 bg-white text-[#246a59] dark:bg-slate-900",
+                  "border-[#0073ea]/40 bg-white text-[#0073ea] dark:bg-slate-900",
                 !step.isComplete &&
                   !isNext &&
                   "border-slate-200/80 text-slate-400 dark:border-slate-700",

@@ -5,10 +5,12 @@ import { useState } from 'react';
 export interface CreatePaymentInput {
   invoiceId: string;
   amount: number;
-  paymentMethod: string; // e.g., MPESA | CASH | BANK | ONLINE | CHEQUE
+  paymentMethod: string;
   transactionReference?: string;
-  paymentDate: string; // ISO string
+  paymentDate: string;
   notes?: string;
+  allocations?: Array<{ studentFeeItemId: string; amount: number }>;
+  applyCreditBalance?: boolean;
 }
 
 export interface CreatePaymentResponse {
@@ -19,10 +21,63 @@ export interface CreatePaymentResponse {
   transactionReference?: string;
   paymentDate: string;
   notes?: string;
+  invoice: {
+    id: string;
+    invoiceNumber: string;
+    totalAmount: number;
+    paidAmount: number;
+    balanceAmount: number;
+    term?: { name: string };
+    academicYear?: { name: string };
+  };
+  student: {
+    id: string;
+    admission_number: string;
+    creditBalance?: number;
+    user: { name: string; email?: string };
+    grade?: {
+      shortName?: string;
+      gradeLevel?: { name: string };
+    };
+    stream?: { name: string };
+  };
+  receivedByUser?: { name: string };
+}
+
+export interface BulkImportPaymentsInput {
+  rows: Array<{
+    admissionNumber?: string;
+    phone?: string;
+    studentName?: string;
+    amount: number;
+    paymentMethod?: string;
+    transactionReference?: string;
+    paymentDate?: string;
+  }>;
+  defaultPaymentMethod?: string;
+  dryRun?: boolean;
+}
+
+export interface BulkPaymentImportResult {
+  totalRows: number;
+  successCount: number;
+  unmatchedCount: number;
+  errorCount: number;
+  results: Array<{
+    rowIndex: number;
+    status: string;
+    studentId?: string;
+    studentName?: string;
+    paymentId?: string;
+    receiptNumber?: string;
+    message?: string;
+  }>;
 }
 
 export const useGraphQLPayments = () => {
   const [isCreating, setIsCreating] = useState(false);
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,9 +96,27 @@ export const useGraphQLPayments = () => {
             transactionReference
             paymentDate
             notes
-            invoice { id invoiceNumber totalAmount paidAmount balanceAmount status }
-            student { id admission_number user { name email } }
-            receivedByUser { id name }
+            invoice {
+              id
+              invoiceNumber
+              totalAmount
+              paidAmount
+              balanceAmount
+              term { name }
+              academicYear { name }
+            }
+            student {
+              id
+              admission_number
+              creditBalance
+              user { name email }
+              grade {
+                shortName
+                gradeLevel { name }
+              }
+              stream { name }
+            }
+            receivedByUser { name }
             createdAt
           }
         }
@@ -96,7 +169,99 @@ export const useGraphQLPayments = () => {
     }
   };
 
-  return { createPayment, isCreating, error };
+  const bulkImportPayments = async (
+    input: BulkImportPaymentsInput,
+  ): Promise<BulkPaymentImportResult | null> => {
+    setIsBulkImporting(true);
+    setError(null);
+
+    try {
+      const mutation = `
+        mutation BulkImportPayments($input: BulkImportPaymentsInput!) {
+          bulkImportPayments(input: $input) {
+            totalRows
+            successCount
+            unmatchedCount
+            errorCount
+            results {
+              rowIndex
+              status
+              studentId
+              studentName
+              paymentId
+              receiptNumber
+              message
+            }
+          }
+        }
+      `;
+
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: mutation, variables: { input } }),
+      });
+
+      const result = await response.json();
+      if (result.errors?.length) {
+        throw new Error(result.errors[0]?.message ?? 'Bulk import failed');
+      }
+
+      return result.data?.bulkImportPayments ?? null;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unknown error importing payments';
+      setError(message);
+      return null;
+    } finally {
+      setIsBulkImporting(false);
+    }
+  };
+
+  const generateReceiptPdf = async (
+    paymentId: string,
+  ): Promise<string | null> => {
+    setIsGeneratingPdf(true);
+    setError(null);
+
+    try {
+      const mutation = `
+        mutation GenerateReceiptPDF($paymentId: ID!) {
+          generateReceiptPDF(paymentId: $paymentId)
+        }
+      `;
+
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: mutation, variables: { paymentId } }),
+      });
+
+      const result = await response.json();
+      if (result.errors?.length) {
+        throw new Error(result.errors[0]?.message ?? 'PDF generation failed');
+      }
+
+      return result.data?.generateReceiptPDF ?? null;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unknown error generating PDF';
+      setError(message);
+      return null;
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  return {
+    createPayment,
+    bulkImportPayments,
+    generateReceiptPdf,
+    isCreating,
+    isBulkImporting,
+    isGeneratingPdf,
+    error,
+  };
 };
 
 // Fetch payments with optional filters

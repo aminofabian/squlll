@@ -44,7 +44,8 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  UserCircle
+  UserCircle,
+  Wallet,
 } from "lucide-react";
 import { DynamicLogo } from '../../parent/components/DynamicLogo';
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,8 @@ import { useStudentAttendanceSummary } from '@/lib/student/useStudentAttendanceS
 import { useStudentExamResults } from '@/lib/student/useStudentExamResults';
 import { useStudentTests } from '@/lib/student/useStudentTests';
 import { useStudentNextClass } from '@/lib/student/useStudentNextClass';
+import { useStudentFeeOverview } from '@/lib/student/useStudentFees';
+import { StudentFeeSummaryCard } from './StudentFeeSummaryCard';
 import { useChatUnreadTotal } from '@/lib/chat/ChatProvider';
 import { cn } from '@/lib/utils';
 import {
@@ -93,6 +96,7 @@ const MOBILE_ACTION_LABELS: Record<string, string> = {
   'view-upcoming-tests': 'Tests',
   'contact-class-teacher': 'Contact',
   'download-report-card': 'Reports',
+  'view-my-fees': 'Fees',
 };
 
 interface Action {
@@ -119,6 +123,8 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
   const { pendingCount, upcomingCount, loading: testsLoading } =
     useStudentTests(subdomain);
   const { nextLesson, loading: nextClassLoading } = useStudentNextClass();
+  const { overview: feeOverview, loading: feesLoading, refetch: refetchFees } =
+    useStudentFeeOverview(subdomain);
   const chatUnread = useChatUnreadTotal();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentView, setCurrentView] = useState<'dashboard' | 'assignments' | 'timetable' | 'examResults' | 'downloadNotes' | 'messages' | 'attendance' | 'contactTeacher'>('dashboard');
@@ -187,6 +193,9 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
         break;
       case 'view-attendance':
         setCurrentView('attendance');
+        break;
+      case 'view-my-fees':
+        router.push('/student/fees');
         break;
       case 'track-performance':
         router.push(`/school/${subdomain}/student/performance`);
@@ -262,6 +271,13 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
       title: 'View Attendance',
       icon: <UserCheck className="w-6 h-6" />,
       onClick: () => handleActionClick('view-attendance'),
+      bgClass: 'bg-primary',
+    },
+    {
+      id: 'view-my-fees',
+      title: 'My Fees',
+      icon: <Wallet className="w-6 h-6" />,
+      onClick: () => handleActionClick('view-my-fees'),
       bgClass: 'bg-primary',
     },
     {
@@ -730,6 +746,12 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                     </div>
                   )
                 ) : null}
+                <StudentFeeSummaryCard
+                  overview={feeOverview}
+                  loading={feesLoading}
+                  onRefresh={refetchFees}
+                  compact
+                />
                 <StudentLiveLessonStatus compact />
                 {renderStudentStats(true)}
                 {renderQuickActions(true)}
@@ -741,6 +763,13 @@ export default function EnhancedStudentDashboard({ subdomain }: EnhancedStudentD
                   <StudentLiveLessonStatus />
                 </div>
                 {renderStudentStats()}
+                <div className="mx-auto mb-8 max-w-5xl">
+                  <StudentFeeSummaryCard
+                    overview={feeOverview}
+                    loading={feesLoading}
+                    onRefresh={refetchFees}
+                  />
+                </div>
                 {renderQuickActions()}
               </div>
                 </>

@@ -55,7 +55,7 @@ export default function StaffGraphQLExample() {
             </p>
           </div>
           
-          <StaffTable />
+          <StaffTable staff={[]} />
         </TabsContent>
 
         <TabsContent value="teaching" className="mt-6">

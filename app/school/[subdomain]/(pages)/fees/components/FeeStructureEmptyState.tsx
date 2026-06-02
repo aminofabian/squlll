@@ -9,10 +9,11 @@ import { ViewAcademicYearsDrawer } from '@/app/school/[subdomain]/(pages)/dashbo
 
 interface FeeStructureEmptyStateProps {
     onCreateNew: () => void
+    onGuidedSetup?: () => void
     onViewSample?: () => void
 }
 
-export const FeeStructureEmptyState = ({ onCreateNew, onViewSample }: FeeStructureEmptyStateProps) => {
+export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup, onViewSample }: FeeStructureEmptyStateProps) => {
     const { academicYears, loading: academicYearsLoading } = useAcademicYears()
     
     // Check if any academic year has terms
@@ -156,11 +157,11 @@ export const FeeStructureEmptyState = ({ onCreateNew, onViewSample }: FeeStructu
 
                 {/* Content */}
                 <h3 className="text-2xl font-bold text-primary mb-3">
-                    No Fee Structures Yet
+                    Set up school fees
                 </h3>
                 <p className="text-slate-600 max-w-md mx-auto mb-8 leading-relaxed">
-                    Get started by creating your first fee structure. Define fees for different grades,
-                    terms, and boarding types to streamline your fee management.
+                    Create a fee plan in two steps: configure year, categories, and
+                    grade amounts, then publish your plan and fee letter.
                 </p>
 
                 {/* CTAs */}
@@ -170,10 +171,20 @@ export const FeeStructureEmptyState = ({ onCreateNew, onViewSample }: FeeStructu
                         size="lg"
                         className="bg-primary hover:bg-primary-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
                     >
-                        <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-                        Create Your First Fee Structure
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        Create fee plan
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                     </Button>
+                    {onGuidedSetup ? (
+                        <Button
+                            onClick={onGuidedSetup}
+                            size="lg"
+                            variant="outline"
+                            className="border-primary/30 text-primary"
+                        >
+                            Configure only
+                        </Button>
+                    ) : null}
 
                     {onViewSample && (
                         <Button

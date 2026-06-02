@@ -27,6 +27,8 @@ import type {
   StudentSummaryFromAPI,
 } from "../types";
 import { useStudentInvoices } from "../hooks/useStudentInvoices";
+import { useStudentSummary } from "../hooks/useStudentSummary";
+import { formatCurrency } from "../utils";
 
 interface RecordPaymentDrawerProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ interface RecordPaymentDrawerProps {
     className: string;
   };
   onPaymentSuccess?: () => void;
+  canOverrideAllocation?: boolean;
 }
 
 export default function RecordPaymentDrawer({
@@ -54,6 +57,7 @@ export default function RecordPaymentDrawer({
   students = [],
   studentInfo,
   onPaymentSuccess,
+  canOverrideAllocation = false,
 }: RecordPaymentDrawerProps) {
   const [pickedStudentId, setPickedStudentId] = useState<string | null>(
     studentId,
@@ -96,6 +100,50 @@ export default function RecordPaymentDrawer({
     error: invoicesError,
     refetch: refetchInvoices,
   } = useStudentInvoices(effectiveStudentId, effectiveStudentInfo);
+
+  const { studentData: studentDetail } = useStudentSummary(effectiveStudentId);
+
+  const unpaidFeeItems =
+    studentDetail?.feeSummary.feeItems.filter(
+      (item) => (item.balance ?? item.amount - (item.amountPaid ?? 0)) > 0,
+    ) ?? [];
+
+  const arrears = Math.max(0, pickedStudent?.feeSummary.balance ?? 0);
+  const creditBalance = pickedStudent?.feeSummary.creditBalance ?? 0;
+  const totalBilled = pickedStudent?.feeSummary.totalOwed ?? 0;
+  const totalPaid = pickedStudent?.feeSummary.totalPaid ?? 0;
+  const balanceDue = arrears;
+
+  useEffect(() => {
+    if (!effectiveStudentId || invoicesLoading || form.invoiceId) return;
+    const owing = invoices.find((inv) => inv.amountDue > 0);
+    if (owing) {
+      setForm((prev) => ({
+        ...prev,
+        invoiceId: owing.id,
+        amountPaid: prev.amountPaid || String(owing.amountDue),
+      }));
+    }
+  }, [effectiveStudentId, invoices, invoicesLoading, form.invoiceId, setForm]);
+
+  const payFullBalance = () => {
+    const target =
+      invoices.find((i) => i.id === form.invoiceId && i.amountDue > 0) ||
+      invoices.find((i) => i.amountDue > 0);
+    if (target) {
+      setForm((prev) => ({
+        ...prev,
+        invoiceId: target.id,
+        amountPaid: String(target.amountDue),
+      }));
+    } else if (balanceDue > 0) {
+      setForm((prev) => ({
+        ...prev,
+        amountPaid: String(balanceDue),
+      }));
+    }
+  };
+
   const handleChange = (
     field: keyof RecordPaymentForm,
     value: string | boolean,
@@ -130,11 +178,11 @@ export default function RecordPaymentDrawer({
   };
 
   const paymentMethods = [
-    { value: "mpesa", label: "M-Pesa" },
-    { value: "cash", label: "Cash" },
-    { value: "bank", label: "Bank transfer" },
-    { value: "online", label: "Online" },
-    { value: "cheque", label: "Cheque" },
+    { value: "MPESA", label: "M-Pesa" },
+    { value: "CASH", label: "Cash" },
+    { value: "BANK_TRANSFER", label: "Bank transfer" },
+    { value: "CHEQUE", label: "Cheque" },
+    { value: "OTHER", label: "Other" },
   ];
 
   return (
@@ -197,35 +245,102 @@ export default function RecordPaymentDrawer({
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm flex items-center justify-between gap-2">
-              <div>
-                <p className="font-semibold text-slate-900">
-                  {effectiveStudentInfo?.name}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {effectiveStudentInfo?.admissionNumber} ·{" "}
-                  {effectiveStudentInfo?.className}
-                </p>
+            <>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm flex items-center justify-between gap-2">
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {effectiveStudentInfo?.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {effectiveStudentInfo?.admissionNumber} ·{" "}
+                    {effectiveStudentInfo?.className}
+                  </p>
+                </div>
+                {students.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs shrink-0"
+                    onClick={() => {
+                      setPickedStudentId(null);
+                      setForm((prev) => ({
+                        ...prev,
+                        studentId: "",
+                        invoiceId: "",
+                        amountPaid: "",
+                      }));
+                    }}
+                  >
+                    Change
+                  </Button>
+                )}
               </div>
-              {students.length > 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs shrink-0"
-                  onClick={() => {
-                    setPickedStudentId(null);
-                    setForm((prev) => ({
-                      ...prev,
-                      studentId: "",
-                      invoiceId: "",
-                    }));
-                  }}
-                >
-                  Change
-                </Button>
-              )}
-            </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    Total billed
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums text-slate-900">
+                    KES {totalBilled.toLocaleString()}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    Total paid
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums text-emerald-800">
+                    KES {totalPaid.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-rose-100 bg-rose-50/80 px-4 py-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-rose-700 uppercase tracking-wide">
+                    Arrears (outstanding)
+                  </p>
+                  <p className="text-2xl font-bold tabular-nums text-rose-900">
+                    KES {balanceDue.toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-[11px] text-rose-700/80">
+                    Payments apply to oldest balances first (FIFO).
+                  </p>
+                </div>
+                {balanceDue > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 border-rose-200 text-rose-800 hover:bg-rose-100"
+                    onClick={payFullBalance}
+                  >
+                    Pay arrears
+                  </Button>
+                )}
+              </div>
+              {creditBalance > 0 ? (
+                <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2">
+                  <p className="text-xs text-blue-900">
+                    Credit balance:{" "}
+                    <span className="font-semibold tabular-nums">
+                      KES {creditBalance.toLocaleString()}
+                    </span>
+                  </p>
+                  <label className="flex items-center gap-2 text-xs text-blue-900">
+                    <Checkbox
+                      checked={form.applyCreditBalance}
+                      onCheckedChange={(checked) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          applyCreditBalance: checked === true,
+                        }))
+                      }
+                    />
+                    Apply credit to this invoice first
+                  </label>
+                </div>
+              ) : null}
+            </>
           )}
 
           {effectiveStudentId && (
@@ -320,7 +435,11 @@ export default function RecordPaymentDrawer({
                   onChange={(e) =>
                     handleChange("referenceNumber", e.target.value)
                   }
-                  placeholder="e.g., TXN-12345"
+                  placeholder={
+                    form.paymentMethod === "mpesa"
+                      ? "M-Pesa confirmation code"
+                      : "Receipt or transaction reference"
+                  }
                 />
               </div>
 
@@ -333,6 +452,66 @@ export default function RecordPaymentDrawer({
                   placeholder="Optional notes"
                 />
               </div>
+
+              {canOverrideAllocation && unpaidFeeItems.length > 0 && (
+                <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                    <Checkbox
+                      checked={form.useManualAllocation}
+                      onCheckedChange={(checked) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          useManualAllocation: checked === true,
+                          allocations: {},
+                        }))
+                      }
+                    />
+                    Manual allocation override
+                  </label>
+                  {form.useManualAllocation && (
+                    <div className="space-y-2">
+                      <p className="text-[11px] text-slate-500">
+                        Amounts must sum to the invoice portion of this payment.
+                      </p>
+                      {unpaidFeeItems.map((item) => {
+                        const due =
+                          item.balance ??
+                          item.amount - (item.amountPaid ?? 0);
+                        return (
+                          <div
+                            key={item.id}
+                            className="grid grid-cols-[1fr_7rem] gap-2 items-center"
+                          >
+                            <div className="min-w-0 text-xs">
+                              <p className="font-medium text-slate-800 truncate">
+                                {item.feeBucketName}
+                              </p>
+                              <p className="text-slate-500 truncate">
+                                {item.feeStructureName} · {formatCurrency(due)}{" "}
+                                due
+                              </p>
+                            </div>
+                            <Input
+                              inputMode="decimal"
+                              placeholder="0"
+                              value={form.allocations[item.id] ?? ""}
+                              onChange={(e) =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  allocations: {
+                                    ...prev.allocations,
+                                    [item.id]: e.target.value,
+                                  },
+                                }))
+                              }
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -366,7 +545,7 @@ export default function RecordPaymentDrawer({
                   Loading...
                 </>
               ) : (
-                "Save Payment"
+                "Save & receipt"
               )}
             </Button>
             <DrawerClose asChild>

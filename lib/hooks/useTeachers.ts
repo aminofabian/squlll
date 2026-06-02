@@ -17,6 +17,13 @@ export interface Teacher {
   department?: string;
   role?: string;
   isActive?: boolean;
+  employeeId?: string;
+  dateOfBirth?: string;
+  address?: string;
+  qualifications?: string;
+  hasCompletedProfile?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   user: {
     id: string;
     name: string;
@@ -189,6 +196,13 @@ export const useGetTeachers = () => {
                 department
                 role
                 isActive
+                employeeId
+                dateOfBirth
+                address
+                qualifications
+                hasCompletedProfile
+                createdAt
+                updatedAt
                 user {
                   id
                   name

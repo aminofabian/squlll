@@ -9,8 +9,25 @@ import Link from "next/link"
 import { useStudentsStore } from "@/lib/stores/useStudentsStore"
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
 import { mockClasses } from "@/lib/data/mockclasses"
-import { useEffect, useMemo } from "react"
-import { Users, GraduationCap, BookOpen, TrendingUp, DollarSign, Award } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import {
+  Users,
+  GraduationCap,
+  BookOpen,
+  TrendingUp,
+  DollarSign,
+  Award,
+  UserSquare2,
+  Wallet,
+  ClipboardCheck,
+  School,
+  CalendarClock,
+  UserCog,
+  UsersRound,
+  BarChart3,
+  MessageSquare,
+  Check,
+} from "lucide-react"
 
 // SQUL Logo Component
 function SQULLogo() {
@@ -29,6 +46,10 @@ function SQULLogo() {
 export default function Home() {
   const { students } = useStudentsStore()
   const { config } = useSchoolConfigStore()
+  const [hoveredPreview, setHoveredPreview] = useState<string | null>(null)
+  const [selectedFeature, setSelectedFeature] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState("/home/students-3518726_1920.jpg")
+  const [isPreviewFading, setIsPreviewFading] = useState(false)
   
   // Calculate real statistics from the stores
   const stats = useMemo(() => {
@@ -59,109 +80,310 @@ export default function Home() {
     }
   }, [students, config])
 
+  const exploreItems = useMemo(() => ([
+    {
+      label: "Students",
+      icon: UserSquare2,
+      preview: "/screenshots/students.jpg",
+      explainer: "Centralize profiles, admissions, attendance, and student lifecycle records in one view.",
+      highlights: ["Smart profiles", "Attendance insights", "Behavior + health notes"],
+    },
+    {
+      label: "Fees",
+      icon: Wallet,
+      preview: "/screenshots/ai-generated-9041893_1920.jpg",
+      explainer: "Automate fee plans, invoices, reminders, and payment tracking with fewer admin bottlenecks.",
+      highlights: ["Digital invoicing", "Live balances", "Collection analytics"],
+    },
+    {
+      label: "Exams",
+      icon: ClipboardCheck,
+      preview: "/screenshots/class.jpg",
+      explainer: "Plan assessments, capture marks, and generate clear progress summaries for every learner.",
+      highlights: ["Assessment setup", "Fast grading", "Progress reporting"],
+    },
+    {
+      label: "Classes",
+      icon: School,
+      preview: "/screenshots/class2.jpg",
+      explainer: "Structure levels, streams, and class context so daily operations stay organized and scalable.",
+      highlights: ["Class organization", "Level-based flow", "Stream visibility"],
+    },
+    {
+      label: "Timetable",
+      icon: CalendarClock,
+      preview: "/screenshots/class.jpg",
+      explainer: "Create balanced schedules for teachers and classes while reducing conflicts across periods.",
+      highlights: ["Conflict checks", "Teacher allocation", "Schedule clarity"],
+    },
+    {
+      label: "Teachers",
+      icon: UserCog,
+      preview: "/screenshots/teachers.jpg",
+      explainer: "Manage teacher profiles, assignments, and performance context from one admin surface.",
+      highlights: ["Teacher records", "Role control", "Workload visibility"],
+    },
+    {
+      label: "Parents",
+      icon: UsersRound,
+      preview: "/screenshots/students-3518726_1920.jpg",
+      explainer: "Give guardians transparent access to grades, attendance, and school communication.",
+      highlights: ["Parent portal", "Academic visibility", "Family communication"],
+    },
+    {
+      label: "Reports",
+      icon: BarChart3,
+      preview: "/screenshots/ai-generated-9041893_1920.jpg",
+      explainer: "Turn school data into actionable reporting for academics, finance, and operations teams.",
+      highlights: ["Operational metrics", "Academic trends", "Decision support"],
+    },
+    {
+      label: "Communication",
+      icon: MessageSquare,
+      preview: "/screenshots/students-3518726_1920.jpg",
+      explainer: "Coordinate updates between staff, students, and parents with timely announcements.",
+      highlights: ["Announcements", "Cross-role messaging", "Faster response loops"],
+    },
+  ]), [])
+
+  const activePreview = useMemo(
+    () =>
+      exploreItems.find((item) => item.label === hoveredPreview || item.label === selectedFeature)?.preview ??
+      "/home/students-3518726_1920.jpg",
+    [exploreItems, hoveredPreview, selectedFeature]
+  )
+
+  const selectedFeatureDetails = useMemo(
+    () => exploreItems.find((item) => item.label === selectedFeature) ?? null,
+    [exploreItems, selectedFeature]
+  )
+
+  useEffect(() => {
+    if (activePreview === previewImage) return
+
+    setIsPreviewFading(true)
+    const timer = window.setTimeout(() => {
+      setPreviewImage(activePreview)
+      setIsPreviewFading(false)
+    }, 160)
+
+    return () => window.clearTimeout(timer)
+  }, [activePreview, previewImage])
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4">
         {/* Hero Section */}
-        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-          <div className="max-w-5xl mx-auto space-y-12">
-            <SQULLogo />
-            
-            <div className="space-y-8">
-              <div className="inline-block px-4 py-2 bg-primary/5 border border-primary/20 text-xs font-mono tracking-wide text-primary uppercase">
-                School Management System
+        <div className="relative min-h-[78vh] py-14 md:py-20">
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(var(--primary-rgb),0.12),transparent_45%)]" />
+          <div className="grid gap-12 lg:grid-cols-[1fr_360px] lg:items-center max-w-6xl mx-auto">
+            <div className="text-center lg:text-left">
+              <SQULLogo />
+              <div className="space-y-7">
+                <div className="inline-block px-4 py-2 bg-primary/5 border border-primary/20 text-xs font-mono tracking-wide text-primary uppercase">
+                  School Management System
+                </div>
+
+                <h1 className="text-4xl md:text-6xl font-mono font-bold tracking-tight leading-[1.05]">
+                  Run your school with
+                  <br />
+                  <span className="text-primary">clarity, speed, and control</span>
+                </h1>
+
+                <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-medium">
+                  From admissions to fee collection, SQUL gives your team one connected workspace to manage students, academics, operations, and communication.
+                </p>
               </div>
-              
-              <h1 className="text-6xl md:text-7xl font-mono font-bold tracking-tight">
-                <span className="text-slate-900 dark:text-slate-100">SQ</span>
-                <span className="text-primary">UL</span>
-              </h1>
-              
-              <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed font-medium">
-                Comprehensive School Management Solution
-                <br />
-                Student Information • Academic Records • Administrative Tools
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row justify-center gap-6 pt-8">
-              <Link href="/login">
-                <Button variant="outline" size="lg" className="h-14 px-12 min-w-[200px] font-mono tracking-wide uppercase text-sm">
-                  login
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button size="lg" className="h-14 px-12 min-w-[200px] font-mono tracking-wide uppercase text-sm">
-                  Try if for Free
-                </Button>
-              </Link>
-            </div>
-                       
-            
-            {/* Class Environment Section */}
-            <div className="relative h-[400px] w-full overflow-hidden my-24">
-              <div className="absolute inset-0">
-                <img 
-                  src="/home/students-3518726_1920.jpg" 
-                  alt="Students in classroom" 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/40"></div>
+
+              <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 pt-8">
+                <Link href="/register">
+                  <Button size="lg" className="h-12 px-10 min-w-[180px] font-mono tracking-wide uppercase text-sm">
+                    Get Started
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button variant="outline" size="lg" className="h-12 px-10 min-w-[180px] font-mono tracking-wide uppercase text-sm">
+                    Sign In
+                  </Button>
+                </Link>
               </div>
-              <div className="relative h-full flex items-center">
-                <div className="px-12">
-                  <div className="max-w-2xl">
-                    <h2 className="text-4xl font-mono font-bold text-white mb-6">
-                      Design the Perfect Class Environment
-                    </h2>
-                    <p className="text-xl text-white/90 leading-relaxed">
-                      Run your institution smoothly and efficiently with tools that scale from small academies to large institutions.
+            </div>
+
+            {/* Explore Card */}
+            <div className="relative mx-auto w-full max-w-[372px]">
+              <div className="border border-primary/20 bg-background shadow-xl p-5 sm:p-6">
+                <h3 className="text-[18px] font-semibold text-center text-slate-900 leading-tight">
+                  What would you
+                  {" "}
+                  <span className="bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                    like to explore?
+                  </span>
+                </h3>
+
+                <div className="grid grid-cols-3 gap-2.5 mt-5">
+                  {exploreItems.map((item) => (
+                    (() => {
+                      const isChecked = selectedFeature === item.label
+                      const isActive = hoveredPreview === item.label || isChecked
+                      return (
+                    <div
+                      key={item.label}
+                      className="group relative border border-primary/20 bg-primary/5 px-2.5 py-3 h-[104px] flex flex-col items-center justify-center gap-2 text-center transition-all duration-200 hover:border-primary/60 hover:bg-primary/10 hover:shadow-[0_0_0_1px_rgba(var(--primary-rgb),0.18)] hover:-translate-y-0.5"
+                      onMouseEnter={() => setHoveredPreview(item.label)}
+                      onMouseLeave={() => setHoveredPreview(null)}
+                      onClick={() => setSelectedFeature((prev) => (prev === item.label ? null : item.label))}
+                      onFocus={() => setHoveredPreview(item.label)}
+                      onBlur={() => setHoveredPreview(null)}
+                      role="button"
+                      aria-pressed={isChecked}
+                      tabIndex={0}
+                    >
+                      <div
+                        className={`absolute left-2 top-2 h-3.5 w-3.5 border bg-background transition-colors ${
+                          isActive ? "border-primary bg-primary/10" : "border-primary/30"
+                        }`}
+                      >
+                        {isChecked ? <Check className="h-3 w-3 text-primary" strokeWidth={2.5} /> : null}
+                      </div>
+                      <item.icon
+                        className={`h-[17px] w-[17px] transition-colors ${
+                          isActive ? "text-primary" : "text-primary/80"
+                        }`}
+                        strokeWidth={1.75}
+                      />
+                      <span
+                        className={`text-[12px] leading-4 font-medium transition-colors ${
+                          isActive ? "text-primary" : "text-slate-900"
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                      {isActive ? (
+                        <span className="absolute inset-x-0 bottom-0 h-[2px] bg-primary/70" />
+                      ) : null}
+                    </div>
+                      )
+                    })()
+                  ))}
+                </div>
+
+                <Link href="/register" className="mt-5 block">
+                  <Button
+                    className={`mx-auto flex h-[42px] min-w-[190px] rounded-full px-6 text-sm font-medium transition-all duration-200 ${
+                      selectedFeature
+                        ? "shadow-[0_0_0_4px_rgba(var(--primary-rgb),0.2)] scale-[1.02]"
+                        : ""
+                    }`}
+                  >
+                    {selectedFeature ? "Click here to get started" : "Get Started"}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Class Environment Section */}
+          <div className="relative h-[360px] md:h-[420px] w-full overflow-hidden mt-20">
+            <div className="absolute inset-0">
+              <img
+                src={previewImage}
+                alt="Students in classroom"
+                className={`w-full h-full object-cover transition-all duration-500 ${
+                  hoveredPreview ? "scale-[1.015]" : "scale-100"
+                }`}
+              />
+              <div
+                className={`absolute inset-0 bg-background/30 transition-opacity duration-200 ${
+                  isPreviewFading ? "opacity-100" : "opacity-0"
+                }`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/40"></div>
+            </div>
+            <div className="relative h-full flex items-center">
+              <div className="px-6 md:px-12">
+                <div className="max-w-2xl">
+                  <h2 className="text-3xl md:text-4xl font-mono font-bold text-white mb-6">
+                    Design the Perfect Class Environment
+                  </h2>
+                  <p className="text-lg md:text-xl text-white/90 leading-relaxed">
+                    Run your institution smoothly and efficiently with tools that scale from small academies to large institutions.
+                  </p>
+                  <div className="mt-5 inline-flex items-center gap-2 border border-white/35 bg-black/20 px-3 py-1.5 backdrop-blur-sm">
+                    <span className="h-2 w-2 bg-emerald-400 animate-pulse" />
+                    <p className="text-sm text-white/90 font-medium">
+                      {hoveredPreview ? `Previewing: ${hoveredPreview}` : "Hover a module card to preview that workflow"}
                     </p>
+                  </div>
+
+                  <div
+                    className={`mt-4 max-w-xl border border-white/25 bg-black/25 px-4 py-3 backdrop-blur-sm transition-all duration-300 ${
+                      selectedFeatureDetails ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="h-2 w-2 bg-primary animate-pulse" />
+                      <p className="text-xs uppercase tracking-wide text-white/80 font-mono">
+                        Feature Spotlight: {selectedFeatureDetails?.label}
+                      </p>
+                    </div>
+                    <p className="text-sm text-white/95 leading-relaxed">
+                      {selectedFeatureDetails?.explainer}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {selectedFeatureDetails?.highlights.map((point) => (
+                        <span
+                          key={point}
+                          className="border border-white/30 bg-white/10 px-2.5 py-1 text-[11px] text-white/90"
+                        >
+                          {point}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
             
             {/* Features Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 max-w-5xl mx-auto">
-              <div className="p-8 border-2 border-primary/20 bg-primary/5">
+              <div className="p-8 border-2 border-primary/20 bg-primary/5 transition-all duration-300 hover:-translate-y-1 hover:bg-primary/10 hover:shadow-lg">
                 <div className="w-12 h-12 bg-primary flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838l-2.727 1.17 3.727 1.51a1 1 0 00.788 0l7-3a1 1 0 000-1.84l-7-3z" />
                   </svg>
                 </div>
-                <h3 className="font-mono font-bold text-lg mb-3 uppercase tracking-wide">Modern School Management, Simplified</h3>
+                <h3 className="font-mono font-bold text-lg mb-3 uppercase tracking-wide">Digital Admissions & Records</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                Go paperless with digital admissions, smart gradebooks, and seamless online fee collection — all in one powerful platform.</p>
+                Go paperless with structured admissions, accurate student profiles, and centralized records your team can trust.</p>
               </div>
               
-              <div className="p-8 border-2 border-primary/20 bg-primary/5">
+              <div className="p-8 border-2 border-primary/20 bg-primary/5 transition-all duration-300 hover:-translate-y-1 hover:bg-primary/10 hover:shadow-lg">
                 <div className="w-12 h-12 bg-primary flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v3a1 1 0 102 0v-3zm2-3a1 1 0 011 1v5a1 1 0 11-2 0v-5a1 1 0 011-1zm4-1a1 1 0 10-2 0v7a1 1 0 102 0V8z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h3 className="font-mono font-bold text-lg mb-3 uppercase tracking-wide">Academic Records</h3>
+                <h3 className="font-mono font-bold text-lg mb-3 uppercase tracking-wide">Academic Performance</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Comprehensive grade management, transcript generation, and academic progress tracking
+                  Track grades, assessments, and transcripts with clear progress views for learners, teachers, and administrators.
                 </p>
               </div>
               
-              <div className="p-8 border-2 border-primary/20 bg-primary/5">
+              <div className="p-8 border-2 border-primary/20 bg-primary/5 transition-all duration-300 hover:-translate-y-1 hover:bg-primary/10 hover:shadow-lg">
                 <div className="w-12 h-12 bg-primary flex items-center justify-center mb-6">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                   </svg>
                 </div>
-                <h3 className="font-mono font-bold text-lg mb-3 uppercase tracking-wide">Staff Portal</h3>
+                <h3 className="font-mono font-bold text-lg mb-3 uppercase tracking-wide">Staff & Operations</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Teacher and staff management with scheduling, attendance, and performance evaluation tools
+                  Coordinate staff, timetables, attendance, and daily workflows from one operational dashboard.
                 </p>
               </div>
             </div>
           </div>
-        </div>
 
         {/* Empowerment Section */}
         <section className="relative py-32 overflow-hidden">
@@ -248,7 +470,7 @@ export default function Home() {
                 <div key={feature.title} className="group relative">
                   {/* Card Background with Gradient Border */}
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="relative p-8 bg-white border border-slate-200 hover:border-primary/20 transition-colors">
+                  <div className="relative p-8 bg-white border border-slate-200 hover:border-primary/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
                     {/* Feature Number */}
                     <div className="absolute -top-4 -right-4 w-8 h-8 bg-white border border-slate-200 group-hover:border-primary/20 flex items-center justify-center transition-colors">
                       <span className="font-mono text-xs text-primary">{String(index + 1).padStart(2, '0')}</span>
@@ -286,12 +508,16 @@ export default function Home() {
                   <p className="text-slate-600">Join the educational revolution with SQUL</p>
                 </div>
                 <div className="flex gap-4">
-                  <Button variant="outline" size="lg" className="h-12 px-6">
-                    Learn More
-                  </Button>
-                  <Button size="lg" className="h-12 px-6">
-                    Get Started
-                  </Button>
+                  <Link href="/login">
+                    <Button variant="outline" size="lg" className="h-12 px-6">
+                      See Platform
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="lg" className="h-12 px-6">
+                      Start Free
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -325,7 +551,7 @@ export default function Home() {
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold text-center mb-6">Comprehensive School Management</h2>
                 <p className="text-lg text-slate-600 max-w-2xl text-center">
-                  Experience a new standard in educational administration with our feature-rich platform designed for modern institutions.
+                  Every core workflow in one connected platform: academics, people, administration, communication, and growth.
                 </p>
               </div>
             </div>
@@ -337,7 +563,7 @@ export default function Home() {
                 {/* Academic Excellence */}
                 <div className="group relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                  <div className="relative p-8 border border-slate-200 hover:border-primary/20 transition-colors">
+                  <div className="relative p-8 border border-slate-200 bg-white/80 backdrop-blur-sm hover:border-primary/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
                     <div className="flex items-start gap-6 mb-8">
                       <div className="relative">
                         <div className="w-16 h-16 bg-primary/10 flex items-center justify-center">
@@ -375,7 +601,7 @@ export default function Home() {
                 {/* Student Success */}
                 <div className="group relative">
                   <div className="absolute inset-0 bg-gradient-to-bl from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                  <div className="relative p-8 border border-slate-200 hover:border-primary/20 transition-colors">
+                  <div className="relative p-8 border border-slate-200 bg-white/80 backdrop-blur-sm hover:border-primary/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
                     <div className="flex items-start gap-6 mb-8">
                       <div className="relative">
                         <div className="w-16 h-16 bg-primary/10 flex items-center justify-center">
@@ -414,7 +640,7 @@ export default function Home() {
               {/* Row 2 - Center Feature */}
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                <div className="relative p-8 border border-slate-200 hover:border-primary/20 transition-colors">
+                <div className="relative p-8 border border-slate-200 bg-white/80 backdrop-blur-sm hover:border-primary/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
                   <div className="grid md:grid-cols-2 gap-8">
                     <div>
                       <div className="flex items-start gap-6 mb-8">
@@ -481,7 +707,7 @@ export default function Home() {
                 {/* Financial Management */}
                 <div className="group relative">
                   <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                  <div className="relative p-8 border border-slate-200 hover:border-primary/20 transition-colors">
+                  <div className="relative p-8 border border-slate-200 bg-white/80 backdrop-blur-sm hover:border-primary/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
                     <div className="flex items-start gap-6 mb-8">
                       <div className="relative">
                         <div className="w-16 h-16 bg-primary/10 flex items-center justify-center">
@@ -519,7 +745,7 @@ export default function Home() {
                 {/* Communication Hub */}
                 <div className="group relative">
                   <div className="absolute inset-0 bg-gradient-to-tl from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                  <div className="relative p-8 border border-slate-200 hover:border-primary/20 transition-colors">
+                  <div className="relative p-8 border border-slate-200 bg-white/80 backdrop-blur-sm hover:border-primary/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
                     <div className="flex items-start gap-6 mb-8">
                       <div className="relative">
                         <div className="w-16 h-16 bg-primary/10 flex items-center justify-center">
@@ -560,7 +786,9 @@ export default function Home() {
             <div className="mt-20 text-center">
               <div className="inline-flex items-center gap-4 p-2 border border-primary/20 bg-primary/5">
                 <span className="px-4 py-2 bg-white text-primary font-mono text-sm">Ready to Transform Your Institution?</span>
-                <Button size="lg" className="h-10">Get Started Today</Button>
+                <Link href="/register">
+                  <Button size="lg" className="h-10">Get Started Today</Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -758,10 +986,10 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {/* Left Column */}
               <div className="space-y-6">
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-l-4 border-primary hover:translate-x-1 transition-transform">
+                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                   <h3 className="font-semibold text-lg mb-4 text-primary flex items-center">
                     <span className="w-8 h-8 bg-primary/10 flex items-center justify-center mr-3">🔒</span>
                     How secure is SQUL for managing student data?
@@ -770,7 +998,7 @@ export default function Home() {
                     SQUL implements enterprise-grade security measures including end-to-end encryption, regular security audits, and compliance with educational data protection standards to ensure your student information is always protected.
                   </p>
                 </div>
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-l-4 border-primary hover:translate-x-1 transition-transform">
+                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                   <h3 className="font-semibold text-lg mb-4 text-primary flex items-center">
                     <span className="w-8 h-8 bg-primary/10 flex items-center justify-center mr-3">🏢</span>
                     Can SQUL handle multiple campuses or branches?
@@ -783,7 +1011,7 @@ export default function Home() {
 
               {/* Middle Column */}
               <div className="space-y-6 lg:translate-y-12">
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-l-4 border-primary hover:translate-x-1 transition-transform">
+                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                   <h3 className="font-semibold text-lg mb-4 text-primary flex items-center">
                     <span className="w-8 h-8 bg-primary/10 flex items-center justify-center mr-3">💬</span>
                     Is technical support included?
@@ -792,7 +1020,7 @@ export default function Home() {
                     Absolutely. All SQUL subscriptions include dedicated technical support, regular updates, and access to our comprehensive knowledge base and training resources.
                   </p>
                 </div>
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-l-4 border-primary hover:translate-x-1 transition-transform">
+                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                   <h3 className="font-semibold text-lg mb-4 text-primary flex items-center">
                     <span className="w-8 h-8 bg-primary/10 flex items-center justify-center mr-3">⏱️</span>
                     How long does it take to implement SQUL?
@@ -805,16 +1033,16 @@ export default function Home() {
 
               {/* Right Column */}
               <div className="space-y-6">
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-l-4 border-primary hover:translate-x-1 transition-transform">
+                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                   <h3 className="font-semibold text-lg mb-4 text-primary flex items-center">
                     <span className="w-8 h-8 bg-primary/10 flex items-center justify-center mr-3">👨‍👩‍👧‍👦</span>
                     Can parents access their children's information?
                   </h3>
                   <p className="text-slate-600 pl-11">
-                    Yes, SQUL provides a secure parent portal where guardians can view grades, attendance, schedules, and communicate with teachers - all from their mobile device or computer.
+                    Yes, SQUL provides a secure parent portal where guardians can view grades, attendance, schedules, and communicate with teachers — all from their mobile device or computer.
                   </p>
                 </div>
-                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border-l-4 border-primary hover:translate-x-1 transition-transform">
+                <div className="p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
                   <h3 className="font-semibold text-lg mb-4 text-primary flex items-center">
                     <span className="w-8 h-8 bg-primary/10 flex items-center justify-center mr-3">📱</span>
                     Does SQUL work on mobile devices?
@@ -834,12 +1062,16 @@ export default function Home() {
                   <p className="text-slate-600">Our team is here to help you get started with SQUL</p>
                 </div>
                 <div className="flex gap-4">
-                  <Button variant="outline" size="lg" className="h-12 px-6 font-mono">
-                    View Documentation
-                  </Button>
-                  <Button size="lg" className="h-12 px-6 font-mono">
-                    Contact Support
-                  </Button>
+                  <Link href="/login">
+                    <Button variant="outline" size="lg" className="h-12 px-6 font-mono">
+                      View Platform
+                    </Button>
+                  </Link>
+                  <Link href="/register">
+                    <Button size="lg" className="h-12 px-6 font-mono">
+                      Contact Support
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>

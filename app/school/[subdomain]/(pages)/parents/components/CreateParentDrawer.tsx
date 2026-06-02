@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -95,6 +95,7 @@ type ParentFormData = z.infer<typeof parentFormSchema>;
 
 interface CreateParentDrawerProps {
   onParentCreated: () => void;
+  defaultOpen?: boolean;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────
@@ -116,9 +117,10 @@ function generateClassName(gradeName: string, streamName?: string): string {
 
 export function CreateParentDrawer({
   onParentCreated,
+  defaultOpen = false,
 }: CreateParentDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(defaultOpen);
   const [isSearchingStudent, setIsSearchingStudent] = useState(false);
   const [searchedStudent, setSearchedStudent] = useState<any>(null);
   const [searchedStudents, setSearchedStudents] = useState<any[]>([]);
@@ -127,6 +129,12 @@ export function CreateParentDrawer({
     "name",
   );
   const [searchValue, setSearchValue] = useState("");
+
+  useEffect(() => {
+    if (defaultOpen) {
+      setIsDrawerOpen(true);
+    }
+  }, [defaultOpen]);
 
   const { config, getAllGradeLevels, getStreamsByGradeId } =
     useSchoolConfigStore();
@@ -357,23 +365,23 @@ export function CreateParentDrawer({
     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
         <Button
-          variant="default"
-          className="flex items-center gap-2"
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
           disabled={isLoading}
         >
-          <UserPlus className="h-4 w-4" />
-          Add New Parent
+          <UserPlus className="h-3.5 w-3.5" />
+          Add parent
         </Button>
       </DrawerTrigger>
       <DrawerContent
-        className="h-full w-full md:w-[520px] bg-white dark:bg-slate-950"
+        className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-slate-50 dark:bg-slate-950 sm:max-w-xl md:max-w-2xl"
         data-vaul-drawer-direction="right"
       >
-        <DrawerHeader className="border-b px-6 py-4">
-          <DrawerTitle className="text-lg font-bold">
-            Register Parent/Guardian
+        <DrawerHeader className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+          <DrawerTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Register parent / guardian
           </DrawerTitle>
-          <DrawerDescription>
+          <DrawerDescription className="text-sm text-slate-500">
             Link a parent or guardian to their student
           </DrawerDescription>
         </DrawerHeader>

@@ -14,48 +14,42 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { User, Trash, AlertTriangle, ChevronRight } from "lucide-react";
+import { User, Trash, AlertTriangle, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { teachersPanel, teachersTh } from "./teachers-ui";
 import { TeacherAvatar } from "./TeacherAvatar";
+import {
+  isTeacherProfileIncomplete,
+  type TeachersListItem,
+} from "../utils/mapGraphqlTeacher";
 
-type Teacher = {
-  id: string;
-  name: string;
-  gender: "male" | "female";
-  department: string;
-  subjects: string[];
-  employeeId: string;
-  dateOfBirth: string;
-  status: "active" | "inactive" | "on leave" | "former" | "substitute" | "retired";
-  contacts: {
-    phone: string;
-    email: string;
-    address?: string;
-  };
-};
+type Teacher = Pick<
+  TeachersListItem,
+  | "id"
+  | "name"
+  | "gender"
+  | "department"
+  | "subjects"
+  | "grades"
+  | "employeeId"
+  | "dateOfBirth"
+  | "status"
+  | "contacts"
+  | "qualifications"
+  | "hasCompletedProfile"
+>;
 
 interface TeachersTableProps {
   teachers: Teacher[];
   onTeacherSelect: (teacherId: string) => void;
   onTeacherDelete?: (teacherId: string) => void;
+  lessonCounts?: Map<string, number>;
+  timetableLoading?: boolean;
+  termName?: string | null;
 }
 
-function formatBirthDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-export function hasPlaceholderData(teacher: Teacher) {
-  return (
-    !teacher.contacts.email ||
-    teacher.contacts.phone === "+254700000000" ||
-    teacher.dateOfBirth === "1980-01-01" ||
-    teacher.contacts.address === "Address not provided"
-  );
+export function hasIncompleteProfile(teacher: Teacher) {
+  return isTeacherProfileIncomplete(teacher);
 }
 
 function statusBadge(status: Teacher["status"]) {
@@ -73,17 +67,55 @@ function statusLabel(status: Teacher["status"]) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function scheduleBadge(
+  teacherId: string,
+  lessonCounts: Map<string, number> | undefined,
+  timetableLoading: boolean,
+) {
+  if (timetableLoading) {
+    return (
+      <span className="text-[11px] text-slate-400">Checking…</span>
+    );
+  }
+
+  const count = lessonCounts?.get(teacherId) ?? 0;
+  if (count > 0) {
+    return (
+      <Badge
+        variant="outline"
+        className="border-emerald-200 bg-emerald-50 text-[10px] font-normal text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+      >
+        <CalendarDays className="mr-1 h-3 w-3" />
+        {count} lesson{count !== 1 ? "s" : ""}
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge
+      variant="outline"
+      className="border-amber-200 bg-amber-50 text-[10px] font-normal text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+      title="No lessons scheduled for the current term"
+    >
+      No schedule
+    </Badge>
+  );
+}
+
 export function TeachersTable({
   teachers,
   onTeacherSelect,
   onTeacherDelete,
+  lessonCounts,
+  timetableLoading = false,
+  termName,
 }: TeachersTableProps) {
   const [deletingTeacherId, setDeletingTeacherId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
-  const placeholderCount = teachers.filter(hasPlaceholderData).length;
+  const incompleteCount = teachers.filter(hasIncompleteProfile).length;
 
   const handleDeleteTeacher = async () => {
     if (!confirmDelete || !onTeacherDelete) return;
@@ -108,6 +140,7 @@ export function TeachersTable({
         </h2>
         <p className="mt-0.5 text-xs text-slate-400">
           Click a row to view full profile · {teachers.length} shown
+          {termName ? ` · Schedule for ${termName}` : ""}
         </p>
       </div>
 
@@ -135,18 +168,20 @@ export function TeachersTable({
                   <th className={cn(teachersTh, "hidden sm:table-cell")}>Contact</th>
                   <th className={teachersTh}>Department</th>
                   <th className={cn(teachersTh, "hidden lg:table-cell")}>Subjects</th>
+                  <th className={cn(teachersTh, "hidden md:table-cell")}>Grades</th>
+                  <th className={cn(teachersTh, "hidden xl:table-cell")}>Schedule</th>
                   <th className={cn(teachersTh, "w-16")} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {teachers.map((teacher, index) => {
-                  const isPlaceholder = hasPlaceholderData(teacher);
+                  const isIncomplete = hasIncompleteProfile(teacher);
                   return (
                     <tr
                       key={teacher.id}
                       className={cn(
                         "group cursor-pointer text-slate-700 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-800/40",
-                        isPlaceholder && "bg-amber-50/30 dark:bg-amber-950/10",
+                        isIncomplete && "bg-amber-50/30 dark:bg-amber-950/10",
                       )}
                       onClick={() => onTeacherSelect(teacher.id)}
                     >
@@ -161,7 +196,7 @@ export function TeachersTable({
                               {teacher.name}
                             </p>
                             <p className="truncate font-mono text-[11px] text-slate-400">
-                              {teacher.employeeId}
+                              {teacher.employeeId || "No employee ID"}
                             </p>
                           </div>
                         </div>
@@ -204,7 +239,34 @@ export function TeachersTable({
                               +{teacher.subjects.length - 2}
                             </span>
                           )}
+                          {teacher.subjects.length === 0 && (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
                         </div>
+                      </td>
+                      <td className="hidden px-4 py-3 md:table-cell">
+                        <div className="flex max-w-[160px] flex-wrap gap-1">
+                          {teacher.grades.slice(0, 2).map((grade) => (
+                            <Badge
+                              key={grade}
+                              variant="outline"
+                              className="border-sky-200 bg-sky-50 px-1.5 py-0 text-[10px] font-normal text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
+                            >
+                              {grade}
+                            </Badge>
+                          ))}
+                          {teacher.grades.length > 2 && (
+                            <span className="text-[11px] text-slate-400">
+                              +{teacher.grades.length - 2}
+                            </span>
+                          )}
+                          {teacher.grades.length === 0 && (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="hidden px-4 py-3 xl:table-cell">
+                        {scheduleBadge(teacher.id, lessonCounts, timetableLoading)}
                       </td>
                       <td className="px-2 py-3">
                         <div className="flex items-center justify-end gap-0.5">
@@ -235,11 +297,11 @@ export function TeachersTable({
             </table>
           </div>
 
-          {placeholderCount > 0 && (
+          {incompleteCount > 0 && (
             <div className="flex items-center gap-2 border-t border-amber-100 bg-amber-50/50 px-4 py-2.5 text-xs text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-400">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              {placeholderCount} row{placeholderCount !== 1 ? "s" : ""} may have
-              incomplete data — open the profile to review.
+              {incompleteCount} teacher{incompleteCount !== 1 ? "s have" : " has"}{" "}
+              incomplete profiles — open the profile to review missing details.
             </div>
           )}
         </>

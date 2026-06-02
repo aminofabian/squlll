@@ -1,330 +1,344 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Button } from '@/components/ui/button';
-import { CreateParentDrawer } from './components/CreateParentDrawer';
-import { PendingInvitationsSection } from './components/PendingInvitationsSection';
-import { ParentSidebar } from './components/ParentSidebar';
-import { ParentStatistics } from './components/ParentStatistics';
-import { GradeFilter } from './components/GradeFilter';
-import { ParentsGrid } from './components/ParentsGrid';
-import { ParentDetailView } from './components/ParentDetailView';
-import { mockGrades } from './data/mockData';
-import { useExactParents as useParents } from './hooks/useExactParents';
-import { 
-  PanelLeftOpen, 
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Info,
   PanelLeftClose,
-  UserCheck,
-  UserPlus
+  PanelLeftOpen,
+  CheckCircle,
+  Loader2,
+  Users,
 } from "lucide-react";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  getRelationshipColor, 
-  getStatusColor, 
-  formatCurrency 
-} from "./utils/helpers";
+import { cn } from "@/lib/utils";
+import { CreateParentDrawer } from "./components/CreateParentDrawer";
+import { ParentsSearchSidebar } from "./components/ParentsSearchSidebar";
+import { ParentDetailView } from "./components/ParentDetailView";
+import { ParentsStats } from "./components/ParentsStats";
+import { ParentsTable } from "./components/ParentsTable";
+import { ParentsFilterBar } from "./components/ParentsFilterBar";
+import { PendingParentInvitations } from "./components/PendingParentInvitations";
+import { ParentsBulkActions } from "./components/ParentsBulkActions";
+import { matchesParentFilter, type ParentFilter } from "./utils/parents-utils";
+import { isParentProfileIncomplete } from "./utils/mapGraphqlParent";
+import { useExactParents } from "./hooks/useExactParents";
+import { usePendingParentInvitations } from "./hooks/usePendingParentInvitations";
+import { useParentDetail } from "@/lib/hooks/useParentDetail";
+import { getTenantInfo } from "@/lib/utils";
+import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 
 export default function ParentsPage() {
-  // State for selected parent and filters
+  const searchParams = useSearchParams();
+  const openAddParent = searchParams.get("action") === "add";
+
+  const tenantInfo = getTenantInfo();
+  const tenantId = tenantInfo?.tenantId;
+
+  const { parents, loading, error, refetchParents } = useExactParents();
+  const {
+    pendingInvitations,
+    isLoading: invitationsLoading,
+    error: invitationsError,
+    refetch: refetchInvitations,
+  } = usePendingParentInvitations();
+
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState('asc');
-  // Track if we've attempted direct fetch
-  const [directFetchAttempted, setDirectFetchAttempted] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGradeId, setSelectedGradeId] = useState<string>('all');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
   const [displayedParentsCount, setDisplayedParentsCount] = useState(10);
-  const [showStats, setShowStats] = useState(false);
-  const [activeTab, setActiveTab] = useState('active-parents');
+  const [parentCreated, setParentCreated] = useState(false);
+  const [parentFilter, setParentFilter] = useState<ParentFilter>("all");
+  const [gradeFilter, setGradeFilter] = useState("all");
 
-  // Get parents data from API
-  const { parents, loading, error, refetchParents, tryDirectFetch } = useParents();
+  useDomainRealtime({
+    onParentInvitationAccepted: () => {
+      void refetchInvitations();
+      void refetchParents();
+    },
+    onInvitationSent: () => {
+      void refetchInvitations();
+    },
+    onInvitationRevoked: () => {
+      void refetchInvitations();
+    },
+  });
 
-  // Filter parents based on search and filters
-  const filteredParents = useMemo(() => {
-    let filtered = parents.filter((parent) => {
-      const matchesSearch = parent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          parent.phone.includes(searchTerm) ||
-                          (parent.email && parent.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          parent.students.some((student) => 
-                            student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())
-                          );
-      
-      const matchesGrade = selectedGradeId === 'all' || 
-                          parent.students.some((student) => student.grade === selectedGradeId);
-
-      return matchesSearch && matchesGrade;
-    });
-
-    // Sort parents
-    filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortField) {
-        case 'name':
-          aValue = a.name;
-          bValue = b.name;
-          break;
-        case 'relationship':
-          aValue = a.relationship;
-          bValue = b.relationship;
-          break;
-        case 'registrationDate':
-          aValue = new Date(a.registrationDate);
-          bValue = new Date(b.registrationDate);
-          break;
-        case 'studentCount':
-          aValue = a.students.length;
-          bValue = b.students.length;
-          break;
-        default:
-          aValue = a.name;
-          bValue = b.name;
+  const grades = useMemo(() => {
+    const unique = new Set<string>();
+    for (const parent of parents) {
+      for (const grade of parent.grades) {
+        unique.add(grade);
       }
-
-      if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
-    });
-
-    return filtered;
-  }, [parents, searchTerm, selectedGradeId, sortField, sortDirection]);
-
-  // Get selected parent
-  const selectedParent = parents.find((parent) => parent.id === selectedParentId);
-
-  // Event handlers
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setSelectedGradeId('all');
-    setDisplayedParentsCount(10);
-  };
-
-  const handleSelectParent = (id: string) => {
-    setSelectedParentId(id);
-  };
-
-  const handleLoadMore = () => {
-    setDisplayedParentsCount(prev => Math.min(prev + 10, filteredParents.length));
-  };
-
-  const handleToggleStats = () => {
-    setShowStats(!showStats);
-  };
-
-  const handleSelectGrade = (gradeId: string) => {
-    setSelectedGradeId(gradeId);
-  };
-
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
     }
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [parents]);
+
+  const filteredParents = useMemo(() => {
+    return parents.filter((parent) => {
+      if (!matchesParentFilter(parent, parentFilter)) return false;
+      if (
+        gradeFilter !== "all" &&
+        !parent.students.some((s) => s.grade === gradeFilter)
+      ) {
+        return false;
+      }
+      const q = searchTerm.toLowerCase();
+      if (!q) return true;
+      return (
+        parent.name.toLowerCase().includes(q) ||
+        parent.email.toLowerCase().includes(q) ||
+        parent.phone.includes(q) ||
+        parent.occupation.toLowerCase().includes(q) ||
+        parent.students.some(
+          (s) =>
+            s.name.toLowerCase().includes(q) ||
+            s.admissionNumber.toLowerCase().includes(q) ||
+            s.grade.toLowerCase().includes(q),
+        )
+      );
+    });
+  }, [parents, searchTerm, parentFilter, gradeFilter]);
+
+  const filterCounts = useMemo(
+    () => ({
+      all: parents.length,
+      active: parents.filter((p) => p.status === "active").length,
+      needsSetup: parents.filter((p) => p.status === "inactive").length,
+      incomplete: parents.filter((p) => isParentProfileIncomplete(p)).length,
+    }),
+    [parents],
+  );
+
+  const selectedParentFromList = useMemo(
+    () => parents.find((p) => p.id === selectedParentId) ?? null,
+    [parents, selectedParentId],
+  );
+
+  const {
+    parent: selectedParentDetail,
+    loading: detailLoading,
+    refetch: refetchParentDetail,
+  } = useParentDetail(selectedParentId);
+
+  const selectedParent = selectedParentDetail ?? selectedParentFromList;
+
+  const selectedParentInvitation = useMemo(() => {
+    if (!selectedParent?.email) return null;
+    const normalized = selectedParent.email.trim().toLowerCase();
+    return (
+      pendingInvitations.find(
+        (inv) => inv.email.trim().toLowerCase() === normalized,
+      ) ?? null
+    );
+  }, [pendingInvitations, selectedParent?.email]);
+
+  const handleParentUpdated = () => {
+    void refetchParents();
+    void refetchInvitations();
+    if (selectedParentId) void refetchParentDetail();
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="text-sm text-slate-600">Loading parents data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-          <h3 className="text-lg font-semibold text-red-700 mb-2">Unable to Load Parents</h3>
-          <p className="mb-4 text-red-600">{error}</p>
-          <div className="text-sm text-gray-600 mb-4">
-            <p>We're having trouble accessing the parent data from the API.</p>
-            <p className="mt-2 font-medium">Possible Solutions:</p>
-            <ul className="list-disc list-inside mt-1 text-left">
-              <li>Check if the API schema includes getAllParents query</li>
-              <li>Ensure you have proper permissions to access parent data</li>
-              <li>Try direct API access (bypasses some client-side restrictions)</li>
-            </ul>
-          </div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Button onClick={refetchParents} variant="default" className="mt-2">
-              Try Standard Fetch
-            </Button>
-            <Button 
-              onClick={async () => {
-                setDirectFetchAttempted(true);
-                const success = await tryDirectFetch();
-                if (!success) {
-                  // If still failing after direct fetch attempt, provide more guidance
-                  alert('Direct fetch also failed. Please check browser console for more details.');
-                }
-              }} 
-              variant="outline" 
-              className="mt-2"
-              disabled={directFetchAttempted}
-            >
-              {directFetchAttempted ? 'Direct Fetch Attempted' : 'Try Direct API Access'}
-            </Button>
-            <Button onClick={() => window.location.reload()} variant="outline" className="mt-2">
-              Reload Page
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleParentCreated = () => {
+    setParentCreated(true);
+    void refetchParents();
+    void refetchInvitations();
+    setTimeout(() => setParentCreated(false), 3000);
+  };
 
   return (
-    <div className="flex h-full">
-      {/* Search filter column */}
-      {!isSidebarCollapsed && (
-        <ParentSidebar
-          parents={parents}
-          filteredParents={filteredParents}
-          searchTerm={searchTerm}
-          selectedParentId={selectedParentId}
-          selectedGradeId={selectedGradeId}
-          displayedParentsCount={displayedParentsCount}
-          onSearchChange={handleSearchChange}
-          onClearFilters={handleClearFilters}
-          onSelectParent={handleSelectParent}
-          onLoadMore={handleLoadMore}
-          onCollapseSidebar={() => setIsSidebarCollapsed(true)}
-          getRelationshipColor={getRelationshipColor}
-          formatCurrency={formatCurrency}
-        />
-      )}
-
-      {/* Main content column */}
-      <div className="flex-1 overflow-auto p-8 transition-all duration-300 ease-in-out relative">
-        {/* Floating toggle button when sidebar is collapsed */}
-        {isSidebarCollapsed && (
-          <div className="absolute top-6 left-6 z-10">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSidebarCollapsed(false)}
-              className="border-slate-200 bg-white/80 backdrop-blur-sm text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-300 shadow-sm transition-all duration-200"
-              title="Show search sidebar"
-            >
-              <PanelLeftOpen className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "md:relative md:translate-x-0",
+          isSidebarMinimized ? "w-14" : "w-64",
         )}
-        
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">
-              {selectedParent ? 'Parent Details' : 'Parents'}
-            </h1>
-            {!loading && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={refetchParents} 
-                className="text-xs hover:bg-primary/5"
-                title="Refresh parents data"
-              >
-                Refresh
-              </Button>
+      >
+        <div
+          className={cn(
+            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+            isSidebarMinimized ? "justify-center" : "justify-end",
+          )}
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+          >
+            {isSidebarMinimized ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
             )}
+          </Button>
+        </div>
+        {!isSidebarMinimized ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3">
+            <ParentsSearchSidebar
+              parents={parents}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedParentId={selectedParentId}
+              onParentSelect={setSelectedParentId}
+              displayedParentsCount={displayedParentsCount}
+              onLoadMore={() =>
+                setDisplayedParentsCount((prev) => prev + 10)
+              }
+            />
           </div>
-          <div className="flex items-center gap-2">
-            {/* Sidebar toggle button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
-              title={isSidebarCollapsed ? "Show search sidebar" : "Hide search sidebar"}
-            >
-              {isSidebarCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </Button>
-            <CreateParentDrawer onParentCreated={() => {}} />
+        ) : null}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
+          <div className="mx-auto max-w-5xl">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  {selectedParent ? selectedParent.name : "Parents"}
+                </h1>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {selectedParent
+                    ? `${selectedParent.studentCount} linked child${selectedParent.studentCount !== 1 ? "ren" : ""} · ${selectedParent.status === "active" ? "Active" : "Not activated"}`
+                    : "Manage guardians, invitations, and linked students"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {!selectedParentId ? (
+                  <CreateParentDrawer
+                    onParentCreated={handleParentCreated}
+                    defaultOpen={openAddParent}
+                  />
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
-        
-        {/* Tab navigation */}
-        {!selectedParent && (
-          <Tabs defaultValue="active-parents" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-            <TabsList className="w-full max-w-md">
-              <TabsTrigger value="active-parents" className="flex-1">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="h-4 w-4" />
-                  <span>Active Parents</span>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+            {!tenantId ? (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                <Info className="h-4 w-4 shrink-0" />
+                Tenant ID not found. Please log in again.
+              </div>
+            ) : null}
+
+            {loading && tenantId ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading parents…
+              </div>
+            ) : null}
+
+            {error ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200/80 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                <span className="flex items-center gap-2">
+                  <Info className="h-4 w-4 shrink-0" />
+                  Error loading parents: {error}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void refetchParents()}
+                  className="h-7 border-red-200 text-red-700 hover:bg-red-100"
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : null}
+
+            {parentCreated ? (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+                <CheckCircle className="h-4 w-4 shrink-0" />
+                Parent invitation sent successfully.
+              </div>
+            ) : null}
+
+            {selectedParent ? (
+              <ParentDetailView
+                parent={selectedParent}
+                pendingInvitation={selectedParentInvitation}
+                detailLoading={detailLoading && !!selectedParentId}
+                onClose={() => setSelectedParentId(null)}
+                onUpdated={handleParentUpdated}
+              />
+            ) : parents.length === 0 && !loading ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center dark:border-slate-800 dark:bg-slate-900/40">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+                  <Users className="h-6 w-6 text-slate-400" />
                 </div>
-              </TabsTrigger>
-              <TabsTrigger value="pending-invitations" className="flex-1">
-                <div className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  <span>Pending Invitations</span>
+                <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  No parents yet
+                </h2>
+                <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
+                  Invite your first parent to connect them with their
+                  children&apos;s school records.
+                </p>
+                <div className="mt-5 flex justify-center">
+                  <CreateParentDrawer
+                    onParentCreated={handleParentCreated}
+                    defaultOpen={openAddParent}
+                  />
                 </div>
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="active-parents" className="mt-6">
-              {/* Show grade filter and stats for active parents */}
-              {selectedGradeId === 'all' && (
-                <ParentStatistics 
-                  parents={parents} 
-                  showStats={showStats} 
-                  onToggleStats={handleToggleStats} 
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <ParentsStats
+                  parents={parents}
+                  pendingCount={pendingInvitations.length}
+                  isLoading={loading}
                 />
-              )}
 
-              <GradeFilter 
-                grades={mockGrades} 
-                selectedGradeId={selectedGradeId} 
-                onSelectGrade={handleSelectGrade} 
-              />
+                {!loading && parents.length > 0 ? (
+                  <ParentsFilterBar
+                    filter={parentFilter}
+                    onFilterChange={setParentFilter}
+                    counts={filterCounts}
+                    grades={grades}
+                    gradeFilter={gradeFilter}
+                    onGradeFilterChange={setGradeFilter}
+                  />
+                ) : null}
 
-              <ParentsGrid 
-                parents={filteredParents} 
-                onSelectParent={handleSelectParent} 
-                getRelationshipColor={getRelationshipColor}
-                formatCurrency={formatCurrency}
-              />
-            </TabsContent>
-            
-            <TabsContent value="pending-invitations" className="mt-6">
-                <PendingInvitationsSection />
-            </TabsContent>
-          </Tabs>
-        )}
-        
-        {/* Parent Detail View */}
-        {selectedParent && (
-          <ParentDetailView 
-            parent={selectedParent} 
-            formatCurrency={formatCurrency}
-            getRelationshipColor={getRelationshipColor}
-            getStatusColor={getStatusColor}
-          />
-        )}
+                {searchTerm && !selectedParentId ? (
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Filtering by</span>
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900"
+                    >
+                      &ldquo;{searchTerm}&rdquo;
+                      <span className="text-slate-400">×</span>
+                    </button>
+                  </div>
+                ) : null}
+
+                <ParentsBulkActions
+                  parents={filteredParents}
+                  invitations={pendingInvitations}
+                  onInvitationsUpdated={() => void refetchInvitations()}
+                />
+
+                <PendingParentInvitations
+                  invitations={pendingInvitations}
+                  isLoading={invitationsLoading}
+                  error={invitationsError}
+                  onInvitationRevoked={() => void refetchInvitations()}
+                  onInvitationResent={() => void refetchInvitations()}
+                />
+
+                <ParentsTable
+                  parents={filteredParents}
+                  onParentSelect={setSelectedParentId}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

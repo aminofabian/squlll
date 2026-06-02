@@ -10,7 +10,7 @@ export default function StudentLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="font-outfit">
+    <div className="font-sans">
       <DashboardLayout
         sidebar={<StudentSidebar />}
         mobileNav={<StudentMobileBottomNav />}

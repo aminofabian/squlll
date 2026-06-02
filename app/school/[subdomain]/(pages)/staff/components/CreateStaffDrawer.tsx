@@ -20,6 +20,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from '@/components/ui/drawer'
 import { 
   User, 
@@ -37,10 +38,13 @@ import {
 } from "lucide-react"
 import { toast } from 'sonner'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
+import { StaffAddTrigger, type StaffAddTriggerVariant } from './StaffAddTrigger'
 
 interface CreateStaffDrawerProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  defaultOpen?: boolean
+  triggerVariant?: StaffAddTriggerVariant
   onStaffCreated: () => void
 }
 
@@ -68,7 +72,19 @@ interface StaffFormData {
   gender: string
 }
 
-export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: CreateStaffDrawerProps) {
+export function CreateStaffDrawer({
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  defaultOpen = false,
+  triggerVariant = 'header',
+  onStaffCreated,
+}: CreateStaffDrawerProps) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen)
+  const isControlled =
+    controlledOpen !== undefined && controlledOnOpenChange !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const onOpenChange = isControlled ? controlledOnOpenChange! : setInternalOpen
+
   const { data: schoolConfig } = useSchoolConfig()
   // Phone number formatting utility
   const formatPhoneNumber = (value: string): string => {
@@ -241,6 +257,15 @@ export function CreateStaffDrawer({ open, onOpenChange, onStaffCreated }: Create
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
+      {!isControlled ? (
+        <DrawerTrigger asChild>
+          <StaffAddTrigger
+            variant={triggerVariant}
+            loading={isSubmitting}
+            loadingLabel={isSubmitting ? 'Adding…' : 'Loading…'}
+          />
+        </DrawerTrigger>
+      ) : null}
       <DrawerContent className="h-full w-full md:w-1/2 bg-background" data-vaul-drawer-direction="right">
         <div className="flex flex-col h-full">
           <DrawerHeader className="border-b-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">

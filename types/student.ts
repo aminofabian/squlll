@@ -97,6 +97,7 @@ export interface StudentDetailSummary {
   streamId?: string | null;
   feeSummary: DetailedFeeSummary;
   isActive: boolean;
+  userId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

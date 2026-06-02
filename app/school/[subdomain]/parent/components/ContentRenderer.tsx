@@ -1,15 +1,14 @@
 'use client'
 
 import React from 'react';
-import { PaymentsSection } from './PaymentsSection';
-import { ParentFeeLiveCard } from './ParentFeeLiveCard';
+import { ParentFeesSection } from './ParentFeesSection';
 import { ParentAttendanceSection } from './ParentAttendanceSection';
 import { ParentGradesSection } from './ParentGradesSection';
 import { ParentNotesSection } from './ParentNotesSection';
 import { ParentReportCardSection } from './ParentReportCardSection';
 import { ParentScheduleSection } from './ParentScheduleSection';
 import { ParentMessagesSection } from './ParentMessagesSection';
-import type { ParentFeeBalance, ParentPortalChild } from '@/lib/parent/types';
+import type { ParentPortalChild } from '@/lib/parent/types';
 
 interface ScheduleItem {
   time: string;
@@ -54,9 +53,7 @@ interface ContentRendererProps {
   notifications: Notification[];
   children?: Child[];
   selectedChild?: number;
-  feeBalance?: ParentFeeBalance | null;
-  feeLoading?: boolean;
-  onFeeRefresh?: () => void;
+  setSelectedChild?: (index: number) => void;
   portalError?: string | null;
 }
 
@@ -83,9 +80,7 @@ export const ContentRenderer = ({
   notifications,
   children,
   selectedChild = 0,
-  feeBalance = null,
-  feeLoading = false,
-  onFeeRefresh,
+  setSelectedChild,
   portalError = null,
 }: ContentRendererProps) => {
   const renderNotifications = () => (
@@ -328,13 +323,12 @@ export const ContentRenderer = ({
               {portalError}
             </p>
           ) : null}
-          <ParentFeeLiveCard
-            balance={feeBalance}
-            childName={children[selectedChild]?.name}
-            loading={feeLoading}
-            onRefresh={onFeeRefresh}
+          <ParentFeesSection
+            subdomain={subdomain}
+            children={children as ParentPortalChild[]}
+            selectedChild={selectedChild}
+            onSelectChild={setSelectedChild}
           />
-          <PaymentsSection children={children} selectedChild={selectedChild} />
         </>
       ) : null;
     case 'reports':

@@ -24,7 +24,7 @@ const ParentsPortal = () => {
 
   const {
     portalChildren,
-    feeBalance,
+    consolidatedFees,
     loading: portalLoading,
     error: portalError,
     refetchAll,
@@ -106,6 +106,18 @@ const ParentsPortal = () => {
                 parentName={dashboard.parentName}
                 averageGpa={dashboard.averageGpa}
                 dashboardLoading={dashboard.loading}
+                consolidatedFees={consolidatedFees}
+                feesLoading={portalLoading}
+                onFeesRefresh={() => void refetchAll()}
+                onSelectChildByStudentId={(studentId) => {
+                  const index = portalChildren.findIndex(
+                    (c) => c.studentId === studentId,
+                  )
+                  if (index >= 0) {
+                    setSelectedChild(index)
+                    setActiveTab('payments')
+                  }
+                }}
               />
             ) : (
               <ContentRenderer
@@ -115,9 +127,7 @@ const ParentsPortal = () => {
                 notifications={notifications}
                 children={portalChildren}
                 selectedChild={selectedChild}
-                feeBalance={feeBalance}
-                feeLoading={portalLoading}
-                onFeeRefresh={() => void refetchAll()}
+                setSelectedChild={setSelectedChild}
                 portalError={portalError}
               />
             ),
@@ -146,6 +156,18 @@ const ParentsPortal = () => {
               subdomain={subdomain}
               averageGpa={dashboard.averageGpa}
               dashboardLoading={dashboard.loading}
+              consolidatedFees={consolidatedFees}
+              feesLoading={portalLoading}
+              onFeesRefresh={() => void refetchAll()}
+              onSelectChildByStudentId={(studentId) => {
+                const index = portalChildren.findIndex(
+                  (c) => c.studentId === studentId,
+                )
+                if (index >= 0) {
+                  setSelectedChild(index)
+                  setActiveTab('payments')
+                }
+              }}
             />
           ) : (
             <div className="p-6">
@@ -156,9 +178,7 @@ const ParentsPortal = () => {
                 notifications={notifications}
                 children={portalChildren}
                 selectedChild={selectedChild}
-                feeBalance={feeBalance}
-                feeLoading={portalLoading}
-                onFeeRefresh={() => void refetchAll()}
+                setSelectedChild={setSelectedChild}
                 portalError={portalError}
               />
             </div>

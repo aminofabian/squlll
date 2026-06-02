@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { studentsEnrollLink } from "./students-ui";
 
 interface StudentsOverviewBarProps {
   total: number;
@@ -20,10 +22,10 @@ export function StudentsOverviewBar({
 }: StudentsOverviewBarProps) {
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="grid grid-cols-2 gap-px bg-slate-100 dark:bg-slate-800 lg:grid-cols-4">
+      <div className="overflow-hidden rounded-xl border border-slate-200/50 bg-slate-100/35 dark:border-slate-800/60 dark:bg-slate-900/25">
+        <div className="grid grid-cols-2 gap-px bg-slate-200/40 dark:bg-slate-800/60 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white px-4 py-3 dark:bg-slate-900/40">
+            <div key={i} className="bg-white/60 px-4 py-3 dark:bg-slate-900/30">
               <div className="h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
               <div className="mt-2 h-4 w-12 animate-pulse rounded bg-slate-50 dark:bg-slate-800/60" />
             </div>
@@ -46,11 +48,9 @@ export function StudentsOverviewBar({
             <p className="text-xs text-slate-500 dark:text-slate-400">
               No students enrolled yet.
             </p>
-            <Link
-              href="/students?action=add"
-              className="mt-1 inline-flex text-xs font-medium text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
-            >
-              Add students →
+            <Link href="/students?action=add" className={cn(studentsEnrollLink, "mt-2")}>
+              Enroll student
+              <ArrowRight className="h-3 w-3 text-white/70" />
             </Link>
           </div>
         ),
@@ -74,11 +74,11 @@ export function StudentsOverviewBar({
 
   return (
     <div
-      className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40"
+      className="overflow-hidden rounded-xl border border-slate-200/50 bg-slate-100/35 dark:border-slate-800/60 dark:bg-slate-900/25"
       role="group"
       aria-label="Student statistics"
     >
-      <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-800 lg:grid-cols-4">
+      <div className="grid grid-cols-2 divide-x divide-y divide-slate-200/40 dark:divide-slate-800/50 lg:grid-cols-4">
         {cells.map((cell) => (
           <div key={cell.label} className="px-4 py-3">
             <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">

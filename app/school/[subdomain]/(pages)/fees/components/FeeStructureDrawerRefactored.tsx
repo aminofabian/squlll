@@ -27,6 +27,7 @@ import { useFeeBuckets } from '@/lib/hooks/useFeeBuckets'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useGradeLevels } from '../hooks/useGradeLevels'
 import { useGraphQLFeeStructures } from '../hooks/useGraphQLFeeStructures'
+import { getDisplayErrorMessage } from '@/lib/utils/graphql-errors'
 import { CreateAcademicYearModal } from './CreateAcademicYearModal'
 import FeeStructureStepContent from './FeeStructureStepBasedContent'
 import { FeeStructurePDFPreview } from './FeeStructurePDFPreview'
@@ -994,10 +995,6 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
         items: feeItems
       });
       
-      if (!createdFeeStructure) {
-        throw new Error('Failed to create fee structure. Please try again.');
-      }
-      
       // Return ID to parent component if needed
       if (onSave && typeof onSave === 'function') {
         await onSave({
@@ -1012,41 +1009,7 @@ export const FeeStructureDrawer: React.FC<FeeStructureDrawerProps> = ({
       showToast(`✅ Fee structure "${createdFeeStructure.name}" created successfully!`, 'success');
     } catch (error) {
       console.error('Error saving fee structure:', error);
-
-      // Create a simplified GraphQL error response format 
-      const errorResponse = {
-        errors: [
-          {
-            message: "Fee structure already exists for this combination",
-            locations: [{ line: 3, column: 11 }],
-            path: ["createFeeStructureWithItems"],
-            extensions: { code: "CONFLICTEXCEPTION" }
-          }
-        ],
-        data: null
-      };
-
-      // If we have an actual error message, use that
-      if (error instanceof Error) {
-        errorResponse.errors[0].message = error.message;
-        
-        // Try to extract GraphQL error details if they exist
-        const enhancedError = error as any;
-        if (enhancedError.rawGraphQLErrors) {
-          errorResponse.errors = enhancedError.rawGraphQLErrors;
-        } else if (enhancedError.rawGraphQLResponse?.errors) {
-          errorResponse.errors = enhancedError.rawGraphQLResponse.errors;
-        }
-      }
-      
-      // Extract just the error message for the toast
-      const errorMessage = errorResponse.errors[0]?.message || 'Unknown error';
-      
-      // Show the error message
-      showToast(errorMessage, 'error');
-      
-      // Log the complete error for debugging
-      console.log('Complete error details:', error);
+      showToast(getDisplayErrorMessage(error), 'error');
     }
   }
 

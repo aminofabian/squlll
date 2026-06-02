@@ -19,6 +19,10 @@ import { FeeStructure } from '../../types'
 import { mockFeeStructures } from '../../data/mockData'
 import { useGraphQLFeeStructures } from '../../hooks/useGraphQLFeeStructures'
 import { useGradeData } from '../../hooks/useGradeData'
+import {
+  fetchFeePlanDeleteEligibility,
+  type FeePlanDeleteEligibility,
+} from '../../lib/feePlanLifecycle'
 
 export const FeeStructureManager = ({
   onCreateNew,
@@ -34,6 +38,9 @@ export const FeeStructureManager = ({
   // Delete confirmation dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [structureToDelete, setStructureToDelete] = useState<StructureToDelete | null>(null)
+  const [deleteEligibility, setDeleteEligibility] =
+    useState<FeePlanDeleteEligibility | null>(null)
+  const [deleteEligibilityLoading, setDeleteEligibilityLoading] = useState(false)
   
   // Fee structure item update state
   const [isUpdateItemModalOpen, setIsUpdateItemModalOpen] = useState(false)
@@ -231,7 +238,23 @@ export const FeeStructureManager = ({
   // Handle delete confirmation
   const handleDeleteConfirmation = (id: string, name: string) => {
     setStructureToDelete({ id, name })
+    setDeleteEligibility(null)
+    setDeleteEligibilityLoading(true)
     setIsDeleteDialogOpen(true)
+
+    fetchFeePlanDeleteEligibility(id)
+      .then(setDeleteEligibility)
+      .catch(() => {
+        setDeleteEligibility({
+          canDelete: false,
+          blockReasons: ['Unable to verify delete eligibility'],
+          studentAssignmentCount: 0,
+          outstandingBalanceCount: 0,
+          paymentRecordCount: 0,
+          invoiceCount: 0,
+        })
+      })
+      .finally(() => setDeleteEligibilityLoading(false))
   }
 
   // Debug data function
@@ -305,6 +328,8 @@ export const FeeStructureManager = ({
         isOpen={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         structureToDelete={structureToDelete}
+        eligibility={deleteEligibility}
+        eligibilityLoading={deleteEligibilityLoading}
         onConfirmDelete={(id) => {
           if (onDelete) {
             onDelete(id)

@@ -99,17 +99,22 @@ export interface FeeSummary {
   totalOwed: number;
   totalPaid: number;
   balance: number;
+  creditBalance?: number;
   numberOfFeeItems: number;
   feeItems: FeeItem[];
+  aging?: Array<{ category: string; amount: number }>;
 }
 
 export interface FeeItem {
   id: string;
   feeBucketName: string;
   amount: number;
+  amountPaid?: number;
+  balance?: number;
   isMandatory: boolean;
   feeStructureName: string;
   academicYearName: string;
+  termName?: string;
 }
 
 export interface StudentSummaryFromAPI {
@@ -166,6 +171,9 @@ export interface RecordPaymentForm {
   referenceNumber: string;
   notes: string;
   partialPayment: boolean;
+  applyCreditBalance: boolean;
+  useManualAllocation: boolean;
+  allocations: Record<string, string>;
 }
 
 export interface PaymentPlanForm {
@@ -234,7 +242,10 @@ export interface FeeComponent {
 
 // Grade and Class types
 export interface Grade {
+  /** Unique key for UI selection (may include stream suffix) */
   id: string;
+  /** Tenant grade level ID — required for fee assignment API */
+  tenantGradeLevelId: string;
   name: string;
   level: number;
   section: string;
@@ -343,6 +354,16 @@ export interface FeeAssignmentGroup {
     feeStructureId: string;
     description: string;
     studentsAssignedCount: number;
+    tenantGradeLevelIds?: string[];
+    gradeLevels?: Array<{
+      tenantGradeLevelId: string;
+      tenantGradeLevel?: {
+        id: string;
+        shortName?: string | null;
+        name?: string | null;
+        gradeLevel?: { name?: string | null };
+      };
+    }>;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;

@@ -19,7 +19,10 @@ import { TeachersStats } from "./components/TeachersStats";
 import { TeachersTable } from "./components/TeachersTable";
 import { TeachersFilterBar } from "./components/TeachersFilterBar";
 import { PendingInvitations } from "./components/PendingInvitations";
+import { TeachersBulkActions } from "./components/TeachersBulkActions";
 import { matchesStaffFilter, type StaffFilter } from "./utils/teachers-utils";
+import { isTeacherProfileIncomplete } from "./utils/mapGraphqlTeacher";
+import { useTeachersTimetableCoverage } from "@/lib/hooks/useTeachersTimetableCoverage";
 import { usePendingInvitationsStore } from "@/lib/stores/usePendingInvitationsStore";
 import { useGetTeachers } from "@/lib/hooks/useTeachers";
 import { useTeacherAdminActions } from "@/lib/hooks/useTeacherAdminActions";
@@ -58,6 +61,7 @@ function TeachersPage() {
   const [displayedTeachersCount, setDisplayedTeachersCount] = useState(10);
   const [teacherCreated, setTeacherCreated] = useState(false);
   const [staffFilter, setStaffFilter] = useState<StaffFilter>("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
   const searchParams = useSearchParams();
   const openAddTeacher = searchParams.get("action") === "add";
 
@@ -90,25 +94,47 @@ function TeachersPage() {
     },
   });
 
+  const {
+    lessonCounts,
+    termName: timetableTermName,
+    loading: timetableLoading,
+  } = useTeachersTimetableCoverage();
+
+  const departments = useMemo(() => {
+    const unique = new Set(
+      teachers.map((t) => t.department).filter(Boolean),
+    );
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [teachers]);
+
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
-      if (!matchesStaffFilter(teacher.status, staffFilter)) return false;
+      if (!matchesStaffFilter(teacher, staffFilter)) return false;
+      if (
+        departmentFilter !== "all" &&
+        teacher.department !== departmentFilter
+      ) {
+        return false;
+      }
       const q = searchTerm.toLowerCase();
       if (!q) return true;
       return (
         teacher.name.toLowerCase().includes(q) ||
-        teacher.employeeId.toLowerCase().includes(q) ||
+        (teacher.employeeId?.toLowerCase().includes(q) ?? false) ||
         teacher.contacts.email.toLowerCase().includes(q) ||
-        teacher.subjects.some((subject) => subject.toLowerCase().includes(q))
+        teacher.subjects.some((subject) => subject.toLowerCase().includes(q)) ||
+        teacher.grades.some((grade) => grade.toLowerCase().includes(q)) ||
+        teacher.department.toLowerCase().includes(q)
       );
     });
-  }, [teachers, searchTerm, staffFilter]);
+  }, [teachers, searchTerm, staffFilter, departmentFilter]);
 
   const filterCounts = useMemo(
     () => ({
       all: teachers.length,
       active: teachers.filter((t) => t.status === "active").length,
       needsSetup: teachers.filter((t) => t.status === "inactive").length,
+      incomplete: teachers.filter((t) => isTeacherProfileIncomplete(t)).length,
     }),
     [teachers],
   );
@@ -295,6 +321,9 @@ function TeachersPage() {
                     filter={staffFilter}
                     onFilterChange={setStaffFilter}
                     counts={filterCounts}
+                    departments={departments}
+                    departmentFilter={departmentFilter}
+                    onDepartmentFilterChange={setDepartmentFilter}
                   />
                 )}
 
@@ -311,6 +340,14 @@ function TeachersPage() {
                     </button>
                   </div>
                 )}
+
+                <TeachersBulkActions
+                  teachers={filteredTeachers}
+                  invitations={invitations}
+                  onInvitationsUpdated={() => {
+                    if (tenantId) fetchPendingInvitations(tenantId);
+                  }}
+                />
 
                 <PendingInvitations
                   invitations={invitations}
@@ -334,6 +371,9 @@ function TeachersPage() {
                   teachers={filteredTeachers}
                   onTeacherSelect={setSelectedTeacherId}
                   onTeacherDelete={handleTeacherDelete}
+                  lessonCounts={lessonCounts}
+                  timetableLoading={timetableLoading}
+                  termName={timetableTermName}
                 />
               </div>
             )}

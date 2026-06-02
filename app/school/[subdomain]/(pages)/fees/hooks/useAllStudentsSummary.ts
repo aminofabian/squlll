@@ -13,7 +13,12 @@ const GET_ALL_STUDENTS_SUMMARY = `
         totalOwed
         totalPaid
         balance
+        creditBalance
         numberOfFeeItems
+        aging {
+          category
+          amount
+        }
       }
     }
   }

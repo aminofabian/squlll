@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import {
+  getDisplayErrorMessage,
+  parseGraphQLResponse,
+} from '@/lib/utils/graphql-errors';
 
 // Define TypeScript interfaces for the GraphQL response
 export interface GraphQLFeeStructureItem {
@@ -16,11 +20,13 @@ export interface GraphQLFeeStructureItem {
 export interface GraphQLTerm {
   id: string;
   name: string;
+  endDate?: string;
 }
 
 export interface GraphQLAcademicYear {
   id: string;
   name: string;
+  endDate?: string;
 }
 
 export interface GraphQLGradeLevel {
@@ -36,6 +42,7 @@ export interface GraphQLGradeLevel {
 export interface GraphQLFeeStructure {
   id: string;
   name: string;
+  planLabel?: string | null;
   academicYear: GraphQLAcademicYear | null;
   terms: GraphQLTerm[] | null;
   gradeLevels: GraphQLGradeLevel[];
@@ -50,10 +57,24 @@ export interface FeeStructuresResponse {
 }
 
 // Interface for the update fee structure input
+export interface UpdateFeeStructureItemAmountInput {
+  id: string;
+  amount: number;
+  isMandatory?: boolean;
+}
+
 export interface UpdateFeeStructureInput {
   name?: string;
+  planLabel?: string;
   isActive?: boolean;
   gradeLevelIds?: string[];
+  itemUpdates?: UpdateFeeStructureItemAmountInput[];
+}
+
+export interface UpdateFeeStructureItemInput {
+  amount?: number;
+  isMandatory?: boolean;
+  feeBucketId?: string;
 }
 
 // Interface for creating a fee structure
@@ -74,6 +95,7 @@ export interface FeeStructureItemInput {
 
 export interface CreateFeeStructureWithItemsInput {
   name: string;
+  planLabel?: string;
   academicYearId: string;
   gradeLevelIds: string[];
   items: FeeStructureItemInput[];
@@ -104,13 +126,16 @@ export const useGraphQLFeeStructures = () => {
           feeStructures {
             id
             name
+            planLabel
             academicYear {
               id
               name
+              endDate
             }
             terms {
               id
               name
+              endDate
             }
             gradeLevels {
               id
@@ -209,10 +234,20 @@ export const useGraphQLFeeStructures = () => {
           updateFeeStructure(id: $id, input: $input) {
             id
             name
+            planLabel
             isActive
             gradeLevels {
               id
               shortName
+            }
+            items {
+              id
+              amount
+              isMandatory
+              feeBucket {
+                id
+                name
+              }
             }
           }
         }
@@ -240,61 +275,10 @@ export const useGraphQLFeeStructures = () => {
         method: 'POST'
       });
 
-      // Parse JSON even if status is not ok - GraphQL may return errors in JSON body
-      let result;
-      try {
-        result = await response.json();
-      } catch (parseError) {
-        // If we can't parse JSON, throw a generic error
-        const text = await response.text();
-        console.error('❌ Failed to parse JSON response. Raw response:', text);
-        throw new Error(`GraphQL request failed with status ${response.status} and could not parse response`);
-      }
-
-      console.log('📥 Update response:', JSON.stringify(result, null, 2));
-      
-      // Check for GraphQL errors first (even if status is 200)
-      if (result.errors) {
-        // Extract detailed error information
-        const errorMessages = result.errors.map((e: any) => {
-          const baseMessage = e.message || 'Unknown error';
-          const exceptionMessage = e.extensions?.exception?.message;
-          const code = e.extensions?.code;
-          const originalError = e.extensions?.originalError?.message;
-          const statusCode = e.extensions?.exception?.status;
-          
-          let detailedMessage = baseMessage;
-          if (code) detailedMessage += ` [${code}]`;
-          if (statusCode) detailedMessage += ` (HTTP ${statusCode})`;
-          if (exceptionMessage && exceptionMessage !== baseMessage) {
-            detailedMessage += `: ${exceptionMessage}`;
-          } else if (originalError) {
-            detailedMessage += `: ${originalError}`;
-          }
-          
-          return detailedMessage;
-        }).join(', ');
-        
-        console.error('❌ GraphQL Update Fee Structure Error:', {
-          message: result.errors[0]?.message,
-          path: result.errors[0]?.path,
-          code: result.errors[0]?.extensions?.code,
-          exception: result.errors[0]?.extensions?.exception,
-          originalError: result.errors[0]?.extensions?.originalError,
-          fullError: result.errors[0],
-          allErrors: result.errors,
-          // Log the full error object as JSON for easier inspection
-          fullErrorJSON: JSON.stringify(result.errors[0], null, 2),
-          allErrorsJSON: JSON.stringify(result.errors, null, 2)
-        });
-        
-        throw new Error(errorMessages);
-      }
-
-      // If no GraphQL errors but HTTP status is not ok, throw generic error
-      if (!response.ok) {
-        throw new Error(`GraphQL request failed with status ${response.status}`);
-      }
+      const result = await parseGraphQLResponse<{
+        data?: { updateFeeStructure?: GraphQLFeeStructure };
+      }>(response);
+      console.log('📥 Update response:', result);
 
       if (!result.data?.updateFeeStructure) {
         throw new Error('GraphQL response missing updateFeeStructure field');
@@ -318,11 +302,10 @@ export const useGraphQLFeeStructures = () => {
       setUpdateError(null); // Clear any previous errors
       return updatedStructure.id;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      const errorMessage = getDisplayErrorMessage(err);
       setUpdateError(errorMessage);
       console.error('Error updating fee structure:', err);
-      // Re-throw the error so the caller can handle it
-      throw err;
+      throw new Error(errorMessage);
     } finally {
       setIsUpdating(false);
     }
@@ -358,50 +341,9 @@ export const useGraphQLFeeStructures = () => {
 
       console.log(`GraphQL delete response status: ${response.status}`);
 
-      if (!response.ok) {
-        throw new Error(`GraphQL request failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('📦 Delete response:', JSON.stringify(result, null, 2));
-      
-      if (result.errors) {
-        // Extract detailed error information
-        const errorMessages = result.errors.map((e: any) => {
-          const baseMessage = e.message || 'Unknown error';
-          
-          // Check for additional error details in extensions
-          const exceptionMessage = e.extensions?.exception?.message;
-          const exceptionStack = e.extensions?.exception?.stack;
-          const code = e.extensions?.code;
-          const originalError = e.extensions?.originalError?.message;
-          
-          // Build detailed error message
-          let detailedMessage = baseMessage;
-          if (code) detailedMessage += ` [${code}]`;
-          if (exceptionMessage && exceptionMessage !== baseMessage) {
-            detailedMessage += `: ${exceptionMessage}`;
-          } else if (originalError) {
-            detailedMessage += `: ${originalError}`;
-          }
-          
-          return detailedMessage;
-        }).join(', ');
-        
-        // Log full error details for debugging
-        console.error('❌ GraphQL Delete Fee Structure Error:', {
-          message: result.errors[0]?.message,
-          path: result.errors[0]?.path,
-          code: result.errors[0]?.extensions?.code,
-          exception: result.errors[0]?.extensions?.exception,
-          originalError: result.errors[0]?.extensions?.originalError,
-          fullError: result.errors[0],
-          allErrors: result.errors
-        });
-        
-        throw new Error(errorMessages);
-      }
-
+      const result = await parseGraphQLResponse<{ data?: { deleteFeeStructure?: boolean } }>(
+        response,
+      );
       // Check the response more carefully
       console.log('🔍 Checking delete response data:', {
         hasData: !!result.data,
@@ -439,7 +381,7 @@ export const useGraphQLFeeStructures = () => {
       console.log('Fee structure deleted successfully');
       return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      const errorMessage = getDisplayErrorMessage(err);
       setDeleteError(errorMessage);
       console.error('Error deleting fee structure:', err);
       return false;
@@ -451,7 +393,7 @@ export const useGraphQLFeeStructures = () => {
   /**
    * Creates a fee structure using GraphQL mutation
    */
-  const createFeeStructure = async (input: CreateFeeStructureInput): Promise<GraphQLFeeStructure | null> => {
+  const createFeeStructure = async (input: CreateFeeStructureInput): Promise<GraphQLFeeStructure> => {
     setIsCreating(true);
     setCreateError(null);
     console.log('Creating fee structure with input:', input);
@@ -465,10 +407,12 @@ export const useGraphQLFeeStructures = () => {
             academicYear {
               id
               name
+              endDate
             }
             terms {
               id
               name
+              endDate
             }
             gradeLevels {
               id
@@ -500,47 +444,10 @@ export const useGraphQLFeeStructures = () => {
 
       console.log(`GraphQL create response status: ${response.status}`);
 
-      if (!response.ok) {
-        throw new Error(`GraphQL request failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await parseGraphQLResponse<{
+        data?: { createFeeStructure?: GraphQLFeeStructure };
+      }>(response);
       console.log('Create response:', result);
-      
-      if (result.errors) {
-        // Extract the primary error message
-        const primaryError = result.errors[0];
-        const errorMessage = primaryError?.message || 'Unknown GraphQL error';
-        const errorCode = primaryError?.extensions?.code;
-        
-        console.error('GraphQL errors:', JSON.stringify(result.errors, null, 2));
-        
-        // Capture the original error message and raw error data
-        const errorWithDetails = new Error(errorMessage);
-        
-        // Use a type assertion to add custom properties without TypeScript errors
-        const enhancedError = errorWithDetails as Error & {
-          graphqlError: boolean;
-          code?: string;
-          extensions?: any;
-          rawGraphQLResponse?: any;
-          rawGraphQLErrors?: any[];
-        };
-        
-        // Add all the GraphQL error details we have
-        enhancedError.graphqlError = true;
-        enhancedError.rawGraphQLResponse = result;
-        enhancedError.rawGraphQLErrors = result.errors;
-        
-        if (errorCode) {
-          enhancedError.code = errorCode;
-        }
-        if (primaryError?.extensions) {
-          enhancedError.extensions = primaryError.extensions;
-        }
-        
-        throw enhancedError;
-      }
 
       if (!result.data?.createFeeStructure) {
         throw new Error('GraphQL response missing createFeeStructure field');
@@ -556,10 +463,10 @@ export const useGraphQLFeeStructures = () => {
       console.log('Fee structure created successfully:', newStructure);
       return newStructure;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      const errorMessage = getDisplayErrorMessage(err);
       setCreateError(errorMessage);
       console.error('Error creating fee structure:', err);
-      return null;
+      throw new Error(errorMessage);
     } finally {
       setIsCreating(false);
     }
@@ -568,7 +475,7 @@ export const useGraphQLFeeStructures = () => {
   /**
    * Creates a fee structure with items using the updated GraphQL mutation
    */
-  const createFeeStructureWithItems = async (input: CreateFeeStructureWithItemsInput): Promise<GraphQLFeeStructure | null> => {
+  const createFeeStructureWithItems = async (input: CreateFeeStructureWithItemsInput): Promise<GraphQLFeeStructure> => {
     setIsCreatingWithItems(true);
     setCreateWithItemsError(null);
     console.log('Creating fee structure with items input:', input);
@@ -579,13 +486,16 @@ export const useGraphQLFeeStructures = () => {
           createFeeStructureWithItems(input: $input) {
             id
             name
+            planLabel
             academicYear {
               id
               name
+              endDate
             }
             terms {
               id
               name
+              endDate
             }
             gradeLevels {
               id
@@ -624,47 +534,10 @@ export const useGraphQLFeeStructures = () => {
 
       console.log(`GraphQL create with items response status: ${response.status}`);
 
-      if (!response.ok) {
-        throw new Error(`GraphQL request failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await parseGraphQLResponse<{
+        data?: { createFeeStructureWithItems?: GraphQLFeeStructure };
+      }>(response);
       console.log('Create with items response:', result);
-      
-      if (result.errors) {
-        // Extract the primary error message
-        const primaryError = result.errors[0];
-        const errorMessage = primaryError?.message || 'Unknown GraphQL error';
-        const errorCode = primaryError?.extensions?.code;
-        
-        console.error('GraphQL errors:', JSON.stringify(result.errors, null, 2));
-        
-        // Capture the original error message and raw error data
-        const errorWithDetails = new Error(errorMessage);
-        
-        // Use a type assertion to add custom properties without TypeScript errors
-        const enhancedError = errorWithDetails as Error & {
-          graphqlError: boolean;
-          code?: string;
-          extensions?: any;
-          rawGraphQLResponse?: any;
-          rawGraphQLErrors?: any[];
-        };
-        
-        // Add all the GraphQL error details we have
-        enhancedError.graphqlError = true;
-        enhancedError.rawGraphQLResponse = result;
-        enhancedError.rawGraphQLErrors = result.errors;
-        
-        if (errorCode) {
-          enhancedError.code = errorCode;
-        }
-        if (primaryError?.extensions) {
-          enhancedError.extensions = primaryError.extensions;
-        }
-        
-        throw enhancedError;
-      }
 
       if (!result.data?.createFeeStructureWithItems) {
         throw new Error('GraphQL response missing createFeeStructureWithItems field');
@@ -680,12 +553,44 @@ export const useGraphQLFeeStructures = () => {
       console.log('Fee structure with items created successfully:', newStructure);
       return newStructure;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      const errorMessage = getDisplayErrorMessage(err);
       setCreateWithItemsError(errorMessage);
       console.error('Error creating fee structure with items:', err);
-      return null;
+      throw new Error(errorMessage);
     } finally {
       setIsCreatingWithItems(false);
+    }
+  };
+
+  const updateFeeStructureItem = async (
+    id: string,
+    input: UpdateFeeStructureItemInput,
+  ): Promise<void> => {
+    const mutation = `
+      mutation UpdateFeeStructureItem($id: ID!, $input: UpdateFeeStructureItemInput!) {
+        updateFeeStructureItem(id: $id, input: $input) {
+          id
+          amount
+          isMandatory
+        }
+      }
+    `;
+
+    const response = await fetch('/api/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: mutation,
+        variables: { id, input },
+      }),
+    });
+
+    const result = await parseGraphQLResponse<{
+      data?: { updateFeeStructureItem?: { id: string } };
+    }>(response);
+
+    if (!result.data?.updateFeeStructureItem) {
+      throw new Error('GraphQL response missing updateFeeStructureItem field');
     }
   };
 
@@ -706,6 +611,7 @@ export const useGraphQLFeeStructures = () => {
     createFeeStructure,
     createFeeStructureWithItems,
     updateFeeStructure,
+    updateFeeStructureItem,
     deleteFeeStructure,
   };
 };

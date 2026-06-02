@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
-import { SchoolSidebar } from '@/components/dashboard/SchoolSidebar'
+import { SchoolSidebar, SCHOOL_SIDEBAR_WIDTH, SCHOOL_SIDEBAR_MIN_WIDTH } from '@/components/dashboard/SchoolSidebar'
+import { getLayoutSchoolName } from '@/lib/schoolLogo'
 import { Toaster } from "sonner"
 import { debugAuth } from '@/lib/utils'
 import { TermsDropdown } from './components/TermsDropdown'
@@ -54,7 +55,7 @@ function SchoolLayoutContent({
   const subdomain = params.subdomain as string
   const [schoolName, setSchoolName] = useState('School Dashboard')
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(true);
   const [userRole, setUserRole] = useState('')
   const [userName, setUserName] = useState('')
   const [isMounted, setIsMounted] = useState(false)
@@ -109,37 +110,16 @@ function SchoolLayoutContent({
     setIsMounted(true)
   }, [])
 
-  // Handle responsive sidebar state based on screen size for 11-inch devices
+  // Default to icon rail (minimized). User can expand for full labels.
   useEffect(() => {
     const handleResize = () => {
-      const width = window.innerWidth
-      
       if (isInitialLoad) {
-        // On initial load, default to minimized on 11-inch and medium devices (768px - 1200px)
-        // 11-inch devices are typically around 820-834px width
-        if (width >= 768 && width < 1200) {
-          setIsSidebarMinimized(true)
-        }
         setIsInitialLoad(false)
-      } else {
-        // On subsequent resizes, auto-adjust based on screen size
-        // Keep sidebar minimized for 11-inch devices and smaller tablets/laptops
-        if (width >= 768 && width < 1200) {
-          setIsSidebarMinimized(true)
-        } else if (width >= 1200) {
-          setIsSidebarMinimized(false)
-        }
-        // Keep current state on small devices (< 768px) as sidebar behavior is different
       }
     }
 
-    // Add event listener
     window.addEventListener('resize', handleResize)
-    
-    // Call once on mount to handle initial state
     handleResize()
-
-    // Cleanup
     return () => window.removeEventListener('resize', handleResize)
   }, [isInitialLoad])
 
@@ -149,9 +129,7 @@ function SchoolLayoutContent({
     
     // Simulate fetching school name from API
     if (subdomain) {
-      // This would normally be an API call
-      const formattedName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1) + ' School'
-      setSchoolName(formattedName)
+      setSchoolName(getLayoutSchoolName(subdomain))
     }
 
     // Read user information from cookies
@@ -196,8 +174,11 @@ function SchoolLayoutContent({
   // Show loading state until mounted or while config is loading
   if (!isMounted || shouldShowLoading || isConfigLoading) {
     return (
-      <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
-        <div className="w-64 bg-white dark:bg-slate-900 border-r-2 border-primary/20 animate-pulse">
+      <div className="flex h-screen bg-[#f5f6f8] dark:bg-slate-950">
+        <div
+          className="animate-pulse bg-[#f5f6f8] dark:bg-slate-900"
+          style={{ width: SCHOOL_SIDEBAR_MIN_WIDTH }}
+        >
           <div className="p-4 space-y-4">
             <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded"></div>
             <div className="space-y-2">
@@ -207,23 +188,25 @@ function SchoolLayoutContent({
             </div>
           </div>
         </div>
-        <div className="flex-1 flex flex-col">
-          <div className="h-16 bg-white dark:bg-slate-900 border-b-2 border-primary/20 animate-pulse">
+        <div className="flex flex-1 flex-col bg-white dark:bg-slate-950">
+          <div className="h-14 animate-pulse border-b border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-950">
             <div className="h-full px-6 flex items-center justify-between">
               <div className="h-8 w-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
               <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
             </div>
           </div>
-          <div className="flex-1 bg-slate-50 dark:bg-slate-900"></div>
+          <div className="flex-1 bg-white dark:bg-slate-950" />
         </div>
       </div>
     )
   }
 
   // If configured, show layout with sidebar
+  const showSidebarPanel = !isSidebarMinimized || isMobileSidebarOpen
+
   return (
     <TermProvider>
-      <div className="flex h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="flex h-screen bg-[#f5f6f8] dark:bg-slate-950">
         <Toaster position="top-right" closeButton richColors />
       {/* Mobile sidebar overlay */}
       {isMobileSidebarOpen && (
@@ -235,38 +218,39 @@ function SchoolLayoutContent({
       
       {/* Sidebar */}
       <div className={`
-        fixed top-0 bottom-0 left-0 z-50 bg-white dark:bg-slate-900 border-r-2 border-primary/20 transform transition-all duration-300 ease-in-out
+        fixed top-0 bottom-0 left-0 z-50 transform transition-all duration-300 ease-in-out
         md:relative md:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isSidebarMinimized ? 'w-16' : 'w-64'}
-      `}>
+      `}
+      style={{
+        width: showSidebarPanel ? SCHOOL_SIDEBAR_WIDTH : SCHOOL_SIDEBAR_MIN_WIDTH,
+      }}
+      >
         
         <SchoolSidebar 
           subdomain={subdomain} 
           schoolName={schoolName} 
-          isMinimized={isSidebarMinimized}
+          isMinimized={!showSidebarPanel}
           onToggleMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
         />
       </div>
       
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main content — white canvas beside the rail */}
+      <div className="flex min-w-0 flex-1 flex-col bg-white dark:bg-slate-950">
         {/* Header */}
         <SchoolNavbar
           userName={userName}
           userRole={userRole}
-          isSidebarMinimized={isSidebarMinimized}
           isMobileSidebarOpen={isMobileSidebarOpen}
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-          onToggleSidebarMinimize={() => setIsSidebarMinimized(!isSidebarMinimized)}
         />
         
         {/* Main content area with scrolling */}
-        <main className="flex-1 overflow-auto pb-[calc(4.75rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <main className="flex-1 overflow-auto bg-white pb-[calc(4.75rem+env(safe-area-inset-bottom))] dark:bg-slate-950 lg:pb-0">
           {children}
         </main>
 
         {/* Mobile bottom navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/70 bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
           <SchoolMobileBottomNav />
         </div>
       </div>

@@ -70,6 +70,7 @@ export function useStudentDetailSummary(studentId: string): UseStudentDetailSumm
                 isActive
                 createdAt
                 updatedAt
+                userId
               }
             }
           `,

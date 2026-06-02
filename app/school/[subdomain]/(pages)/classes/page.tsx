@@ -69,6 +69,27 @@ export default function ClassesPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    const gradeId = searchParams.get("gradeId");
+    if (!gradeId || !config?.selectedLevels) return;
+
+    for (const level of config.selectedLevels) {
+      const grade = level.gradeLevels?.find((g) => g.id === gradeId);
+      if (!grade) continue;
+
+      setSelectedGradeId(gradeId);
+      setSelectedLevelId(level.id);
+
+      const streamId = searchParams.get("streamId");
+      if (streamId && grade.streams?.some((s) => s.id === streamId)) {
+        setSelectedStreamId(streamId);
+      } else {
+        setSelectedStreamId("");
+      }
+      break;
+    }
+  }, [searchParams, config?.selectedLevels]);
+
+  useEffect(() => {
     const handleResize = () => {
       setIsGradePanelOpen(window.innerWidth >= 1280);
     };

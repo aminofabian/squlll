@@ -4,37 +4,46 @@ export type TeachersListItem = {
   id: string;
   userId: string;
   name: string;
-  title?: string;
   gender: "male" | "female";
-  dateOfBirth: string;
-  joinDate: string;
-  employeeId: string;
+  dateOfBirth: string | null;
+  joinDate: string | null;
+  employeeId: string | null;
   status: "active" | "inactive" | "on leave" | "former" | "substitute" | "retired";
   designation: string;
   department: string;
   subjects: string[];
-  classesAssigned: string[];
   grades: string[];
+  qualifications: string | null;
+  hasCompletedProfile: boolean;
   contacts: {
     phone: string;
     email: string;
     address?: string;
   };
-  academic: {
-    qualification: string;
-    specialization: string;
-    experience: number;
-    certifications: string[];
-  };
-  performance: {
-    rating: number;
-    lastEvaluation: string;
-    studentPerformance: string;
-    trend: "improving" | "declining" | "stable";
-  };
-  responsibilities: string[];
-  extraCurricular: { clubs: string[]; sports: string[]; committees: string[] };
 };
+
+export function isTeacherProfileIncomplete(teacher: {
+  employeeId?: string | null;
+  dateOfBirth?: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  qualifications?: string | null;
+  hasCompletedProfile?: boolean;
+  contacts?: { phone?: string; email?: string; address?: string };
+}): boolean {
+  if (teacher.hasCompletedProfile === false) return true;
+
+  const email = teacher.email ?? teacher.contacts?.email;
+  const phone = teacher.phoneNumber ?? teacher.contacts?.phone;
+
+  return (
+    !teacher.employeeId?.trim() ||
+    !teacher.dateOfBirth ||
+    !email?.trim() ||
+    !phone?.trim() ||
+    !teacher.qualifications?.trim()
+  );
+}
 
 export function mapGraphqlTeacherToListItem(
   teacher: GraphqlTeacher,
@@ -46,6 +55,7 @@ export function mapGraphqlTeacherToListItem(
     "Unknown Teacher";
 
   const email = teacher.email || teacher.user?.email || "";
+  const phone = teacher.phoneNumber?.trim() || "";
   const subjects =
     teacher.tenantSubjects?.map((s) => s.name).filter(Boolean) ?? [];
   const grades =
@@ -53,39 +63,36 @@ export function mapGraphqlTeacherToListItem(
       ?.map((g) => g.gradeLevel?.name)
       .filter((n): n is string => !!n) ?? [];
 
+  const joinDate = teacher.createdAt
+    ? new Date(teacher.createdAt).toISOString().split("T")[0]
+    : null;
+
+  const dateOfBirth = teacher.dateOfBirth
+    ? new Date(teacher.dateOfBirth).toISOString().split("T")[0]
+    : null;
+
+  const contacts = {
+    phone,
+    email,
+    address: teacher.address?.trim() || undefined,
+  };
+
   return {
     id: teacher.id,
     userId: teacher.user?.id ?? "",
     name,
-    employeeId: `TCH/${new Date().getFullYear()}/${teacher.id.slice(-6).toUpperCase()}`,
+    employeeId: teacher.employeeId?.trim() || null,
     gender:
       teacher.gender?.toLowerCase() === "female" ? "female" : "male",
-    dateOfBirth: "1980-01-01",
-    joinDate: new Date().toISOString().split("T")[0],
+    dateOfBirth,
+    joinDate,
     status: teacher.isActive ? "active" : "inactive",
     designation: teacher.role || "teacher",
     department: teacher.department || "General",
-    subjects: subjects.length > 0 ? subjects : ["General"],
-    classesAssigned: [],
+    subjects: subjects.length > 0 ? subjects : [],
     grades,
-    contacts: {
-      phone: teacher.phoneNumber || "+254700000000",
-      email,
-      address: "Address not provided",
-    },
-    academic: {
-      qualification: "bachelors",
-      specialization: "General Education",
-      experience: 1,
-      certifications: [],
-    },
-    performance: {
-      rating: 4.0,
-      lastEvaluation: new Date().toISOString().split("T")[0],
-      studentPerformance: "Good",
-      trend: "stable",
-    },
-    responsibilities: [],
-    extraCurricular: { clubs: [], sports: [], committees: [] },
+    qualifications: teacher.qualifications?.trim() || null,
+    hasCompletedProfile: teacher.hasCompletedProfile ?? false,
+    contacts,
   };
 }

@@ -1,70 +1,162 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { 
-  User, 
-  Info, 
-  CalendarDays, 
-  School, 
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  School,
   BookOpen,
   ChevronDown,
   ChevronRight,
   Download,
   Printer,
   FileText,
-  Key,
-  Mail,
   Copy,
-  RefreshCw,
+  GraduationCap,
   Loader2,
   AlertCircle,
-  Check,
-  Lock,
-  Eye,
-  EyeOff,
-  GraduationCap,
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import { Toaster } from '@/components/ui/toaster';
-import SchoolReportCard from './ReportCard';
-import { useStudentDetailSummary } from '@/lib/hooks/useStudentDetailSummary';
-import { StudentLedger } from './StudentLedger';
-import { useStudentLedger } from '@/lib/hooks/use-student-ledger';
-import { useStudentCredentials } from '@/lib/hooks/useStudentCredentials';
-import { cn } from '@/lib/utils';
-import { AssignGradeStreamDialog } from './AssignGradeStreamDialog';
+  RefreshCw,
+  AlertTriangle,
+  Wallet,
+  Receipt,
+} from "lucide-react";
+import SchoolReportCard from "./ReportCard";
+import { useStudentDetailSummary } from "@/lib/hooks/useStudentDetailSummary";
+import { StudentLedger } from "./StudentLedger";
+import { useStudentLedger } from "@/lib/hooks/use-student-ledger";
+import { useStudentCredentials } from "@/lib/hooks/useStudentCredentials";
+import { cn } from "@/lib/utils";
+import { AssignGradeStreamDialog } from "./AssignGradeStreamDialog";
+import { StudentAccountPanel } from "./StudentAccountPanel";
+import { StudentCredentialsDialog } from "./StudentCredentialsDialog";
+import { studentsPanel } from "./students-ui";
+import { toast } from "sonner";
 
 interface StudentDetailsViewProps {
   studentId: string;
   onClose: () => void;
-  schoolConfig?: any;
-  /** When true, hides back navigation — parent provides context bar */
+  schoolConfig?: {
+    id?: string;
+    tenant?: { schoolName?: string; subdomain?: string };
+    selectedLevels?: Array<{ subjects?: unknown[] }>;
+  };
   embedded?: boolean;
   onEnrollmentUpdated?: () => void;
+}
+
+function DetailField({
+  label,
+  value,
+  icon: Icon,
+  copyValue,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+  copyValue?: string;
+}) {
+  return (
+    <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
+      <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+        {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
+        {label}
+      </p>
+      <div className="mt-1 flex items-start justify-between gap-2">
+        <div className="min-w-0 text-sm text-slate-800 dark:text-slate-100">
+          {value}
+        </div>
+        {copyValue ? (
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard.writeText(copyValue);
+              toast.success("Copied to clipboard");
+            }}
+            className="shrink-0 rounded p-1 text-slate-400 hover:text-slate-600"
+            aria-label={`Copy ${label}`}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function InfoGroup({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <Icon className="h-3.5 w-3.5" />
+        {title}
+      </h3>
+      <div className="space-y-2">{children}</div>
+    </section>
+  );
+}
+
+function EmptyPanel({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+        <Icon className="h-5 w-5 text-slate-400" />
+      </div>
+      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+        {title}
+      </p>
+      <p className="mt-1 max-w-xs text-xs text-slate-400">{description}</p>
+    </div>
+  );
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function StudentInitials({ name }: { name: string }) {
+  const parts = name.trim().split(/\s+/);
+  const initials =
+    parts.length >= 2
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+
+  return (
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-base font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+      {initials || "?"}
+    </div>
+  );
 }
 
 export function StudentDetailsView({
@@ -74,34 +166,31 @@ export function StudentDetailsView({
   embedded = false,
   onEnrollmentUpdated,
 }: StudentDetailsViewProps) {
-  const { toast } = useToast();
-  const [expandedDocuments, setExpandedDocuments] = useState<Record<string, boolean>>({});
+  const [expandedDocuments, setExpandedDocuments] = useState<
+    Record<string, boolean>
+  >({});
   const [showCredentialsDialog, setShowCredentialsDialog] = useState(false);
-  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
   const [showAssignClassDialog, setShowAssignClassDialog] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const { studentDetail, loading, error, refetch } = useStudentDetailSummary(studentId);
-  const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
-  
-  // Password change form state
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
-  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<string | null>(null);
-  
-  // Student credentials hook
-  const { credentials, loading: credentialsLoading, error: credentialsError, fetchCredentials } = useStudentCredentials(studentId);
-  
-  // Student ledger data
-  const { ledgerData, loading: ledgerLoading, error: ledgerError } = useStudentLedger({
+  const [selectedTemplate, setSelectedTemplate] = useState<
+    "modern" | "classic" | "compact" | "uganda-classic"
+  >("modern");
+
+  const { studentDetail, loading, error, refetch } =
+    useStudentDetailSummary(studentId);
+  const {
+    credentials,
+    loading: credentialsLoading,
+    error: credentialsError,
+    fetchCredentials,
+  } = useStudentCredentials(studentId);
+  const {
+    ledgerData,
+    loading: ledgerLoading,
+    error: ledgerError,
+  } = useStudentLedger({
     studentId,
-    dateRange: {
-      startDate: "2024-01-01",
-      endDate: "2024-12-31"
-    }
+    dateRange: { startDate: "2024-01-01", endDate: "2024-12-31" },
   });
 
   const handleShowCredentials = async () => {
@@ -115,148 +204,13 @@ export function StudentDetailsView({
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
+      toast.success("Copied to clipboard");
       setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    } catch {
+      toast.error("Failed to copy");
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Reset messages
-    setPasswordChangeError(null);
-    setPasswordChangeSuccess(null);
-    
-    // Validation
-    if (!oldPassword || !newPassword) {
-      setPasswordChangeError('Both old and new passwords are required');
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      setPasswordChangeError('New password must be at least 8 characters long');
-      return;
-    }
-    
-    setIsChangingPassword(true);
-    
-    try {
-      const mutation = `
-        mutation ChangeMyPassword($input: ChangePasswordsInput!) {
-          changeMyPassword(changePasswordsInput: $input) {
-            success
-            message
-          }
-        }
-      `;
-      
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          query: mutation,
-          variables: {
-            input: {
-              oldPassword: oldPassword.trim(),
-              newPassword: newPassword.trim(),
-            },
-          },
-        }),
-      });
-      
-      // Read response text first (can only be read once)
-      const responseText = await response.text();
-      
-      // Parse response as JSON
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        // If response is not JSON, it's a true HTTP error
-        toast({
-          variant: 'destructive',
-          title: 'Server Error',
-          description: responseText || `HTTP error! status: ${response.status}`,
-        });
-        setIsChangingPassword(false);
-        return;
-      }
-      
-      // Check for HTTP errors (non-200 status)
-      if (!response.ok) {
-        // Try to extract error message from GraphQL response or JSON
-        let errorMessage = `Server error (${response.status})`;
-        
-        if (result.errors && result.errors.length > 0) {
-          // GraphQL errors in error response - show in toast
-          errorMessage = result.errors[0].message || errorMessage;
-        } else if (result.message) {
-          errorMessage = result.message;
-        } else if (result.error) {
-          errorMessage = result.error;
-        }
-        
-        toast({
-          variant: 'destructive',
-          title: 'Server Error',
-          description: errorMessage,
-        });
-        setIsChangingPassword(false);
-        return;
-      }
-      
-      // Check for GraphQL errors in successful HTTP response
-      if (result.errors && result.errors.length > 0) {
-        // Extract the specific error message from the first error
-        const errorMessage = result.errors[0].message || 'An error occurred while changing password';
-        // GraphQL errors are shown in the dialog, not toast
-        setPasswordChangeError(errorMessage);
-        setIsChangingPassword(false);
-        return;
-      }
-      
-      // Check if the mutation was successful
-      if (result.data?.changeMyPassword?.success) {
-        setPasswordChangeSuccess(result.data.changeMyPassword.message || 'Password changed successfully');
-        // Clear form
-        setOldPassword('');
-        setNewPassword('');
-        setShowOldPassword(false);
-        setShowNewPassword(false);
-        // Close dialog after 2 seconds
-        setTimeout(() => {
-          setShowChangePasswordDialog(false);
-          setPasswordChangeSuccess(null);
-        }, 2000);
-      } else {
-        // If data exists but success is false, use the message from the response
-        const errorMessage = result.data?.changeMyPassword?.message || 'Failed to change password';
-        setPasswordChangeError(errorMessage);
-      }
-    } catch (error: any) {
-      console.error('Password change error:', error);
-      
-      // Check if it's an HTTP error that wasn't caught above
-      if (error.message && error.message.includes('HTTP error')) {
-        toast({
-          variant: 'destructive',
-          title: 'Server Error',
-          description: error.message,
-        });
-      } else {
-        // Other errors (network, etc.) - show in dialog
-        setPasswordChangeError(error.message || 'Failed to change password. Please try again.');
-      }
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
-
-  // Show loading state
   if (loading) {
     return (
       <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
@@ -268,14 +222,20 @@ export function StudentDetailsView({
     );
   }
 
-  // Show error state
   if (error || !studentDetail) {
     return (
       <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
         <div className="text-center">
           <AlertCircle className="mx-auto h-5 w-5 text-red-500" />
-          <p className="mt-2 text-sm text-slate-500">{error || "Student not found"}</p>
-          <Button onClick={refetch} variant="outline" size="sm" className="mt-3">
+          <p className="mt-2 text-sm text-slate-500">
+            {error || "Student not found"}
+          </p>
+          <Button
+            onClick={refetch}
+            variant="outline"
+            size="sm"
+            className="mt-3 h-8 text-xs"
+          >
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
             Retry
           </Button>
@@ -285,39 +245,192 @@ export function StudentDetailsView({
   }
 
   const student = studentDetail;
+  const missingStream = !student.streamName;
 
   return (
-    <div className="space-y-4">
-      {!embedded && (
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            ← Back
-          </Button>
-        </div>
+    <div className="space-y-5">
+      {embedded ? (
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-slate-200"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to list
+        </button>
+      ) : (
+        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onClose}>
+          ← Back
+        </Button>
       )}
 
-      {/* Student profile header */}
-      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <User className="h-7 w-7 text-slate-400" />
+      {missingStream ? (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-medium">No class assigned</p>
+            <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
+              Assign a grade and stream so this student appears in class lists
+              and timetables.
+            </p>
           </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              {student.studentName}
-            </h2>
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-              <span>{student.admissionNumber}</span>
-              <span>{student.gradeLevelName}</span>
-              {student.streamName ? (
-                <span>{student.streamName}</span>
-              ) : (
-                <span className="text-amber-600 dark:text-amber-400">
-                  No stream
-                </span>
-              )}
+        </div>
+      ) : null}
+
+      <div className={`${studentsPanel} overflow-hidden`}>
+        <div className="bg-gradient-to-br from-slate-50/80 to-white px-4 py-5 dark:from-slate-900/40 dark:to-slate-900/20 sm:px-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <StudentInitials name={student.studentName} />
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {student.studentName}
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-500">
+                {student.admissionNumber} · {student.gradeLevelName}
+                {student.streamName ? ` · ${student.streamName}` : ""}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px] font-medium",
+                    student.isActive
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-amber-200 bg-amber-50 text-amber-700",
+                  )}
+                >
+                  {student.isActive ? "Active" : "Inactive"}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-medium capitalize text-slate-600"
+                >
+                  {student.gender?.toLowerCase() || "—"}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-medium capitalize text-slate-600"
+                >
+                  {student.schoolType}
+                </Badge>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 text-[10px]"
+                  onClick={() => setShowAssignClassDialog(true)}
+                >
+                  <GraduationCap className="h-3 w-3" />
+                  {student.gradeLevelId ? "Change class" : "Assign class"}
+                </Button>
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="details">
+        <TabsList className="mb-4 inline-flex h-10 w-full flex-wrap rounded-lg border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60 sm:w-auto">
+          {[
+            { value: "details", label: "Details" },
+            { value: "enrollment", label: "Enrollment" },
+            { value: "fees", label: "Fees" },
+            { value: "ledger", label: "Ledger" },
+            { value: "account", label: "Account" },
+            { value: "documents", label: "Documents" },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="details" className="mt-0">
+          <div className={`${studentsPanel} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Personal &amp; contact
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2 sm:p-5">
+              <InfoGroup title="Personal" icon={User}>
+                <DetailField label="Full name" value={student.studentName} />
+                <DetailField
+                  label="Gender"
+                  value={
+                    <span className="capitalize">
+                      {student.gender?.toLowerCase() || "—"}
+                    </span>
+                  }
+                />
+                <DetailField
+                  label="Admission number"
+                  value={student.admissionNumber}
+                  copyValue={student.admissionNumber}
+                />
+                <DetailField
+                  label="Registered"
+                  icon={Calendar}
+                  value={new Date(student.createdAt).toLocaleDateString()}
+                />
+                <DetailField
+                  label="Status"
+                  value={student.isActive ? "Active" : "Inactive"}
+                />
+              </InfoGroup>
+
+              <InfoGroup title="Contact" icon={Mail}>
+                <DetailField
+                  label="Email"
+                  icon={Mail}
+                  copyValue={student.email || undefined}
+                  value={
+                    student.email ? (
+                      <a
+                        href={`mailto:${student.email}`}
+                        className="break-all text-emerald-700 hover:underline dark:text-emerald-400"
+                      >
+                        {student.email}
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">Not provided</span>
+                    )
+                  }
+                />
+                <DetailField
+                  label="Phone"
+                  icon={Phone}
+                  copyValue={student.phone || undefined}
+                  value={
+                    student.phone ? (
+                      <a href={`tel:${student.phone}`} className="hover:underline">
+                        {student.phone}
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">Not provided</span>
+                    )
+                  }
+                />
+              </InfoGroup>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="enrollment" className="mt-0">
+          <div className={`${studentsPanel} overflow-hidden`}>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Class enrollment
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Grade, curriculum, and stream assignment
+                </p>
+              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -328,771 +441,331 @@ export function StudentDetailsView({
                 <GraduationCap className="h-3.5 w-3.5" />
                 {student.gradeLevelId ? "Change class" : "Assign class"}
               </Button>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs capitalize",
-                  student.isActive
-                    ? "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
-                    : "text-slate-400",
-                )}
-              >
-                {student.isActive ? "Active" : "Inactive"}
-              </Badge>
-              <Badge variant="outline" className="text-xs capitalize text-slate-500">
-                {student.gender}
-              </Badge>
+            </div>
+            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3 sm:p-5">
+              <DetailField
+                label="Grade"
+                icon={School}
+                value={student.gradeLevelName}
+              />
+              <DetailField
+                label="Curriculum"
+                icon={BookOpen}
+                value={student.curriculumName}
+              />
+              <DetailField
+                label="Stream"
+                icon={GraduationCap}
+                value={
+                  student.streamName ? (
+                    student.streamName
+                  ) : (
+                    <span className="text-amber-700 dark:text-amber-400">
+                      Not assigned
+                    </span>
+                  )
+                }
+              />
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Student details tabs */}
-      <Tabs defaultValue="details">
-        <TabsList className="mb-4 grid h-auto w-full grid-cols-3 gap-1 rounded-lg border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60 lg:grid-cols-6">
-          <TabsTrigger value="details" className="text-xs">Details</TabsTrigger>
-          <TabsTrigger value="attendance" className="text-xs">Attendance</TabsTrigger>
-          <TabsTrigger value="academics" className="text-xs">Academics</TabsTrigger>
-          <TabsTrigger value="fees" className="text-xs">Fees</TabsTrigger>
-          <TabsTrigger value="ledger" className="text-xs">Ledger</TabsTrigger>
-          <TabsTrigger value="documents" className="text-xs">Documents</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="details">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Student Information</CardTitle>
-                  <CardDescription className="font-mono text-[var(--color-textSecondary)] mt-1">
-                    Detailed personal information about {student.studentName}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={handleShowCredentials}
-                    className="font-mono border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 hover:border-[var(--color-primary)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md whitespace-nowrap"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
-                      <Key className="h-4 w-4 text-[var(--color-primary)]" />
-                    </div>
-                    <span className="font-semibold">Login Credentials</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="default"
-                    onClick={() => {
-                      setShowChangePasswordDialog(true);
-                      setPasswordChangeError(null);
-                      setPasswordChangeSuccess(null);
-                      setOldPassword('');
-                      setNewPassword('');
-                    }}
-                    className="font-mono border-2 border-[var(--color-primary)]/40 bg-[var(--color-primary)]/5 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/15 hover:border-[var(--color-primary)]/60 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md whitespace-nowrap"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center">
-                      <Lock className="h-4 w-4 text-[var(--color-primary)]" />
-                    </div>
-                    <span className="font-semibold">Change Password</span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Personal Details</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Full Name</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{student.studentName}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Gender</div>
-                      <div className="font-mono text-sm text-[var(--color-text)] capitalize">{student.gender.toLowerCase()}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Admission Number</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{student.admissionNumber}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">School Type</div>
-                      <div className="font-mono text-sm text-[var(--color-text)] capitalize">{student.schoolType}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Created At</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{new Date(student.createdAt).toLocaleDateString()}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Status</div>
-                      <div className="font-mono text-sm text-[var(--color-text)] capitalize">{student.isActive ? 'Active' : 'Inactive'}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Contact Information</h3>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)] flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        Email
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="font-mono text-sm text-[var(--color-text)]">{student.email}</div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 w-6 p-0 hover:bg-[var(--color-primary)]/10"
-                          onClick={() => navigator.clipboard.writeText(student.email)}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Phone</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{student.phone}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6 md:col-span-2">
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md">
-                      <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Academic Information</h3>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-1.5 text-xs shrink-0"
-                      onClick={() => setShowAssignClassDialog(true)}
-                    >
-                      <GraduationCap className="h-3.5 w-3.5" />
-                      {student.gradeLevelId ? "Change class" : "Assign class"}
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Grade Level</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{student.gradeLevelName}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Curriculum</div>
-                      <div className="font-mono text-sm text-[var(--color-text)]">{student.curriculumName}</div>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[var(--color-border)]/20">
-                      <div className="font-mono font-medium text-sm text-[var(--color-textSecondary)]">Stream</div>
-                      <div className={cn(
-                        "font-mono text-sm",
-                        student.streamName
-                          ? "text-[var(--color-text)]"
-                          : "text-amber-600 dark:text-amber-400",
-                      )}>
-                        {student.streamName || "Not assigned"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
-        
-        <TabsContent value="academics">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Academic Performance</CardTitle>
-              <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Academic performance metrics will be available soon
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                  <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                    <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)] flex items-center">
-                      <BookOpen className="h-3 w-3 mr-2" />
-                      Academic Summary
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-4">
-                      <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Grade Level</div>
-                      <div className="text-xl font-mono font-bold text-[var(--color-primary)]">{student.gradeLevelName}</div>
-                    </div>
-                    <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-4">
-                      <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Curriculum</div>
-                      <div className="text-xl font-mono font-bold text-[var(--color-text)]">{student.curriculumName}</div>
-                    </div>
-                    {student.streamName && (
-                      <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl p-4">
-                        <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Stream</div>
-                        <div className="text-xl font-mono font-bold text-[var(--color-text)]">{student.streamName}</div>
-                      </div>
+
+        <TabsContent value="fees" className="mt-0">
+          <div className={`${studentsPanel} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <Wallet className="h-4 w-4 text-slate-400" />
+                Fee summary
+              </h3>
+            </div>
+            <div className="space-y-4 p-4 sm:p-5">
+              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
+                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    Total owed
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+                    {formatCurrency(student.feeSummary.totalOwed)}
+                  </dd>
+                </div>
+                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
+                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    Paid
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold tabular-nums text-emerald-700">
+                    {formatCurrency(student.feeSummary.totalPaid)}
+                  </dd>
+                </div>
+                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
+                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    Balance
+                  </dt>
+                  <dd
+                    className={cn(
+                      "mt-1 text-sm font-semibold tabular-nums",
+                      student.feeSummary.balance > 0
+                        ? "text-amber-700"
+                        : "text-emerald-700",
                     )}
-                  </div>
-                  <div className="mt-6 text-center p-8 text-[var(--color-textSecondary)] font-mono text-sm">
-                    Academic performance data will be displayed here once exams and assessments are recorded.
-                  </div>
+                  >
+                    {formatCurrency(student.feeSummary.balance)}
+                  </dd>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="attendance">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Attendance Records</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="text-center p-8 text-[var(--color-textSecondary)] font-mono">
-                Attendance records will appear here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="fees">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Fee Information</CardTitle>
-              <CardDescription className="font-mono text-[var(--color-textSecondary)]">
-                Complete fee structure and payment status
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              {/* Fee Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-4">
-                  <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Total Owed</div>
-                  <div className="text-2xl font-mono font-bold text-[var(--color-text)]">
-                    KSh {student.feeSummary.totalOwed.toLocaleString()}
-                  </div>
-                </div>
-                <div className="border-2 border-[var(--color-success)]/20 bg-[var(--color-success)]/10 rounded-xl p-4">
-                  <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Total Paid</div>
-                  <div className="text-2xl font-mono font-bold text-[var(--color-success)]">
-                    KSh {student.feeSummary.totalPaid.toLocaleString()}
-                  </div>
-                </div>
-                <div className="border-2 border-[var(--color-error)]/20 bg-[var(--color-error)]/10 rounded-xl p-4">
-                  <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Balance</div>
-                  <div className="text-2xl font-mono font-bold text-[var(--color-error)]">
-                    KSh {student.feeSummary.balance.toLocaleString()}
-                  </div>
-                </div>
-                <div className="border-2 border-[var(--color-info)]/20 bg-[var(--color-info)]/10 rounded-xl p-4">
-                  <div className="text-xs font-mono text-[var(--color-textSecondary)] mb-2">Fee Items</div>
-                  <div className="text-2xl font-mono font-bold text-[var(--color-info)]">
+                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
+                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    Fee items
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
                     {student.feeSummary.numberOfFeeItems}
-                  </div>
+                  </dd>
                 </div>
-              </div>
+              </dl>
 
-              {/* Fee Items Table */}
-              <div className="border-2 border-[var(--color-border)] bg-[var(--color-primary)]/5 rounded-xl p-6">
-                <div className="inline-block w-fit px-3 py-1 bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 rounded-md mb-4">
-                  <h3 className="text-xs font-mono uppercase tracking-wide text-[var(--color-primary)]">Fee Structure Details</h3>
-                </div>
-                
-                {student.feeSummary.feeItems.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b-2 border-[var(--color-border)]">
-                          <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-[var(--color-textSecondary)]">Fee Item</th>
-                          <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-[var(--color-textSecondary)]">Amount</th>
-                          <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-[var(--color-textSecondary)]">Type</th>
-                          <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-[var(--color-textSecondary)]">Structure</th>
-                          <th className="text-left py-3 px-4 font-mono text-xs uppercase tracking-wide text-[var(--color-textSecondary)]">Academic Year</th>
+              {student.feeSummary.feeItems.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-left text-slate-400 dark:border-slate-800">
+                        <th className="pb-2 pr-3 font-medium">Item</th>
+                        <th className="pb-2 pr-3 font-medium">Amount</th>
+                        <th className="pb-2 pr-3 font-medium">Type</th>
+                        <th className="pb-2 pr-3 font-medium">Structure</th>
+                        <th className="pb-2 font-medium">Year</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {student.feeSummary.feeItems.map((item) => (
+                        <tr key={item.id}>
+                          <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">
+                            {item.feeBucketName}
+                          </td>
+                          <td className="py-2 pr-3 tabular-nums">
+                            {formatCurrency(item.amount)}
+                          </td>
+                          <td className="py-2 pr-3">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[10px] font-normal",
+                                item.isMandatory
+                                  ? "border-slate-200 text-slate-600"
+                                  : "border-sky-200 text-sky-700",
+                              )}
+                            >
+                              {item.isMandatory ? "Mandatory" : "Optional"}
+                            </Badge>
+                          </td>
+                          <td className="py-2 pr-3 text-slate-500">
+                            {item.feeStructureName}
+                          </td>
+                          <td className="py-2 text-slate-500">
+                            {item.academicYearName}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {student.feeSummary.feeItems.map((item) => (
-                          <tr key={item.id} className="border-b border-[var(--color-border)]/20 hover:bg-[var(--color-primary)]/5 transition-colors">
-                            <td className="py-3 px-4 font-mono text-sm text-[var(--color-text)]">
-                              {item.feeBucketName}
-                            </td>
-                            <td className="py-3 px-4 font-mono text-sm font-bold text-[var(--color-text)]">
-                              KSh {item.amount.toLocaleString()}
-                            </td>
-                            <td className="py-3 px-4">
-                              <Badge variant={item.isMandatory ? "default" : "outline"} className="font-mono text-xs">
-                                {item.isMandatory ? 'Mandatory' : 'Optional'}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 font-mono text-sm text-[var(--color-textSecondary)]">
-                              {item.feeStructureName}
-                            </td>
-                            <td className="py-3 px-4 font-mono text-sm text-[var(--color-textSecondary)]">
-                              {item.academicYearName}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center p-8 text-[var(--color-textSecondary)] font-mono">
-                    No fee items found
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <EmptyPanel
+                  icon={Wallet}
+                  title="No fee items"
+                  description="Fee assignments will appear here once configured for this student's grade."
+                />
+              )}
+            </div>
+          </div>
         </TabsContent>
-        
-        <TabsContent value="ledger">
-          <StudentLedger 
-            ledgerData={ledgerData}
-            loading={ledgerLoading}
-            error={ledgerError}
+
+        <TabsContent value="ledger" className="mt-0">
+          <div className={`${studentsPanel} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <Receipt className="h-4 w-4 text-slate-400" />
+                Fee ledger
+              </h3>
+            </div>
+            <div className="p-4 sm:p-5">
+              <StudentLedger
+                ledgerData={ledgerData}
+                loading={ledgerLoading}
+                error={ledgerError}
+              />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="account" className="mt-0">
+          <StudentAccountPanel
+            studentName={student.studentName}
+            email={student.email}
+            userId={student.userId}
+            isActive={student.isActive}
+            onViewCredentials={() => void handleShowCredentials()}
           />
         </TabsContent>
-        
-        <TabsContent value="documents">
-          <Card className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] rounded-xl shadow-sm">
-            <CardHeader className="border-b-2 border-[var(--color-border)] bg-[var(--color-primary)]/5">
-              <CardTitle className="font-mono font-bold tracking-wide text-[var(--color-text)]">Student Documents</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="border border-[var(--color-primary)]/20 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setExpandedDocuments(prev => ({
-                        ...prev,
-                        'report-card': !prev['report-card']
-                      }));
-                    }}
-                    className="w-full p-4 bg-[var(--color-primary)]/5 hover:bg-[var(--color-primary)]/10 transition-colors flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[var(--color-primary)] rounded-lg flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-semibold text-[var(--color-primary)]">Academic Report Card</h3>
-                        <p className="text-sm text-[var(--color-textSecondary)]">Term 1, 2024</p>
-                      </div>
+
+        <TabsContent value="documents" className="mt-0">
+          <div className={`${studentsPanel} overflow-hidden`}>
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Documents
+              </h3>
+            </div>
+            <div className="space-y-3 p-4 sm:p-5">
+              <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedDocuments((prev) => ({
+                      ...prev,
+                      "report-card": !prev["report-card"],
+                    }))
+                  }
+                  className="flex w-full items-center justify-between gap-3 bg-slate-50/50 px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800/30 dark:hover:bg-slate-800/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                      <BookOpen className="h-4 w-4 text-slate-500" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      {expandedDocuments['report-card'] ? (
-                        <ChevronDown className="w-5 h-5 text-[var(--color-primary)]" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-[var(--color-primary)]" />
-                      )}
+                    <div>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        Academic report card
+                      </p>
+                      <p className="text-xs text-slate-400">Term 1, 2024</p>
                     </div>
-                  </button>
-                  
-                  {expandedDocuments['report-card'] && (
-                    <div className="p-4 border-t border-[var(--color-primary)]/20 bg-[var(--color-surface)]">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-[var(--color-text)]">Template:</span>
-                            <select
-                              value={selectedTemplate}
-                              onChange={(e) => setSelectedTemplate(e.target.value as 'modern' | 'classic' | 'compact' | 'uganda-classic')}
-                              className="border border-[var(--color-primary)]/30 rounded px-2 py-1 text-sm bg-[var(--color-surface)]"
-                            >
-                              <option value="modern">Modern</option>
-                              <option value="classic">Classic</option>
-                              <option value="compact">Compact</option>
-                              <option value="uganda-classic">Uganda Classic</option>
-                            </select>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download PDF
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
-                            >
-                              <Printer className="w-4 h-4 mr-2" />
-                              Print
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="border border-[var(--color-primary)]/20 rounded-lg overflow-hidden">
-                        <SchoolReportCard
-                          student={{
-                            id: student.id,
-                            name: student.studentName,
-                            admissionNumber: student.admissionNumber,
-                            gender: student.gender,
-                            grade: student.gradeLevelName,
-                            stream: student.streamName || undefined,
-                            user: { email: student.email }
-                          }}
-                          school={{
-                            id: schoolConfig?.id || 'school-id',
-                            schoolName: schoolConfig?.tenant?.schoolName || 'School Name',
-                            subdomain: schoolConfig?.tenant?.subdomain || 'school'
-                          }}
-                          subjects={schoolConfig?.selectedLevels?.flatMap((level: any) => level.subjects) || []}
-                          term="1"
-                          year="2024"
-                          template={selectedTemplate}
-                        />
-                      </div>
-                    </div>
+                  </div>
+                  {expandedDocuments["report-card"] ? (
+                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
                   )}
-                </div>
-                
-                <div className="border border-[var(--color-primary)]/20 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setExpandedDocuments(prev => ({
-                        ...prev,
-                        'other-docs': !prev['other-docs']
-                      }));
-                    }}
-                    className="w-full p-4 bg-[var(--color-primary)]/5 hover:bg-[var(--color-primary)]/10 transition-colors flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[var(--color-primary)] rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-semibold text-[var(--color-primary)]">Other Documents</h3>
-                        <p className="text-sm text-[var(--color-textSecondary)]">Additional student documents</p>
-                      </div>
+                </button>
+
+                {expandedDocuments["report-card"] ? (
+                  <div className="border-t border-slate-100 p-4 dark:border-slate-800">
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                      <select
+                        value={selectedTemplate}
+                        onChange={(e) =>
+                          setSelectedTemplate(
+                            e.target.value as typeof selectedTemplate,
+                          )
+                        }
+                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                      >
+                        <option value="modern">Modern</option>
+                        <option value="classic">Classic</option>
+                        <option value="compact">Compact</option>
+                        <option value="uganda-classic">Uganda classic</option>
+                      </select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download PDF
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1 text-xs"
+                      >
+                        <Printer className="h-3.5 w-3.5" />
+                        Print
+                      </Button>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {expandedDocuments['other-docs'] ? (
-                        <ChevronDown className="w-5 h-5 text-[var(--color-primary)]" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-[var(--color-primary)]" />
-                      )}
+                    <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+                      <SchoolReportCard
+                        student={{
+                          id: student.id,
+                          name: student.studentName,
+                          admissionNumber: student.admissionNumber,
+                          gender: student.gender,
+                          grade: student.gradeLevelName,
+                          stream: student.streamName || undefined,
+                          user: { email: student.email },
+                        }}
+                        school={{
+                          id: schoolConfig?.id || "school-id",
+                          schoolName:
+                            schoolConfig?.tenant?.schoolName || "School",
+                          subdomain:
+                            schoolConfig?.tenant?.subdomain || "school",
+                        }}
+                        subjects={
+                          schoolConfig?.selectedLevels?.flatMap(
+                            (level) => (level as { subjects?: unknown[] }).subjects ?? [],
+                          ) || []
+                        }
+                        term="1"
+                        year="2024"
+                        template={selectedTemplate}
+                      />
                     </div>
-                  </button>
-                  
-                  {expandedDocuments['other-docs'] && (
-                    <div className="p-4 border-t border-[var(--color-primary)]/20 bg-[var(--color-surface)]">
-                      <div className="text-center p-8 text-[var(--color-textSecondary)]">
-                        Additional student documents will appear here
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : null}
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedDocuments((prev) => ({
+                      ...prev,
+                      "other-docs": !prev["other-docs"],
+                    }))
+                  }
+                  className="flex w-full items-center justify-between gap-3 bg-slate-50/50 px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800/30 dark:hover:bg-slate-800/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                      <FileText className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        Other documents
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        Additional uploads
+                      </p>
+                    </div>
+                  </div>
+                  {expandedDocuments["other-docs"] ? (
+                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                  )}
+                </button>
+                {expandedDocuments["other-docs"] ? (
+                  <div className="border-t border-slate-100 p-4 dark:border-slate-800">
+                    <EmptyPanel
+                      icon={FileText}
+                      title="No other documents"
+                      description="Uploaded documents will appear here."
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
-      {/* Credentials Dialog */}
-      <Dialog open={showCredentialsDialog} onOpenChange={setShowCredentialsDialog}>
-        <DialogContent className="border-2 border-[var(--color-border)] bg-white rounded-xl max-w-lg shadow-xl">
-          <DialogHeader className="pb-4 border-b-2 border-gray-200 bg-gray-50/50 rounded-t-xl -mx-6 -mt-6 px-6 pt-6 mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center border-2 border-[var(--color-primary)]/20">
-                <Key className="h-5 w-5 text-[var(--color-primary)]" />
-              </div>
-              <DialogTitle className="font-mono font-bold text-xl tracking-wide text-[var(--color-text)]">
-                Student Login Credentials
-              </DialogTitle>
-            </div>
-            <DialogDescription className="font-mono text-sm text-[var(--color-textSecondary)] mt-2">
-              Login details for <span className="font-semibold text-[var(--color-text)]">{student.studentName}</span>
-            </DialogDescription>
-          </DialogHeader>
-          
-          {credentialsLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
-              <p className="font-mono text-sm text-[var(--color-textSecondary)]">Loading credentials...</p>
-            </div>
-          ) : credentialsError ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <div className="w-16 h-16 rounded-full bg-[var(--color-error)]/10 flex items-center justify-center border-2 border-[var(--color-error)]/20">
-                <AlertCircle className="h-8 w-8 text-[var(--color-error)]" />
-              </div>
-              <p className="font-mono text-sm text-[var(--color-error)] text-center max-w-sm">{credentialsError}</p>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={fetchCredentials}
-                className="font-mono border-2 border-[var(--color-border)] text-[var(--color-text)] hover:bg-gray-50 hover:border-[var(--color-primary)]/40 transition-all"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-            </div>
-          ) : credentials ? (
-            <div className="space-y-4 py-6">
-              {/* Name Card */}
-              <div className="border-2 border-[var(--color-border)] bg-gray-50 rounded-xl p-5 hover:border-[var(--color-primary)]/30 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="font-mono font-semibold text-xs text-[var(--color-textSecondary)] uppercase tracking-wider flex items-center gap-2">
-                    <User className="h-3.5 w-3.5" />
-                    Full Name
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-[var(--color-primary)]/10 rounded-md transition-colors"
-                    onClick={() => handleCopy(credentials.name, 'name')}
-                  >
-                    {copiedField === 'name' ? (
-                      <Check className="h-4 w-4 text-[var(--color-success)]" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-[var(--color-textSecondary)]" />
-                    )}
-                  </Button>
-                </div>
-                <div className="font-mono text-base font-semibold text-[var(--color-text)] break-all">{credentials.name}</div>
-              </div>
-
-              {/* Email Card */}
-              <div className="border-2 border-[var(--color-border)] bg-gray-50 rounded-xl p-5 hover:border-[var(--color-primary)]/30 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="font-mono font-semibold text-xs text-[var(--color-textSecondary)] uppercase tracking-wider flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5" />
-                    Email Address
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-[var(--color-primary)]/10 rounded-md transition-colors"
-                    onClick={() => handleCopy(credentials.email, 'email')}
-                  >
-                    {copiedField === 'email' ? (
-                      <Check className="h-4 w-4 text-[var(--color-success)]" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-[var(--color-textSecondary)]" />
-                    )}
-                  </Button>
-                </div>
-                <div className="font-mono text-base font-semibold text-[var(--color-text)] break-all">{credentials.email}</div>
-              </div>
-
-              {/* Password Card - Highlighted */}
-              <div className="border-2 border-[var(--color-primary)]/40 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 shadow-md hover:border-[var(--color-primary)]/60 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="font-mono font-semibold text-xs text-[var(--color-primary)] uppercase tracking-wider flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-[var(--color-primary)]/20 flex items-center justify-center">
-                      <Key className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-                    </div>
-                    Password (Admission Number)
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-[var(--color-primary)]/20 rounded-md transition-colors"
-                    onClick={() => handleCopy(credentials.password, 'password')}
-                  >
-                    {copiedField === 'password' ? (
-                      <Check className="h-4 w-4 text-[var(--color-success)]" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-[var(--color-primary)]" />
-                    )}
-                  </Button>
-                </div>
-                <div className="font-mono text-2xl font-bold text-[var(--color-primary)] tracking-wider mb-2 select-all">
-                  {credentials.password}
-                </div>
-                <div className="flex items-start gap-2 mt-3 pt-3 border-t border-[var(--color-primary)]/20">
-                  <Info className="h-4 w-4 text-[var(--color-textSecondary)] mt-0.5 flex-shrink-0" />
-                  <p className="text-xs font-mono text-[var(--color-textSecondary)] leading-relaxed">
-                    This is the student's default login password. The password is their admission number and should be changed on first login.
-                  </p>
-                </div>
-              </div>
-
-              {/* Info Banner */}
-              <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                <p className="text-xs font-mono text-[var(--color-textSecondary)] text-center">
-                  <span className="font-semibold text-[var(--color-info)]">Note:</span> Keep these credentials secure and share them only with authorized personnel.
-                </p>
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
-
-      {/* Change Password Dialog */}
-      <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
-        <DialogContent className="border-2 border-[var(--color-border)] bg-white rounded-xl max-w-lg shadow-xl">
-          <DialogHeader className="pb-4 border-b-2 border-gray-200 bg-gray-50/50 rounded-t-xl -mx-6 -mt-6 px-6 pt-6 mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/10 flex items-center justify-center border-2 border-[var(--color-primary)]/20">
-                <Lock className="h-5 w-5 text-[var(--color-primary)]" />
-              </div>
-              <DialogTitle className="font-mono font-bold text-xl tracking-wide text-[var(--color-text)]">
-                Change Password
-              </DialogTitle>
-            </div>
-            <DialogDescription className="font-mono text-sm text-[var(--color-textSecondary)] mt-2">
-              Change your password. All active sessions will be logged out for security.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <form onSubmit={handleChangePassword} className="space-y-4 py-4">
-            {/* Error Message */}
-            {passwordChangeError && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <p className="text-sm font-mono text-red-600">{passwordChangeError}</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Success Message */}
-            {passwordChangeSuccess && (
-              <div className="p-3 rounded-lg bg-green-50 border border-green-200">
-                <div className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <p className="text-sm font-mono text-green-600">{passwordChangeSuccess}</p>
-                </div>
-              </div>
-            )}
-            
-            {/* Old Password */}
-            <div className="space-y-2">
-              <Label htmlFor="oldPassword" className="font-mono text-sm font-semibold text-[var(--color-text)]">
-                Current Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="oldPassword"
-                  type={showOldPassword ? "text" : "password"}
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  disabled={isChangingPassword}
-                  className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)] pr-10"
-                  placeholder="Enter your current password"
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowOldPassword(!showOldPassword)}
-                  disabled={isChangingPassword}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-[var(--color-primary)]/10"
-                  aria-label={showOldPassword ? "Hide password" : "Show password"}
-                >
-                  {showOldPassword ? (
-                    <EyeOff className="h-4 w-4 text-[var(--color-textSecondary)]" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-[var(--color-textSecondary)]" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            
-            {/* New Password */}
-            <div className="space-y-2">
-              <Label htmlFor="newPassword" className="font-mono text-sm font-semibold text-[var(--color-text)]">
-                New Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={isChangingPassword}
-                  className="font-mono border-2 border-[var(--color-border)] focus:border-[var(--color-primary)] pr-10"
-                  placeholder="Enter your new password (min. 8 characters)"
-                  required
-                  minLength={8}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  disabled={isChangingPassword}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-[var(--color-primary)]/10"
-                  aria-label={showNewPassword ? "Hide password" : "Show password"}
-                >
-                  {showNewPassword ? (
-                    <EyeOff className="h-4 w-4 text-[var(--color-textSecondary)]" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-[var(--color-textSecondary)]" />
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs font-mono text-[var(--color-textSecondary)]">
-                Password must be at least 8 characters long
-              </p>
-            </div>
-            
-            {/* Info Banner */}
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs font-mono text-blue-700 leading-relaxed">
-                  After changing your password, all active sessions will be logged out and you'll need to sign in again with your new password.
-                </p>
-              </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowChangePasswordDialog(false);
-                  setOldPassword('');
-                  setNewPassword('');
-                  setShowOldPassword(false);
-                  setShowNewPassword(false);
-                  setPasswordChangeError(null);
-                  setPasswordChangeSuccess(null);
-                }}
-                disabled={isChangingPassword}
-                className="font-mono border-2 border-[var(--color-border)] text-[var(--color-text)] hover:bg-gray-50"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isChangingPassword || !oldPassword || !newPassword}
-                className="font-mono bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isChangingPassword ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Changing...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4" />
-                    Change Password
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Toast Notifications */}
-      <Toaster />
+      <StudentCredentialsDialog
+        open={showCredentialsDialog}
+        onOpenChange={setShowCredentialsDialog}
+        studentName={student.studentName}
+        credentials={credentials}
+        loading={credentialsLoading}
+        error={credentialsError}
+        onRetry={() => void fetchCredentials()}
+        copiedField={copiedField}
+        onCopy={handleCopy}
+      />
 
       <AssignGradeStreamDialog
         studentId={studentId}
@@ -1108,4 +781,4 @@ export function StudentDetailsView({
       />
     </div>
   );
-} 
+}

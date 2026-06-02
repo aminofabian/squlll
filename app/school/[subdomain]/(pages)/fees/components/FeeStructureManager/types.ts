@@ -50,7 +50,7 @@ export interface ProcessedFeeStructure {
   academicYearId: string
   termName: string
   termId: string
-  terms: Array<{ id: string; name: string }>
+  terms: Array<{ id: string; name: string; endDate?: string }>
   gradeLevels: Array<{
     id: string
     shortName: string | null
@@ -75,6 +75,9 @@ export interface ProcessedFeeStructure {
   }>>
   allStructures?: any[]
   isActive: boolean
+  isExpired?: boolean
+  validUntil?: string | null
+  academicYearEndDate?: string | null
   createdAt: string
   updatedAt: string
 }

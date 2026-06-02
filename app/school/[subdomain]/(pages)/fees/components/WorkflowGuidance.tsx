@@ -1,7 +1,8 @@
 "use client";
 
-import { CheckCircle2, Circle, Sparkles, Target, Zap } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, Target, Zap, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FEES_BRAND } from "../lib/fees-ui";
 
 interface WorkflowStep {
   id: string;
@@ -20,31 +21,31 @@ interface WorkflowGuidanceProps {
 const defaultSteps: WorkflowStep[] = [
   {
     id: "1",
-    title: "Create a fee plan",
-    description: "Set charges per class and term",
+    title: "Fee plan",
+    description: "Charges per class & term",
     completed: false,
     icon: <Sparkles className="h-4 w-4" />,
   },
   {
     id: "2",
-    title: "Apply to classes",
-    description: "Link the plan to grades",
+    title: "Assign classes",
+    description: "Link plan to grades",
     completed: false,
     icon: <Target className="h-4 w-4" />,
   },
   {
     id: "3",
     title: "Bill students",
-    description: "Create invoices for a term",
+    description: "Term invoices",
     completed: false,
     icon: <Zap className="h-4 w-4" />,
   },
   {
     id: "4",
-    title: "Record payments",
-    description: "Track money received",
+    title: "Collect fees",
+    description: "Record payments",
     completed: false,
-    icon: <CheckCircle2 className="h-4 w-4" />,
+    icon: <Receipt className="h-4 w-4" />,
   },
 ];
 
@@ -60,88 +61,97 @@ export const WorkflowGuidance = ({
   }));
 
   const done = completedSteps.length;
+  const pct = (done / steps.length) * 100;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      {/* Progress bar */}
-      <div className="h-1 w-full bg-slate-100">
-        <div
-          className="h-full bg-slate-800 transition-all duration-500 ease-out"
-          style={{ width: `${(done / steps.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between px-5 py-3">
+    <div className="h-full rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-start justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold tracking-tight text-slate-900">
-            Setup guide
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-900">Getting started</h3>
           <p className="mt-0.5 text-xs text-slate-500">
-            {done === 0
-              ? "Follow these steps to get started"
-              : done === steps.length
-                ? "All done — you're ready to collect fees"
-                : `${done} of ${steps.length} steps complete`}
+            {done === steps.length
+              ? "You're ready to run term billing"
+              : `${done} of ${steps.length} complete`}
           </p>
         </div>
-        <span className="text-xs font-medium tabular-nums text-slate-400">
-          {done}/{steps.length}
+        <span className="text-xs font-bold tabular-nums text-emerald-700">
+          {Math.round(pct)}%
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-px bg-slate-100 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-4">
-        {steps.map((step, index) => (
-          <button
-            key={step.id}
-            onClick={() => !step.completed && onStepClick?.(index)}
-            disabled={step.completed || !onStepClick}
-            className={cn(
-              "flex items-start gap-3 rounded-lg p-3 text-left transition-colors",
-              step.completed && "bg-transparent",
-              !step.completed &&
-                onStepClick &&
-                "cursor-pointer hover:bg-slate-50",
-              !step.completed && !onStepClick && "cursor-default",
-            )}
-          >
-            <div
-              className={cn(
-                "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                step.completed && "bg-emerald-100 text-emerald-600",
-                step.current && "bg-slate-800 text-white",
-                !step.completed &&
-                  !step.current &&
-                  "bg-slate-100 text-slate-400",
-              )}
-            >
-              {step.completed ? (
-                <CheckCircle2 className="h-3.5 w-3.5" />
-              ) : (
-                <span className="text-xs font-bold tabular-nums">
-                  {index + 1}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p
+      <div className="mb-5 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${pct}%`,
+            backgroundColor: FEES_BRAND.primary,
+          }}
+        />
+      </div>
+
+      <ol className="space-y-1">
+        {steps.map((step, index) => {
+          const clickable = !step.completed && !!onStepClick;
+          return (
+            <li key={step.id}>
+              <button
+                type="button"
+                onClick={() => clickable && onStepClick?.(index)}
+                disabled={!clickable}
                 className={cn(
-                  "text-sm font-medium leading-tight",
-                  step.completed
-                    ? "text-slate-400 line-through"
-                    : step.current
-                      ? "text-slate-900"
-                      : "text-slate-600",
+                  "flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors",
+                  clickable && "hover:bg-slate-50 cursor-pointer",
+                  !clickable && "cursor-default",
+                  step.current && "bg-emerald-50/80",
                 )}
               >
-                {step.title}
-              </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                {step.description}
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
+                <div
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
+                    step.completed &&
+                      "bg-emerald-100 text-emerald-700",
+                    step.current &&
+                      !step.completed &&
+                      "text-white",
+                    !step.completed &&
+                      !step.current &&
+                      "bg-slate-100 text-slate-400",
+                  )}
+                  style={
+                    step.current && !step.completed
+                      ? { backgroundColor: FEES_BRAND.primary }
+                      : undefined
+                  }
+                >
+                  {step.completed ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={cn(
+                      "text-sm font-medium leading-tight",
+                      step.completed
+                        ? "text-slate-400 line-through decoration-slate-300"
+                        : "text-slate-800",
+                    )}
+                  >
+                    {step.title}
+                  </p>
+                  <p className="text-xs text-slate-500">{step.description}</p>
+                </div>
+                {step.icon && (
+                  <span className="hidden text-slate-300 sm:block">
+                    {step.icon}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 };

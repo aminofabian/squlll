@@ -1,55 +1,144 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import Link from 'next/link'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
   Edit, 
   Trash2, 
-  Users, 
+  Link2,
   Calendar,
-  FileText,
   Coins,
   Building2,
   Eye,
-  X,
-  Download
 } from 'lucide-react'
 import { FeeStructure, FeeStructureForm } from '../../types'
 import { ProcessedFeeStructure } from './types'
 import { cn } from '@/lib/utils'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { FeeStructurePDFPreview } from '../FeeStructurePDFPreview'
+import { FeeStructureLetterPreview } from '../FeeStructureWizard/FeeStructureLetterPreview'
+import { FeeLetterPreviewDialog } from '../feeLetter/FeeLetterPreviewDialog'
+import {
+  readFeeLetterTemplate,
+  writeFeeLetterTemplate,
+} from '../../lib/feeLetter/storage'
+import type { FeeLetterTemplateId } from '../../lib/feeLetter/types'
+import { DEFAULT_FEE_LETTER_TEMPLATE } from '../../lib/feeLetter/templates'
+import { buildLetterTermScopeLabel } from '../../lib/feeLetter/termScopeLabel'
 import { useParams } from 'next/navigation'
+import { FeeTermsMatrixTable } from '../FeeTermsMatrixTable'
+import { FEES_BRAND, FEES_BTN, FEES_DETAIL, FEES_LAYOUT } from '../../lib/fees-ui'
+import { feesOverviewHref } from '../../lib/feesRoutes'
+import { printFeeStructureLetter } from '../../lib/feesPrint'
+import { getLayoutSchoolName } from '@/lib/schoolLogo'
+import { useTenantFeeLetterSettings } from '../../hooks/useTenantFeeLetterSettings'
+import { getSchoolPortalUrl } from '../../lib/feeLetter/schoolPortalUrl'
+import { FeeLetterSetupPanel } from '../feeLetter/FeeLetterSetupPanel'
+import { sortTermsForLetter } from '../../lib/sortTermsForLetter'
+import { FeePlanSection } from './FeePlanSection'
+import {
+  feeLetterGradeStorageKey,
+  termsShareSameCategories,
+  termsShareSameTotals,
+} from '../../lib/feePlanDetailUrl'
+import { getInactivePlanDetail } from '../../lib/feePlanLifecycle'
 
 interface FeeStructureCardProps {
   structure: ProcessedFeeStructure
   index?: number
+  /** card = list; page = legacy embed; detail = full plan slug page */
+  layout?: 'card' | 'page' | 'detail'
+  /** On detail page: render only amounts or only letter block */
+  detailPart?: 'amounts' | 'letter'
+  hideHeader?: boolean
+  /** Controlled term (detail page — shared with fee letter). */
+  selectedTermId?: string
+  onSelectedTermIdChange?: (termId: string) => void
+  planSlug?: string
+  letterPreviewOpen?: boolean
+  onLetterPreviewOpenChange?: (open: boolean) => void
   onEdit: (feeStructure: FeeStructure) => void
   onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
   onDelete?: (id: string, name: string) => void
   onUpdateFeeItem: (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => void
   isDeleting?: boolean
+  canManage?: boolean
+}
+
+function toLegacyFeeStructure(s: ProcessedFeeStructure): FeeStructure {
+  return {
+    id: s.structureId,
+    name: s.structureName,
+    isActive: s.isActive,
+    academicYear: s.academicYear,
+    grade: '',
+    boardingType: 'day',
+    createdDate: s.createdAt || '',
+    lastModified: s.updatedAt || '',
+    termStructures: [],
+  }
+}
+
+function termTotalFromMap(
+  termFeesMap: ProcessedFeeStructure['termFeesMap'],
+  termId: string,
+): number {
+  const buckets = termFeesMap?.[termId]
+  if (!buckets?.length) return 0
+  return buckets.reduce((sum, b) => sum + (b.totalAmount || 0), 0)
 }
 
 export const FeeStructureCard = ({
   structure,
   index,
+  layout = 'card',
+  detailPart,
+  hideHeader = false,
+  selectedTermId: selectedTermIdProp,
+  onSelectedTermIdChange,
+  planSlug,
+  letterPreviewOpen: letterPreviewOpenProp,
+  onLetterPreviewOpenChange,
   onEdit,
   onAssignToGrade,
-  onGenerateInvoices,
   onDelete,
-  onUpdateFeeItem,
-  isDeleting = false
+  isDeleting = false,
+  canManage = true,
 }: FeeStructureCardProps) => {
   const params = useParams()
   const subdomain = params.subdomain as string
-  const [selectedTermId, setSelectedTermId] = useState(structure.termId)
-  const [showPDFPreview, setShowPDFPreview] = useState(false)
+  const [internalTermId, setInternalTermId] = useState(
+    () => structure.termId || structure.terms?.[0]?.id || '',
+  )
+  const selectedTermId = selectedTermIdProp ?? internalTermId
+  const setSelectedTermId = onSelectedTermIdChange ?? setInternalTermId
+  const [showPDFPreviewInternal, setShowPDFPreviewInternal] = useState(false)
+  const showPDFPreview = letterPreviewOpenProp ?? showPDFPreviewInternal
+  const setShowPDFPreview = onLetterPreviewOpenChange ?? setShowPDFPreviewInternal
+  const [letterTermIds, setLetterTermIds] = useState<string[]>([])
+  const [previewGrade, setPreviewGrade] = useState('')
+  const [letterTemplateId, setLetterTemplateId] = useState<FeeLetterTemplateId>(
+    DEFAULT_FEE_LETTER_TEMPLATE,
+  )
+  const [gradesExpanded, setGradesExpanded] = useState(false)
 
-  // Get school name from subdomain
+  const letterTemplateScope = planSlug || subdomain || 'school'
+  const sidebarSchoolName = getLayoutSchoolName(subdomain)
+  const {
+    details: letterDetails,
+    setDetails: setLetterDetails,
+    saveNow: saveLetterDetails,
+    saving: letterDetailsSaving,
+    loading: letterDetailsLoading,
+    error: letterDetailsError,
+  } = useTenantFeeLetterSettings(subdomain)
+  const [schoolPortalUrl, setSchoolPortalUrl] = useState('')
+  useEffect(() => {
+    setSchoolPortalUrl(getSchoolPortalUrl())
+  }, [])
+
   const schoolName = useMemo(() => {
     if (!subdomain) return "KANYAWANGA HIGH SCHOOL"
     return subdomain
@@ -60,56 +149,116 @@ export const FeeStructureCard = ({
       .trim() + ' School'
   }, [subdomain])
 
-  // Sort terms by term number (Term 1, Term 2, Term 3)
   const sortedTerms = useMemo(() => {
     if (!structure.terms || structure.terms.length === 0) return []
-    
-    return [...structure.terms].sort((a, b) => {
-      const getTermNumber = (name: string): number => {
-        const match = name.match(/\d+/)
-        return match ? parseInt(match[0], 10) : 999
-      }
-      
-      return getTermNumber(a.name) - getTermNumber(b.name)
-    })
+    return sortTermsForLetter(structure.terms)
   }, [structure.terms])
 
-  // Get buckets for the selected term
   const displayBuckets = useMemo(() => {
     if (structure.termFeesMap && selectedTermId) {
       const buckets = structure.termFeesMap[selectedTermId]
-      if (buckets && buckets.length > 0) {
-        return buckets
-      }
+      if (buckets && buckets.length > 0) return buckets
     }
     return structure.buckets || []
   }, [structure.termFeesMap, structure.buckets, selectedTermId])
 
-  // Calculate term total (currently selected term)
-  const termTotal = displayBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
+  const termTotal = displayBuckets.reduce((sum: number, bucket: { totalAmount: number }) => sum + bucket.totalAmount, 0)
 
-  // Calculate year total (all terms combined)
   const yearTotal = useMemo(() => {
     if (!structure.termFeesMap || Object.keys(structure.termFeesMap).length === 0) {
-      return termTotal * structure.terms.length
+      return termTotal * Math.max(structure.terms.length, 1)
     }
-
-    // Sum all buckets from all terms
-    const total = Object.entries(structure.termFeesMap).reduce((yearSum, [termId, termBuckets]) => {
-      const termSum = termBuckets.reduce((sum: number, bucket: any) => sum + bucket.totalAmount, 0)
+    return Object.values(structure.termFeesMap).reduce((yearSum, termBuckets) => {
+      const termSum = termBuckets.reduce((sum: number, bucket: { totalAmount: number }) => sum + bucket.totalAmount, 0)
       return yearSum + termSum
     }, 0)
-
-    return total
   }, [structure.termFeesMap, structure.terms.length, termTotal])
 
-  // Convert ProcessedFeeStructure to FeeStructureForm for PDF preview
+  const gradeLabels = useMemo(() => {
+    if (!structure.gradeLevels?.length) return []
+    const labels = structure.gradeLevels.map(
+      (grade) => grade.shortName || grade.gradeLevel?.name || grade.name || 'Grade',
+    )
+    return [...new Set(labels)]
+  }, [structure.gradeLevels])
+
+  useEffect(() => {
+    if (gradeLabels.length === 0) {
+      setPreviewGrade('')
+      return
+    }
+    const storageKey = planSlug ? feeLetterGradeStorageKey(planSlug) : null
+    const saved =
+      storageKey && typeof window !== 'undefined'
+        ? window.localStorage.getItem(storageKey)
+        : null
+    setPreviewGrade((prev) => {
+      if (saved && gradeLabels.includes(saved)) return saved
+      if (prev && gradeLabels.includes(prev)) return prev
+      return gradeLabels[0]
+    })
+  }, [structure.structureId, gradeLabels, planSlug])
+
+  useEffect(() => {
+    if (!planSlug || !previewGrade) return
+    try {
+      window.localStorage.setItem(
+        feeLetterGradeStorageKey(planSlug),
+        previewGrade,
+      )
+    } catch {
+      /* ignore quota */
+    }
+  }, [planSlug, previewGrade])
+
+  useEffect(() => {
+    setLetterTemplateId(readFeeLetterTemplate(letterTemplateScope))
+  }, [letterTemplateScope])
+
+  useEffect(() => {
+    writeFeeLetterTemplate(letterTemplateScope, letterTemplateId)
+  }, [letterTemplateScope, letterTemplateId])
+
+  const configuredTermCount = useMemo(() => {
+    if (!structure.termFeesMap) return 0
+    return sortedTerms.filter((t) => termTotalFromMap(structure.termFeesMap, t.id) > 0).length
+  }, [sortedTerms, structure.termFeesMap])
+
+  const termTotals = useMemo(
+    () =>
+      sortedTerms.map((t) => ({
+        id: t.id,
+        name: t.name,
+        total: termTotalFromMap(structure.termFeesMap, t.id),
+      })),
+    [sortedTerms, structure.termFeesMap],
+  )
+
+  const termIds = useMemo(() => sortedTerms.map((t) => t.id), [sortedTerms])
+
+  const allTermsSameAmount = useMemo(
+    () => termsShareSameTotals(structure, termIds),
+    [structure, termIds],
+  )
+
+  const allTermsSameCategories = useMemo(
+    () => termsShareSameCategories(structure, termIds),
+    [structure, termIds],
+  )
+
+  const isDetailLayout = layout === 'detail'
+  const isPageLayout = layout === 'page'
+  const collapseTermTabs =
+    isDetailLayout &&
+    allTermsSameAmount &&
+    allTermsSameCategories &&
+    (termTotals[0]?.total ?? 0) > 0 &&
+    termTotals.every((t) => t.total > 0)
+
   const convertToPDFForm = useMemo((): FeeStructureForm => {
     const termsToUse = sortedTerms.length > 0 ? sortedTerms : (structure.terms || [])
-    
     const termStructures = termsToUse.map((term) => {
       const termBuckets = structure.termFeesMap?.[term.id] || structure.buckets || []
-
       return {
         term: term.name as 'Term 1' | 'Term 2' | 'Term 3',
         academicYear: structure.academicYear,
@@ -133,7 +282,6 @@ export const FeeStructureCard = ({
         existingBucketAmounts: {}
       }
     })
-
     return {
       name: structure.structureName,
       grade: '',
@@ -147,7 +295,7 @@ export const FeeStructureCard = ({
         latePaymentFee: '',
         earlyPaymentDiscount: '',
         earlyPaymentDeadline: '',
-        buckets: structure.buckets.map(bucket => ({
+        buckets: (structure.buckets || []).map(bucket => ({
           id: bucket.feeBucketId,
           type: 'tuition' as const,
           name: bucket.name,
@@ -165,61 +313,396 @@ export const FeeStructureCard = ({
     }
   }, [structure, sortedTerms])
 
+  useEffect(() => {
+    if (sortedTerms.length === 0) {
+      setLetterTermIds([])
+      return
+    }
+    setLetterTermIds((prev) => {
+      const valid = prev.filter((id) => sortedTerms.some((t) => t.id === id))
+      if (valid.length > 0) return valid
+      return sortedTerms.map((t) => t.id)
+    })
+  }, [structure.structureId, sortedTerms])
+
+  const selectedLetterTermIds = useMemo(() => {
+    const valid = letterTermIds.filter((id) =>
+      sortedTerms.some((t) => t.id === id),
+    )
+    return valid.length > 0 ? valid : sortedTerms.map((t) => t.id)
+  }, [letterTermIds, sortedTerms])
+
+  const pdfFormForLetter = useMemo((): FeeStructureForm => {
+    const ids = new Set(selectedLetterTermIds)
+    const letterGrade =
+      previewGrade || gradeLabels[0] || convertToPDFForm.grade || ''
+    const byTermName = new Map(
+      convertToPDFForm.termStructures.map((ts) => [ts.term, ts]),
+    )
+    const termStructures = sortedTerms
+      .filter((t) => ids.has(t.id))
+      .map((t) => byTermName.get(t.name))
+      .filter((ts): ts is NonNullable<typeof ts> => Boolean(ts))
+    return {
+      ...convertToPDFForm,
+      grade: letterGrade,
+      schoolDetails: letterDetails.schoolDetails,
+      paymentModes: letterDetails.paymentModes,
+      termStructures:
+        termStructures.length > 0
+          ? termStructures
+          : convertToPDFForm.termStructures,
+    }
+  }, [
+    convertToPDFForm,
+    selectedLetterTermIds,
+    sortedTerms,
+    previewGrade,
+    gradeLabels,
+    letterDetails,
+  ])
+
+  const gradeLevelsForLetter = useMemo(() => {
+    const letterGrade =
+      previewGrade || gradeLabels[0] || ''
+    if (!letterGrade) return structure.gradeLevels || []
+    return [{ id: letterGrade, gradeLevel: { name: letterGrade } }]
+  }, [previewGrade, gradeLabels, structure.gradeLevels])
+
+  const { termScopeLine, totalRowLabel } = useMemo(() => {
+    const names = sortedTerms
+      .filter((t) => selectedLetterTermIds.includes(t.id))
+      .map((t) => t.name)
+    if (names.length === 0) {
+      return { termScopeLine: undefined, totalRowLabel: undefined }
+    }
+    if (names.length === sortedTerms.length) {
+      return {
+        termScopeLine: 'ALL TERMS',
+        totalRowLabel: undefined,
+      }
+    }
+    if (names.length === 1) {
+      return {
+        termScopeLine: names[0].toUpperCase(),
+        totalRowLabel: 'TOTAL',
+      }
+    }
+    return {
+      termScopeLine: names.map((n) => n.toUpperCase()).join(' · '),
+      totalRowLabel: 'TOTAL (SELECTED TERMS)',
+    }
+  }, [sortedTerms, selectedLetterTermIds])
+
+  const pdfPrintRef = useRef<HTMLDivElement>(null)
+
   const handleDownloadPDF = () => {
-    setTimeout(() => {
-      window.print()
-    }, 100)
+    printFeeStructureLetter(pdfPrintRef.current)
+  }
+
+  const letterBuckets = useMemo(() => {
+    const ids = selectedLetterTermIds
+    if (ids.length === 1 && structure.termFeesMap?.[ids[0]]?.length) {
+      return structure.termFeesMap[ids[0]]
+    }
+    if (ids.length > 1 && structure.termFeesMap) {
+      const firstWithBuckets = ids.find(
+        (id) => (structure.termFeesMap?.[id]?.length ?? 0) > 0,
+      )
+      if (firstWithBuckets) {
+        return structure.termFeesMap![firstWithBuckets]
+      }
+    }
+    return displayBuckets
+  }, [selectedLetterTermIds, structure.termFeesMap, displayBuckets])
+
+  const letterTermsHaveAmounts = useMemo(() => {
+    if (!structure.termFeesMap || selectedLetterTermIds.length === 0) {
+      return termTotal > 0 && displayBuckets.length > 0
+    }
+    return selectedLetterTermIds.every((id) => {
+      const buckets = structure.termFeesMap?.[id]
+      if (!buckets?.length) return false
+      return buckets.reduce((sum, b) => sum + (b.totalAmount || 0), 0) > 0
+    })
+  }, [
+    structure.termFeesMap,
+    selectedLetterTermIds,
+    termTotal,
+    displayBuckets.length,
+  ])
+
+  const letterTermLabel = useMemo(
+    () => buildLetterTermScopeLabel(sortedTerms, selectedLetterTermIds),
+    [sortedTerms, selectedLetterTermIds],
+  )
+
+  const letterPreviewMeta = useMemo(
+    () => ({
+      grade: previewGrade || null,
+      academicYear: structure.academicYear || null,
+      terms: letterTermLabel,
+    }),
+    [previewGrade, structure.academicYear, letterTermLabel],
+  )
+
+  const letterAmountsReady = letterTermsHaveAmounts && !!previewGrade
+
+  const mapBucketsForLetter = (buckets: typeof displayBuckets) =>
+    buckets.map((b) => ({
+      id: b.feeBucketId,
+      name: b.name,
+      description: "",
+    }))
+
+  const letterReadinessMessage = !letterAmountsReady
+    ? !previewGrade
+      ? 'Select a grade to preview the letter.'
+      : !letterTermsHaveAmounts
+        ? `Add fee amounts for the selected term${selectedLetterTermIds.length > 1 ? 's' : ''} before generating a letter.`
+        : 'No fee categories to show on the letter.'
+    : null
+
+  const letterSetupPanelBase = {
+    grades: gradeLabels,
+    previewGrade,
+    onGradeChange: setPreviewGrade,
+    terms: sortedTerms,
+    selectedTermIds: selectedLetterTermIds,
+    onTermIdsChange: setLetterTermIds,
+    templateId: letterTemplateId,
+    onTemplateChange: setLetterTemplateId,
+    letterDetails,
+    onLetterDetailsChange: setLetterDetails,
+    onSaveLetterDetails: saveLetterDetails,
+    letterDetailsSaving,
+    letterDetailsLoading,
+    letterDetailsError,
+    schoolLogoKey: sidebarSchoolName,
+    portalUrl: schoolPortalUrl,
+    letterAmountsReady,
+    onPreview: () => setShowPDFPreview(true),
+    onPrint: handleDownloadPDF,
+    termScopeHint:
+      isDetailLayout && letterTermLabel ? letterTermLabel : null,
+    readinessMessage: letterReadinessMessage,
+    compact: true as const,
+  }
+
+  const letterPreviewControls = (
+    <FeeLetterSetupPanel
+      {...letterSetupPanelBase}
+      pinActions={isDetailLayout}
+    />
+  )
+
+  const letterPreviewDialogControls = (
+    <FeeLetterSetupPanel
+      {...letterSetupPanelBase}
+      embeddedInPreview
+      pinActions={false}
+    />
+  )
+
+  const openEditPlan = onEdit
+    ? () => onEdit(toLegacyFeeStructure(structure))
+    : undefined
+
+  const feeByTermMatrix = (
+    <>
+      <FeeTermsMatrixTable
+        terms={sortedTerms}
+        termFeesMap={structure.termFeesMap}
+        fallbackBuckets={structure.buckets}
+        yearTotal={yearTotal}
+        uniformAcrossTerms={collapseTermTabs}
+        onEditPlan={canManage && structure.isActive ? openEditPlan : undefined}
+      />
+    </>
+  )
+
+  const pdfDialog = (
+    <>
+      <div
+        className="pointer-events-none fixed left-[-9999px] top-0 w-[210mm] opacity-0"
+        aria-hidden
+      >
+        <FeeStructureLetterPreview
+          containerRef={pdfPrintRef}
+          formData={pdfFormForLetter}
+          schoolName={schoolName}
+          feeBuckets={mapBucketsForLetter(letterBuckets)}
+          gradeLevels={gradeLevelsForLetter}
+          termScopeLine={termScopeLine}
+          totalRowLabel={totalRowLabel}
+          templateId={letterTemplateId}
+          schoolLogoKey={sidebarSchoolName}
+          logoUrl={letterDetails.logoUrl}
+          schoolMotto={letterDetails.schoolMotto}
+          schoolWebsiteUrl={schoolPortalUrl}
+        />
+      </div>
+
+      <FeeLetterPreviewDialog
+        open={showPDFPreview}
+        onOpenChange={setShowPDFPreview}
+        meta={letterPreviewMeta}
+        onPrint={handleDownloadPDF}
+        headerActions={letterPreviewDialogControls}
+      >
+        <div className="mx-auto max-w-3xl">
+          <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-slate-300/40">
+            <FeeStructureLetterPreview
+              formData={pdfFormForLetter}
+              schoolName={schoolName}
+              feeBuckets={mapBucketsForLetter(letterBuckets)}
+              gradeLevels={gradeLevelsForLetter}
+              termScopeLine={termScopeLine}
+              totalRowLabel={totalRowLabel}
+              templateId={letterTemplateId}
+              schoolLogoKey={sidebarSchoolName}
+              logoUrl={letterDetails.logoUrl}
+              schoolMotto={letterDetails.schoolMotto}
+              schoolWebsiteUrl={schoolPortalUrl}
+            />
+          </div>
+        </div>
+      </FeeLetterPreviewDialog>
+    </>
+  )
+
+  if (isDetailLayout && detailPart === 'amounts') {
+    return (
+      <FeePlanSection
+        id="term-amounts"
+        lead
+        compact
+        hideStep
+        title="Amounts by term"
+        description={
+          sortedTerms.length > 0
+            ? collapseTermTabs
+              ? 'Same fees every term · use Edit amounts to change'
+              : `${sortedTerms.length} term${sortedTerms.length === 1 ? '' : 's'} · ${structure.buckets?.length ?? 0} categories`
+            : 'Add term amounts in Edit plan'
+        }
+        action={
+          canManage && structure.isActive && openEditPlan ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className={cn(FEES_BTN.secondary, "h-9 gap-1.5 text-xs max-md:rounded-xl")}
+              onClick={openEditPlan}
+              disabled={isDeleting}
+            >
+              <Edit className="h-3.5 w-3.5 shrink-0" />
+              Edit
+            </Button>
+          ) : undefined
+        }
+      >
+        {feeByTermMatrix}
+      </FeePlanSection>
+    )
+  }
+
+  if (isDetailLayout && detailPart === 'letter') {
+    return (
+      <>
+        <FeePlanSection
+          id="fee-letter"
+          compact
+          hideStep
+          title="Parent letter"
+          description="PDF for parents — letterhead, grade, terms, then preview"
+        >
+          {gradeLabels.length === 0 ? (
+            <p className="text-xs text-amber-800">Link classes first.</p>
+          ) : (
+            letterPreviewControls
+          )}
+        </FeePlanSection>
+        {pdfDialog}
+      </>
+    )
+  }
+
+  if (isDetailLayout) {
+    return (
+      <>
+        <FeePlanSection id="term-amounts" lead compact hideStep title="Amounts by term">
+          {feeByTermMatrix}
+        </FeePlanSection>
+        <FeePlanSection id="fee-letter" compact hideStep title="Parent letter">
+          {gradeLabels.length === 0 ? (
+            <p className="text-xs text-amber-800">Link classes first.</p>
+          ) : (
+            letterPreviewControls
+          )}
+        </FeePlanSection>
+        {pdfDialog}
+      </>
+    )
   }
 
   return (
-    <Card className="hover:shadow-md transition-all border border-slate-200 rounded-lg overflow-hidden bg-white">
-      <CardHeader className="pb-2.5 px-3.5 pt-3 border-b border-slate-100">
-        {/* Header Row 1: Title and Actions */}
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
+    <Card className={cn(
+      "overflow-hidden bg-white",
+      isPageLayout
+        ? "rounded-2xl border border-slate-200/80 shadow-sm"
+        : "rounded-2xl border border-slate-200/90 shadow-sm transition-shadow hover:shadow-md",
+      !structure.isActive && "opacity-80",
+    )}>
+      {!hideHeader && (
+      <CardHeader className="border-b border-slate-100 bg-slate-50/50 px-4 py-4 sm:px-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
               {index !== undefined && (
-                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-primary">{index}</span>
-                </div>
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                  style={{ backgroundColor: FEES_BRAND.primary }}
+                >
+                  {index}
+                </span>
               )}
-              <CardTitle className="text-sm font-semibold text-slate-900 truncate">
+              <CardTitle className="break-words text-base font-semibold text-slate-900 sm:text-lg">
                 {structure.structureName}
               </CardTitle>
-              {structure.isActive && (
-                <Badge variant="default" className="bg-primary text-white text-[9px] px-1.5 py-0.5 h-4 leading-none flex-shrink-0">
-                  Active
+              {structure.isActive ? (
+                <Badge className="bg-emerald-600 text-[10px] text-white">Active</Badge>
+              ) : (
+                <Badge variant="outline" className="border-slate-200 bg-slate-50 text-[10px] text-slate-500">
+                  Inactive
                 </Badge>
               )}
             </div>
-            {/* Header Row 2: Metadata */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-1 text-[10px] text-slate-600">
-                <Calendar className="h-3 w-3 text-primary/70" />
-                <span className="font-medium">{structure.academicYear}</span>
-              </div>
-              {structure.gradeLevels && structure.gradeLevels.length > 0 && (
-                <div className="flex items-center gap-1 flex-wrap">
-                  {structure.gradeLevels.slice(0, 3).map(grade => (
-                    <Badge key={grade.id} variant="outline" className="text-[9px] px-1.5 py-0 h-4 leading-none border-slate-300 text-slate-700">
-                      {grade.shortName || grade.gradeLevel?.name || grade.name}
-                    </Badge>
-                  ))}
-                  {structure.gradeLevels.length > 3 && (
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 leading-none border-slate-300 text-slate-700">
-                      +{structure.gradeLevels.length - 3}
-                    </Badge>
-                  )}
-                </div>
+            {!structure.isActive ? (
+              <p className="mb-2 text-[11px] text-slate-500">
+                {getInactivePlanDetail(structure)}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+              <span className="inline-flex items-center gap-1 font-medium">
+                <Calendar className="h-3.5 w-3.5" style={{ color: FEES_BRAND.primary }} />
+                {structure.academicYear}
+              </span>
+              {sortedTerms.length > 0 && (
+                <span className="text-slate-500">
+                  {configuredTermCount}/{sortedTerms.length} terms configured
+                </span>
               )}
             </div>
           </div>
-          {/* Action Buttons */}
-          <div className="flex gap-1 flex-shrink-0">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary" 
+          <div className="flex shrink-0 gap-1">
+            {canManage ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title={structure.isActive ? "Edit fee plan" : "Inactive plans cannot be edited"}
+              disabled={!structure.isActive}
               onClick={() => onEdit({
                 id: structure.structureId,
                 name: structure.structureName,
@@ -232,252 +715,125 @@ export const FeeStructureCard = ({
                 termStructures: []
               })}
             >
-              <Edit className="h-3.5 w-3.5" />
+              <Edit className="h-4 w-4" />
             </Button>
-            {onDelete && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+            ) : null}
+            {onDelete && canManage ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
                 onClick={() => onDelete(structure.structureId, structure.structureName)}
                 disabled={isDeleting}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent className="px-3.5 py-3 space-y-3">
-        {/* Terms Selection */}
-        {sortedTerms.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {sortedTerms.map((term: { id: string; name: string }) => (
+
+        {gradeLabels.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              {gradeLabels.length === 1
+                ? "1 grade covered"
+                : `All ${gradeLabels.length} grades covered`}
+            </p>
+            <div
+              className={cn(
+                "flex flex-wrap gap-1.5",
+                !gradesExpanded && gradeLabels.length > 8 && "max-h-[4.5rem] overflow-hidden",
+              )}
+            >
+              {gradeLabels.map((label) => (
+                <Badge
+                  key={label}
+                  variant="outline"
+                  className="border-slate-200 bg-white text-[11px] font-medium text-slate-700"
+                >
+                  {label}
+                </Badge>
+              ))}
+            </div>
+            {gradeLabels.length > 8 && (
               <button
-                key={term.id}
-                onClick={() => setSelectedTermId(term.id)}
-                className={cn(
-                  "px-2 py-1 text-[9px] font-semibold uppercase border rounded-md transition-all",
-                  selectedTermId === term.id
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
-                )}
+                type="button"
+                className="mt-1.5 text-xs font-medium text-emerald-700 hover:underline"
+                onClick={() => setGradesExpanded((v) => !v)}
               >
-                {term.name}
+                {gradesExpanded ? "Show fewer" : `Show all ${gradeLabels.length} grades`}
               </button>
-            ))}
-          </div>
-        )}
-
-        {/* Totals Section - Better Organized */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-md border border-slate-200">
-            <Coins className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-            <div className="min-w-0">
-              <div className="text-[9px] text-slate-600 font-medium leading-tight">
-                {structure.terms.length > 1 ? sortedTerms.find(t => t.id === selectedTermId)?.name || 'Term' : 'Total'}
-              </div>
-              <div className="text-xs font-bold text-slate-900 leading-tight">
-                KES {termTotal.toLocaleString()}
-              </div>
-            </div>
-          </div>
-          {structure.terms.length > 1 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-br from-primary/5 to-primary/10 rounded-md border border-primary/20">
-              <Building2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-              <div className="min-w-0">
-                <div className="text-[9px] text-primary/80 font-medium leading-tight">Year Total</div>
-                <div className="text-xs font-bold text-primary leading-tight">
-                  KES {yearTotal.toLocaleString()}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Buckets - Organized Grid Layout */}
-        {displayBuckets.length > 0 ? (
-          <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-            {displayBuckets.map((bucket, idx) => (
-              <div 
-                key={bucket.id || idx} 
-                className="group flex items-center justify-between gap-3 px-2.5 py-1.5 bg-white border border-slate-200 rounded-md hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm transition-all"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                    bucket.isOptional ? "bg-amber-400" : "bg-primary"
-                  )} />
-                  <span className={cn(
-                    "text-[10px] font-medium truncate",
-                    bucket.isOptional ? "text-slate-500" : "text-slate-900"
-                  )}>
-                    {bucket.name}
-                  </span>
-                  {bucket.isOptional && (
-                    <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5 leading-none border-amber-200 text-amber-600 bg-amber-50 flex-shrink-0">
-                      OPT
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[10px] font-bold text-slate-900 whitespace-nowrap">
-                    KES {bucket.totalAmount.toLocaleString()}
-                  </span>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-5 w-5 p-0 hover:bg-primary/20 hover:text-primary opacity-0 group-hover:opacity-100 transition-all"
-                    onClick={() => onUpdateFeeItem(
-                      bucket.firstItemId || bucket.id,
-                      bucket.totalAmount,
-                      !bucket.isOptional,
-                      bucket.name,
-                      structure.structureName,
-                      bucket.feeBucketId
-                    )}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-3 border border-dashed border-slate-200 rounded-md bg-slate-50/50">
-            <p className="text-[10px] text-slate-400">No fee items</p>
-          </div>
-        )}
-
-        {/* Actions - Better Spaced */}
-        <div className="flex gap-2 pt-2 border-t border-slate-200">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1 text-[10px] h-8 font-medium border-slate-300 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
-            onClick={() => onAssignToGrade(
-              structure.structureId, 
-              structure.structureName, 
-              structure.academicYear,
-              structure.academicYearId,
-              selectedTermId
             )}
-          >
-            <Users className="h-3.5 w-3.5 mr-1.5" />
-            Assign
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="flex-1 text-[10px] h-8 font-medium border-slate-300 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
-            onClick={() => onGenerateInvoices(structure.structureId, sortedTerms.find(t => t.id === selectedTermId)?.name || structure.termName)}
-          >
-            <FileText className="h-3.5 w-3.5 mr-1.5" />
-            Invoices
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="h-8 w-8 p-0 border-slate-300 hover:bg-primary/5 hover:border-primary/30 hover:text-primary"
-            onClick={() => setShowPDFPreview(true)}
-            title="Preview PDF"
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+          </div>
+        )}
+      </CardHeader>
+      )}
+
+      <CardContent className={cn(
+        "space-y-3 px-4 sm:px-5",
+        hideHeader ? "py-3" : "py-3",
+      )}>
+        {feeByTermMatrix}
+
+        {!hideHeader && (
+          <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row">
+            <Button
+              size="sm"
+              className="flex-1 text-white"
+              style={{ backgroundColor: FEES_BRAND.primary }}
+              onClick={() => onAssignToGrade(
+                structure.structureId,
+                structure.structureName,
+                structure.academicYear,
+                structure.academicYearId,
+                selectedTermId,
+              )}
+            >
+              <Link2 className="mr-2 h-4 w-4" />
+              Link plan to classes
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="sm:w-auto"
+              onClick={() => setShowPDFPreview(true)}
+              title="Preview printable fee structure"
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview PDF
+            </Button>
+          </div>
+        )}
+        {!hideHeader && (
+          <p className="text-[11px] leading-snug text-slate-500">
+            To bill students, use{" "}
+            <strong className="font-medium text-slate-700">Send term invoices</strong>{" "}
+            on the{" "}
+            <Link
+              href={feesOverviewHref()}
+              scroll={false}
+              className="font-medium text-primary underline underline-offset-2"
+            >
+              Overview
+            </Link>{" "}
+            tab after classes are linked.
+          </p>
+        )}
+        {hideHeader && !isDetailLayout && (
+          <div className="flex border-t border-slate-100 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPDFPreview(true)}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview fee letter
+            </Button>
+          </div>
+        )}
       </CardContent>
 
-      {/* PDF Preview Dialog */}
-      <Dialog open={showPDFPreview} onOpenChange={setShowPDFPreview}>
-        <style>{`
-          @media print {
-            @page {
-              margin: 15mm;
-              size: A4;
-            }
-            [data-radix-dialog-overlay],
-            [data-radix-dialog-content] > header,
-            button {
-              display: none !important;
-            }
-            [data-radix-dialog-content] {
-              position: static !important;
-              max-width: 100% !important;
-              width: 100% !important;
-              height: auto !important;
-              max-height: none !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              box-shadow: none !important;
-              border: none !important;
-              overflow: visible !important;
-            }
-            [data-pdf-content] {
-              position: static !important;
-              width: 100% !important;
-              height: auto !important;
-              max-height: none !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              overflow: visible !important;
-              display: block !important;
-            }
-          }
-        `}</style>
-        <DialogContent className="max-w-[280mm] w-[280mm] max-h-[95vh] p-0 overflow-hidden flex flex-col print:p-0 print:m-0 print:max-w-none print:w-full print:h-full">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200/60 bg-gradient-to-br from-white via-slate-50/30 to-white flex-shrink-0 print:hidden">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center gap-3">
-                <div className="h-10 w-10 flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white shadow-md ring-2 ring-primary/20">
-                  <FileText className="h-5 w-5 drop-shadow-sm" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-base font-semibold text-slate-900 leading-tight">
-                    Fee Structure Preview
-                  </span>
-                  <span className="text-sm text-slate-600 font-medium truncate max-w-md">
-                    {structure.structureName}
-                  </span>
-                </div>
-              </DialogTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadPDF}
-                  className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-md transition-all duration-200 font-medium print:hidden"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowPDFPreview(false)}
-                  className="h-9 w-9 p-0 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 print:hidden rounded-lg"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4 print:px-0 print:py-0 print:overflow-visible print:h-auto print:max-h-none">
-            <div data-pdf-content className="print:block print:w-full print:h-auto print:max-h-none">
-              <FeeStructurePDFPreview
-                formData={convertToPDFForm}
-                schoolName={schoolName}
-                feeBuckets={displayBuckets.map(b => ({
-                  id: b.feeBucketId,
-                  name: b.name,
-                  description: ''
-                }))}
-                gradeLevels={structure.gradeLevels}
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {pdfDialog}
     </Card>
   )
 }

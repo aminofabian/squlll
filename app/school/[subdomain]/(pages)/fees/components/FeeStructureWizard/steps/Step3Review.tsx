@@ -1,13 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Edit2, Eye, FileText, Download, X } from 'lucide-react'
+import { Edit2, Settings2, Copy, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { FeeStructurePDFPreview } from '../../FeeStructurePDFPreview'
-import { FeeStructureForm } from '../../../types'
+import { FEES_BRAND } from '../../../lib/fees-ui'
+import { isPrimaryFeeCategory } from '../../../lib/feeCategoryDisplay'
+import { sortTermsForLetter } from '../../../lib/sortTermsForLetter'
+import type { FeesSetupWizardResult } from '../../FeesSetupWizardDialog'
+import { CategorySplitEditor } from '../../CategorySplitEditor'
+import { useWizardTermAmounts } from '../useWizardTermAmounts'
+import {
+    FeesAmountTable,
+    FeesKesCell,
+    FeesMetaGrid,
+    FeesWizardSection,
+    feesTableCellAmount,
+    feesTableCellLabel,
+    feesTableHead,
+    feesTableRowTotal,
+    feesTableThFirst,
+    feesTableThTerm,
+} from '../FeesWizardLayout'
 
 interface Step3ReviewProps {
     formData: {
@@ -20,539 +35,407 @@ interface Step3ReviewProps {
         bucketAmounts: Record<string, { id: string; name: string; amount: number; isMandatory: boolean }>
         terms?: Array<{ id: string; name: string }>
         termBucketAmounts?: Record<string, Record<string, { id: string; name: string; amount: number; isMandatory: boolean }>>
+        previewGrade?: string
     }
     onChange: (field: string, value: any) => void
+    editableAmounts?: boolean
+    setupDraft?: FeesSetupWizardResult | null
+    onSetupDraftChange?: (draft: FeesSetupWizardResult) => void
+    onEditSetup?: () => void
+    errors?: Record<string, string>
 }
 
-export const Step3Review = ({ formData, onChange }: Step3ReviewProps) => {
-    const [editingField, setEditingField] = useState<string | null>(null)
-    const [editingAmount, setEditingAmount] = useState<string | null>(null)
-    const [showPDFPreview, setShowPDFPreview] = useState(false)
+function boardingLabel(type: string): string {
+    if (type === 'both') return 'Day & boarding'
+    if (type === 'boarding') return 'Boarding'
+    return 'Day'
+}
 
-    const hasTerms = formData.terms && formData.terms.length > 0
-    const hasTermSpecificAmounts = formData.termBucketAmounts && Object.keys(formData.termBucketAmounts).length > 0
-    
-    // Calculate totals - if terms exist, show per-term totals, otherwise show global total
+export const Step3Review = ({
+    formData,
+    onChange,
+    editableAmounts = false,
+    setupDraft,
+    onSetupDraftChange,
+    onEditSetup,
+    errors,
+}: Step3ReviewProps) => {
+    const [editingName, setEditingName] = useState(false)
+    const [showSplits, setShowSplits] = useState(false)
+    const [showLineEdit, setShowLineEdit] = useState(false)
+
+    const amounts = useWizardTermAmounts(formData, onChange, {
+        setupDraft: editableAmounts ? setupDraft : null,
+        onSetupDraftChange: editableAmounts ? onSetupDraftChange : undefined,
+    })
+
+    const hasTerms = (formData.terms?.length ?? 0) > 0
+    const hasTermAmounts =
+        formData.termBucketAmounts &&
+        Object.keys(formData.termBucketAmounts).length > 0
+
+    const sortedTerms = useMemo(
+        () =>
+            editableAmounts
+                ? amounts.sortedTerms
+                : sortTermsForLetter(formData.terms || []),
+        [editableAmounts, amounts.sortedTerms, formData.terms],
+    )
+
     const getAmountForTerm = (bucketId: string, termId: string): number => {
+        if (editableAmounts) {
+            return amounts.getAmountForTerm(bucketId, termId)
+        }
         if (formData.termBucketAmounts?.[termId]?.[bucketId]) {
             return formData.termBucketAmounts[termId][bucketId].amount || 0
         }
         return formData.bucketAmounts[bucketId]?.amount || 0
     }
-    
+
     const getTotalForTerm = (termId: string): number => {
-        if (!formData.selectedBuckets) return 0
-        // If termBucketAmounts exists for this term, use it; otherwise fallback to global bucketAmounts
-        if (formData.termBucketAmounts?.[termId]) {
-            return formData.selectedBuckets.reduce((sum, bucketId) => {
-                return sum + getAmountForTerm(bucketId, termId)
-            }, 0)
-        }
-        // Fallback to global amounts if term-specific amounts don't exist
-        return formData.selectedBuckets.reduce((sum, bucketId) => {
-            return sum + (formData.bucketAmounts[bucketId]?.amount || 0)
-        }, 0)
+        if (editableAmounts) return amounts.getTotalForTerm(termId)
+        if (!formData.selectedBuckets?.length) return 0
+        return formData.selectedBuckets.reduce(
+            (sum, bucketId) => sum + getAmountForTerm(bucketId, termId),
+            0,
+        )
     }
-    
-    const getMandatoryTotalForTerm = (termId: string): number => {
-        if (!formData.selectedBuckets) return 0
-        // If termBucketAmounts exists for this term, use it; otherwise fallback to global bucketAmounts
-        if (formData.termBucketAmounts?.[termId]) {
-            return formData.selectedBuckets.reduce((sum, bucketId) => {
-                const bucket = formData.termBucketAmounts?.[termId]?.[bucketId] || formData.bucketAmounts[bucketId]
-                if (bucket?.isMandatory) {
-                    return sum + getAmountForTerm(bucketId, termId)
-                }
-                return sum
-            }, 0)
-        }
-        // Fallback to global amounts
-        return formData.selectedBuckets.reduce((sum, bucketId) => {
+
+    const bucketRows = useMemo(() => {
+        const rows = (formData.selectedBuckets || []).map((bucketId) => {
             const bucket = formData.bucketAmounts[bucketId]
-            if (bucket?.isMandatory) {
-                return sum + (bucket.amount || 0)
-            }
-            return sum
-        }, 0)
-    }
-    
-    const totalAmount = hasTerms && hasTermSpecificAmounts
-        ? (formData.terms?.reduce((sum, term) => sum + getTotalForTerm(term.id), 0) || 0)
-        : Object.values(formData.bucketAmounts).reduce((sum, b) => sum + b.amount, 0)
-    const mandatoryAmount = hasTerms && hasTermSpecificAmounts
-        ? (formData.terms?.reduce((sum, term) => sum + getMandatoryTotalForTerm(term.id), 0) || 0)
-        : Object.values(formData.bucketAmounts)
-            .filter(b => b.isMandatory)
-            .reduce((sum, b) => sum + b.amount, 0)
-
-    // Convert formData to FeeStructureForm for PDF preview
-    const convertToPDFForm = (): FeeStructureForm => {
-        if (hasTerms && hasTermSpecificAmounts) {
-            // Create term-specific structures
-            const termStructures = formData.terms?.map((term, index) => {
-                const buckets = formData.selectedBuckets.map(bucketId => {
-                    const bucket = formData.termBucketAmounts?.[term.id]?.[bucketId] || formData.bucketAmounts[bucketId]
-                    return {
-                        id: bucketId,
-                        type: 'tuition' as const,
-                        name: bucket.name,
-                        description: '',
-                        isOptional: !bucket.isMandatory,
-                        components: [{
-                            name: bucket.name,
-                            description: '',
-                            amount: bucket.amount.toString(),
-                            category: 'fee'
-                        }]
-                    }
-                })
-
-                return {
-                    term: term.name as any,
-                    academicYear: formData.academicYear,
-                    dueDate: '',
-                    latePaymentFee: '',
-                    earlyPaymentDiscount: '',
-                    earlyPaymentDeadline: '',
-                    buckets: buckets,
-                    existingBucketAmounts: {}
-                }
-            }) || []
-
+            const name = bucket?.name || 'Fee item'
+            const amountsList = hasTerms
+                ? sortedTerms.map((t) => getAmountForTerm(bucketId, t.id))
+                : [bucket?.amount || 0]
+            const maxAmount = Math.max(...amountsList, 0)
             return {
-                name: formData.name,
-                grade: formData.grade || formData.selectedGrades?.join(', ') || '',
-                boardingType: formData.boardingType as 'day' | 'boarding' | 'both',
-                academicYear: formData.academicYear,
-                termStructures
+                bucketId,
+                name,
+                amounts: amountsList,
+                maxAmount,
+                isMandatory: bucket?.isMandatory ?? true,
             }
-        } else {
-            // Single term structure (backward compatibility)
-            const buckets = formData.selectedBuckets.map(bucketId => {
-                const bucket = formData.bucketAmounts[bucketId]
-                return {
-                    id: bucketId,
-                    type: 'tuition' as const,
-                    name: bucket.name,
-                    description: '',
-                    isOptional: !bucket.isMandatory,
-                    components: [{
-                        name: bucket.name,
-                        description: '',
-                        amount: bucket.amount.toString(),
-                        category: 'fee'
-                    }]
-                }
-            })
-
-            return {
-                name: formData.name,
-                grade: formData.grade || formData.selectedGrades?.join(', ') || '',
-                boardingType: formData.boardingType as 'day' | 'boarding' | 'both',
-                academicYear: formData.academicYear,
-                termStructures: [{
-                    term: 'Term 1' as const,
-                    academicYear: formData.academicYear,
-                    dueDate: '',
-                    latePaymentFee: '',
-                    earlyPaymentDiscount: '',
-                    earlyPaymentDeadline: '',
-                    buckets: buckets,
-                    existingBucketAmounts: {}
-                }]
-            }
-        }
-    }
-
-    // Handle PDF download with slug-based filename
-    const handleDownloadPDF = () => {
-        // Create a slug from form data name
-        const pdfId = formData.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'fee-structure'
-        
-        // Use browser's print functionality
-        // The print dialog will allow saving as PDF with the suggested filename
-        // Note: To enable direct download with slug URL, install html2pdf.js:
-        // npm install html2pdf.js
-        window.print()
-        
-        // After print dialog opens, the browser will suggest the filename
-        // For direct download with slug URL like /fee/[pdf-id], 
-        // you would need a server-side route or html2pdf.js library
-    }
-
-    const updateBucketAmount = (bucketId: string, newAmount: number) => {
-        const bucket = formData.bucketAmounts[bucketId]
-        onChange('bucketAmounts', {
-            ...formData.bucketAmounts,
-            [bucketId]: { ...bucket, amount: newAmount }
         })
-        setEditingAmount(null)
-    }
+        return rows.sort((a, b) => b.maxAmount - a.maxAmount)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        formData.selectedBuckets,
+        formData.bucketAmounts,
+        formData.termBucketAmounts,
+        sortedTerms,
+        hasTerms,
+        editableAmounts,
+    ])
+
+    const totalAmount =
+        hasTerms && hasTermAmounts
+            ? sortedTerms.reduce((sum, term) => sum + getTotalForTerm(term.id), 0)
+            : Object.values(formData.bucketAmounts).reduce(
+                  (sum, b) => sum + b.amount,
+                  0,
+              )
+
+    const perTermAverage =
+        hasTerms && sortedTerms.length > 0
+            ? Math.round(totalAmount / sortedTerms.length)
+            : totalAmount
+
+    const gradeSummary = formData.selectedGrades?.length
+        ? formData.selectedGrades.length <= 3
+            ? formData.selectedGrades.join(', ')
+            : `${formData.selectedGrades.length} grades`
+        : formData.grade || '—'
+
+    const termColumns = hasTerms ? sortedTerms : [{ id: '_single', name: 'Per term' }]
+    const termColWidth =
+        termColumns.length > 0
+            ? `${Math.floor(62 / termColumns.length)}%`
+            : '20%'
+
+    const canEditLines = editableAmounts && showLineEdit && hasTerms
 
     return (
-        <div className="space-y-6">
-            {/* Name - Editable */}
-            {editingField === 'name' ? (
-                <Input
-                    autoFocus
-                    value={formData.name}
-                    onChange={(e) => onChange('name', e.target.value)}
-                    onBlur={() => setEditingField(null)}
-                    onKeyDown={(e) => e.key === 'Enter' && setEditingField(null)}
-                    className="font-semibold text-xl h-12"
-                />
-            ) : (
-                <button
-                    onClick={() => setEditingField('name')}
-                    className="flex items-center gap-2 group w-full text-left hover:bg-slate-50 -mx-2 px-2 py-2 rounded transition-colors"
-                >
-                    <span className="font-semibold text-xl text-slate-900">{formData.name}</span>
-                    <Edit2 className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-            )}
-
-            {/* Meta Info */}
-            <div className="text-slate-600 -mt-2">
-                {formData.grade} • {formData.boardingType === 'both' ? 'Day & Boarding' :
-                    formData.boardingType === 'day' ? 'Day Students' : 'Boarding Students'} • {formData.academicYear}
-            </div>
-
-            {/* Fees */}
-            {hasTerms && hasTermSpecificAmounts ? (
-                // Term-specific display
-                <div className="space-y-4 pt-2">
-                    {formData.terms?.map(term => {
-                        const termTotal = getTotalForTerm(term.id)
-                        const mandatoryTotal = getMandatoryTotalForTerm(term.id)
-                        
-                        return (
-                            <div key={term.id} className="border border-slate-200 rounded-lg p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h4 className="font-semibold text-slate-900">{term.name}</h4>
-                                    <div className="text-right">
-                                        <div className="text-lg font-bold text-primary">
-                                            {termTotal.toLocaleString()} KES
-                                        </div>
-                                        {termTotal !== mandatoryTotal && (
-                                            <div className="text-xs text-slate-600">
-                                                Required: {mandatoryTotal.toLocaleString()} KES
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-0.5">
-                                    {formData.selectedBuckets.map(bucketId => {
-                                        const bucket = formData.termBucketAmounts?.[term.id]?.[bucketId] || formData.bucketAmounts[bucketId]
-                                        if (!bucket) return null
-                                        
-                                        return (
-                                            <div
-                                                key={`${term.id}-${bucketId}`}
-                                                className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
-                                            >
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className={cn(
-                                                        "w-1.5 h-1.5 rounded-full",
-                                                        bucket.isMandatory ? "bg-primary" : "bg-amber-400"
-                                                    )} />
-                                                    <span className="text-slate-700 text-sm">{bucket.name}</span>
-                                                </div>
-                                                <span className="font-semibold text-primary text-sm">
-                                                    {bucket.amount.toLocaleString()} KES
-                                                </span>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        )
-                    })}
+        <div className="space-y-5">
+            {editableAmounts && onEditSetup ? (
+                <div className="flex justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 border-emerald-200 text-emerald-900"
+                        onClick={onEditSetup}
+                    >
+                        <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+                        Edit categories & grade amounts
+                    </Button>
                 </div>
-            ) : (
-                // Single amount display (backward compatibility)
-                <div className="space-y-0.5 pt-2">
-                    {Object.values(formData.bucketAmounts).map((bucket) => (
-                        <div
-                            key={bucket.id}
-                            className="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0"
+            ) : null}
+
+            {editableAmounts && setupDraft?.categories?.length ? (
+                <FeesWizardSection
+                    title="Category split"
+                    action={
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => setShowSplits((v) => !v)}
                         >
-                            <div className="flex items-center gap-2.5">
-                                <div className={cn(
-                                    "w-1.5 h-1.5 rounded-full",
-                                    bucket.isMandatory ? "bg-primary" : "bg-amber-400"
-                                )} />
-                                <span className="text-slate-700">{bucket.name}</span>
-                            </div>
-
-                            {editingAmount === bucket.id ? (
-                                <Input
-                                    type="number"
-                                    autoFocus
-                                    value={bucket.amount}
-                                    onChange={(e) => updateBucketAmount(bucket.id, parseFloat(e.target.value) || 0)}
-                                    onBlur={() => setEditingAmount(null)}
-                                    onKeyDown={(e) => e.key === 'Enter' && setEditingAmount(null)}
-                                    className="w-32 h-9 text-right font-semibold"
-                                />
+                            {showSplits ? (
+                                <>
+                                    <ChevronUp className="mr-1 h-3.5 w-3.5" />
+                                    Hide
+                                </>
                             ) : (
-                                <button
-                                    onClick={() => setEditingAmount(bucket.id)}
-                                    className="group flex items-center gap-2 hover:bg-slate-50 px-2 py-1 rounded transition-colors"
-                                >
-                                    <span className="font-semibold text-primary">
-                                        {bucket.amount.toLocaleString()}
-                                    </span>
-                                    <Edit2 className="h-3 w-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </button>
+                                <>
+                                    <ChevronDown className="mr-1 h-3.5 w-3.5" />
+                                    Edit %
+                                </>
                             )}
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Total - Enhanced with per-term breakdown */}
-            {hasTerms && formData.terms && formData.terms.length > 0 ? (
-                <div className="space-y-4 mt-6">
-                    {/* Per-term totals */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {formData.terms.map((term) => {
-                            const termTotal = getTotalForTerm(term.id)
-                            const termMandatory = getMandatoryTotalForTerm(term.id)
-                            return (
-                                <div key={term.id} className="bg-gradient-to-br from-slate-50 to-white rounded-lg p-4 border border-slate-200">
-                                    <div className="text-xs font-medium text-slate-600 mb-1">{term.name}</div>
-                                    <div className="text-2xl font-bold text-primary">
-                                        {termTotal.toLocaleString()} KES
-                                    </div>
-                                    {termTotal !== termMandatory && (
-                                        <div className="text-xs text-slate-500 mt-1">
-                                            Required: {termMandatory.toLocaleString()} KES
-                                        </div>
-                                    )}
-                                </div>
-                            )
-                        })}
-                    </div>
-
-                    {/* Grand Total - Creative Design */}
-                    <div className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 rounded-xl p-6 border-2 border-primary shadow-lg relative overflow-hidden">
-                        {/* Decorative elements */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -ml-12 -mb-12"></div>
-                        
-                        <div className="relative flex items-end justify-between">
-                            <div>
-                                <div className="text-xs font-semibold text-white/90 uppercase tracking-wider mb-2">
-                                    Grand Total
-                                </div>
-                                <div className="text-6xl font-bold text-white mb-1">
-                                    {totalAmount.toLocaleString()}
-                                </div>
-                                <div className="text-sm text-white/80 font-medium">
-                                    KES across {formData.terms.length} term{formData.terms.length !== 1 ? 's' : ''}
-                                </div>
-                                {formData.terms.length > 1 && (
-                                    <div className="text-xs text-white/70 mt-2">
-                                        Average: {(totalAmount / formData.terms.length).toLocaleString(undefined, { maximumFractionDigits: 0 })} KES per term
-                                    </div>
-                                )}
-                            </div>
-                            {totalAmount !== mandatoryAmount && (
-                                <div className="text-right bg-white/20 rounded-lg px-4 py-3 backdrop-blur-sm">
-                                    <div className="text-xs text-white/90 font-medium mb-1">Required Amount</div>
-                                    <div className="text-3xl font-bold text-white">
-                                        {mandatoryAmount.toLocaleString()}
-                                    </div>
-                                    <div className="text-xs text-white/80 mt-1">
-                                        Optional: {(totalAmount - mandatoryAmount).toLocaleString()} KES
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="bg-gradient-to-r from-primary/10 to-primary-light/5 rounded-xl p-6 border-2 border-primary/30 mt-6">
-                    <div className="flex items-end justify-between">
-                        <div>
-                            <div className="text-5xl font-bold text-primary">
-                                {totalAmount.toLocaleString()}
-                            </div>
-                            <div className="text-sm text-slate-600 mt-2">
-                                KES per term
-                            </div>
-                        </div>
-                        {totalAmount !== mandatoryAmount && (
-                            <div className="text-right">
-                                <div className="text-xs text-slate-600">Required</div>
-                                <div className="text-2xl font-bold text-slate-900">
-                                    {mandatoryAmount.toLocaleString()}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* PDF Preview Link */}
-            <div className="mt-6 pt-6 border-t border-slate-200">
-                <Button
-                    onClick={() => setShowPDFPreview(true)}
-                    variant="outline"
-                    size="sm"
-                    className="border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
-                >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview PDF
-                </Button>
-            </div>
-
-            {/* PDF Preview Modal */}
-            <Dialog open={showPDFPreview} onOpenChange={setShowPDFPreview}>
-                <style>{`
-                    @media print {
-                        @page {
-                            margin: 15mm;
-                            size: A4;
-                        }
-                        /* Hide dialog elements */
-                        [data-radix-dialog-overlay],
-                        [data-radix-dialog-content] > header,
-                        button {
-                            display: none !important;
-                        }
-                        /* Make dialog content full page */
-                        [data-radix-dialog-content] {
-                            position: static !important;
-                            max-width: 100% !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            max-height: none !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            box-shadow: none !important;
-                            border: none !important;
-                            overflow: visible !important;
-                            page-break-inside: auto !important;
-                        }
-                        /* Remove any flex constraints */
-                        [data-radix-dialog-content] > div {
-                            height: auto !important;
-                            max-height: none !important;
-                            overflow: visible !important;
-                            page-break-inside: auto !important;
-                        }
-                        /* PDF content container */
-                        [data-pdf-content] {
-                            position: static !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            min-height: 0 !important;
-                            max-height: none !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            overflow: visible !important;
-                            display: block !important;
-                            page-break-inside: auto !important;
-                            break-inside: auto !important;
-                        }
-                        /* PDF preview container */
-                        [data-pdf-content] > div {
-                            position: static !important;
-                            width: 100% !important;
-                            height: auto !important;
-                            min-height: 0 !important;
-                            max-height: none !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            page-break-inside: auto !important;
-                            break-inside: auto !important;
-                            overflow: visible !important;
-                        }
-                        /* Force content to flow */
-                        [data-pdf-content] > div > * {
-                            page-break-inside: auto !important;
-                            break-inside: auto !important;
-                        }
-                        /* Allow tables to break across pages */
-                        table {
-                            page-break-inside: auto !important;
-                        }
-                        /* Allow rows to break */
-                        tr {
-                            page-break-inside: auto !important;
-                        }
-                        /* Table headers repeat on each page */
-                        thead {
-                            display: table-header-group !important;
-                        }
-                        /* Allow sections to break */
-                        div {
-                            page-break-inside: auto !important;
-                        }
-                        /* Body and html */
-                        body, html {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            height: auto !important;
-                        }
+                        </Button>
                     }
-                `}</style>
-                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto print:p-0 print:m-0 print:max-w-none print:w-full print:h-full">
-                    <DialogHeader className="print:hidden">
-                        <div className="flex items-center justify-between">
-                            <DialogTitle className="flex items-center gap-2">
-                                <FileText className="h-5 w-5 text-primary" />
-                                Fee Structure Preview - {formData.name}
-                            </DialogTitle>
-                            <div className="flex items-center gap-2">
+                >
+                    {showSplits ? (
+                        <CategorySplitEditor
+                            compact
+                            categories={setupDraft.categories}
+                            splits={amounts.draftSplits}
+                            onChange={amounts.applyCategorySplits}
+                            previewTotalKes={amounts.previewTotalKes}
+                        />
+                    ) : (
+                        <p className="text-xs text-slate-500">
+                            {setupDraft.categories.length} categories · adjust
+                            percentages to redistribute line items
+                        </p>
+                    )}
+                </FeesWizardSection>
+            ) : null}
+
+            <FeesWizardSection title="Plan details">
+                <div className="space-y-4">
+                    {editingName ? (
+                        <Input
+                            autoFocus
+                            value={formData.name}
+                            onChange={(e) => onChange('name', e.target.value)}
+                            onBlur={() => setEditingName(false)}
+                            onKeyDown={(e) => e.key === 'Enter' && setEditingName(false)}
+                            className="h-10 font-semibold"
+                        />
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setEditingName(true)}
+                            className="group flex w-full items-center justify-between gap-2 rounded-lg border border-transparent py-1 text-left hover:border-slate-200 hover:bg-slate-50"
+                        >
+                            <span className="text-base font-semibold text-slate-900">
+                                {formData.name || 'Untitled plan'}
+                            </span>
+                            <Edit2 className="h-4 w-4 shrink-0 text-slate-400 opacity-0 group-hover:opacity-100" />
+                        </button>
+                    )}
+                    <FeesMetaGrid
+                        items={[
+                            { label: 'Year', value: formData.academicYear },
+                            { label: 'Grades', value: gradeSummary },
+                            { label: 'Students', value: boardingLabel(formData.boardingType) },
+                            {
+                                label: 'Items',
+                                value: `${formData.selectedBuckets?.length ?? 0} categories`,
+                            },
+                        ]}
+                    />
+                </div>
+            </FeesWizardSection>
+
+            <FeesWizardSection
+                title="Fee breakdown"
+                noPadding
+                action={
+                    editableAmounts && hasTerms ? (
+                        <div className="flex items-center gap-1">
+                            {sortedTerms.length >= 2 ? (
                                 <Button
+                                    type="button"
                                     variant="outline"
                                     size="sm"
-                                    onClick={handleDownloadPDF}
-                                    className="border-primary/30 text-primary hover:bg-primary/5 print:hidden"
+                                    className="h-7 text-xs"
+                                    onClick={amounts.copyTerm1ToAllTerms}
                                 >
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Download PDF
+                                    <Copy className="mr-1 h-3.5 w-3.5" />
+                                    Copy T1 → all
                                 </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowPDFPreview(false)}
-                                    className="h-8 w-8 p-0 print:hidden"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            ) : null}
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setShowLineEdit((v) => !v)}
+                            >
+                                {showLineEdit ? 'Lock lines' : 'Edit lines'}
+                            </Button>
                         </div>
-                    </DialogHeader>
-                    <div className="mt-4 print:mt-0 print:overflow-visible print:h-auto print:max-h-none">
-                        <div data-pdf-content className="print:block print:w-full print:h-auto print:max-h-none">
-                            <FeeStructurePDFPreview
-                            formData={convertToPDFForm()}
-                            feeBuckets={formData.selectedBuckets.map(bucketId => {
-                                // Try to get bucket from term-specific amounts first, then fallback to global
-                                let bucket = null
-                                if (hasTerms && hasTermSpecificAmounts && formData.terms && formData.terms.length > 0) {
-                                    // Get bucket from first term (all terms should have same bucket names)
-                                    const firstTerm = formData.terms[0]
-                                    bucket = formData.termBucketAmounts?.[firstTerm.id]?.[bucketId]
-                                }
-                                if (!bucket) {
-                                    bucket = formData.bucketAmounts[bucketId]
-                                }
-                                
-                                return {
-                                    id: bucketId,
-                                    name: bucket?.name || 'Unknown',
-                                    description: bucket?.name || ''
-                                }
+                    ) : undefined
+                }
+            >
+                {errors?.bucketAmounts && (
+                    <p className="px-4 pt-3 text-xs text-red-600">{errors.bucketAmounts}</p>
+                )}
+                <FeesAmountTable className="rounded-none border-0 shadow-none">
+                    <colgroup>
+                        <col className="w-[38%]" />
+                        {termColumns.map((term) => (
+                            <col key={term.id} style={{ width: termColWidth }} />
+                        ))}
+                    </colgroup>
+                    <thead>
+                        <tr className={feesTableHead}>
+                            <th className={feesTableThFirst}>Category</th>
+                            {termColumns.map((term) => (
+                                <th key={term.id} className={feesTableThTerm}>
+                                    {term.name}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className={feesTableRowTotal}>
+                            <td className={cn(feesTableCellLabel, 'text-emerald-900')}>
+                                Term total
+                            </td>
+                            {termColumns.map((term) => {
+                                const total = hasTerms
+                                    ? getTotalForTerm(term.id)
+                                    : totalAmount
+                                return (
+                                    <td
+                                        key={term.id}
+                                        className={cn(
+                                            feesTableCellAmount,
+                                            'text-emerald-800',
+                                            editableAmounts && hasTerms && 'py-2 px-2',
+                                        )}
+                                    >
+                                        {editableAmounts && hasTerms ? (
+                                            <div className="relative min-w-[100px]">
+                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                                                    KES
+                                                </span>
+                                                <Input
+                                                    {...amounts.bindTermTotalInput(term.id)}
+                                                    placeholder="e.g. 45000"
+                                                    className="h-9 border-emerald-200/80 bg-white pl-10 text-right text-sm font-bold tabular-nums"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <FeesKesCell amount={total} bold />
+                                        )}
+                                    </td>
+                                )
                             })}
-                            />
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                        </tr>
+                        {bucketRows.map((row, idx) => {
+                            const primary = isPrimaryFeeCategory(row.name)
+                            return (
+                                <tr
+                                    key={row.bucketId}
+                                    className={cn(
+                                        'border-b border-slate-100',
+                                        idx % 2 === 1 && !primary && 'bg-slate-50/50',
+                                        primary && 'bg-emerald-50/30',
+                                    )}
+                                >
+                                    <td className={feesTableCellLabel}>
+                                        <span
+                                            className={cn(
+                                                primary && 'font-semibold text-slate-900',
+                                            )}
+                                        >
+                                            {row.name}
+                                        </span>
+                                        {!row.isMandatory && (
+                                            <span className="ml-2 text-[10px] font-medium uppercase tracking-wide text-amber-600">
+                                                Optional
+                                            </span>
+                                        )}
+                                    </td>
+                                    {row.amounts.map((amount, i) => {
+                                        const termId = termColumns[i]?.id
+                                        const showInput =
+                                            canEditLines &&
+                                            termId &&
+                                            termId !== '_single'
+                                        return (
+                                            <td
+                                                key={termColumns[i]?.id ?? i}
+                                                className={cn(
+                                                    feesTableCellAmount,
+                                                    showInput && 'py-2 px-2',
+                                                )}
+                                            >
+                                                {showInput ? (
+                                                    <div className="relative min-w-[88px]">
+                                                        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
+                                                            KES
+                                                        </span>
+                                                        <Input
+                                                            {...amounts.bindLineAmountInput(
+                                                                row.bucketId,
+                                                                termId,
+                                                            )}
+                                                            className="h-8 bg-white pl-8 text-right text-xs tabular-nums"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <FeesKesCell
+                                                        amount={amount}
+                                                        bold={primary}
+                                                    />
+                                                )}
+                                            </td>
+                                        )
+                                    })}
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                    <tfoot>
+                        <tr className="border-t-2 border-slate-200 bg-slate-50">
+                            <td className={cn(feesTableCellLabel, 'py-3')}>
+                                <span className="block text-slate-800">Year total</span>
+                                {hasTerms && sortedTerms.length > 1 && (
+                                    <span className="mt-0.5 block text-[11px] font-normal text-slate-400 tabular-nums">
+                                        ~{perTermAverage.toLocaleString()} / term
+                                    </span>
+                                )}
+                            </td>
+                            <td
+                                colSpan={termColumns.length}
+                                className={cn(feesTableCellAmount, 'py-3')}
+                            >
+                                <span
+                                    className="text-lg font-bold tabular-nums"
+                                    style={{ color: FEES_BRAND.primaryDark }}
+                                >
+                                    <span className="mr-1.5 text-sm font-normal text-slate-400">
+                                        KES
+                                    </span>
+                                    {totalAmount.toLocaleString()}
+                                </span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </FeesAmountTable>
+            </FeesWizardSection>
+
+            <p className="px-1 text-sm text-slate-500">
+                Next: add your school letterhead, bank details, and preview the
+                official fee structure before saving.
+            </p>
         </div>
     )
 }

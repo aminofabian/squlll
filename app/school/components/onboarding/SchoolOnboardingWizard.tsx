@@ -564,7 +564,7 @@ export function SchoolOnboardingWizard() {
               <ChecklistItem
                 title="Fees"
                 description="Fee structures for the active term."
-                href="/fees"
+                href="/fees?section=plans"
               />
               <ChecklistItem
                 title="Timetable"

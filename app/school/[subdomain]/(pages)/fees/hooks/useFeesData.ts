@@ -65,17 +65,24 @@ export const useFeesData = () => {
     return mapped.sort((a, b) => a.name.localeCompare(b.name));
   }, [students]);
 
-  // Filter students by search term
+  // Filter by grade, then search term
   const filteredStudents = useMemo(() => {
-    if (!searchTerm) return allStudents;
-    return allStudents.filter(
+    let list = allStudents;
+    if (selectedClass && selectedClass !== "all") {
+      list = list.filter(
+        (student) =>
+          student.class === selectedClass ||
+          student.class?.includes(selectedClass),
+      );
+    }
+    if (!searchTerm) return list;
+    const q = searchTerm.toLowerCase();
+    return list.filter(
       (student) =>
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.admissionNumber
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()),
+        student.name.toLowerCase().includes(q) ||
+        student.admissionNumber.toLowerCase().includes(q),
     );
-  }, [allStudents, searchTerm]);
+  }, [allStudents, searchTerm, selectedClass]);
 
   // Get invoices for selected student using GraphQL
   const {

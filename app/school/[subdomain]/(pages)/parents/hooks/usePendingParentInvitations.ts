@@ -1,13 +1,35 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { graphqlClient } from "@/lib/graphql-client";
+import { gql } from "graphql-request";
 import { ParentInvitation } from "../types";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 
+const GET_PENDING_PARENT_INVITATIONS = gql`
+  query GetPendingParentInvitations($tenantId: String!) {
+    getPendingParentInvitations(tenantId: $tenantId) {
+      id
+      email
+      role
+      status
+      createdAt
+      expiresAt
+      invitedBy {
+        id
+        name
+        email
+      }
+    }
+  }
+`;
+
 export const usePendingParentInvitations = () => {
-  const [pendingInvitations, setPendingInvitations] = useState<ParentInvitation[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [pendingInvitations, setPendingInvitations] = useState<
+    ParentInvitation[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { config } = useSchoolConfigStore();
   const tenantId = config?.tenant?.id;
@@ -19,46 +41,12 @@ export const usePendingParentInvitations = () => {
       setIsLoading(true);
       setError(null);
 
-      const query = `
-        query {
-          getPendingParentInvitations(tenantId: "${tenantId}") {
-            id
-            email
-            role
-            status
-            createdAt
-            invitedBy {
-              id
-              name
-              email
-            }
-          }
-        }
-      `;
+      const data = await graphqlClient.request<{
+        getPendingParentInvitations: ParentInvitation[];
+      }>(GET_PENDING_PARENT_INVITATIONS, { tenantId });
 
-      const response = await fetch("/api/graphql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch pending parent invitations");
-      }
-
-      const data = await response.json();
-
-      if (data.errors) {
-        throw new Error(
-          data.errors[0]?.message || "Error fetching pending parent invitations",
-        );
-      }
-
-      setPendingInvitations(data.data.getPendingParentInvitations || []);
+      setPendingInvitations(data.getPendingParentInvitations ?? []);
     } catch (err: unknown) {
-      console.error("Error fetching pending parent invitations:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -87,15 +75,10 @@ export const usePendingParentInvitations = () => {
     },
   });
 
-  const resendInvitation = async (invitationId: string) => {
-    console.log(`Resend invitation for ${invitationId}`);
-  };
-
   return {
     pendingInvitations,
     isLoading,
     error,
-    resendInvitation,
     refetch: fetchPendingInvitations,
   };
 };

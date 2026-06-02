@@ -24,8 +24,8 @@ export const defaultSchoolTheme: SchoolTheme = {
     border: '#d1d5db', // gray-300
   },
   typography: {
-    fontFamily: 'Inter, system-ui, sans-serif',
-    headingFontFamily: 'Inter, system-ui, sans-serif',
+    fontFamily: 'Figtree, sans-serif',
+    headingFontFamily: 'Figtree, sans-serif',
     headingWeight: '900', // font-black
     bodyWeight: '600', // font-semibold
     buttonWeight: '700', // font-bold
