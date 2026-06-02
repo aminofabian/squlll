@@ -1,4 +1,8 @@
 // Polyfill localStorage for SSR before anything else
+import type { Metadata } from "next";
+
+import { metadata as siteMetadata } from "./metadata";
+
 import "@/lib/polyfills/localStorage";
 
 import { Figtree } from "next/font/google";
@@ -12,6 +16,10 @@ const figtree = Figtree({
   variable: "--font-figtree",
   display: "swap",
 });
+
+// Ensures <title>/<meta> tags are emitted for crawlers on routes that
+// don't have their own segment metadata.
+export const metadata: Metadata = siteMetadata;
 
 // Server component root layout
 export default function RootLayout({
