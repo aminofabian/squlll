@@ -25,11 +25,11 @@ export function FeeLetterPreviewMeta({
 }: FeeLetterPreviewMetaProps) {
   const values = { grade, academicYear, terms }
 
-  const items = META_ITEMS.map(({ key, label }) => {
+  const items = META_ITEMS.flatMap(({ key, label }) => {
     const raw = values[key]
-    if (!raw?.trim()) return null
-    return { key, label, value: formatMetaValue(raw.trim()) }
-  }).filter(Boolean)
+    if (!raw?.trim()) return []
+    return [{ key, label, value: formatMetaValue(raw.trim()) }]
+  })
 
   if (items.length === 0) return null
 

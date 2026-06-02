@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   FeeStructureManagerProps, 
@@ -19,6 +19,13 @@ import { FeeStructure } from '../../types'
 import { mockFeeStructures } from '../../data/mockData'
 import { useGraphQLFeeStructures } from '../../hooks/useGraphQLFeeStructures'
 import { useGradeData } from '../../hooks/useGradeData'
+import { useFeeAssignments } from '../../hooks/useFeeAssignments'
+import {
+  buildLinkedClassCountByPlanId,
+  countStudentsForPlan,
+  findPlanForStructureId,
+  getLinkedClassesForPlan,
+} from '../../lib/feePlanLinkage'
 import {
   fetchFeePlanDeleteEligibility,
   type FeePlanDeleteEligibility,
@@ -61,6 +68,7 @@ export const FeeStructureManager = ({
 
   // Use the GraphQL hook to fetch fee structures
   const { structures, isLoading, error, lastFetchTime, fetchFeeStructures } = useGraphQLFeeStructures()
+  const { data: feeAssignmentsData } = useFeeAssignments()
   
   // Track data state for UI feedback
   const [dataState, setDataState] = useState<'loading' | 'success' | 'error' | 'empty'>('loading')
@@ -176,9 +184,46 @@ export const FeeStructureManager = ({
     return grades.filter(grade => grade.feeStructureId === feeStructureId)
   }
 
-  const getTotalStudents = (feeStructureId: string) => {
-    return getAssignedGrades(feeStructureId).reduce((sum, grade) => sum + grade.studentCount, 0)
-  }
+  const linkedClassCountByPlan = useMemo(
+    () =>
+      buildLinkedClassCountByPlanId(
+        graphQLStructures,
+        feeAssignmentsData?.feeAssignments,
+      ),
+    [graphQLStructures, feeAssignmentsData?.feeAssignments],
+  )
+
+  const getLinkedClassCount = useCallback(
+    (feeStructureId: string) =>
+      linkedClassCountByPlan.get(feeStructureId) ?? 0,
+    [linkedClassCountByPlan],
+  )
+
+  const getLinkedClasses = useCallback(
+    (feeStructureId: string) => {
+      const plan = findPlanForStructureId(graphQLStructures, feeStructureId)
+      if (!plan) return []
+      return getLinkedClassesForPlan(
+        plan,
+        feeAssignmentsData?.feeAssignments,
+      )
+    },
+    [graphQLStructures, feeAssignmentsData?.feeAssignments],
+  )
+
+  const getTotalStudents = useCallback(
+    (feeStructureId: string) => {
+      const plan = findPlanForStructureId(graphQLStructures, feeStructureId)
+      if (!plan) {
+        return getAssignedGrades(feeStructureId).reduce(
+          (sum, grade) => sum + grade.studentCount,
+          0,
+        )
+      }
+      return countStudentsForPlan(plan, feeAssignmentsData?.feeAssignments)
+    },
+    [graphQLStructures, feeAssignmentsData?.feeAssignments, grades],
+  )
   
   // Handle opening the update fee structure item modal
   const handleUpdateFeeItem = (itemId: string, amount: number, isMandatory: boolean, bucketName: string, feeStructureName: string, bucketId?: string) => {
@@ -294,8 +339,10 @@ export const FeeStructureManager = ({
             onUpdateFeeItem={handleUpdateFeeItem}
             onCreateNew={onCreateNew}
             fetchFeeStructures={fetchFeeStructures}
-            getAssignedGrades={getAssignedGrades}
+            getLinkedClassCount={getLinkedClassCount}
+            getLinkedClasses={getLinkedClasses}
             getTotalStudents={getTotalStudents}
+            feeAssignments={feeAssignmentsData?.feeAssignments}
           />
         </TabsContent>
 

@@ -42,6 +42,7 @@ import {
     dedupeTermsById,
     getFeePlanGroupKey,
     resolvePlanLabel,
+    type FeeStructureGroupSource,
 } from '../../lib/feePlanGrouping'
 import { sortTermsForLetter } from '../../lib/sortTermsForLetter'
 import { FEES_BRAND } from '../../lib/fees-ui'
@@ -675,8 +676,11 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                         academicYear: { id: formData.academicYearId },
                     })
                     grouped =
-                        allFromApi?.filter(
-                            (s) => getFeePlanGroupKey(s) === planKey,
+                        (allFromApi as StructureWithItems[] | null)?.filter(
+                            (s) =>
+                                getFeePlanGroupKey(
+                                    s as FeeStructureGroupSource,
+                                ) === planKey,
                         ) ?? []
                 }
 
@@ -730,7 +734,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                     const created = await createFeeStructureWithItems({
                         name: `${basePlanName} - ${term.name}`,
                         planLabel,
-                        academicYearId: formData.academicYearId,
+                        academicYearId: formData.academicYearId!,
                         gradeLevelIds,
                         items: termItems,
                     })

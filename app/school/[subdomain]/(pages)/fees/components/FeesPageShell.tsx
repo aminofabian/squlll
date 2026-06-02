@@ -11,9 +11,10 @@ interface FeesPageShellProps {
 export function FeesPageShell({ children, className }: FeesPageShellProps) {
   return (
     <div
-      className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden"
+      className={cn(
+        "relative flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden max-md:bg-[#eef1ef]",
+      )}
       style={{ backgroundColor: FEES_BRAND.surface }}
-      className="max-md:bg-[#eef1ef]"
     >
       <div
         className={cn(
