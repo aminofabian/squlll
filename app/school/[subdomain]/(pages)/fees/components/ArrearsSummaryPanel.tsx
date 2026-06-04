@@ -5,13 +5,14 @@ import { FEES_LAYOUT } from "../lib/fees-ui";
 import { formatCurrency } from "../utils";
 import {
   AGING_BADGE_STYLES,
-  AGING_LABELS,
+  AGING_SHORT_LABELS,
   type ArrearsAgingCategory,
 } from "../lib/arrearsAging";
 import type {
   GradeArrearsSummary,
   SchoolArrearsSummary,
 } from "../hooks/useSchoolArrearsSummary";
+import { ArrearsSummarySkeleton } from "./BalancesSkeletons";
 
 interface ArrearsSummaryPanelProps {
   summary: SchoolArrearsSummary | null;
@@ -19,7 +20,6 @@ interface ArrearsSummaryPanelProps {
   error: string | null;
   selectedGrade?: string;
   onGradeSelect?: (gradeName: string) => void;
-  compact?: boolean;
 }
 
 const AGING_ORDER: ArrearsAgingCategory[] = [
@@ -47,84 +47,15 @@ function matchGrade(
   );
 }
 
-function resolveDisplaySummary(
-  summary: SchoolArrearsSummary,
-  selectedGrade?: string,
-): {
-  title: string;
-  scope: "school" | "grade";
-  totalBilled: number;
-  totalPaid: number;
-  totalArrears: number;
-  totalCredit: number;
-  studentsWithArrears: number;
-  studentCount: number;
-} {
-  if (!selectedGrade || selectedGrade === "all") {
-    const studentCount = summary.byGrade.reduce(
-      (sum, g) => sum + g.studentCount,
-      0,
-    );
-    return {
-      title: "School arrears",
-      scope: "school",
-      totalBilled: summary.totalBilled,
-      totalPaid: summary.totalPaid,
-      totalArrears: summary.totalArrears,
-      totalCredit: summary.totalCredit,
-      studentsWithArrears: summary.studentsWithArrears,
-      studentCount,
-    };
-  }
-
-  const grade = summary.byGrade.find((g) => matchGrade(g, selectedGrade));
-  if (!grade) {
-    return {
-      title: selectedGrade,
-      scope: "grade",
-      totalBilled: 0,
-      totalPaid: 0,
-      totalArrears: 0,
-      totalCredit: 0,
-      studentsWithArrears: 0,
-      studentCount: 0,
-    };
-  }
-
-  return {
-    title: grade.gradeLevelName,
-    scope: "grade",
-    totalBilled: 0,
-    totalPaid: 0,
-    totalArrears: grade.totalArrears,
-    totalCredit: grade.totalCredit,
-    studentsWithArrears: grade.studentsWithArrears,
-    studentCount: grade.studentCount,
-  };
-}
-
-function SummarySkeleton() {
-  return (
-    <div className="animate-pulse space-y-3 px-3 py-3 sm:px-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-lg bg-slate-100" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function ArrearsSummaryPanel({
   summary,
   loading,
   error,
   selectedGrade = "all",
   onGradeSelect,
-  compact = false,
 }: ArrearsSummaryPanelProps) {
   if (loading) {
-    return <SummarySkeleton />;
+    return <ArrearsSummarySkeleton />;
   }
 
   if (error) {
@@ -139,245 +70,197 @@ export function ArrearsSummaryPanel({
     return null;
   }
 
-  const display = resolveDisplaySummary(summary, selectedGrade);
-  const showGradeBreakdown =
-    !compact && (!selectedGrade || selectedGrade === "all");
+  const isAllGrades = !selectedGrade || selectedGrade === "all";
   const sortedGrades = [...summary.byGrade].sort(
     (a, b) => b.totalArrears - a.totalArrears,
   );
+  const showGradeChips =
+    isAllGrades && sortedGrades.length > 1 && !!onGradeSelect;
+  const gradeRow =
+    !isAllGrades
+      ? sortedGrades.find((g) => matchGrade(g, selectedGrade))
+      : null;
 
-  const metrics =
-    display.scope === "school"
-      ? [
-          {
-            label: "Total billed",
-            value: formatKesCompact(summary.totalBilled),
-            tone: "text-slate-900",
-          },
-          {
-            label: "Total paid",
-            value: formatKesCompact(summary.totalPaid),
-            tone: "text-emerald-800",
-          },
-          {
-            label: "Outstanding",
-            value: formatKesCompact(display.totalArrears),
-            tone: "text-rose-800",
-          },
-          {
-            label: "Credit",
-            value: formatKesCompact(display.totalCredit),
-            tone: "text-sky-800",
-          },
-        ]
-      : [
-          {
-            label: "Outstanding",
-            value: formatKesCompact(display.totalArrears),
-            tone: "text-rose-800",
-          },
-          {
-            label: "Credit",
-            value: formatKesCompact(display.totalCredit),
-            tone: "text-sky-800",
-          },
-          {
-            label: "Students",
-            value: String(display.studentCount),
-            tone: "text-slate-900",
-          },
-          {
-            label: "Owing",
-            value: String(display.studentsWithArrears),
-            tone: "text-amber-800",
-          },
-        ];
+  const totalArrears = isAllGrades
+    ? summary.totalArrears
+    : (gradeRow?.totalArrears ?? 0);
+  const totalCredit = isAllGrades
+    ? summary.totalCredit
+    : (gradeRow?.totalCredit ?? 0);
+  const studentsWithArrears = isAllGrades
+    ? summary.studentsWithArrears
+    : (gradeRow?.studentsWithArrears ?? 0);
+  const studentCount = isAllGrades
+    ? sortedGrades.reduce((sum, g) => sum + g.studentCount, 0)
+    : (gradeRow?.studentCount ?? 0);
+
+  const agingBuckets = AGING_ORDER.map((category) => ({
+    category,
+    amount:
+      summary.aging.find((b) => b.category === category)?.amount ?? 0,
+  })).filter((b) => b.amount > 0);
+
+  const showAgingRow =
+    isAllGrades &&
+    totalArrears > 0 &&
+    (agingBuckets.length > 1 ||
+      (agingBuckets.length === 1 && agingBuckets[0].category !== "CURRENT"));
 
   return (
-    <div className="border-b border-slate-100 bg-slate-50/40">
-      <div className={cn("px-3 py-3 sm:px-4", compact && "py-2")}>
-        <div
-          className={cn(
-            FEES_LAYOUT.toolbarRow,
-            "mb-2 gap-1",
-          )}
-        >
+    <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-white">
+      <div className="px-3 py-3 sm:px-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              {display.title}
+              {isAllGrades ? "Outstanding" : selectedGrade}
             </p>
-            <p className="text-xs text-slate-600">
-              {display.studentsWithArrears > 0 ? (
+            <p
+              className={cn(
+                "text-2xl font-bold tabular-nums tracking-tight sm:text-[1.65rem]",
+                totalArrears > 0 ? "text-rose-800" : "text-emerald-800",
+              )}
+            >
+              {totalArrears > 0
+                ? formatKesCompact(totalArrears)
+                : "All clear"}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-600">
+              {studentsWithArrears > 0 ? (
                 <>
-                  <span className="font-semibold text-rose-800">
-                    {display.studentsWithArrears}
+                  <span className="font-medium text-slate-800">
+                    {studentsWithArrears}
                   </span>{" "}
-                  of {display.studentCount} students with outstanding balances
+                  of {studentCount} owing
                 </>
               ) : (
-                <>No outstanding balances</>
+                <>No balances due{isAllGrades ? " school-wide" : ""}</>
               )}
             </p>
           </div>
-          {selectedGrade && selectedGrade !== "all" && onGradeSelect && (
+
+          {!isAllGrades && onGradeSelect ? (
             <button
               type="button"
               onClick={() => onGradeSelect("all")}
-              className="shrink-0 text-[11px] font-medium text-emerald-700 hover:underline"
+              className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-50/80"
             >
-              View all grades
+              All grades
             </button>
-          )}
+          ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-2"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {metric.label}
+        {isAllGrades ? (
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center sm:max-w-md">
+            <div className="rounded-lg border border-slate-200/80 bg-white px-2 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                Billed
               </p>
-              <p
-                className={cn(
-                  "text-sm font-bold tabular-nums",
-                  metric.tone,
-                )}
-              >
-                {metric.value}
+              <p className="text-xs font-bold tabular-nums text-slate-800">
+                {formatKesCompact(summary.totalBilled)}
               </p>
             </div>
-          ))}
-        </div>
-
-        {display.scope === "school" && display.totalArrears > 0 && (
-          <div className="mt-3">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              Arrears aging
-            </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {AGING_ORDER.map((category) => {
-                const amount =
-                  summary.aging.find((b) => b.category === category)?.amount ??
-                  0;
-                const active = amount > 0;
-
-                return (
-                  <div
-                    key={category}
-                    className={cn(
-                      "rounded-lg border px-2.5 py-2",
-                      active
-                        ? AGING_BADGE_STYLES[category]
-                        : "border-slate-200/80 bg-white",
-                    )}
-                  >
-                    <p
-                      className={cn(
-                        "text-[10px] font-semibold uppercase tracking-wider",
-                        active ? "opacity-80" : "text-slate-400",
-                      )}
-                    >
-                      {AGING_LABELS[category]}
-                    </p>
-                    <p
-                      className={cn(
-                        "text-sm font-bold tabular-nums",
-                        active ? "" : "text-slate-300",
-                      )}
-                    >
-                      {active ? formatKesCompact(amount) : "—"}
-                    </p>
-                  </div>
-                );
-              })}
+            <div className="rounded-lg border border-slate-200/80 bg-white px-2 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                Paid
+              </p>
+              <p className="text-xs font-bold tabular-nums text-emerald-800">
+                {formatKesCompact(summary.totalPaid)}
+              </p>
             </div>
+            <div className="rounded-lg border border-slate-200/80 bg-white px-2 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                Credit
+              </p>
+              <p className="text-xs font-bold tabular-nums text-sky-800">
+                {formatKesCompact(totalCredit)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600">
+            {totalCredit > 0 ? (
+              <span>
+                Credit{" "}
+                <span className="font-semibold tabular-nums text-sky-800">
+                  {formatKesCompact(totalCredit)}
+                </span>
+              </span>
+            ) : null}
+            <span>
+              {studentCount} student{studentCount === 1 ? "" : "s"}
+            </span>
           </div>
         )}
+
+        {showAgingRow ? (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Aging
+            </span>
+            {agingBuckets.map(({ category, amount }) => (
+              <span
+                key={category}
+                className={cn(
+                  "inline-flex rounded-md border px-2 py-0.5 text-[10px] font-semibold tabular-nums",
+                  AGING_BADGE_STYLES[category],
+                )}
+              >
+                {AGING_SHORT_LABELS[category]}{" "}
+                {formatKesCompact(amount)}
+              </span>
+            ))}
+          </div>
+        ) : totalArrears > 0 && agingBuckets.length === 1 ? (
+          <p className="mt-2 text-[11px] text-amber-800/90">
+            All outstanding balances are current (not yet overdue).
+          </p>
+        ) : null}
       </div>
 
-      {showGradeBreakdown && sortedGrades.length > 0 && (
+      {showGradeChips ? (
         <div className="border-t border-slate-100 px-3 pb-3 sm:px-4">
-          <p className="mb-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            By grade / class
+          <p className="mb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Filter by grade
           </p>
-          <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-            <table className="w-full min-w-[28rem] text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  <th className="px-3 py-2">Grade</th>
-                  <th className="px-3 py-2 text-right">Students</th>
-                  <th className="px-3 py-2 text-right">Owing</th>
-                  <th className="px-3 py-2 text-right">Arrears</th>
-                  <th className="px-3 py-2 text-right">Credit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedGrades.map((grade) => {
-                  const isSelected =
-                    selectedGrade !== "all" && matchGrade(grade, selectedGrade);
-                  const clickable = !!onGradeSelect;
-
-                  return (
-                    <tr
-                      key={grade.gradeLevelId}
-                      className={cn(
-                        "border-b border-slate-50 last:border-0",
-                        isSelected && "bg-emerald-50/60",
-                        clickable &&
-                          "cursor-pointer transition-colors hover:bg-slate-50",
-                      )}
-                      onClick={() =>
-                        clickable && onGradeSelect?.(grade.gradeLevelName)
-                      }
-                    >
-                      <td className="px-3 py-2 font-medium text-slate-900">
-                        {grade.gradeLevelName}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-slate-600">
-                        {grade.studentCount}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-slate-600">
-                        {grade.studentsWithArrears}
-                      </td>
-                      <td
-                        className={cn(
-                          "px-3 py-2 text-right tabular-nums font-semibold",
-                          grade.totalArrears > 0
-                            ? "text-rose-700"
-                            : "text-slate-400",
-                        )}
-                      >
-                        {grade.totalArrears > 0
-                          ? formatCurrency(grade.totalArrears)
-                          : "—"}
-                      </td>
-                      <td
-                        className={cn(
-                          "px-3 py-2 text-right tabular-nums",
-                          grade.totalCredit > 0
-                            ? "text-sky-700"
-                            : "text-slate-400",
-                        )}
-                      >
-                        {grade.totalCredit > 0
-                          ? formatCurrency(grade.totalCredit)
-                          : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className={cn("flex flex-wrap gap-1.5", FEES_LAYOUT.chipStrip)}>
+            {sortedGrades.map((grade) => {
+              const hasDue = grade.totalArrears > 0;
+              return (
+                <button
+                  key={grade.gradeLevelId}
+                  type="button"
+                  onClick={() => onGradeSelect?.(grade.gradeLevelName)}
+                  className={cn(
+                    "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5 text-left transition-colors",
+                    "hover:border-emerald-200 hover:bg-emerald-50/60",
+                    hasDue
+                      ? "border-slate-200/90 bg-white"
+                      : "border-slate-200/60 bg-slate-50/80",
+                  )}
+                >
+                  <span className="text-[11px] font-semibold text-slate-900">
+                    {grade.gradeLevelName}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[10px] tabular-nums",
+                      hasDue ? "font-medium text-rose-700" : "text-slate-400",
+                    )}
+                  >
+                    {hasDue
+                      ? formatKesCompact(grade.totalArrears)
+                      : "Paid up"}
+                    <span className="text-slate-400">
+                      {" "}
+                      · {grade.studentCount}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          {onGradeSelect && (
-            <p className="mt-1.5 text-[10px] text-slate-400">
-              Tap a row to filter the student list below.
-            </p>
-          )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

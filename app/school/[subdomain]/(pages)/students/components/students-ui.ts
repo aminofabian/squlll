@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 export const studentsPanel =
-  "overflow-hidden rounded-xl border border-slate-200/60 bg-white/80 backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-900/50";
+  "overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/50";
 
 export const studentsTh =
   "px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-slate-400";
@@ -20,7 +20,7 @@ export function studentsFilterPill(active: boolean) {
   return cn(
     "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition-colors",
     active
-      ? "bg-slate-800/95 text-white shadow-sm dark:bg-slate-200 dark:text-slate-900"
+      ? "bg-[#0073ea] text-white shadow-sm shadow-[#0073ea]/20"
       : "bg-slate-200/45 text-slate-600 hover:bg-slate-200/75 dark:bg-slate-800/45 dark:text-slate-400 dark:hover:bg-slate-800/70",
   );
 }
@@ -56,9 +56,9 @@ export const studentsSearchChip =
 export const studentsControlDivider =
   "mt-3 border-t border-slate-200/45 pt-3 dark:border-slate-800/50";
 
-/** Solid primary enroll links — white text on theme background */
+/** Solid enroll links — school blue */
 export const studentsEnrollLink =
-  "inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary-dark hover:text-white dark:hover:text-white";
+  "inline-flex items-center gap-1 rounded-full bg-[#0073ea] px-2.5 py-1 text-xs font-medium text-white shadow-sm shadow-[#0073ea]/25 transition-colors hover:bg-[#0062c4] hover:text-white";
 
 export const studentsEnrollLinkLg =
-  "inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary-dark hover:text-white dark:hover:text-white";
+  "inline-flex items-center gap-1 rounded-full bg-[#0073ea] px-3 py-1.5 text-xs font-medium text-white shadow-sm shadow-[#0073ea]/25 transition-colors hover:bg-[#0062c4] hover:text-white";

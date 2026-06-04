@@ -1,31 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, type ReactNode } from 'react'
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerDescription,
   DrawerFooter,
   DrawerClose,
-} from "@/components/ui/drawer"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, Users, School, GraduationCap, X, CheckCircle2 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Card, CardContent } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useToast } from "@/components/ui/use-toast"
+} from '@/components/ui/drawer'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Loader2, Users, GraduationCap, X, Check, Link2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useToast } from '@/components/ui/use-toast'
 import { Grade } from '../types'
 import { useGradeLevels } from '../hooks/useGradeLevels'
 import {
   tenantGradeLevelsToGrades,
   resolveTenantGradeLevelIds,
 } from '../lib/gradeLevelsDisplay'
+import { FEES_BRAND } from '../lib/fees-ui'
 
 interface FeeStructure {
   id: string
@@ -41,7 +38,214 @@ interface AssignFeeStructureModalProps {
   onClose: () => void
   feeStructure: FeeStructure | null
   availableGrades: Grade[]
-  onSuccess?: (response: any) => void
+  onSuccess?: (response: unknown) => void
+}
+
+const FLOW_STEPS = [
+  { id: 'note', label: 'Note' },
+  { id: 'grades', label: 'Grades' },
+] as const
+
+type FlowStepId = (typeof FLOW_STEPS)[number]['id']
+
+function FlowProgressBar({
+  currentStep,
+  completed,
+}: {
+  currentStep: FlowStepId
+  completed: Record<FlowStepId, boolean>
+}) {
+  const currentIndex = FLOW_STEPS.findIndex((s) => s.id === currentStep)
+
+  return (
+    <nav
+      aria-label="Link structure steps"
+      className="flex items-center gap-1 rounded-lg border border-slate-200/80 bg-white p-1"
+    >
+      {FLOW_STEPS.map((step, index) => {
+        const done = completed[step.id]
+        const isCurrent = step.id === currentStep
+
+        return (
+          <div key={step.id} className="flex flex-1 items-center">
+            <div
+              className={cn(
+                'flex w-full flex-col items-center gap-0.5 rounded-md px-2 py-1.5',
+                isCurrent && 'bg-primary/10',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold',
+                  done
+                    ? 'bg-primary text-white'
+                    : isCurrent
+                      ? 'border-2 border-primary text-primary'
+                      : 'border border-slate-300 text-slate-400',
+                )}
+              >
+                {done ? <Check className="h-3 w-3" /> : index + 1}
+              </span>
+              <span
+                className={cn(
+                  'text-[10px] font-medium',
+                  isCurrent ? 'text-primary' : done ? 'text-slate-700' : 'text-slate-400',
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+            {index < FLOW_STEPS.length - 1 ? (
+              <div
+                className={cn(
+                  'mx-1 h-px w-6 shrink-0',
+                  completed.note ? 'bg-primary/40' : 'bg-slate-200',
+                )}
+              />
+            ) : null}
+          </div>
+        )
+      })}
+    </nav>
+  )
+}
+
+function DrawerSection({
+  step,
+  title,
+  hint,
+  action,
+  children,
+}: {
+  step: number
+  title: string
+  hint?: string
+  action?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2.5">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+              style={{ backgroundColor: FEES_BRAND.primary }}
+            >
+              {step}
+            </span>
+            <h3
+              className="text-sm font-semibold"
+              style={{ color: FEES_BRAND.primaryDark }}
+            >
+              {title}
+            </h3>
+          </div>
+          {hint ? (
+            <p className="mt-1 pl-8 text-xs leading-relaxed text-slate-500">
+              {hint}
+            </p>
+          ) : null}
+        </div>
+        {action}
+      </div>
+      <div className="p-3">{children}</div>
+    </section>
+  )
+}
+
+function GradeSelectRow({
+  id,
+  checked,
+  onToggle,
+  title,
+  subtitle,
+  badge,
+}: {
+  id: string
+  checked: boolean
+  onToggle: () => void
+  title: string
+  subtitle?: string
+  badge?: string
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        'flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors',
+        checked
+          ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/15'
+          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80',
+      )}
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={onToggle}
+        className="mt-0.5"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-slate-900">{title}</p>
+          {badge ? (
+            <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+              {badge}
+            </span>
+          ) : null}
+        </div>
+        {subtitle ? (
+          <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
+        ) : null}
+      </div>
+    </label>
+  )
+}
+
+function abbreviateGradeName(name: string): string {
+  const normalized = name.toLowerCase().trim()
+
+  if (normalized.includes('playgroup')) return 'PG'
+  if (normalized.includes('pp1') || normalized === 'pre-primary 1') return 'PP1'
+  if (normalized.includes('pp2') || normalized === 'pre-primary 2') return 'PP2'
+
+  const gradeMatch = normalized.match(/grade\s*(\d+)/i)
+  if (gradeMatch) {
+    const gradeNum = parseInt(gradeMatch[1], 10)
+    if (gradeNum >= 1 && gradeNum <= 6) return `G${gradeNum}`
+    if (gradeNum >= 7 && gradeNum <= 12) return `F${gradeNum - 6}`
+  }
+
+  const formMatch = normalized.match(/form\s*(\d+)/i)
+  if (formMatch) {
+    const formNum = parseInt(formMatch[1], 10)
+    if (formNum >= 1 && formNum <= 6) return `F${formNum}`
+  }
+
+  return name
+}
+
+function getGradeSortOrder(name: string): number {
+  const normalized = name.toLowerCase().trim()
+
+  if (normalized.includes('playgroup')) return 1
+  if (normalized.includes('pp1') || normalized === 'pre-primary 1') return 2
+  if (normalized.includes('pp2') || normalized === 'pre-primary 2') return 3
+
+  const gradeMatch = normalized.match(/grade\s*(\d+)/i)
+  if (gradeMatch) {
+    const gradeNum = parseInt(gradeMatch[1], 10)
+    if (gradeNum >= 1 && gradeNum <= 6) return 3 + gradeNum
+    if (gradeNum >= 7 && gradeNum <= 12) return 9 + gradeNum
+  }
+
+  const formMatch = normalized.match(/form\s*(\d+)/i)
+  if (formMatch) {
+    const formNum = parseInt(formMatch[1], 10)
+    if (formNum >= 1 && formNum <= 6) return 9 + formNum
+  }
+
+  return 999
 }
 
 export const AssignFeeStructureModal = ({
@@ -49,125 +253,83 @@ export const AssignFeeStructureModal = ({
   onClose,
   feeStructure,
   availableGrades,
-  onSuccess
+  onSuccess,
 }: AssignFeeStructureModalProps) => {
-  const [description, setDescription] = useState<string>("")
+  const [description, setDescription] = useState('')
   const [selectedGradeIds, setSelectedGradeIds] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filteredGradeLevels, setFilteredGradeLevels] = useState<string[]>([])
-  const [isLoadingFilteredStructure, setIsLoadingFilteredStructure] = useState<boolean>(false)
-  const [eligibleStudentCount, setEligibleStudentCount] = useState<number | null>(null)
+  const [isLoadingFilteredStructure, setIsLoadingFilteredStructure] =
+    useState(false)
+  const [eligibleStudentCount, setEligibleStudentCount] = useState<
+    number | null
+  >(null)
   const [eligibilityLoading, setEligibilityLoading] = useState(false)
   const { toast } = useToast()
-  
-  // Fetch grade levels as fallback when no classes are available
-  const { gradeLevels, isLoading: isLoadingGradeLevels, error: gradeLevelsError } = useGradeLevels()
-  
-  // Function to abbreviate grade names
-  const abbreviateGradeName = (name: string): string => {
-    const normalized = name.toLowerCase().trim()
-    
-    if (normalized.includes('playgroup')) return 'PG'
-    if (normalized.includes('pp1') || normalized === 'pre-primary 1') return 'PP1'
-    if (normalized.includes('pp2') || normalized === 'pre-primary 2') return 'PP2'
-    
-    // Grade 1-6 → G1-G6
-    const gradeMatch = normalized.match(/grade\s*(\d+)/i)
-    if (gradeMatch) {
-      const gradeNum = parseInt(gradeMatch[1])
-      if (gradeNum >= 1 && gradeNum <= 6) {
-        return `G${gradeNum}`
-      }
-      // Grade 7 → F1, Grade 8 → F2, Grade 9 → F3, Grade 10 → F4, Grade 11 → F5, Grade 12 → F6
-      if (gradeNum === 7) return 'F1'
-      if (gradeNum === 8) return 'F2'
-      if (gradeNum === 9) return 'F3'
-      if (gradeNum === 10) return 'F4'
-      if (gradeNum === 11) return 'F5'
-      if (gradeNum === 12) return 'F6'
-    }
-    
-    // Form 1-6 → F1-F6
-    const formMatch = normalized.match(/form\s*(\d+)/i)
-    if (formMatch) {
-      const formNum = parseInt(formMatch[1])
-      if (formNum >= 1 && formNum <= 6) {
-        return `F${formNum}`
-      }
-    }
-    
-    // If no match, return original
-    return name
-  }
-  
-  // Function to get sort order for grade levels
-  const getGradeSortOrder = (name: string): number => {
-    const normalized = name.toLowerCase().trim()
-    
-    if (normalized.includes('playgroup')) return 1
-    if (normalized.includes('pp1') || normalized === 'pre-primary 1') return 2
-    if (normalized.includes('pp2') || normalized === 'pre-primary 2') return 3
-    
-    // Grade 1-6 → G1-G6 (sort order 4-9)
-    const gradeMatch = normalized.match(/grade\s*(\d+)/i)
-    if (gradeMatch) {
-      const gradeNum = parseInt(gradeMatch[1])
-      if (gradeNum >= 1 && gradeNum <= 6) {
-        return 3 + gradeNum // 4-9
-      }
-      // Grade 7 → F1 (sort order 10), Grade 8 → F2 (11), Grade 9 → F3 (12), Grade 10 → F4 (13), Grade 11 → F5 (14), Grade 12 → F6 (15)
-      if (gradeNum === 7) return 10
-      if (gradeNum === 8) return 11
-      if (gradeNum === 9) return 12
-      if (gradeNum === 10) return 13
-      if (gradeNum === 11) return 14
-      if (gradeNum === 12) return 15
-    }
-    
-    // Form 1-6 → F1-F6 (sort order 10-15, same as Grade 7-12)
-    const formMatch = normalized.match(/form\s*(\d+)/i)
-    if (formMatch) {
-      const formNum = parseInt(formMatch[1])
-      if (formNum >= 1 && formNum <= 6) {
-        return 9 + formNum // 10-15 (same as Grade 7-12)
-      }
-    }
-    
-    // Default to end
-    return 999
-  }
-  
+
+  const { gradeLevels, isLoading: isLoadingGradeLevels } = useGradeLevels()
+
   const gradeLevelsAsGrades = tenantGradeLevelsToGrades(gradeLevels)
 
-  // Prefer API grade levels (correct tenantGradeLevelId); page `grades` may use stream ids
   const allAvailableGrades =
     gradeLevelsAsGrades.length > 0 ? gradeLevelsAsGrades : availableGrades
-  const filteredGrades = filteredGradeLevels.length > 0
-    ? allAvailableGrades.filter(
-        (grade) =>
-          filteredGradeLevels.includes(grade.tenantGradeLevelId) ||
-          filteredGradeLevels.includes(grade.id),
-      )
-    : allAvailableGrades
-  
-  // Sort and prepare display items
-  const sortedDisplayItems = filteredGrades
-    .map(item => ({
-      ...item,
-      abbreviatedName: abbreviateGradeName(item.name),
-      sortOrder: getGradeSortOrder(item.name)
-    }))
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-  
-  // Use grade levels if no classes are available
-  const displayItems = sortedDisplayItems
-  const isLoading = (availableGrades.length === 0 && isLoadingGradeLevels) || isLoadingFilteredStructure
-  
-  // Fetch filtered fee structure by term when modal opens
+  const filteredGrades =
+    filteredGradeLevels.length > 0
+      ? allAvailableGrades.filter(
+          (grade) =>
+            filteredGradeLevels.includes(grade.tenantGradeLevelId) ||
+            filteredGradeLevels.includes(grade.id),
+        )
+      : allAvailableGrades
+
+  const displayItems = useMemo(
+    () =>
+      filteredGrades
+        .map((item) => ({
+          ...item,
+          abbreviatedName: abbreviateGradeName(item.name),
+          sortOrder: getGradeSortOrder(item.name),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [filteredGrades],
+  )
+
+  const isLoading =
+    (availableGrades.length === 0 && isLoadingGradeLevels) ||
+    isLoadingFilteredStructure
+  const isShowingGradeLevels = availableGrades.length === 0
+  const gradeLabel = isShowingGradeLevels ? 'grade' : 'class'
+  const gradeLabelPlural = isShowingGradeLevels ? 'grades' : 'classes'
+
+  const allSelected =
+    displayItems.length > 0 &&
+    displayItems.every((g) => selectedGradeIds.includes(g.id))
+
+  const hasNote = description.trim().length > 0
+  const hasGrades = selectedGradeIds.length > 0
+
+  const flowCompleted = useMemo(
+    (): Record<FlowStepId, boolean> => ({
+      note: hasNote,
+      grades: hasGrades,
+    }),
+    [hasNote, hasGrades],
+  )
+
+  const currentFlowStep: FlowStepId = hasGrades ? 'grades' : 'note'
+
+  const selectedPreview = useMemo(
+    () =>
+      selectedGradeIds
+        .map((id) => displayItems.find((g) => g.id === id))
+        .filter(Boolean) as (typeof displayItems)[number][],
+    [selectedGradeIds, displayItems],
+  )
+
   useEffect(() => {
     const fetchFilteredFeeStructure = async () => {
-      if (!isOpen || !feeStructure || !feeStructure.termId || !feeStructure.academicYearId) {
+      if (!isOpen || !feeStructure?.termId || !feeStructure?.academicYearId) {
         setFilteredGradeLevels([])
         return
       }
@@ -178,9 +340,7 @@ export const AssignFeeStructureModal = ({
       try {
         const response = await fetch('/api/graphql', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             query: `
               query GetFeeStructureByGradeAndTerm($termId: String!, $academicYearId: String!) {
@@ -190,12 +350,7 @@ export const AssignFeeStructureModal = ({
                 ) {
                   id
                   name
-                  academicYear { id name }
-                  terms { id name }
-                  gradeLevels { 
-                    id
-                    name
-                  }
+                  gradeLevels { id name }
                 }
               }
             `,
@@ -212,22 +367,24 @@ export const AssignFeeStructureModal = ({
 
         const result = await response.json()
 
-        if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
-          throw new Error(result.errors[0]?.message || 'Failed to fetch fee structure')
+        if (result.errors?.length) {
+          throw new Error(
+            result.errors[0]?.message || 'Failed to fetch fee structure',
+          )
         }
 
         if (result.data?.feeStructureByGradeAndTerm?.gradeLevels) {
-          const gradeLevelIds = result.data.feeStructureByGradeAndTerm.gradeLevels.map(
-            (gl: { id: string }) => gl.id
-          )
+          const gradeLevelIds =
+            result.data.feeStructureByGradeAndTerm.gradeLevels.map(
+              (gl: { id: string }) => gl.id,
+            )
           setFilteredGradeLevels(gradeLevelIds)
-          console.log('Filtered grade levels by term:', gradeLevelIds)
         } else {
           setFilteredGradeLevels([])
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch filtered fee structure'
-        console.error('Error fetching filtered fee structure:', err)
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to load grade filter'
         setError(errorMessage)
         setFilteredGradeLevels([])
       } finally {
@@ -238,24 +395,19 @@ export const AssignFeeStructureModal = ({
     fetchFilteredFeeStructure()
   }, [isOpen, feeStructure])
 
-  // Reset form when modal opens with new fee structure
   useEffect(() => {
-    if (isOpen) {
-      // Default description based on fee structure and quarter
-      const currentDate = new Date()
-      const quarter = Math.floor(currentDate.getMonth() / 3) + 1
-      const year = currentDate.getFullYear()
-      setDescription(`Q${quarter} ${year} Fee Assignment${feeStructure ? ` - ${feeStructure.name}` : ''}`)
-      
-      // Clear previous selections
-      setSelectedGradeIds([])
-      setError(null)
-      
-      // Debug: Log available grades
-      console.log('AssignFeeStructureModal - availableGrades:', availableGrades)
-      console.log('AssignFeeStructureModal - availableGrades length:', availableGrades?.length)
-    }
-  }, [isOpen, feeStructure, availableGrades])
+    if (!isOpen) return
+
+    const currentDate = new Date()
+    const quarter = Math.floor(currentDate.getMonth() / 3) + 1
+    const year = currentDate.getFullYear()
+    setDescription(
+      `Q${quarter} ${year} Fee Assignment${feeStructure ? ` — ${feeStructure.name}` : ''}`,
+    )
+    setSelectedGradeIds([])
+    setError(null)
+    setEligibleStudentCount(null)
+  }, [isOpen, feeStructure])
 
   useEffect(() => {
     if (!isOpen || !feeStructure || selectedGradeIds.length === 0) {
@@ -290,7 +442,6 @@ export const AssignFeeStructureModal = ({
               tenantGradeLevelIds: $tenantGradeLevelIds
             ) {
               eligibleStudentCount
-              gradeCount
             }
           }
         `,
@@ -303,12 +454,9 @@ export const AssignFeeStructureModal = ({
       .then((res) => res.json())
       .then((result) => {
         if (cancelled) return
-        if (result.errors?.length) {
-          setEligibleStudentCount(null)
-          return
-        }
         setEligibleStudentCount(
-          result.data?.feePlanGradeEligibilityPreview?.eligibleStudentCount ?? null,
+          result.data?.feePlanGradeEligibilityPreview?.eligibleStudentCount ??
+            null,
         )
       })
       .catch(() => {
@@ -323,459 +471,401 @@ export const AssignFeeStructureModal = ({
     }
   }, [isOpen, feeStructure, selectedGradeIds, displayItems])
 
-  
   const handleGradeToggle = (gradeId: string) => {
-    setSelectedGradeIds(prev => 
-      prev.includes(gradeId) 
-        ? prev.filter(id => id !== gradeId)
-        : [...prev, gradeId]
+    setSelectedGradeIds((prev) =>
+      prev.includes(gradeId)
+        ? prev.filter((id) => id !== gradeId)
+        : [...prev, gradeId],
     )
   }
-  
-  const handleSelectAll = (itemList: { id: string }[]) => {
-    const itemIds = itemList.map(item => item.id)
-    const allSelected = itemIds.every(id => selectedGradeIds.includes(id))
-    
+
+  const handleSelectAll = () => {
     if (allSelected) {
-      // Deselect all if all are currently selected
-      setSelectedGradeIds(prev => prev.filter(id => !itemIds.includes(id)))
+      setSelectedGradeIds([])
     } else {
-      // Select all items
-      setSelectedGradeIds(prev => {
-        const newSelection = [...prev]
-        itemIds.forEach(id => {
-          if (!newSelection.includes(id)) {
-            newSelection.push(id)
-          }
-        })
-        return newSelection
-      })
+      setSelectedGradeIds(displayItems.map((item) => item.id))
     }
   }
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!feeStructure) {
-      setError("No fee structure selected")
+      setError('No fee structure selected')
       return
     }
-    
+
     if (selectedGradeIds.length === 0) {
-      setError("Please select at least one class")
+      setError(`Select at least one ${gradeLabel} to continue`)
       return
     }
-    
+
     const tenantGradeLevelIds = resolveTenantGradeLevelIds(
       selectedGradeIds,
       displayItems,
     )
 
     if (tenantGradeLevelIds.length === 0) {
-      setError("Could not resolve grade levels for assignment. Refresh and try again.")
+      setError('Could not resolve grade levels. Refresh and try again.')
       return
     }
-    
+
     setIsSubmitting(true)
     setError(null)
-    
+
     try {
       const response = await fetch('/api/graphql', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `
             mutation CreateFeeAssignment($input: CreateFeeAssignmentInput!) {
               createFeeAssignment(createFeeAssignmentInput: $input) {
                 id
-                feeStructureId
-                assignedBy
-                description
-                isActive
                 studentsAssignedCount
-                createdAt
-                feeStructure {
-                  id
-                  name
-                }
-                assignedByUser {
-                  id
-                  name
-                }
+                feeStructure { id name }
               }
             }
           `,
           variables: {
             input: {
               feeStructureId: feeStructure.id,
-              tenantGradeLevelIds: tenantGradeLevelIds,
-              description: description
-            }
-          }
+              tenantGradeLevelIds,
+              description,
+            },
+          },
         }),
       })
-      
-      // Always parse the response first, even for error status codes
-      // GraphQL can return errors in the response body even with error HTTP status codes
-      let result
-      try {
-        result = await response.json()
-      } catch (parseError) {
-        // If we can't parse JSON, fall back to HTTP status error
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        throw new Error('Failed to parse response from server')
+
+      const result = await response.json()
+
+      if (result.errors?.length) {
+        throw new Error(
+          result.errors[0]?.message || 'Failed to link structure to grades',
+        )
       }
-      
-      // Check for GraphQL errors first (these contain the actual error messages)
-      if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
-        const errorMessage = result.errors[0]?.message || 'Failed to assign fee structure to grades'
-        throw new Error(errorMessage)
-      }
-      
-      // If no GraphQL errors but HTTP status is not ok, throw HTTP error
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
-      // Handle successful assignment
+
       const assignmentResult = result.data.createFeeAssignment
       const studentsAssigned = assignmentResult?.studentsAssignedCount ?? 0
-      
+
       toast({
-        title: "Fee plan linked to grades",
+        title: 'Fee structure linked',
         description:
           studentsAssigned > 0
-            ? `Linked ${tenantGradeLevelIds.length} grade${tenantGradeLevelIds.length !== 1 ? 's' : ''} and assigned ${studentsAssigned} student${studentsAssigned !== 1 ? 's' : ''}. New admissions will inherit automatically.`
-            : `Linked ${tenantGradeLevelIds.length} grade level${tenantGradeLevelIds.length !== 1 ? 's' : ''}. Students will be assigned as they enroll.`,
-        variant: "default",
+            ? `Linked ${tenantGradeLevelIds.length} ${gradeLabelPlural} — ${studentsAssigned} student${studentsAssigned !== 1 ? 's' : ''} assigned now.`
+            : `Linked ${tenantGradeLevelIds.length} ${gradeLabelPlural}. Students inherit as they enroll.`,
       })
-      
-      if (onSuccess && assignmentResult) {
-        onSuccess(assignmentResult)
-      }
-      
-      // Close the modal
+
+      onSuccess?.(assignmentResult)
       onClose()
-      
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
+      const errorMessage =
+        err instanceof Error ? err.message : 'Something went wrong'
       setError(errorMessage)
-      console.error('Error assigning fee structure to grades:', err)
-      
-      // Show error toast
       toast({
-        title: "Error",
+        title: 'Could not link structure',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       })
     } finally {
       setIsSubmitting(false)
     }
   }
-  
-  const allSelected = displayItems.length > 0 && selectedGradeIds.length === displayItems.length
-  const isShowingGradeLevels = availableGrades.length === 0
-  
+
+  const sectionAction = (label: string, onClick: () => void, disabled?: boolean) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      disabled={disabled}
+      className="h-7 shrink-0 px-2 text-xs font-medium text-primary hover:bg-primary/10"
+      onClick={onClick}
+    >
+      {label}
+    </Button>
+  )
+
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => { if (!open) onClose() }} direction="right">
-      <DrawerContent className="max-w-2xl">
-        <DrawerHeader className="px-4 pt-4 pb-3 border-b border-slate-200/60 bg-gradient-to-br from-white via-slate-50/30 to-white">
-          <DrawerTitle className="flex items-center gap-2">
-            <div className="h-8 w-8 flex items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-white">
-              <Users className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-slate-900 leading-tight">
-                Link fee plan to grades
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+      direction="right"
+    >
+      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-xl flex-col">
+        <DrawerHeader className="shrink-0 space-y-3 border-b border-slate-200/60 bg-gradient-to-br from-white via-slate-50/40 to-white px-4 pb-3 pt-4 text-left">
+          <DrawerTitle className="flex items-center gap-2.5">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white shadow-sm"
+              style={{
+                background: `linear-gradient(135deg, ${FEES_BRAND.primary} 0%, ${FEES_BRAND.primaryDark} 100%)`,
+              }}
+            >
+              <Link2 className="h-4 w-4" />
+            </span>
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-base font-semibold text-slate-900">
+                Link structure to grades
               </span>
-              {feeStructure && (
-                <span className="text-xs text-slate-600 font-medium truncate max-w-md">
+              {feeStructure ? (
+                <span className="truncate text-xs text-slate-500">
                   {feeStructure.name}
+                  {feeStructure.academicYear
+                    ? ` · ${feeStructure.academicYear}`
+                    : ''}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-500">
+                  Choose which grades receive this structure
                 </span>
               )}
-            </div>
+            </span>
           </DrawerTitle>
-          <DrawerDescription className="mt-2 space-y-2 text-xs text-slate-600">
-            {feeStructure ? (
-              <>
-                <span>
-                  Fee plans apply at the <span className="font-semibold text-slate-900">grade level</span>.
-                  All students currently in the selected grades will receive{" "}
-                  <span className="font-semibold text-slate-900">{feeStructure.name}</span>,
-                  unless they have a custom fee structure or exemption.
-                </span>
-                <span className="block text-slate-500">
-                  New admissions and grade transfers inherit the active plan automatically.
-                  Students who leave a grade keep their historical balances.
-                </span>
-              </>
-            ) : (
-              'Select grades to link this fee plan'
-            )}
-          </DrawerDescription>
-        </DrawerHeader>
-        
-        {feeStructure && (
-          <form onSubmit={handleSubmit} className="flex flex-col h-full">
-            <ScrollArea className="flex-1 px-4">
-              <div className="grid gap-4 py-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="description" className="text-xs font-semibold text-slate-700">Assignment Description</Label>
-                <Input
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Q1 2024 Fee Assignment"
-                  className="border-slate-300 focus:border-primary focus:ring-primary/20 h-9"
-                />
-              </div>
 
-              {selectedGradeIds.length > 0 ? (
-                <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-3 py-2.5 text-xs text-emerald-900">
-                  {eligibilityLoading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Counting eligible students…
-                    </span>
-                  ) : eligibleStudentCount != null ? (
-                    <span>
-                      <span className="font-semibold tabular-nums">
-                        {eligibleStudentCount.toLocaleString()}
-                      </span>{" "}
-                      student{eligibleStudentCount !== 1 ? 's' : ''} in the selected
-                      grade{selectedGradeIds.length !== 1 ? 's' : ''} will receive this
-                      plan now (excluding exemptions and custom assignments).
-                    </span>
+          {feeStructure ? (
+            <FlowProgressBar
+              currentStep={currentFlowStep}
+              completed={flowCompleted}
+            />
+          ) : null}
+        </DrawerHeader>
+
+        {feeStructure ? (
+          <form
+            onSubmit={handleSubmit}
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[#f4f7f5]/50 px-4 py-4">
+              <div className="space-y-3">
+                <p className="rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600">
+                  Students in selected grades get{' '}
+                  <span className="font-semibold text-slate-900">
+                    {feeStructure.name}
+                  </span>
+                  . New enrollments inherit automatically; past balances stay
+                  unchanged.
+                </p>
+
+                <DrawerSection
+                  step={1}
+                  title="Label this assignment"
+                  hint="Optional — helps you find it later in assignment history."
+                >
+                  <div className="space-y-1.5">
+                    <Label
+                      htmlFor="description"
+                      className="text-xs font-medium text-slate-700"
+                    >
+                      Description
+                    </Label>
+                    <Input
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="e.g. Term 1 2026 — all day grades"
+                      className="h-9"
+                    />
+                  </div>
+                </DrawerSection>
+
+                <DrawerSection
+                  step={2}
+                  title={`Which ${gradeLabelPlural} should get this structure?`}
+                  hint={`Tap to select. Applies to every student currently in that ${gradeLabel}.`}
+                  action={
+                    displayItems.length > 0 && !isLoading
+                      ? sectionAction(
+                          allSelected ? 'Clear all' : 'Select all',
+                          handleSelectAll,
+                        )
+                      : undefined
+                  }
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      Loading {gradeLabelPlural}…
+                    </div>
+                  ) : displayItems.length === 0 ? (
+                    <div className="py-6 text-center">
+                      <GraduationCap className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+                      <p className="text-sm text-slate-600">
+                        No {gradeLabelPlural} available for this structure.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-500">
+                        {selectedGradeIds.length === 0 ? (
+                          `Select one or more ${gradeLabelPlural} below.`
+                        ) : (
+                          <>
+                            <span className="font-semibold tabular-nums text-slate-800">
+                              {selectedGradeIds.length}
+                            </span>{' '}
+                            {gradeLabel}
+                            {selectedGradeIds.length !== 1 ? 's' : ''}{' '}
+                            selected
+                          </>
+                        )}
+                      </p>
+                      <div className="max-h-[min(22rem,50vh)] space-y-2 overflow-y-auto pr-0.5">
+                        {displayItems.map((grade) => {
+                          const isSelected = selectedGradeIds.includes(
+                            grade.id,
+                          )
+                          const isAlreadyAssigned =
+                            grade.feeStructureId === feeStructure.id
+                          const displayTitle =
+                            grade.abbreviatedName +
+                            (grade.section ? ` · ${grade.section}` : '')
+
+                          return (
+                            <GradeSelectRow
+                              key={grade.id}
+                              id={`link-grade-${grade.id}`}
+                              checked={isSelected}
+                              onToggle={() => handleGradeToggle(grade.id)}
+                              title={displayTitle}
+                              subtitle={
+                                grade.studentCount !== undefined
+                                  ? `${grade.studentCount} student${grade.studentCount !== 1 ? 's' : ''} enrolled`
+                                  : undefined
+                              }
+                              badge={
+                                isAlreadyAssigned
+                                  ? 'Already on this structure'
+                                  : grade.feeStructureId
+                                    ? 'Other structure'
+                                    : undefined
+                              }
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </DrawerSection>
+
+                {error ? (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800">
+                    {error}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <DrawerFooter className="shrink-0 gap-2 border-t border-slate-200/80 bg-white px-4 pb-4 pt-3">
+              {hasGrades ? (
+                <div className="w-full space-y-2">
+                  <div
+                    className="rounded-lg border px-3 py-2 text-xs"
+                    style={{
+                      borderColor: FEES_BRAND.primaryMuted,
+                      backgroundColor: FEES_BRAND.primaryLight,
+                      color: FEES_BRAND.primaryDark,
+                    }}
+                  >
+                    {eligibilityLoading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Counting students who will receive this structure…
+                      </span>
+                    ) : eligibleStudentCount != null ? (
+                      <span>
+                        <span className="font-bold tabular-nums">
+                          {eligibleStudentCount.toLocaleString()}
+                        </span>{' '}
+                        student
+                        {eligibleStudentCount !== 1 ? 's' : ''} will be
+                        assigned now (excluding exemptions).
+                      </span>
+                    ) : (
+                      <span>
+                        {selectedGradeIds.length}{' '}
+                        {gradeLabel}
+                        {selectedGradeIds.length !== 1 ? 's' : ''} selected
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedPreview.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedPreview.slice(0, 6).map((grade) => (
+                        <span
+                          key={grade.id}
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-700"
+                        >
+                          {grade.abbreviatedName}
+                          {grade.section ? ` · ${grade.section}` : ''}
+                          <button
+                            type="button"
+                            className="rounded p-0.5 hover:bg-slate-200"
+                            aria-label={`Remove ${grade.name}`}
+                            onClick={() => handleGradeToggle(grade.id)}
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </span>
+                      ))}
+                      {selectedPreview.length > 6 ? (
+                        <span className="rounded-md border border-dashed border-slate-200 px-2 py-0.5 text-[10px] text-slate-500">
+                          +{selectedPreview.length - 6} more
+                        </span>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
-              ) : null}
-              
-              <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-semibold text-slate-700">
-                        {isShowingGradeLevels ? 'Select Grade Levels' : 'Select Classes'}
-                      </Label>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        className="h-7 text-xs border-slate-300 hover:bg-primary/10 hover:border-primary/40 hover:text-primary"
-                        onClick={() => handleSelectAll(displayItems)}
-                        disabled={isLoading}
-                      >
-                        {displayItems.length > 0 && displayItems.every(g => selectedGradeIds.includes(g.id)) 
-                          ? 'Deselect All' 
-                          : 'Select All'}
-                      </Button>
-                    </div>
-                    
-                    {isLoading ? (
-                      <div className="flex items-center justify-center p-4 bg-slate-50/50 border border-slate-200">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        <span className="ml-2 text-xs font-medium text-slate-600">Loading {isShowingGradeLevels ? 'grade levels' : 'classes'}...</span>
-                      </div>
-                    ) : displayItems.length === 0 ? (
-                      <div className="text-center p-4 bg-slate-50/50 border border-slate-200">
-                        <GraduationCap className="h-6 w-6 mx-auto text-slate-400 mb-1" />
-                        <p className="text-xs text-slate-500 font-medium">No {isShowingGradeLevels ? 'grade levels' : 'classes'} available</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                        {displayItems.map((grade) => {
-                        const isSelected = selectedGradeIds.includes(grade.id)
-                        const isAlreadyAssigned = grade.feeStructureId === feeStructure?.id
-                        return (
-                          <button
-                            key={grade.id}
-                            type="button"
-                            onClick={() => handleGradeToggle(grade.id)}
-                            title={`${grade.name}${grade.section ? ` - ${grade.section}` : ''}`}
-                            className={cn(
-                              "h-auto p-2.5 border transition-all text-left cursor-pointer",
-                              isSelected
-                                ? "bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white border-primary"
-                                : "bg-white text-slate-900 border-slate-200 hover:border-primary/40 hover:bg-primary/5"
-                            )}
-                          >
-                            <div className="flex items-start gap-2 w-full">
-                              <div className={cn(
-                                "h-7 w-7 flex items-center justify-center flex-shrink-0 transition-all",
-                                isSelected 
-                                  ? "bg-white/20 text-white" 
-                                  : "bg-primary/10 text-primary"
-                              )}>
-                                <GraduationCap className="h-3.5 w-3.5" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div 
-                                  className={cn(
-                                    "font-semibold text-xs mb-0.5",
-                                    isSelected ? "text-white" : "text-slate-900"
-                                  )}
-                                  title={`${grade.name}${grade.section ? ` - ${grade.section}` : ''}`}
-                                >
-                                  {(grade as any).abbreviatedName || grade.name}
-                                  {grade.section && <span className="opacity-80"> - {grade.section}</span>}
-                                </div>
-                                {grade.studentCount !== undefined && (
-                                  <div className={cn(
-                                    "text-[10px] mt-0.5",
-                                    isSelected ? "text-white/90" : "text-slate-600"
-                                  )}>
-                                    {grade.studentCount} {grade.studentCount === 1 ? 'student' : 'students'}
-                                  </div>
-                                )}
-                                {grade.feeStructureId && (
-                                  <div className={cn(
-                                    "text-[10px] mt-0.5 font-medium inline-block px-1.5 py-0.5",
-                                    isSelected 
-                                      ? isAlreadyAssigned 
-                                        ? "text-white/90 bg-white/20" 
-                                        : "text-white/80"
-                                      : isAlreadyAssigned 
-                                        ? "text-emerald-600 bg-emerald-50" 
-                                        : "text-amber-600 bg-amber-50"
-                                  )}>
-                                    {isAlreadyAssigned ? '✓ Already assigned' : 'Has fee structure'}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex-shrink-0">
-                                <div className={cn(
-                                  "w-4 h-4 flex items-center justify-center transition-all border-2",
-                                  isSelected 
-                                    ? "bg-white text-primary border-white" 
-                                    : "border-slate-300"
-                                )}>
-                                  {isSelected && (
-                                    <CheckCircle2 className="h-3 w-3" />
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        )
-                      })}
-                      </div>
-                    )}
-              </div>
-              
-              {/* Selection summary */}
-              {selectedGradeIds.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-200 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 flex items-center justify-center bg-primary/20 text-primary">
-                        <CheckCircle2 className="h-3 w-3" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-xs text-slate-900">
-                          Selected Items
-                        </div>
-                        <div className="text-[10px] text-slate-600">
-                          {selectedGradeIds.length} {isShowingGradeLevels ? 'grade level' : 'class'}{selectedGradeIds.length !== 1 ? 's' : ''} selected
-                        </div>
-                      </div>
-                    </div>
-                    {selectedGradeIds.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                        onClick={() => setSelectedGradeIds([])}
-                      >
-                        <X className="h-3 w-3 mr-1" />
-                        Clear all
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedGradeIds.slice(0, 8).map(gradeId => {
-                      const grade = displayItems.find(g => g.id === gradeId)
-                      const abbreviatedName = grade ? ((grade as any).abbreviatedName || grade.name) : ''
-                      const fullName = grade ? `${grade.name}${grade.section ? ` - ${grade.section}` : ''}` : ''
-                      const displayName = abbreviatedName + (grade?.section ? ` - ${grade.section}` : '')
-                      
-                      return (
-                        <Badge 
-                          key={gradeId} 
-                          variant="secondary" 
-                          title={fullName}
-                          className="px-2 py-1 flex items-center gap-1 bg-white hover:bg-primary/10 text-[10px] border border-primary/30 text-slate-700 font-medium transition-all"
-                        >
-                          {displayName}
-                          <X 
-                            className="h-2.5 w-2.5 cursor-pointer hover:text-rose-600 transition-colors" 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleGradeToggle(gradeId)
-                            }}
-                          />
-                        </Badge>
-                      )
-                    })}
-                    {selectedGradeIds.length > 8 && (
-                      <Badge variant="outline" className="bg-white hover:bg-primary/10 border-primary/30 text-slate-700 font-medium text-[10px]">
-                        +{selectedGradeIds.length - 8} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+              ) : (
+                <p className="w-full text-center text-xs text-slate-500">
+                  Select at least one {gradeLabel} to link this structure
+                </p>
               )}
-              
-              {error && (
-                <div className="bg-gradient-to-br from-rose-50/50 to-rose-50/30 border border-rose-200/60 p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="h-4 w-4 flex-shrink-0 text-rose-600 mt-0.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                      </svg>
-                    </div>
-                    <p className="text-xs text-rose-700 font-medium">{error}</p>
-                  </div>
-                </div>
-              )}
-              </div>
-            </ScrollArea>
-            
-            <DrawerFooter className="px-4 py-3 border-t border-slate-200/60 bg-gradient-to-br from-white via-slate-50/30 to-white">
-              <div className="flex gap-2">
+
+              <div className="flex w-full gap-2">
                 <DrawerClose asChild>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
                     disabled={isSubmitting}
-                    className="h-8 text-xs border-slate-300 hover:bg-slate-50 hover:border-slate-400"
                   >
                     Cancel
                   </Button>
                 </DrawerClose>
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || selectedGradeIds.length === 0}
-                  className="h-8 text-xs min-w-[120px] bg-gradient-to-r from-primary via-primary/95 to-primary/90 hover:from-primary/90 hover:via-primary hover:to-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                <Button
+                  type="submit"
+                  className="flex-1 text-white disabled:opacity-50"
+                  style={{ backgroundColor: FEES_BRAND.primary }}
+                  disabled={isSubmitting || !hasGrades}
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                      Assigning...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Linking…
                     </>
                   ) : (
                     <>
-                      <Users className="mr-1.5 h-3 w-3" />
-                      Assign to {selectedGradeIds.length} {isShowingGradeLevels ? 'Grade Level' : 'Class'}{selectedGradeIds.length !== 1 ? 's' : ''}
+                      <Users className="mr-2 h-4 w-4 shrink-0" />
+                      Link {selectedGradeIds.length || ''}{' '}
+                      {selectedGradeIds.length === 1
+                        ? gradeLabel
+                        : gradeLabelPlural}
                     </>
                   )}
                 </Button>
               </div>
             </DrawerFooter>
           </form>
+        ) : (
+          <div className="flex flex-1 items-center justify-center p-8 text-sm text-slate-500">
+            Select a fee structure first.
+          </div>
         )}
       </DrawerContent>
     </Drawer>

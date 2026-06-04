@@ -60,8 +60,8 @@ const tabs: TabDef[] = [
   },
   {
     id: "plans",
-    label: "Fee plans",
-    short: "Plans",
+    label: "Fee structures",
+    short: "Structures",
     icon: FileStack,
     priority: 4,
   },
@@ -89,6 +89,7 @@ export const FeesSectionTabs = ({
   return (
     <nav
       className={cn(
+        FEES_LAYOUT.page,
         integrated
           ? "border-t border-slate-100 px-3 py-2 max-md:border-0 max-md:px-3 max-md:pb-3"
           : "rounded-xl border border-slate-200/80 bg-white p-2 shadow-sm",

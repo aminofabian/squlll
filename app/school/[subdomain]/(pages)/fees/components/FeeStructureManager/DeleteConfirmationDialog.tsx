@@ -30,7 +30,7 @@ export const DeleteConfirmationDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete fee plan</DialogTitle>
+          <DialogTitle>Delete fee structure</DialogTitle>
           <DialogDescription className="pt-2 space-y-3">
             <span>
               Are you sure you want to delete{" "}
@@ -39,7 +39,7 @@ export const DeleteConfirmationDialog = ({
 
             {eligibilityLoading ? (
               <span className="block text-slate-600">
-                Checking whether this plan can be deleted…
+                Checking whether this structure can be deleted…
               </span>
             ) : eligibility && !canDelete ? (
               <span className="block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
@@ -48,7 +48,7 @@ export const DeleteConfirmationDialog = ({
                   Cannot delete — financial activity exists
                 </span>
                 <span className="block text-sm">
-                  This plan must be kept for auditing and reporting. Historical
+                  This structure must be kept for auditing and reporting. Historical
                   records linked to it include:
                 </span>
                 <ul className="mt-2 list-disc space-y-0.5 pl-5 text-sm">
@@ -59,7 +59,7 @@ export const DeleteConfirmationDialog = ({
               </span>
             ) : canDelete ? (
               <span className="block text-red-600">
-                This action cannot be undone. The plan has no student assignments,
+                This action cannot be undone. The structure has no student assignments,
                 balances, payments, or invoices.
               </span>
             ) : null}
@@ -81,7 +81,7 @@ export const DeleteConfirmationDialog = ({
               }}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete plan
+              Delete structure
             </Button>
           ) : null}
         </DialogFooter>

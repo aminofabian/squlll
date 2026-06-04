@@ -56,7 +56,10 @@ import { Download, FileStack, Upload } from "lucide-react";
 // Import modular components and hooks
 import { FeesPageShell } from "./components/FeesPageShell";
 import { FeesPageChrome } from "./components/FeesPageChrome";
-import { hasMeaningfulFeeMetrics } from "./lib/feesWorkflow";
+import {
+  hasMeaningfulFeeMetrics,
+  setupMilestonesComplete,
+} from "./lib/feesWorkflow";
 import { FeesPanel } from "./components/FeesPanel";
 import { FeesOverviewBoard } from "./components/FeesOverviewBoard";
 import { OverviewStatsCards } from "./components/OverviewStatsCards";
@@ -155,8 +158,12 @@ export default function FeesPage() {
   );
 
   const feesAccess = useFeesAccess();
-  const { applyFeeAdjustment, isApplying: isApplyingAdjustment } =
-    useGraphQLFeeAdjustments();
+  const {
+    applyFeeAdjustment,
+    isApplying: isApplyingAdjustment,
+    error: adjustmentError,
+    clearError: clearAdjustmentError,
+  } = useGraphQLFeeAdjustments();
 
   const feesSection = useMemo((): FeesSection => {
     if (planSlugFromUrl) return "plans";
@@ -187,6 +194,10 @@ export default function FeesPage() {
     studentFeeItemId: "",
   });
 
+  useEffect(() => {
+    if (showAdjustmentDrawer) clearAdjustmentError();
+  }, [showAdjustmentDrawer, clearAdjustmentError]);
+
   const { entries: auditEntries, append: appendAudit, refresh: refreshAudit } =
     useFeeAuditLog();
   const [selectedInvoices, setSelectedInvoices] = useState<string[]>([]);
@@ -213,7 +224,7 @@ export default function FeesPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   /** Bumps when guided setup saves so the plan drawer reloads buckets/amounts */
   const [feeDraftSyncKey, setFeeDraftSyncKey] = useState(0);
-  /** Re-open fee plan drawer after closing setup (edit setup from plan) */
+  /** Re-open fee structure drawer after closing setup (edit setup from plan) */
   const [feePlanResumeAfterSetup, setFeePlanResumeAfterSetup] = useState(false);
   const [feePlanSetupIntent, setFeePlanSetupIntent] =
     useState<FeePlanSetupIntent>("initial");
@@ -457,8 +468,11 @@ export default function FeesPage() {
     }
   }, [searchParams, feesSection, setSelectedClass]);
 
-  const { data: feeAssignmentsData, refetch: refetchFeeAssignments } =
-    useFeeAssignments();
+  const {
+    data: feeAssignmentsData,
+    loading: feeAssignmentsLoading,
+    refetch: refetchFeeAssignments,
+  } = useFeeAssignments();
 
   const tenantGradeLabelMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -534,7 +548,7 @@ export default function FeesPage() {
   );
 
   const handleUpdateFeeItem = () => {
-    /* Inline bucket edit removed — use Edit on the fee plan card */
+    /* Inline bucket edit removed — use Edit on the fee structure card */
   };
 
 
@@ -548,8 +562,8 @@ export default function FeesPage() {
     }
     if (processedFeeStructures.length === 0) {
       toast({
-        title: "Create a fee plan first",
-        description: "Add a fee plan before billing students.",
+        title: "Create a fee structure first",
+        description: "Add a fee structure before billing students.",
       });
       handleCreateNew();
       return;
@@ -559,9 +573,9 @@ export default function FeesPage() {
       structureId || processedFeeStructures[0]?.structureId || "";
     if (targetId && getLinkedClassCount(targetId) === 0) {
       toast({
-        title: "Link plan to classes first",
+        title: "Link structure to classes first",
         description:
-          "Apply this fee plan to grades or classes before generating bills.",
+          "Apply this fee structure to grades or classes before generating bills.",
         variant: "destructive",
       });
       handleAssignToGrade(targetId);
@@ -570,9 +584,9 @@ export default function FeesPage() {
 
     if (assignedClassCount === 0) {
       toast({
-        title: "Link plan to classes first",
+        title: "Link structure to classes first",
         description:
-          "Apply a fee plan to your classes before billing students.",
+          "Apply a fee structure to your classes before billing students.",
         variant: "destructive",
       });
       handleAssignToGradeAction();
@@ -589,7 +603,7 @@ export default function FeesPage() {
     if (!hasFetchedOnMount.current) {
       hasFetchedOnMount.current = true;
       fetchFeeStructures().catch((err) => {
-        console.error("Failed to fetch fee plans on mount:", err);
+        console.error("Failed to fetch fee structures on mount:", err);
         hasFetchedOnMount.current = false; // Reset on error so we can retry
       });
     }
@@ -675,15 +689,17 @@ export default function FeesPage() {
     ],
   );
 
-  const finalRefetch = () => {
-    refetchStudentData();
-    refetchFallback();
-    refetchStudents();
-    refetchArrearsSummary();
+  const finalRefetch = async () => {
+    await Promise.all([
+      refetchStudentData(),
+      refetchFallback(),
+      refetchStudents(),
+      refetchArrearsSummary(),
+    ]);
   };
 
   const forcePageRefresh = () => {
-    finalRefetch();
+    void finalRefetch();
   };
 
   const { append: appendReminderLog, refresh: refreshReminderLog } =
@@ -710,6 +726,7 @@ export default function FeesPage() {
     handleSubmitReminder,
     handleSubmitInvoice,
     isGeneratingInvoices,
+    isSubmittingPayment,
   } = useFormHandlers(
     selectedStudent,
     filteredInvoices,
@@ -784,6 +801,9 @@ export default function FeesPage() {
   }, [refreshAudit]);
 
   const bursarMetrics = useBursarDashboardMetrics(allStudentsSummary);
+
+  const overviewBootstrapping =
+    studentsLoading || feeAssignmentsLoading;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -947,12 +967,12 @@ export default function FeesPage() {
   };
 
   // Fee Structure handlers
-  /** Single path: configure (setup) → publish (fee plan drawer) */
+  /** Single path: configure (setup) → publish (fee structure drawer) */
   const startCreateFeePlan = useCallback(() => {
     if (!feesAccess.canManagePlans) {
       toast({
         title: "View only",
-        description: "Your role cannot create fee plans.",
+        description: "Your role cannot create fee structures.",
       });
       return;
     }
@@ -973,7 +993,7 @@ export default function FeesPage() {
     if (!feesAccess.canManagePlans) {
       toast({
         title: "View only",
-        description: "Your role cannot create fee plans.",
+        description: "Your role cannot create fee structures.",
       });
       return;
     }
@@ -994,9 +1014,9 @@ export default function FeesPage() {
 
     if (processedStructure && !isFeePlanEditable(processedStructure)) {
       toast({
-        title: "Plan is inactive",
+        title: "Structure is inactive",
         description:
-          "Expired fee plans are read-only. Existing balances can still be collected from Balances.",
+          "Expired fee structures are read-only. Existing balances can still be collected from Balances.",
         variant: "destructive",
       });
       return;
@@ -1031,10 +1051,10 @@ export default function FeesPage() {
       deletingStructureId.current = feeStructureId;
 
       toast({
-        title: "Deleting fee plan...",
+        title: "Deleting fee structure...",
         description: structureName
           ? `Please wait while we delete "${structureName}".`
-          : "Please wait while we delete this fee plan.",
+          : "Please wait while we delete this fee structure.",
       });
 
       const success = await graphqlDeleteFeeStructure(feeStructureId);
@@ -1044,7 +1064,7 @@ export default function FeesPage() {
           await fetchFeeStructures();
         } catch (refreshError) {
           console.error(
-            "Failed to refresh fee plans list, but deletion succeeded:",
+            "Failed to refresh fee structures list, but deletion succeeded:",
             refreshError,
           );
           // Don't show error to user since deletion succeeded
@@ -1053,15 +1073,15 @@ export default function FeesPage() {
         appendAudit({
           action: "fee_plan_deleted",
           summary: structureName
-            ? `Fee plan "${structureName}" deleted`
-            : "Fee plan deleted",
+            ? `Fee structure "${structureName}" deleted`
+            : "Fee structure deleted",
         });
 
         toast({
-          title: "Fee plan deleted",
+          title: "Fee structure deleted",
           description: structureName
             ? `"${structureName}" has been successfully deleted.`
-            : "The fee plan has been successfully deleted.",
+            : "The fee structure has been successfully deleted.",
           variant: "default",
         });
 
@@ -1075,7 +1095,7 @@ export default function FeesPage() {
       } else {
         const errorMsg =
           deleteError ||
-          "Failed to delete fee plan. It may be in use or you may not have permission to delete it.";
+          "Failed to delete fee structure. It may be in use or you may not have permission to delete it.";
         console.error(`Delete failed for ${feeStructureId}:`, errorMsg);
         toast({
           title: "Deletion failed",
@@ -1088,7 +1108,7 @@ export default function FeesPage() {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       console.error(
-        `Unexpected error deleting fee plan ${feeStructureId}:`,
+        `Unexpected error deleting fee structure ${feeStructureId}:`,
         error,
       );
       toast({
@@ -1163,7 +1183,7 @@ export default function FeesPage() {
       const wasCreate = !selectedStructure;
 
       toast({
-        title: wasCreate ? "Fee plan created" : "Fee plan updated",
+        title: wasCreate ? "Fee structure created" : "Fee structure updated",
         description: wasCreate
           ? "Next, apply it to your classes so students can be billed."
           : "Your changes have been saved.",
@@ -1174,8 +1194,8 @@ export default function FeesPage() {
         appendAudit({
           action: "fee_plan_created",
           summary: wasCreate
-            ? `Fee plan "${(formData as { name?: string }).name || "New plan"}" created`
-            : `Fee plan updated`,
+            ? `Fee structure "${(formData as { name?: string }).name || "New structure"}" created`
+            : `Fee structure updated`,
         });
       }
 
@@ -1183,7 +1203,7 @@ export default function FeesPage() {
         const name =
           (formData as { name?: string }).name ||
           graphQLStructures.find((s) => s.id === result)?.name ||
-          "Fee plan";
+          "Fee structure";
         setFeeStructureToAssign({
           id: result,
           name,
@@ -1195,10 +1215,10 @@ export default function FeesPage() {
       return result;
     } catch (error) {
       const errorMessage = getDisplayErrorMessage(error);
-      console.error("Error saving fee plan:", error);
+      console.error("Error saving fee structure:", error);
 
       toast({
-        title: selectedStructure ? "Could not update fee plan" : "Could not create fee plan",
+        title: selectedStructure ? "Could not update fee structure" : "Could not create fee structure",
         description: errorMessage,
         variant: "destructive",
       });
@@ -1214,9 +1234,9 @@ export default function FeesPage() {
 
     if (structure && !isFeePlanEditable(structure)) {
       toast({
-        title: "Plan is inactive",
+        title: "Structure is inactive",
         description:
-          "Cannot generate new invoices from an expired fee plan. Collect against existing balances instead.",
+          "Cannot generate new invoices from an expired fee structure. Collect against existing balances instead.",
         variant: "destructive",
       });
       return;
@@ -1263,9 +1283,9 @@ export default function FeesPage() {
 
     if (structure && !isFeePlanEditable(structure)) {
       toast({
-        title: "Plan is inactive",
+        title: "Structure is inactive",
         description:
-          "Cannot link classes or create new assignments from an expired fee plan.",
+          "Cannot link classes or create new assignments from an expired fee structure.",
         variant: "destructive",
       });
       return;
@@ -1280,11 +1300,11 @@ export default function FeesPage() {
       });
       setIsAssignModalOpen(true);
     } else {
-      console.error("Fee plan not found:", feeStructureId);
+      console.error("Fee structure not found:", feeStructureId);
       toast({
         title: "Error",
         description:
-          "Fee plan not found. Please refresh the page and try again.",
+          "Fee structure not found. Please refresh the page and try again.",
         variant: "destructive",
       });
     }
@@ -1294,7 +1314,7 @@ export default function FeesPage() {
   const handleAssignmentSuccess = (assignmentResult: any) => {
     appendAudit({
       action: "plan_assigned",
-      summary: `Fee plan linked to classes`,
+      summary: `Fee structure linked to classes`,
     });
     Promise.all([
       fetchFeeStructures(),
@@ -1403,11 +1423,44 @@ export default function FeesPage() {
       toast({ title: "View only", description: "Your role cannot log adjustments." });
       return;
     }
+    if (!selectedStudent) {
+      toast({
+        title: "Select a student first",
+        description: "Open a student from Balances before logging an adjustment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAdjustmentForm({
+      type: "discount",
+      amount: "",
+      reason: "",
+      studentFeeItemId: "",
+    });
     setShowAdjustmentDrawer(true);
   };
 
   const handleSubmitAdjustment = async () => {
-    if (!finalStudentData || !adjustmentForm.reason.trim()) return;
+    if (!selectedStudent || !finalStudentData) {
+      toast({
+        title: "Student not ready",
+        description:
+          "Wait for the student profile to load, then try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reason = adjustmentForm.reason.trim();
+    if (reason.length < 3) {
+      toast({
+        title: "Reason required",
+        description: "Enter at least 3 characters explaining this adjustment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const amount = Number(adjustmentForm.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
       toast({
@@ -1418,7 +1471,7 @@ export default function FeesPage() {
       return;
     }
 
-    const result = await applyFeeAdjustment({
+    const { record: result, errorMessage } = await applyFeeAdjustment({
       studentId: finalStudentData.id,
       type: mapAdjustmentType(adjustmentForm.type),
       amount,
@@ -1429,7 +1482,9 @@ export default function FeesPage() {
     if (!result) {
       toast({
         title: "Adjustment failed",
-        description: "Could not apply the fee adjustment. Try again.",
+        description:
+          errorMessage ??
+          "Could not apply the fee adjustment. Check that the student has unpaid fee lines and try again.",
         variant: "destructive",
       });
       return;
@@ -1440,10 +1495,6 @@ export default function FeesPage() {
       summary: `${adjustmentForm.type} of KES ${result.amount.toLocaleString()} for ${finalStudentData.studentName}: ${adjustmentForm.reason.trim()}`,
       meta: { studentId: finalStudentData.id, adjustmentId: result.id },
     });
-    toast({
-      title: "Adjustment applied",
-      description: "Student balance updated. Entry saved to audit trail.",
-    });
     setShowAdjustmentDrawer(false);
     setAdjustmentForm({
       type: "discount",
@@ -1451,7 +1502,11 @@ export default function FeesPage() {
       reason: "",
       studentFeeItemId: "",
     });
-    forcePageRefresh();
+    await finalRefetch();
+    toast({
+      title: "Adjustment applied",
+      description: `KES ${result.amount.toLocaleString()} credited. Balance and invoices updated.`,
+    });
   };
 
   const exportBalancesCsv = () => {
@@ -1484,8 +1539,8 @@ export default function FeesPage() {
 
     if (processedFeeStructures.length === 0) {
       toast({
-        title: "Create a fee plan first",
-        description: "Add a fee plan, then apply it to your classes.",
+        title: "Create a fee structure first",
+        description: "Add a fee structure, then apply it to your classes.",
       });
       setShowCreateForm(true);
       return;
@@ -1497,9 +1552,9 @@ export default function FeesPage() {
     }
 
     toast({
-      title: "Choose a fee plan",
+      title: "Choose a fee structure",
       description:
-        "Open the plan you want below, then tap Apply to class on that card.",
+        "Open the structure you want below, then tap Apply to class on that card.",
     });
   };
 
@@ -1553,9 +1608,9 @@ export default function FeesPage() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full">
+      <div className="flex min-w-0 flex-1 flex-col w-full max-w-full overflow-x-hidden">
         {/* Header with Back Button when not on dashboard */}
         {currentView !== "dashboard" && (
           <div className="border-b border-slate-200 bg-white px-5 py-2.5">
@@ -1591,11 +1646,13 @@ export default function FeesPage() {
                   todayPaymentCount: bursarMetrics.todayPaymentCount,
                   overviewSetupMode:
                     feesSection === "overview" &&
+                    !overviewBootstrapping &&
                     !hasMeaningfulFeeMetrics({
                       totalExpected: bursarMetrics.totalExpected,
                       totalCollected: bursarMetrics.totalCollected,
                       todayPaymentCount: bursarMetrics.todayPaymentCount,
-                    }),
+                    }) &&
+                    !setupMilestonesComplete(feeWorkflowCompleted),
                   isReadOnly: feesAccess.isReadOnly,
                   selectedStudent: selectedStudent,
                   searchTerm,
@@ -1619,6 +1676,7 @@ export default function FeesPage() {
                 <FeesOverviewBoard
                   metrics={bursarMetrics}
                   completedSteps={feeWorkflowCompleted}
+                  bootstrapping={overviewBootstrapping}
                   onStepClick={handleFeeWorkflowStep}
                   onViewBalances={handleViewInvoices}
                   onViewHighBalances={handleViewHighBalances}
@@ -1639,27 +1697,19 @@ export default function FeesPage() {
                 <FeesPanel
                   dense
                   noPadding
-                  className="flex min-h-0 flex-1 flex-col"
-                  action={
-                    !feesAccess.isReadOnly ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs"
-                        onClick={() => openBulkInvoiceGenerator()}
-                      >
-                        <FileStack className="mr-1 h-3.5 w-3.5" />
-                        Term invoices
-                      </Button>
-                    ) : undefined
-                  }
+                  className="flex min-h-0 flex-1 flex-col border-0 bg-transparent shadow-none"
                 >
-                <div className="flex min-h-0 flex-1 flex-col overflow-auto p-3">
+                <div className="flex min-h-0 flex-1 flex-col overflow-auto p-2 sm:p-3">
                 <FeesReportsPanel
                   embedded
                   students={allStudentsSummary}
                   auditEntries={auditEntries}
                   canExport={feesAccess.canExport}
+                  onTermInvoices={
+                    !feesAccess.isReadOnly
+                      ? () => openBulkInvoiceGenerator()
+                      : undefined
+                  }
                 />
                 </div>
                 </FeesPanel>
@@ -1668,7 +1718,7 @@ export default function FeesPage() {
               {feesSection === "plans" && !feesAccess.canManagePlans && (
                 <FeesPanel>
                 <p className="text-sm text-slate-600">
-                  Your role cannot edit fee plans. Open Reports or Student
+                  Your role cannot edit fee structures. Open Reports or Student
                   balances instead.
                 </p>
                 </FeesPanel>
@@ -1678,11 +1728,11 @@ export default function FeesPage() {
                 <FeesPanel
                   dense
                   noPadding
-                  className="flex min-h-0 flex-1 flex-col border-0 bg-transparent shadow-none"
+                  className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden border-0 bg-transparent shadow-none"
                 >
                   <div
                     className={cn(
-                      "min-h-0 flex-1 overflow-auto",
+                      "min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden overflow-y-auto",
                       planSlugFromUrl
                         ? "max-md:p-0 md:p-2 md:sm:p-3"
                         : "p-2",
@@ -1728,11 +1778,21 @@ export default function FeesPage() {
                 <FeesPanel
                   dense
                   noPadding
-                  title={`${displayedStudentsForBalances.length} students`}
+                  title="Students"
                   description={
-                    balancesStatusFilter === "all"
-                      ? "Sorted by balance"
-                      : `Showing: ${balancesStatusFilter.replace(/_/g, " ")}`
+                    studentsLoading || arrearsSummaryLoading
+                      ? "Loading balances…"
+                      : [
+                          `${displayedStudentsForBalances.length} shown`,
+                          selectedClass && selectedClass !== "all"
+                            ? selectedClass
+                            : null,
+                          balancesStatusFilter !== "all"
+                            ? balancesStatusFilter.replace(/_/g, " ")
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")
                   }
                   className={cn(
                     "flex min-h-0 flex-1 flex-col",
@@ -1813,6 +1873,7 @@ export default function FeesPage() {
                   <div className="min-h-0 flex-1 overflow-auto max-md:p-0 sm:p-3">
                   <FeesDataTable
                     embedded
+                    streamlined
                     students={displayedStudentsForBalances}
                     loading={studentsLoading}
                     error={studentsError}
@@ -1829,11 +1890,9 @@ export default function FeesPage() {
                 <FeesPanel
                   dense
                   noPadding
-                  className="flex min-h-0 flex-1 flex-col overflow-auto"
+                  className="flex min-h-0 flex-1 flex-col overflow-auto border-0 bg-transparent shadow-none"
                 >
-                  <div className="p-2 sm:p-3">
-                    <FeeAssignmentsView />
-                  </div>
+                  <FeeAssignmentsView />
                 </FeesPanel>
               )}
               </div>
@@ -1847,7 +1906,7 @@ export default function FeesPage() {
                 onStepClick={handleFeeWorkflowStep}
               />
 
-              <FeesPanel title="Manage fee plans" noPadding>
+              <FeesPanel title="Manage fee structures" noPadding>
                 <div className="p-5 sm:p-6">
               <FeeStructureManager
                 onCreateNew={handleCreateNew}
@@ -1883,7 +1942,6 @@ export default function FeesPage() {
                     </div>
                     <FeeSummaryCard
                       studentData={finalStudentData}
-                      invoiceData={selectedStudentInvoices}
                       loading={finalLoading}
                       error={finalError}
                     />
@@ -2106,6 +2164,7 @@ export default function FeesPage() {
         preselectedStructureId={preselectedStructureId}
         preselectedTerm={preselectedTerm}
         getLinkedClassCount={getLinkedClassCount}
+        getLinkedClasses={getLinkedClasses}
         onNeedClassAssignment={handleAssignToGrade}
       />
 
@@ -2125,6 +2184,7 @@ export default function FeesPage() {
         form={paymentForm}
         setForm={setPaymentForm}
         onSubmit={handleSubmitPayment}
+        isSubmitting={isSubmittingPayment}
         studentId={paymentForm.studentId || selectedStudent}
         students={allStudentsSummary}
         studentInfo={
@@ -2198,6 +2258,7 @@ export default function FeesPage() {
         setForm={setAdjustmentForm}
         onSubmit={handleSubmitAdjustment}
         isSubmitting={isApplyingAdjustment}
+        submitError={adjustmentError}
       />
 
       <FeesSetupWizardDialog

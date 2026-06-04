@@ -12,8 +12,8 @@ import {
 import { FEES_BRAND } from "../lib/fees-ui";
 
 const STEPS = [
-  { key: "plan", label: "Create fee plan", hint: "Amounts per term & category" },
-  { key: "link", label: "Link to classes", hint: "Which grades use this plan" },
+  { key: "plan", label: "Create fee structure", hint: "Amounts per term & category" },
+  { key: "link", label: "Link to classes", hint: "Which grades use this structure" },
   { key: "bill", label: "Send invoices", hint: "Bill students for the term" },
 ] as const;
 
@@ -78,8 +78,8 @@ export function FeesSetupBanner({
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-emerald-50/95">
             {plansReady
               ? classesLinked
-                ? "Your plans are linked — send term invoices so balances and collection % reflect real data."
-                : `You have ${planCount} plan${planCount === 1 ? "" : "s"} — link each plan to the classes it applies to.`
+                ? "Your structures are linked — send term invoices so balances and collection % reflect real data."
+                : `You have ${planCount} fee structure${planCount === 1 ? "" : "s"} — link each structure to the classes it applies to.`
               : "Start with a guided setup: academic year, categories, and amounts per grade."}
           </p>
         </div>

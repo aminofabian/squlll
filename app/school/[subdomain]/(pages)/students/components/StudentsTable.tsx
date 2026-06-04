@@ -18,6 +18,7 @@ export interface StudentRow {
   streamId?: string | null;
   missingStream?: boolean;
   status: string;
+  createdAt?: string;
 }
 
 interface StudentsTableProps {

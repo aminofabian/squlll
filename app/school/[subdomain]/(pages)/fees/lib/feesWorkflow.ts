@@ -3,15 +3,15 @@
 export const FEES_WORKFLOW_STEPS = [
   {
     step: 0,
-    title: "Create fee plan",
+    title: "Create fee structure",
     subtitle: "Amounts per term and category",
-    actionLabel: "Create fee plan",
+    actionLabel: "Create fee structure",
   },
   {
     step: 1,
     title: "Link to classes",
-    subtitle: "Which grades use this plan",
-    actionLabel: "Link plan to classes",
+    subtitle: "Which grades use this structure",
+    actionLabel: "Link structure to classes",
   },
   {
     step: 2,

@@ -66,6 +66,7 @@ export function FeesPanel({
       )}
       <div
         className={cn(
+          "min-w-0 max-w-full overflow-x-hidden",
           !noPadding && (dense ? "p-4 sm:p-5" : "p-5 sm:p-6"),
         )}
       >

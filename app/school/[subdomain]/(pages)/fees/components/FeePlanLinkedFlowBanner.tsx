@@ -36,7 +36,7 @@ export function FeePlanLinkedFlowBanner({
       )}
     >
       <div className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
-        <span>Create fee plan</span>
+        <span>Create fee structure</span>
         <span className="text-slate-300">·</span>
         <span className="text-slate-700">
           {onSetup
@@ -96,7 +96,7 @@ export function FeePlanLinkedFlowBanner({
             2
           </span>
           <span className="min-w-0 truncate text-xs font-medium text-slate-800">
-            Fee plan & letter
+            Fee structure & letter
           </span>
         </li>
       </ol>
@@ -104,13 +104,13 @@ export function FeePlanLinkedFlowBanner({
       {onSetup && setupIntent === "initial" ? (
         <p className="mt-2 text-xs leading-relaxed text-slate-600">
           Set year, categories, splits, and amounts per grade. You&apos;ll
-          continue to name the plan, review amounts, and publish the fee letter.
+          continue to name the structure, review amounts, and publish the fee letter.
         </p>
       ) : null}
 
       {onSetup && setupIntent === "revise" ? (
         <p className="mt-2 text-xs leading-relaxed text-slate-600">
-          Changes apply to your in-progress fee plan when you continue.
+          Changes apply to your in-progress fee structure when you continue.
         </p>
       ) : null}
 

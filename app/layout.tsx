@@ -5,7 +5,7 @@ import { metadata as siteMetadata } from "./metadata";
 
 import "@/lib/polyfills/localStorage";
 
-import { Figtree } from "next/font/google";
+import { Figtree, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { QueryClientWrapper } from "./QueryClientWrapper";
 import { ApolloWrapper } from "./ApolloWrapper";
@@ -14,6 +14,13 @@ import { ErrorHandler } from "@/components/ErrorHandler";
 const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-figtree",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-instrument-serif",
   display: "swap",
 });
 
@@ -35,7 +42,7 @@ export default function RootLayout({
           <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         )}
       </head>
-      <body className={`${figtree.variable} font-sans antialiased`}>
+      <body className={`${figtree.variable} ${instrumentSerif.variable} font-sans antialiased`}>
         <QueryClientWrapper>
           <ApolloWrapper>
             <ErrorHandler />

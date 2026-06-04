@@ -12,7 +12,7 @@ export const FEES_BRAND = {
 
 export const FEES_DETAIL = {
   maxWidth: "max-w-3xl",
-  /** Single fee plan slug page — room for structure + letter tooling */
+  /** Single fee structure slug page — room for structure + letter tooling */
   planPageWidth: "max-w-5xl",
   pageGap: "space-y-3",
   planPageGap: "space-y-3",
@@ -38,13 +38,15 @@ export const FEES_LAYOUT = {
   toolbarButtons:
     "flex w-full flex-col gap-2 min-[400px]:grid min-[400px]:grid-cols-2 sm:flex sm:w-auto sm:shrink-0",
   chipStrip:
-    "flex flex-wrap gap-1.5 max-md:overflow-visible md:overflow-x-auto md:overscroll-x-contain md:pb-0.5 md:[-webkit-overflow-scrolling:touch]",
-  tableScroll:
-    "max-md:overflow-x-hidden md:overflow-x-auto md:overscroll-x-contain md:[-webkit-overflow-scrolling:touch]",
+    "flex min-w-0 max-w-full flex-wrap gap-1.5 overflow-x-hidden",
+  /** Tables stay inside the page width — no document-level horizontal scroll. */
+  tableScroll: "min-w-0 max-w-full overflow-x-hidden",
+  tableContained:
+    "min-w-0 max-w-full overflow-x-hidden rounded-xl border border-slate-200/80",
   planScrollMt: "scroll-mt-28 max-md:scroll-mt-24 sm:scroll-mt-[11rem]",
   /** Room for pinned letter toolbar (+ mobile tab bar on small screens). */
   planPageBottom:
-    "pb-[calc(10rem+env(safe-area-inset-bottom,0px))] lg:pb-[max(5.5rem,calc(5.5rem+env(safe-area-inset-bottom,0px)))]",
+    "pb-[calc(10rem+env(safe-area-inset-bottom,0px))] lg:pb-[max(4rem,calc(4rem+env(safe-area-inset-bottom,0px)))]",
   /** Dock above school mobile bottom nav (4.75rem). */
   mobileDockBottom:
     "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-0",
@@ -58,7 +60,7 @@ export const FEES_LAYOUT = {
 /** Mobile-native (iOS/Android-style) patterns — use with max-md: via cn(). */
 export const FEES_MOBILE = {
   shell: "max-md:gap-3 max-md:px-3 max-md:pb-3 max-md:pt-1",
-  /** Fee plan slug page — soft canvas, floating cards. */
+  /** Fee structure slug page — soft canvas, floating cards. */
   planPageShell: "max-md:bg-[#eef2f1] max-md:px-3 max-md:pt-0",
   stack: "max-md:flex max-md:flex-col max-md:gap-3",
   chrome:
@@ -86,7 +88,7 @@ export const FEES_MOBILE = {
     "max-md:mb-3 max-md:flex max-md:flex-row max-md:items-center max-md:justify-between max-md:gap-2",
   planSectionTitle: "max-md:text-[15px] max-md:font-semibold max-md:tracking-tight",
   planStickyTop:
-    "max-md:-mx-3 max-md:border-0 max-md:border-b max-md:border-slate-200/80 max-md:bg-white/90 max-md:shadow-none max-md:ring-0 max-md:backdrop-blur-xl max-md:supports-[backdrop-filter]:bg-white/82",
+    "max-md:border-0 max-md:border-b max-md:border-slate-200/80 max-md:bg-white/90 max-md:shadow-none max-md:ring-0 max-md:backdrop-blur-xl max-md:supports-[backdrop-filter]:bg-white/82",
   card:
     "max-md:rounded-2xl max-md:border-0 max-md:bg-white max-md:shadow-[0_2px_14px_rgba(15,23,42,0.07)] max-md:overflow-x-hidden md:rounded-xl md:border md:border-slate-200/70 md:shadow-sm",
   planHeaderCard:

@@ -9,6 +9,7 @@ import { ParentReportCardSection } from './ParentReportCardSection';
 import { ParentScheduleSection } from './ParentScheduleSection';
 import { ParentMessagesSection } from './ParentMessagesSection';
 import type { ParentPortalChild } from '@/lib/parent/types';
+import type { ParentConsolidatedFees } from '@/lib/parent/parentFees';
 
 interface ScheduleItem {
   time: string;
@@ -55,6 +56,7 @@ interface ContentRendererProps {
   selectedChild?: number;
   setSelectedChild?: (index: number) => void;
   portalError?: string | null;
+  consolidatedFees?: ParentConsolidatedFees | null;
 }
 
 const getStatusColor = (status: string) => {
@@ -82,6 +84,7 @@ export const ContentRenderer = ({
   selectedChild = 0,
   setSelectedChild,
   portalError = null,
+  consolidatedFees = null,
 }: ContentRendererProps) => {
   const renderNotifications = () => (
     <div className="space-y-4 md:space-y-6">
@@ -319,7 +322,7 @@ export const ContentRenderer = ({
       return children ? (
         <>
           {portalError ? (
-            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+            <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
               {portalError}
             </p>
           ) : null}
@@ -328,6 +331,7 @@ export const ContentRenderer = ({
             children={children as ParentPortalChild[]}
             selectedChild={selectedChild}
             onSelectChild={setSelectedChild}
+            consolidatedFees={consolidatedFees}
           />
         </>
       ) : null;

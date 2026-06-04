@@ -5,7 +5,9 @@ const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://skool.
 
 export async function POST(request: Request) {
   try {
-    const { teacherId, streamId, gradeLevelId } = await request.json();
+    const { teacherId, streamId, gradeLevelId, contextGradeLevelId } =
+      await request.json();
+    const streamContextGradeId = contextGradeLevelId ?? gradeLevelId;
     
     console.log('Assign class teacher API called with:', { teacherId, streamId, gradeLevelId });
     
@@ -44,10 +46,15 @@ export async function POST(request: Request) {
     if (streamId) {
       // Use stream-specific assignment
       mutation = `
-        mutation AssignStreamClassTeacher($teacherId: ID!, $streamId: ID!) {
+        mutation AssignStreamClassTeacher(
+          $teacherId: ID!
+          $streamId: ID!
+          $gradeLevelId: ID
+        ) {
           assignClassTeacher(input: {
             teacherId: $teacherId,
-            streamId: $streamId
+            streamId: $streamId,
+            gradeLevelId: $gradeLevelId
           }) {
             id
             active
@@ -68,7 +75,11 @@ export async function POST(request: Request) {
           }
         }
       `;
-      variables = { teacherId, streamId };
+      variables = {
+        teacherId,
+        streamId,
+        gradeLevelId: streamContextGradeId || null,
+      };
     } else if (gradeLevelId) {
       // Use grade level assignment
       mutation = `

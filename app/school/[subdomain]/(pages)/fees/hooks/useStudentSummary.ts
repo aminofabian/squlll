@@ -116,9 +116,9 @@ export const useStudentSummary = (studentId: string | null) => {
     studentData,
     loading,
     error,
-    refetch: () => {
-      if (studentId) {
-        const fetchStudentSummary = async () => {
+    refetch: async () => {
+      if (!studentId) return;
+      const fetchStudentSummary = async () => {
           setLoading(true)
           setError(null)
 
@@ -181,10 +181,9 @@ export const useStudentSummary = (studentId: string | null) => {
           } finally {
             setLoading(false)
           }
-        }
+        };
 
-        fetchStudentSummary()
-      }
-    }
-  }
+      return fetchStudentSummary();
+    },
+  };
 }

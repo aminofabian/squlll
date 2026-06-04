@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { 
   NewInvoiceForm, 
@@ -30,7 +30,10 @@ export const useFormHandlers = (
   }) => void,
 ) => {
   const { toast } = useToast()
-  const { createPayment, error: paymentError } = useGraphQLPayments()
+  const { createPayment, error: paymentError, isCreating: isCreatingPayment } =
+    useGraphQLPayments()
+  const paymentSubmitLock = useRef(false)
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false)
   const { generateInvoices, isGenerating: isGeneratingInvoices } = useGraphQLInvoices()
   // Modal states
   const [showNewInvoiceDrawer, setShowNewInvoiceDrawer] = useState(false)
@@ -198,14 +201,18 @@ export const useFormHandlers = (
     setShowRecordPaymentDrawer(true)
   }
 
-  const handleSubmitPayment = async () => {
+  const handleSubmitPayment = async (): Promise<boolean> => {
+    if (paymentSubmitLock.current || isCreatingPayment) {
+      return false
+    }
+
     if (!paymentForm.studentId) {
       toast({
         title: 'Choose a student first',
         description: 'Search for the student who made this payment, then continue.',
         variant: 'destructive',
       })
-      return
+      return false
     }
 
     if (!paymentForm.invoiceId || !paymentForm.amountPaid || !paymentForm.paymentDate) {
@@ -214,7 +221,7 @@ export const useFormHandlers = (
         description: 'Select a bill, enter the amount, and choose the payment date.',
         variant: 'destructive',
       })
-      return
+      return false
     }
 
     const amount = roundToNearestTen(Number(paymentForm.amountPaid))
@@ -224,8 +231,11 @@ export const useFormHandlers = (
         description: 'Enter a payment amount greater than zero.',
         variant: 'destructive',
       })
-      return
+      return false
     }
+
+    paymentSubmitLock.current = true
+    setIsSubmittingPayment(true)
 
     const input = {
       invoiceId: paymentForm.invoiceId,
@@ -246,44 +256,50 @@ export const useFormHandlers = (
           : undefined,
     }
 
-    const result = await createPayment(input)
-    if (result) {
-      onPaymentRecorded?.({
-        amount,
-        method: paymentForm.paymentMethod,
-        receiptNumber: result.receiptNumber,
-        studentId: paymentForm.studentId,
-        payment: result,
-      })
+    try {
+      const result = await createPayment(input)
+      if (result) {
+        onPaymentRecorded?.({
+          amount,
+          method: paymentForm.paymentMethod,
+          receiptNumber: result.receiptNumber,
+          studentId: paymentForm.studentId,
+          payment: result,
+        })
 
-      setShowRecordPaymentDrawer(false)
-      setPaymentForm({
-        invoiceId: '',
-        studentId: '',
-        amountPaid: '',
-        paymentMethod: 'cash',
-        paymentDate: '',
-        referenceNumber: '',
-        notes: '',
-        partialPayment: false,
-        applyCreditBalance: false,
-        useManualAllocation: false,
-        allocations: {},
-      })
+        setShowRecordPaymentDrawer(false)
+        setPaymentForm({
+          invoiceId: '',
+          studentId: '',
+          amountPaid: '',
+          paymentMethod: 'cash',
+          paymentDate: '',
+          referenceNumber: '',
+          notes: '',
+          partialPayment: false,
+          applyCreditBalance: false,
+          useManualAllocation: false,
+          allocations: {},
+        })
 
-      if (onDataChange) {
-        onDataChange()
+        if (onDataChange) {
+          onDataChange()
+        }
+        return true
       }
-      return
-    }
 
-    toast({
-      title: 'Could not record payment',
-      description:
-        paymentError ||
-        'Something went wrong. Check the amount and try again.',
-      variant: 'destructive',
-    })
+      toast({
+        title: 'Could not record payment',
+        description:
+          paymentError ||
+          'Something went wrong. Check the amount and try again.',
+        variant: 'destructive',
+      })
+      return false
+    } finally {
+      paymentSubmitLock.current = false
+      setIsSubmittingPayment(false)
+    }
   }
 
   // Payment Plan Handlers
@@ -353,6 +369,7 @@ export const useFormHandlers = (
     handleSubmitPaymentPlan,
     
     // GraphQL states
-    isGeneratingInvoices
+    isGeneratingInvoices,
+    isSubmittingPayment: isSubmittingPayment || isCreatingPayment,
   }
 }

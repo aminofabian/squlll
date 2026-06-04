@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { FEES_BTN, FEES_DETAIL, FEES_LAYOUT, FEES_MOBILE } from "../../lib/fees-ui";
 import { FeeStructureCard } from "./FeeStructureCard";
 import { FeePlanDetailHeader } from "./FeePlanDetailHeader";
+import { FeePlanDetailSectionNav } from "./FeePlanDetailSectionNav";
 import { FeePlanLinkedClasses } from "./FeePlanLinkedClasses";
 import { FeePlanNextSteps } from "./FeePlanNextSteps";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
@@ -24,6 +25,8 @@ import {
   isFeePlanEditable,
   type FeePlanDeleteEligibility,
 } from "../../lib/feePlanLifecycle";
+import { sortTermsForLetter } from "../../lib/sortTermsForLetter";
+import { useFeeLetterPreviewPrefs } from "../../hooks/useFeeLetterPreviewPrefs";
 interface FeePlanDetailViewProps {
   structure: ProcessedFeeStructure;
   planSlug: string;
@@ -100,6 +103,35 @@ export function FeePlanDetailView({
 
   const canonicalSlug = feePlanSlug(structure);
 
+  const gradeLabels = useMemo(() => {
+    if (!structure.gradeLevels?.length) return [];
+    const labels = structure.gradeLevels.map(
+      (grade) =>
+        grade.shortName || grade.gradeLevel?.name || grade.name || "Grade",
+    );
+    return [...new Set(labels)];
+  }, [structure.gradeLevels]);
+
+  const letterDefaultTermIds = useMemo(
+    () => sortTermsForLetter(structure.terms ?? []).map((t) => t.id),
+    [structure.terms, structure.structureId],
+  );
+
+  const letterPrefs = useFeeLetterPreviewPrefs({
+    planSlug: canonicalSlug,
+    gradeLabels,
+    defaultTermIds: letterDefaultTermIds,
+  });
+
+  const [isLgViewport, setIsLgViewport] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setIsLgViewport(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   const syncTermToUrl = useCallback(
     (termId: string) => {
       router.replace(
@@ -148,7 +180,7 @@ export function FeePlanDetailView({
 
   useEffect(() => {
     const prev = document.title;
-    document.title = `${structure.structureName} · Fee plans`;
+    document.title = `${structure.structureName} · Fee structures`;
     return () => {
       document.title = prev;
     };
@@ -158,6 +190,54 @@ export function FeePlanDetailView({
     const fromSelection = structure.terms?.find((t) => t.id === selectedTermId)?.name;
     return fromSelection || structure.termName || "this term";
   }, [structure.terms, structure.termName, selectedTermId]);
+
+  const letterCardProps = useMemo(
+    () => ({
+      structure,
+      layout: "detail" as const,
+      detailPart: "letter" as const,
+      hideHeader: true,
+      planSlug: canonicalSlug,
+      selectedTermId,
+      onSelectedTermIdChange: handleTermChange,
+      letterTemplateId: letterPrefs.letterTemplateId,
+      onLetterTemplateIdChange: letterPrefs.setLetterTemplateId,
+      previewGrade: letterPrefs.previewGrade,
+      onPreviewGradeChange: letterPrefs.setPreviewGrade,
+      letterTermIds: letterPrefs.letterTermIds,
+      onLetterTermIdsChange: letterPrefs.setLetterTermIds,
+      letterPreviewOpen: letterPrefs.letterPreviewOpen,
+      onLetterPreviewOpenChange: letterPrefs.setLetterPreviewOpen,
+      canManage: canModifyPlan,
+      onEdit,
+      onAssignToGrade,
+      onGenerateInvoices: () =>
+        onGenerateInvoices(structure.structureId, billingTermName),
+      onUpdateFeeItem,
+      isDeleting,
+    }),
+    [
+      structure,
+      canonicalSlug,
+      selectedTermId,
+      handleTermChange,
+      letterPrefs.letterTemplateId,
+      letterPrefs.setLetterTemplateId,
+      letterPrefs.previewGrade,
+      letterPrefs.setPreviewGrade,
+      letterPrefs.letterTermIds,
+      letterPrefs.setLetterTermIds,
+      letterPrefs.letterPreviewOpen,
+      letterPrefs.setLetterPreviewOpen,
+      canModifyPlan,
+      onEdit,
+      onAssignToGrade,
+      billingTermName,
+      onGenerateInvoices,
+      onUpdateFeeItem,
+      isDeleting,
+    ],
+  );
 
   const openLinkClasses = () =>
     onAssignToGrade(
@@ -180,7 +260,7 @@ export function FeePlanDetailView({
   const termsLabel =
     termProgress.total > 0
       ? `${termProgress.configured} of ${termProgress.total} terms still need amounts`
-      : "Add term amounts in Edit plan";
+      : "Add term amounts in Edit structure";
 
   const assignedForDelete =
     collection?.assignedStudents ?? totalStudents;
@@ -285,65 +365,83 @@ export function FeePlanDetailView({
         />
       ) : null}
 
+      <FeePlanDetailSectionNav className="max-md:mx-0 md:rounded-lg md:ring-1 md:ring-slate-200/60" />
+
       <FeePlanDocument className="min-w-0 max-md:!bg-transparent">
-        <FeeStructureCard
-          structure={structure}
-          layout="detail"
-          detailPart="amounts"
-          hideHeader
-          planSlug={canonicalSlug}
-          selectedTermId={selectedTermId}
-          onSelectedTermIdChange={handleTermChange}
-          canManage={canModifyPlan}
-          onEdit={onEdit}
-          onAssignToGrade={onAssignToGrade}
-          onGenerateInvoices={() =>
-            onGenerateInvoices(structure.structureId, billingTermName)
-          }
-          onDelete={
-            canManage && onDelete ? openDeleteDialog : undefined
-          }
-          onUpdateFeeItem={onUpdateFeeItem}
-          isDeleting={isDeleting}
-        />
+        <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:divide-x lg:divide-slate-100">
+          <div className="min-w-0 lg:col-span-1">
+            <FeeStructureCard
+              structure={structure}
+              layout="detail"
+              detailPart="amounts"
+              hideHeader
+              planSlug={canonicalSlug}
+              selectedTermId={selectedTermId}
+              onSelectedTermIdChange={handleTermChange}
+              canManage={canModifyPlan}
+              onEdit={onEdit}
+              onAssignToGrade={onAssignToGrade}
+              onGenerateInvoices={() =>
+                onGenerateInvoices(structure.structureId, billingTermName)
+              }
+              onDelete={
+                canManage && onDelete ? openDeleteDialog : undefined
+              }
+              onUpdateFeeItem={onUpdateFeeItem}
+              isDeleting={isDeleting}
+            />
 
-        <FeePlanSection
-          id="linked-classes"
-          compact
-          hideStep
-          title="Linked classes"
-          description={
-            linkedClasses.length > 0
-              ? `${linkedClasses.length} linked · A–Z`
-              : "None linked yet"
-          }
-          action={linkClassesAction}
-        >
-          <FeePlanLinkedClasses
-            embedded
-            compact
-            classes={linkedClasses}
-            onLinkMore={canManage ? openLinkClasses : undefined}
-          />
-        </FeePlanSection>
+            <FeePlanSection
+              id="linked-classes"
+              compact
+              hideStep
+              title="Linked classes"
+              description={
+                linkedClasses.length > 0
+                  ? `${linkedClasses.length} class${linkedClasses.length === 1 ? "" : "es"} on this structure`
+                  : "Assign grades that use this fee schedule"
+              }
+              action={linkClassesAction}
+              className="lg:hidden"
+            >
+              <FeePlanLinkedClasses
+                embedded
+                variant="chips"
+                classes={linkedClasses}
+                onLinkMore={canManage ? openLinkClasses : undefined}
+              />
+            </FeePlanSection>
+          </div>
 
-        <FeeStructureCard
-          structure={structure}
-          layout="detail"
-          detailPart="letter"
-          hideHeader
-          planSlug={canonicalSlug}
-          selectedTermId={selectedTermId}
-          onSelectedTermIdChange={handleTermChange}
-          canManage={canModifyPlan}
-          onEdit={onEdit}
-          onAssignToGrade={onAssignToGrade}
-          onGenerateInvoices={() =>
-            onGenerateInvoices(structure.structureId, billingTermName)
-          }
-          onUpdateFeeItem={onUpdateFeeItem}
-          isDeleting={isDeleting}
-        />
+          <aside className="hidden min-w-0 flex-col lg:flex">
+            <FeePlanSection
+              compact
+              hideStep
+              title="Linked classes"
+              description={
+                linkedClasses.length > 0
+                  ? String(linkedClasses.length)
+                  : "None yet"
+              }
+              action={linkClassesAction}
+              className="border-t-0"
+            >
+              <FeePlanLinkedClasses
+                embedded
+                variant="chips"
+                classes={linkedClasses}
+              />
+            </FeePlanSection>
+
+            {isLgViewport ? <FeeStructureCard {...letterCardProps} /> : null}
+          </aside>
+        </div>
+
+        {!isLgViewport ? (
+          <div>
+            <FeeStructureCard {...letterCardProps} />
+          </div>
+        ) : null}
       </FeePlanDocument>
 
       {canManage && onDelete ? (

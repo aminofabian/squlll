@@ -8,6 +8,7 @@ import type { ParentsListItem } from "../utils/mapGraphqlParent";
 import { exportParentsToCsv } from "../utils/exportParentsCsv";
 import { resendPendingParentInvitations } from "../utils/parentInvitationActions";
 import type { ParentInvitation } from "../types";
+import { parentsActionButton } from "./parents-ui";
 
 interface ParentsBulkActionsProps {
   parents: ParentsListItem[];
@@ -79,11 +80,11 @@ export function ParentsBulkActions({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-xs"
+          className={parentsActionButton}
           onClick={handleExport}
         >
           <Download className="h-3.5 w-3.5" />
-          Export parent list
+          Export
           <span className="text-slate-400">({parents.length})</span>
         </Button>
       ) : null}
@@ -92,7 +93,7 @@ export function ParentsBulkActions({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-xs"
+          className={parentsActionButton}
           onClick={() => void handleResendAll()}
           disabled={isResending}
         >
@@ -101,7 +102,7 @@ export function ParentsBulkActions({
           ) : (
             <Mail className="h-3.5 w-3.5" />
           )}
-          Resend pending invites
+          Resend invites
           <span className="text-slate-400">({pendingInviteIds.length})</span>
         </Button>
       ) : null}

@@ -24,6 +24,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PaymentReminderForm, StudentSummaryFromAPI } from "../types";
 import { ChevronLeft } from "lucide-react";
+import { FEES_BRAND } from "../lib/fees-ui";
 
 interface PaymentReminderDrawerProps {
   isOpen: boolean;
@@ -100,9 +101,13 @@ export default function PaymentReminderDrawer({
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DrawerContent className="max-h-[90vh]">
-        <DrawerHeader>
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => !open && handleClose()}
+      direction="right"
+    >
+      <DrawerContent className="flex h-full max-h-[100dvh] w-full max-w-md flex-col">
+        <DrawerHeader className="shrink-0 border-b border-slate-100 text-left">
           <DrawerTitle>
             {step === "compose" ? "Send fee reminder" : "Preview recipients"}
           </DrawerTitle>
@@ -113,7 +118,7 @@ export default function PaymentReminderDrawer({
           </DrawerDescription>
         </DrawerHeader>
 
-        <div className="space-y-4 overflow-y-auto px-4 pb-2">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {step === "compose" ? (
             <>
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
@@ -165,13 +170,13 @@ export default function PaymentReminderDrawer({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Label htmlFor="reminder-message">Message</Label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-auto px-2 text-xs"
+                    className="h-auto shrink-0 px-2 text-xs"
                     onClick={applyTemplate}
                     disabled={filteredByBalance.length === 0}
                   >
@@ -180,7 +185,7 @@ export default function PaymentReminderDrawer({
                 </div>
                 <Textarea
                   id="reminder-message"
-                  rows={5}
+                  rows={6}
                   value={form.message}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, message: e.target.value }))
@@ -189,7 +194,7 @@ export default function PaymentReminderDrawer({
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <Checkbox
                   id="include-invoice"
                   checked={form.includeInvoiceDetails}
@@ -200,48 +205,50 @@ export default function PaymentReminderDrawer({
                     }))
                   }
                 />
-                <Label htmlFor="include-invoice" className="font-normal">
+                <Label htmlFor="include-invoice" className="font-normal leading-snug">
                   Include bill details in the message
                 </Label>
               </div>
             </>
           ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
-              {filteredByBalance.length === 0 ? (
-                <p className="p-4 text-sm text-slate-500">
-                  No students match your filters.
-                </p>
-              ) : (
-                filteredByBalance.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex justify-between gap-3 px-3 py-2.5 text-sm"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium text-slate-900 truncate">
-                        {s.studentName}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {s.admissionNumber} · {s.gradeLevelName}
+            <>
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto rounded-lg border border-slate-200 divide-y divide-slate-100">
+                {filteredByBalance.length === 0 ? (
+                  <p className="p-4 text-sm text-slate-500">
+                    No students match your filters.
+                  </p>
+                ) : (
+                  filteredByBalance.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex justify-between gap-3 px-3 py-2.5 text-sm"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-900">
+                          {s.studentName}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {s.admissionNumber} · {s.gradeLevelName}
+                        </p>
+                      </div>
+                      <p className="shrink-0 font-semibold tabular-nums text-rose-700">
+                        KES {s.feeSummary.balance.toLocaleString()}
                       </p>
                     </div>
-                    <p className="font-semibold tabular-nums text-rose-700 shrink-0">
-                      KES {s.feeSummary.balance.toLocaleString()}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                  ))
+                )}
+              </div>
 
-          {step === "preview" && form.message.trim() && (
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-sm text-slate-700 whitespace-pre-wrap">
-              {form.message}
-            </div>
+              {form.message.trim() ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm whitespace-pre-wrap text-slate-700">
+                  {form.message}
+                </div>
+              ) : null}
+            </>
           )}
         </div>
 
-        <DrawerFooter className="flex-row gap-2">
+        <DrawerFooter className="shrink-0 flex-row gap-2 border-t border-slate-100">
           {step === "preview" ? (
             <>
               <Button
@@ -249,11 +256,12 @@ export default function PaymentReminderDrawer({
                 className="flex-1"
                 onClick={() => setStep("compose")}
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
+                <ChevronLeft className="mr-1 h-4 w-4" />
                 Back
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 text-white"
+                style={{ backgroundColor: FEES_BRAND.primary }}
                 onClick={handleConfirmSend}
                 disabled={filteredByBalance.length === 0}
               >
@@ -268,7 +276,8 @@ export default function PaymentReminderDrawer({
                 </Button>
               </DrawerClose>
               <Button
-                className="flex-1"
+                className="flex-1 text-white"
+                style={{ backgroundColor: FEES_BRAND.primary }}
                 onClick={() => setStep("preview")}
                 disabled={
                   filteredByBalance.length === 0 || !form.message.trim()

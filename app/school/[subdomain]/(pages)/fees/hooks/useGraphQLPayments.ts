@@ -278,6 +278,8 @@ export interface PaymentListItem {
   amount: number;
   paymentMethod: string;
   paymentDate: string;
+  notes?: string | null;
+  parentProofUrl?: string | null;
   student: {
     admission_number: string;
     user: { name: string };
@@ -302,6 +304,8 @@ export const usePaymentsQuery = () => {
             amount
             paymentMethod
             paymentDate
+            notes
+            parentProofUrl
             student { admission_number user { name } }
             invoice { invoiceNumber }
           }

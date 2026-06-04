@@ -2983,8 +2983,10 @@ export const useTimetableStore = create<TimetableStore>()(
           // Convert response to Break format and update store
           const fetchedBreaks = result.data.getAllDayTemplateBreaks.map(
             (breakItem: any) => {
-              // Get dayOfWeek from dayTemplate if available, otherwise use 1 as default
-              const dayOfWeek = breakItem.dayTemplate?.dayOfWeek || 1;
+              const appliesAllDays = !!breakItem.applyToAllDays;
+              const dayOfWeek = appliesAllDays
+                ? undefined
+                : breakItem.dayTemplate?.dayOfWeek;
 
               return {
                 id: breakItem.id,
@@ -2996,7 +2998,7 @@ export const useTimetableStore = create<TimetableStore>()(
                 icon: breakItem.icon || "☕",
                 color: breakItem.color || "#3B82F6",
                 dayTemplateId: breakItem.dayTemplateId || null,
-                applyToAllDays: breakItem.applyToAllDays || false,
+                applyToAllDays: appliesAllDays,
               };
             },
           );

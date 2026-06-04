@@ -15,14 +15,15 @@ import {
   Sparkles,
   ArrowRight,
   AlertTriangle,
-  ChevronRight,
 } from "lucide-react";
 import { FEES_BRAND, FEES_LAYOUT, FEES_MOBILE } from "../lib/fees-ui";
 import {
   FEES_WORKFLOW_STEPS,
   getNextWorkflowStep,
   hasMeaningfulFeeMetrics,
+  setupMilestonesComplete,
 } from "../lib/feesWorkflow";
+import { FeesOverviewSkeleton } from "./FeesOverviewSkeleton";
 
 function formatKes(amount: number): string {
   if (amount >= 1_000_000) return `KES ${(amount / 1_000_000).toFixed(1)}M`;
@@ -32,6 +33,8 @@ function formatKes(amount: number): string {
 interface FeesOverviewBoardProps {
   metrics: BursarDashboardMetrics;
   completedSteps: number[];
+  /** Wait for students + assignments before choosing setup vs collections UI. */
+  bootstrapping?: boolean;
   onStepClick?: (step: number) => void;
   onViewHighBalances?: () => void;
   onViewBalances?: () => void;
@@ -44,6 +47,7 @@ interface FeesOverviewBoardProps {
 export function FeesOverviewBoard({
   metrics,
   completedSteps,
+  bootstrapping = false,
   onStepClick,
   onViewHighBalances,
   onViewBalances,
@@ -63,11 +67,16 @@ export function FeesOverviewBoard({
     loadingToday,
   } = metrics;
 
-  const operational = hasMeaningfulFeeMetrics({
-    totalExpected,
-    totalCollected,
-    todayPaymentCount,
-  });
+  if (bootstrapping) {
+    return <FeesOverviewSkeleton />;
+  }
+
+  const operational =
+    hasMeaningfulFeeMetrics({
+      totalExpected,
+      totalCollected,
+      todayPaymentCount,
+    }) || setupMilestonesComplete(completedSteps);
 
   const nextStep = getNextWorkflowStep(completedSteps);
   const setupProgress = [0, 1, 2].filter((s) =>
@@ -79,7 +88,7 @@ export function FeesOverviewBoard({
     const primaryAction = () => onStepClick?.(nextStep);
 
     return (
-      <section className={cn(FEES_MOBILE.card)}>
+      <section className={cn(FEES_LAYOUT.page, FEES_MOBILE.card)}>
         <div
           className={cn(
             FEES_LAYOUT.panelHeader,
@@ -93,13 +102,13 @@ export function FeesOverviewBoard({
             </p>
             <h2 className="text-base font-bold text-slate-900">
               {setupProgress === 0
-                ? "Create your first fee plan"
+                ? "Create your first fee structure"
                 : setupProgress === 1
-                  ? "Link plan to classes"
+                  ? "Link structure to classes"
                   : "Bill students for this term"}
             </h2>
           </div>
-          <div className="h-1.5 w-full min-w-[8rem] max-w-xs overflow-hidden rounded-full bg-white/80 sm:w-40">
+          <div className="h-1.5 w-full max-w-[10rem] overflow-hidden rounded-full bg-white/80 sm:w-40">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -209,7 +218,7 @@ export function FeesOverviewBoard({
     {
       key: "pay",
       label: "Record payment",
-      sub: "Most common task",
+      sub: "Cash, M-Pesa, bank",
       onClick: onRecordPayment,
       primary: true,
       icon: CreditCard,
@@ -237,133 +246,109 @@ export function FeesOverviewBoard({
     {
       key: "invoice",
       label: "Term invoices",
-      sub: "Bill a class or grade",
+      sub: "Bill a class",
       onClick: onGenerateInvoices,
       primary: false,
       icon: FileStack,
     },
   ] as const;
 
+  const pct = Math.min(100, Math.max(0, collectionRate));
+
   return (
-    <section className="space-y-2">
+    <section className={cn(FEES_LAYOUT.page, "space-y-2")}>
       {studentsAboveAlert > 0 && (
         <button
           type="button"
           onClick={onViewHighBalances ?? onViewBalances}
           className={cn(
             FEES_MOBILE.card,
-            "flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-amber-950 active:bg-amber-100/90",
+            "flex w-full min-w-0 items-center gap-2 px-3 py-2.5 text-left text-xs text-amber-950 active:bg-amber-50",
           )}
         >
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700" />
-          <span className={FEES_LAYOUT.textWrap}>
-            <strong className="font-semibold">{studentsAboveAlert}</strong>{" "}
-            students above {formatKes(BALANCE_ALERT_KES)} — review now
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+          <span className={cn("min-w-0 flex-1", FEES_LAYOUT.textWrap)}>
+            <span className="font-semibold">{studentsAboveAlert}</span> above{" "}
+            {formatKes(BALANCE_ALERT_KES)} —{" "}
+            <span className="font-semibold underline">Review</span>
           </span>
         </button>
       )}
 
-      <div className={cn(FEES_MOBILE.card)}>
-        <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 max-md:gap-px max-md:bg-slate-100 sm:grid-cols-4 sm:divide-y-0 sm:bg-white">
-          {[
-            { label: "Expected", value: formatKes(totalExpected), tone: "text-slate-900" },
-            { label: "Collected", value: formatKes(totalCollected), tone: "text-emerald-800" },
-            { label: "Outstanding", value: formatKes(totalOutstanding), tone: "text-rose-800" },
-            {
-              label: "Today",
-              value: loadingToday ? "…" : formatKes(todayCollected),
-              tone: "text-sky-800",
-              sub: loadingToday ? undefined : `${todayPaymentCount} payments`,
-            },
-          ].map((m) => (
-            <div
-              key={m.label}
-              className="bg-white px-3 py-3 sm:bg-transparent sm:px-4 sm:py-2.5"
-            >
+      <div className={cn(FEES_MOBILE.card, "min-w-0 overflow-hidden")}>
+        <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/90 to-white px-4 py-3.5 sm:px-5">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {m.label}
+                Outstanding
               </p>
-              <p
-                className={cn(
-                  "text-sm font-bold tabular-nums sm:text-base",
-                  m.tone,
-                )}
-              >
-                {m.value}
+              <p className="text-2xl font-bold tabular-nums tracking-tight text-rose-800 sm:text-[1.65rem]">
+                {totalOutstanding > 0
+                  ? formatKes(totalOutstanding)
+                  : "All clear"}
               </p>
-              {"sub" in m && m.sub && (
-                <p className="text-[10px] text-slate-400">{m.sub}</p>
-              )}
             </div>
-          ))}
+            <button
+              type="button"
+              onClick={() => onViewBalances?.()}
+              className="shrink-0 text-[11px] font-semibold hover:underline"
+              style={{ color: FEES_BRAND.primary }}
+            >
+              All balances →
+            </button>
+          </div>
+
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full transition-[width]"
+              style={{
+                width: `${pct}%`,
+                backgroundColor: FEES_BRAND.primary,
+              }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-slate-600">
+            <span className="font-semibold tabular-nums text-emerald-800">
+              {formatKes(totalCollected)}
+            </span>{" "}
+            collected ({pct.toFixed(0)}%) of{" "}
+            <span className="tabular-nums">{formatKes(totalExpected)}</span>{" "}
+            expected
+          </p>
         </div>
 
+        <div className="grid min-w-0 grid-cols-3 divide-x divide-slate-100">
+          <MiniMetric label="Expected" value={formatKes(totalExpected)} />
+          <MiniMetric
+            label="Collected"
+            value={formatKes(totalCollected)}
+            tone="emerald"
+          />
+          <MiniMetric
+            label="Today"
+            value={loadingToday ? "…" : formatKes(todayCollected)}
+            tone="sky"
+            sub={
+              loadingToday
+                ? undefined
+                : `${todayPaymentCount} payment${todayPaymentCount === 1 ? "" : "s"}`
+            }
+          />
+        </div>
+      </div>
+
+      <div className={cn(FEES_MOBILE.card, "min-w-0 p-2 sm:p-2.5")}>
+        <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Quick actions
+        </p>
         <div
           className={cn(
-            FEES_LAYOUT.toolbarRow,
-            "border-t border-slate-100 px-3 py-2",
+            "grid min-w-0 gap-2",
+            quickActions.length >= 4
+              ? "grid-cols-2 sm:grid-cols-4"
+              : "grid-cols-2 sm:grid-cols-3",
           )}
         >
-          <span className="text-xs font-semibold tabular-nums text-emerald-800">
-            {collectionRate.toFixed(0)}% of expected collected
-          </span>
-          <button
-            type="button"
-            onClick={() => onViewBalances?.()}
-            className="shrink-0 text-left text-[11px] font-medium text-emerald-700 hover:underline sm:text-right"
-          >
-            All balances →
-          </button>
-        </div>
-
-        {/* Mobile — settings-style action list */}
-        <ul className={cn(FEES_MOBILE.listGroup, "md:hidden")}>
-          {quickActions.map((action, i) => {
-            const Icon = action.icon;
-            return (
-              <li
-                key={action.key}
-                className={cn(i > 0 && "border-t border-slate-100")}
-              >
-                <button
-                  type="button"
-                  onClick={action.onClick}
-                  className={cn(FEES_MOBILE.listRow, "justify-between")}
-                >
-                  <span className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                        action.primary
-                          ? "text-white"
-                          : "bg-slate-100 text-slate-600",
-                      )}
-                      style={
-                        action.primary
-                          ? { backgroundColor: FEES_BRAND.primary }
-                          : undefined
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 text-left">
-                      <span className="block text-[15px] font-semibold text-slate-900">
-                        {action.label}
-                      </span>
-                      <span className="block text-xs text-slate-500">
-                        {action.sub}
-                      </span>
-                    </span>
-                  </span>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-
-        {/* Desktop — compact tiles */}
-        <div className="hidden grid-cols-4 gap-2 border-t border-slate-100 p-2 md:grid">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
@@ -372,10 +357,13 @@ export function FeesOverviewBoard({
                 type="button"
                 onClick={action.onClick}
                 className={cn(
-                  "flex flex-col items-start gap-0.5 rounded-lg px-3 py-2.5 text-left transition-colors",
+                  "flex min-w-0 flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-left transition-colors",
                   action.primary
-                    ? "text-white shadow-sm"
-                    : "bg-slate-50 ring-1 ring-slate-200/80 hover:bg-white hover:ring-emerald-200/80",
+                    ? "text-white shadow-sm sm:col-span-1"
+                    : "bg-slate-50 ring-1 ring-slate-200/80 hover:bg-white hover:ring-emerald-200/60",
+                  action.primary &&
+                    quickActions.length <= 3 &&
+                    "sm:row-span-1",
                 )}
                 style={
                   action.primary
@@ -385,13 +373,14 @@ export function FeesOverviewBoard({
               >
                 <Icon
                   className={cn(
-                    "h-4 w-4",
-                    action.primary ? "opacity-90" : "text-slate-600",
+                    "h-4 w-4 shrink-0",
+                    action.primary ? "opacity-95" : "text-slate-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-xs font-semibold",
+                    FEES_LAYOUT.textWrap,
                     action.primary ? "text-white" : "text-slate-900",
                   )}
                 >
@@ -400,6 +389,7 @@ export function FeesOverviewBoard({
                 <span
                   className={cn(
                     "text-[10px]",
+                    FEES_LAYOUT.textWrap,
                     action.primary ? "text-emerald-100" : "text-slate-500",
                   )}
                 >
@@ -411,5 +401,37 @@ export function FeesOverviewBoard({
         </div>
       </div>
     </section>
+  );
+}
+
+function MiniMetric({
+  label,
+  value,
+  tone = "neutral",
+  sub,
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "emerald" | "sky";
+  sub?: string;
+}) {
+  const valueClass = {
+    neutral: "text-slate-900",
+    emerald: "text-emerald-800",
+    sky: "text-sky-800",
+  }[tone];
+
+  return (
+    <div className="min-w-0 bg-white px-2 py-2.5 text-center sm:px-3">
+      <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </p>
+      <p className={cn("text-xs font-bold tabular-nums sm:text-sm", valueClass)}>
+        {value}
+      </p>
+      {sub ? (
+        <p className="text-[10px] text-slate-400">{sub}</p>
+      ) : null}
+    </div>
   );
 }

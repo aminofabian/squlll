@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { CreateTermModal } from "./components/CreateTermModal";
 import { DashboardHeader } from "./components/DashboardHeader";
-import { DashboardOverview } from "./components/DashboardOverview";
+import { DashboardSchoolSnapshot } from "./components/DashboardSchoolSnapshot";
 import { DashboardSetupBanner } from "./components/DashboardSetupBanner";
-import { DashboardLiveActivity } from "./components/DashboardLiveActivity";
-import { DashboardSchoolBar } from "./components/DashboardSchoolBar";
+import { DashboardPulseHero } from "./components/DashboardPulseHero";
+import { DashboardActivityFeed } from "./components/DashboardActivityFeed";
 import { DashboardQuickActions } from "./components/DashboardQuickActions";
 import { DashboardGradeSheet } from "./components/DashboardGradeSheet";
 import { DashboardPageSkeleton } from "./components/DashboardSkeleton";
@@ -142,7 +142,7 @@ export default function SchoolDashboard() {
   if (!config?.selectedLevels?.length) return null;
 
   return (
-    <div className="flex min-h-full flex-col bg-white dark:bg-slate-950">
+    <div className="flex min-h-full flex-col bg-[#f8f9fb] dark:bg-slate-950">
       <div className="flex min-w-0 flex-1">
         <aside
           className={cn(
@@ -182,9 +182,17 @@ export default function SchoolDashboard() {
           />
 
           <div className="flex-1">
-            <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
+            <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
               {!selectedGrade ? (
                 <>
+                  <DashboardPulseHero
+                    subdomain={subdomain}
+                    studentCount={studentCount}
+                    teacherCount={tenantStats?.teacherCount}
+                    streamCount={tenantStats?.streamCount}
+                    statsLoading={statsLoading}
+                  />
+
                   <DashboardSetupBanner />
 
                   {statsError ? (
@@ -201,45 +209,33 @@ export default function SchoolDashboard() {
                     </div>
                   ) : null}
 
-                  <DashboardSection
-                    title="At a glance"
-                    description="Live activity and key counts"
-                    bodyClassName="space-y-2.5 p-2.5"
-                  >
-                    <DashboardLiveActivity compact />
-                    <DashboardSchoolBar
-                      studentCount={studentCount}
-                      teacherCount={tenantStats?.teacherCount}
-                      streamCount={tenantStats?.streamCount}
-                      attendanceRate={null}
-                      academicProgress={null}
-                      isLoading={statsLoading}
-                      compact
-                    />
-                  </DashboardSection>
+                  <div className="grid gap-4 lg:grid-cols-5">
+                    <div className="space-y-4 lg:col-span-3">
+                      <DashboardActivityFeed />
+                      <DashboardSection
+                        title="School snapshot"
+                        description="Term, fees, enrollment mix, and where to go next"
+                        bodyClassName="p-2.5 sm:p-3"
+                      >
+                        <DashboardSchoolSnapshot
+                          config={schoolConfig}
+                          students={students}
+                          studentCount={studentCount}
+                          streamCount={tenantStats?.streamCount}
+                        />
+                      </DashboardSection>
+                    </div>
 
-                  <DashboardSection
-                    title="Quick tasks"
-                    bodyClassName="p-2"
-                  >
-                    <DashboardQuickActions subdomain={subdomain} />
-                  </DashboardSection>
-
-                  <DashboardSection
-                    title="Browse by grade"
-                    description="Grouped by school level — tap a grade, then pick a stream if needed"
-                    bodyClassName="p-2 sm:p-2.5"
-                  >
-                    <DashboardOverview
-                      config={schoolConfig}
-                      students={students}
-                      isLoading={isLoading || studentsLoading}
-                      selectedGradeId={selectedGrade || ""}
-                      selectedStreamId={selectedStreamId}
-                      onGradeSelect={handleGradeSelect}
-                      onStreamSelect={handleStreamSelect}
-                    />
-                  </DashboardSection>
+                    <div className="space-y-4 lg:col-span-2">
+                      <DashboardSection
+                        title="Quick tasks"
+                        description="Jump in with one tap"
+                        bodyClassName="p-2.5"
+                      >
+                        <DashboardQuickActions subdomain={subdomain} />
+                      </DashboardSection>
+                    </div>
+                  </div>
                 </>
               ) : (
                 selectedGradeInfo && (

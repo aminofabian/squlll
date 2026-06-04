@@ -3,13 +3,22 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Search, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ParentAvatar } from "./ParentAvatar";
 import type { ParentsListItem } from "../utils/mapGraphqlParent";
+import {
+  parentsDirectoryMeta,
+  parentsGhostButton,
+  parentsSearchClearBtn,
+  parentsSearchInput,
+  parentsSectionLabel,
+  parentsSidebarItem,
+} from "./parents-ui";
 
 interface ParentsSearchSidebarProps {
   parents: ParentsListItem[];
+  totalCount: number;
   searchTerm: string;
   onSearchChange: (term: string) => void;
   selectedParentId: string | null;
@@ -20,6 +29,7 @@ interface ParentsSearchSidebarProps {
 
 export function ParentsSearchSidebar({
   parents,
+  totalCount,
   searchTerm,
   onSearchChange,
   selectedParentId,
@@ -27,33 +37,30 @@ export function ParentsSearchSidebar({
   displayedParentsCount,
   onLoadMore,
 }: ParentsSearchSidebarProps) {
-  const filtered = React.useMemo(() => {
-    if (!searchTerm.trim()) return parents;
-    const q = searchTerm.toLowerCase();
-    return parents.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.email.toLowerCase().includes(q) ||
-        p.phone.includes(q) ||
-        p.students.some(
-          (s) =>
-            s.name.toLowerCase().includes(q) ||
-            s.admissionNumber.toLowerCase().includes(q),
-        ),
-    );
-  }, [parents, searchTerm]);
-
-  const visible = filtered.slice(0, displayedParentsCount);
+  const visible = parents.slice(0, displayedParentsCount);
   const activeCount = parents.filter((p) => p.status === "active").length;
+  const hasFilters = parents.length !== totalCount;
 
   return (
-    <div className="flex h-full flex-col pt-2">
+    <div className="flex h-full flex-col">
+      <div className="mb-3 flex items-center gap-2 px-0.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Users className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+            Directory
+          </p>
+          <p className="text-[11px] text-slate-400">Quick jump to a parent</p>
+        </div>
+      </div>
+
       <div className="relative mb-3">
         <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
         <Input
           type="text"
-          placeholder="Search name, child, phone…"
-          className="h-9 border-slate-200/80 bg-white pl-8 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-900"
+          placeholder="Name, email, child, phone…"
+          className={parentsSearchInput}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -61,7 +68,7 @@ export function ParentsSearchSidebar({
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute right-2 top-2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+            className={parentsSearchClearBtn}
             aria-label="Clear search"
           >
             <X className="h-3.5 w-3.5" />
@@ -69,23 +76,34 @@ export function ParentsSearchSidebar({
         ) : null}
       </div>
 
-      <div className="mb-3 rounded-lg border border-slate-200/80 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-          Directory
-        </p>
+      <div className={parentsDirectoryMeta}>
+        <p className={parentsSectionLabel}>Showing</p>
         <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
           <span className="font-semibold text-slate-800 dark:text-slate-200">
             {parents.length}
-          </span>{" "}
-          parents ·{" "}
-          <span className="text-emerald-600">{activeCount} active</span>
+          </span>
+          {hasFilters ? (
+            <span className="text-slate-400"> of {totalCount}</span>
+          ) : null}{" "}
+          parent{parents.length !== 1 ? "s" : ""}
+          {activeCount > 0 ? (
+            <>
+              {" "}
+              ·{" "}
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {activeCount} active
+              </span>
+            </>
+          ) : null}
         </p>
       </div>
 
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
-        {filtered.length === 0 ? (
+        {parents.length === 0 ? (
           <p className="py-8 text-center text-xs text-slate-400">
-            {searchTerm ? "No matches" : "No parents yet"}
+            {searchTerm || hasFilters
+              ? "No matches for current filters"
+              : "No parents yet"}
           </p>
         ) : (
           visible.map((parent) => {
@@ -95,12 +113,7 @@ export function ParentsSearchSidebar({
                 key={parent.id}
                 type="button"
                 onClick={() => onParentSelect(parent.id)}
-                className={cn(
-                  "w-full rounded-lg border px-2.5 py-2 text-left transition-all",
-                  isSelected
-                    ? "border-slate-300 bg-white shadow-sm ring-1 ring-slate-200 dark:border-slate-600 dark:bg-slate-900 dark:ring-slate-700"
-                    : "border-transparent hover:border-slate-200/80 hover:bg-white/90 dark:hover:border-slate-700 dark:hover:bg-slate-900/60",
-                )}
+                className={parentsSidebarItem(isSelected)}
               >
                 <div className="flex items-center gap-2.5">
                   <ParentAvatar name={parent.name} size="sm" ring={isSelected} />
@@ -116,6 +129,7 @@ export function ParentsSearchSidebar({
                             ? "bg-emerald-500"
                             : "bg-amber-400",
                         )}
+                        aria-hidden
                       />
                     </div>
                     <p className="truncate text-[11px] text-slate-400">
@@ -131,15 +145,15 @@ export function ParentsSearchSidebar({
         )}
       </div>
 
-      {filtered.length > displayedParentsCount ? (
-        <div className="mt-2 shrink-0 border-t border-slate-200/80 pt-2 dark:border-slate-800">
+      {parents.length > displayedParentsCount ? (
+        <div className="mt-2 shrink-0 border-t border-slate-200/45 pt-2 dark:border-slate-800/50">
           <Button
             variant="ghost"
             size="sm"
             onClick={onLoadMore}
-            className="h-7 w-full text-xs text-slate-500 hover:text-slate-700"
+            className={parentsGhostButton}
           >
-            Show more ({Math.min(10, filtered.length - displayedParentsCount)})
+            Show more ({Math.min(10, parents.length - displayedParentsCount)})
           </Button>
         </div>
       ) : null}

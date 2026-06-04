@@ -23,6 +23,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-figtree)', 'sans-serif'],
         mono: ['var(--font-figtree)', 'sans-serif'],
+        display: ['var(--font-instrument-serif)', 'Georgia', 'serif'],
       },
     },
   },

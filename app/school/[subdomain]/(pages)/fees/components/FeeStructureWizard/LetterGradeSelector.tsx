@@ -96,8 +96,8 @@ export function LetterGradeSelector({
           )}
         >
           {compact
-            ? "Letter title uses this grade. Defaults to the first class linked to this plan."
-            : "The letter heading shows this grade. Fee amounts are the same for all grades in this plan unless you edited them per grade."}
+            ? "Letter title uses this grade. Defaults to the first class linked to this structure."
+            : "The letter heading shows this grade. Fee amounts are the same for all grades in this structure unless you edited them per grade."}
         </p>
       ) : null}
     </div>

@@ -4,6 +4,9 @@ import React from 'react';
 import { Clock, GraduationCap, MessageCircle, Calendar, Bell, ChevronRight } from 'lucide-react';
 import { ParentConsolidatedFeeCard } from './ParentConsolidatedFeeCard';
 import type { ParentConsolidatedFees } from '@/lib/parent/parentFees';
+import { childGradeSubtitle } from '@/lib/parent/displayName';
+import { portalEmptyState, portalPanel } from './parent-portal-ui';
+import { cn } from '@/lib/utils';
 
 interface Child {
   id: number;
@@ -54,6 +57,7 @@ interface MobileDashboardProps {
   feesLoading?: boolean;
   onFeesRefresh?: () => void;
   onSelectChildByStudentId?: (studentId: string) => void;
+  onPayFees?: () => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -86,20 +90,14 @@ export const MobileDashboard = ({
   feesLoading = false,
   onFeesRefresh,
   onSelectChildByStudentId,
+  onPayFees,
 }: MobileDashboardProps) => {
   const displayGpa = averageGpa ?? children[selectedChild].currentGPA;
   return (
-    <div className="min-h-screen bg-white">
-      {/* Student Profile Header */}
-      <div className="relative pt-12 pb-8 px-6">
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 bg-primary/5 rounded-b-[3rem]" />
-          <div className="absolute top-0 left-1/4 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-primary/10 rounded-full blur-2xl animate-pulse delay-1000" />
-        </div>
-        
-        {/* Student Avatar and Info */}
+    <div className="min-h-screen bg-slate-50/80 dark:bg-slate-950">
+      <div className="relative px-4 pb-6 pt-4">
+        <div className="absolute inset-x-0 top-0 h-48 rounded-b-3xl bg-gradient-to-b from-primary/8 to-transparent" />
+
         <div className="relative z-10 text-center">
           {/* Child Selector Dots */}
           <div className="flex justify-center space-x-3 mb-8">
@@ -141,8 +139,8 @@ export const MobileDashboard = ({
             <h1 className="text-3xl font-black text-slate-800 tracking-tight">
               {children[selectedChild].name}
             </h1>
-            <p className="text-slate-600 font-medium tracking-wide">
-              {children[selectedChild].grade} • {children[selectedChild].class}
+            <p className="text-sm font-medium text-slate-500">
+              {childGradeSubtitle(children[selectedChild])}
             </p>
           </div>
 
@@ -152,6 +150,7 @@ export const MobileDashboard = ({
               loading={feesLoading}
               onRefresh={onFeesRefresh}
               onSelectChild={onSelectChildByStudentId}
+              onPayFees={onPayFees}
             />
           </div>
           
@@ -190,13 +189,12 @@ export const MobileDashboard = ({
       {/* Action Cards with Enhanced Spacing */}
       <div className="px-6 space-y-6 pb-8">
         {/* Today's Schedule Card */}
-        <div className="bg-white border-2 border-primary/20 rounded-3xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-black flex items-center text-primary">
-              <Clock className="w-6 h-6 mr-3 text-primary" />
-              Today's Schedule
+        <div className={cn(portalPanel, "p-4")}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center text-base font-semibold text-slate-900 dark:text-slate-100">
+              <Clock className="mr-2 h-5 w-5 text-primary" />
+              Today&apos;s schedule
             </h2>
-            <button className="text-primary text-sm font-bold hover:scale-105 transition-transform">View All</button>
           </div>
           <div className="space-y-3">
             {dashboardLoading && todaySchedule.length === 0 ? (
@@ -222,14 +220,12 @@ export const MobileDashboard = ({
           </div>
         </div>
 
-        {/* Recent Grades Card */}
-        <div className="bg-white border-2 border-primary/20 rounded-3xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-black flex items-center text-primary">
-              <GraduationCap className="w-6 h-6 mr-3 text-primary" />
-              Recent Grades
+        <div className={cn(portalPanel, "p-4")}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center text-base font-semibold text-slate-900 dark:text-slate-100">
+              <GraduationCap className="mr-2 h-5 w-5 text-primary" />
+              Recent grades
             </h2>
-            <button className="text-primary text-sm font-bold hover:scale-105 transition-transform">View All</button>
           </div>
           <div className="space-y-3">
             {dashboardLoading && recentGrades.length === 0 ? (

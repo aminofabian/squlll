@@ -202,7 +202,7 @@ export function ClassesGradeBrowse({
                       type="button"
                       onClick={() => handleGradeClick(grade)}
                       className={cn(
-                        "relative flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-center transition-colors active:scale-[0.98]",
+                        "relative flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-center transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]",
                         isActive
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200",
@@ -270,7 +270,7 @@ export function ClassesGradeBrowse({
                   className={cn(
                     "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
                     isSelected
-                      ? "bg-[#246a59] text-white"
+                      ? "bg-[#0073ea] text-white"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700",
                   )}
                 >
@@ -285,7 +285,7 @@ export function ClassesGradeBrowse({
               setExpandedGradeId(null);
               onGradeSelect?.(activeGrade.id, activeGrade.levelId);
             }}
-            className="mt-2 text-[11px] font-medium text-[#246a59] hover:underline"
+            className="mt-2 text-[11px] font-medium text-[#0073ea] hover:underline"
           >
             Manage whole grade →
           </button>

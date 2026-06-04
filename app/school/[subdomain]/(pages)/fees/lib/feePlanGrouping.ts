@@ -13,7 +13,7 @@ export type FeeStructureGroupSource = {
   academicYear?: { id: string } | null
 }
 
-/** Display title for a grouped fee plan card. */
+/** Display title for a grouped fee structure card. */
 export function getPlanDisplayName(structure: FeeStructureGroupSource): string {
   const label = structure.planLabel?.trim()
   if (label) return label

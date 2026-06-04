@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -13,32 +14,39 @@ import {
 } from "@/components/ui/drawer";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
-import { ClassCard } from "../components/ClassCard";
-import { ClassCardSkeleton } from "../components/ClassCardSkeleton";
+import { ClassesClassDetail } from "./components/ClassesClassDetail";
 import { X } from "lucide-react";
 import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
-import { ClassesStats } from "./components/ClassesStats";
-import { ClassesContextBar } from "./components/ClassesContextBar";
-import { ClassesGradeBrowse } from "./components/ClassesGradeBrowse";
+import { ClassesPulseHero } from "./components/ClassesPulseHero";
+import { ClassesQuickLinks } from "./components/ClassesQuickLinks";
+import { ClassesCampusOverview } from "./components/ClassesCampusOverview";
+import { useStudentsFromStore } from "@/lib/hooks/useStudents";
+import { useTenantStatistics } from "@/lib/hooks/useTenantStatistics";
 import { ClassesPageHeader } from "./components/ClassesPageHeader";
 import { ClassesPageSkeleton } from "./components/ClassesPageSkeleton";
 import { SubjectsView } from "./components/SubjectsView";
-import { GradeDetailsView } from "./components/GradeDetailsView";
 import { AddStreamModal } from "../components/AddStreamModal";
 import { AssignTeacherModal } from "../components/AssignTeacherModal";
 import { AddSubjectDialog } from "../components/AddSubjectDialog";
 import { type ClassAction } from "./components/ClassActionBar";
 import { DashboardGradeSheet } from "../dashboard/components/DashboardGradeSheet";
-import { DashboardSection } from "../dashboard/components/DashboardSection";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BookOpen, Layers, Plus, UserPlus } from "lucide-react";
 import { formatGradeDisplayName } from "@/lib/utils/grade-display";
+import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
+import { refreshAfterClassTeacherChange } from "./utils/class-teacher-cache";
 
 export default function ClassesPage() {
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const { config } = useSchoolConfigStore();
   const { isLoading, error } = useSchoolConfig();
+  const { students } = useStudentsFromStore();
+  const { data: tenantStats, isLoading: statsLoading } = useTenantStatistics();
+  const studentCount = tenantStats?.studentCount ?? students.length;
 
   const [selectedGradeId, setSelectedGradeId] = useState("");
   const [selectedLevelId, setSelectedLevelId] = useState("");
@@ -82,6 +90,8 @@ export default function ClassesPage() {
       const streamId = searchParams.get("streamId");
       if (streamId && grade.streams?.some((s) => s.id === streamId)) {
         setSelectedStreamId(streamId);
+      } else if (grade.streams?.length === 1) {
+        setSelectedStreamId(grade.streams[0].id);
       } else {
         setSelectedStreamId("");
       }
@@ -145,11 +155,44 @@ export default function ClassesPage() {
     selectedStreamId,
   ]);
 
-  const handleGradeSelect = useCallback((gradeId: string, levelId: string) => {
-    setSelectedGradeId(gradeId);
-    setSelectedLevelId(levelId);
-    setSelectedStreamId("");
-  }, []);
+  const syncClassUrl = useCallback(
+    (gradeId: string, levelId: string, streamId: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (gradeId) {
+        params.set("gradeId", gradeId);
+        if (levelId) params.set("levelId", levelId);
+        if (streamId) params.set("streamId", streamId);
+        else params.delete("streamId");
+      } else {
+        params.delete("gradeId");
+        params.delete("levelId");
+        params.delete("streamId");
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const handleGradeSelect = useCallback(
+    (gradeId: string, levelId: string) => {
+      let streamId = "";
+      if (config?.selectedLevels) {
+        for (const level of config.selectedLevels) {
+          const grade = level.gradeLevels?.find((g) => g.id === gradeId);
+          if (grade?.streams?.length === 1) {
+            streamId = grade.streams[0].id;
+            break;
+          }
+        }
+      }
+      setSelectedGradeId(gradeId);
+      setSelectedLevelId(levelId);
+      setSelectedStreamId(streamId);
+      syncClassUrl(gradeId, levelId, streamId);
+    },
+    [syncClassUrl, config?.selectedLevels],
+  );
 
   const handleStreamSelect = useCallback(
     (streamId: string, gradeId: string, levelId: string) => {
@@ -158,15 +201,45 @@ export default function ClassesPage() {
         setSelectedGradeId(gradeId);
         setSelectedLevelId(levelId);
       }
+      syncClassUrl(gradeId, levelId, streamId);
     },
-    [selectedGradeId, selectedLevelId],
+    [selectedGradeId, selectedLevelId, syncClassUrl],
+  );
+
+  const handleStreamSelectInGrade = useCallback(
+    (streamId: string) => {
+      if (!selectedGrade) return;
+      if (!streamId) {
+        setSelectedStreamId("");
+        syncClassUrl(selectedGrade.grade.id, selectedGrade.level.id, "");
+        return;
+      }
+      handleStreamSelect(
+        streamId,
+        selectedGrade.grade.id,
+        selectedGrade.level.id,
+      );
+    },
+    [handleStreamSelect, selectedGrade, syncClassUrl],
   );
 
   const clearFilters = useCallback(() => {
     setSelectedGradeId("");
     setSelectedLevelId("");
     setSelectedStreamId("");
-  }, []);
+    syncClassUrl("", "", "");
+  }, [syncClassUrl]);
+
+  const openClassFromOverview = useCallback(
+    (gradeId: string, levelId: string, streamId?: string) => {
+      if (streamId) {
+        handleStreamSelect(streamId, gradeId, levelId);
+      } else {
+        handleGradeSelect(gradeId, levelId);
+      }
+    },
+    [handleGradeSelect, handleStreamSelect],
+  );
 
   const openAddSubject = useCallback(
     (context: {
@@ -195,16 +268,28 @@ export default function ClassesPage() {
     };
   }, [selectedGrade]);
 
+  useDomainRealtime({
+    enabled: Boolean(selectedGradeId),
+    onClassTeacherAssigned: () => {
+      void refreshAfterClassTeacherChange(queryClient, {
+        gradeLevelId: selectedGrade?.grade?.id,
+        streamId: selectedStreamId || undefined,
+      });
+    },
+  });
+
   const openAssignTeacher = useCallback(() => {
     if (selectedStreamId && selectedGrade?.streamName) {
       setAssignTeacherData({
         streamId: selectedStreamId,
         streamName: selectedGrade.streamName,
+        gradeLevelId: selectedGrade.grade?.id,
+        gradeName: selectedGrade.displayName,
       });
     } else if (selectedGrade?.grade) {
       setAssignTeacherData({
         gradeLevelId: selectedGrade.grade.id,
-        gradeName: selectedGrade.name,
+        gradeName: selectedGrade.displayName,
       });
     } else {
       toast.error("Select a grade first");
@@ -258,15 +343,11 @@ export default function ClassesPage() {
     [defaultAddSubjectContext, openAddSubject, openAssignTeacher, selectedGrade],
   );
 
-  const headerTitle = selectedGrade
-    ? selectedGrade.streamName
-      ? `${selectedGrade.displayName} · ${selectedGrade.streamName}`
-      : selectedGrade.displayName
-    : "Classes";
+  const headerTitle = selectedGrade ? "Class" : "Classes";
 
   const headerSubtitle = selectedGrade
-    ? `${selectedGrade.levelName} — manage subjects, streams, and teachers`
-    : "Browse grades to manage subjects, streams, and teachers";
+    ? `${selectedGrade.displayName}${selectedGrade.streamName ? ` · ${selectedGrade.streamName}` : ""} · ${selectedGrade.levelName}`
+    : "Structure, subjects, and teachers by grade";
 
   if (isLoading && !config) {
     return <ClassesPageSkeleton />;
@@ -295,11 +376,11 @@ export default function ClassesPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-full flex-col bg-[#f8f9fb] dark:bg-slate-950">
       <div className="flex min-w-0 flex-1">
         <aside
           className={cn(
-            "hidden shrink-0 flex-col border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950 lg:flex",
+            "hidden shrink-0 flex-col border-r border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-900 lg:flex",
             isGradePanelOpen ? "w-56" : "w-0 overflow-hidden border-r-0",
           )}
           aria-label="Grade navigation"
@@ -333,67 +414,45 @@ export default function ClassesPage() {
           />
 
           <div className="flex-1">
-            <div className="mx-auto max-w-5xl space-y-3 p-3 sm:p-4">
+            <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
               {!selectedGradeId ? (
                 <>
-                  <ClassesStats config={config} isLoading={isLoading} />
+                  <ClassesPulseHero
+                    config={config}
+                    isLoading={isLoading}
+                    studentCount={studentCount}
+                    studentsLoading={statsLoading}
+                  />
 
-                  <DashboardSection
-                    title="Browse by grade"
-                    description="Grouped by school level — tap a grade to manage it"
-                    bodyClassName="p-2 sm:p-2.5"
-                  >
-                    <ClassesGradeBrowse
-                      config={config}
-                      isLoading={isLoading}
-                      selectedGradeId={selectedGradeId}
-                      selectedStreamId={selectedStreamId}
-                      onGradeSelect={handleGradeSelect}
-                      onStreamSelect={handleStreamSelect}
-                    />
-                  </DashboardSection>
+                  <ClassesQuickLinks
+                    onOpenSubjects={() => setShowSubjectsDrawer(true)}
+                  />
+
+                  <ClassesCampusOverview
+                    config={config}
+                    students={students}
+                    isLoading={isLoading}
+                    onOpenGradePicker={() => setIsGradeSheetOpen(true)}
+                    onGradeSelect={handleGradeSelect}
+                    onStreamSelect={handleStreamSelect}
+                  />
                 </>
               ) : (
-                selectedGrade?.grade && (
-                  <div className="space-y-3">
-                    <ClassesContextBar
-                      levelName={selectedGrade.levelName}
-                      gradeName={selectedGrade.displayName}
-                      streamName={selectedGrade.streamName}
-                      onClear={clearFilters}
-                    />
-
-                    <DashboardSection
-                      title="Overview"
-                      bodyClassName="p-2 sm:p-2.5"
-                    >
-                      <GradeDetailsView
-                        grade={selectedGrade.grade}
-                        selectedStreamId={selectedStreamId || undefined}
-                        onStreamSelect={(streamId) =>
-                          handleStreamSelect(
-                            streamId,
-                            selectedGrade.grade.id,
-                            selectedGrade.level.id,
-                          )
-                        }
-                        onAssignTeacher={openAssignTeacher}
-                      />
-                    </DashboardSection>
-
-                    {isLoading ? (
-                      <ClassCardSkeleton />
-                    ) : (
-                      filteredLevels.map((level) => (
-                        <ClassCard
-                          key={level.id}
-                          level={level}
-                          selectedGradeId={selectedGradeId}
-                          onAssignTeacher={openAssignTeacher}
-                        />
-                      ))
-                    )}
-                  </div>
+                selectedGrade?.grade &&
+                filteredLevels[0] && (
+                  <ClassesClassDetail
+                    displayName={selectedGrade.displayName}
+                    levelName={selectedGrade.levelName}
+                    streamName={selectedGrade.streamName}
+                    grade={selectedGrade.grade}
+                    level={filteredLevels[0]}
+                    selectedStreamId={selectedStreamId}
+                    students={students}
+                    onClear={clearFilters}
+                    onStreamSelect={handleStreamSelectInGrade}
+                    onAssignTeacher={openAssignTeacher}
+                    actions={pageActions}
+                  />
                 )
               )}
             </div>
@@ -449,9 +508,6 @@ export default function ClassesPage() {
                   ? () => setShowAddStreamModal(true)
                   : undefined
               }
-              onAssignTeacher={
-                selectedGrade?.grade ? openAssignTeacher : undefined
-              }
             />
           </div>
         </DrawerContent>
@@ -467,11 +523,17 @@ export default function ClassesPage() {
         />
       ) : null}
 
-      {showAssignTeacherModal ? (
+      {showAssignTeacherModal && assignTeacherData ? (
         <AssignTeacherModal
           isOpen={showAssignTeacherModal}
-          onClose={() => setShowAssignTeacherModal(false)}
-          onSuccess={() => setShowAssignTeacherModal(false)}
+          onClose={() => {
+            setShowAssignTeacherModal(false);
+            setAssignTeacherData(null);
+          }}
+          onSuccess={() => {
+            setShowAssignTeacherModal(false);
+            setAssignTeacherData(null);
+          }}
           streamId={assignTeacherData.streamId}
           streamName={assignTeacherData.streamName}
           gradeLevelId={assignTeacherData.gradeLevelId}

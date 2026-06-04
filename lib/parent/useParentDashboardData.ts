@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { getCookie } from '@/lib/utils'
+import { decodeDisplayText } from './displayName'
 import { useParentChildMarks } from './useParentChildMarks'
 import { useParentChildSchedule } from './useParentChildSchedule'
 import type { ParentPortalChild } from './types'
@@ -48,8 +49,9 @@ export function useParentDashboardData(
   }, [studentId, sessions])
 
   const parentName = useMemo(() => {
-    const name = getCookie('userName')
-    return name?.split(' ')[0] ?? 'Parent'
+    const raw = getCookie('userName') ?? getCookie('name')
+    const decoded = decodeDisplayText(raw)
+    return decoded || 'Parent'
   }, [])
 
   return {

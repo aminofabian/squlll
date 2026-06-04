@@ -103,7 +103,7 @@ export function getLinkedClassesForPlan(
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Distinct classes (tenant grade levels) linked to a fee plan via assignments */
+/** Distinct classes (tenant grade levels) linked to a fee structure via assignments */
 export function countLinkedClassesForPlan(
   plan: Pick<ProcessedFeeStructure, "structureId" | "allStructures">,
   assignments: FeeAssignmentGroup[] | undefined,

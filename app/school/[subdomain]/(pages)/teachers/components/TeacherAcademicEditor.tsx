@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -116,6 +117,7 @@ export function TeacherAcademicEditor({
   initialStreamIds,
   onSaved,
 }: TeacherAcademicEditorProps) {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -274,6 +276,11 @@ export function TeacherAcademicEditor({
       if (result.errors?.length) {
         throw new Error(result.errors[0]?.message || "Failed to save");
       }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["getTeachers"] }),
+        queryClient.invalidateQueries({ queryKey: ["tenantSubjects"] }),
+      ]);
 
       toast({
         title: "Assignments updated",

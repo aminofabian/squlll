@@ -115,18 +115,21 @@ export function PendingParentInvitations({
   return (
     <>
       <div className={parentsPanel}>
-        <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+        <div
+          id="pending-invites-heading"
+          className="border-b border-amber-100/80 bg-amber-50/40 px-4 py-3 dark:border-amber-900/30 dark:bg-amber-950/20 sm:px-5"
+        >
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-40" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
             </span>
             <div>
-              <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                 Pending invitations
               </h2>
-              <p className="mt-0.5 text-xs text-slate-400">
-                {invitations.length} awaiting response
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                {invitations.length} awaiting parent signup · resend or revoke
               </p>
             </div>
           </div>

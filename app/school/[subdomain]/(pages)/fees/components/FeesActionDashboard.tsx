@@ -182,14 +182,14 @@ export const FeesActionDashboard = ({
           />
           <QuickAction
             icon={<Plus className="h-4 w-4" />}
-            label="New fee plan"
+            label="New fee structure"
             description="Set charges per grade"
             onClick={onCreateStructure}
           />
           <QuickAction
             icon={<Users className="h-4 w-4" />}
             label="Apply to classes"
-            description="Link plan to grades"
+            description="Link structure to grades"
             onClick={onAssignToGrade}
           />
           <QuickAction
@@ -200,14 +200,14 @@ export const FeesActionDashboard = ({
           />
           <QuickAction
             icon={<FileText className="h-4 w-4" />}
-            label="Fee plans"
-            description="View or edit plans"
+            label="Fee structures"
+            description="View or edit structures"
             onClick={onViewStructures}
           />
           <QuickAction
             icon={<Link2 className="h-4 w-4" />}
             label="Assignments"
-            description="Who has a plan linked"
+            description="Who has a structure linked"
             onClick={onViewAssignments}
           />
           <QuickAction
@@ -229,7 +229,7 @@ export const FeesActionDashboard = ({
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
-          { label: "Plans", value: feeStructures, icon: FileText },
+          { label: "Structures", value: feeStructures, icon: FileText },
           { label: "Students", value: students, icon: Users },
           { label: "Bills", value: invoices, icon: Receipt },
           { label: "Collected", value: revenue, icon: CreditCard },
@@ -265,7 +265,7 @@ export const FeesActionDashboard = ({
         </div>
         <ul className="divide-y divide-slate-50">
           <SetupRow
-            label="Fee plans"
+            label="Fee structures"
             done={!!setupStatus?.plansReady}
             detail={
               setupStatus?.plansReady

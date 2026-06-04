@@ -28,97 +28,97 @@ export interface ClassTeacherAssignment {
   };
 }
 
-interface GetClassTeacherForGradeResponse {
-  getAllTeachers: Array<{
-    id: string;
-    fullName: string;
-    email: string;
-    classTeacherAssignments: ClassTeacherAssignment[];
-  }>;
-}
-
-const GET_CLASS_TEACHER_QUERY = gql`
-  query GetAllTeachers {
-    getAllTeachers {
+const CLASS_TEACHER_FIELDS = `
+  id
+  active
+  startDate
+  endDate
+  teacher {
+    id
+    fullName
+    email
+  }
+  stream {
+    id
+    stream {
       id
-      fullName
-      email
-      classTeacherAssignments {
-        id
-        active
-        startDate
-        endDate
-        teacher {
-          id
-          fullName
-          email
-        }
-        stream {
-          id
-          stream {
-            id
-            name
-          }
-        }
-        gradeLevel {
-          id
-          gradeLevel {
-            id
-            name
-          }
-        }
-      }
+      name
+    }
+  }
+  gradeLevel {
+    id
+    gradeLevel {
+      id
+      name
     }
   }
 `;
 
-export function useClassTeacherAssignment(gradeLevelId?: string | null, streamId?: string | null) {
+const GET_STREAM_CLASS_TEACHER = gql`
+  query GetStreamClassTeacher($streamId: String!) {
+    getStreamClassTeacher(streamId: $streamId) {
+      ${CLASS_TEACHER_FIELDS}
+    }
+  }
+`;
+
+const GET_GRADE_LEVEL_CLASS_TEACHER = gql`
+  query GetGradeLevelClassTeacher($gradeLevelId: String!) {
+    getGradeLevelClassTeacher(gradeLevelId: $gradeLevelId) {
+      ${CLASS_TEACHER_FIELDS}
+    }
+  }
+`;
+
+export function classTeacherQueryKey(
+  gradeLevelId?: string | null,
+  streamId?: string | null,
+) {
+  return ['classTeacherAssignment', gradeLevelId ?? null, streamId ?? null] as const;
+}
+
+function normalizeAssignment(
+  raw: ClassTeacherAssignment | null | undefined,
+): ClassTeacherAssignment | null {
+  if (!raw?.id || !raw.teacher?.id) {
+    return null;
+  }
+
+  return {
+    ...raw,
+    teacher: {
+      id: raw.teacher.id,
+      fullName: raw.teacher.fullName || 'Teacher',
+      email: raw.teacher.email || '',
+    },
+  };
+}
+
+export function useClassTeacherAssignment(
+  gradeLevelId?: string | null,
+  streamId?: string | null,
+) {
   return useQuery<ClassTeacherAssignment | null>({
-    queryKey: ['classTeacherAssignment', gradeLevelId, streamId],
+    queryKey: classTeacherQueryKey(gradeLevelId, streamId),
     queryFn: async () => {
-      if (!gradeLevelId && !streamId) {
-        return null;
+      if (streamId) {
+        const data = await graphqlClient.request<{
+          getStreamClassTeacher: ClassTeacherAssignment | null;
+        }>(GET_STREAM_CLASS_TEACHER, { streamId });
+        return normalizeAssignment(data.getStreamClassTeacher);
       }
 
-      const data = await graphqlClient.request<GetClassTeacherForGradeResponse>(
-        GET_CLASS_TEACHER_QUERY
-      );
-
-      // Find the active class teacher assignment for the specified grade or stream
-      for (const teacher of data.getAllTeachers) {
-        const activeAssignment = teacher.classTeacherAssignments.find(
-          (assignment) => {
-            if (!assignment.active) return false;
-            
-            if (streamId) {
-              return assignment.stream?.stream?.id === streamId;
-            }
-            
-            if (gradeLevelId) {
-              return assignment.gradeLevel?.gradeLevel?.id === gradeLevelId;
-            }
-            
-            return false;
-          }
-        );
-
-        if (activeAssignment) {
-          return {
-            ...activeAssignment,
-            teacher: {
-              id: teacher.id,
-              fullName: teacher.fullName,
-              email: teacher.email,
-            },
-          };
-        }
+      if (gradeLevelId) {
+        const data = await graphqlClient.request<{
+          getGradeLevelClassTeacher: ClassTeacherAssignment | null;
+        }>(GET_GRADE_LEVEL_CLASS_TEACHER, { gradeLevelId });
+        return normalizeAssignment(data.getGradeLevelClassTeacher);
       }
 
       return null;
     },
     enabled: !!(gradeLevelId || streamId),
-    staleTime: 30000,
+    staleTime: 0,
     retry: 2,
   });
 }
-

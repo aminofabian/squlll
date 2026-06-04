@@ -17,6 +17,7 @@ import { FEES_LAYOUT, FEES_MOBILE } from "../lib/fees-ui";
 import { StudentSummaryFromAPI } from "../types";
 import { formatCurrency } from "../utils";
 import { ArrearsAgingBadge } from "./ArrearsAgingBadge";
+import { FeesDataTableSkeleton } from "./BalancesSkeletons";
 
 interface FeesDataTableProps {
   students: StudentSummaryFromAPI[];
@@ -27,6 +28,8 @@ interface FeesDataTableProps {
   onSelectAll: () => void;
   onViewStudent: (student: StudentSummaryFromAPI) => void;
   embedded?: boolean;
+  /** Fewer columns on Balances — no duplicate status/aging. */
+  streamlined?: boolean;
 }
 
 function getStudentStatus(student: StudentSummaryFromAPI) {
@@ -77,17 +80,11 @@ export const FeesDataTable = ({
   onSelectAll,
   onViewStudent,
   embedded = false,
+  streamlined = embedded,
 }: FeesDataTableProps) => {
   if (loading) {
     return (
-      <div className={cn(FEES_MOBILE.card, "overflow-hidden")}>
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
-          <p className="mt-4 text-sm text-slate-500">
-            Loading student balances…
-          </p>
-        </div>
-      </div>
+      <FeesDataTableSkeleton embedded={embedded} streamlined={streamlined} />
     );
   }
 
@@ -204,7 +201,7 @@ export const FeesDataTable = ({
                       >
                         {status.label}
                       </Badge>
-                      {arrears > 0 && (
+                      {arrears > 0 && !streamlined && (
                         <ArrearsAgingBadge
                           aging={student.feeSummary.aging}
                           hasArrears={arrears > 0}
@@ -224,7 +221,7 @@ export const FeesDataTable = ({
 
       {/* Desktop — table */}
       <div className={cn(FEES_LAYOUT.tableScroll, "hidden md:block")}>
-        <Table className="min-w-[40rem]">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow className="border-slate-200 hover:bg-transparent">
               <TableHead className="w-12">
@@ -239,21 +236,29 @@ export const FeesDataTable = ({
               <TableHead className="text-xs font-medium text-slate-500">
                 Class
               </TableHead>
-              <TableHead className="text-xs font-medium text-slate-500">
-                Owed
-              </TableHead>
-              <TableHead className="text-xs font-medium text-slate-500">
-                Paid
-              </TableHead>
-              <TableHead className="text-xs font-medium text-slate-500">
-                Balance
-              </TableHead>
-              <TableHead className="text-xs font-medium text-slate-500">
-                Aging
-              </TableHead>
-              <TableHead className="text-xs font-medium text-slate-500">
-                Status
-              </TableHead>
+              {streamlined ? (
+                <TableHead className="text-right text-xs font-medium text-slate-500">
+                  Balance
+                </TableHead>
+              ) : (
+                <>
+                  <TableHead className="text-xs font-medium text-slate-500">
+                    Owed
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-slate-500">
+                    Paid
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-slate-500">
+                    Balance
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-slate-500">
+                    Aging
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-slate-500">
+                    Status
+                  </TableHead>
+                </>
+              )}
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
@@ -261,6 +266,14 @@ export const FeesDataTable = ({
             {students.map((student) => {
               const status = getStudentStatus(student);
               const arrears = Math.max(0, student.feeSummary.balance);
+              const worstAging =
+                arrears > 0 && !streamlined ? (
+                  <ArrearsAgingBadge
+                    aging={student.feeSummary.aging}
+                    hasArrears
+                  />
+                ) : null;
+
               return (
                 <TableRow
                   key={student.id}
@@ -272,8 +285,8 @@ export const FeesDataTable = ({
                       onCheckedChange={() => onSelectStudent(student.id)}
                     />
                   </TableCell>
-                  <TableCell>
-                    <div>
+                  <TableCell className={FEES_LAYOUT.textWrap}>
+                    <div className="min-w-0">
                       <p className="text-sm font-medium text-slate-900">
                         {student.studentName}
                       </p>
@@ -285,44 +298,81 @@ export const FeesDataTable = ({
                   <TableCell className="text-sm text-slate-600">
                     {student.gradeLevelName}
                   </TableCell>
-                  <TableCell className="text-sm tabular-nums text-slate-600">
-                    {formatCurrency(student.feeSummary.totalOwed)}
-                  </TableCell>
-                  <TableCell className="text-sm tabular-nums text-emerald-600">
-                    {formatCurrency(student.feeSummary.totalPaid)}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "text-sm font-semibold tabular-nums",
-                      student.feeSummary.balance > 0
-                        ? "text-rose-600"
-                        : student.feeSummary.balance < 0
-                          ? "text-blue-600"
-                          : "text-slate-400",
-                    )}
-                  >
-                    {formatCurrency(student.feeSummary.balance)}
-                  </TableCell>
-                  <TableCell>
-                    {arrears > 0 ? (
-                      <ArrearsAgingBadge
-                        aging={student.feeSummary.aging}
-                        hasArrears={arrears > 0}
-                      />
-                    ) : (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
-                        status.className,
+                  {streamlined ? (
+                    <TableCell className="text-right">
+                      <p
+                        className={cn(
+                          "text-sm font-bold tabular-nums",
+                          student.feeSummary.balance > 0
+                            ? "text-rose-600"
+                            : student.feeSummary.balance < 0
+                              ? "text-blue-600"
+                              : "text-slate-400",
+                        )}
+                      >
+                        {formatCurrency(student.feeSummary.balance)}
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-slate-500">
+                        <span className="text-emerald-700">
+                          {formatCurrency(student.feeSummary.totalPaid)}
+                        </span>
+                        {" paid · "}
+                        <span className="text-slate-600">
+                          {formatCurrency(student.feeSummary.totalOwed)} billed
+                        </span>
+                      </p>
+                      {arrears > 0 ? (
+                        <div className="mt-1 flex justify-end">
+                          <ArrearsAgingBadge
+                            aging={student.feeSummary.aging}
+                            hasArrears
+                            compact
+                            showAmount={false}
+                          />
+                        </div>
+                      ) : (
+                        <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+                          {status.label}
+                        </p>
                       )}
-                    >
-                      {status.label}
-                    </span>
-                  </TableCell>
+                    </TableCell>
+                  ) : (
+                    <>
+                      <TableCell className="text-sm tabular-nums text-slate-600">
+                        {formatCurrency(student.feeSummary.totalOwed)}
+                      </TableCell>
+                      <TableCell className="text-sm tabular-nums text-emerald-600">
+                        {formatCurrency(student.feeSummary.totalPaid)}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-sm font-semibold tabular-nums",
+                          student.feeSummary.balance > 0
+                            ? "text-rose-600"
+                            : student.feeSummary.balance < 0
+                              ? "text-blue-600"
+                              : "text-slate-400",
+                        )}
+                      >
+                        {formatCurrency(student.feeSummary.balance)}
+                      </TableCell>
+                      <TableCell>
+                        {worstAging ?? (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
+                            status.className,
+                          )}
+                        >
+                          {status.label}
+                        </span>
+                      </TableCell>
+                    </>
+                  )}
                   <TableCell>
                     <Button
                       variant="ghost"

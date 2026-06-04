@@ -142,7 +142,7 @@ export function FeeCategoryBreakdown({
       >
         <p className="text-sm font-medium text-slate-700">No amounts for this term</p>
         <p className="mt-1 text-xs text-slate-500">
-          Use Edit plan to add fee categories and amounts
+          Use Edit structure to add fee categories and amounts
         </p>
       </div>
     );

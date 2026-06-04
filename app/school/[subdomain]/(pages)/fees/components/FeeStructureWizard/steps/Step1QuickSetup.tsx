@@ -124,7 +124,7 @@ export const Step1QuickSetup = ({
                 <div className="space-y-4">
                     <div>
                         <label className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1.5 block">
-                            Plan name
+                            Structure name
                         </label>
                         <Input
                             value={formData.name}

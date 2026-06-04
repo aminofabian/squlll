@@ -2,6 +2,7 @@
 
 import type { RefObject } from 'react'
 import { FeeStructurePDFPreview } from '../FeeStructurePDFPreview'
+import { FeeLetterScreenStyles } from '../feeLetter/FeeLetterScreenStyles'
 import type { FeeLetterTemplateId } from '../../lib/feeLetter/types'
 import type { FeeStructureForm } from '../../types'
 
@@ -37,7 +38,9 @@ export function FeeStructureLetterPreview({
 }: FeeStructureLetterPreviewProps) {
     return (
         <div ref={containerRef} data-pdf-content>
+            <FeeLetterScreenStyles />
             <FeeStructurePDFPreview
+                key={templateId}
                 formData={formData}
                 schoolName={schoolName}
                 logoUrl={logoUrl}

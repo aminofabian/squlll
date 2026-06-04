@@ -1,181 +1,143 @@
-"use client"
+"use client";
 
-import { RefreshCw, Download, Filter } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { FeeAssignmentsDataTable } from "./FeeAssignmentsDataTable"
-import { useFeeAssignments } from "../hooks/useFeeAssignments"
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { FeeAssignmentsDataTable } from "./FeeAssignmentsDataTable";
+import { FeeAssignmentsSummary } from "./FeeAssignmentsSummary";
+import {
+  FeeAssignmentsToolbar,
+  type ClassLinksFilter,
+  type FilterCounts,
+} from "./FeeAssignmentsToolbar";
+import { FeeAssignmentsSummarySkeleton } from "./FeeAssignmentsSkeletons";
+import { useFeeAssignments } from "../hooks/useFeeAssignments";
+import { FEES_LAYOUT } from "../lib/fees-ui";
+import { downloadCsv } from "../lib/exportCsv";
+import {
+  assignmentLine,
+  buildClassLinksStats,
+  gradeLabels,
+} from "../lib/feeAssignmentDisplay";
+
+function matchesFilter(
+  filter: ClassLinksFilter,
+  totalStudents: number,
+  isActive: boolean,
+): boolean {
+  if (filter === "all") return true;
+  if (filter === "ready") return isActive && totalStudents > 0;
+  if (filter === "needs_students") return isActive && totalStudents === 0;
+  if (filter === "inactive") return !isActive;
+  return true;
+}
 
 export const FeeAssignmentsView = () => {
-  const { data, loading, error, refetch } = useFeeAssignments()
+  const { data, loading, error, refetch } = useFeeAssignments();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<ClassLinksFilter>("all");
 
-  const handleRefresh = () => {
-    refetch()
-  }
+  const stats = useMemo(
+    () => (data ? buildClassLinksStats(data) : null),
+    [data],
+  );
+
+  const filterCounts = useMemo((): FilterCounts | null => {
+    if (!data) return null;
+    const list = data.feeAssignments;
+    return {
+      all: list.length,
+      ready: list.filter(
+        (g) => g.feeAssignment.isActive && g.totalStudents > 0,
+      ).length,
+      needs_students: list.filter(
+        (g) => g.feeAssignment.isActive && g.totalStudents === 0,
+      ).length,
+      inactive: list.filter((g) => !g.feeAssignment.isActive).length,
+    };
+  }, [data]);
+
+  const filteredGroups = useMemo(() => {
+    if (!data?.feeAssignments) return [];
+    let list = data.feeAssignments.filter((g) =>
+      matchesFilter(
+        filter,
+        g.totalStudents,
+        g.feeAssignment.isActive,
+      ),
+    );
+
+    const q = search.trim().toLowerCase();
+    if (!q) return list;
+
+    return list.filter((g) => {
+      const a = g.feeAssignment;
+      const haystack = [
+        a.feeStructure.name,
+        a.description,
+        gradeLabels(g),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [data, filter, search]);
 
   const handleExport = () => {
-    if (!data) return
-    
-    // Convert data to CSV or Excel format
-    console.log('Exporting fee assignments data:', data)
-    // TODO: Implement actual export logic
-  }
+    if (!data) return;
+    const date = new Date().toISOString().split("T")[0];
+    downloadCsv(`class-links-${date}.csv`, [
+      ["Fee structure", "Billing period", "Classes", "Students", "Status", "Created"],
+      ...filteredGroups.map((g) => {
+        const a = g.feeAssignment;
+        return [
+          a.feeStructure.name,
+          assignmentLine(a.description, a.feeStructure.name),
+          gradeLabels(g),
+          String(g.totalStudents),
+          a.isActive ? "Active" : "Inactive",
+          new Date(a.createdAt).toLocaleDateString("en-KE"),
+        ];
+      }),
+    ]);
+  };
+
+  const emptyVariant =
+    !data || data.feeAssignments.length === 0 ? "none" : "filtered";
 
   return (
-    <div className="space-y-6">
-      <ViewHeader 
-        onRefresh={handleRefresh} 
+    <div className={cn(FEES_LAYOUT.page, "space-y-0")}>
+      {loading && !stats ? <FeeAssignmentsSummarySkeleton /> : null}
+      {stats ? <FeeAssignmentsSummary stats={stats} /> : null}
+
+      <FeeAssignmentsToolbar
+        search={search}
+        onSearchChange={setSearch}
+        filter={filter}
+        onFilterChange={setFilter}
+        counts={filterCounts}
+        showInactiveFilter={stats?.showInactive ?? false}
+        loading={loading}
+        showingCount={data && !loading ? filteredGroups.length : null}
+        totalCount={data && !loading ? data.feeAssignments.length : null}
+        onRefresh={() => refetch()}
         onExport={handleExport}
-        isLoading={loading}
+        exportDisabled={!data || filteredGroups.length === 0}
       />
 
-      {error && <ErrorAlert error={error} />}
+      {error ? (
+        <div className="mx-3 mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 sm:mx-4">
+          Could not load class links: {error}
+        </div>
+      ) : null}
 
-      <FeeAssignmentsDataTable 
-        data={data} 
-        isLoading={loading} 
-      />
-
-      {data && <AssignmentsSummary data={data} />}
+      <div className="p-2 sm:p-3">
+        <FeeAssignmentsDataTable
+          groups={filteredGroups}
+          isLoading={loading}
+          showStatusColumn={stats?.showInactive ?? false}
+          emptyVariant={emptyVariant}
+        />
+      </div>
     </div>
-  )
-}
-
-interface ViewHeaderProps {
-  onRefresh: () => void
-  onExport: () => void
-  isLoading: boolean
-}
-
-const ViewHeader = ({ onRefresh, onExport, isLoading }: ViewHeaderProps) => (
-  <div className="flex flex-wrap justify-between items-start gap-4">
-    <div>
-      <h2 className="text-lg font-semibold text-slate-900">
-        Who is assigned
-      </h2>
-      <p className="text-sm text-slate-600 mt-1">
-        See which fee plans are linked to students and verify wiring before
-        billing.
-      </p>
-    </div>
-    
-    <div className="flex gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onRefresh}
-        disabled={isLoading}
-      >
-        <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-        Refresh
-      </Button>
-      
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onExport}
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Export
-      </Button>
-      
-      <Button
-        variant="outline"
-        size="sm"
-      >
-        <Filter className="h-4 w-4 mr-2" />
-        Filter
-      </Button>
-    </div>
-  </div>
-)
-
-const ErrorAlert = ({ error }: { error: string }) => (
-  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-    <h3 className="font-semibold text-red-800 mb-1">
-      Could not load assignments
-    </h3>
-    <p className="text-sm text-red-700">{error}</p>
-  </div>
-)
-
-interface AssignmentsSummaryProps {
-  data: any
-}
-
-const AssignmentsSummary = ({ data }: AssignmentsSummaryProps) => {
-  if (!data || !data.feeAssignments) return null
-
-  const activeAssignments = data.feeAssignments.filter(
-    (a: any) => a.feeAssignment?.isActive
-  ).length
-
-  const totalFeeItems = data.feeAssignments.reduce(
-    (sum: number, group: any) => {
-      if (!group.studentAssignments) return sum
-      return sum + group.studentAssignments.reduce(
-        (itemSum: number, assignment: any) => {
-          return itemSum + (assignment.feeItems?.length || 0)
-        },
-        0
-      )
-    },
-    0
-  )
-
-  return (
-    <div className="grid grid-cols-4 gap-4">
-      <SummaryCard
-        label="Total Assignments"
-        value={data.totalFeeAssignments || 0}
-        color="blue"
-      />
-      <SummaryCard
-        label="Active Assignments"
-        value={activeAssignments || 0}
-        color="green"
-      />
-      <SummaryCard
-        label="Students with Fees"
-        value={data.totalStudentsWithFees || 0}
-        color="purple"
-      />
-      <SummaryCard
-        label="Total Fee Items"
-        value={totalFeeItems || 0}
-        color="orange"
-      />
-    </div>
-  )
-}
-
-interface SummaryCardProps {
-  label: string
-  value: number
-  color: 'blue' | 'green' | 'purple' | 'orange'
-}
-
-const SummaryCard = ({ label, value, color }: SummaryCardProps) => {
-  const colorClasses = {
-    blue: 'border-blue-200 bg-blue-50',
-    green: 'border-green-200 bg-green-50',
-    purple: 'border-purple-200 bg-purple-50',
-    orange: 'border-orange-200 bg-orange-50',
-  }
-
-  const textColorClasses = {
-    blue: 'text-blue-700',
-    green: 'text-green-700',
-    purple: 'text-purple-700',
-    orange: 'text-orange-700',
-  }
-
-  return (
-    <div className={`rounded-xl border p-4 ${colorClasses[color]}`}>
-      <p className="text-xs text-slate-600 mb-1">{label}</p>
-      <p className={`text-2xl font-bold tabular-nums ${textColorClasses[color]}`}>
-        {value}
-      </p>
-    </div>
-  )
-}
-
+  );
+};

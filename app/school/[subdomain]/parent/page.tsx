@@ -13,6 +13,7 @@ import { ParentPortalEmptyState } from './components/ParentPortalEmptyState'
 import { useParentPortal } from '@/lib/parent/useParentPortal'
 import { useParentDashboardData } from '@/lib/parent/useParentDashboardData'
 import { useNotificationsOptional } from '@/lib/notifications/NotificationProvider'
+import { cn } from '@/lib/utils'
 
 const ParentsPortal = () => {
   const params = useParams()
@@ -83,16 +84,22 @@ const ParentsPortal = () => {
   }
 
   const renderDesktopLayout = () => (
-    <div className="flex h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="flex h-screen bg-slate-50/80 dark:bg-slate-950">
       <DesktopSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         subdomain={subdomain}
         notifications={notifications}
+        parentName={dashboard.parentName}
       />
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-10">
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <div
+          className={cn(
+            'px-4 sm:px-6 lg:px-8',
+            activeTab === 'payments' ? 'py-3' : 'py-6 lg:py-8',
+          )}
+        >
           {portalGate(
             activeTab === 'dashboard' ? (
               <DesktopDashboard
@@ -118,6 +125,7 @@ const ParentsPortal = () => {
                     setActiveTab('payments')
                   }
                 }}
+                onPayFees={() => setActiveTab('payments')}
               />
             ) : (
               <ContentRenderer
@@ -129,6 +137,7 @@ const ParentsPortal = () => {
                 selectedChild={selectedChild}
                 setSelectedChild={setSelectedChild}
                 portalError={portalError}
+                consolidatedFees={consolidatedFees}
               />
             ),
           )}
@@ -140,7 +149,7 @@ const ParentsPortal = () => {
   )
 
   const renderMobileLayout = () => (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="flex h-screen flex-col bg-slate-50/80 dark:bg-slate-950">
       <MobileHeader subdomain={subdomain} />
 
       <div className="flex-1 overflow-y-auto pb-24">
@@ -168,9 +177,10 @@ const ParentsPortal = () => {
                   setActiveTab('payments')
                 }
               }}
+              onPayFees={() => setActiveTab('payments')}
             />
           ) : (
-            <div className="p-6">
+            <div className={activeTab === 'payments' ? 'p-3' : 'p-6'}>
               <ContentRenderer
                 activeTab={activeTab}
                 subdomain={subdomain}
@@ -180,6 +190,7 @@ const ParentsPortal = () => {
                 selectedChild={selectedChild}
                 setSelectedChild={setSelectedChild}
                 portalError={portalError}
+                consolidatedFees={consolidatedFees}
               />
             </div>
           ),

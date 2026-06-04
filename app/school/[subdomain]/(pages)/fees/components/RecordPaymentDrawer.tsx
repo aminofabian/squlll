@@ -28,6 +28,9 @@ import type {
 } from "../types";
 import { useStudentInvoices } from "../hooks/useStudentInvoices";
 import { useStudentSummary } from "../hooks/useStudentSummary";
+import { useGraphQLInvoices } from "../hooks/useGraphQLInvoices";
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears";
+import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "../utils";
 
 interface RecordPaymentDrawerProps {
@@ -35,7 +38,8 @@ interface RecordPaymentDrawerProps {
   onClose: () => void;
   form: RecordPaymentForm;
   setForm: (updater: (prev: RecordPaymentForm) => RecordPaymentForm) => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<boolean>;
+  isSubmitting?: boolean;
   studentId: string | null;
   students?: StudentSummaryFromAPI[];
   studentInfo?: {
@@ -53,12 +57,18 @@ export default function RecordPaymentDrawer({
   form,
   setForm,
   onSubmit,
+  isSubmitting = false,
   studentId,
   students = [],
   studentInfo,
   onPaymentSuccess,
   canOverrideAllocation = false,
 }: RecordPaymentDrawerProps) {
+  const { toast } = useToast();
+  const { generateInvoices, isGenerating: isGeneratingInvoice } =
+    useGraphQLInvoices();
+  const { getActiveAcademicYear, loading: academicYearsLoading } =
+    useAcademicYears();
   const [pickedStudentId, setPickedStudentId] = useState<string | null>(
     studentId,
   );
@@ -114,6 +124,60 @@ export default function RecordPaymentDrawer({
   const totalPaid = pickedStudent?.feeSummary.totalPaid ?? 0;
   const balanceDue = arrears;
 
+  const needsBilling =
+    Boolean(effectiveStudentId) &&
+    !invoicesLoading &&
+    !invoicesError &&
+    invoices.length === 0 &&
+    balanceDue > 0;
+
+  const handleGenerateBill = async () => {
+    if (!effectiveStudentId) return;
+
+    const activeYear = getActiveAcademicYear();
+    const termId = activeYear?.terms?.[0]?.id;
+    if (!termId) {
+      toast({
+        title: "No term available",
+        description:
+          "Set up an active academic year with terms before generating bills.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const result = await generateInvoices({
+      studentId: effectiveStudentId,
+      termId,
+      issueDate: today,
+      dueDate: today,
+    });
+
+    if (result?.length) {
+      const invoice = result[0];
+      toast({
+        title: "Bill generated",
+        description: `Invoice ${invoice.invoiceNumber} created for ${effectiveStudentInfo?.name ?? "student"}.`,
+      });
+      refetchInvoices();
+      setForm((prev) => ({
+        ...prev,
+        invoiceId: invoice.id,
+        amountPaid:
+          prev.amountPaid || String(invoice.balanceAmount ?? balanceDue),
+      }));
+      return;
+    }
+
+    toast({
+      title: "Could not generate bill",
+      description:
+        "No invoice was created. Confirm the fee structure is linked to this student's grade and includes the current term.",
+      variant: "destructive",
+    });
+  };
+
   useEffect(() => {
     if (!effectiveStudentId || invoicesLoading || form.invoiceId) return;
     const owing = invoices.find((inv) => inv.amountDue > 0);
@@ -155,25 +219,20 @@ export default function RecordPaymentDrawer({
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     try {
-      // Execute the payment submission
-      await onSubmit();
+      const ok = await onSubmit();
+      if (!ok) return;
 
-      console.log("🔄 Payment submitted successfully, refreshing all data...");
-
-      // Force refresh invoices with cache busting
-      console.log("📊 Refreshing invoice data...");
       refetchInvoices();
-
-      // Call parent callback to refresh student summary and fee data
-      if (onPaymentSuccess) {
-        console.log("📈 Refreshing student summary and fee data...");
-        onPaymentSuccess();
-      }
-
-      console.log("✅ All data refresh operations triggered");
+      onPaymentSuccess?.();
     } catch (error) {
-      console.error("❌ Error during payment submission:", error);
+      console.error("Error during payment submission:", error);
+      toast({
+        title: "Could not record payment",
+        description: "Something went wrong. Try again once.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -193,12 +252,12 @@ export default function RecordPaymentDrawer({
       }}
       direction="right"
     >
-      <DrawerContent className="max-w-xl">
-        <DrawerHeader>
+      <DrawerContent className="flex h-full max-h-[100dvh] max-w-xl flex-col">
+        <DrawerHeader className="shrink-0">
           <DrawerTitle className="text-lg">Record payment</DrawerTitle>
         </DrawerHeader>
 
-        <div className="p-4 space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           {!effectiveStudentId ? (
             <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/80 p-4">
               <p className="text-sm text-amber-900 font-medium">
@@ -345,11 +404,43 @@ export default function RecordPaymentDrawer({
 
           {effectiveStudentId && (
             <>
+              {needsBilling && (
+                <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-sm text-amber-950">
+                  <p>
+                    This student owes{" "}
+                    <span className="font-semibold tabular-nums">
+                      KES {balanceDue.toLocaleString()}
+                    </span>{" "}
+                    from linked fee structures, but no bill has been generated yet.
+                  </p>
+                  <p className="text-xs text-amber-800">
+                    Linking grades assigns fees to students. Billing (generating
+                    invoices) is a separate step before you can record payments.
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleGenerateBill}
+                    disabled={isGeneratingInvoice || academicYearsLoading}
+                  >
+                    {isGeneratingInvoice ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating bill…
+                      </>
+                    ) : (
+                      "Generate bill for this student"
+                    )}
+                  </Button>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="invoice">Bill / invoice</Label>
                 <Select
                   value={form.invoiceId}
                   onValueChange={(v) => handleChange("invoiceId", v)}
+                  disabled={needsBilling}
                 >
                   <SelectTrigger id="invoice">
                     <SelectValue
@@ -372,7 +463,9 @@ export default function RecordPaymentDrawer({
                       </div>
                     ) : invoices.length === 0 ? (
                       <div className="p-4 text-sm text-gray-500">
-                        No invoices found for this student
+                        {needsBilling
+                          ? "Generate a bill above to continue"
+                          : "No invoices found for this student"}
                       </div>
                     ) : (
                       invoices.map((inv) => (
@@ -527,19 +620,27 @@ export default function RecordPaymentDrawer({
           )}
         </div>
 
-        <DrawerFooter>
+        <DrawerFooter className="shrink-0 border-t pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="flex gap-2">
             <Button
-              onClick={handleSubmit}
+              onClick={() => void handleSubmit()}
               disabled={
+                isSubmitting ||
                 !effectiveStudentId ||
                 !form.invoiceId ||
                 !form.amountPaid ||
                 !form.paymentDate ||
-                invoicesLoading
+                invoicesLoading ||
+                needsBilling ||
+                isGeneratingInvoice
               }
             >
-              {invoicesLoading ? (
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving…
+                </>
+              ) : invoicesLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Loading...

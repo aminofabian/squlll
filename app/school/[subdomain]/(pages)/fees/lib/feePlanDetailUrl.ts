@@ -8,7 +8,7 @@ export function termToQueryValue(termId: string): string {
 }
 
 /**
- * Resolve ?term= to a term id on this plan.
+ * Resolve ?term= to a term id on this structure.
  * Accepts term id or a slugified / plain term name (e.g. "term-ii", "Term II").
  */
 export function resolveTermIdForPlan(

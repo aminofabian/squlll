@@ -214,7 +214,7 @@ export const Step3Review = ({
                 </FeesWizardSection>
             ) : null}
 
-            <FeesWizardSection title="Plan details">
+            <FeesWizardSection title="Structure details">
                 <div className="space-y-4">
                     {editingName ? (
                         <Input
@@ -232,7 +232,7 @@ export const Step3Review = ({
                             className="group flex w-full items-center justify-between gap-2 rounded-lg border border-transparent py-1 text-left hover:border-slate-200 hover:bg-slate-50"
                         >
                             <span className="text-base font-semibold text-slate-900">
-                                {formData.name || 'Untitled plan'}
+                                {formData.name || 'Untitled structure'}
                             </span>
                             <Edit2 className="h-4 w-4 shrink-0 text-slate-400 opacity-0 group-hover:opacity-100" />
                         </button>

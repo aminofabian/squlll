@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Download, Eye } from 'lucide-react'
+import { ChevronDown, Download, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FeeLetterPinnedBar } from '../FeeLetterPinnedBar'
 import { FEES_BRAND, FEES_BTN, FEES_LAYOUT, FEES_MOBILE } from '../../lib/fees-ui'
@@ -235,7 +235,7 @@ export function FeeLetterSetupPanel({
             <LetterTemplateSelector
               value={templateId}
               onChange={onTemplateChange}
-              minimal
+              variant="strip"
             />
           </div>
         </div>
@@ -255,56 +255,74 @@ export function FeeLetterSetupPanel({
             className,
           )}
         >
-        <div
-          className={cn(
-            "border-b border-slate-100 px-4 py-3 sm:px-4",
-            pinActions && "max-md:px-0 max-md:pt-0",
-          )}
-          style={{ backgroundColor: `${FEES_BRAND.primaryLight}40` }}
+        <details
+          className="group border-b border-slate-100 bg-white open:bg-slate-50/40"
+          open={!pinActions}
         >
-          <LetterIdentityPanel
-            compact
-            details={letterDetails}
-            onChange={onLetterDetailsChange}
-            onSave={onSaveLetterDetails}
-            saving={letterDetailsSaving}
-            loading={letterDetailsLoading}
-            error={letterDetailsError}
-            schoolLogoKey={schoolLogoKey}
-            portalUrl={portalUrl}
-          />
-        </div>
+          <summary
+            className={cn(
+              "flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-xs font-medium text-slate-700",
+              "[&::-webkit-details-marker]:hidden",
+              pinActions && "max-md:px-0",
+            )}
+            style={{ backgroundColor: `${FEES_BRAND.primaryLight}55` }}
+          >
+            <span className="font-semibold text-slate-900">School letterhead</span>
+            <span className="truncate text-[10px] font-normal text-slate-500">
+              {letterDetails.schoolDetails?.name?.trim() ||
+                schoolLogoKey ||
+                "Edit details"}
+            </span>
+            <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+          </summary>
+          <div
+            className="border-t border-slate-100 px-3 py-3 sm:px-4"
+            style={{ backgroundColor: `${FEES_BRAND.primaryLight}30` }}
+          >
+            <LetterIdentityPanel
+              compact
+              details={letterDetails}
+              onChange={onLetterDetailsChange}
+              onSave={onSaveLetterDetails}
+              saving={letterDetailsSaving}
+              loading={letterDetailsLoading}
+              error={letterDetailsError}
+              schoolLogoKey={schoolLogoKey}
+              portalUrl={portalUrl}
+            />
+          </div>
+        </details>
 
-        <div className="divide-y divide-slate-100 bg-white max-md:px-0 md:grid md:grid-cols-2 md:gap-2 md:divide-y-0 md:border-b md:border-slate-100 md:p-2.5">
-          <div className="min-w-0 space-y-1.5 py-3.5 md:space-y-0.5 md:py-0">
-            <FieldLabel>Grade on letter</FieldLabel>
+        <div className="divide-y divide-slate-100 bg-white max-md:px-0 md:grid md:grid-cols-1 md:gap-0 md:divide-y-0 md:border-b md:border-slate-100 md:p-2.5 lg:space-y-2">
+          <div className="min-w-0 space-y-1 px-3 py-2.5 md:px-2.5 md:py-2">
+            <FieldLabel dense>Grade</FieldLabel>
             <LetterGradeSelector
               grades={grades}
               value={previewGrade}
               onChange={onGradeChange}
               variant="compact"
-              showHelper
+              showHelper={false}
             />
           </div>
           {terms.length > 0 ? (
-            <div className="min-w-0 space-y-1.5 py-3.5 md:space-y-0.5 md:py-0">
-              <FieldLabel>Terms to print</FieldLabel>
+            <div className="min-w-0 space-y-1 border-t border-slate-100 px-3 py-2.5 md:border-t-0 md:px-2.5 md:py-2">
+              <FieldLabel dense>Terms</FieldLabel>
               <LetterTermSelector
                 terms={terms}
                 selectedIds={selectedTermIds}
                 onChange={onTermIdsChange}
                 variant="compact"
-                showHelper
+                showHelper={false}
               />
             </div>
           ) : null}
         </div>
 
-        <div className="bg-slate-50/90 px-4 py-3.5 max-md:px-0 md:px-2.5 md:py-2">
+        <div className="border-t border-slate-100 bg-slate-50/90 px-3 py-3 max-md:px-3 md:px-2.5 md:py-3">
           <LetterTemplateSelector
             value={templateId}
             onChange={onTemplateChange}
-            minimal
+            variant="strip"
           />
         </div>
 
@@ -369,7 +387,7 @@ export function FeeLetterSetupPanel({
             <LetterTemplateSelector
               value={templateId}
               onChange={onTemplateChange}
-              compact
+              variant="grid"
             />
           </div>
         </section>

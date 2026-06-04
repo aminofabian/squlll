@@ -35,8 +35,8 @@ export function ClassesPageHeader({
   onToggleGradePanel,
 }: ClassesPageHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/80 bg-white/95 px-3 py-2 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 sm:px-4">
-      <div className="mx-auto flex max-w-5xl items-center gap-2">
+    <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-3 py-2 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 sm:px-4">
+      <div className="mx-auto flex max-w-6xl items-center gap-2">
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-[15px]">
             {title}

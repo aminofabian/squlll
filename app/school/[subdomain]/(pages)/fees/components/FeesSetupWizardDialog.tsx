@@ -95,7 +95,7 @@ interface FeesSetupWizardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: (result: FeesSetupWizardResult) => void;
-  /** First-time configure vs return from fee plan drawer */
+  /** First-time configure vs return from fee structure drawer */
   setupIntent?: FeePlanSetupIntent;
 }
 
@@ -119,7 +119,7 @@ export function FeesSetupWizardDialog({
     () => initSplitsForCategories([...DEFAULT_SELECTED_CATEGORIES]),
   );
   const [gradeAmounts, setGradeAmounts] = useState<Record<string, number>>({});
-  /** Grades included in this fee plan — pick once here, not again in the plan wizard */
+  /** Grades included in this fee structure — pick once here, not again in the structure wizard */
   const [setupGrades, setSetupGrades] = useState<string[]>([]);
   const [bulkAmount, setBulkAmount] = useState("");
   const [customCategoryInput, setCustomCategoryInput] = useState("");
@@ -410,7 +410,7 @@ export function FeesSetupWizardDialog({
             <div className={WIZARD.body}>
               <WizardStepIntro>
                 {termCount === 3
-                  ? "Choose the academic year for this fee plan. Most schools bill in three terms per year."
+                  ? "Choose the academic year for this fee structure. Most schools bill in three terms per year."
                   : termCount > 0
                     ? `This year has ${termCount} terms — fees you set up apply to each one.`
                     : "Choose the academic year. Add terms in school settings if none appear below."}
@@ -722,7 +722,7 @@ export function FeesSetupWizardDialog({
               <WizardStepIntro>
                 Choose grades and enter each{" "}
                 <span className="font-medium text-slate-800">term total</span>.
-                You won&apos;t enter these again in the fee plan wizard.
+                You won&apos;t enter these again in the fee structure wizard.
               </WizardStepIntro>
 
               {gradesLoading ? (
@@ -915,7 +915,7 @@ export function FeesSetupWizardDialog({
           {step === 5 && (
             <div className={WIZARD.body}>
               <WizardStepIntro>
-                Review your setup. The fee plan wizard opens next — you
+                Review your setup. The fee structure wizard opens next — you
                 won&apos;t re-enter grades or amounts there.
               </WizardStepIntro>
 
@@ -1062,8 +1062,8 @@ export function FeesSetupWizardDialog({
               onClick={handleFinish}
             >
               {setupIntent === "revise"
-                ? "Apply to fee plan"
-                : "Continue to fee plan"}
+                ? "Apply to fee structure"
+                : "Continue to fee structure"}
             </Button>
             )}
           </div>

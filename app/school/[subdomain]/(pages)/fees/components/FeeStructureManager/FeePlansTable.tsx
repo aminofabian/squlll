@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { FEES_BRAND } from "../../lib/fees-ui";
+import { FEES_BRAND, FEES_LAYOUT } from "../../lib/fees-ui";
 import type { ProcessedFeeStructure } from "./types";
 import {
   feePlanTermProgress,
@@ -60,6 +60,7 @@ interface FeePlansTableProps {
   collectionByPlanId?: Map<string, FeePlanCollectionStats>;
   assignments?: FeeAssignmentGroup[];
   schoolGrades?: SchoolGradeRef[];
+  pageLevelConflictAlert?: boolean;
   className?: string;
 }
 
@@ -150,40 +151,31 @@ function TermsCell({
   }
 
   const termsReady = termProgress.configured === termProgress.total;
-  const label = `${termProgress.configured}/${termProgress.total}`;
+  const label = `${termProgress.configured}/${termProgress.total} terms`;
 
   return (
-    <div className="space-y-0.5">
-      <span
-        className={cn(
-          "text-sm tabular-nums",
-          termsReady ? "text-slate-600" : "font-medium text-amber-700",
-        )}
-      >
-        {label}
-      </span>
-      <p className="text-[10px] text-slate-400">configured</p>
-    </div>
+    <span
+      className={cn(
+        "text-sm tabular-nums",
+        termsReady ? "text-slate-600" : "font-medium text-amber-700",
+      )}
+    >
+      {label}
+    </span>
   );
 }
 
 function PlanGradesLinked({ linked }: { linked: number }) {
   if (linked === 0) {
     return (
-      <div className="space-y-0.5">
-        <span className="text-sm font-medium text-amber-800">None</span>
-        <p className="text-[10px] text-amber-700">assign grades</p>
-      </div>
+      <span className="text-sm font-medium text-amber-800">None linked</span>
     );
   }
 
   return (
-    <div className="space-y-0.5">
-      <span className="text-sm font-medium tabular-nums text-slate-800">
-        {linked} grade{linked === 1 ? "" : "s"}
-      </span>
-      <p className="text-[10px] text-slate-500">on this plan</p>
-    </div>
+    <span className="text-sm font-medium tabular-nums text-slate-800">
+      {linked} grade{linked === 1 ? "" : "s"}
+    </span>
   );
 }
 
@@ -203,16 +195,31 @@ function NotBilledBadge({ className }: { className?: string }) {
 function CollectionCellContent({
   stats,
   yearTotal,
+  compactUnbilled,
 }: {
   stats: FeePlanCollectionStats | undefined;
   yearTotal: number;
+  /** Year-level note covers billing — avoid repeating badges on every row. */
+  compactUnbilled?: boolean;
 }) {
   if (!stats || !stats.hasBilling) {
     return (
-      <div className="space-y-1.5 text-left">
-        <NotBilledBadge />
-        <p className="text-slate-600">
-          Plan total <KesAmount amount={yearTotal} />
+      <div className="min-w-0 space-y-0.5 text-left">
+        {!compactUnbilled ? <NotBilledBadge /> : null}
+        <p className="break-words text-[11px] text-slate-600 [overflow-wrap:anywhere]">
+          {stats && stats.assignedStudents > 0 ? (
+            <>
+              {stats.assignedStudents} student
+              {stats.assignedStudents === 1 ? "" : "s"}
+              {" · "}
+            </>
+          ) : compactUnbilled ? (
+            "Awaiting billing · "
+          ) : null}
+          <span className="font-medium text-slate-800">
+            <KesAmount amount={yearTotal} size="sm" />
+          </span>
+          <span className="text-slate-500"> / year</span>
         </p>
       </div>
     );
@@ -221,17 +228,8 @@ function CollectionCellContent({
   const pct = Math.round(stats.collectionRate);
 
   return (
-    <div className="space-y-1.5 text-right">
-      <p className="text-sm text-emerald-800">
-        <KesAmount amount={stats.totalCollected} size="sm" />{" "}
-        <span className="font-medium">collected</span>
-      </p>
-      {stats.totalOutstanding > 0 ? (
-        <p className="text-slate-600">
-          <KesAmount amount={stats.totalOutstanding} /> outstanding
-        </p>
-      ) : null}
-      <div className="ml-auto h-1.5 w-full max-w-[7rem] overflow-hidden rounded-full bg-slate-100">
+    <div className="min-w-0 max-w-full space-y-1.5">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className="h-full rounded-full transition-all"
           style={{
@@ -240,7 +238,23 @@ function CollectionCellContent({
           }}
         />
       </div>
-      <p className="text-[10px] tabular-nums text-slate-500">{pct}% collected</p>
+      <p className="break-words text-[11px] leading-snug text-slate-700 [overflow-wrap:anywhere]">
+        <span className="font-medium text-emerald-800">
+          <KesAmount amount={stats.totalCollected} size="sm" />
+        </span>
+        {" · "}
+        {stats.totalOutstanding > 0 ? (
+          <>
+            <KesAmount amount={stats.totalOutstanding} size="sm" /> due
+          </>
+        ) : (
+          <span className="text-emerald-700">paid up</span>
+        )}
+      </p>
+      <p className="text-[10px] tabular-nums text-slate-500">
+        {pct}% · {stats.assignedStudents} student
+        {stats.assignedStudents === 1 ? "" : "s"}
+      </p>
     </div>
   );
 }
@@ -269,27 +283,28 @@ function CollectionCell({
   stats,
   yearTotal,
   showChevron = false,
+  compactUnbilled = false,
 }: {
   stats: FeePlanCollectionStats | undefined;
   yearTotal: number;
   showChevron?: boolean;
+  compactUnbilled?: boolean;
 }) {
   const unbilled = !stats || !stats.hasBilling;
 
   return (
-    <div
-      className={cn(
-        "flex items-start gap-2 pr-1",
-        unbilled ? "justify-between" : "justify-end",
-      )}
-    >
-      <div className="min-w-0 flex-1">
-        <CollectionCellContent stats={stats} yearTotal={yearTotal} />
-        {unbilled ? <BillOnOverviewRowLink /> : null}
+    <div className="grid min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-1">
+      <div className="min-w-0">
+        <CollectionCellContent
+          stats={stats}
+          yearTotal={yearTotal}
+          compactUnbilled={compactUnbilled && unbilled}
+        />
+        {unbilled && !compactUnbilled ? <BillOnOverviewRowLink /> : null}
       </div>
       {showChevron ? (
         <ChevronRight
-          className="mt-2 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-slate-700 group-focus-visible:text-slate-700"
+          className="mt-1.5 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-slate-700 group-focus-visible:text-slate-700"
           aria-hidden
         />
       ) : null}
@@ -316,11 +331,20 @@ function PlanRowContent({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-medium text-slate-900">
+      <div className="flex min-w-0 items-start gap-2">
+        <span
+          className={cn(
+            "min-w-0 font-medium text-slate-900",
+            "line-clamp-2 md:truncate md:line-clamp-none",
+            FEES_LAYOUT.textWrap,
+          )}
+          title={structure.structureName}
+        >
           {structure.structureName}
         </span>
-        <PlanAttentionBadge structure={structure} linked={linked} />
+        <span className="shrink-0">
+          <PlanAttentionBadge structure={structure} linked={linked} />
+        </span>
       </div>
       {!termsReady && termProgress.total > 0 && (
         <div className="mt-1 md:hidden">
@@ -337,7 +361,9 @@ function PlanRowContent({
             <KesAmount amount={collection.totalCollected} size="sm" /> collected
           </span>
         ) : (
-          <NotBilledBadge />
+          <span className="text-slate-600">
+            <KesAmount amount={yearTotal} size="sm" /> / year
+          </span>
         )}
       </div>
     </>
@@ -350,6 +376,7 @@ export function FeePlansTable({
   collectionByPlanId,
   assignments,
   schoolGrades = [],
+  pageLevelConflictAlert = false,
   className,
 }: FeePlansTableProps) {
   const router = useRouter();
@@ -389,11 +416,16 @@ export function FeePlansTable({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className={cn("space-y-6", className)}>
+      <div className={cn(FEES_LAYOUT.page, "space-y-4", className)}>
         {yearGroups.map((group) => {
           const isCurrentSchoolYear =
             !!currentSchoolYearName &&
             academicYearsMatch(group.academicYear, currentSchoolYearName);
+
+          const allPlansUnbilled = group.plans.every((structure) => {
+            const stats = collectionByPlanId?.get(structure.structureId);
+            return !stats?.hasBilling;
+          });
 
           return (
             <FeePlansYearSection
@@ -401,6 +433,8 @@ export function FeePlansTable({
               group={group}
               currentTermName={currentTermName}
               isCurrentSchoolYear={isCurrentSchoolYear}
+              pageLevelConflictAlert={pageLevelConflictAlert}
+              allPlansUnbilled={allPlansUnbilled}
             >
               <ul className="flex flex-col gap-2 p-3 md:hidden">
                 {group.plans.map((structure) => {
@@ -439,7 +473,7 @@ export function FeePlansTable({
                             <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-300" />
                           </div>
                         </button>
-                        {unbilled ? (
+                        {unbilled && !allPlansUnbilled ? (
                           <div className="border-t border-slate-100 bg-[#f4f7f5]/80 px-4 py-2">
                             <Link
                               href={feesOverviewHref()}
@@ -457,30 +491,35 @@ export function FeePlansTable({
                 })}
               </ul>
 
-              <div className="hidden md:block">
-                <Table className="w-full">
+              <div className={cn("hidden md:block", FEES_LAYOUT.tableContained)}>
+                <Table className="w-full table-fixed">
+                  <colgroup>
+                    <col style={{ width: "36%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "16%" }} />
+                    <col style={{ width: "34%" }} />
+                  </colgroup>
                   <TableHeader>
                     <TableRow className="bg-slate-50/60 hover:bg-slate-50/60">
-                      <TableHead>
-                        <ColumnHint label="Plan" hint="Fee plan name" />
+                      <TableHead className="min-w-0">
+                        <ColumnHint label="Structure" hint="Fee structure name and status" />
                       </TableHead>
-                      <TableHead>
+                      <TableHead className="min-w-0">
                         <ColumnHint
-                          label="Terms set"
+                          label="Terms"
                           hint="Terms with fee amounts configured"
                         />
                       </TableHead>
-                      <TableHead>
+                      <TableHead className="min-w-0">
                         <ColumnHint
-                          label="Grades linked"
-                          hint="School grades assigned to this plan (one plan per grade per term)"
+                          label="Classes"
+                          hint="Grades linked to this structure"
                         />
                       </TableHead>
-                      <TableHead className="w-[11rem] text-right sm:w-[12rem]">
+                      <TableHead className="min-w-0">
                         <ColumnHint
-                          label="Collection"
-                          hint="Collected vs plan total"
-                          className="ml-auto"
+                          label="Billing"
+                          hint="Collection and whether students have been billed"
                         />
                       </TableHead>
                     </TableRow>
@@ -514,7 +553,7 @@ export function FeePlansTable({
                             }
                           }}
                         >
-                          <TableCell className="max-w-[20rem]">
+                          <TableCell className="min-w-0 overflow-hidden py-3">
                             <PlanRowContent
                               structure={structure}
                               linked={linked}
@@ -523,17 +562,18 @@ export function FeePlansTable({
                               collection={collection}
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="min-w-0 whitespace-nowrap">
                             <TermsCell termProgress={termProgress} />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="min-w-0 whitespace-nowrap">
                             <PlanGradesLinked linked={linked} />
                           </TableCell>
-                          <TableCell className="align-top">
+                          <TableCell className="min-w-0 overflow-hidden py-3 align-top">
                             <CollectionCell
                               stats={collection}
                               yearTotal={yearTotal}
                               showChevron
+                              compactUnbilled={allPlansUnbilled}
                             />
                           </TableCell>
                         </TableRow>

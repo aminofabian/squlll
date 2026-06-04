@@ -42,7 +42,7 @@ export function FeePlanSection({
     >
       <div
         className={cn(
-          dense ? "px-4 py-3.5 sm:px-4" : "px-5 py-4 sm:px-6 sm:py-5",
+          dense ? "px-3 py-3 sm:px-4" : "px-5 py-4 sm:px-6 sm:py-5",
         )}
       >
         <div

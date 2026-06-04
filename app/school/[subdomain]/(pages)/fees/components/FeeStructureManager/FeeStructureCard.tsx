@@ -58,6 +58,13 @@ interface FeeStructureCardProps {
   planSlug?: string
   letterPreviewOpen?: boolean
   onLetterPreviewOpenChange?: (open: boolean) => void
+  /** Lifted from plan detail so desktop/mobile letter blocks stay in sync. */
+  letterTemplateId?: FeeLetterTemplateId
+  onLetterTemplateIdChange?: (id: FeeLetterTemplateId) => void
+  previewGrade?: string
+  onPreviewGradeChange?: (grade: string) => void
+  letterTermIds?: string[]
+  onLetterTermIdsChange?: (ids: string[]) => void
   onEdit: (feeStructure: FeeStructure) => void
   onAssignToGrade: (feeStructureId: string, name: string, academicYear?: string, academicYearId?: string, termId?: string) => void
   onGenerateInvoices: (feeStructureId: string, term: string) => void
@@ -101,6 +108,12 @@ export const FeeStructureCard = ({
   planSlug,
   letterPreviewOpen: letterPreviewOpenProp,
   onLetterPreviewOpenChange,
+  letterTemplateId: letterTemplateIdProp,
+  onLetterTemplateIdChange,
+  previewGrade: previewGradeProp,
+  onPreviewGradeChange,
+  letterTermIds: letterTermIdsProp,
+  onLetterTermIdsChange,
   onEdit,
   onAssignToGrade,
   onDelete,
@@ -117,11 +130,18 @@ export const FeeStructureCard = ({
   const [showPDFPreviewInternal, setShowPDFPreviewInternal] = useState(false)
   const showPDFPreview = letterPreviewOpenProp ?? showPDFPreviewInternal
   const setShowPDFPreview = onLetterPreviewOpenChange ?? setShowPDFPreviewInternal
-  const [letterTermIds, setLetterTermIds] = useState<string[]>([])
-  const [previewGrade, setPreviewGrade] = useState('')
-  const [letterTemplateId, setLetterTemplateId] = useState<FeeLetterTemplateId>(
-    DEFAULT_FEE_LETTER_TEMPLATE,
-  )
+  const [internalLetterTermIds, setInternalLetterTermIds] = useState<string[]>([])
+  const [internalPreviewGrade, setInternalPreviewGrade] = useState('')
+  const [internalLetterTemplateId, setInternalLetterTemplateId] =
+    useState<FeeLetterTemplateId>(DEFAULT_FEE_LETTER_TEMPLATE)
+  const letterTermIds = letterTermIdsProp ?? internalLetterTermIds
+  const setLetterTermIds = onLetterTermIdsChange ?? setInternalLetterTermIds
+  const previewGrade = previewGradeProp ?? internalPreviewGrade
+  const setPreviewGrade = onPreviewGradeChange ?? setInternalPreviewGrade
+  const letterTemplateId = letterTemplateIdProp ?? internalLetterTemplateId
+  const setLetterTemplateId =
+    onLetterTemplateIdChange ?? setInternalLetterTemplateId
+  const letterPrefsControlled = Boolean(onLetterTemplateIdChange)
   const [gradesExpanded, setGradesExpanded] = useState(false)
 
   const letterTemplateScope = planSlug || subdomain || 'school'
@@ -183,8 +203,9 @@ export const FeeStructureCard = ({
   }, [structure.gradeLevels])
 
   useEffect(() => {
+    if (letterPrefsControlled || onPreviewGradeChange) return
     if (gradeLabels.length === 0) {
-      setPreviewGrade('')
+      setInternalPreviewGrade('')
       return
     }
     const storageKey = planSlug ? feeLetterGradeStorageKey(planSlug) : null
@@ -192,14 +213,15 @@ export const FeeStructureCard = ({
       storageKey && typeof window !== 'undefined'
         ? window.localStorage.getItem(storageKey)
         : null
-    setPreviewGrade((prev) => {
+    setInternalPreviewGrade((prev) => {
       if (saved && gradeLabels.includes(saved)) return saved
       if (prev && gradeLabels.includes(prev)) return prev
       return gradeLabels[0]
     })
-  }, [structure.structureId, gradeLabels, planSlug])
+  }, [structure.structureId, gradeLabels, planSlug, letterPrefsControlled, onPreviewGradeChange])
 
   useEffect(() => {
+    if (letterPrefsControlled || onPreviewGradeChange) return
     if (!planSlug || !previewGrade) return
     try {
       window.localStorage.setItem(
@@ -209,15 +231,17 @@ export const FeeStructureCard = ({
     } catch {
       /* ignore quota */
     }
-  }, [planSlug, previewGrade])
+  }, [planSlug, previewGrade, letterPrefsControlled, onPreviewGradeChange])
 
   useEffect(() => {
-    setLetterTemplateId(readFeeLetterTemplate(letterTemplateScope))
-  }, [letterTemplateScope])
+    if (letterPrefsControlled) return
+    setInternalLetterTemplateId(readFeeLetterTemplate(letterTemplateScope))
+  }, [letterTemplateScope, letterPrefsControlled])
 
   useEffect(() => {
+    if (letterPrefsControlled) return
     writeFeeLetterTemplate(letterTemplateScope, letterTemplateId)
-  }, [letterTemplateScope, letterTemplateId])
+  }, [letterTemplateScope, letterTemplateId, letterPrefsControlled])
 
   const configuredTermCount = useMemo(() => {
     if (!structure.termFeesMap) return 0
@@ -314,16 +338,17 @@ export const FeeStructureCard = ({
   }, [structure, sortedTerms])
 
   useEffect(() => {
+    if (onLetterTermIdsChange) return
     if (sortedTerms.length === 0) {
-      setLetterTermIds([])
+      setInternalLetterTermIds([])
       return
     }
-    setLetterTermIds((prev) => {
+    setInternalLetterTermIds((prev) => {
       const valid = prev.filter((id) => sortedTerms.some((t) => t.id === id))
       if (valid.length > 0) return valid
       return sortedTerms.map((t) => t.id)
     })
-  }, [structure.structureId, sortedTerms])
+  }, [structure.structureId, sortedTerms, onLetterTermIdsChange])
 
   const selectedLetterTermIds = useMemo(() => {
     const valid = letterTermIds.filter((id) =>
@@ -517,6 +542,8 @@ export const FeeStructureCard = ({
         yearTotal={yearTotal}
         uniformAcrossTerms={collapseTermTabs}
         onEditPlan={canManage && structure.isActive ? openEditPlan : undefined}
+        compact
+        scrollable
       />
     </>
   )
@@ -578,28 +605,13 @@ export const FeeStructureCard = ({
         lead
         compact
         hideStep
-        title="Amounts by term"
+        title="Fee schedule"
         description={
           sortedTerms.length > 0
             ? collapseTermTabs
-              ? 'Same fees every term · use Edit amounts to change'
-              : `${sortedTerms.length} term${sortedTerms.length === 1 ? '' : 's'} · ${structure.buckets?.length ?? 0} categories`
-            : 'Add term amounts in Edit plan'
-        }
-        action={
-          canManage && structure.isActive && openEditPlan ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className={cn(FEES_BTN.secondary, "h-9 gap-1.5 text-xs max-md:rounded-xl")}
-              onClick={openEditPlan}
-              disabled={isDeleting}
-            >
-              <Edit className="h-3.5 w-3.5 shrink-0" />
-              Edit
-            </Button>
-          ) : undefined
+              ? `KES ${yearTotal.toLocaleString("en-KE")} per term · same every term`
+              : `${sortedTerms.length} terms · year total KES ${yearTotal.toLocaleString("en-KE")}`
+            : "Add amounts in Edit amounts"
         }
       >
         {feeByTermMatrix}
@@ -615,7 +627,8 @@ export const FeeStructureCard = ({
           compact
           hideStep
           title="Parent letter"
-          description="PDF for parents — letterhead, grade, terms, then preview"
+          description="Grade, terms, layout — Preview or Print below"
+          className="lg:border-t-0"
         >
           {gradeLabels.length === 0 ? (
             <p className="text-xs text-amber-800">Link classes first.</p>
@@ -701,7 +714,7 @@ export const FeeStructureCard = ({
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              title={structure.isActive ? "Edit fee plan" : "Inactive plans cannot be edited"}
+              title={structure.isActive ? "Edit fee structure" : "Inactive structures cannot be edited"}
               disabled={!structure.isActive}
               onClick={() => onEdit({
                 id: structure.structureId,
@@ -790,7 +803,7 @@ export const FeeStructureCard = ({
               )}
             >
               <Link2 className="mr-2 h-4 w-4" />
-              Link plan to classes
+              Link structure to classes
             </Button>
             <Button
               variant="outline"

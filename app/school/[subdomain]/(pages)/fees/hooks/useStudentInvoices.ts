@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { FeeInvoice } from '../types'
 
 interface StudentInvoice {
@@ -52,7 +52,11 @@ export function useStudentInvoices(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchStudentInvoices = async () => {
+  const studentName = studentInfo?.name
+  const admissionNumber = studentInfo?.admissionNumber
+  const className = studentInfo?.className
+
+  const fetchStudentInvoices = useCallback(async () => {
     if (!studentId) {
       setInvoices([])
       return
@@ -199,9 +203,9 @@ export function useStudentInvoices(
         return {
           id: invoice.id,
           studentId: studentId, // Use the studentId passed to the hook
-          studentName: studentInfo?.name || 'Loading...',
-          admissionNumber: studentInfo?.admissionNumber || 'Loading...',
-          class: studentInfo?.className || 'Loading...',
+          studentName: studentName || 'Loading...',
+          admissionNumber: admissionNumber || 'Loading...',
+          class: className || 'Loading...',
           section: '', // Not available in current schema
           feeType: primaryFeeType as any,
           totalAmount: invoice.totalAmount,
@@ -229,11 +233,11 @@ export function useStudentInvoices(
     } finally {
       setLoading(false)
     }
-  }
+  }, [studentId, studentName, admissionNumber, className])
 
   useEffect(() => {
     fetchStudentInvoices()
-  }, [studentId, studentInfo])
+  }, [fetchStudentInvoices])
 
   return {
     invoices,

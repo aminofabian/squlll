@@ -33,7 +33,7 @@ const SECTION_TITLES: Record<FeesSection, string> = {
   overview: "Collections",
   balances: "Balances",
   reports: "Reports",
-  plans: "Fee plans",
+  plans: "Fee structures",
   assignments: "Class links",
 };
 
@@ -79,7 +79,7 @@ export function FeesPageHeader({
     (activeSection === "overview" && overviewSetupMode);
 
   const displayHint = overviewSetupMode
-    ? "Plan → link classes → bill"
+    ? "Structure → link classes → bill"
     : "";
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { AlertTriangle, Check, Info, PenLine } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AlertTriangle, Check, ChevronDown, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,10 @@ interface FeeTermsMatrixTableProps {
   uniformAcrossTerms?: boolean;
   /** Opens the plan editor to change categories and amounts. */
   onEditPlan?: () => void;
+  /** Tighter meta bar and row padding (plan detail). */
+  compact?: boolean;
+  /** Cap table height with internal scroll. */
+  scrollable?: boolean;
   className?: string;
 }
 
@@ -59,8 +63,11 @@ export function FeeTermsMatrixTable({
   yearTotal,
   uniformAcrossTerms = false,
   onEditPlan,
+  compact = false,
+  scrollable = false,
   className,
 }: FeeTermsMatrixTableProps) {
+  const [showUniformHint, setShowUniformHint] = useState(false);
   const effectiveTerms = useMemo((): TermCol[] => {
     if (terms.length > 0) return terms;
     return [{ id: "__fallback", name: "Fees" }];
@@ -127,7 +134,7 @@ export function FeeTermsMatrixTable({
       >
         <p className="font-medium text-slate-700">No fee amounts yet</p>
         <p className="mt-0.5 text-xs text-slate-500">
-          Use Edit plan to add categories per term
+          Use Edit structure to add categories per term
         </p>
       </div>
     );
@@ -141,80 +148,86 @@ export function FeeTermsMatrixTable({
   const totalsVerified = termTotalsMatchRowSums(rows, termTotals);
 
   const matrixMeta = (
-    <div className="mb-2.5 space-y-2">
+    <div className={cn(compact ? "mb-2 space-y-1.5" : "mb-2.5 space-y-2")}>
       <div
         className={cn(
-          "flex flex-col gap-2 rounded-xl px-3 py-2.5 text-[11px] sm:flex-row sm:items-center sm:justify-between",
-          "bg-slate-50 ring-1 ring-slate-200/80",
+          "flex flex-col gap-2 text-[11px] sm:flex-row sm:items-center sm:justify-between",
+          compact
+            ? "rounded-lg bg-slate-50/90 px-2.5 py-2"
+            : "rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200/80",
         )}
       >
-        <div className="flex min-w-0 items-start gap-2 text-slate-600">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
-          <p className={cn("leading-snug", FEES_LAYOUT.textWrap)}>
-            <span className="font-medium text-slate-700">
-              {rows.length} fee categor{rows.length === 1 ? "y" : "ies"}
-            </span>
-            {optionalCount > 0 ? (
-              <>
-                {" · "}
-                <span title="Optional fees are not required on every student bill">
-                  {optionalCount} optional
-                </span>
-              </>
-            ) : null}
-            {totalsVerified ? (
-              <span className="text-emerald-700"> · Term totals match row sums</span>
-            ) : null}
-          </p>
-        </div>
+        <p className={cn("min-w-0 leading-snug text-slate-600", FEES_LAYOUT.textWrap)}>
+          <span className="font-medium text-slate-800">
+            {rows.length} categor{rows.length === 1 ? "y" : "ies"}
+          </span>
+          {optionalCount > 0 ? ` · ${optionalCount} optional` : null}
+          {totalsVerified ? (
+            <span className="text-emerald-700"> · totals verified</span>
+          ) : null}
+          {uniformAcrossTerms ? (
+            <span className="text-slate-500"> · same every term</span>
+          ) : null}
+        </p>
         {onEditPlan ? (
           <Button
             type="button"
             size="sm"
             variant="outline"
-            className={cn(FEES_BTN.secondary, "h-8 shrink-0 gap-1.5 text-xs")}
+            className={cn(
+              FEES_BTN.secondary,
+              "h-8 shrink-0 gap-1.5 text-xs",
+              compact && "h-7",
+            )}
             onClick={onEditPlan}
           >
             <PenLine className="h-3.5 w-3.5" />
             Edit amounts
           </Button>
-        ) : (
-          <p className="shrink-0 text-[10px] text-slate-500">View only</p>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
-        <span className="rounded-md bg-white px-2 py-0.5 ring-1 ring-slate-200/70">
-          <span
-            className="font-medium text-amber-800"
-            title="Not charged on every student bill"
-          >
-            Optional
-          </span>{" "}
-          = optional fee
-        </span>
-        {uniformAcrossTerms ? (
-          <span className="rounded-md bg-white px-2 py-0.5 ring-1 ring-slate-200/70">
-            Same amount every term
-          </span>
         ) : null}
       </div>
 
-      {uniformCategories ? (
+      {uniformCategories && compact ? (
+        <button
+          type="button"
+          className="flex w-full items-center gap-1.5 rounded-lg border border-amber-200/70 bg-amber-50/80 px-2.5 py-1.5 text-left text-[10px] font-medium text-amber-950"
+          onClick={() => setShowUniformHint((v) => !v)}
+        >
+          <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden />
+          Similar amounts across categories
+          <ChevronDown
+            className={cn(
+              "ml-auto h-3 w-3 transition-transform",
+              showUniformHint && "rotate-180",
+            )}
+          />
+        </button>
+      ) : null}
+      {uniformCategories && (!compact || showUniformHint) ? (
         <p
-          className="flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] leading-snug text-amber-950"
+          className={cn(
+            "text-[10px] leading-snug text-amber-900/90",
+            compact
+              ? "rounded-lg border border-amber-200/60 bg-amber-50/60 px-2.5 py-1.5"
+              : "flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] text-amber-950",
+          )}
           role="status"
         >
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          {!compact ? (
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          ) : null}
           <span className={FEES_LAYOUT.textWrap}>
-            Many categories share the same amount in a term. If that is not
-            intentional, use Edit amounts to set real fees (e.g. transport vs
-            tuition).
+            Many lines share the same amount — confirm tuition, transport, and
+            other fees are correct via Edit amounts.
           </span>
         </p>
       ) : null}
     </div>
   );
+
+  const tableScrollClass = scrollable
+    ? "max-h-[min(22rem,52vh)] overflow-y-auto overscroll-contain"
+    : "";
 
   const footerVerifyNote =
     multiTerm && totalsVerified ? (
@@ -229,7 +242,13 @@ export function FeeTermsMatrixTable({
       {matrixMeta}
 
       {/* Mobile — table inside a card (full width, no min-width scroll) */}
-      <div className={cn(FEES_MOBILE.card, "max-w-full md:hidden")}>
+      <div
+        className={cn(
+          FEES_MOBILE.card,
+          tableScrollClass,
+          "max-w-full md:hidden",
+        )}
+      >
         <table className="w-full max-w-full table-fixed border-collapse text-left text-[11px]">
           <colgroup>
             <col style={{ width: colCount <= 2 ? "40%" : "34%" }} />
@@ -395,19 +414,18 @@ export function FeeTermsMatrixTable({
       <div
         className={cn(
           FEES_LAYOUT.tableScroll,
+          tableScrollClass,
           "hidden rounded-lg ring-1 ring-slate-200/80 md:block",
         )}
       >
-        <table
-          className="w-full border-collapse text-left text-xs"
-          style={{ minWidth: `${8.5 + colCount * 5.75}rem` }}
-        >
+        <table className="w-full table-fixed border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/90">
               <th
                 scope="col"
                 className={cn(
-                  "sticky left-0 z-[1] bg-slate-50/95 px-2.5 py-2 font-semibold text-slate-600 shadow-[4px_0_8px_-4px_rgba(15,23,42,0.08)] md:min-w-[8.5rem]",
+                  "bg-slate-50/95 px-2.5 py-2 font-semibold text-slate-600",
+                  FEES_LAYOUT.textWrap,
                   FEES_LAYOUT.textWrap,
                 )}
               >
@@ -421,7 +439,7 @@ export function FeeTermsMatrixTable({
                     key={term.id}
                     scope="col"
                     className={cn(
-                      "min-w-[5.5rem] px-2 py-2 text-right font-semibold",
+                      "px-2 py-2 text-right font-semibold",
                       configured ? "text-slate-700" : "text-amber-800",
                     )}
                   >
@@ -456,7 +474,7 @@ export function FeeTermsMatrixTable({
                   <th
                     scope="row"
                     className={cn(
-                      "sticky left-0 z-[1] px-2.5 py-1.5 font-medium text-slate-800 shadow-[4px_0_8px_-4px_rgba(15,23,42,0.06)] md:min-w-[8.5rem]",
+                      "px-2.5 py-1.5 font-medium text-slate-800",
                       FEES_LAYOUT.textWrap,
                       idx % 2 === 1 ? "bg-slate-50/95" : "bg-white",
                       isTuition && "bg-[#e8f2ef]/50",
@@ -505,7 +523,7 @@ export function FeeTermsMatrixTable({
               <th
                 scope="row"
                 className={cn(
-                  "sticky left-0 px-2.5 py-2 text-left text-[10px] uppercase tracking-wide text-slate-600 shadow-[4px_0_8px_-4px_rgba(15,23,42,0.08)] md:min-w-[8.5rem]",
+                  "px-2.5 py-2 text-left text-[10px] uppercase tracking-wide text-slate-600",
                   FEES_LAYOUT.textWrap,
                 )}
                 style={{ backgroundColor: FEES_BRAND.primaryLight }}

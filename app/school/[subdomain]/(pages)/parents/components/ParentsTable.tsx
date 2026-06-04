@@ -16,6 +16,7 @@ import { ChevronRight, User } from "lucide-react";
 interface ParentsTableProps {
   parents: ParentsListItem[];
   onParentSelect: (parentId: string) => void;
+  totalCount?: number;
 }
 
 function statusBadge(status: ParentsListItem["status"]) {
@@ -29,18 +30,29 @@ function statusLabel(status: ParentsListItem["status"]) {
   return status === "active" ? "Active" : "Not activated";
 }
 
-export function ParentsTable({ parents, onParentSelect }: ParentsTableProps) {
+export function ParentsTable({
+  parents,
+  onParentSelect,
+  totalCount,
+}: ParentsTableProps) {
   const incompleteCount = parents.filter(isParentProfileIncomplete).length;
+  const filteredFromTotal =
+    totalCount !== undefined && totalCount !== parents.length;
 
   return (
     <div className={parentsPanel}>
-      <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-        <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
-          All parents
-        </h2>
-        <p className="mt-0.5 text-xs text-slate-400">
-          Click a row to view full profile · {parents.length} shown
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            Parent roster
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-400">
+            Click a row to open profile
+            {filteredFromTotal
+              ? ` · ${parents.length} of ${totalCount} shown`
+              : ` · ${parents.length} shown`}
+          </p>
+        </div>
       </div>
 
       {parents.length === 0 ? (

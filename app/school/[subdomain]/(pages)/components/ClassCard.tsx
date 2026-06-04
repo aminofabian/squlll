@@ -308,7 +308,10 @@ function SubjectList({
     tenantSubjectIds: string[];
     _tenantSubject: TenantSubject;
   }>;
-  getTeacherForSubject: (tenantSubjectIds: string[]) => string | undefined;
+  getTeacherForSubject: (
+    tenantSubjectIds: string[],
+    meta?: { _tenantSubject: TenantSubject; name: string; code: string },
+  ) => string | undefined;
   onAssignTeacher?: () => void;
   onEdit: (s: {
     id: string;
@@ -376,7 +379,11 @@ function SubjectList({
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 sm:mt-0 sm:shrink-0">
                   <SubjectTeacherBadge
-                    teacherName={getTeacherForSubject(s.tenantSubjectIds)}
+                    teacherName={getTeacherForSubject(s.tenantSubjectIds, {
+                      _tenantSubject: s._tenantSubject,
+                      name: s.name,
+                      code: s.code,
+                    })}
                     onAssign={onAssignTeacher}
                     className="max-w-full sm:max-w-[5.5rem]"
                   />

@@ -32,6 +32,8 @@ export interface Teacher {
   tenantSubjects: Array<{
     id: string;
     name: string;
+    subject?: { id: string; code?: string } | null;
+    customSubject?: { id: string; code?: string } | null;
   }>;
   tenantGradeLevels: Array<{
     id: string;
@@ -211,6 +213,14 @@ export const useGetTeachers = () => {
                 tenantSubjects {
                   id
                   name
+                  subject {
+                    id
+                    code
+                  }
+                  customSubject {
+                    id
+                    code
+                  }
                 }
                 tenantGradeLevels {
                   id
@@ -223,8 +233,16 @@ export const useGetTeachers = () => {
                 }
                 classTeacherAssignments {
                   id
+                  active
+                  stream {
+                    stream {
+                      id
+                      name
+                    }
+                  }
                   gradeLevel {
                     gradeLevel {
+                      id
                       name
                     }
                   }

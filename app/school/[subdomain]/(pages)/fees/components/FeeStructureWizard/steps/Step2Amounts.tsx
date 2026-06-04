@@ -713,7 +713,7 @@ export const Step2Amounts = ({ formData, onChange, errors, setupDraft, guidedSet
                         ),
                     ).size > 1 ? (
                         <p className="text-xs text-amber-900/90">
-                            This plan stores one amount for all linked grades. Line
+                            This structure stores one amount for all linked grades. Line
                             items use{' '}
                             <strong>
                                 KES{' '}

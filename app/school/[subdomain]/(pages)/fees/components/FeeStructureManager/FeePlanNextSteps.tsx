@@ -24,7 +24,7 @@ export function FeePlanNextSteps({
 
   const items = [
     !termsReady && termsLabel,
-    !classesReady && "Link classes to this plan",
+    !classesReady && "Link classes to this structure",
   ].filter(Boolean) as string[];
 
   return (

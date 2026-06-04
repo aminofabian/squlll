@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { ParentFilter } from "../utils/parents-utils";
+import { parentsFilterPill, parentsSelect, parentsSectionLabel } from "./parents-ui";
 
 interface ParentsFilterBarProps {
   filter: ParentFilter;
@@ -18,10 +19,10 @@ interface ParentsFilterBarProps {
 }
 
 const filters: { id: ParentFilter; label: string }[] = [
-  { id: "all", label: "All parents" },
+  { id: "all", label: "All" },
   { id: "active", label: "Active" },
   { id: "needs-setup", label: "Needs setup" },
-  { id: "incomplete", label: "Incomplete profile" },
+  { id: "incomplete", label: "Incomplete" },
 ];
 
 export function ParentsFilterBar({
@@ -48,46 +49,44 @@ export function ParentsFilterBar({
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-2">
-        {filters.map(({ id, label }) => {
-          const isActive = filter === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onFilterChange(id)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-                isActive
-                  ? "border-slate-800 bg-slate-900 text-white dark:border-slate-200 dark:bg-slate-100 dark:text-slate-900"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400",
-              )}
-            >
-              {label}
-              <span
-                className={cn(
-                  "tabular-nums",
-                  isActive ? "opacity-80" : "text-slate-400",
-                )}
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <p className={cn(parentsSectionLabel, "mb-2")}>Status</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {filters.map(({ id, label }) => {
+            const isActive = filter === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onFilterChange(id)}
+                className={parentsFilterPill(isActive)}
               >
-                {countFor(id)}
-              </span>
-            </button>
-          );
-        })}
+                {label}
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    isActive ? "opacity-80" : "text-slate-400",
+                  )}
+                >
+                  {countFor(id)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {grades.length > 0 ? (
-        <div className="flex items-center gap-2">
-          <label htmlFor="grade-filter" className="text-xs text-slate-400">
+        <div className="flex shrink-0 flex-col gap-1.5 sm:items-end">
+          <label htmlFor="grade-filter" className={parentsSectionLabel}>
             Child grade
           </label>
           <select
             id="grade-filter"
             value={gradeFilter}
             onChange={(e) => onGradeFilterChange(e.target.value)}
-            className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            className={parentsSelect}
           >
             <option value="all">All grades</option>
             {grades.map((grade) => (

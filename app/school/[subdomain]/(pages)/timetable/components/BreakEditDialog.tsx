@@ -79,7 +79,8 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
         icon: selectedType.icon,
         color: selectedType.color,
       });
-      setApplyToAllDays(false);
+      // Default to all weekdays unless adding for one day via "+ Add" on a break row
+      setApplyToAllDays(breakData.dayOfWeek == null);
     }
   }, [breakData]);
 

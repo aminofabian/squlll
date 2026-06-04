@@ -10,11 +10,6 @@ interface DynamicLogoProps {
   className?: string
 }
 
-const styleSchoolName = (name: string): string => {
-  const words = name.replace(/-/g, ' ').split(' ')
-  return `${words.map((word) => word.toUpperCase()).join(' ')} SCHOOL`
-}
-
 const sizeClasses = {
   sm: 'w-9 aspect-[88/96]',
   md: 'w-14 aspect-[88/96]',
@@ -45,7 +40,7 @@ export const DynamicLogo = ({
       {showText ? (
         <div className="relative py-0.5">
           <span className="font-bold text-sm tracking-wide text-slate-900 dark:text-slate-100 relative group-hover:translate-x-1 transition-all duration-300">
-            {styleSchoolName(subdomain)}
+            {getLayoutSchoolName(subdomain)}
             <div
               className="absolute bottom-0 left-0 w-0 h-px group-hover:w-full transition-all duration-300"
               style={{

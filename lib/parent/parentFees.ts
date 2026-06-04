@@ -193,6 +193,68 @@ const CHILD_RECEIPT_PDF = `
   }
 `
 
+const PARENT_PAYMENT_INSTRUCTIONS = `
+  query ParentPaymentInstructions {
+    parentPaymentInstructions {
+      schoolName
+      schoolContact
+      steps
+      paymentModes {
+        bankAccounts {
+          bankName
+          branch
+          accountNumber
+        }
+        postalAddress
+        includePostalMoneyOrder
+        notes
+      }
+    }
+  }
+`
+
+const SUBMIT_PARENT_PAYMENT = `
+  mutation SubmitParentPayment($input: SubmitParentPaymentInput!) {
+    submitParentPayment(input: $input) {
+      success
+      message
+      receiptNumber
+    }
+  }
+`
+
+export interface ParentPaymentInstructions {
+  schoolName?: string | null
+  schoolContact?: string | null
+  steps: string[]
+  paymentModes?: {
+    bankAccounts: Array<{
+      bankName: string
+      branch?: string | null
+      accountNumber?: string | null
+    }>
+    postalAddress?: string | null
+    includePostalMoneyOrder?: boolean
+    notes: string[]
+  } | null
+}
+
+export interface SubmitParentPaymentInput {
+  studentId: string
+  amount: number
+  paymentMethod: string
+  transactionReference?: string
+  paymentDate?: string
+  notes?: string
+  proofImageUrl?: string
+}
+
+export interface SubmitParentPaymentResult {
+  success: boolean
+  message: string
+  receiptNumber?: string | null
+}
+
 export async function fetchChildFeeOverview(
   subdomain: string,
   studentId: string,
@@ -253,6 +315,25 @@ export async function fetchChildReceiptPdf(
   return data.childReceiptPdf
 }
 
+export async function fetchParentPaymentInstructions(
+  subdomain: string,
+): Promise<ParentPaymentInstructions> {
+  const data = await chatGraphqlFetch<{
+    parentPaymentInstructions: ParentPaymentInstructions
+  }>(PARENT_PAYMENT_INSTRUCTIONS, {}, subdomain)
+  return data.parentPaymentInstructions
+}
+
+export async function submitParentPayment(
+  subdomain: string,
+  input: SubmitParentPaymentInput,
+): Promise<SubmitParentPaymentResult> {
+  const data = await chatGraphqlFetch<{
+    submitParentPayment: SubmitParentPaymentResult
+  }>(SUBMIT_PARENT_PAYMENT, { input }, subdomain)
+  return data.submitParentPayment
+}
+
 export function formatParentPaymentStatus(status: ParentPaymentStatus): string {
   const labels: Record<ParentPaymentStatus, string> = {
     CLEARED: 'Cleared',
@@ -295,6 +376,13 @@ export function formatFeeDate(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
   return date.toLocaleDateString('en-KE', { dateStyle: 'medium' })
+}
+
+/** Month bucket label for grouping payment history (e.g. "June 2026"). */
+export function formatFeeMonthGroup(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return 'Other'
+  return date.toLocaleDateString('en-KE', { year: 'numeric', month: 'long' })
 }
 
 export function downloadPdfDataUrl(dataUrl: string, filename: string): void {

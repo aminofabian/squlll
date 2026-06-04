@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
 import type { Break } from "@/lib/types/timetable";
 import {
@@ -24,6 +25,7 @@ import { TimetableConflictsPanel } from "./components/TimetableConflictsPanel";
 import { TimetableStatusBar } from "./components/TimetableStatusBar";
 import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
+import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import { TimetableOnboarding } from "./components/TimetableOnboarding";
 import { TimetableFillProgress } from "./components/TimetableFillProgress";
 import { TimetableSubjectInsights } from "./components/TimetableSubjectInsights";
@@ -151,6 +153,8 @@ import { useTimetableCore } from "@/lib/timetable";
 import type { TimetableLesson } from "@/lib/timetable/types";
 
 export default function SmartTimetableNew() {
+  const searchParams = useSearchParams();
+  const { config } = useSchoolConfigStore();
   const { selectedTerm, setSelectedTerm, termsLoading } = useSelectedTerm();
   const { isLoading: isSchoolConfigLoading } = useSchoolConfig();
   const {
@@ -226,6 +230,33 @@ export default function SmartTimetableNew() {
       setStoreTerm(selectedTerm.id);
     }
   }, [selectedTerm?.id, selectedTermId, setStoreTerm]);
+
+  useEffect(() => {
+    const gradeId = searchParams.get("gradeId");
+    const streamId = searchParams.get("streamId");
+    if (!gradeId || !config?.selectedLevels) return;
+
+    const gradeExists = config.selectedLevels.some((level) =>
+      level.gradeLevels?.some((g) => g.id === gradeId),
+    );
+    if (!gradeExists) return;
+
+    if (selectedGradeId !== gradeId) {
+      setSelectedGrade(gradeId);
+    }
+    if (streamId) {
+      if (selectedStreamId !== streamId) setSelectedStream(streamId);
+    } else if (selectedStreamId) {
+      setSelectedStream(null);
+    }
+  }, [
+    searchParams,
+    config?.selectedLevels,
+    selectedGradeId,
+    selectedStreamId,
+    setSelectedGrade,
+    setSelectedStream,
+  ]);
 
   const hasTerm = !!selectedTerm;
   const hasTimeSlots = timeSlots.length > 0;

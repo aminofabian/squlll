@@ -160,8 +160,8 @@ export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup, onViewSampl
                     Set up school fees
                 </h3>
                 <p className="text-slate-600 max-w-md mx-auto mb-8 leading-relaxed">
-                    Create a fee plan in two steps: configure year, categories, and
-                    grade amounts, then publish your plan and fee letter.
+                    Create a fee structure in two steps: configure year, categories, and
+                    grade amounts, then publish your structure and fee letter.
                 </p>
 
                 {/* CTAs */}
@@ -172,7 +172,7 @@ export const FeeStructureEmptyState = ({ onCreateNew, onGuidedSetup, onViewSampl
                         className="bg-primary hover:bg-primary-dark text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
                     >
                         <Sparkles className="h-5 w-5 mr-2" />
-                        Create fee plan
+                        Create fee structure
                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                     </Button>
                     {onGuidedSetup ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,12 +10,13 @@ import {
   CheckCircle,
   Loader2,
   Users,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateParentDrawer } from "./components/CreateParentDrawer";
 import { ParentsSearchSidebar } from "./components/ParentsSearchSidebar";
 import { ParentDetailView } from "./components/ParentDetailView";
-import { ParentsStats } from "./components/ParentsStats";
+import { ParentsOverviewBar } from "./components/ParentsOverviewBar";
 import { ParentsTable } from "./components/ParentsTable";
 import { ParentsFilterBar } from "./components/ParentsFilterBar";
 import { PendingParentInvitations } from "./components/PendingParentInvitations";
@@ -27,6 +28,13 @@ import { usePendingParentInvitations } from "./hooks/usePendingParentInvitations
 import { useParentDetail } from "@/lib/hooks/useParentDetail";
 import { getTenantInfo } from "@/lib/utils";
 import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
+import {
+  parentsControlDivider,
+  parentsControlShell,
+  parentsIconButton,
+  parentsPageContainer,
+  parentsSearchChip,
+} from "./components/parents-ui";
 
 export default function ParentsPage() {
   const searchParams = useSearchParams();
@@ -50,6 +58,11 @@ export default function ParentsPage() {
   const [parentCreated, setParentCreated] = useState(false);
   const [parentFilter, setParentFilter] = useState<ParentFilter>("all");
   const [gradeFilter, setGradeFilter] = useState("all");
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    if (mq.matches) setIsSidebarMinimized(true);
+  }, []);
 
   useDomainRealtime({
     onParentInvitationAccepted: () => {
@@ -133,6 +146,26 @@ export default function ParentsPage() {
     );
   }, [pendingInvitations, selectedParent?.email]);
 
+  const overviewStats = useMemo(() => {
+    const active = parents.filter((p) => p.status === "active").length;
+    const linkedChildren = parents.reduce(
+      (sum, p) => sum + p.studentCount,
+      0,
+    );
+    return { active, linkedChildren };
+  }, [parents]);
+
+  const hasActiveFilters =
+    searchTerm.trim() !== "" ||
+    parentFilter !== "all" ||
+    gradeFilter !== "all";
+
+  const clearFilters = useCallback(() => {
+    setSearchTerm("");
+    setParentFilter("all");
+    setGradeFilter("all");
+  }, []);
+
   const handleParentUpdated = () => {
     void refetchParents();
     void refetchInvitations();
@@ -146,25 +179,47 @@ export default function ParentsPage() {
     setTimeout(() => setParentCreated(false), 3000);
   };
 
+  const listSubtitle = selectedParent
+    ? `${selectedParent.studentCount} linked child${selectedParent.studentCount !== 1 ? "ren" : ""} · ${selectedParent.status === "active" ? "Active" : "Not activated"}`
+    : filteredParents.length !== parents.length
+      ? `${filteredParents.length} of ${parents.length} parents · ${pendingInvitations.length} pending invite${pendingInvitations.length !== 1 ? "s" : ""}`
+      : `${parents.length} parent${parents.length !== 1 ? "s" : ""} · ${pendingInvitations.length} pending invite${pendingInvitations.length !== 1 ? "s" : ""}`;
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
-      <div
+      {!isSidebarMinimized ? (
+        <button
+          type="button"
+          aria-label="Close directory"
+          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px] md:hidden"
+          onClick={() => setIsSidebarMinimized(true)}
+        />
+      ) : null}
+
+      <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/60 bg-slate-50/90 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
           "md:relative md:translate-x-0",
-          isSidebarMinimized ? "w-14" : "w-64",
+          isSidebarMinimized
+            ? "w-14 -translate-x-full md:translate-x-0"
+            : "w-72 translate-x-0",
         )}
       >
         <div
           className={cn(
-            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
-            isSidebarMinimized ? "justify-center" : "justify-end",
+            "flex shrink-0 items-center border-b border-slate-200/60 px-2 py-2 dark:border-slate-800",
+            isSidebarMinimized ? "justify-center" : "justify-between gap-2",
           )}
         >
+          {!isSidebarMinimized ? (
+            <p className="truncate px-1 text-xs font-medium text-slate-500">
+              Parents
+            </p>
+          ) : null}
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+            className={parentsIconButton}
             onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
           >
             {isSidebarMinimized ? (
@@ -175,9 +230,10 @@ export default function ParentsPage() {
           </Button>
         </div>
         {!isSidebarMinimized ? (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 pb-3 pt-1">
             <ParentsSearchSidebar
-              parents={parents}
+              parents={filteredParents}
+              totalCount={parents.length}
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
               selectedParentId={selectedParentId}
@@ -189,23 +245,32 @@ export default function ParentsPage() {
             />
           </div>
         ) : null}
-      </div>
+      </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
-          <div className="mx-auto max-w-5xl">
+        <header className="shrink-0 border-b border-slate-200/50 bg-slate-50/80 px-4 py-3 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-950/80 sm:px-6">
+          <div className={parentsPageContainer}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  {selectedParent ? selectedParent.name : "Parents"}
-                </h1>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  {selectedParent
-                    ? `${selectedParent.studentCount} linked child${selectedParent.studentCount !== 1 ? "ren" : ""} · ${selectedParent.status === "active" ? "Active" : "Not activated"}`
-                    : "Manage guardians, invitations, and linked students"}
-                </p>
+              <div className="flex min-w-0 items-start gap-3">
+                {isSidebarMinimized ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(parentsIconButton, "shrink-0 md:hidden")}
+                    onClick={() => setIsSidebarMinimized(false)}
+                    aria-label="Open directory"
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                ) : null}
+                <div className="min-w-0">
+                  <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+                    {selectedParent ? selectedParent.name : "Parents & guardians"}
+                  </h1>
+                  <p className="mt-0.5 text-xs text-slate-400">{listSubtitle}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 {!selectedParentId ? (
                   <CreateParentDrawer
                     onParentCreated={handleParentCreated}
@@ -215,12 +280,12 @@ export default function ParentsPage() {
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto">
+          <div className={cn(parentsPageContainer, "space-y-5 p-4 sm:p-6")}>
             {!tenantId ? (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
                 <Info className="h-4 w-4 shrink-0" />
                 Tenant ID not found. Please log in again.
               </div>
@@ -234,7 +299,7 @@ export default function ParentsPage() {
             ) : null}
 
             {error ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200/80 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200/80 bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
                 <span className="flex items-center gap-2">
                   <Info className="h-4 w-4 shrink-0" />
                   Error loading parents: {error}
@@ -243,7 +308,7 @@ export default function ParentsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => void refetchParents()}
-                  className="h-7 border-red-200 text-red-700 hover:bg-red-100"
+                  className="h-7 border-red-200 text-red-700 hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-950/50"
                 >
                   Retry
                 </Button>
@@ -251,7 +316,7 @@ export default function ParentsPage() {
             ) : null}
 
             {parentCreated ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
                 <CheckCircle className="h-4 w-4 shrink-0" />
                 Parent invitation sent successfully.
               </div>
@@ -266,7 +331,7 @@ export default function ParentsPage() {
                 onUpdated={handleParentUpdated}
               />
             ) : parents.length === 0 && !loading ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center dark:border-slate-800 dark:bg-slate-900/40">
+              <div className="rounded-xl border border-dashed border-slate-200/80 bg-white/60 px-6 py-16 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                   <Users className="h-6 w-6 text-slate-400" />
                 </div>
@@ -286,59 +351,89 @@ export default function ParentsPage() {
               </div>
             ) : (
               <div className="space-y-5">
-                <ParentsStats
-                  parents={parents}
-                  pendingCount={pendingInvitations.length}
+                <ParentsOverviewBar
+                  total={parents.length}
+                  active={overviewStats.active}
+                  pendingInvites={pendingInvitations.length}
+                  linkedChildren={overviewStats.linkedChildren}
                   isLoading={loading}
                 />
 
                 {!loading && parents.length > 0 ? (
-                  <ParentsFilterBar
-                    filter={parentFilter}
-                    onFilterChange={setParentFilter}
-                    counts={filterCounts}
-                    grades={grades}
-                    gradeFilter={gradeFilter}
-                    onGradeFilterChange={setGradeFilter}
-                  />
-                ) : null}
+                  <div className={parentsControlShell}>
+                    <ParentsFilterBar
+                      filter={parentFilter}
+                      onFilterChange={setParentFilter}
+                      counts={filterCounts}
+                      grades={grades}
+                      gradeFilter={gradeFilter}
+                      onGradeFilterChange={setGradeFilter}
+                    />
 
-                {searchTerm && !selectedParentId ? (
-                  <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>Filtering by</span>
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm("")}
-                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900"
+                    <div
+                      className={cn(
+                        parentsControlDivider,
+                        "flex flex-wrap items-center justify-between gap-2",
+                      )}
                     >
-                      &ldquo;{searchTerm}&rdquo;
-                      <span className="text-slate-400">×</span>
-                    </button>
+                      {hasActiveFilters ? (
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          <span>Filtered results</span>
+                          {searchTerm ? (
+                            <button
+                              type="button"
+                              onClick={() => setSearchTerm("")}
+                              className={parentsSearchChip}
+                            >
+                              &ldquo;{searchTerm}&rdquo;
+                              <X className="h-3 w-3 text-slate-400" />
+                            </button>
+                          ) : null}
+                          {(parentFilter !== "all" || gradeFilter !== "all") ? (
+                            <button
+                              type="button"
+                              onClick={clearFilters}
+                              className="text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:hover:text-slate-300"
+                            >
+                              Clear filters
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">
+                          Use the directory or filters to narrow the list
+                        </span>
+                      )}
+                      <ParentsBulkActions
+                        parents={filteredParents}
+                        invitations={pendingInvitations}
+                        onInvitationsUpdated={() => void refetchInvitations()}
+                      />
+                    </div>
                   </div>
                 ) : null}
 
-                <ParentsBulkActions
-                  parents={filteredParents}
-                  invitations={pendingInvitations}
-                  onInvitationsUpdated={() => void refetchInvitations()}
-                />
-
-                <PendingParentInvitations
-                  invitations={pendingInvitations}
-                  isLoading={invitationsLoading}
-                  error={invitationsError}
-                  onInvitationRevoked={() => void refetchInvitations()}
-                  onInvitationResent={() => void refetchInvitations()}
-                />
+                {pendingInvitations.length > 0 || invitationsLoading ? (
+                  <section aria-labelledby="pending-invites-heading">
+                    <PendingParentInvitations
+                      invitations={pendingInvitations}
+                      isLoading={invitationsLoading}
+                      error={invitationsError}
+                      onInvitationRevoked={() => void refetchInvitations()}
+                      onInvitationResent={() => void refetchInvitations()}
+                    />
+                  </section>
+                ) : null}
 
                 <ParentsTable
                   parents={filteredParents}
                   onParentSelect={setSelectedParentId}
+                  totalCount={parents.length}
                 />
               </div>
             )}
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

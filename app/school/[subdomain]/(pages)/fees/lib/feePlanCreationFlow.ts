@@ -8,7 +8,7 @@ export type FeePlanFlowPhase = "setup" | "plan";
 
 export type FeePlanSetupIntent = "initial" | "revise";
 
-/** Draft is complete enough to open the publish (fee plan) drawer */
+/** Draft is complete enough to open the publish (fee structure) drawer */
 export function hasValidSetupDraft(): boolean {
   const draft = loadFeesSetupDraft();
   if (!draft?.academicYearId) return false;

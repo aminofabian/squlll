@@ -1079,7 +1079,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
             console.error('Failed to save:', error)
             setSaveError(message)
             toast({
-                title: isEditMode ? 'Could not update fee plan' : 'Could not create fee plan',
+                title: isEditMode ? 'Could not update fee structure' : 'Could not create fee structure',
                 description: message,
                 variant: 'destructive',
             })
@@ -1091,7 +1091,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
     const stepSubtitle =
         currentStep === 1
             ? setupDraft
-              ? 'Plan name (grades already set)'
+              ? 'Structure name (grades already set)'
               : 'Name, year, and grades'
             : currentStep === 2
               ? setupDraft
@@ -1128,10 +1128,10 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                 >
                     <SheetTitle className="text-lg font-semibold text-slate-900">
                         {isEditMode
-                            ? 'Edit fee plan'
+                            ? 'Edit fee structure'
                             : skipAmountsStep
-                              ? 'Create fee plan'
-                              : 'New fee plan'}
+                              ? 'Create fee structure'
+                              : 'New fee structure'}
                     </SheetTitle>
                     <SheetDescription className="text-sm text-slate-600">
                         {skipAmountsStep
@@ -1271,7 +1271,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
                                 ) : isEditMode ? (
                                     'Save'
                                 ) : (
-                                    'Create plan'
+                                    'Create structure'
                                 )}
                             </Button>
                         )}
@@ -1280,7 +1280,7 @@ export const FeeStructureWizard = ({ isOpen, onClose, onSave, initialData, mode 
 
                 {showSuccess && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/95">
-                        <p className="text-lg font-semibold text-emerald-800">Plan saved</p>
+                        <p className="text-lg font-semibold text-emerald-800">Structure saved</p>
                     </div>
                 )}
             </SheetContent>

@@ -8,6 +8,14 @@ export type FeePlansListStats = {
   unlinkedPlans: number;
 };
 
+export type FeePlansDashboardStats = FeePlansListStats & {
+  schoolYears: number;
+  conflictCount: number;
+  unbilledCount: number;
+  gradesLinked: number;
+  totalGrades: number;
+};
+
 export function computeFeePlansListStats(
   structures: ProcessedFeeStructure[],
   getLinkedClassCount: (id: string) => number,
@@ -21,6 +29,27 @@ export function computeFeePlansListStats(
     activePlans: structures.filter((s) => s.isActive).length,
     linkedPlans,
     unlinkedPlans: structures.length - linkedPlans,
+  };
+}
+
+export function buildFeePlansDashboardStats(
+  structures: ProcessedFeeStructure[],
+  getLinkedClassCount: (id: string) => number,
+  options: {
+    schoolYears: number;
+    conflictCount: number;
+    unbilledCount: number;
+    gradesLinked: number;
+    totalGrades: number;
+  },
+): FeePlansDashboardStats {
+  return {
+    ...computeFeePlansListStats(structures, getLinkedClassCount),
+    schoolYears: options.schoolYears,
+    conflictCount: options.conflictCount,
+    unbilledCount: options.unbilledCount,
+    gradesLinked: options.gradesLinked,
+    totalGrades: options.totalGrades,
   };
 }
 
@@ -51,7 +80,7 @@ export function isLegacyAutoFeePlanName(name: string): boolean {
 }
 
 /**
- * Default fee plan title from year, grades, and student type.
+ * Default fee structure title from year, grades, and student type.
  * e.g. "2027-2028 · All grades · Day & boarding" or "2027-2028 · Grade 5"
  */
 export function buildDefaultFeePlanName(options: {

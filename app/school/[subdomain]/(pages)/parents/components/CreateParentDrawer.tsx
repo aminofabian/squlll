@@ -70,7 +70,7 @@ const studentSchema = z.object({
 
 const parentFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Valid email is required").or(z.literal("")),
+  email: z.string().email("Valid email is required"),
   phone: z
     .string()
     .min(10, "Valid phone number is required")
@@ -190,31 +190,32 @@ export function CreateParentDrawer({
       setSearchedStudents([]);
 
       try {
-        const response = await fetch("/api/graphql", {
+        const response = await fetch("/api/parents/search-student", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: `
-            query SearchStudents($input: StudentSearchInput!) {
-              searchStudents(input: $input) {
-                id name admissionNumber grade stream phone
-              }
-            }
-          `,
-            variables: {
-              input:
-                type === "admissionNumber"
-                  ? { admissionNumber: value, searchType: "ADMISSION_NUMBER" }
-                  : { name: value, searchType: "NAME" },
-            },
-          }),
+          body: JSON.stringify(
+            type === "admissionNumber"
+              ? { searchType: "admissionNumber", admissionNumber: value }
+              : { searchType: "name", name: value },
+          ),
         });
 
         const data = await response.json();
-        if (data.errors)
-          throw new Error(data.errors[0]?.message || "Search failed");
+        if (!response.ok) {
+          throw new Error(
+            typeof data.error === "string"
+              ? data.error
+              : data.errors?.[0]?.message || "Search failed",
+          );
+        }
 
-        const results = data.data?.searchStudents || [];
+        const results =
+          type === "admissionNumber"
+            ? data.searchStudentByAdmission
+              ? [data.searchStudentByAdmission]
+              : []
+            : data.searchStudentsByName || [];
+
         if (results.length === 1) {
           setSearchedStudent(results[0]);
         } else if (results.length > 1) {
@@ -251,17 +252,23 @@ export function CreateParentDrawer({
         return;
       }
 
-      const gradeName =
-        allGrades.find((g) => g.id === student.grade)?.name ||
-        student.grade ||
+      const matchedGrade = allGrades.find((g) => g.id === student.grade);
+      const gradeName = matchedGrade?.name || student.grade || "";
+      const gradeId = matchedGrade?.id || student.grade || "";
+      const streamName =
+        student.stream ||
+        (student.streamId && gradeId
+          ? getStreamsByGradeId(gradeId).find((s) => s.id === student.streamId)
+              ?.name
+          : "") ||
         "";
       const newStudent = {
         id: student.id,
         name: student.name,
         admissionNumber: student.admissionNumber,
-        grade: student.grade || "",
-        class: generateClassName(gradeName, student.stream),
-        stream: student.stream || "",
+        grade: gradeId,
+        class: generateClassName(gradeName, streamName),
+        stream: streamName,
         phone: student.phone || "",
       };
 
@@ -270,7 +277,7 @@ export function CreateParentDrawer({
       setSearchedStudents([]);
       setSearchValue("");
     },
-    [form, allGrades],
+    [form, allGrades, getStreamsByGradeId],
   );
 
   const removeStudent = useCallback(
@@ -292,45 +299,56 @@ export function CreateParentDrawer({
       setIsLoading(true);
 
       try {
-        const payload = {
-          parentData: {
-            name: data.name,
-            email: data.email || undefined,
-            phone: data.phone,
-            relationship: data.relationship || "guardian",
-            occupation: data.occupation || undefined,
-            workAddress: data.workAddress || undefined,
-            homeAddress: data.homeAddress || undefined,
-            emergencyContact: data.emergencyContact || undefined,
-            idNumber: data.idNumber || undefined,
-            communicationSms: data.communicationSms,
-            communicationEmail: data.communicationEmail,
-            communicationWhatsapp: data.communicationWhatsapp,
-          },
-          students: data.students.map((s) => ({
-            name: s.name,
-            admissionNumber: s.admissionNumber,
-            grade: s.grade,
-            class: s.class,
-            stream: s.stream || undefined,
-            phone: s.phone || undefined,
-            ...(s.id ? { id: s.id } : {}),
-          })),
-          linkingMethod: "MANUAL_INPUT",
-        };
+        const email = data.email?.trim();
+        if (!email) {
+          throw new Error(
+            "Email is required to register the parent and send an invitation.",
+          );
+        }
+
+        const studentIds = data.students
+          .map((s) => s.id)
+          .filter((id): id is string => Boolean(id));
+
+        if (studentIds.length !== data.students.length) {
+          throw new Error(
+            "Link each student using search so they can be connected to this parent.",
+          );
+        }
 
         const response = await fetch("/api/graphql", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query: `
-            mutation InviteParent($input: InviteParentInput!) {
-              inviteParent(input: $input) {
-                id name email phone
+            mutation InviteParent(
+              $createParentDto: CreateParentInvitationDto!
+              $studentIds: [String!]!
+            ) {
+              inviteParent(
+                createParentDto: $createParentDto
+                studentIds: $studentIds
+              ) {
+                email
+                name
+                status
+                createdAt
+                students {
+                  id
+                  name
+                  admissionNumber
+                }
               }
             }
           `,
-            variables: { input: payload },
+            variables: {
+              createParentDto: {
+                email,
+                name: data.name,
+                phone: data.phone,
+              },
+              studentIds,
+            },
           }),
         });
 
@@ -339,6 +357,10 @@ export function CreateParentDrawer({
         if (result.errors) {
           const msg = result.errors[0]?.message || "Failed to create parent";
           throw new Error(msg);
+        }
+
+        if (!result.data?.inviteParent) {
+          throw new Error("No invitation was created. Please try again.");
         }
 
         toast.success("Parent registered successfully", {
@@ -438,6 +460,7 @@ export function CreateParentDrawer({
                     label="Email"
                     placeholder="parent@example.com"
                     type="email"
+                    required
                   />
                   <FieldInput
                     form={form}

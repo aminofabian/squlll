@@ -136,7 +136,7 @@ export function StudentFeesSection({
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
             <Wallet className="h-4 w-4 text-primary" />
-            Fee plans
+            Fee structures
           </h3>
           <div className="space-y-2">
             {overview.byPlan.map((plan) => (

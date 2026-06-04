@@ -38,7 +38,8 @@ export interface MyChildApi {
   isActive: boolean
   grade: {
     id: string
-    name?: string
-    displayName?: string
+    name?: string | null
+    shortName?: string | null
+    gradeLevel?: { name?: string | null } | null
   }
 }

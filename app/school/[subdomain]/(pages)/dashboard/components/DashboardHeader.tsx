@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   Plus,
 } from "lucide-react";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ export function DashboardHeader({
   isGradePanelOpen = true,
   onToggleGradePanel,
 }: DashboardHeaderProps) {
+  const { connected } = useRealtime();
   const title = hasGradeSelected
     ? selectedStreamLabel
       ? `${selectedGradeLabel} · ${selectedStreamLabel}`
@@ -51,15 +53,21 @@ export function DashboardHeader({
     : "Dashboard";
 
   return (
-    <div className="sticky top-0 z-10 shrink-0 border-b border-slate-200/60 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-6">
-      <div className="mx-auto flex max-w-5xl items-center gap-2">
+    <div className="sticky top-0 z-10 shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 sm:px-6">
+      <div className="mx-auto flex max-w-6xl items-center gap-2">
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-[15px]">
             {title}
           </h1>
           {!hasGradeSelected ? (
-            <p className="hidden truncate text-[11px] text-slate-400 sm:block">
-              Overview of your school
+            <p className="hidden items-center gap-1.5 truncate text-[11px] text-slate-400 sm:flex">
+              {connected ? (
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+              ) : null}
+              Live overview · updates as your school moves
             </p>
           ) : null}
         </div>

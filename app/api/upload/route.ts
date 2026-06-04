@@ -1,33 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+
+function resolveStorageUploadUrl(): string {
+  const base = (
+    process.env.API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:3001'
+  )
+    .trim()
+    .replace(/\/+$/, '');
+  return `${base}/api/storage/upload/single`;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Upload API called');
-    
-    // Get the authorization header from the request
     const authHeader = request.headers.get('authorization');
-    
-    console.log('Auth header:', authHeader);
-    
-    if (!authHeader) {
-      console.log('No auth header provided');
+    const cookieStore = await cookies();
+    const tokenFromHeader = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : undefined;
+    const token =
+      tokenFromHeader ?? cookieStore.get('accessToken')?.value;
+
+    if (!token) {
       return NextResponse.json(
-        { error: 'Authorization header is required' },
-        { status: 401 }
+        { error: 'Authorization required' },
+        { status: 401 },
       );
     }
 
-    console.log('Using real Skool API for upload');
-
-    // Get the form data from the request
     const formData = await request.formData();
-    
-    // Forward the request to the Skool API
-    const response = await fetch('https://skool.zelisline.com/api/storage/upload/single', {
+
+    const response = await fetch(resolveStorageUploadUrl(), {
       method: 'POST',
       headers: {
-        'Authorization': authHeader,
-        // Note: Don't set Content-Type for FormData, let fetch handle it
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     });

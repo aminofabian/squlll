@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-/** Shared shell for fee plan wizard steps */
+/** Shared shell for fee structure wizard steps */
 export function FeesWizardSection({
     title,
     children,

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Loader2, RotateCcw } from 'lucide-react'
+import { ExternalLink, Loader2, RotateCcw } from 'lucide-react'
 import { usePaymentsQuery } from '../hooks/useGraphQLPayments'
 import { useVoidPayment } from '../hooks/useVoidPayment'
 
@@ -38,6 +38,20 @@ export default function StudentPayments({
       fetchPayments({ studentId })
     }
   }, [studentId, fetchPayments])
+
+  const duplicateGroupCount = useMemo(() => {
+    const buckets = new Map<string, number>()
+    for (const p of payments) {
+      const day = p.paymentDate?.slice(0, 10) ?? ''
+      const key = `${p.invoice.invoiceNumber}|${p.amount}|${day}`
+      buckets.set(key, (buckets.get(key) ?? 0) + 1)
+    }
+    let extras = 0
+    for (const count of buckets.values()) {
+      if (count > 1) extras += count - 1
+    }
+    return extras
+  }, [payments])
 
   const handleConfirmVoid = async () => {
     if (!voidTarget || !voidReason.trim()) return
@@ -72,6 +86,21 @@ export default function StudentPayments({
         </div>
       )}
 
+      {duplicateGroupCount > 0 && (
+        <div
+          className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+          role="alert"
+        >
+          <p className="font-medium">Possible duplicate entries</p>
+          <p className="mt-1 leading-relaxed">
+            {duplicateGroupCount} payment
+            {duplicateGroupCount === 1 ? '' : 's'} look like accidental repeats
+            (same invoice, amount, and date). Keep the one you meant and use{' '}
+            <strong>Reverse</strong> on the rest — balances will be corrected.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         {payments.map((p) => (
           <Card
@@ -94,6 +123,17 @@ export default function StudentPayments({
                 <p className="text-xs text-slate-500">
                   {new Date(p.paymentDate).toLocaleString()}
                 </p>
+                {p.parentProofUrl ? (
+                  <a
+                    href={p.parentProofUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Parent receipt photo
+                  </a>
+                ) : null}
               </div>
               {canVoid && (
                 <Button

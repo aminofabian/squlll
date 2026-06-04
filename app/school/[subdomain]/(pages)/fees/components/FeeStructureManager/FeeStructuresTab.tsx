@@ -8,12 +8,15 @@ import { Loader2, RefreshCw, Search, X } from 'lucide-react'
 import { FeePlansTable } from './FeePlansTable'
 import { FeePlansListNextSteps } from './FeePlansListNextSteps'
 import { FeePlansListAlerts } from './FeePlansListAlerts'
+import { FeePlansSummary } from './FeePlansSummary'
+import { FeePlansListSkeleton } from './FeePlansListSkeleton'
 import { FeePlansToolbar } from './FeePlansToolbar'
 import { FeePlanDetailView } from './FeePlanDetailView'
 import { FeePlanDetailSkeleton } from './FeePlanDetailSkeleton'
 import { FeeStructureEmptyState } from '../FeeStructureEmptyState'
 import { findFeePlanBySlug } from '../../lib/feePlanSlug'
-import { computeFeePlansListStats } from '../../lib/feePlanStats'
+import { buildFeePlansDashboardStats } from '../../lib/feePlanStats'
+import { buildAcademicYearPlanGroups } from '../../lib/feePlanYearLinkage'
 import type { FeePlanCollectionStats } from '../../lib/feePlanCollection'
 import type { LinkedClassEntry } from '../../lib/feePlanLinkage'
 import type { FeeAssignmentGroup } from '../../types'
@@ -168,16 +171,7 @@ export const FeeStructuresTab = ({
 
   // Show loading if actively loading OR if we haven't fetched yet
   if (isLoading || (!hasFetched && !error && graphQLStructures.length === 0)) {
-    return (
-      <div className="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-white to-primary/5 border-2 border-primary/10">
-        <div className="relative">
-          <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
-          <Loader2 className="h-12 w-12 animate-spin text-primary relative z-10" />
-        </div>
-        <span className="mt-6 text-base font-medium text-slate-700">Loading fee structures...</span>
-        <span className="mt-2 text-sm text-primary/70">Please wait while we fetch your data</span>
-      </div>
-    )
+    return <FeePlansListSkeleton />
   }
 
   if (error) {
@@ -221,7 +215,7 @@ export const FeeStructuresTab = ({
     if (selectedPlanSlug && !activePlan && hasFetched) {
       return (
         <div className="space-y-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-          <p className="text-sm font-medium text-slate-800">Fee plan not found</p>
+          <p className="text-sm font-medium text-slate-800">Fee structure not found</p>
           <p className="mt-1 text-xs text-slate-500">
             It may have been deleted or renamed.
           </p>
@@ -232,7 +226,7 @@ export const FeeStructuresTab = ({
             className="mt-3"
             onClick={onBackToPlanList}
           >
-            Back to all plans
+            Back to all structures
           </Button>
         </div>
       );
@@ -265,14 +259,47 @@ export const FeeStructuresTab = ({
       )
     }
 
-    const listStats = computeFeePlansListStats(
+    const yearGroupsForList = buildAcademicYearPlanGroups(
+      filteredStructures,
+      feeAssignments,
+      schoolGrades,
+    )
+    const allConflicts = yearGroupsForList.flatMap((g) => g.conflicts)
+    const conflictCount = allConflicts.length
+    const unbilledPlanCount = filteredStructures.filter(
+      (s) => !collectionByPlanId?.get(s.structureId)?.hasBilling,
+    ).length
+    const schoolYears = new Set(
+      graphQLStructures.map((s) => s.academicYear),
+    ).size
+    const coverageGroup =
+      yearGroupsForList.find((g) => g.linkedGradeCount > 0) ??
+      yearGroupsForList[0]
+    const dashboardStats = buildFeePlansDashboardStats(
       graphQLStructures,
       getLinkedClassCount,
+      {
+        schoolYears,
+        conflictCount,
+        unbilledCount: unbilledPlanCount,
+        gradesLinked: coverageGroup?.linkedGradeCount ?? 0,
+        totalGrades: coverageGroup?.totalSchoolGrades ?? 0,
+      },
     )
 
     return (
-      <div className="space-y-3">
-        <FeePlansListAlerts stats={listStats} />
+      <div className="min-w-0 max-w-full overflow-x-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
+        <FeePlansSummary
+          stats={dashboardStats}
+          onCreateNew={onCreateNew}
+          canCreate={canCreateFeeStructure}
+        />
+        <FeePlansListAlerts
+          conflictCount={conflictCount}
+          conflicts={allConflicts}
+          unlinkedPlanCount={dashboardStats.unlinkedPlans}
+          unbilledPlanCount={unbilledPlanCount}
+        />
         <FeePlansToolbar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -284,30 +311,26 @@ export const FeeStructuresTab = ({
           filteredCount={filteredStructures.length}
           totalCount={graphQLStructures.length}
           onRefresh={() => fetchFeeStructures()}
-          onCreateNew={onCreateNew}
-          canCreate={canCreateFeeStructure}
         />
 
         {filteredStructures.length > 0 ? (
-          <>
+          <div className="space-y-4 p-3 sm:p-4">
             <FeePlansTable
               structures={filteredStructures}
               getLinkedClassCount={getLinkedClassCount}
               collectionByPlanId={collectionByPlanId}
               assignments={feeAssignments}
               schoolGrades={schoolGrades}
+              pageLevelConflictAlert={conflictCount > 0}
             />
             <FeePlansListNextSteps
               planCount={filteredStructures.length}
-              hasUnbilledPlans={filteredStructures.some(
-                (s) => !collectionByPlanId?.get(s.structureId)?.hasBilling,
-              )}
-              onCreateNew={onCreateNew}
-              canCreate={canCreateFeeStructure}
+              hasUnbilledPlans={unbilledPlanCount > 0}
+              hasDuplicateLinks={conflictCount > 0}
             />
-          </>
+          </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center shadow-sm">
+          <div className="border-t border-dashed border-slate-200 p-10 text-center">
             <div className="mx-auto max-w-sm">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
                 <Search className="h-6 w-6 text-slate-400" />

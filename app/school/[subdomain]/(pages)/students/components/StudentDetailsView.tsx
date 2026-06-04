@@ -28,18 +28,22 @@ import {
   AlertCircle,
   RefreshCw,
   AlertTriangle,
-  Wallet,
-  Receipt,
 } from "lucide-react";
 import SchoolReportCard from "./ReportCard";
 import { useStudentDetailSummary } from "@/lib/hooks/useStudentDetailSummary";
-import { StudentLedger } from "./StudentLedger";
-import { useStudentLedger } from "@/lib/hooks/use-student-ledger";
 import { useStudentCredentials } from "@/lib/hooks/useStudentCredentials";
 import { cn } from "@/lib/utils";
 import { AssignGradeStreamDialog } from "./AssignGradeStreamDialog";
 import { StudentAccountPanel } from "./StudentAccountPanel";
 import { StudentCredentialsDialog } from "./StudentCredentialsDialog";
+import { StudentProfileHero } from "./StudentProfileHero";
+import { StudentProfileOverview } from "./StudentProfileOverview";
+import { StudentProfileMoneyTab } from "./StudentProfileMoneyTab";
+import {
+  STUDENT_PROFILE_TABS,
+  tabBadge,
+  type StudentProfileTab,
+} from "./student-profile-tabs";
 import { studentsPanel } from "./students-ui";
 import { toast } from "sonner";
 
@@ -53,6 +57,8 @@ interface StudentDetailsViewProps {
   };
   embedded?: boolean;
   onEnrollmentUpdated?: () => void;
+  activeTab: StudentProfileTab;
+  onTabChange: (tab: StudentProfileTab) => void;
 }
 
 type ReportCardProps = ComponentProps<typeof SchoolReportCard>
@@ -139,35 +145,14 @@ function EmptyPanel({
   );
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function StudentInitials({ name }: { name: string }) {
-  const parts = name.trim().split(/\s+/);
-  const initials =
-    parts.length >= 2
-      ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-      : name.slice(0, 2).toUpperCase();
-
-  return (
-    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-base font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-      {initials || "?"}
-    </div>
-  );
-}
-
 export function StudentDetailsView({
   studentId,
   onClose,
   schoolConfig,
   embedded = false,
   onEnrollmentUpdated,
+  activeTab,
+  onTabChange,
 }: StudentDetailsViewProps) {
   const [expandedDocuments, setExpandedDocuments] = useState<
     Record<string, boolean>
@@ -187,15 +172,6 @@ export function StudentDetailsView({
     error: credentialsError,
     fetchCredentials,
   } = useStudentCredentials(studentId);
-  const {
-    ledgerData,
-    loading: ledgerLoading,
-    error: ledgerError,
-  } = useStudentLedger({
-    studentId,
-    dateRange: { startDate: "2024-01-01", endDate: "2024-12-31" },
-  });
-
   const handleShowCredentials = async () => {
     setShowCredentialsDialog(true);
     if (!credentials) {
@@ -251,108 +227,95 @@ export function StudentDetailsView({
   const missingStream = !student.streamName;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {embedded ? (
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-[#0073ea] dark:hover:text-slate-200"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to list
+          Back to roster
         </button>
       ) : (
         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onClose}>
-          ← Back
+          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+          Back
         </Button>
       )}
 
       {missingStream ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-medium">No class assigned</p>
             <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
               Assign a grade and stream so this student appears in class lists
               and timetables.
             </p>
           </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 shrink-0 text-xs"
+            onClick={() => setShowAssignClassDialog(true)}
+          >
+            Assign
+          </Button>
         </div>
       ) : null}
 
-      <div className={`${studentsPanel} overflow-hidden`}>
-        <div className="bg-gradient-to-br from-slate-50/80 to-white px-4 py-5 dark:from-slate-900/40 dark:to-slate-900/20 sm:px-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <StudentInitials name={student.studentName} />
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {student.studentName}
-              </h2>
-              <p className="mt-0.5 text-sm text-slate-500">
-                {student.admissionNumber} · {student.gradeLevelName}
-                {student.streamName ? ` · ${student.streamName}` : ""}
-              </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px] font-medium",
-                    student.isActive
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-amber-200 bg-amber-50 text-amber-700",
-                  )}
-                >
-                  {student.isActive ? "Active" : "Inactive"}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-medium capitalize text-slate-600"
-                >
-                  {student.gender?.toLowerCase() || "—"}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-medium capitalize text-slate-600"
-                >
-                  {student.schoolType}
-                </Badge>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1 text-[10px]"
-                  onClick={() => setShowAssignClassDialog(true)}
-                >
-                  <GraduationCap className="h-3 w-3" />
-                  {student.gradeLevelId ? "Change class" : "Assign class"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StudentProfileHero
+        student={student}
+        missingStream={missingStream}
+        onAssignClass={() => setShowAssignClassDialog(true)}
+        onTabSelect={(tab) => onTabChange(tab as StudentProfileTab)}
+      />
 
-      <Tabs defaultValue="details">
-        <TabsList className="mb-4 inline-flex h-10 w-full flex-wrap rounded-lg border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60 sm:w-auto">
-          {[
-            { value: "details", label: "Details" },
-            { value: "enrollment", label: "Enrollment" },
-            { value: "fees", label: "Fees" },
-            { value: "ledger", label: "Ledger" },
-            { value: "account", label: "Account" },
-            { value: "documents", label: "Documents" },
-          ].map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => onTabChange(v as StudentProfileTab)}
+      >
+        <TabsList className="mb-4 inline-flex h-auto min-h-10 w-full flex-wrap gap-1 rounded-xl border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60">
+          {STUDENT_PROFILE_TABS.map((tab) => {
+            const badge = tabBadge(tab.value, student, missingStream);
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-[#0073ea] data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-[#5ba3ff]"
+              >
+                {tab.label}
+                {badge ? (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[9px] font-semibold tabular-nums",
+                      tab.value === "money"
+                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        : tab.value === "access"
+                          ? "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                          : "bg-amber-100 text-amber-800",
+                    )}
+                  >
+                    {badge}
+                  </span>
+                ) : null}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
-        <TabsContent value="details" className="mt-0">
+        <TabsContent value="overview" className="mt-0">
+          <StudentProfileOverview
+            student={student}
+            missingStream={missingStream}
+            onTabSelect={(tab) => onTabChange(tab as StudentProfileTab)}
+            onAssignClass={() => setShowAssignClassDialog(true)}
+          />
+        </TabsContent>
+
+        <TabsContent value="person" className="mt-0">
           <div className={`${studentsPanel} overflow-hidden`}>
             <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
               <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -473,132 +436,11 @@ export function StudentDetailsView({
           </div>
         </TabsContent>
 
-        <TabsContent value="fees" className="mt-0">
-          <div className={`${studentsPanel} overflow-hidden`}>
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                <Wallet className="h-4 w-4 text-slate-400" />
-                Fee summary
-              </h3>
-            </div>
-            <div className="space-y-4 p-4 sm:p-5">
-              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                    Total owed
-                  </dt>
-                  <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
-                    {formatCurrency(student.feeSummary.totalOwed)}
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                    Paid
-                  </dt>
-                  <dd className="mt-1 text-sm font-semibold tabular-nums text-emerald-700">
-                    {formatCurrency(student.feeSummary.totalPaid)}
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                    Balance
-                  </dt>
-                  <dd
-                    className={cn(
-                      "mt-1 text-sm font-semibold tabular-nums",
-                      student.feeSummary.balance > 0
-                        ? "text-amber-700"
-                        : "text-emerald-700",
-                    )}
-                  >
-                    {formatCurrency(student.feeSummary.balance)}
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-                  <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                    Fee items
-                  </dt>
-                  <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
-                    {student.feeSummary.numberOfFeeItems}
-                  </dd>
-                </div>
-              </dl>
-
-              {student.feeSummary.feeItems.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-left text-slate-400 dark:border-slate-800">
-                        <th className="pb-2 pr-3 font-medium">Item</th>
-                        <th className="pb-2 pr-3 font-medium">Amount</th>
-                        <th className="pb-2 pr-3 font-medium">Type</th>
-                        <th className="pb-2 pr-3 font-medium">Structure</th>
-                        <th className="pb-2 font-medium">Year</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {student.feeSummary.feeItems.map((item) => (
-                        <tr key={item.id}>
-                          <td className="py-2 pr-3 text-slate-700 dark:text-slate-300">
-                            {item.feeBucketName}
-                          </td>
-                          <td className="py-2 pr-3 tabular-nums">
-                            {formatCurrency(item.amount)}
-                          </td>
-                          <td className="py-2 pr-3">
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[10px] font-normal",
-                                item.isMandatory
-                                  ? "border-slate-200 text-slate-600"
-                                  : "border-sky-200 text-sky-700",
-                              )}
-                            >
-                              {item.isMandatory ? "Mandatory" : "Optional"}
-                            </Badge>
-                          </td>
-                          <td className="py-2 pr-3 text-slate-500">
-                            {item.feeStructureName}
-                          </td>
-                          <td className="py-2 text-slate-500">
-                            {item.academicYearName}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <EmptyPanel
-                  icon={Wallet}
-                  title="No fee items"
-                  description="Fee assignments will appear here once configured for this student's grade."
-                />
-              )}
-            </div>
-          </div>
+        <TabsContent value="money" className="mt-0">
+          <StudentProfileMoneyTab student={student} studentId={studentId} />
         </TabsContent>
 
-        <TabsContent value="ledger" className="mt-0">
-          <div className={`${studentsPanel} overflow-hidden`}>
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                <Receipt className="h-4 w-4 text-slate-400" />
-                Fee ledger
-              </h3>
-            </div>
-            <div className="p-4 sm:p-5">
-              <StudentLedger
-                ledgerData={ledgerData}
-                loading={ledgerLoading}
-                error={ledgerError}
-              />
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="account" className="mt-0">
+        <TabsContent value="access" className="mt-0">
           <StudentAccountPanel
             studentName={student.studentName}
             email={student.email}

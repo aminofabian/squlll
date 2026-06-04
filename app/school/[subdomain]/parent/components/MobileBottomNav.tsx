@@ -1,14 +1,26 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import { Home, Calendar, GraduationCap, MessageCircle, Bell, MoreHorizontal, Settings, FileText, DollarSign, Users, Clock } from 'lucide-react';
-import { useChatUnreadTotal } from '@/lib/chat/ChatProvider';
+import React, { useState } from "react";
+import {
+  Bell,
+  Calendar,
+  Clock,
+  DollarSign,
+  FileText,
+  GraduationCap,
+  Home,
+  MessageCircle,
+  MoreHorizontal,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
+import { cn } from "@/lib/utils";
 
-interface BottomNavItem {
-  icon: any;
+type NavItem = {
+  icon: LucideIcon;
   label: string;
   key: string;
-}
+};
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -16,215 +28,199 @@ interface MobileBottomNavProps {
   notifications: Array<{ read: boolean }>;
 }
 
-export const MobileBottomNav = ({ activeTab, setActiveTab, notifications }: MobileBottomNavProps) => {
+function NavButton({
+  item,
+  isActive,
+  badge,
+  onClick,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  badge?: number;
+  onClick: () => void;
+}) {
+  const Icon = item.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 transition-colors",
+        isActive ? "text-primary" : "text-slate-500",
+      )}
+      aria-current={isActive ? "page" : undefined}
+    >
+      <span className="relative">
+        <Icon className="h-5 w-5" />
+        {badge && badge > 0 ? (
+          <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-white">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        ) : null}
+      </span>
+      <span className="max-w-full truncate text-[10px] font-medium">
+        {item.label}
+      </span>
+      {isActive ? (
+        <span className="h-0.5 w-4 rounded-full bg-primary" aria-hidden />
+      ) : null}
+    </button>
+  );
+}
+
+export function MobileBottomNav({
+  activeTab,
+  setActiveTab,
+  notifications,
+}: MobileBottomNavProps) {
   const [showMore, setShowMore] = useState(false);
   const chatUnread = useChatUnreadTotal();
-  
-  const bottomNavItems: BottomNavItem[] = [
-    { icon: Calendar, label: 'Schedule', key: 'schedule' },
-    { icon: GraduationCap, label: 'Grades', key: 'grades' },
-    { icon: MessageCircle, label: 'Messages', key: 'messages' },
-    { icon: Bell, label: 'Notifications', key: 'notifications' }
+  const unreadNotifications = notifications.filter((n) => !n.read).length;
+
+  const primaryItems: NavItem[] = [
+    { icon: Calendar, label: "Schedule", key: "schedule" },
+    { icon: GraduationCap, label: "Grades", key: "grades" },
+    { icon: MessageCircle, label: "Messages", key: "messages" },
+    { icon: DollarSign, label: "Fees", key: "payments" },
   ];
 
-  const moreMenuItems: BottomNavItem[] = [
-    { icon: Clock, label: 'Attendance', key: 'attendance' },
-    { icon: DollarSign, label: 'Payments', key: 'payments' },
-    { icon: FileText, label: 'Reports', key: 'reports' },
-    { icon: Users, label: 'Staff', key: 'staff' },
-    { icon: Settings, label: 'Settings', key: 'settings' }
+  const moreItems: NavItem[] = [
+    { icon: Bell, label: "Notifications", key: "notifications" },
+    { icon: Clock, label: "Attendance", key: "attendance" },
+    { icon: FileText, label: "Reports", key: "reports" },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-primary/20 shadow-2xl">
-      {/* Background Glow Effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent" />
-      
-      {/* More Menu Overlay */}
-      {showMore && (
-        <div className="absolute bottom-full left-0 right-0 bg-white border-t-2 border-primary/20 shadow-2xl rounded-t-3xl">
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-slate-800">More Options</h3>
-              <button 
-                onClick={() => setShowMore(false)}
-                className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-all duration-300"
-              >
-                <span className="text-lg">×</span>
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-4">
-              {moreMenuItems.map((item) => {
-                const isActive = activeTab === item.key;
+    <>
+      {showMore ? (
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-[1px] lg:hidden"
+          onClick={() => setShowMore(false)}
+        />
+      ) : null}
+
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+        {showMore ? (
+          <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+              More
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {moreItems.map((item) => {
+                const badge =
+                  item.key === "notifications" ? unreadNotifications : undefined;
+
                 return (
                   <button
                     key={item.key}
+                    type="button"
                     onClick={() => {
                       setActiveTab(item.key);
                       setShowMore(false);
                     }}
-                    className={`flex flex-col items-center space-y-2 p-4 rounded-2xl transition-all duration-300 group ${
-                      isActive 
-                        ? 'bg-primary text-white shadow-lg scale-105' 
-                        : 'bg-primary/5 text-slate-700 hover:bg-primary/10 hover:scale-105'
-                    }`}
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                      activeTab === item.key
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300",
+                    )}
                   >
-                    <item.icon className={`w-6 h-6 transition-all duration-300 ${
-                      isActive ? 'animate-pulse' : 'group-hover:scale-110'
-                    }`} />
-                    <span className="text-xs font-black">{item.label}</span>
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                    {badge && badge > 0 ? (
+                      <span className="ml-auto rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">
+                        {badge > 9 ? "9+" : badge}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
           </div>
-        </div>
-      )}
-      
-      <div className="relative z-10 flex items-center justify-between px-4 py-4">
-        {/* Left Side Items */}
-        <div className="flex items-center space-x-2">
-          {bottomNavItems.slice(0, 2).map((item) => {
-            const isActive = activeTab === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => setActiveTab(item.key)}
-                className={`relative flex flex-col items-center space-y-1 p-2 rounded-xl transition-all duration-300 group ${
-                  isActive 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-slate-600 hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                <div className="relative">
-                  <item.icon className={`w-6 h-6 transition-all duration-300 ${
-                    isActive ? 'animate-pulse' : 'group-hover:scale-110'
-                  }`} />
-                </div>
-                <span className="text-xs font-black">{item.label}</span>
-                {isActive && (
-                  <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+        ) : null}
 
-        {/* Center Home Button */}
-        <div className="flex flex-col items-center">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`relative flex flex-col items-center transition-all duration-300 group transform -translate-y-2`}
-          >
-            <div className="relative">
-              {/* Glow Effect for Home */}
-              <div className={`absolute inset-0 rounded-full transition-all duration-300 ${
-                activeTab === 'dashboard' ? 'bg-primary/20 blur-md scale-150' : 'opacity-0'
-              }`} />
-              
-              {/* Main Home Button */}
-              <div className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
-                activeTab === 'dashboard'
-                  ? 'bg-primary text-white shadow-xl scale-110' 
-                  : 'bg-white border-2 border-primary/30 text-primary hover:border-primary/50 hover:scale-105'
-              }`}>
-                <Home className={`w-8 h-8 transition-all duration-300 ${
-                  activeTab === 'dashboard' ? 'animate-pulse' : 'group-hover:scale-110'
-                }`} />
-                
-                {/* Decorative Ring for Active State */}
-                {activeTab === 'dashboard' && (
-                  <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-ping" />
-                )}
-              </div>
-              
-              {/* Home Label */}
-              <span className={`text-xs font-black mt-2 transition-all duration-300 ${
-                activeTab === 'dashboard' ? 'text-primary' : 'text-slate-600'
-              }`}>
-                Home
-              </span>
-            </div>
-          </button>
-        </div>
+        <div className="flex items-end gap-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+          <NavButton
+            item={primaryItems[0]}
+            isActive={activeTab === primaryItems[0].key}
+            onClick={() => {
+              setActiveTab(primaryItems[0].key);
+              setShowMore(false);
+            }}
+          />
+          <NavButton
+            item={primaryItems[1]}
+            isActive={activeTab === primaryItems[1].key}
+            onClick={() => {
+              setActiveTab(primaryItems[1].key);
+              setShowMore(false);
+            }}
+          />
 
-        {/* Right Side Items */}
-        <div className="flex items-center space-x-2">
-          {bottomNavItems.slice(2, 4).map((item) => {
-            const isActive = activeTab === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => setActiveTab(item.key)}
-                className={`relative flex flex-col items-center space-y-1 p-2 rounded-xl transition-all duration-300 group ${
-                  isActive 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'text-slate-600 hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                <div className="relative">
-                  <item.icon className={`w-6 h-6 transition-all duration-300 ${
-                    isActive ? 'animate-pulse' : 'group-hover:scale-110'
-                  }`} />
-                  
-                  {/* Notification Badge */}
-                  {item.key === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
-                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-black animate-pulse border-2 border-white">
-                      {notifications.filter(n => !n.read).length}
-                    </span>
-                  )}
-                  {item.key === 'messages' && chatUnread > 0 && (
-                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-black animate-pulse border-2 border-white">
-                      {chatUnread > 99 ? '99+' : chatUnread}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs font-black">{item.label}</span>
-                {isActive && (
-                  <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
-                )}
-              </button>
-            );
-          })}
-          
-          {/* More Button */}
           <button
-            onClick={() => setShowMore(!showMore)}
-            className={`relative flex flex-col items-center space-y-1 p-2 rounded-xl transition-all duration-300 group ${
-              showMore 
-                ? 'bg-primary/10 text-primary' 
-                : 'text-slate-600 hover:text-primary hover:bg-primary/5'
-            }`}
-          >
-            <div className="relative">
-              <MoreHorizontal className={`w-6 h-6 transition-all duration-300 ${
-                showMore ? 'animate-pulse' : 'group-hover:scale-110'
-              }`} />
-              
-              {/* Animated Dots */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className={`flex space-x-0.5 transition-all duration-300 ${
-                  showMore ? 'opacity-0' : 'opacity-100'
-                }`}>
-                  <div className="w-1 h-1 bg-current rounded-full animate-pulse" />
-                  <div className="w-1 h-1 bg-current rounded-full animate-pulse delay-150" />
-                  <div className="w-1 h-1 bg-current rounded-full animate-pulse delay-300" />
-                </div>
-              </div>
-            </div>
-            
-            <span className="text-xs font-black">More</span>
-            
-            {/* Active Indicator */}
-            {showMore && (
-              <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full" />
+            type="button"
+            onClick={() => {
+              setActiveTab("dashboard");
+              setShowMore(false);
+            }}
+            className={cn(
+              "mx-1 flex shrink-0 flex-col items-center gap-0.5 rounded-xl px-2 pb-1 transition-colors",
+              activeTab === "dashboard" ? "text-primary" : "text-slate-500",
             )}
+            aria-current={activeTab === "dashboard" ? "page" : undefined}
+          >
+            <span
+              className={cn(
+                "flex h-11 w-11 items-center justify-center rounded-full border-2 shadow-sm transition-colors",
+                activeTab === "dashboard"
+                  ? "border-primary bg-primary text-white"
+                  : "border-slate-200 bg-white text-primary dark:border-slate-700 dark:bg-slate-900",
+              )}
+            >
+              <Home className="h-5 w-5" />
+            </span>
+            <span className="text-[10px] font-semibold">Home</span>
+          </button>
+
+          <NavButton
+            item={primaryItems[2]}
+            isActive={activeTab === primaryItems[2].key}
+            badge={chatUnread}
+            onClick={() => {
+              setActiveTab(primaryItems[2].key);
+              setShowMore(false);
+            }}
+          />
+          <NavButton
+            item={primaryItems[3]}
+            isActive={activeTab === primaryItems[3].key}
+            onClick={() => {
+              setActiveTab(primaryItems[3].key);
+              setShowMore(false);
+            }}
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowMore((v) => !v)}
+            className={cn(
+              "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 transition-colors",
+              showMore ? "text-primary" : "text-slate-500",
+            )}
+            aria-expanded={showMore}
+          >
+            <MoreHorizontal className="h-5 w-5" />
+            <span className="text-[10px] font-medium">More</span>
+            {(unreadNotifications > 0 && !showMore) ||
+            (moreItems.some((i) => activeTab === i.key) && !showMore) ? (
+              <span className="h-0.5 w-4 rounded-full bg-primary" aria-hidden />
+            ) : null}
           </button>
         </div>
       </div>
-      
-      {/* Bottom Safe Area for iOS */}
-      <div className="h-1 bg-white" />
-    </div>
+    </>
   );
-}; 
+}

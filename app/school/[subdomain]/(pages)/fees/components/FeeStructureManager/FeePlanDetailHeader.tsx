@@ -116,10 +116,10 @@ export function FeePlanDetailHeader({
               href={feesPlansHref()}
               scroll={false}
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary active:bg-slate-100 md:h-auto md:w-auto md:gap-1 md:px-0 md:text-xs md:text-slate-500 md:hover:text-primary"
-              aria-label="Back to plans"
+              aria-label="Back to structures"
             >
               <ArrowLeft className="h-5 w-5 md:h-3.5 md:w-3.5" />
-              <span className="hidden md:inline">Plans</span>
+              <span className="hidden md:inline">Structures</span>
             </Link>
 
             <div className="min-w-0 flex-1 md:hidden">
@@ -205,7 +205,7 @@ export function FeePlanDetailHeader({
                     )}
                     onClick={onEdit}
                     disabled={isDeleting}
-                    aria-label="Edit plan"
+                    aria-label="Edit structure"
                   >
                     <Edit className="h-3.5 w-3.5 shrink-0" />
                   </Button>
@@ -228,7 +228,7 @@ export function FeePlanDetailHeader({
                       {!showPrimaryEdit && !showSecondaryEdit && canModifyPlan ? (
                         <DropdownMenuItem onClick={onEdit}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit plan
+                          Edit structure
                         </DropdownMenuItem>
                       ) : null}
                       {!showPrimaryLink && canModifyPlan ? (

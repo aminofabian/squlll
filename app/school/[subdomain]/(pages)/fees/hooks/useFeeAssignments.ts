@@ -13,7 +13,7 @@ interface UseFeeAssignmentsResult {
 
 export const useFeeAssignments = (): UseFeeAssignmentsResult => {
   const [data, setData] = useState<FeeAssignmentData | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null)
 

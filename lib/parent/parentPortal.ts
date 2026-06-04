@@ -15,7 +15,10 @@ const MY_CHILDREN = `
       grade {
         id
         name
-        displayName
+        shortName
+        gradeLevel {
+          name
+        }
       }
     }
   }

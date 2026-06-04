@@ -1,33 +1,25 @@
-'use client'
+"use client";
 
-import React from 'react';
-import { Settings } from 'lucide-react';
-import { DynamicLogo } from './DynamicLogo';
+import React from "react";
+import { DynamicLogo } from "./DynamicLogo";
+import { getLayoutSchoolName } from "@/lib/schoolLogo";
 
 interface MobileHeaderProps {
   subdomain: string;
 }
 
-export const MobileHeader = ({ subdomain }: MobileHeaderProps) => {
+export function MobileHeader({ subdomain }: MobileHeaderProps) {
+  const schoolName = getLayoutSchoolName(subdomain);
+
   return (
-    <div className="bg-card/90 backdrop-blur-sm shadow-lg border-b border-border/50 px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center space-x-4">
-        <DynamicLogo subdomain={subdomain} size="sm" showText={true} />
-        
-        <div className="flex-1">
-          <div className="font-black text-card-foreground text-base mb-0.5">
-            {subdomain.split('-').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Academy
-          </div>
-          <div className="text-xs text-muted-foreground font-medium">Parents Portal</div>
-          <div className="flex items-center space-x-1 mt-0.5">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[0.6rem] text-green-600 font-bold">Online</span>
-          </div>
-        </div>
+    <header className="flex items-center justify-between border-b border-slate-200/60 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
+      <div className="min-w-0">
+        <DynamicLogo subdomain={subdomain} size="sm" showText={false} />
+        <p className="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {schoolName}
+        </p>
+        <p className="text-[11px] text-slate-400">Parent portal</p>
       </div>
-      <button className="p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-all duration-300 group">
-        <Settings className="w-5 h-5 text-muted-foreground group-hover:rotate-90 transition-transform" />
-      </button>
-    </div>
+    </header>
   );
-}; 
+}

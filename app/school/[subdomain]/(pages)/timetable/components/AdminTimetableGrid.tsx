@@ -220,6 +220,60 @@ function slotTimeRange(slot: TimeSlotInfo | null | undefined): string | null {
   return raw.replace(/\s*[-–]\s*/g, "–").trim();
 }
 
+/**
+ * Extra minutes not yet reflected in stored period times.
+ * School-wide breaks are already applied when periods were recalculated.
+ */
+function breakMinutesAtPosition(breaks: BreakEntry[]): number {
+  const notInBellSchedule = breaks.filter((b) => !b.applyToAllDays);
+  if (notInBellSchedule.length === 0) return 0;
+  return notInBellSchedule[0].durationMinutes || 0;
+}
+
+/** Minutes from breaks that shift the bell schedule before this period. */
+function breakMinutesBeforePeriod(
+  period: number,
+  periodNumbers: number[],
+  getBreaksAfterPeriod: (p: number) => BreakEntry[],
+  getBreaksBeforeFirstPeriod: () => BreakEntry[],
+): number {
+  let total = breakMinutesAtPosition(getBreaksBeforeFirstPeriod());
+
+  for (const p of periodNumbers) {
+    if (p >= period) break;
+    total += breakMinutesAtPosition(getBreaksAfterPeriod(p));
+  }
+
+  return total;
+}
+
+function slotTimeRangeWithBreaks(
+  slot: TimeSlotInfo | null | undefined,
+  period: number,
+  periodNumbers: number[],
+  getBreaksAfterPeriod: (p: number) => BreakEntry[],
+  getBreaksBeforeFirstPeriod: () => BreakEntry[],
+): string | null {
+  if (!slot?.startTime || !slot?.endTime) {
+    return slotTimeRange(slot);
+  }
+
+  const shift = breakMinutesBeforePeriod(
+    period,
+    periodNumbers,
+    getBreaksAfterPeriod,
+    getBreaksBeforeFirstPeriod,
+  );
+  if (shift <= 0) {
+    return slotTimeRange(slot);
+  }
+
+  return formatCompactRange(
+    formatHHMM(parseHHMM(slot.startTime) + shift),
+    formatHHMM(parseHHMM(slot.endTime) + shift),
+  );
+}
+
 function breakTimeRange(
   breakEntry: BreakEntry,
   getSlotFor: (dayIndex: number, period: number) => TimeSlotInfo | null,
@@ -653,6 +707,9 @@ export function AdminTimetableGrid({
                           <TimeColumnCell
                             slot={rowSlot}
                             period={period}
+                            periodNumbers={periodNumbers}
+                            getBreaksAfterPeriod={getBreaksAfterPeriod}
+                            getBreaksBeforeFirstPeriod={getBreaksBeforeFirstPeriod}
                             isDoubleBlockRow={rowHasDoubleBlock}
                             isDoubleContinuation={rowIsDoubleContinuation}
                             onEdit={onEditTimeslot}
@@ -889,6 +946,9 @@ function CombinedChipTooltipContent({
 function TimeColumnCell({
   slot,
   period,
+  periodNumbers,
+  getBreaksAfterPeriod,
+  getBreaksBeforeFirstPeriod,
   isDoubleBlockRow,
   isDoubleContinuation,
   onEdit,
@@ -896,12 +956,22 @@ function TimeColumnCell({
 }: {
   slot: TimeSlotInfo;
   period: number;
+  periodNumbers: number[];
+  getBreaksAfterPeriod: (p: number) => BreakEntry[];
+  getBreaksBeforeFirstPeriod: () => BreakEntry[];
   isDoubleBlockRow?: boolean;
   isDoubleContinuation?: boolean;
   onEdit?: (slot: TimeSlotInfo) => void;
   onAddBreak?: (afterPeriod: number) => void;
 }) {
-  const timeLabel = slotTimeRange(slot) ?? "—";
+  const timeLabel =
+    slotTimeRangeWithBreaks(
+      slot,
+      period,
+      periodNumbers,
+      getBreaksAfterPeriod,
+      getBreaksBeforeFirstPeriod,
+    ) ?? "—";
 
   return (
     <div
@@ -1393,6 +1463,16 @@ function BreakRow({
   const canMoveDown = afterPeriod < maxPeriod && !isMoving;
   const appliesAllDays = !!primary.applyToAllDays;
   const colSpan = 1 + visibleDayIndices.length;
+  // Per-day "+ Add" is only for building a partial schedule, not an existing break row
+  const showPerDayAddButtons =
+    !appliesAllDays &&
+    !primary.id &&
+    visibleDayIndices.some(
+      (dayIndex) =>
+        !breaks.find(
+          (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1,
+        ),
+    );
 
   return (
     <tr className={cn("group/break", visual.rowBand)}>
@@ -1466,13 +1546,7 @@ function BreakRow({
           </div>
         ) : null}
 
-        {!appliesAllDays &&
-        visibleDayIndices.some(
-          (dayIndex) =>
-            !breaks.find(
-              (b) => b.applyToAllDays || b.dayOfWeek === dayIndex + 1,
-            ),
-        ) ? (
+        {showPerDayAddButtons ? (
           <div className="flex flex-wrap items-center justify-center gap-2 px-3 pb-2 pt-0">
             {visibleDayIndices.map((dayIndex) => {
               const dayBreak = breaks.find(

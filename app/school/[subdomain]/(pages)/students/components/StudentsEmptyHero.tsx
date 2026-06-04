@@ -13,20 +13,20 @@ export function StudentsEmptyHero({
   onStudentCreated,
 }: StudentsEmptyHeroProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-white to-primary/10 px-6 py-16 text-center dark:border-primary/25 dark:from-primary/10 dark:via-slate-900/50 dark:to-primary/5">
+    <div className="relative overflow-hidden rounded-2xl border border-[#0073ea]/20 bg-gradient-to-br from-[#0073ea]/5 via-white to-[#0073ea]/10 px-6 py-16 text-center dark:border-[#0073ea]/25 dark:from-[#0073ea]/10 dark:via-slate-900/50 dark:to-[#0073ea]/5">
       <div
-        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl"
+        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#0073ea]/10 blur-3xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-primary/5 blur-2xl"
+        className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#0073ea]/5 blur-2xl"
         aria-hidden
       />
 
-      <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30 ring-1 ring-white/30">
+      <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0073ea] shadow-lg shadow-[#0073ea]/30 ring-1 ring-white/30">
         <Users className="h-7 w-7 text-white" strokeWidth={1.75} />
-        <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md ring-2 ring-primary/15 dark:bg-slate-900 dark:ring-primary/30">
-          <GraduationCap className="h-3 w-3 text-primary" />
+        <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md ring-2 ring-[#0073ea]/15 dark:bg-slate-900 dark:ring-[#0073ea]/30">
+          <GraduationCap className="h-3 w-3 text-[#0073ea]" />
         </span>
       </div>
 

@@ -21,7 +21,7 @@ interface WorkflowGuidanceProps {
 const defaultSteps: WorkflowStep[] = [
   {
     id: "1",
-    title: "Fee plan",
+    title: "Fee structure",
     description: "Charges per class & term",
     completed: false,
     icon: <Sparkles className="h-4 w-4" />,
@@ -29,7 +29,7 @@ const defaultSteps: WorkflowStep[] = [
   {
     id: "2",
     title: "Assign classes",
-    description: "Link plan to grades",
+    description: "Link structure to grades",
     completed: false,
     icon: <Target className="h-4 w-4" />,
   },

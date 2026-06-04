@@ -53,7 +53,7 @@ interface DashboardQuickActionsProps {
 export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps) {
   return (
     <div
-      className="grid grid-cols-4 gap-1.5"
+      className="grid grid-cols-2 gap-2 sm:grid-cols-2"
       aria-label="Quick actions"
     >
       {QUICK_ACTIONS.map((action) => {
@@ -66,8 +66,8 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
               key={action.id}
               subdomain={subdomain}
               triggerClassName={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center transition-colors",
-                "border-slate-200/80 bg-slate-50/50 active:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/30 dark:active:bg-slate-800",
+                "group flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200",
+                "border-slate-200/80 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/60",
               )}
               triggerLabel={action.label}
               triggerIcon={Icon}
@@ -81,14 +81,24 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
             key={action.id}
             href={action.href ?? "#"}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 rounded-lg border px-1 py-2 text-center transition-colors active:scale-[0.98]",
+              "group flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200",
+              "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]",
               isPrimary
-                ? "border-[#0073ea]/30 bg-[#0073ea]/10 text-[#0073ea] dark:bg-[#0073ea]/15"
-                : "border-slate-200/80 bg-slate-50/50 text-slate-700 active:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/30 dark:text-slate-200 dark:active:bg-slate-800",
+                ? "border-[#0073ea]/35 bg-gradient-to-b from-[#0073ea]/15 to-[#0073ea]/5 text-[#0073ea] shadow-sm dark:from-[#0073ea]/25 dark:to-transparent"
+                : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200",
             )}
           >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span className="text-[10px] font-medium leading-none">
+            <span
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                isPrimary
+                  ? "bg-[#0073ea]/15 group-hover:bg-[#0073ea]/25"
+                  : "bg-slate-100 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700",
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+            </span>
+            <span className="text-[11px] font-semibold leading-none">
               {action.label}
             </span>
           </Link>

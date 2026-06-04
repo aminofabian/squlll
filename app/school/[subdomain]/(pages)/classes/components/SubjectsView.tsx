@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Search, Edit, Trash2, Loader2, Plus, Layers, UserPlus } from "lucide-react";
+import { BookOpen, Search, Edit, Trash2, Loader2, Plus, Layers } from "lucide-react";
 import {
   useTenantSubjects,
   TenantSubject,
@@ -33,6 +33,7 @@ import {
 } from "../utils/dedupeSubjects";
 import { useSubjectTeacherMap } from "../utils/useSubjectTeacherMap";
 import { SubjectTeacherBadge } from "./SubjectTeacherBadge";
+import { AssignSubjectTeacherSheet } from "./AssignSubjectTeacherSheet";
 
 type DisplaySubject = SubjectListItem;
 
@@ -40,19 +41,18 @@ interface SubjectsViewProps {
   selectedGradeId?: string | null;
   onAddSubject?: () => void;
   onAddStream?: () => void;
-  onAssignTeacher?: () => void;
 }
 
 export function SubjectsView({
   selectedGradeId,
   onAddSubject,
   onAddStream,
-  onAssignTeacher,
 }: SubjectsViewProps = {}) {
   const { config } = useSchoolConfigStore();
   const { data: tenantSubjects = [], isLoading } = useTenantSubjects();
   const queryClient = useQueryClient();
-  const { getTeacherForSubject } = useSubjectTeacherMap();
+  const { getTeacherForSubject, refetch: refetchSubjectTeachers } =
+    useSubjectTeacherMap();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [editingSubject, setEditingSubject] = useState<TenantSubject | null>(
@@ -60,6 +60,10 @@ export function SubjectsView({
   );
   const [deleteTarget, setDeleteTarget] = useState<DisplaySubject | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [assignSubject, setAssignSubject] = useState<{
+    tenantSubjectIds: string[];
+    name: string;
+  } | null>(null);
 
   const filteredSubjects = useMemo(() => {
     let subs = tenantSubjects.map((ts) => ({
@@ -170,12 +174,6 @@ export function SubjectsView({
       icon: Layers,
       onClick: onAddStream,
     },
-    onAssignTeacher && {
-      id: "assign-teacher",
-      label: "Assign teacher",
-      icon: UserPlus,
-      onClick: onAssignTeacher,
-    },
   ].filter(Boolean) as ClassAction[];
 
   return (
@@ -230,7 +228,12 @@ export function SubjectsView({
                 subjects={coreSubjects}
                 accent="emerald"
                 getTeacherForSubject={getTeacherForSubject}
-                onAssignTeacher={onAssignTeacher}
+                onAssignSubject={(s) =>
+                  setAssignSubject({
+                    tenantSubjectIds: s.tenantSubjectIds,
+                    name: s.name,
+                  })
+                }
                 onEdit={setEditingSubject}
                 onDelete={setDeleteTarget}
               />
@@ -242,13 +245,30 @@ export function SubjectsView({
                 subjects={electiveSubjects}
                 accent="amber"
                 getTeacherForSubject={getTeacherForSubject}
-                onAssignTeacher={onAssignTeacher}
+                onAssignSubject={(s) =>
+                  setAssignSubject({
+                    tenantSubjectIds: s.tenantSubjectIds,
+                    name: s.name,
+                  })
+                }
                 onEdit={setEditingSubject}
                 onDelete={setDeleteTarget}
               />
             )}
         </div>
       )}
+
+      {assignSubject ? (
+        <AssignSubjectTeacherSheet
+          open={Boolean(assignSubject)}
+          onOpenChange={(open) => {
+            if (!open) setAssignSubject(null);
+          }}
+          tenantSubjectIds={assignSubject.tenantSubjectIds}
+          subjectName={assignSubject.name}
+          onAssigned={() => void refetchSubjectTeachers()}
+        />
+      ) : null}
 
       {editingSubject && (
         <EditSubjectDialog
@@ -328,7 +348,7 @@ function SubjectSection({
   subjects,
   accent,
   getTeacherForSubject,
-  onAssignTeacher,
+  onAssignSubject,
   onEdit,
   onDelete,
 }: {
@@ -336,8 +356,11 @@ function SubjectSection({
   hint: string;
   subjects: DisplaySubject[];
   accent: "emerald" | "amber";
-  getTeacherForSubject: (tenantSubjectIds: string[]) => string | undefined;
-  onAssignTeacher?: () => void;
+  getTeacherForSubject: (
+    tenantSubjectIds: string[],
+    meta?: { _tenantSubject: TenantSubject; name: string; code: string },
+  ) => string | undefined;
+  onAssignSubject: (s: DisplaySubject) => void;
   onEdit: (s: TenantSubject) => void;
   onDelete: (s: DisplaySubject) => void;
 }) {
@@ -366,8 +389,12 @@ function SubjectSection({
                 {s.name}
               </span>
               <SubjectTeacherBadge
-                teacherName={getTeacherForSubject(s.tenantSubjectIds)}
-                onAssign={onAssignTeacher}
+                teacherName={getTeacherForSubject(s.tenantSubjectIds, {
+                  _tenantSubject: s._tenantSubject,
+                  name: s.name,
+                  code: s.code,
+                })}
+                onAssign={() => onAssignSubject(s)}
               />
               <div className="flex shrink-0 items-center">
                 <ClassActionBar
