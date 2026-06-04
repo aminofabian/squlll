@@ -61,7 +61,7 @@ export default function ClassesPage() {
     streamName?: string;
     gradeLevelId?: string;
     gradeName?: string;
-  }>({});
+  } | null>(null);
   const [showAddSubjectDialog, setShowAddSubjectDialog] = useState(false);
   const [addSubjectContext, setAddSubjectContext] = useState<{
     curriculumId: string;
