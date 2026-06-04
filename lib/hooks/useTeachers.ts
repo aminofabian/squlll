@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTeachersStore, useTeachersByTenantQuery } from '../stores/useTeachersStore';
+import type { ClassTeacherAssignmentRow } from '../utils/teacher-picker';
 
 interface TeachersResponse {
   usersByTenant: any[];
@@ -44,14 +45,7 @@ export interface Teacher {
   tenantStreams: Array<{
     id: string;
   }>;
-  classTeacherAssignments: Array<{
-    id: string;
-    gradeLevel: {
-      gradeLevel: {
-        name: string;
-      };
-    };
-  }>;
+  classTeacherAssignments: ClassTeacherAssignmentRow[];
   tenant: {
     id: string;
     name: string;
