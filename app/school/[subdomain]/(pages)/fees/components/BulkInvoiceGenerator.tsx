@@ -541,7 +541,7 @@ export const BulkInvoiceGenerator = ({
   )
 
   const currentFlowStep = useMemo((): FlowStepId => {
-    if (!flowCompleted.plan) return 'structure'
+    if (!flowCompleted.plan) return 'plan'
     if (!flowCompleted.classes) return 'classes'
     if (!flowCompleted.fees) return 'fees'
     return 'dates'

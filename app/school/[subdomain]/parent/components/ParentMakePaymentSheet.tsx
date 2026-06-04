@@ -247,7 +247,7 @@ export function ParentMakePaymentSheet({
         proofImageUrl,
       })
       setSubmittedReceipt(result.receiptNumber ?? null)
-      onSuccess?.(result.receiptNumber)
+      onSuccess?.(result.receiptNumber ?? undefined)
       window.setTimeout(() => onOpenChange(false), 1400)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not record payment')

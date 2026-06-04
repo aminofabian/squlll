@@ -16,14 +16,15 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePendingParentInvitations } from "../hooks/usePendingParentInvitations";
+import { resendParentInvitation } from "../utils/parentInvitationActions";
 import { toast } from "sonner";
 
 export function PendingInvitationsSection() {
-  const { pendingInvitations, isLoading, error, resendInvitation } = usePendingParentInvitations();
+  const { pendingInvitations, isLoading, error } = usePendingParentInvitations();
 
   const handleResendInvitation = async (id: string, email: string) => {
     try {
-      await resendInvitation(id);
+      await resendParentInvitation(id);
       toast.success("Invitation resent", {
         description: `Invitation has been resent to ${email}`,
       });

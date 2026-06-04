@@ -20,9 +20,9 @@ describe("getPeriodsPerDay", () => {
       getPeriodsPerDay({
         periodNumbers: Array.from({ length: 40 }, (_, i) => i + 1),
         timeSlots: [
-          { id: "1", periodNumber: 1, time: "", color: "" },
-          { id: "2", periodNumber: 2, time: "", color: "" },
-          { id: "3", periodNumber: 8, time: "", color: "" },
+          { id: "1", periodNumber: 1, time: "", color: "", startTime: "", endTime: "" },
+          { id: "2", periodNumber: 2, time: "", color: "", startTime: "", endTime: "" },
+          { id: "3", periodNumber: 8, time: "", color: "", startTime: "", endTime: "" },
         ],
       }),
     ).toBe(3);
