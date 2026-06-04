@@ -18,12 +18,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Map form data to match the exact GraphQL createStudentInput structure
     const createStudentInput: Record<string, string> = {
       name: studentData.name,
       email: studentData.student_email,
       admission_number: studentData.admission_number,
-      phone: studentData.guardian_phone,
+      phone: studentData.phone ?? studentData.guardian_phone,
       tenantGradeLevelId: studentData.grade,
       gender: studentData.gender.toUpperCase(),
     };

@@ -16,12 +16,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select"
 import {
   Drawer,
@@ -33,61 +33,43 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer'
-import { 
-  UserPlus, 
-  User, 
-  Users, 
-  Info, 
-  CalendarDays, 
-  Clock, 
-  Calendar, 
-  GraduationCap,
+import {
+  UserPlus,
   Verified,
   Loader2,
+  Users,
+  Hash,
+  Phone,
+  GraduationCap,
   Mail,
-  CheckCircle,
-  Wand2,
+  Sparkles,
+  ArrowRight,
+  X,
+  CheckCircle2,
+  Circle,
 } from "lucide-react"
 import { toast } from 'sonner'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import { StudentSuccessModal } from './StudentSuccessModal'
 import { StudentsEnrollTrigger, type EnrollTriggerVariant } from './StudentsEnrollTrigger'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
-import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { useGradeLevelsForSchoolType } from '@/lib/hooks/useGradeLevelsForSchoolType'
+import { studentsPanel } from './students-ui'
 
-// Form validation schema
+const phoneSchema = z.string().refine(
+  (value) => /^\+254[0-9]{9}$|^\+2540[0-9]{9}$/.test(value),
+  { message: 'Enter a valid number: +254XXXXXXXXX' },
+)
+
 const studentFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   admission_number: z.string().min(1, "Admission number is required"),
   gender: z.enum(["male", "female"]),
   grade: z.string().min(1, "Grade is required"),
   stream: z.string().optional(),
-  date_of_birth: z.string().min(1, "Date of birth is required").refine((dateString) => {
-    const birthDate = new Date(dateString);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    const dayDiff = today.getDate() - birthDate.getDate();
-    
-    // Calculate exact age
-    const exactAge = age - (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? 1 : 0);
-    
-    return exactAge <= 25; // Students should be 25 or younger
-  }, { message: 'Student must be 25 years old or younger' }),
-  age: z.coerce.number().min(1, "Age must be at least 1").max(25, "Age must be at most 25"),
-  admission_date: z.string().min(1, "Admission date is required"),
+  phone: phoneSchema,
   student_email: z.string().email().optional().or(z.literal("")),
-  guardian_name: z.string().min(2, "Guardian name must be at least 2 characters"),
-  guardian_phone: z.string()
-    .refine((value) => {
-      // Must be exactly +254 followed by 9 digits OR +2540 followed by 9 digits
-      // Pattern 1: +254712675412 (13 characters total)
-      // Pattern 2: +2540712675412 (14 characters total)
-      const phoneRegex = /^\+254[0-9]{9}$|^\+2540[0-9]{9}$/;
-      return phoneRegex.test(value);
-    }, { message: 'Phone number must be exactly +254XXXXXXXXX (9 digits) or +2540XXXXXXXXX (9 digits after 0)' }),
-  guardian_email: z.string().email().optional().or(z.literal("")),
-  home_address: z.string().optional(),
 })
 
 type StudentFormData = z.infer<typeof studentFormSchema>
@@ -99,6 +81,162 @@ interface CreateStudentDrawerProps {
   triggerVariant?: EnrollTriggerVariant
 }
 
+function formatPhoneNumber(value: string): string {
+  if (value === '' || value === '+' || value === '+2' || value === '+25') {
+    return '+254'
+  }
+
+  let cleaned = value.replace(/[^\d+]/g, '')
+
+  if (cleaned.startsWith('0')) {
+    cleaned = '+254' + cleaned.substring(1)
+  } else if (cleaned && /^\d/.test(cleaned) && !cleaned.startsWith('+')) {
+    cleaned = '+254' + cleaned
+  } else if (cleaned.startsWith('+2540')) {
+    cleaned = '+254' + cleaned.substring(5)
+  } else if (!cleaned || cleaned === '+') {
+    cleaned = '+254'
+  }
+
+  if (cleaned.startsWith('+2540')) {
+    if (cleaned.length > 14) cleaned = cleaned.substring(0, 14)
+  } else if (cleaned.startsWith('+254')) {
+    if (cleaned.length > 13) cleaned = cleaned.substring(0, 13)
+  }
+
+  return cleaned
+}
+
+function emailFromName(name: string): string {
+  const cleanName = name.toLowerCase()
+    .replace(/[^a-z\s]/g, '')
+    .replace(/\s+/g, '')
+  return cleanName ? `${cleanName}@squl.ac.ke` : 'studentname@squl.ac.ke'
+}
+
+function getGradeNumber(gradeName: string): number {
+  const gradeMatch = gradeName.match(/Grade\s+(\d+)/i)
+  if (gradeMatch) return parseInt(gradeMatch[1])
+
+  const formMatch = gradeName.match(/Form\s+(\d+)/i)
+  if (formMatch) return parseInt(formMatch[1]) + 6
+
+  const ppMatch = gradeName.match(/PP(\d+)/i)
+  if (ppMatch) return parseInt(ppMatch[1]) - 3
+
+  const specialGrades: Record<string, number> = {
+    'Baby Class': -4,
+    'Nursery': -3,
+    'Reception': -2,
+  }
+
+  return specialGrades[gradeName] ?? 999
+}
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+const fieldShell =
+  "h-11 rounded-xl border-0 bg-slate-100/80 pl-10 text-sm shadow-none ring-1 ring-inset ring-slate-200/70 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-slate-800/60 dark:ring-slate-700/60 dark:placeholder:text-slate-500"
+
+const selectShell =
+  "h-11 rounded-xl border-0 bg-slate-100/80 text-sm shadow-none ring-1 ring-inset ring-slate-200/70 focus:ring-2 focus:ring-primary/40 dark:bg-slate-800/60 dark:ring-slate-700/60"
+
+function SectionCard({
+  step,
+  title,
+  subtitle,
+  icon,
+  children,
+  complete,
+}: {
+  step: string
+  title: string
+  subtitle: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  complete?: boolean
+}) {
+  return (
+    <section className={cn(studentsPanel, "relative overflow-hidden p-0")}>
+      <div className="flex items-start gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-slate-800/80">
+        <div
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors",
+            complete
+              ? "bg-primary/15 text-primary ring-1 ring-primary/25"
+              : "bg-primary/10 text-primary/70 ring-1 ring-primary/10",
+          )}
+        >
+          {complete ? <CheckCircle2 className="h-4 w-4" /> : icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {step}
+            </span>
+            {complete && (
+              <Badge className="h-4 rounded-full bg-primary/10 px-1.5 text-[9px] font-semibold text-primary hover:bg-primary/10">
+                Done
+              </Badge>
+            )}
+          </div>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
+        </div>
+      </div>
+      <div className="space-y-4 p-4">{children}</div>
+    </section>
+  )
+}
+
+function FieldIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+      {children}
+    </span>
+  )
+}
+
+function GenderPills({
+  value,
+  onChange,
+}: {
+  value: "male" | "female"
+  onChange: (v: "male" | "female") => void
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {([
+        { id: "male" as const, label: "Male", emoji: "👦" },
+        { id: "female" as const, label: "Female", emoji: "👧" },
+      ]).map((option) => {
+        const active = value === option.id
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+              active
+                ? "bg-primary text-white shadow-md shadow-primary/25 ring-2 ring-primary/30"
+                : "bg-slate-100/80 text-slate-600 ring-1 ring-inset ring-slate-200/70 hover:bg-slate-200/60 dark:bg-slate-800/60 dark:text-slate-300 dark:ring-slate-700/60 dark:hover:bg-slate-800",
+            )}
+          >
+            <span aria-hidden>{option.emoji}</span>
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function CreateStudentDrawer({
   onStudentCreated,
   defaultOpen = false,
@@ -106,6 +244,7 @@ export function CreateStudentDrawer({
 }: CreateStudentDrawerProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultOpen)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showCustomEmail, setShowCustomEmail] = useState(false)
   const [successData, setSuccessData] = useState<{
     user: { id: string; email: string; name: string }
     student: { id: string; admission_number: string; grade: { id: string }; gender: string; phone: string; gradeName: string }
@@ -114,142 +253,12 @@ export function CreateStudentDrawer({
   const { data: schoolConfig } = useSchoolConfig()
   const { data: gradeLevelsForSchoolType, isLoading: gradesLoading } = useGradeLevelsForSchoolType()
   const queryClient = useQueryClient()
+  const schoolSubdomain = schoolConfig?.tenant?.subdomain || 'school'
 
   useEffect(() => {
-    if (defaultOpen) {
-      setIsDrawerOpen(true)
-    }
+    if (defaultOpen) setIsDrawerOpen(true)
   }, [defaultOpen])
-  
-  // Create student mutation
-  const createStudentMutation = useMutation({
-    mutationFn: async (data: StudentFormData) => {
-      // Auto-generate email if not provided
-      let studentEmail = data.student_email
-      if (!studentEmail || studentEmail.trim() === '') {
-        const cleanName = data.name.toLowerCase()
-          .replace(/[^a-z\s]/g, '')
-          .replace(/\s+/g, '')
-        studentEmail = `${cleanName}@squl.ac.ke`
-      }
 
-      const submissionData = {
-        ...data,
-        student_email: studentEmail
-      }
-
-      const response = await fetch('/api/school/create-student', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submissionData),
-      })
-
-      const result = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create student')
-      }
-
-      return result.createStudent
-    },
-    onSuccess: (studentData) => {
-      // Optimistically update the cache
-      queryClient.setQueryData(['students'], (oldData: any) => {
-        if (!oldData?.students) return oldData
-        return {
-          ...oldData,
-          students: [...oldData.students, studentData.student]
-        }
-      })
-      
-      // Invalidate to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ['students'] })
-      
-      // Find the grade name from available grade levels
-      const selectedGrade = tenantGradeLevels.find(tg => tg.id === studentData.student.grade.id)
-      const gradeName = selectedGrade?.gradeLevel.name || studentData.student.grade.id
-      
-      // Store success data for display with grade name
-      setSuccessData({
-        ...studentData,
-        student: {
-          ...studentData.student,
-          gradeName: gradeName
-        }
-      })
-      setShowSuccessModal(true)
-      
-      // Show success toast
-      toast.success("Student Created Successfully!", {
-        description: `${studentData.user.name} has been registered with admission number ${studentData.student.admission_number}`
-      })
-      
-      // Reset form and close drawer
-      form.reset()
-      setIsDrawerOpen(false)
-      onStudentCreated(studentData.user.name)
-    },
-    onError: (error) => {
-      console.error('Error creating student:', error)
-      toast.error("Registration Failed", {
-        description: error instanceof Error ? error.message : "An error occurred while creating the student"
-      })
-    }
-  })
-  
-  // Phone number formatting utility
-  const formatPhoneNumber = (value: string): string => {
-    // If user is trying to clear the field, allow empty or just +254
-    if (value === '' || value === '+' || value === '+2' || value === '+25') {
-      return '+254';
-    }
-    
-    // Remove all non-digit characters except + at the start
-    let cleaned = value.replace(/[^\d+]/g, '');
-    
-    // If it starts with 0, replace with +254
-    if (cleaned.startsWith('0')) {
-      cleaned = '+254' + cleaned.substring(1);
-    }
-    // If it's just digits without +, prepend +254
-    else if (cleaned && /^\d/.test(cleaned) && !cleaned.startsWith('+')) {
-      cleaned = '+254' + cleaned;
-    }
-    // If it starts with +254, ensure it's properly formatted and remove any 0 after +254
-    else if (cleaned.startsWith('+254')) {
-      // Remove 0 immediately after +254 (e.g., +2540712345678 -> +254712345678)
-      if (cleaned.startsWith('+2540')) {
-        cleaned = '+254' + cleaned.substring(5);
-      }
-    }
-    // If it starts with + but not +254, keep as is (for other country codes)
-    else if (cleaned.startsWith('+') && !cleaned.startsWith('+254')) {
-      // Keep as is for international numbers
-    }
-    // If empty or just +, default to +254
-    else if (!cleaned || cleaned === '+') {
-      cleaned = '+254';
-    }
-    
-    // Enforce exact length: +254XXXXXXXXX (13 chars) or +2540XXXXXXXXX (14 chars)
-    if (cleaned.startsWith('+2540')) {
-      // Limit to 14 characters total (+2540 + 9 digits)
-      if (cleaned.length > 14) {
-        cleaned = cleaned.substring(0, 14);
-      }
-    } else if (cleaned.startsWith('+254')) {
-      // Limit to 13 characters total (+254 + 9 digits)
-      if (cleaned.length > 13) {
-        cleaned = cleaned.substring(0, 13);
-      }
-    }
-    
-    return cleaned;
-  };
-  
-  // Form handling
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
@@ -258,73 +267,27 @@ export function CreateStudentDrawer({
       gender: "male",
       grade: "",
       stream: "",
-      date_of_birth: "",
-      age: 0,
-      admission_date: "",
+      phone: "+254",
       student_email: "",
-      guardian_name: "",
-      guardian_phone: "+254",
-      guardian_email: "",
-      home_address: "",
     },
   })
-    
-  // Use tenant-specific grade levels instead of school config
+
   const tenantGradeLevels = gradeLevelsForSchoolType || []
-  
-  // Sort tenant grade levels by grade name
+
   const sortedTenantGrades = [...tenantGradeLevels].sort((a, b) => {
-    // Helper function to extract grade number
-    const getGradeNumber = (gradeName: string): number => {
-      // Handle "Grade X" format
-      const gradeMatch = gradeName.match(/Grade\s+(\d+)/i)
-      if (gradeMatch) {
-        return parseInt(gradeMatch[1])
-      }
-      
-      // Handle "Form X" format
-      const formMatch = gradeName.match(/Form\s+(\d+)/i)
-      if (formMatch) {
-        return parseInt(formMatch[1]) + 6 // Form 1 = Grade 7, Form 2 = Grade 8, etc.
-      }
-      
-      // Handle "PPX" format
-      const ppMatch = gradeName.match(/PP(\d+)/i)
-      if (ppMatch) {
-        return parseInt(ppMatch[1]) - 3 // PP1 = -2, PP2 = -1, PP3 = 0
-      }
-      
-      // Handle "Baby Class", "Nursery", "Reception"
-      const specialGrades: { [key: string]: number } = {
-        'Baby Class': -4,
-        'Nursery': -3,
-        'Reception': -2
-      }
-      
-      if (specialGrades[gradeName]) {
-        return specialGrades[gradeName]
-      }
-      
-      // For any other grades, use a high number to put them at the end
-      return 999
-    }
-    
-    const aNumber = getGradeNumber(a.gradeLevel.name)
-    const bNumber = getGradeNumber(b.gradeLevel.name)
-    
-    return aNumber - bNumber
+    return getGradeNumber(a.gradeLevel.name) - getGradeNumber(b.gradeLevel.name)
   })
 
-  // Debug logging for grade levels
-  console.log('CreateStudentDrawer - Tenant grade levels:', tenantGradeLevels)
-  console.log('CreateStudentDrawer - Grades loading:', gradesLoading)
-  console.log('CreateStudentDrawer - Sorted tenant grades:', sortedTenantGrades)
-  
-  // Watch form values for dynamic updates
   const watchedGrade = form.watch('grade')
   const watchedStream = form.watch('stream')
+  const watchedName = form.watch('name')
+  const watchedAdmission = form.watch('admission_number')
+  const watchedPhone = form.watch('phone')
+  const watchedGender = form.watch('gender')
 
   const selectedGradeData = sortedTenantGrades.find((tg) => tg.id === watchedGrade)
+  const selectedGradeName = selectedGradeData?.gradeLevel.name
+
   const availableStreams = useMemo(
     () =>
       selectedGradeData?.tenantStreams
@@ -332,6 +295,7 @@ export function CreateStudentDrawer({
         .filter((stream): stream is { id: string; name: string } => Boolean(stream)) ?? [],
     [selectedGradeData],
   )
+  const selectedStreamName = availableStreams.find((s) => s.id === watchedStream)?.name
   const requiresStream = availableStreams.length > 0
 
   useEffect(() => {
@@ -339,124 +303,250 @@ export function CreateStudentDrawer({
       form.setValue('stream', '')
       return
     }
-
     if (availableStreams.length === 1) {
       form.setValue('stream', availableStreams[0].id)
       return
     }
-
     form.setValue('stream', '')
   }, [watchedGrade, availableStreams, form])
 
-  // Function to generate email from name
-  const generateEmailFromName = () => {
-    const name = form.getValues('name')
-    if (!name || name.trim() === '') {
-      toast.error('Please enter a name first to generate email')
-      return
-    }
-    
-    // Generate email from name: "Kelvin Mwangi" -> "kelvinmwangi@squl.ac.ke"
-    const cleanName = name.toLowerCase()
-      .replace(/[^a-z\s]/g, '') // Remove non-alphabetic characters except spaces
-      .replace(/\s+/g, '') // Remove all spaces
-    const generatedEmail = `${cleanName}@squl.ac.ke`
-    
-    form.setValue('student_email', generatedEmail)
-    toast.success('Email generated!', {
-      description: `Generated: ${generatedEmail}`
-    })
-  }
+  const identityComplete = watchedName.trim().length >= 2 && watchedAdmission.trim().length >= 1
+  const placementComplete = Boolean(watchedGrade) && (!requiresStream || Boolean(watchedStream))
+  const contactComplete = phoneSchema.safeParse(watchedPhone).success
 
+  const progressSteps = [identityComplete, placementComplete, contactComplete]
+  const progressCount = progressSteps.filter(Boolean).length
+  const progressPct = Math.round((progressCount / progressSteps.length) * 100)
 
-  // Watch the name field for dynamic email preview
-  const watchedName = form.watch('name')
+  const createStudentMutation = useMutation({
+    mutationFn: async (data: StudentFormData) => {
+      const studentEmail = data.student_email?.trim() || emailFromName(data.name)
 
-  // Generate preview email from current name
-  const getPreviewEmail = () => {
-    if (!watchedName || watchedName.trim() === '') {
-      return 'studentname@squl.ac.ke'
-    }
-    const cleanName = watchedName.toLowerCase()
-      .replace(/[^a-z\s]/g, '') // Remove non-alphabetic characters except spaces
-      .replace(/\s+/g, '') // Remove all spaces
-    return `${cleanName}@squl.ac.ke`
-  }
-
-
-  // Submit handler
-  const onSubmit = async (data: StudentFormData) => {
-    if (requiresStream && !data.stream) {
-      form.setError('stream', {
-        message: 'Please select a stream for this grade',
+      const response = await fetch('/api/school/create-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          admission_number: data.admission_number,
+          gender: data.gender,
+          grade: data.grade,
+          stream: data.stream,
+          phone: data.phone,
+          student_email: studentEmail,
+        }),
       })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create student')
+      }
+
+      return result.createStudent
+    },
+    onSuccess: (studentData) => {
+      queryClient.setQueryData(['students'], (oldData: { students?: unknown[] } | undefined) => {
+        if (!oldData?.students) return oldData
+        return {
+          ...oldData,
+          students: [...oldData.students, studentData.student],
+        }
+      })
+
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+
+      const selectedGrade = tenantGradeLevels.find((tg) => tg.id === studentData.student.grade.id)
+      const gradeName = selectedGrade?.gradeLevel.name || studentData.student.grade.id
+
+      setSuccessData({
+        ...studentData,
+        student: {
+          ...studentData.student,
+          gradeName,
+        },
+      })
+      setShowSuccessModal(true)
+
+      toast.success("Student enrolled", {
+        description: `${studentData.user.name} · ${studentData.student.admission_number}`,
+      })
+
+      form.reset()
+      setShowCustomEmail(false)
+      setIsDrawerOpen(false)
+      onStudentCreated(studentData.user.name)
+    },
+    onError: (error) => {
+      toast.error("Enrollment failed", {
+        description: error instanceof Error ? error.message : "Something went wrong",
+      })
+    },
+  })
+
+  const onSubmit = (data: StudentFormData) => {
+    if (requiresStream && !data.stream) {
+      form.setError('stream', { message: 'Select a stream for this grade' })
       return
     }
-
-    console.log('CreateStudentDrawer - Form submission data:', {
-      selectedGradeId: data.grade,
-      selectedStreamId: data.stream,
-      allAvailableGrades: sortedTenantGrades.map(tg => ({ id: tg.id, name: tg.gradeLevel.name })),
-      formData: data
-    })
     createStudentMutation.mutate(data)
   }
 
+  const previewEmail = emailFromName(watchedName)
+  const displayName = watchedName.trim() || "New student"
+  const classLabel = selectedGradeName
+    ? selectedStreamName
+      ? `${selectedGradeName} · ${selectedStreamName}`
+      : selectedGradeName
+    : "Grade not selected"
+
   return (
     <>
-    <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-      <DrawerTrigger asChild>
-        <StudentsEnrollTrigger
-          variant={triggerVariant}
-          loading={createStudentMutation.isPending || gradesLoading}
-          loadingLabel={gradesLoading ? 'Loading…' : 'Creating…'}
-        />
-      </DrawerTrigger>
-      <DrawerContent className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col bg-slate-50 dark:bg-slate-950 sm:max-w-xl md:max-w-2xl" data-vaul-drawer-direction="right">
-        <DrawerHeader className="shrink-0 border-b border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
-              <UserPlus className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <DrawerTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Enroll a student
-              </DrawerTitle>
-              <DrawerDescription className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Register a new student and assign their grade
-              </DrawerDescription>
-            </div>
-          </div>
-        </DrawerHeader>
-        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 relative">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
-              {/* Loading Overlay */}
-              {createStudentMutation.isPending && (
-                <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 z-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Creating student...</p>
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+        <DrawerTrigger asChild>
+          <StudentsEnrollTrigger
+            variant={triggerVariant}
+            loading={createStudentMutation.isPending || gradesLoading}
+            loadingLabel={gradesLoading ? 'Loading…' : 'Creating…'}
+          />
+        </DrawerTrigger>
+        <DrawerContent
+          className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col border-l border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-950 sm:max-w-[440px]"
+          data-vaul-drawer-direction="right"
+        >
+          {/* ── Header ── */}
+          <DrawerHeader className="relative shrink-0 overflow-hidden border-0 px-0 pb-0 pt-0">
+            <div className="relative border-b border-primary/10 bg-gradient-to-br from-primary/[0.08] via-white to-primary/[0.04] px-5 pb-5 pt-5 dark:border-primary/20 dark:from-primary/15 dark:via-slate-900 dark:to-primary/5">
+              <div
+                className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/15 blur-3xl"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute -bottom-6 left-8 h-24 w-24 rounded-full bg-primary/10 blur-2xl"
+                aria-hidden
+              />
+
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
+                    <UserPlus className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0">
+                    <DrawerTitle className="text-left text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+                      Enroll a student
+                    </DrawerTitle>
+                    <DrawerDescription className="mt-0.5 text-left text-sm text-slate-500 dark:text-slate-400">
+                      Quick register — about 30 seconds
+                    </DrawerDescription>
                   </div>
                 </div>
-              )}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
-                    Personal Information
-                  </h3>
+                <DrawerClose asChild>
+                  <button
+                    type="button"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </DrawerClose>
+              </div>
+
+              {/* Progress bar */}
+              <div className="relative mt-4">
+                <div className="mb-2 flex items-center justify-between text-[11px]">
+                  <span className="font-medium text-slate-500 dark:text-slate-400">
+                    {progressCount} of 3 sections complete
+                  </span>
+                  <span className="font-semibold tabular-nums text-primary">{progressPct}%</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Student Personal Information */}
+                <div className="h-1.5 overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light transition-all duration-500 ease-out"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </DrawerHeader>
+
+          {/* ── Body ── */}
+          <div className="relative flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+            <Form {...form}>
+              <form id="enroll-student-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {createStudentMutation.isPending && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#f5f6f8]/80 backdrop-blur-[2px] dark:bg-slate-950/80">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white px-6 py-5 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                      <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">Creating student…</p>
+                      <p className="mt-1 text-xs text-slate-500">Setting up portal access</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Live ID preview */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dark via-slate-800 to-primary/80 p-[1px] shadow-lg shadow-primary/10">
+                  <div className="relative overflow-hidden rounded-[15px] bg-gradient-to-br from-primary-dark to-slate-800 px-4 py-4">
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.07]"
+                      style={{
+                        backgroundImage: `repeating-linear-gradient(
+                          -45deg,
+                          transparent,
+                          transparent 8px,
+                          white 8px,
+                          white 9px
+                        )`,
+                      }}
+                      aria-hidden
+                    />
+                    <div className="relative flex items-center gap-3">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-lg font-bold text-white ring-1 ring-white/20 backdrop-blur-sm">
+                        {initialsFromName(watchedName)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-semibold text-white">{displayName}</p>
+                        <p className="mt-0.5 truncate font-mono text-xs text-white/60">
+                          {watchedAdmission.trim() || "ADM-0000"}
+                        </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <Badge className="h-5 rounded-md border-0 bg-white/10 px-2 text-[10px] font-medium text-white/90 hover:bg-white/10">
+                            {classLabel}
+                          </Badge>
+                          <Badge className="h-5 rounded-md border-0 bg-white/10 px-2 text-[10px] font-medium capitalize text-white/90 hover:bg-white/10">
+                            {watchedGender}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+                      <Sparkles className="h-3.5 w-3.5 text-primary-light" />
+                      <p className="truncate font-mono text-[11px] text-white/50">
+                        {previewEmail}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 01 Identity */}
+                <SectionCard
+                  step="01"
+                  title="Who is enrolling?"
+                  subtitle="Name and admission number"
+                  icon={<UserPlus className="h-4 w-4" />}
+                  complete={identityComplete}
+                >
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Full Name *</FormLabel>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Full name
+                        </FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter student's full name" {...field} className="h-10" />
+                          <div className="relative">
+                            <FieldIcon><UserPlus className="h-4 w-4" /></FieldIcon>
+                            <Input placeholder="e.g. Jane Wanjiku" {...field} className={fieldShell} />
+                          </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
@@ -467,276 +557,63 @@ export function CreateStudentDrawer({
                     control={form.control}
                     name="admission_number"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Admission Number *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., KPS/2023/001" {...field} className="h-10" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="student_email"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Student Email
-                          <span className="text-slate-400 font-normal ml-1">(optional)</span>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Admission number
                         </FormLabel>
                         <FormControl>
-                          <div className="flex gap-2">
-                            <Input placeholder="student@example.com" {...field} className="flex-1 h-10" />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={generateEmailFromName}
-                              disabled={createStudentMutation.isPending}
-                              className="shrink-0 h-10 w-10"
-                              title="Generate email from name"
-                            >
-                              <Wand2 className="h-4 w-4" />
-                            </Button>
+                          <div className="relative">
+                            <FieldIcon><Hash className="h-4 w-4" /></FieldIcon>
+                            <Input placeholder="e.g. KPS/2026/001" {...field} className={fieldShell} />
                           </div>
                         </FormControl>
                         <FormMessage className="text-xs" />
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Or click the magic wand to auto-generate
-                        </p>
                       </FormItem>
                     )}
                   />
+                </SectionCard>
 
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Gender *</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="h-10">
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="date_of_birth"
-                    render={({ field }) => {
-                      // Calculate the maximum year (25 years old max for students)
-                      const today = new Date();
-                      const maxYear = today.getFullYear() - 3; // Allow 3+ years old
-                      const minYear = today.getFullYear() - 25; // Max 25 years old
-                      
-                      // Parse current value
-                      const currentValue = field.value || '';
-                      const dateParts = currentValue.split('-');
-                      const currentYear = dateParts[0] || '';
-                      const currentMonth = dateParts[1] ? parseInt(dateParts[1]).toString() : '';
-                      const currentDay = dateParts[2] ? parseInt(dateParts[2]).toString() : '';
-                      
-                      // Use state to track individual selections
-                      const [selectedDay, setSelectedDay] = React.useState(currentDay);
-                      const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
-                      const [selectedYear, setSelectedYear] = React.useState(currentYear);
-                      
-                      // Calculate age when date of birth changes
-                      React.useEffect(() => {
-                        if (selectedDay && selectedMonth && selectedYear) {
-                          const paddedDay = selectedDay.padStart(2, '0');
-                          const paddedMonth = selectedMonth.padStart(2, '0');
-                          const dateString = `${selectedYear}-${paddedMonth}-${paddedDay}`;
-                          field.onChange(dateString);
-                          
-                          // Auto-calculate age
-                          const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
-                          const today = new Date();
-                          let years = today.getFullYear() - birthDate.getFullYear();
-                          const monthDiff = today.getMonth() - birthDate.getMonth();
-                          const dayDiff = today.getDate() - birthDate.getDate();
-                          
-                          // Adjust if the birthday hasn't occurred this year
-                          if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-                            years--;
-                          }
-                          
-                          // Update age field
-                          form.setValue('age', years);
-                        }
-                      }, [selectedDay, selectedMonth, selectedYear, field.onChange, form]);
-                      
-                      // Ensure empty strings are treated as undefined for Select components
-                      const dayValue = selectedDay || undefined;
-                      const monthValue = selectedMonth || undefined;
-                      const yearValue = selectedYear || undefined;
-                      
-                      // Get days in month
-                      const getDaysInMonth = (month: string, year: string) => {
-                        if (!month || !year) return 31;
-                        return new Date(parseInt(year), parseInt(month), 0).getDate();
-                      };
-                      
-                      const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
-                      
-                      return (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Date of Birth *</FormLabel>
-                          <FormControl>
-                            <div className="grid grid-cols-3 gap-2">
-                              {/* Day */}
-                              <Select 
-                                value={dayValue} 
-                                onValueChange={setSelectedDay}
-                              >
-                                <SelectTrigger className="h-10">
-                                  <SelectValue placeholder="Day" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
-                                    <SelectItem key={day} value={day.toString()}>
-                                      {day}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              
-                              {/* Month */}
-                              <Select 
-                                value={monthValue} 
-                                onValueChange={setSelectedMonth}
-                              >
-                                <SelectTrigger className="h-10">
-                                  <SelectValue placeholder="Month" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="1">January</SelectItem>
-                                  <SelectItem value="2">February</SelectItem>
-                                  <SelectItem value="3">March</SelectItem>
-                                  <SelectItem value="4">April</SelectItem>
-                                  <SelectItem value="5">May</SelectItem>
-                                  <SelectItem value="6">June</SelectItem>
-                                  <SelectItem value="7">July</SelectItem>
-                                  <SelectItem value="8">August</SelectItem>
-                                  <SelectItem value="9">September</SelectItem>
-                                  <SelectItem value="10">October</SelectItem>
-                                  <SelectItem value="11">November</SelectItem>
-                                  <SelectItem value="12">December</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              
-                              {/* Year */}
-                              <Select 
-                                value={yearValue} 
-                                onValueChange={setSelectedYear}
-                              >
-                                <SelectTrigger className="h-10">
-                                  <SelectValue placeholder="Year" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                  {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
-                                    <SelectItem key={year} value={year.toString()}>
-                                      {year}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </FormControl>
-                          {(selectedDay && selectedMonth && selectedYear) && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Age: {(() => {
-                                const birthDate = new Date(parseInt(selectedYear), parseInt(selectedMonth) - 1, parseInt(selectedDay));
-                                const today = new Date();
-                                let years = today.getFullYear() - birthDate.getFullYear();
-                                const monthDiff = today.getMonth() - birthDate.getMonth();
-                                const dayDiff = today.getDate() - birthDate.getDate();
-                                if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-                                  years--;
-                                }
-                                return `${years} years old`;
-                              })()}
-                            </p>
-                          )}
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      );
-                    }}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Age *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            {...field} 
-                            className="h-10 bg-slate-50 dark:bg-slate-800" 
-                            readOnly
-                            disabled
-                          />
-                        </FormControl>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Automatically calculated from date of birth</p>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
+                {/* 02 Placement */}
+                <SectionCard
+                  step="02"
+                  title="Class placement"
+                  subtitle="Grade, stream, and gender"
+                  icon={<GraduationCap className="h-4 w-4" />}
+                  complete={placementComplete}
+                >
                   <FormField
                     control={form.control}
                     name="grade"
                     render={({ field }) => (
-                      <FormItem className="space-y-2 md:col-span-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Grade *</FormLabel>
-                        <Select 
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Grade
+                        </FormLabel>
+                        <Select
                           onValueChange={(value) => {
                             field.onChange(value)
                             form.setValue('stream', '')
                           }}
-                          defaultValue={field.value}
+                          value={field.value || undefined}
                         >
                           <FormControl>
-                            <SelectTrigger className="h-10">
+                            <SelectTrigger className={selectShell}>
                               <SelectValue placeholder="Select grade" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {sortedTenantGrades.map(tenantGrade => {
-                              const gradeStreams = tenantGrade.tenantStreams.map(ts => ts.stream)
+                            {sortedTenantGrades.map((tenantGrade) => {
+                              const streamCount = tenantGrade.tenantStreams.length
                               return (
-                                <SelectItem 
-                                  key={tenantGrade.id} 
-                                  value={tenantGrade.id}
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span>{tenantGrade.gradeLevel.name}</span>
-                                    {gradeStreams.length > 0 && (
-                                      <Badge 
-                                        variant="secondary" 
-                                        className="ml-2 text-xs"
-                                      >
-                                        {gradeStreams.length} stream{gradeStreams.length !== 1 ? 's' : ''}
+                                <SelectItem key={tenantGrade.id} value={tenantGrade.id}>
+                                  <span className="flex items-center gap-2">
+                                    {tenantGrade.gradeLevel.name}
+                                    {streamCount > 0 && (
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        {streamCount} stream{streamCount !== 1 ? 's' : ''}
                                       </Badge>
                                     )}
-                                  </div>
+                                  </span>
                                 </SelectItem>
                               )
                             })}
@@ -746,21 +623,22 @@ export function CreateStudentDrawer({
                       </FormItem>
                     )}
                   />
+
                   {requiresStream && (
                     <FormField
                       control={form.control}
                       name="stream"
                       render={({ field }) => (
-                        <FormItem className="space-y-2 md:col-span-2">
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Stream *
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                            Stream
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value || watchedStream || undefined}
                           >
                             <FormControl>
-                              <SelectTrigger className="h-10">
+                              <SelectTrigger className={selectShell}>
                                 <SelectValue placeholder="Select stream" />
                               </SelectTrigger>
                             </FormControl>
@@ -772,277 +650,220 @@ export function CreateStudentDrawer({
                               ))}
                             </SelectContent>
                           </Select>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                          <p className="text-[11px] text-slate-400">
                             {availableStreams.length > 1
-                              ? 'This grade has multiple streams — pick one for the student.'
-                              : 'Stream assigned automatically for this grade.'}
+                              ? 'This grade has multiple streams.'
+                              : 'Auto-assigned for this grade.'}
                           </p>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
                   )}
-                  <FormField
-                    control={form.control}
-                    name="admission_date"
-                    render={({ field }) => {
-                      // Calculate reasonable year range for admission dates
-                      const today = new Date();
-                      const minYear = today.getFullYear() - 10; // Allow 10 years back
-                      const maxYear = today.getFullYear() + 5; // Allow 5 years forward
-                      
-                      // Parse current value
-                      const currentValue = field.value || '';
-                      const dateParts = currentValue.split('-');
-                      const currentYear = dateParts[0] || '';
-                      const currentMonth = dateParts[1] ? parseInt(dateParts[1]).toString() : '';
-                      const currentDay = dateParts[2] ? parseInt(dateParts[2]).toString() : '';
-                      
-                      // Use state to track individual selections
-                      const [selectedDay, setSelectedDay] = React.useState(currentDay);
-                      const [selectedMonth, setSelectedMonth] = React.useState(currentMonth);
-                      const [selectedYear, setSelectedYear] = React.useState(currentYear);
-                      
-                      // Update form field whenever all three are selected
-                      React.useEffect(() => {
-                        if (selectedDay && selectedMonth && selectedYear) {
-                          const paddedDay = selectedDay.padStart(2, '0');
-                          const paddedMonth = selectedMonth.padStart(2, '0');
-                          const dateString = `${selectedYear}-${paddedMonth}-${paddedDay}`;
-                          field.onChange(dateString);
-                        }
-                      }, [selectedDay, selectedMonth, selectedYear, field]);
-                      
-                      // Ensure empty strings are treated as undefined for Select components
-                      const dayValue = selectedDay || undefined;
-                      const monthValue = selectedMonth || undefined;
-                      const yearValue = selectedYear || undefined;
-                      
-                      // Get days in month
-                      const getDaysInMonth = (month: string, year: string) => {
-                        if (!month || !year) return 31;
-                        return new Date(parseInt(year), parseInt(month), 0).getDate();
-                      };
-                      
-                      const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
-                      
-                      return (
-                        <FormItem className="space-y-2 md:col-span-2">
-                          <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Admission Date *</FormLabel>
-                          <FormControl>
-                            <div className="grid grid-cols-3 gap-2">
-                              {/* Day */}
-                              <Select 
-                                value={dayValue} 
-                                onValueChange={setSelectedDay}
-                              >
-                                <SelectTrigger className="h-10">
-                                  <SelectValue placeholder="Day" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
-                                    <SelectItem key={day} value={day.toString()}>
-                                      {day}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              
-                              {/* Month */}
-                              <Select 
-                                value={monthValue} 
-                                onValueChange={setSelectedMonth}
-                              >
-                                <SelectTrigger className="h-10">
-                                  <SelectValue placeholder="Month" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="1">January</SelectItem>
-                                  <SelectItem value="2">February</SelectItem>
-                                  <SelectItem value="3">March</SelectItem>
-                                  <SelectItem value="4">April</SelectItem>
-                                  <SelectItem value="5">May</SelectItem>
-                                  <SelectItem value="6">June</SelectItem>
-                                  <SelectItem value="7">July</SelectItem>
-                                  <SelectItem value="8">August</SelectItem>
-                                  <SelectItem value="9">September</SelectItem>
-                                  <SelectItem value="10">October</SelectItem>
-                                  <SelectItem value="11">November</SelectItem>
-                                  <SelectItem value="12">December</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              
-                              {/* Year */}
-                              <Select 
-                                value={yearValue} 
-                                onValueChange={setSelectedYear}
-                              >
-                                <SelectTrigger className="h-10">
-                                  <SelectValue placeholder="Year" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                  {Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i).map((year) => (
-                                    <SelectItem key={year} value={year.toString()}>
-                                      {year}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      );
-                    }}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">
-                    Guardian Information
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="guardian_name"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Guardian Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter guardian's full name" {...field} className="h-10" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
 
                   <FormField
                     control={form.control}
-                    name="guardian_phone"
+                    name="gender"
                     render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Guardian Phone *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="+254700000000" 
-                            value={field.value}
-                            onChange={(e) => {
-                              const formatted = formatPhoneNumber(e.target.value);
-                              field.onChange(formatted);
-                            }}
-                            className="h-10" 
-                          />
-                        </FormControl>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Format: +254XXXXXXXXX or +2540XXXXXXXXX
-                        </p>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="guardian_email"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Guardian Email
-                          <span className="text-slate-400 font-normal ml-1">(optional)</span>
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Gender
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="guardian@example.com" {...field} className="h-10" />
+                          <GenderPills value={field.value} onChange={field.onChange} />
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
+                </SectionCard>
 
-                  <FormField
-                    control={form.control}
-                    name="home_address"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2 md:col-span-2">
-                        <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          Home Address
-                          <span className="text-slate-400 font-normal ml-1">(optional)</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter physical address" {...field} className="h-10" />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Portal Access
-                  </h3>
-                  <Badge variant="secondary" className="text-xs">Auto-generated</Badge>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                  Login credentials will be automatically generated and sent to the guardian's email
-                </p>
-                <div className="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md p-3">
-                  <div className="flex items-center gap-2">
-                    <Verified className="h-4 w-4 text-slate-500" />
-                    <span className="text-sm text-slate-700 dark:text-slate-300">Student Portal</span>
-                  </div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                    portal.kenyaschools.edu5
-                  </span>
-                </div>
-              </div>
-
-              <DrawerFooter className="shrink-0 gap-2 border-t border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6 sm:flex-row">
-                <Button 
-                  type="submit" 
-                  disabled={createStudentMutation.isPending}
-                  className="h-10 flex-1 gap-2 rounded-full bg-primary text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-dark hover:text-white disabled:opacity-50"
+                {/* 03 Contact */}
+                <SectionCard
+                  step="03"
+                  title="Contact"
+                  subtitle="For SMS and fee reminders"
+                  icon={<Phone className="h-4 w-4" />}
+                  complete={contactComplete}
                 >
-                  {createStudentMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Enrolling…
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-4 w-4" />
-                      Complete enrollment
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setIsDrawerOpen(false)}
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Phone number
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FieldIcon><Phone className="h-4 w-4" /></FieldIcon>
+                            <Input
+                              placeholder="+254700000000"
+                              value={field.value}
+                              onChange={(e) => field.onChange(formatPhoneNumber(e.target.value))}
+                              className={fieldShell}
+                            />
+                          </div>
+                        </FormControl>
+                        <p className="text-[11px] text-slate-400">Kenya format: +254 followed by 9 digits</p>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="rounded-xl bg-slate-50/80 p-3 ring-1 ring-inset ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-700/50">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Mail className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-slate-700 dark:text-slate-300">Portal login email</p>
+                        <p className="mt-0.5 truncate font-mono text-[11px] text-slate-500">{previewEmail}</p>
+                        {!showCustomEmail ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowCustomEmail(true)}
+                            className="mt-1.5 text-[11px] font-medium text-primary hover:underline"
+                          >
+                            Use a custom email instead
+                          </button>
+                        ) : (
+                          <FormField
+                            control={form.control}
+                            name="student_email"
+                            render={({ field }) => (
+                              <FormItem className="mt-2 space-y-1">
+                                <FormControl>
+                                  <Input placeholder="custom@example.com" {...field} className="h-9 rounded-lg text-sm" />
+                                </FormControl>
+                                <FormMessage className="text-xs" />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                {/* What happens next */}
+                <div className={cn(studentsPanel, "p-4")}>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    What happens next
+                  </p>
+                  <ol className="space-y-3">
+                    {[
+                      {
+                        title: "Student portal login created",
+                        desc: "Copy password from the confirmation screen",
+                        icon: Verified,
+                        active: true,
+                      },
+                      {
+                        title: "Share credentials",
+                        desc: `${schoolSubdomain}.squl.co.ke/student`,
+                        icon: Sparkles,
+                        active: false,
+                      },
+                      {
+                        title: "Link a parent (optional)",
+                        desc: "Parents page for fee & grade access",
+                        icon: Users,
+                        active: false,
+                        link: "/parents",
+                      },
+                    ].map((item, i) => (
+                      <li key={item.title} className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <div
+                            className={cn(
+                              "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                              item.active
+                                ? "bg-primary/10 text-primary"
+                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500",
+                            )}
+                          >
+                            <item.icon className="h-3.5 w-3.5" />
+                          </div>
+                          {i < 2 && (
+                            <div className="my-1 w-px flex-1 bg-slate-200 dark:bg-slate-700" />
+                          )}
+                        </div>
+                        <div className="min-w-0 pb-1 pt-0.5">
+                          <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{item.title}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            {'link' in item && item.link ? (
+                              <>
+                                Open the{' '}
+                                <Link href={item.link} className="font-medium text-primary hover:underline">
+                                  Parents
+                                </Link>
+                                {' '}page to link a guardian
+                              </>
+                            ) : (
+                              item.desc
+                            )}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </form>
+            </Form>
+          </div>
+
+          {/* ── Sticky footer ── */}
+          <DrawerFooter className="shrink-0 border-t border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 sm:px-5">
+            <div className="flex w-full flex-col gap-2 sm:flex-row">
+              <Button
+                type="submit"
+                form="enroll-student-form"
+                disabled={createStudentMutation.isPending || progressCount < 3}
+                className="h-11 flex-1 gap-2 rounded-full bg-primary text-white shadow-md shadow-primary/25 transition-all hover:bg-primary-dark disabled:opacity-50"
+              >
+                {createStudentMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Enrolling…
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    Complete enrollment
+                    <ArrowRight className="ml-auto h-4 w-4 opacity-70 sm:ml-0" />
+                  </>
+                )}
+              </Button>
+              <DrawerClose asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
                   disabled={createStudentMutation.isPending}
-                  className="h-10 rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-50 sm:flex-none sm:px-5"
+                  className="h-11 rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 sm:flex-none sm:px-5"
                 >
                   Cancel
                 </Button>
-              </DrawerFooter>
-            </form>
-          </Form>
-        </div>
-      </DrawerContent>
-    </Drawer>
-    
-    {/* Success Modal */}
-    {successData && showSuccessModal && (
-      <StudentSuccessModal
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        studentData={successData}
-        schoolSubdomain={schoolConfig?.tenant?.subdomain || "school"}
-      />
-    )}
-  </>
+              </DrawerClose>
+            </div>
+            {progressCount < 3 && (
+              <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
+                <Circle className="h-2.5 w-2.5" />
+                Fill all three sections to enroll
+              </p>
+            )}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      {successData && showSuccessModal && (
+        <StudentSuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          studentData={successData}
+          schoolSubdomain={schoolSubdomain}
+        />
+      )}
+    </>
   )
-} 
+}

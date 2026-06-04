@@ -38,6 +38,7 @@ import { StudentAccountPanel } from "./StudentAccountPanel";
 import { StudentCredentialsDialog } from "./StudentCredentialsDialog";
 import { StudentProfileHero } from "./StudentProfileHero";
 import { StudentProfileOverview } from "./StudentProfileOverview";
+import { StudentParentsPanel } from "./StudentParentsPanel";
 import { StudentProfileMoneyTab } from "./StudentProfileMoneyTab";
 import {
   STUDENT_PROFILE_TABS,
@@ -315,7 +316,7 @@ export function StudentDetailsView({
           />
         </TabsContent>
 
-        <TabsContent value="person" className="mt-0">
+        <TabsContent value="person" className="mt-0 space-y-4">
           <div className={`${studentsPanel} overflow-hidden`}>
             <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
               <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
@@ -384,6 +385,16 @@ export function StudentDetailsView({
               </InfoGroup>
             </div>
           </div>
+
+          <StudentParentsPanel
+            student={{
+              id: student.id,
+              name: student.studentName,
+              admissionNumber: student.admissionNumber,
+              gradeLevelName: student.gradeLevelName,
+              streamName: student.streamName ?? undefined,
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="enrollment" className="mt-0">

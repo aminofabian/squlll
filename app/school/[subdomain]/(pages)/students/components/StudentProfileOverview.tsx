@@ -9,11 +9,15 @@ import {
   Mail,
   Phone,
   Wallet,
+  Users,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { StudentDetailSummary } from "@/types/student";
 import { studentsPanel } from "./students-ui";
 import { cn } from "@/lib/utils";
+import { useStudentParents } from "@/lib/hooks/useStudentParents";
+import { LinkParentDrawer } from "./LinkParentDrawer";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-KE", {
@@ -67,6 +71,20 @@ export function StudentProfileOverview({
     grossFees > 0
       ? Math.round((student.feeSummary.totalPaid / grossFees) * 100)
       : 100;
+
+  const {
+    parents,
+    loading: parentsLoading,
+    refetch: refetchParents,
+  } = useStudentParents(student.id);
+
+  const studentForLink = {
+    id: student.id,
+    name: student.studentName,
+    admissionNumber: student.admissionNumber,
+    gradeLevelName: student.gradeLevelName,
+    streamName: student.streamName ?? undefined,
+  };
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -248,6 +266,89 @@ export function StudentProfileOverview({
             year: "numeric",
           })}
         </p>
+      </OverviewCard>
+
+      <OverviewCard
+        title="Parents & guardians"
+        icon={Users}
+        action={
+          <LinkParentDrawer
+            student={studentForLink}
+            linkedParentIds={parents.map((p) => p.id)}
+            onLinked={() => void refetchParents()}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-xs text-primary"
+              >
+                Link parent
+                <ArrowRight className="h-3 w-3" />
+              </Button>
+            }
+          />
+        }
+      >
+        {parentsLoading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            Loading…
+          </div>
+        ) : parents.length === 0 ? (
+          <div>
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              No guardian linked yet.
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Link a parent for portal access to fees and grades.
+            </p>
+            <div className="mt-3">
+              <LinkParentDrawer
+                student={studentForLink}
+                linkedParentIds={[]}
+                onLinked={() => void refetchParents()}
+                trigger={
+                  <Button type="button" size="sm" className="h-8 gap-1.5 bg-primary text-xs hover:bg-primary-dark">
+                    <Users className="h-3.5 w-3.5" />
+                    Link parent
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {parents.slice(0, 2).map((parent) => (
+              <li
+                key={parent.id}
+                className="flex items-center justify-between gap-2 rounded-lg bg-slate-50/80 px-3 py-2 dark:bg-slate-800/30"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {parent.name}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">{parent.email}</p>
+                </div>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                    parent.userId
+                      ? "bg-primary/10 text-primary"
+                      : "bg-amber-100 text-amber-700",
+                  )}
+                >
+                  {parent.userId ? "Active" : "Pending"}
+                </span>
+              </li>
+            ))}
+            {parents.length > 2 ? (
+              <p className="text-xs text-slate-400">
+                +{parents.length - 2} more — see Person tab
+              </p>
+            ) : null}
+          </ul>
+        )}
       </OverviewCard>
 
       <div className={cn(studentsPanel, "lg:col-span-2")}>
