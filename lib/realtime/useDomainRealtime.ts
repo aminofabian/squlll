@@ -26,6 +26,8 @@ import type {
 } from './liveStatsTypes'
 
 export interface DomainRealtimeHandlers {
+  /** When false, socket listeners are not registered. Defaults to true. */
+  enabled?: boolean
   onTimetablePublished?: (payload: TimetablePublishedPayload) => void
   onTimetableUnpublished?: (payload: TimetablePublishedPayload) => void
   onTimetableEntryChanged?: (payload: TimetableEntryChangedPayload) => void
@@ -55,9 +57,10 @@ export function useDomainRealtime(handlers: DomainRealtimeHandlers): void {
   const { socket } = useRealtime()
   const handlersRef = useRef(handlers)
   handlersRef.current = handlers
+  const enabled = handlers.enabled !== false
 
   useEffect(() => {
-    if (!socket) return
+    if (!socket || !enabled) return
 
     const bind = <T>(
       event: string,
@@ -156,5 +159,5 @@ export function useDomainRealtime(handlers: DomainRealtimeHandlers): void {
     return () => {
       for (const cleanup of cleanups) cleanup()
     }
-  }, [socket])
+  }, [socket, enabled])
 }
