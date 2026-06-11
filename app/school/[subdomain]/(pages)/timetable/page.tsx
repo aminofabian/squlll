@@ -383,7 +383,11 @@ export default function SmartTimetableNew() {
 
         if (cancelled) return;
 
-        const timetableLoads = termId
+        const tenantId = getTenantIdFromCookies();
+        const loadTimetable =
+          !!termId &&
+          (isTimetableWizardComplete(tenantId) || hasCachedTimetableData());
+        const timetableLoads = loadTimetable
           ? [
               loadTimetableBundle({
                 gradeId: selectedGradeId,
@@ -455,6 +459,12 @@ export default function SmartTimetableNew() {
   useEffect(() => {
     const termId = selectedTerm?.id || selectedTermId;
     if (!termId || !selectedGradeId || isLoadingInitial) return;
+    if (
+      !isTimetableWizardComplete(getTenantIdFromCookies()) &&
+      !hasCachedTimetableData()
+    ) {
+      return;
+    }
 
     const scopeKey = `${selectedGradeId}:${selectedStreamId ?? ""}`;
     if (initialGradeScopeKey.current === scopeKey) {
@@ -504,8 +514,13 @@ export default function SmartTimetableNew() {
     prevSelectedGradeIdRef.current = selectedGradeId;
 
     if (prev && !selectedGradeId) {
-      setTimetableError(false);
-      void loadTimetableBundle({ gradeId: null, streamId: null });
+      if (
+        isTimetableWizardComplete(getTenantIdFromCookies()) ||
+        hasCachedTimetableData()
+      ) {
+        setTimetableError(false);
+        void loadTimetableBundle({ gradeId: null, streamId: null });
+      }
     }
   }, [
     selectedGradeId,
@@ -513,52 +528,58 @@ export default function SmartTimetableNew() {
     selectedTermId,
     isLoadingInitial,
     loadTimetableBundle,
+    hasCachedTimetableData,
   ]);
 
   const grid = useTimetableGrid(selectedGradeId);
   const { periodNumbers, getSlotFor } = usePeriodSlots();
   const breaks = useTimetableStore((state) => state.breaks);
-  const timetableSetupComplete = isTimetableWizardComplete(
+  const timetableWizardComplete = isTimetableWizardComplete(
     getTenantIdFromCookies(),
   );
   const daysPerWeekFromStore = useTimetableStore((state) => state.daysPerWeek);
   const lessonPeriodsPerDay = useTimetableStore(
     (state) => state.lessonPeriodsPerDay,
   );
-  const hasScheduleStructure =
+
+  /** Lesson times + breaks exist in store (not merely a local “wizard done” flag). */
+  const hasLessonTimesReady =
     hasTimeSlots ||
     periodNumbers.length > 0 ||
-    hasAnyLessons ||
-    (timetableSetupComplete && breaks.length > 0) ||
-    (!isGridLoading &&
-      !!selectedTerm &&
+    (breaks.length > 0 &&
       ((lessonPeriodsPerDay ?? 0) > 0 || daysPerWeekFromStore > 0));
+
   const hasScheduleSlots = hasTimeSlots || periodNumbers.length > 0;
 
-  /** Slots not in store yet but schedule data suggests a template exists */
+  const hasScheduleStructure = hasLessonTimesReady || hasAnyLessons;
+
+  const hasSelectedTerm = !!(selectedTerm?.id || selectedTermId);
+
+  /** Only fetch timetable rows after the school-day setup step is finished. */
+  const shouldLoadTimetableBundle =
+    hasSelectedTerm &&
+    (timetableWizardComplete || hasLessonTimesReady || hasAnyLessons);
+
   const slotsStillPending =
+    shouldLoadTimetableBundle &&
     !hasScheduleSlots &&
     !timetableError &&
-    !!selectedTerm &&
-    (hasAnyLessons ||
-      breaks.length > 0 ||
-      timetableSetupComplete ||
-      isGridLoading ||
-      isLoadingTimetable ||
-      isRetrying);
+    (isGridLoading || isLoadingTimetable || isRetrying);
 
   const showGridSkeleton =
-    !!selectedTerm &&
+    shouldLoadTimetableBundle &&
+    !hasLessonTimesReady &&
+    !hasAnyLessons &&
     !timetableError &&
     (isGridLoading || isLoadingTimetable || isRetrying || slotsStillPending);
 
-  /** Empty “set up lesson times” — only after load settles with no template */
+  /** Empty “set up lesson times” inside the grid after load settles with no template */
   const showEmptyScheduleState =
+    hasScheduleStructure &&
     !showGridSkeleton &&
     !hasScheduleSlots &&
     !timetableError &&
-    !hasAnyLessons &&
-    breaks.length === 0;
+    !hasAnyLessons;
 
   // Whole-school grid failed hard (not a stale-cache refresh).
   const combinedGridFailed =
@@ -835,7 +856,7 @@ export default function SmartTimetableNew() {
   useEffect(() => {
     if (isGridLoading) return;
     if (hasTimeSlots || periodNumbers.length > 0) return;
-    if (!timetableSetupComplete) return;
+    if (!timetableWizardComplete) return;
     if (periodsRefetchAttemptedRef.current) return;
 
     const termId = selectedTerm?.id || selectedTermId;
@@ -855,7 +876,7 @@ export default function SmartTimetableNew() {
     isPageLoading,
     hasTimeSlots,
     periodNumbers.length,
-    timetableSetupComplete,
+    timetableWizardComplete,
     selectedTerm?.id,
     selectedTermId,
     reloadTimetableData,
@@ -866,6 +887,7 @@ export default function SmartTimetableNew() {
     if (!reconnectedAt) return;
     const termId = selectedTerm?.id || selectedTermId;
     if (!termId || isPageLoading) return;
+    if (!shouldLoadTimetableBundle) return;
 
     const timer = window.setTimeout(() => {
       void reloadTimetableData().then((result) => {
@@ -884,6 +906,7 @@ export default function SmartTimetableNew() {
     selectedTerm?.id,
     selectedTermId,
     isPageLoading,
+    shouldLoadTimetableBundle,
     reloadTimetableData,
     toast,
   ]);
@@ -2209,7 +2232,7 @@ export default function SmartTimetableNew() {
                 />
               )}
 
-            {(hasScheduleStructure || isPageLoading || selectedGradeId) && (
+            {(hasScheduleStructure || shouldLoadTimetableBundle) && (
               <section
                 data-timetable-print-root
                 className="rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900"
@@ -2363,33 +2386,38 @@ export default function SmartTimetableNew() {
               </section>
             )}
 
-            <TimetableStatusBar
-              hasScheduleStructure={hasScheduleStructure}
-              hasAnyLessons={hasAnyLessons}
-              conflictCount={conflictCount}
-              onAddFirstLesson={() => {
-                if (!selectedGradeId && grades.length > 0) {
-                  setSelectedGrade(grades[0].id);
+            {hasScheduleStructure ? (
+              <TimetableStatusBar
+                hasScheduleStructure={hasScheduleStructure}
+                hasAnyLessons={hasAnyLessons}
+                conflictCount={conflictCount}
+                onAddFirstLesson={() => {
+                  if (!selectedGradeId && grades.length > 0) {
+                    setSelectedGrade(grades[0].id);
+                  }
+                }}
+                onHighlightProblems={handleHighlightProblems}
+                classLabel={selectedGradeId ? classDisplayLabel : "All classes"}
+                streamName={currentStream?.name}
+                filledSlots={
+                  selectedGradeId ? stats.filledSlots : termOverview.totalFilled
                 }
-              }}
-              onHighlightProblems={handleHighlightProblems}
-              classLabel={selectedGradeId ? classDisplayLabel : "All classes"}
-              streamName={currentStream?.name}
-              filledSlots={
-                selectedGradeId ? stats.filledSlots : termOverview.totalFilled
-              }
-              totalSlots={
-                selectedGradeId ? stats.totalSlots : termOverview.totalSlots
-              }
-              totalLessons={
-                selectedGradeId ? stats.totalLessons : schoolLessonCount
-              }
-              periodCount={periodNumbers.length}
-              lastUpdatedIso={lastUpdated}
-              teacherLessons={teacherLessons}
-              highlightTeacherId={highlightTeacherId}
-              onTeacherClick={handleTeacherHighlightClick}
-            />
+                totalSlots={
+                  selectedGradeId ? stats.totalSlots : termOverview.totalSlots
+                }
+                totalLessons={
+                  selectedGradeId ? stats.totalLessons : schoolLessonCount
+                }
+                periodCount={Math.max(
+                  periodNumbers.length,
+                  lessonPeriodsPerDay ?? 0,
+                )}
+                lastUpdatedIso={lastUpdated}
+                teacherLessons={teacherLessons}
+                highlightTeacherId={highlightTeacherId}
+                onTeacherClick={handleTeacherHighlightClick}
+              />
+            ) : null}
 
             {selectedGradeId &&
               stats.totalSlots > 0 &&

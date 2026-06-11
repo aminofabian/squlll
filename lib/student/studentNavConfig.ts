@@ -96,7 +96,7 @@ export const STUDENT_NAV_ITEMS: StudentNavItem[] = [
   },
   {
     title: "Assignments",
-    href: "/student/assignments",
+    href: "/student/upcoming-tests",
     icon: BookOpen,
     tab: "more",
   },

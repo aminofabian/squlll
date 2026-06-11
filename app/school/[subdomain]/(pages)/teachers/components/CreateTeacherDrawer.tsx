@@ -1,91 +1,183 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Button } from '@/components/ui/button';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from '@/components/ui/drawer';
-import { UserPlus, GraduationCap, Loader2, X } from "lucide-react";
-import { toast } from 'sonner';
-import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
-import { useTenantSubjects } from '@/lib/hooks/useTenantSubjects';
-import { useGradeLevelsForSchoolType } from '@/lib/hooks/useGradeLevelsForSchoolType';
-import { InvitationSuccessModal } from './InvitationSuccessModal';
-import { TeacherRegistrationForm, TEACHER_WIZARD_STEPS, WIZARD_STEP_FIELDS } from './TeacherRegistrationForm';
-import type { TeachingPanel } from './teacher-registration-ui';
+} from "@/components/ui/drawer";
+import {
+  UserPlus,
+  GraduationCap,
+  Loader2,
+  X,
+  Mail,
+  Phone,
+  User,
+  Sparkles,
+  BookOpen,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
+import { InvitationSuccessModal } from "./InvitationSuccessModal";
+import { teachersPanel } from "./teachers-ui";
 
-// Teacher form data schema
+const DEPARTMENTS = [
+  "English",
+  "Mathematics",
+  "Science",
+  "Social Studies",
+  "Physical Education",
+  "Arts & Music",
+  "Languages",
+  "Computer Science",
+  "Special Education",
+  "Administration",
+] as const;
+
+const phoneSchema = z.string().refine(
+  (value) => /^\+254[0-9]{9}$|^\+[1-9][0-9]{1,14}$/.test(value),
+  { message: "Enter a valid number: +254XXXXXXXXX" },
+);
+
 const teacherFormSchema = z.object({
-  email: z.string().email({ message: 'Valid email is required' }),
-  fullName: z.string().min(2, { message: 'Full name must be at least 2 characters' }),
-  firstName: z.string().min(1, { message: 'First name is required' }),
-  lastName: z.string().min(1, { message: 'Last name is required' }),
-  gender: z.enum(['MALE', 'FEMALE'], { required_error: "Please select a gender" }),
-  department: z.string().min(1, { message: 'Department is required' }),
-  phoneNumber: z.string()
-    .min(10, { message: 'Valid phone number is required' })
-    .refine((value) => {
-      // Allow Kenyan numbers (+254...) and international numbers
-      const phoneRegex = /^\+254[0-9]{9}$|^\+[1-9][0-9]{1,14}$/;
-      return phoneRegex.test(value);
-    }, { message: 'Please enter a valid phone number (e.g., +254700000000)' }),
-  address: z.string().optional().or(z.literal('')),
-  employeeId: z.string().min(2, { message: 'Employee ID is required' }),
-  dateOfBirth: z.string().min(1, { message: 'Date of birth is required' }).refine((dateString) => {
-    const birthDate = new Date(dateString);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    const dayDiff = today.getDate() - birthDate.getDate();
-    
-    // Calculate exact age
-    const exactAge = age - (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? 1 : 0);
-    
-    return exactAge >= 18;
-  }, { message: 'Teacher must be at least 18 years old' }),
-  qualifications: z.string().min(1, { message: 'Qualifications are required' }),
-  gradeSubjects: z.record(z.string(), z.array(z.string())).optional().default({}).refine((gradeSubjects) => {
-    // Ensure at least one subject is selected across all grades
-    const allSubjects = Object.values(gradeSubjects || {}).flat();
-    return allSubjects.length > 0;
-  }, { message: 'Please select at least one subject for any grade' }),
-  tenantGradeLevelIds: z.array(z.string()).min(1, { message: 'Please select at least one grade level' }),
-  tenantStreamIds: z.array(z.string()).optional().default([]),
-  isClassTeacher: z.boolean().default(false),
-  classTeacherType: z.enum(['stream', 'grade']).optional(),
-  classTeacherTenantStreamId: z.string().optional(),
-  classTeacherTenantGradeLevelId: z.string().optional(),
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email is required"),
+  phoneNumber: phoneSchema,
+  gender: z.enum(["MALE", "FEMALE"]),
+  department: z.string().min(1, "Department is required"),
 });
 
 type TeacherFormData = z.infer<typeof teacherFormSchema>;
 
-// Mock data for the departments
-const departments = [
-  'English',
-  'Mathematics',
-  'Science',
-  'Social Studies',
-  'Physical Education',
-  'Arts & Music',
-  'Languages',
-  'Computer Science',
-  'Special Education',
-  'Administration'
-];
-
 interface CreateTeacherDrawerProps {
   onTeacherCreated: () => void;
   defaultOpen?: boolean;
+}
+
+function formatPhoneNumber(value: string): string {
+  if (value === "" || value === "+" || value === "+2" || value === "+25") {
+    return "+254";
+  }
+
+  let cleaned = value.replace(/[^\d+]/g, "");
+
+  if (cleaned.startsWith("0")) {
+    cleaned = "+254" + cleaned.substring(1);
+  } else if (cleaned && /^\d/.test(cleaned) && !cleaned.startsWith("+")) {
+    cleaned = "+254" + cleaned;
+  } else if (cleaned.startsWith("+2540")) {
+    cleaned = "+254" + cleaned.substring(5);
+  } else if (!cleaned || cleaned === "+") {
+    cleaned = "+254";
+  }
+
+  if (cleaned.startsWith("+254") && cleaned.length > 13) {
+    cleaned = cleaned.substring(0, 13);
+  }
+
+  return cleaned;
+}
+
+function splitName(fullName: string): {
+  firstName: string;
+  lastName: string;
+  fullName: string;
+} {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return { firstName: "", lastName: "", fullName: "" };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: parts[0], fullName: parts[0] };
+  }
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+    fullName: parts.join(" "),
+  };
+}
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const fieldShell =
+  "h-11 rounded-xl border-0 bg-slate-100/80 pl-10 text-sm shadow-none ring-1 ring-inset ring-slate-200/70 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-slate-800/60 dark:ring-slate-700/60 dark:placeholder:text-slate-500";
+
+const selectShell =
+  "h-11 rounded-xl border-0 bg-slate-100/80 text-sm shadow-none ring-1 ring-inset ring-slate-200/70 focus:ring-2 focus:ring-primary/40 dark:bg-slate-800/60 dark:ring-slate-700/60";
+
+function FieldIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+      {children}
+    </span>
+  );
+}
+
+function GenderPills({
+  value,
+  onChange,
+}: {
+  value: "MALE" | "FEMALE";
+  onChange: (v: "MALE" | "FEMALE") => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {([
+        { id: "MALE" as const, label: "Male" },
+        { id: "FEMALE" as const, label: "Female" },
+      ]).map((option) => {
+        const active = value === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            className={cn(
+              "rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+              active
+                ? "bg-primary text-white shadow-md shadow-primary/25 ring-2 ring-primary/30"
+                : "bg-slate-100/80 text-slate-600 ring-1 ring-inset ring-slate-200/70 hover:bg-slate-200/60 dark:bg-slate-800/60 dark:text-slate-300 dark:ring-slate-700/60",
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function CreateTeacherDrawer({
@@ -96,10 +188,7 @@ export function CreateTeacherDrawer({
   const isSubmittingRef = useRef(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(defaultOpen);
-  const [wizardStep, setWizardStep] = useState(0);
-  const [teachingPanel, setTeachingPanel] = useState<TeachingPanel>("grades");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [invitationData, setInvitationData] = useState<{
     email: string;
     fullName: string;
@@ -108,230 +197,28 @@ export function CreateTeacherDrawer({
     emailSent?: boolean;
   } | null>(null);
   const { data: schoolConfig } = useSchoolConfig();
-  
-  // Get tenant subjects and grade levels using new GraphQL queries
-  const { data: tenantSubjects = [], isLoading: subjectsLoading, error: subjectsError } = useTenantSubjects();
-  const { data: gradeLevelsData = [], isLoading: gradeLevelsLoading, error: gradeLevelsError } = useGradeLevelsForSchoolType();
-  
-  // Transform the new data to match existing component expectations
-  const allSubjects = tenantSubjects.map(ts => ({
-    id: ts.id,
-    name: ts.subject?.name || ts.customSubject?.name || 'Unknown Subject',
-    code: ts.subject?.code || ts.customSubject?.code || '',
-    subjectType: ts.subjectType,
-    category: ts.subject?.category || ts.customSubject?.category,
-    department: ts.subject?.department || ts.customSubject?.department,
-    shortName: ts.subject?.shortName || ts.customSubject?.shortName,
-    isCompulsory: ts.isCompulsory,
-    totalMarks: ts.totalMarks,
-    passingMarks: ts.passingMarks,
-    creditHours: ts.creditHours,
-    curriculum: ts.curriculum.name,
-    isActive: ts.isActive
-  }));
-  
-  // Transform grade levels data to match existing structure
-  const gradeLevels = gradeLevelsData.reduce((acc, gl) => {
-    const curriculumName = gl.curriculum.name;
-    let level = acc.find(l => l.levelName === curriculumName);
-    
-    if (!level) {
-      level = {
-        levelId: gl.curriculum.id,
-        levelName: curriculumName,
-        grades: []
-      };
-      acc.push(level);
-    }
-    
-    level.grades.push({
-      id: gl.id,
-      name: gl.gradeLevel.name,
-      streams: gl.tenantStreams.map((ts) => ({
-        id: ts.id,
-        name: ts.stream.name,
-      })),
-    });
-    
-    return acc;
-  }, [] as Array<{
-    levelId: string;
-    levelName: string;
-    grades: Array<{
-      id: string;
-      name: string;
-      streams: Array<{ id: string; name: string }>;
-    }>;
-  }>);
-  
-  // Flatten grades and streams for easier access with the new data structure
-  const flatGrades = gradeLevels.flatMap(level =>
-    (level.grades || [])
-      .filter(grade => grade.id) // Only include grades with valid IDs
-      .map(grade => ({
-        ...grade,
-        levelName: level.levelName,
-        levelId: level.levelId,
-        streams: grade.streams || []
-      }))
-  );
-  
-  const allStreams = flatGrades.flatMap(grade => 
-    grade.streams.map(stream => ({
-      ...stream,
-      gradeName: grade.name,
-      gradeId: grade.id
-    }))
-  );
-  
+
   useEffect(() => {
-    if (defaultOpen) {
-      setIsDrawerOpen(true);
-    }
+    if (defaultOpen) setIsDrawerOpen(true);
   }, [defaultOpen]);
 
-  const resetWizard = () => {
-    setWizardStep(0);
-    setTeachingPanel("grades");
-  };
-
-  // Clear error when drawer opens
-  const handleDrawerOpenChange = (open: boolean) => {
-    setIsDrawerOpen(open);
-    if (open) {
-      setError(null);
-    } else {
-      resetWizard();
-    }
-  };
-  
-  // Phone number formatting utility
-  const formatPhoneNumber = (value: string): string => {
-    // If user is trying to clear the field, allow empty or just +254
-    if (value === '' || value === '+' || value === '+2' || value === '+25') {
-      return '+254';
-    }
-    
-    // Remove all non-digit characters except + at the start
-    let cleaned = value.replace(/[^\d+]/g, '');
-    
-    // If it starts with 0, replace with +254
-    if (cleaned.startsWith('0')) {
-      cleaned = '+254' + cleaned.substring(1);
-    }
-    // If it's just digits without +, prepend +254
-    else if (cleaned && /^\d/.test(cleaned) && !cleaned.startsWith('+')) {
-      cleaned = '+254' + cleaned;
-    }
-    // If it starts with +254, ensure it's properly formatted and remove any 0 after +254
-    else if (cleaned.startsWith('+254')) {
-      // Remove 0 immediately after +254 (e.g., +2540712345678 -> +254712345678)
-      if (cleaned.startsWith('+2540')) {
-        cleaned = '+254' + cleaned.substring(5);
-      }
-    }
-    // If it starts with + but not +254, keep as is (for other country codes)
-    else if (cleaned.startsWith('+') && !cleaned.startsWith('+254')) {
-      // Keep as is for international numbers
-    }
-    // If empty or just +, default to +254
-    else if (!cleaned || cleaned === '+') {
-      cleaned = '+254';
-    }
-    
-    return cleaned;
-  };
-
   const form = useForm<TeacherFormData>({
-    resolver: zodResolver(teacherFormSchema) as any,
+    resolver: zodResolver(teacherFormSchema),
     defaultValues: {
-      email: '',
-      fullName: '',
-      firstName: '',
-      lastName: '',
-      gender: 'MALE',
-      department: '',
-      phoneNumber: '+254',
-      address: '',
-      employeeId: '',
-      dateOfBirth: '',
-      qualifications: '',
-      gradeSubjects: {},
-      tenantGradeLevelIds: [],
-      tenantStreamIds: [],
-      isClassTeacher: false,
-      classTeacherType: 'stream',
-      classTeacherTenantStreamId: '',
-      classTeacherTenantGradeLevelId: '',
+      fullName: "",
+      email: "",
+      phoneNumber: "+254",
+      gender: "MALE",
+      department: "",
     },
   });
 
-  // Submit handler — guarded against double submission (double-click / Enter + click)
-  const onSubmit = useCallback(async (data: TeacherFormData) => {
-    if (isSubmittingRef.current) {
-      return;
-    }
+  const watchedName = form.watch("fullName");
+  const watchedEmail = form.watch("email");
+  const watchedDepartment = form.watch("department");
 
-    if (!schoolConfig?.tenant?.id) {
-      toast.error("Configuration Error", {
-        description: "School configuration not available. Please refresh and try again."
-      });
-      return;
-    }
-    
-    // Check if data is still loading
-    if (subjectsLoading || gradeLevelsLoading) {
-      toast.error("Data Loading", {
-        description: "Subject and grade level data is still loading. Please wait a moment and try again."
-      });
-      return;
-    }
-    
-    // Check for data loading errors
-    if (subjectsError || gradeLevelsError) {
-      toast.error("Data Loading Error", {
-        description: `Failed to load required data: ${subjectsError?.message || gradeLevelsError?.message}`
-      });
-      return;
-    }
-    
-    // Additional safety check: ensure grade levels and subjects are loaded
-    if (flatGrades.length === 0) {
-      toast.error("Data Loading Error", {
-        description: "Grade level data is not available. Please refresh and try again."
-      });
-      return;
-    }
-    
-    if (allSubjects.length === 0) {
-      toast.error("Data Loading Error", {
-        description: "Subject data is not available. Please refresh and try again."
-      });
-      return;
-    }
-    
-    // Validate that all selected grade IDs exist in the available grades
-    const availableGradeIds = flatGrades.map(g => g.id);
-    const invalidGradeIds = data.tenantGradeLevelIds.filter(id => !availableGradeIds.includes(id));
-    
-    if (invalidGradeIds.length > 0) {
-      console.error('Invalid grade IDs detected before submission:', {
-        invalidIds: invalidGradeIds,
-        availableIds: availableGradeIds.slice(0, 5), // Show first 5 for debugging
-        totalAvailable: availableGradeIds.length
-      });
-      
-      toast.error("Invalid Selection", {
-        description: "Some selected grade levels are invalid. Please refresh the page and try again."
-      });
-      return;
-    }
-
-    isSubmittingRef.current = true;
-    setIsLoading(true);
-    setError(null);
-
-    const finishInvitation = async (inviteData: {
+  const finishInvitation = useCallback(
+    async (inviteData: {
       email: string;
       fullName: string;
       status: string;
@@ -341,456 +228,364 @@ export function CreateTeacherDrawer({
       setInvitationData(inviteData);
       setShowSuccessModal(true);
       form.reset();
-      resetWizard();
       setIsDrawerOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ['getTeachers'] });
+      await queryClient.invalidateQueries({ queryKey: ["getTeachers"] });
       onTeacherCreated();
 
       if (inviteData.emailSent === false) {
-        toast.warning('Teacher registered', {
+        toast.warning("Teacher registered", {
           description:
-            'The invitation email could not be sent. Use Resend on the pending invitations list.',
+            "The invitation email could not be sent. Use Resend on the pending invitations list.",
           duration: 10000,
         });
       }
-    };
+    },
+    [form, onTeacherCreated, queryClient],
+  );
 
-    const isEmailDeliveryFailure = (message: string) =>
-      message.toLowerCase().includes('failed to send email');
+  const onSubmit = useCallback(
+    async (data: TeacherFormData) => {
+      if (isSubmittingRef.current) return;
 
-    try {
-      // Debug: Log form data before processing
-      console.log('CreateTeacherDrawer - Form submission data:', {
-        selectedGradeIds: data.tenantGradeLevelIds,
-        gradeSubjects: data.gradeSubjects,
-        selectedStreamIds: data.tenantStreamIds,
-        isClassTeacher: data.isClassTeacher,
-        classTeacherType: data.classTeacherType,
-        classTeacherStreamId: data.classTeacherTenantStreamId,
-        classTeacherGradeLevelId: data.classTeacherTenantGradeLevelId
-      });
-      
-      // Debug: Validate that selected grade IDs exist in available grades
-      const availableGradeIds = flatGrades.map(g => g.id);
-      const invalidGradeIds = data.tenantGradeLevelIds.filter(id => !availableGradeIds.includes(id));
-      if (invalidGradeIds.length > 0) {
-        console.error('CreateTeacherDrawer - Invalid grade IDs selected:', {
-          invalidIds: invalidGradeIds,
-          availableIds: availableGradeIds,
-          flatGrades: flatGrades.map(g => ({ id: g.id, name: g.name }))
-        });
-      }
-      
-      // Filter out any invalid grade IDs before sending (additional safety check)
-      const validatedGradeLevelIds = data.tenantGradeLevelIds.filter(id => 
-        !invalidGradeIds.includes(id)
-      );
-      
-      console.log('Grade ID validation:', {
-        original: data.tenantGradeLevelIds,
-        filtered: validatedGradeLevelIds,
-        removedIds: data.tenantGradeLevelIds.filter(id => invalidGradeIds.includes(id))
-      });
-      
-      // Ensure we still have valid grade IDs after filtering
-      if (validatedGradeLevelIds.length === 0) {
-        toast.error("Invalid Grade Selection", {
-          description: "All selected grade levels are invalid. Please refresh the page and try selecting different grades."
-        });
-        return;
-      }
-      const allSelectedSubjects = new Set<string>();
-      Object.values(data.gradeSubjects || {}).forEach(subjectIds => {
-        (subjectIds as string[]).forEach(id => allSelectedSubjects.add(id));
-      });
-      const tenantSubjectIds = Array.from(allSelectedSubjects);
-
-      // Ensure at least one subject remains after flattening
-      if (tenantSubjectIds.length === 0) {
-        toast.error("No Subjects Selected", {
-          description: "Please select at least one subject for the teacher."
+      if (!schoolConfig?.tenant?.id) {
+        toast.error("Configuration error", {
+          description: "School configuration not available. Please refresh and try again.",
         });
         return;
       }
 
-      // Normalize department to match allowed list (case-insensitive)
-      const allowedDepartments = departments;
-      const selectedDept = data.department?.toString().trim();
-      const normalizedDepartment = allowedDepartments.find(d => d.toLowerCase() === selectedDept?.toLowerCase()) || allowedDepartments[0];
+      isSubmittingRef.current = true;
+      setIsLoading(true);
 
-      // Sanitize employeeId (alphanumeric, dash, slash) and clamp length
-      const employeeIdSanitized = data.employeeId
-        ? data.employeeId.toString().trim().replace(/[^A-Za-z0-9\/-]/g, '').slice(0, 32)
-        : '';
+      const { firstName, lastName, fullName } = splitName(data.fullName);
+      const isEmailDeliveryFailure = (message: string) =>
+        message.toLowerCase().includes("failed to send email");
 
-      // Clamp long text fields to reasonable lengths
-      const addressClamped = (data.address || '').toString().trim().slice(0, 200);
-      const qualificationsClamped = data.qualifications.toString().trim().slice(0, 300);
+      try {
+        const createTeacherDto = {
+          email: data.email.trim(),
+          fullName,
+          firstName,
+          lastName,
+          role: "TEACHER",
+          gender: data.gender,
+          department: data.department.toLowerCase(),
+          phoneNumber: data.phoneNumber.trim(),
+        };
 
-      // Extract only the fields that are accepted by the API schema
-      const createTeacherDto = {
-        email: data.email.trim(),
-        fullName: data.fullName.trim(),
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        role: "TEACHER",
-        gender: data.gender,
-        department: normalizedDepartment,
-        phoneNumber: data.phoneNumber.trim(),
-        address: addressClamped,
-        employeeId: employeeIdSanitized,
-        dateOfBirth: data.dateOfBirth,
-        qualifications: qualificationsClamped,
-        tenantSubjectIds: tenantSubjectIds,
-        tenantGradeLevelIds: validatedGradeLevelIds, // Use filtered IDs
-        ...(data.isClassTeacher && data.classTeacherType === 'stream' && data.classTeacherTenantStreamId && {
-          classTeacherTenantStreamId: data.classTeacherTenantStreamId
-        }),
-        ...(data.isClassTeacher && data.classTeacherType === 'grade' && data.classTeacherTenantGradeLevelId && {
-          classTeacherTenantGradeLevelId: data.classTeacherTenantGradeLevelId
-        })
-      };
+        const response = await fetch("/api/school/invite-teacher", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ createTeacherDto }),
+        });
 
+        const result = await response.json();
 
-
-      // Note: We no longer send tenantId in the payload - it's not part of the CreateTeacherInvitationDto schema
-      const response = await fetch('/api/school/invite-teacher', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          createTeacherDto
-          // tenantId removed - it will be handled by the API route via auth token
-        }),
-      });
-
-      const result = await response.json();
-      
-      if (!response.ok) {
-        // Handle API errors with detailed information
-        if (result.error) {
-          if (isEmailDeliveryFailure(result.error)) {
+        if (!response.ok) {
+          if (result.error && isEmailDeliveryFailure(result.error)) {
             await finishInvitation({
               email: data.email.trim(),
-              fullName: data.fullName.trim(),
-              status: 'PENDING',
+              fullName,
+              status: "PENDING",
               createdAt: new Date().toISOString(),
               emailSent: false,
             });
             return;
           }
 
-          let userFriendlyMessage = '';
-          
-          // Transform technical errors into user-friendly messages
-          if (result.error.includes('User already exists') || result.error.includes('already exists in this tenant')) {
-            userFriendlyMessage = 'This teacher is already registered in your school.';
-          } else if (result.error.includes('Error creating teacher record')) {
-            userFriendlyMessage = 'We encountered an issue while creating the teacher account.';
-          } else if (result.error.includes('Invalid') || result.error.includes('BADREQUESTEXCEPTION')) {
-            userFriendlyMessage = 'The information provided is not valid.';
-          } else if (result.error.includes('NOTFOUNDEXCEPTION')) {
-            userFriendlyMessage = 'The requested resource was not found.';
-          } else {
-            userFriendlyMessage = result.error;
-          }
-          
-          // Add error code if available
-          if (result.code) {
-            userFriendlyMessage += ` (${result.code})`;
-          }
-          
-          // Add additional details if available
-          if (result.details && Array.isArray(result.details)) {
-            const detailMessages = result.details.map((detail: any) => detail.message).filter(Boolean);
-            if (detailMessages.length > 0) {
-              userFriendlyMessage += `\n\nDetails:\n${detailMessages.join('\n')}`;
-            }
-          }
-          
-          throw new Error(userFriendlyMessage);
-        } else {
-          throw new Error('We encountered an unexpected issue while creating the teacher account.');
+          throw new Error(result.error || "Failed to send invitation");
         }
+
+        await finishInvitation({
+          ...result.inviteTeacher,
+          emailSent: result.inviteTeacher.emailSent !== false,
+        });
+
+        toast.success("Invitation sent", {
+          description: `${fullName} will receive an email to set up their account.`,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Could not send invitation";
+        toast.error("Invitation failed", { description: message, duration: 8000 });
+      } finally {
+        isSubmittingRef.current = false;
+        setIsLoading(false);
       }
+    },
+    [finishInvitation, schoolConfig?.tenant?.id],
+  );
 
-      const inviteData = result.inviteTeacher;
-      
-      await finishInvitation({
-        ...inviteData,
-        emailSent: inviteData.emailSent !== false,
-      });
-      
-    } catch (error) {
-      console.error('Error inviting teacher:', error);
-      
-      let errorMessage = "We couldn't send the teacher invitation. Please try again.";
-      let errorTitle = "Invitation Not Sent";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-
-        // Legacy backend: invitation saved but email provider failed
-        if (error.message.toLowerCase().includes('failed to send email')) {
-          await finishInvitation({
-            email: data.email.trim(),
-            fullName: data.fullName.trim(),
-            status: 'PENDING',
-            createdAt: new Date().toISOString(),
-            emailSent: false,
-          });
-          return;
-        }
-        
-        // Handle specific error types with better titles
-        if (error.message.includes('already registered')) {
-          errorTitle = "Teacher Already Exists";
-        } else if (error.message.includes('already sent') || error.message.includes('Another invitation')) {
-          errorTitle = "Invitation Already Sent";
-        } else if (error.message.includes('BADREQUESTEXCEPTION')) {
-          errorTitle = "Please Check Your Information";
-        } else if (error.message.includes('NOTFOUNDEXCEPTION')) {
-          errorTitle = "Resource Not Found";
-        } else if (error.message.includes('unexpected issue')) {
-          errorTitle = "Something Went Wrong";
-        }
-      }
-      
-      // Set error for UI display
-      setError(errorMessage);
-      
-      // Also show toast notification
-      toast.error(errorTitle, {
-        description: errorMessage,
-        duration: 8000, // Show longer for detailed errors
-      });
-    } finally {
-      isSubmittingRef.current = false;
-      setIsLoading(false);
-    }
-  }, [
-    schoolConfig?.tenant?.id,
-    subjectsLoading,
-    gradeLevelsLoading,
-    subjectsError,
-    gradeLevelsError,
-    flatGrades,
-    allSubjects,
-    form,
-    onTeacherCreated,
-    queryClient,
-  ]);
-
-  const handleBack = () => {
-    if (wizardStep === 2) {
-      if (teachingPanel === "subjects") {
-        setTeachingPanel("grades");
-        return;
-      }
-      if (teachingPanel === "extras") {
-        setTeachingPanel("subjects");
-        return;
-      }
-    }
-    if (wizardStep > 0) {
-      setWizardStep((s) => s - 1);
-    }
-  };
-
-  const handleContinue = async () => {
-    if (wizardStep === 0 || wizardStep === 1) {
-      const fields = WIZARD_STEP_FIELDS[wizardStep];
-      const valid = await form.trigger(fields);
-      if (valid) {
-        setWizardStep((s) => s + 1);
-        if (wizardStep === 1) {
-          setTeachingPanel("grades");
-        }
-      }
-      return;
-    }
-
-    if (teachingPanel === "grades") {
-      const valid = await form.trigger(["tenantGradeLevelIds"]);
-      if (valid) setTeachingPanel("subjects");
-      return;
-    }
-
-    if (teachingPanel === "subjects") {
-      const valid = await form.trigger(["tenantGradeLevelIds", "gradeSubjects"]);
-      if (valid) setTeachingPanel("extras");
-    }
-  };
-
-  const isLastPanel = wizardStep === 2 && teachingPanel === "extras";
-  const showBack = wizardStep > 0 || (wizardStep === 2 && teachingPanel !== "grades");
-
-  const continueLabel =
-    wizardStep === 0
-      ? "Continue"
-      : wizardStep === 1
-        ? "Continue"
-        : teachingPanel === "grades"
-          ? "Next: subjects"
-          : teachingPanel === "subjects"
-            ? "Next: optional"
-            : "Continue";
-
-  const stepDescriptions = [
-    "Name, contact, and basic details.",
-    "Staff ID, department, and qualifications.",
-    "Grades, subjects, and optional class teacher role.",
-  ];
+  const previewName = watchedName.trim() || "New teacher";
+  const previewDept = watchedDepartment || "Department not selected";
 
   return (
     <>
-      <Drawer open={isDrawerOpen} onOpenChange={handleDrawerOpenChange}>
+      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <DrawerTrigger asChild>
           <Button
             variant="default"
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white shadow-sm"
+            className="flex items-center gap-2 bg-primary text-white shadow-sm hover:bg-primary-dark"
             disabled={isLoading}
           >
             <UserPlus className="h-4 w-4" />
-            Add New Teacher
+            Add teacher
           </Button>
         </DrawerTrigger>
         <DrawerContent
-          className="h-[100dvh] max-h-[100dvh] w-full sm:max-w-xl md:max-w-2xl ml-auto flex flex-col bg-slate-50 dark:bg-slate-950"
+          className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col border-l border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-950 sm:max-w-[440px]"
           data-vaul-drawer-direction="right"
         >
-          <DrawerHeader className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-4 sm:px-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <GraduationCap className="h-5 w-5" />
+          <DrawerHeader className="relative shrink-0 overflow-hidden border-0 px-0 pb-0 pt-0">
+            <div className="relative border-b border-primary/10 bg-gradient-to-br from-primary/[0.08] via-white to-primary/[0.04] px-5 pb-5 pt-5 dark:from-primary/15 dark:via-slate-900 dark:to-primary/5">
+              <div
+                className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/15 blur-3xl"
+                aria-hidden
+              />
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
+                    <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
+                  </div>
+                  <div className="min-w-0">
+                    <DrawerTitle className="text-left text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+                      Invite a teacher
+                    </DrawerTitle>
+                    <DrawerDescription className="mt-0.5 text-left text-sm text-slate-500 dark:text-slate-400">
+                      Five fields — they&apos;ll get an email to join
+                    </DrawerDescription>
+                  </div>
+                </div>
+                <DrawerClose asChild>
+                  <button
+                    type="button"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-800"
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </DrawerClose>
               </div>
-              <div className="min-w-0 flex-1">
-                <DrawerTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Register a new teacher
-                </DrawerTitle>
-                <DrawerDescription className="text-sm text-muted-foreground mt-1">
-                  Step {wizardStep + 1} of {TEACHER_WIZARD_STEPS.length} — {stepDescriptions[wizardStep]}
-                </DrawerDescription>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0 text-muted-foreground"
-                onClick={() => setIsDrawerOpen(false)}
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 relative">
-            {isLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 dark:bg-slate-950/60 backdrop-blur-[1px]">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Sending invitation…</p>
+          <div className="relative flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+            <Form {...form}>
+              <form
+                id="invite-teacher-form"
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                {isLoading && (
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#f5f6f8]/80 backdrop-blur-[2px] dark:bg-slate-950/80">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white px-6 py-5 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900">
+                      <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                        Sending invitation…
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview card */}
+                <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dark via-slate-800 to-primary/70 p-[1px] shadow-md shadow-primary/10">
+                  <div className="rounded-[15px] bg-gradient-to-br from-primary-dark to-slate-800 px-4 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-white ring-1 ring-white/20">
+                        {initialsFromName(watchedName)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-white">{previewName}</p>
+                        <p className="mt-0.5 truncate text-xs text-white/55">
+                          {watchedEmail.trim() || "email@school.com"}
+                        </p>
+                        <p className="mt-1 truncate text-[11px] text-primary-light/90">
+                          {previewDept}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-            <TeacherRegistrationForm
-                form={form}
-                onSubmit={onSubmit}
-                isSubmitting={isLoading}
-                error={error}
-                departments={departments}
-                flatGrades={flatGrades}
-                allSubjects={allSubjects}
-                gradeLevels={gradeLevels}
-                allStreams={allStreams}
-                formatPhoneNumber={formatPhoneNumber}
-                subjectsLoading={subjectsLoading}
-                gradeLevelsLoading={gradeLevelsLoading}
-                wizardStep={wizardStep}
-                teachingPanel={teachingPanel}
-              />
+
+                <div className={cn(teachersPanel, "space-y-4 p-4")}>
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Full name
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FieldIcon>
+                              <User className="h-4 w-4" />
+                            </FieldIcon>
+                            <Input
+                              placeholder="e.g. Jane Wanjiku"
+                              {...field}
+                              className={fieldShell}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Work email
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FieldIcon>
+                              <Mail className="h-4 w-4" />
+                            </FieldIcon>
+                            <Input
+                              type="email"
+                              placeholder="teacher@school.com"
+                              {...field}
+                              className={fieldShell}
+                            />
+                          </div>
+                        </FormControl>
+                        <p className="text-[11px] text-slate-400">
+                          Invitation and login link will be sent here.
+                        </p>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Phone
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <FieldIcon>
+                              <Phone className="h-4 w-4" />
+                            </FieldIcon>
+                            <Input
+                              placeholder="+254700000000"
+                              value={field.value}
+                              onChange={(e) =>
+                                field.onChange(formatPhoneNumber(e.target.value))
+                              }
+                              className={fieldShell}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Gender
+                        </FormLabel>
+                        <FormControl>
+                          <GenderPills value={field.value} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1.5">
+                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                          Department
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
+                          <FormControl>
+                            <SelectTrigger className={selectShell}>
+                              <SelectValue placeholder="Select department" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {DEPARTMENTS.map((dept) => (
+                              <SelectItem key={dept} value={dept}>
+                                {dept}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className={cn(teachersPanel, "p-4")}>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    After they join
+                  </p>
+                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                    <li className="flex items-start gap-2">
+                      <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      Assign grades and subjects from their teacher profile.
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      Set class teacher role and timetable from Classes.
+                    </li>
+                  </ul>
+                </div>
+              </form>
+            </Form>
           </div>
 
-          <DrawerFooter className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:px-6 sm:py-4">
-            <div className="flex flex-col-reverse sm:flex-row gap-2 w-full">
+          <DrawerFooter className="shrink-0 border-t border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 sm:px-5">
+            <div className="flex w-full flex-col gap-2 sm:flex-row">
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDrawerOpen(false)}
+                type="submit"
+                form="invite-teacher-form"
                 disabled={isLoading}
-                className="sm:flex-1"
+                className="h-11 flex-1 gap-2 rounded-full bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary-dark disabled:opacity-50"
               >
-                Cancel
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    Send invitation
+                  </>
+                )}
               </Button>
-              {showBack && (
+              <DrawerClose asChild>
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleBack}
+                  variant="ghost"
                   disabled={isLoading}
-                  className="sm:flex-1"
+                  className="h-11 rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 sm:flex-none sm:px-5"
                 >
-                  Back
+                  Cancel
                 </Button>
-              )}
-              {isLastPanel ? (
-                <Button
-                  type="submit"
-                  form="teacher-registration-form"
-                  disabled={
-                    isLoading ||
-                    subjectsLoading ||
-                    gradeLevelsLoading ||
-                    flatGrades.length === 0 ||
-                    allSubjects.length === 0
-                  }
-                  className="sm:flex-[2] bg-primary hover:bg-primary/90 text-white shadow-sm shadow-primary/20 h-11 text-base font-semibold"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Registering…
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Register teacher
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={handleContinue}
-                  disabled={isLoading || subjectsLoading || gradeLevelsLoading}
-                  className="sm:flex-[2] bg-primary hover:bg-primary/90 text-white h-11 text-base font-semibold"
-                >
-                  {continueLabel}
-                </Button>
-              )}
+              </DrawerClose>
             </div>
-            {wizardStep === 2 && teachingPanel === "subjects" && (
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:text-primary mt-2 text-center w-full disabled:opacity-50"
-                disabled={isLoading}
-                onClick={async () => {
-                  if (isSubmittingRef.current || isLoading) return;
-                  const valid = await form.trigger(["tenantGradeLevelIds", "gradeSubjects"]);
-                  if (valid) {
-                    form.handleSubmit(onSubmit)();
-                  }
-                }}
-              >
-                Skip optional details and register →
-              </button>
-            )}
-            <p className="text-[11px] text-center text-muted-foreground mt-2">
-              {isLastPanel
-                ? "An email invitation will be sent to set up their password."
-                : "Required fields are marked with *"}
+            <p className="text-center text-[11px] text-slate-400">
+              They&apos;ll set their password from the invitation email.
             </p>
           </DrawerFooter>
         </DrawerContent>

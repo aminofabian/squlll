@@ -31,6 +31,8 @@ export interface TeacherActivityAssessment {
   status: AssesStatus;
   term: number;
   academicYear?: string | null;
+  resultsPublished?: boolean;
+  publishDate?: string | null;
   maxScore?: number | null;
   cutoff?: number | null;
   description?: string | null;
@@ -79,6 +81,8 @@ const GET_ASSESSMENTS = gql`
       status
       term
       academicYear
+      resultsPublished
+      publishDate
       maxScore
       cutoff
       description

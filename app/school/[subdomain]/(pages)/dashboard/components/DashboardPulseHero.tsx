@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   BookOpenCheck,
+  Clock,
   GraduationCap,
   Radio,
   Sparkles,
+  UserPlus,
   Users,
   UserCircle,
 } from "lucide-react";
@@ -170,11 +172,21 @@ export function DashboardPulseHero({
           value={studentCount}
           accent="success"
           loading={loading}
+          emptyCta={{
+            href: "/students?action=add",
+            label: "Enroll your first student",
+            icon: UserPlus,
+          }}
         />
         <DashboardAnimatedMetric
           label="Teachers"
           value={teacherCount}
           loading={loading}
+          emptyCta={{
+            href: "/teachers?action=add",
+            label: "Add your first teacher",
+            icon: GraduationCap,
+          }}
         />
         <DashboardAnimatedMetric
           label="Online now"
@@ -187,6 +199,11 @@ export function DashboardPulseHero({
           value={stats.lessonsCompletedToday}
           accent="warm"
           loading={liveLoading}
+          emptyCta={{
+            href: "/timetable",
+            label: "Set up your timetable",
+            icon: Clock,
+          }}
         />
       </div>
 

@@ -352,6 +352,7 @@ export default function PendingAssignmentsComponent({ subdomain, onBack }: Pendi
       {/* Submit Assignment Modal */}
       {selectedAssignment && (
         <SubmitAssignmentModal
+          subdomain={subdomain}
           assignment={selectedAssignment}
           isOpen={showSubmitModal}
           onClose={() => {

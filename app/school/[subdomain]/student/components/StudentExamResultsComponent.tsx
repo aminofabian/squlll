@@ -89,36 +89,36 @@ export default function StudentExamResultsComponent({
                 if (percentage >= 80)
                   return {
                     grade: "A",
-                    color: "text-primary",
-                    bg: "bg-primary/10",
-                    border: "border-primary/30",
+                    color: "text-green-700",
+                    bg: "bg-green-100",
+                    border: "border-green-300",
                   };
                 if (percentage >= 70)
                   return {
                     grade: "B",
-                    color: "text-primary",
-                    bg: "bg-primary/10",
-                    border: "border-primary/30",
+                    color: "text-blue-700",
+                    bg: "bg-blue-100",
+                    border: "border-blue-300",
                   };
                 if (percentage >= 60)
                   return {
                     grade: "C",
-                    color: "text-primary",
-                    bg: "bg-primary/10",
-                    border: "border-primary/30",
+                    color: "text-amber-700",
+                    bg: "bg-amber-100",
+                    border: "border-amber-300",
                   };
                 if (percentage >= 50)
                   return {
                     grade: "D",
-                    color: "text-primary",
-                    bg: "bg-primary/10",
-                    border: "border-primary/30",
+                    color: "text-orange-700",
+                    bg: "bg-orange-100",
+                    border: "border-orange-300",
                   };
                 return {
                   grade: "E",
-                  color: "text-primary",
-                  bg: "bg-primary/10",
-                  border: "border-primary/30",
+                  color: "text-red-700",
+                  bg: "bg-red-100",
+                  border: "border-red-300",
                 };
               };
 

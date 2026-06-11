@@ -70,10 +70,11 @@ const getStatusColor = (status: string) => {
 };
 
 const getGradeColor = (grade: string) => {
-  if (grade.startsWith('A')) return 'text-primary bg-primary/10 border border-primary/20';
-  if (grade.startsWith('B')) return 'text-primary bg-primary/10 border border-primary/20';
-  if (grade.startsWith('C')) return 'text-primary bg-primary/10 border border-primary/20';
-  return 'text-red-600 bg-red-50 border border-red-200';
+  if (grade.startsWith('A')) return 'text-green-700 bg-green-100 border border-green-300';
+  if (grade.startsWith('B')) return 'text-blue-700 bg-blue-100 border border-blue-300';
+  if (grade.startsWith('C')) return 'text-amber-700 bg-amber-100 border border-amber-300';
+  if (grade.startsWith('D')) return 'text-orange-700 bg-orange-100 border border-orange-300';
+  return 'text-red-700 bg-red-100 border border-red-300';
 };
 
 export const MobileDashboard = ({ 

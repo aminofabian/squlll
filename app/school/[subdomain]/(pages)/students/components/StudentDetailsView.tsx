@@ -47,6 +47,13 @@ import {
 } from "./student-profile-tabs";
 import { studentsPanel } from "./students-ui";
 import { toast } from "sonner";
+import { useParams } from "next/navigation";
+import { StudentSnePanel } from "./StudentSnePanel";
+import {
+  downloadPdfDataUrl,
+  generateReportCardPdf,
+  suggestReportCardComment,
+} from "@/lib/exams/reportCards";
 
 interface StudentDetailsViewProps {
   studentId: string;
@@ -164,6 +171,14 @@ export function StudentDetailsView({
   const [selectedTemplate, setSelectedTemplate] = useState<
     "modern" | "classic" | "compact" | "uganda-classic"
   >("modern");
+  const [reportCardYear, setReportCardYear] = useState("2025");
+  const [reportCardTerm, setReportCardTerm] = useState("1");
+  const [teacherComment, setTeacherComment] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [commentLoading, setCommentLoading] = useState(false);
+
+  const params = useParams();
+  const subdomain = params.subdomain as string;
 
   const { studentDetail, loading, error, refetch } =
     useStudentDetailSummary(studentId);
@@ -395,6 +410,8 @@ export function StudentDetailsView({
               streamName: student.streamName ?? undefined,
             }}
           />
+
+          <StudentSnePanel studentId={student.id} />
         </TabsContent>
 
         <TabsContent value="enrollment" className="mt-0">
@@ -502,6 +519,24 @@ export function StudentDetailsView({
                   <div className="border-t border-slate-100 p-4 dark:border-slate-800">
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                       <select
+                        value={reportCardYear}
+                        onChange={(e) => setReportCardYear(e.target.value)}
+                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                      >
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                      </select>
+                      <select
+                        value={reportCardTerm}
+                        onChange={(e) => setReportCardTerm(e.target.value)}
+                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                      >
+                        <option value="1">Term 1</option>
+                        <option value="2">Term 2</option>
+                        <option value="3">Term 3</option>
+                      </select>
+                      <select
                         value={selectedTemplate}
                         onChange={(e) =>
                           setSelectedTemplate(
@@ -520,8 +555,37 @@ export function StudentDetailsView({
                         variant="outline"
                         size="sm"
                         className="h-8 gap-1 text-xs"
+                        disabled={pdfLoading}
+                        onClick={async () => {
+                          setPdfLoading(true);
+                          try {
+                            const pdf = await generateReportCardPdf(subdomain, {
+                              studentId: student.id,
+                              academicYear: reportCardYear,
+                              term: Number(reportCardTerm),
+                              teacherComment: teacherComment.trim() || undefined,
+                            });
+                            downloadPdfDataUrl(
+                              pdf,
+                              `report-card-${student.admissionNumber}-${reportCardYear}-t${reportCardTerm}.pdf`,
+                            );
+                            toast.success("Report card PDF downloaded");
+                          } catch (err) {
+                            toast.error(
+                              err instanceof Error
+                                ? err.message
+                                : "Failed to generate PDF",
+                            );
+                          } finally {
+                            setPdfLoading(false);
+                          }
+                        }}
                       >
-                        <Download className="h-3.5 w-3.5" />
+                        {pdfLoading ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
                         Download PDF
                       </Button>
                       <Button
@@ -533,6 +597,53 @@ export function StudentDetailsView({
                         <Printer className="h-3.5 w-3.5" />
                         Print
                       </Button>
+                    </div>
+                    <div className="mb-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                          Class teacher comment
+                        </label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          disabled={commentLoading}
+                          onClick={async () => {
+                            setCommentLoading(true);
+                            try {
+                              const suggestion = await suggestReportCardComment(
+                                subdomain,
+                                student.id,
+                                reportCardYear,
+                                Number(reportCardTerm),
+                              );
+                              setTeacherComment(suggestion);
+                              toast.success("Comment suggestion generated");
+                            } catch (err) {
+                              toast.error(
+                                err instanceof Error
+                                  ? err.message
+                                  : "Could not generate comment",
+                              );
+                            } finally {
+                              setCommentLoading(false);
+                            }
+                          }}
+                        >
+                          {commentLoading ? (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          ) : null}
+                          Suggest with AI
+                        </Button>
+                      </div>
+                      <textarea
+                        value={teacherComment}
+                        onChange={(e) => setTeacherComment(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                        placeholder="Optional comment included in the PDF report card..."
+                      />
                     </div>
                     <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
                       <SchoolReportCard

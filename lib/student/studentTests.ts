@@ -10,6 +10,7 @@ const GET_MY_TESTS = `
       startTime
       endTime
       duration
+      effectiveDuration
       totalMarks
       status
       instructions
@@ -19,6 +20,7 @@ const GET_MY_TESTS = `
       mySubmission {
         id
         submitted_at
+        started_at
         file_url
         comments
         submission_text
@@ -49,6 +51,7 @@ const GET_MY_UPCOMING_TESTS = `
       date
       startTime
       duration
+      effectiveDuration
       totalMarks
       status
       subject { id name }
@@ -104,6 +107,7 @@ const GET_MY_TEST_BY_ID = `
       startTime
       endTime
       duration
+      effectiveDuration
       totalMarks
       status
       instructions
@@ -128,18 +132,38 @@ export async function fetchMyTestById(
   return data.getMyTestById
 }
 
+const START_MY_TEST = `
+  mutation StartMyTest($input: StartMyTestInput!) {
+    startMyTest(input: $input) {
+      id
+      started_at
+    }
+  }
+`
+
 const SUBMIT_MY_TEST = `
   mutation SubmitMyTest($input: SubmitMyTestInput!) {
     submitMyTest(input: $input) {
       id
       test_id
       submitted_at
+      started_at
       file_url
       comments
       submission_text
     }
   }
 `
+
+export async function startMyTest(
+  subdomain: string,
+  testId: string,
+): Promise<{ id: string; started_at?: string | null }> {
+  const data = await chatGraphqlFetch<{
+    startMyTest: { id: string; started_at?: string | null }
+  }>(START_MY_TEST, { input: { testId } }, subdomain)
+  return data.startMyTest
+}
 
 export async function submitMyTest(
   subdomain: string,

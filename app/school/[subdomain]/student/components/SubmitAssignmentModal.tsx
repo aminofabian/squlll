@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   X,
   Upload,
@@ -11,7 +11,10 @@ import {
   CheckCircle,
   Loader2,
   Trash2,
+  Timer,
 } from "lucide-react";
+import { startMyTest } from '@/lib/student/studentTests';
+import { useTestTimer } from '@/lib/student/useTestTimer';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +24,7 @@ import { toast } from "sonner";
 import type { StudentAssignmentItem } from '@/lib/student/types';
 
 interface SubmitAssignmentModalProps {
+  subdomain: string;
   assignment: StudentAssignmentItem;
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +36,7 @@ interface SubmitAssignmentModalProps {
 }
 
 export default function SubmitAssignmentModal({
+  subdomain,
   assignment,
   isOpen,
   onClose,
@@ -41,6 +46,58 @@ export default function SubmitAssignmentModal({
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [startedAt, setStartedAt] = useState<string | null>(
+    assignment.startedAt ?? null,
+  );
+  const [startingTest, setStartingTest] = useState(false);
+
+  const duration = assignment.duration ?? 0;
+  const { remainingLabel, isExpired, hasTimer } = useTestTimer(
+    duration,
+    startedAt,
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStartedAt(assignment.startedAt ?? null);
+  }, [isOpen, assignment.startedAt, assignment.id]);
+
+  useEffect(() => {
+    if (!isOpen || !subdomain || startedAt || duration <= 0) return;
+
+    let cancelled = false;
+    setStartingTest(true);
+    void startMyTest(subdomain, assignment.id)
+      .then((submission) => {
+        if (!cancelled && submission.started_at) {
+          setStartedAt(submission.started_at);
+        }
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to start test timer';
+        toast.error(msg);
+      })
+      .finally(() => {
+        if (!cancelled) setStartingTest(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, subdomain, assignment.id, startedAt, duration]);
+
+  // Auto-submit when timer expires
+  useEffect(() => {
+    if (!hasTimer || !isExpired || isSubmitting) return;
+    if (selectedFiles.length === 0 && !comments.trim()) {
+      toast.error('Time expired. No work was submitted.');
+      onClose();
+      return;
+    }
+    toast.warning('Time expired — auto-submitting your work…');
+    void handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpired, hasTimer]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -71,6 +128,11 @@ export default function SubmitAssignmentModal({
   };
 
   const handleSubmit = async () => {
+    if (hasTimer && isExpired) {
+      toast.error('Test time limit has expired. You can no longer submit.');
+      return;
+    }
+
     if (selectedFiles.length === 0 && !comments.trim()) {
       toast.error("Please add a file or comments to submit.");
       return;
@@ -147,6 +209,25 @@ export default function SubmitAssignmentModal({
                 <span>Max Score: {assignment.maxScore}</span>
               </div>
             </div>
+
+            {hasTimer ? (
+              <div
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+                  isExpired
+                    ? 'bg-destructive/10 text-destructive'
+                    : startingTest
+                      ? 'bg-muted text-muted-foreground'
+                      : 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                }`}
+              >
+                <Timer className="h-4 w-4" />
+                {startingTest
+                  ? 'Starting timed session...'
+                  : isExpired
+                    ? 'Time expired — submission blocked'
+                    : `Time remaining: ${remainingLabel}`}
+              </div>
+            ) : null}
 
             {assignment.attachments && assignment.attachments.length > 0 && (
               <div>
@@ -261,7 +342,12 @@ export default function SubmitAssignmentModal({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={selectedFiles.length === 0 || isSubmitting}
+              disabled={
+                isSubmitting ||
+                startingTest ||
+                isExpired ||
+                (selectedFiles.length === 0 && !comments.trim())
+              }
               className="flex-1"
             >
               {isSubmitting ? (

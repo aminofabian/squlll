@@ -59,6 +59,8 @@ interface SchoolSearchFilterProps {
   selectedStreamId?: string
   allClassesSelected?: boolean
   onSelectAllClasses?: () => void
+  /** When set, only these grade IDs appear in the list (e.g. exam session scope). */
+  allowedGradeIds?: string[]
 }
 
 export function SchoolSearchFilter({ 
@@ -74,6 +76,7 @@ export function SchoolSearchFilter({
   selectedStreamId: parentSelectedStreamId,
   allClassesSelected = false,
   onSelectAllClasses,
+  allowedGradeIds,
 }: SchoolSearchFilterProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedGrades, setExpandedGrades] = useState<Set<string>>(new Set())
@@ -125,18 +128,24 @@ export function SchoolSearchFilter({
     return sorted;
   }, [config?.selectedLevels]);
 
+  const scopedGrades = useMemo(() => {
+    if (!allowedGradeIds?.length) return allGrades;
+    const allowed = new Set(allowedGradeIds);
+    return allGrades.filter((grade) => allowed.has(grade.id));
+  }, [allGrades, allowedGradeIds]);
+
   // Filter grades based on search term
   const filteredGrades = useMemo(() => {
-    if (!allGrades) return [];
-    
-    if (!searchTerm) return allGrades;
-    
+    if (!scopedGrades.length) return [];
+
+    if (!searchTerm) return scopedGrades;
+
     const term = searchTerm.toLowerCase();
-    return allGrades.filter(grade =>
+    return scopedGrades.filter(grade =>
       grade.name.toLowerCase().includes(term) ||
       abbreviateGradeShort(grade.name).toLowerCase().includes(term)
     );
-  }, [allGrades, searchTerm]);
+  }, [scopedGrades, searchTerm]);
 
   // Group grades by configured school level (minimal sidebar) or curriculum band (default)
   const levelGroups = useMemo(() => {

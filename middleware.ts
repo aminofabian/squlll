@@ -76,7 +76,10 @@ export function middleware(request: NextRequest) {
     }
     
     // For other subdomain requests, rewrite the path to include /school/[subdomain]
-    const rewritePath = `/school/${currentHost}${url.pathname}`
+    const schoolPrefix = `/school/${currentHost}`
+    const rewritePath = url.pathname.startsWith(schoolPrefix)
+      ? url.pathname
+      : `${schoolPrefix}${url.pathname === '/' ? '' : url.pathname}`
     
     console.log('Middleware - Subdomain request, rewriting:', {
       hostname,

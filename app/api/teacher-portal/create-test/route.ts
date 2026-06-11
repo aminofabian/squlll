@@ -18,10 +18,10 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const token = cookieStore.get('accessToken')?.value;
     
-    // Remove authentication requirement - allow all requests
-    // if (!token) {
-    //   return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
-    // }
+    // Authentication is required for test creation
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
 
     // Parse the request body
     const body = await request.json();
@@ -35,8 +35,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Only send Authorization header if token exists
-        ...(token && { 'Authorization': `Bearer ${token}` }),
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
         query: CREATE_TEST_MUTATION,
@@ -53,4 +52,4 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
-} 
+}

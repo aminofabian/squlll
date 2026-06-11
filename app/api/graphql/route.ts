@@ -83,12 +83,35 @@ export async function POST(request: Request) {
         upstreamHeaders['x-tenant-subdomain'] = tenantSubdomain;
       }
 
-      response = await fetch(GRAPHQL_ENDPOINT, {
-        method: 'POST',
-        headers: upstreamHeaders,
-        body: JSON.stringify(body),
-      });
+      const queryText = typeof body.query === 'string' ? body.query : '';
+      const isBatchMutation =
+        queryText.includes('createAssessmentsBatch') ||
+        queryText.includes('CreateAssessmentsBatch') ||
+        queryText.includes('createExamSession') ||
+        queryText.includes('CreateExamSession');
+      const isExamSessionCreate =
+        queryText.includes('createExamSession') ||
+        queryText.includes('CreateExamSession');
+      const upstreamTimeoutMs = isExamSessionCreate
+        ? 180_000
+        : isBatchMutation
+          ? 60_000
+          : 25_000;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), upstreamTimeoutMs);
+      try {
+        response = await fetch(GRAPHQL_ENDPOINT, {
+          method: 'POST',
+          headers: upstreamHeaders,
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (fetchError) {
+      const isAbort = fetchError instanceof Error && fetchError.name === 'AbortError';
       console.error('GraphQL API Route - Fetch error:', {
         error: fetchError,
         message: fetchError instanceof Error ? fetchError.message : 'Unknown error',
@@ -98,14 +121,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           errors: [{
-            message: `Failed to connect to GraphQL endpoint: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`,
+            message: isAbort
+              ? 'GraphQL request timed out. The backend may be busy or unavailable. Please try again.'
+              : `Failed to connect to GraphQL endpoint: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`,
             extensions: { 
-              code: 'NETWORK_ERROR',
+              code: isAbort ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR',
               endpoint: GRAPHQL_ENDPOINT
             }
           }]
         },
-        { status: 503 }
+        { status: isAbort ? 504 : 503 }
       );
     }
 

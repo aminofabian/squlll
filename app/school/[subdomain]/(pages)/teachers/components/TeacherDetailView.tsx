@@ -45,6 +45,7 @@ import {
   MapPin,
   Briefcase,
   AlertTriangle,
+  Plus,
 } from "lucide-react";
 import { useTeacherDetailSummary } from "@/lib/hooks/useTeacherDetailSummary";
 import { TeacherAcademicEditor } from "./TeacherAcademicEditor";
@@ -185,6 +186,44 @@ function EmptyPanel({
   );
 }
 
+function AcademicSetupCta({
+  title,
+  description,
+  actionLabel,
+  onAction,
+  icon: Icon,
+}: {
+  title: string;
+  description: string;
+  actionLabel: string;
+  onAction: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onAction}
+      className="group flex w-full items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/[0.04] px-4 py-3.5 text-left transition-all hover:border-primary/50 hover:bg-primary/[0.08] dark:border-primary/25 dark:bg-primary/10 dark:hover:bg-primary/15"
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          {title}
+        </p>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
+      </div>
+      <span className="hidden shrink-0 rounded-full bg-primary px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors group-hover:bg-primary-dark sm:inline">
+        {actionLabel}
+      </span>
+      <Plus className="h-4 w-4 shrink-0 text-primary sm:hidden" />
+    </button>
+  );
+}
+
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return (
     <Badge
@@ -218,6 +257,7 @@ export function TeacherDetailView({
   } = useTeacherAdminActions();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [academicEditorOpen, setAcademicEditorOpen] = useState(false);
 
   if (loading) {
     return <TeacherDetailSkeleton />;
@@ -258,6 +298,11 @@ export function TeacherDetailView({
   const dateOfBirth = formatTeacherDate(teacher.dateOfBirth);
   const joinDate = formatTeacherDate(teacher.createdAt);
   const profileIncomplete = isTeacherProfileIncomplete(teacher);
+  const hasSubjects = teacher.tenantSubjects.length > 0;
+  const hasGrades = teacher.tenantGradeLevels.length > 0;
+  const hasStreams = teacher.tenantStreams.length > 0;
+  const isAcademicEmpty = !hasSubjects && !hasGrades;
+  const openAcademicEditor = () => setAcademicEditorOpen(true);
 
   const handleRemove = async () => {
     if (!tenantId) {
@@ -642,103 +687,179 @@ export function TeacherDetailView({
                   Subjects, grades, and streams for {displayName}
                 </p>
               </div>
-              <TeacherAcademicEditor
-                teacherId={teacher.id}
-                teacherName={displayName}
-                initialSubjectIds={teacher.tenantSubjects.map((s) => s.id)}
-                initialGradeLevelIds={teacher.tenantGradeLevels.map((g) => g.id)}
-                initialStreamIds={teacher.tenantStreams.map((s) => s.id)}
-                tenantSubjects={teacher.tenantSubjects}
-                tenantGradeLevels={teacher.tenantGradeLevels}
-                tenantStreams={teacher.tenantStreams}
-                onSaved={refetch}
-              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={openAcademicEditor}
+                className="h-7 gap-1 px-2.5 text-xs"
+              >
+                <BookOpen className="h-3 w-3" />
+                {isAcademicEmpty ? "Set up" : "Edit"}
+              </Button>
             </div>
             <div className="space-y-5 p-4 sm:p-5">
-              <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/30">
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                  Workload summary
-                </p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Teaches {teacher.tenantSubjects.length} subject
-                  {teacher.tenantSubjects.length !== 1 ? "s" : ""} across{" "}
-                  {teacher.tenantGradeLevels.length} grade
-                  {teacher.tenantGradeLevels.length !== 1 ? "s" : ""}
-                  {teacher.tenantStreams.length > 0
-                    ? `, ${teacher.tenantStreams.length} stream${teacher.tenantStreams.length !== 1 ? "s" : ""}`
-                    : ""}
-                </p>
-                {teacher.updatedAt ? (
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Last updated {formatTeacherDate(teacher.updatedAt)}
-                  </p>
-                ) : null}
-              </div>
-
-              <InfoGroup title="Subjects taught" icon={BookOpen}>
-                {teacher.tenantSubjects.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {teacher.tenantSubjects.map((subject) => (
-                      <Badge
-                        key={subject.id}
-                        variant="outline"
-                        className="border-emerald-200 bg-emerald-50 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+              {isAcademicEmpty ? (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] via-white to-primary/[0.03] px-4 py-4 dark:from-primary/10 dark:via-slate-900 dark:to-primary/5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                          Teaching assignments not set up
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          Choose subjects and grade levels so {displayName.split(" ")[0] || "this teacher"} can be scheduled and assigned classes.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={openAcademicEditor}
+                        className="h-9 shrink-0 gap-1.5 rounded-full bg-primary px-4 text-xs text-white hover:bg-primary-dark"
                       >
-                        {formatTenantSubjectLabel(subject)}
-                      </Badge>
-                    ))}
+                        <Plus className="h-3.5 w-3.5" />
+                        Set up assignments
+                      </Button>
+                    </div>
                   </div>
-                ) : (
-                  <p className="rounded-lg bg-slate-50/80 px-3 py-2.5 text-xs text-slate-400 dark:bg-slate-800/30">
-                    No subjects assigned yet. Use Edit to add subjects.
-                  </p>
-                )}
-              </InfoGroup>
-
-              <InfoGroup title="Grade levels" icon={GraduationCap}>
-                {teacher.tenantGradeLevels.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {teacher.tenantGradeLevels.map((gradeLevel) => (
-                      <Badge
-                        key={gradeLevel.id}
-                        variant="outline"
-                        className="border-violet-200 bg-violet-50 text-[11px] font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-400"
+                  <ul className="grid gap-2 sm:grid-cols-3">
+                    {[
+                      { icon: BookOpen, label: "Subjects", hint: "What they teach" },
+                      { icon: GraduationCap, label: "Grades", hint: "Year levels" },
+                      { icon: School, label: "Streams", hint: "Optional classes" },
+                    ].map(({ icon: Icon, label, hint }) => (
+                      <li
+                        key={label}
+                        className="flex items-center gap-2.5 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-800/30"
                       >
-                        {gradeLevel.gradeLevel?.name || "Unknown"}
-                      </Badge>
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700">
+                          <Icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                            {label}
+                          </p>
+                          <p className="text-[10px] text-slate-400">{hint}</p>
+                        </div>
+                      </li>
                     ))}
+                  </ul>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/30">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      Workload summary
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Teaches {teacher.tenantSubjects.length} subject
+                      {teacher.tenantSubjects.length !== 1 ? "s" : ""} across{" "}
+                      {teacher.tenantGradeLevels.length} grade
+                      {teacher.tenantGradeLevels.length !== 1 ? "s" : ""}
+                      {hasStreams
+                        ? `, ${teacher.tenantStreams.length} stream${teacher.tenantStreams.length !== 1 ? "s" : ""}`
+                        : ""}
+                    </p>
+                    {teacher.updatedAt ? (
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        Last updated {formatTeacherDate(teacher.updatedAt)}
+                      </p>
+                    ) : null}
                   </div>
-                ) : (
-                  <p className="rounded-lg bg-slate-50/80 px-3 py-2.5 text-xs text-slate-400 dark:bg-slate-800/30">
-                    No grade levels assigned yet.
-                  </p>
-                )}
-              </InfoGroup>
 
-              <InfoGroup title="Streams / classes" icon={School}>
-                {teacher.tenantStreams.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {teacher.tenantStreams.map((stream) => (
-                      <Badge
-                        key={stream.id}
-                        variant="outline"
-                        className="border-sky-200 bg-sky-50 text-[11px] font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
-                      >
-                        {stream.stream?.name || "Stream"}
-                        {stream.tenantGradeLevel?.gradeLevel?.name
-                          ? ` · ${stream.tenantGradeLevel.gradeLevel.name}`
-                          : ""}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="rounded-lg bg-slate-50/80 px-3 py-2.5 text-xs text-slate-400 dark:bg-slate-800/30">
-                    No streams assigned.
-                  </p>
-                )}
-              </InfoGroup>
+                  <InfoGroup title="Subjects taught" icon={BookOpen}>
+                    {hasSubjects ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {teacher.tenantSubjects.map((subject) => (
+                          <Badge
+                            key={subject.id}
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-50 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+                          >
+                            {formatTenantSubjectLabel(subject)}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <AcademicSetupCta
+                        icon={BookOpen}
+                        title="No subjects assigned"
+                        description="Pick the subjects this teacher can teach."
+                        actionLabel="Add subjects"
+                        onAction={openAcademicEditor}
+                      />
+                    )}
+                  </InfoGroup>
+
+                  <InfoGroup title="Grade levels" icon={GraduationCap}>
+                    {hasGrades ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {teacher.tenantGradeLevels.map((gradeLevel) => (
+                          <Badge
+                            key={gradeLevel.id}
+                            variant="outline"
+                            className="border-violet-200 bg-violet-50 text-[11px] font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-400"
+                          >
+                            {gradeLevel.gradeLevel?.name || "Unknown"}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <AcademicSetupCta
+                        icon={GraduationCap}
+                        title="No grade levels assigned"
+                        description="Choose which grades this teacher covers."
+                        actionLabel="Assign grades"
+                        onAction={openAcademicEditor}
+                      />
+                    )}
+                  </InfoGroup>
+
+                  <InfoGroup title="Streams / classes" icon={School}>
+                    {hasStreams ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {teacher.tenantStreams.map((stream) => (
+                          <Badge
+                            key={stream.id}
+                            variant="outline"
+                            className="border-sky-200 bg-sky-50 text-[11px] font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
+                          >
+                            {stream.stream?.name || "Stream"}
+                            {stream.tenantGradeLevel?.gradeLevel?.name
+                              ? ` · ${stream.tenantGradeLevel.gradeLevel.name}`
+                              : ""}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <AcademicSetupCta
+                        icon={School}
+                        title="No streams assigned"
+                        description="Optional — narrow to specific classes, or leave blank for all streams."
+                        actionLabel="Assign streams"
+                        onAction={openAcademicEditor}
+                      />
+                    )}
+                  </InfoGroup>
+                </>
+              )}
             </div>
           </div>
+
+          <TeacherAcademicEditor
+            teacherId={teacher.id}
+            teacherName={displayName}
+            initialSubjectIds={teacher.tenantSubjects.map((s) => s.id)}
+            initialGradeLevelIds={teacher.tenantGradeLevels.map((g) => g.id)}
+            initialStreamIds={teacher.tenantStreams.map((s) => s.id)}
+            tenantSubjects={teacher.tenantSubjects}
+            tenantGradeLevels={teacher.tenantGradeLevels}
+            tenantStreams={teacher.tenantStreams}
+            onSaved={refetch}
+            open={academicEditorOpen}
+            onOpenChange={setAcademicEditorOpen}
+            hideTrigger
+          />
         </TabsContent>
 
         <TabsContent value="assignments" className="mt-0">

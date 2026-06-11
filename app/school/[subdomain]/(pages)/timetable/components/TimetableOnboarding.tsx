@@ -1,8 +1,6 @@
 "use client";
 
 import { useTimetableStore } from "@/lib/stores/useTimetableStoreNew";
-import { getTenantIdFromCookies } from "@/lib/utils/school-onboarding";
-import { isTimetableWizardComplete } from "@/lib/utils/timetable-setup";
 import { Button } from "@/components/ui/button";
 import { Clock, CheckCircle2, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,13 +10,15 @@ interface TimetableOnboardingProps {
 }
 
 export function TimetableOnboarding({ onSetupSchoolDay }: TimetableOnboardingProps) {
-  const { timeSlots, breaks } = useTimetableStore();
+  const { timeSlots, breaks, daysPerWeek, lessonPeriodsPerDay } =
+    useTimetableStore();
 
-  const setupWizardDone = isTimetableWizardComplete(getTenantIdFromCookies());
-  const hasSchoolDay =
-    timeSlots.length > 0 || (setupWizardDone && breaks.length > 0);
+  const hasLessonTimesReady =
+    timeSlots.length > 0 ||
+    (breaks.length > 0 &&
+      ((lessonPeriodsPerDay ?? 0) > 0 || (daysPerWeek ?? 0) > 0));
 
-  if (hasSchoolDay) {
+  if (hasLessonTimesReady) {
     return null;
   }
 

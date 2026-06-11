@@ -19,10 +19,15 @@ interface ParentReportCardSectionProps {
 
 function gradeFromAverage(average: number): string {
   if (average >= 80) return 'A'
-  if (average >= 70) return 'B'
-  if (average >= 60) return 'C'
-  if (average >= 50) return 'D'
-  return 'E'
+  if (average >= 75) return 'A-'
+  if (average >= 70) return 'B+'
+  if (average >= 65) return 'B'
+  if (average >= 60) return 'B-'
+  if (average >= 55) return 'C+'
+  if (average >= 50) return 'C'
+  if (average >= 45) return 'C-'
+  if (average >= 40) return 'D+'
+  return 'D'
 }
 
 export function ParentReportCardSection({

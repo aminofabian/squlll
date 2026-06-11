@@ -135,17 +135,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
     }
   }, [availableSubjects]);
 
-  // Debug: Log the live data being used
-  console.log('=== CreateTestSection Debug ===');
-  console.log('Teacher data:', teacher);
-  console.log('Teacher loading:', teacherLoading);
-  console.log('Teacher error:', teacherError);
-  console.log('Using teacher data:', !!teacher);
-  console.log('Final grade levels:', finalGradeLevels);
-  console.log('Final subjects:', finalSubjects);
-  console.log('Number of levels:', finalGradeLevels.length);
-  console.log('Number of subjects:', finalSubjects.length);
-  console.log('=== End CreateTestSection Debug ===');
+  // Debug logging removed for production
 
   // Show loading state if teacher data is loading
   if (teacherLoading) {
@@ -342,44 +332,10 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         fileSize: file.size
       }));
 
-      // Map frontend data to GraphQL input structure
-      // Verify all grade level IDs with the server
-      // Filter out all known invalid IDs that cause errors
-      const invalidIds = [
-        "6e7a61ee-9543-4cdc-8400-5e4a85f8a0d2",
-        "d3f70760-5f17-4a60-9607-6ff9735d7394",
-        "3b39f4ab-d579-4b22-9379-66c5989f6d8b",
-        "24f0795e-7c43-4f55-9dc3-89ba24e5c459",
-        "022011a6-58c3-4e07-9f97-9ab2e0e655c7" // Added the problematic ID from the error
-      ];
-      
-      const validatedGradeLevelIds = gradeLevelIds.filter((id): id is string => 
-        typeof id === 'string' && !invalidIds.includes(id)
-      );
-      
-      console.log('Filtered out invalid IDs:', invalidIds);
-      console.log('Remaining valid grade IDs:', validatedGradeLevelIds);
-      
-      if (validatedGradeLevelIds.length === 0) {
-        throw new Error('All selected grade levels are invalid. Please select different grades.');
-      }
-      
-      // Validate subject ID - filter out known problematic subject IDs
-      const invalidSubjectIds = [
-        "dfba0945-3561-4ec7-8c5c-e99379bc0f11" // Subject ID from the error
-      ];
-      
-      if (invalidSubjectIds.includes(subjectId)) {
-        console.error(`Invalid subject ID detected: ${subjectId}`);
-        throw new Error('The selected subject is no longer available. Please select a different subject.');
-      }
-      
-      console.log('Using tenant subject ID:', subjectId);
-      
       const createTestInput = {
         title,
-        tenantSubjectId: subjectId, // Using tenant subject ID
-        tenantGradeLevelIds: validatedGradeLevelIds, // Use validated IDs
+        tenantSubjectId: subjectId,
+        tenantGradeLevelIds: gradeLevelIds,
         date,
         startTime,
         duration: parseInt(duration, 10),
@@ -388,7 +344,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         instructions: instructions || '',
         questions: questions.map((q, index) => ({
           text: q.text,
-          marks: 10, // Default marks per question
+          marks: Math.max(1, Math.round(parseInt(points, 10) / questions.length)), // Distribute total points across questions
           order: index + 1,
           type: q.type === 'mcq' ? 'MULTIPLE_CHOICE' : q.type === 'short' ? 'SHORT_ANSWER' : q.type === 'tf' ? 'TRUE_FALSE' : 'MULTIPLE_CHOICE',
           isAIGenerated: q.text.startsWith('AI:'),

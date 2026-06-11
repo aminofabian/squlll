@@ -56,4 +56,4 @@ export default function EnterMarksSection({ subdomain, onBack }: EnterMarksSecti
       </div>
     </div>
   );
-} 
+}

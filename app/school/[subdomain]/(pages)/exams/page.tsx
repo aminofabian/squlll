@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { ExamsFilterSidebar } from "@/components/dashboard/ExamsFilterSidebar";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { SchoolSearchFilter } from "@/components/dashboard/SchoolSearchFilter";
+import { DashboardGradeSheet } from "../dashboard/components/DashboardGradeSheet";
+import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
+import { cn } from "@/lib/utils";
+import { formatGradeDisplayName } from "@/lib/utils/grade-display";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Plus,
-  Eye,
-  Edit,
   Download,
   FileText,
   BarChart3,
@@ -29,13 +30,26 @@ import {
   Award,
   CheckCircle,
   RefreshCw,
+  Filter,
 } from "lucide-react";
-import { subjects } from "@/lib/data/mockExams";
-import type { Exam, StudentExamResult } from "@/types/exam";
-import { format } from "date-fns";
-import { CreateExamDrawer } from "./components/CreateExamDrawer";
+import type { StudentExamResult } from "@/types/exam";
+import { CreateExamSessionDrawer } from "./components/CreateExamSessionDrawer";
 import { ReportCardTemplateModal } from "./components/ReportCardTemplateModal";
+import { BulkReportCardsPanel } from "./components/BulkReportCardsPanel";
+import { ExamsSessionScopedPanel } from "./components/ExamsSessionScopedPanel";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
+import { useExamSessions } from "@/lib/hooks/useExamSessions";
+import { useAcademicYears } from "@/lib/hooks/useAcademicYears";
+import {
+  publishExamSessionResults,
+  unpublishExamSessionResults,
+  statusLabel,
+} from "@/lib/exams/examSessions";
+import { examSessionPath } from "@/lib/school/schoolRoutes";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // ─── Shared Helpers ────────────────────────────────────────────
 
@@ -56,7 +70,13 @@ function getPerformanceGrade(percentage: number) {
 
 // ─── Student Performance View ──────────────────────────────────
 
-function StudentPerformanceView({ studentId }: { studentId: string }) {
+function StudentPerformanceView({
+  studentId,
+  configSubjects,
+}: {
+  studentId: string;
+  configSubjects: { id: string; name: string; code: string }[];
+}) {
   // TODO: Replace with real API data
   const studentResults: StudentExamResult[] = [];
   const student = studentResults[0]?.student;
@@ -151,7 +171,13 @@ function StudentPerformanceView({ studentId }: { studentId: string }) {
                   user: { email: "" },
                 }}
                 school={{ id: "", schoolName: "", subdomain: "" }}
-                subjects={subjects}
+                subjects={configSubjects.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  code: s.code,
+                  category: "core" as const,
+                  maxMarks: 100,
+                }))}
                 term="1"
                 year="2024"
               />
@@ -261,159 +287,358 @@ function StudentPerformanceView({ studentId }: { studentId: string }) {
 // ─── Main Page ──────────────────────────────────────────────────
 
 export default function ExamsPage() {
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [selectedTerm, setSelectedTerm] = useState<string>("Term 1");
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
+  const params = useParams();
+  const subdomain = params.subdomain as string;
+  const queryClient = useQueryClient();
+
+  const [selectedTerm, setSelectedTerm] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
   const [viewMode, setViewMode] = useState<"overview" | "student">("overview");
   const [selectedStudentId, setSelectedStudentId] = useState<string>();
   const [examTypeFilter, setExamTypeFilter] = useState<string>("all");
-  const [subjectFilter, setSubjectFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedGradeId, setSelectedGradeId] = useState<string>();
   const [selectedLevelId, setSelectedLevelId] = useState<string>();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedStreamId, setSelectedStreamId] = useState<string>("");
+  const [isGradePanelOpen, setIsGradePanelOpen] = useState(false);
+  const [isGradeSheetOpen, setIsGradeSheetOpen] = useState(false);
 
-  const { config: schoolConfig } = useSchoolConfigStore();
+  const { isLoading: configLoading } = useSchoolConfig();
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    sessionId: string;
+    publish: boolean;
+  } | null>(null);
+  const [activeSection, setActiveSection] = useState<
+    "sessions" | "report-cards" | "rankings" | "analytics"
+  >("sessions");
 
-  // Build classes from school config instead of hardcoded
-  const classes = useMemo(() => {
-    const result: string[] = [];
-    if (schoolConfig?.selectedLevels) {
-      for (const level of schoolConfig.selectedLevels) {
-        for (const grade of level.gradeLevels || []) {
-          const streams = grade.streams || [];
-          if (streams.length > 0) {
-            for (const stream of streams) {
-              result.push(`${grade.name} ${stream.name}`);
-            }
-          } else {
-            result.push(grade.name);
-          }
-        }
+  const { getAllSubjects, config } = useSchoolConfigStore();
+  const { academicYears, getActiveAcademicYear } = useAcademicYears();
+  const configSubjects = getAllSubjects();
+
+  const availableTerms = useMemo(() => {
+    const year = academicYears.find((y) => y.name === selectedYear);
+    return year?.terms ?? [];
+  }, [academicYears, selectedYear]);
+
+  const selectedTermNumber = useMemo(() => {
+    const idx = availableTerms.findIndex((t) => t.id === selectedTerm);
+    return idx >= 0 ? idx + 1 : undefined;
+  }, [availableTerms, selectedTerm]);
+
+  const {
+    data: examSessions = [],
+    isLoading: examsLoading,
+    refetch: refetchExams,
+  } = useExamSessions({
+    academicYear: selectedYear || undefined,
+    term: selectedTermNumber,
+    type: examTypeFilter === "all" ? undefined : (examTypeFilter as "CA" | "EXAM"),
+    tenantGradeLevelId: selectedGradeId,
+  });
+
+  useEffect(() => {
+    const active = getActiveAcademicYear();
+    if (active && !selectedYear) {
+      setSelectedYear(active.name);
+      if (active.terms[0]) {
+        setSelectedTerm(active.terms[0].id);
       }
     }
-    return result.length > 0
-      ? result
-      : ["Form 1A", "Form 2A", "Form 3A", "Form 4A"];
-  }, [schoolConfig]);
+  }, [academicYears, getActiveAcademicYear, selectedYear]);
 
-  const terms = ["Term 1", "Term 2", "Term 3"];
-  const years = ["2023", "2024", "2025"];
-
-  // TODO: Replace with real API data
-  const exams: Exam[] = [];
-
-  const filteredExams = useMemo(() => {
-    return exams.filter((exam) => {
-      const matchesClass = !selectedClass || exam.class === selectedClass;
-      const matchesTerm = !selectedTerm || exam.term === selectedTerm;
-      const matchesYear = !selectedYear || exam.academicYear === selectedYear;
-      const matchesType =
-        examTypeFilter === "all" || exam.examType === examTypeFilter;
-      const matchesSubject =
-        subjectFilter === "all" || exam.subject.name === subjectFilter;
+  const filteredSessions = useMemo(() => {
+    return examSessions.filter((session) => {
       const matchesStatus =
-        statusFilter === "all" || exam.status === statusFilter;
-      return (
-        matchesClass &&
-        matchesTerm &&
-        matchesYear &&
-        matchesType &&
-        matchesSubject &&
-        matchesStatus
-      );
+        statusFilter === "all" || session.status === statusFilter;
+      return matchesStatus;
     });
-  }, [
-    exams,
-    selectedClass,
-    selectedTerm,
-    selectedYear,
-    examTypeFilter,
-    subjectFilter,
-    statusFilter,
-  ]);
+  }, [examSessions, statusFilter]);
 
-  const handleGradeSelect = (gradeId: string, levelId: string) => {
+  useEffect(() => {
+    const handleResize = () => {
+      setIsGradePanelOpen(window.innerWidth >= 1280);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const selectedGrade = useMemo(() => {
+    if (!selectedGradeId || !config) return null;
+    for (const level of config.selectedLevels) {
+      const grade = level.gradeLevels?.find((g) => g.id === selectedGradeId);
+      if (grade) {
+        const stream = selectedStreamId
+          ? grade.streams?.find((s) => s.id === selectedStreamId)
+          : null;
+        return {
+          name: grade.name,
+          displayName: formatGradeDisplayName(grade.name),
+          levelName: level.name,
+          streamName: stream?.name,
+        };
+      }
+    }
+    return null;
+  }, [selectedGradeId, selectedStreamId, config]);
+
+  const handleGradeSelect = useCallback((gradeId: string, levelId: string) => {
     setSelectedGradeId(gradeId);
     setSelectedLevelId(levelId);
-  };
+    setSelectedStreamId("");
+  }, []);
+
+  const handleStreamSelect = useCallback(
+    (streamId: string, gradeId: string, levelId: string) => {
+      setSelectedGradeId(gradeId);
+      setSelectedLevelId(levelId);
+      setSelectedStreamId(streamId);
+    },
+    [],
+  );
+
+  const handleSelectAllGrades = useCallback(() => {
+    setSelectedGradeId(undefined);
+    setSelectedLevelId(undefined);
+    setSelectedStreamId("");
+  }, []);
 
   const handleExamCreated = () => {
-    setRefreshKey((k) => k + 1);
+    void refetchExams();
   };
 
-  return (
-    <DashboardLayout
-      searchFilter={
-        <ExamsFilterSidebar
-          selectedGradeId={selectedGradeId}
-          onGradeSelect={handleGradeSelect}
-        />
+  const handleTogglePublish = async (
+    sessionId: string,
+    published: boolean,
+  ) => {
+    setConfirmAction({ sessionId, publish: !published });
+  };
+
+  const executePublishAction = async () => {
+    if (!confirmAction) return;
+    const { sessionId, publish } = confirmAction;
+    setPublishingId(sessionId);
+    setConfirmAction(null);
+    try {
+      if (publish) {
+        await publishExamSessionResults(subdomain, sessionId);
+        toast.success("Results published to students");
+      } else {
+        await unpublishExamSessionResults(subdomain, sessionId);
+        toast.success("Results unpublished");
       }
-    >
-      <div className="space-y-6">
-        {/* Header */}
-        <Card className="border border-slate-200 dark:border-slate-700">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {viewMode === "student" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setViewMode("overview");
-                      setSelectedStudentId(undefined);
-                    }}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
-                  </Button>
-                )}
-                <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                  <GraduationCap className="h-6 w-6 text-slate-600 dark:text-slate-400" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    {viewMode === "student" ? "Student Performance" : "Exams"}
-                  </h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {viewMode === "student"
-                      ? "Detailed performance analysis"
-                      : "Manage and track examinations"}
-                  </p>
+      await queryClient.invalidateQueries({ queryKey: ["examSessions", subdomain] });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update publish status",
+      );
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
+  const headerSubtitle = selectedGrade
+    ? `${selectedGrade.displayName}${selectedGrade.streamName ? ` · ${selectedGrade.streamName}` : ""} · ${selectedGrade.levelName}`
+    : viewMode === "student"
+      ? "Detailed performance analysis"
+      : "Manage and track examinations";
+
+  return (
+    <div className="flex min-h-full flex-col bg-[#f8f9fb] dark:bg-slate-950">
+      <div className="flex min-w-0 flex-1">
+        <aside
+          className={cn(
+            "hidden shrink-0 flex-col border-r border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-900 lg:flex",
+            isGradePanelOpen ? "w-56" : "w-0 overflow-hidden border-r-0",
+          )}
+          aria-label="Grade navigation"
+        >
+          {isGradePanelOpen ? (
+            <div className="sticky top-[2.75rem] flex max-h-[calc(100vh-5.5rem)] flex-col overflow-hidden px-2 py-2">
+              <SchoolSearchFilter
+                className="h-full"
+                variant="minimal"
+                type="grades"
+                onGradeSelect={handleGradeSelect}
+                onStreamSelect={handleStreamSelect}
+                onSelectAllClasses={handleSelectAllGrades}
+                isLoading={configLoading}
+                selectedGradeId={selectedGradeId ?? ""}
+                selectedStreamId={selectedStreamId}
+                allClassesSelected={!selectedGradeId}
+              />
+            </div>
+          ) : null}
+        </aside>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-3 py-2 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 sm:px-4">
+            <div className="mx-auto flex max-w-6xl items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  {viewMode === "student" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 shrink-0 p-0"
+                      onClick={() => {
+                        setViewMode("overview");
+                        setSelectedStudentId(undefined);
+                      }}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <div className="min-w-0">
+                    <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-[15px]">
+                      {viewMode === "student" ? "Student Performance" : "Exams"}
+                    </h1>
+                    <p className="hidden truncate text-[11px] text-slate-400 sm:block">
+                      {headerSubtitle}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex shrink-0 items-center gap-1">
                 <Button
-                  onClick={() => setRefreshKey((k) => k + 1)}
+                  type="button"
+                  variant={selectedGradeId ? "secondary" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 px-2 text-xs lg:hidden"
+                  onClick={() => setIsGradeSheetOpen(true)}
+                >
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="hidden min-[380px]:inline">
+                    {selectedGradeId ? "Grades" : "Browse"}
+                  </span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="hidden h-7 px-2 text-xs lg:inline-flex"
+                  onClick={() => setIsGradePanelOpen((open) => !open)}
+                >
+                  {isGradePanelOpen ? "Hide panel" : "Grades"}
+                </Button>
+
+                <Button
+                  onClick={() => void refetchExams()}
                   variant="outline"
                   size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={examsLoading}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
+                  <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Refresh</span>
                 </Button>
-                <CreateExamDrawer
-                  onExamCreated={handleExamCreated}
+                <CreateExamSessionDrawer
+                  onCreated={handleExamCreated}
+                  initialGradeId={selectedGradeId}
                   trigger={
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Exam
+                    <Button size="sm" className="h-7 px-2 text-xs">
+                      <Plus className="h-3.5 w-3.5 sm:mr-1.5" />
+                      <span className="hidden sm:inline">Create exam</span>
                     </Button>
                   }
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="flex-1">
+            <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
+
+        {viewMode === "overview" && (
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
+            {(
+              [
+                { id: "sessions", label: "Sessions", icon: GraduationCap },
+                { id: "report-cards", label: "Report Cards", icon: FileText },
+                { id: "rankings", label: "Rankings", icon: Trophy },
+                { id: "analytics", label: "Analytics", icon: BarChart3 },
+              ] as const
+            ).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveSection(id)}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px whitespace-nowrap ${
+                  activeSection === id
+                    ? "border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100"
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Student View */}
         {viewMode === "student" && selectedStudentId && (
-          <StudentPerformanceView studentId={selectedStudentId} />
+          <StudentPerformanceView
+            studentId={selectedStudentId}
+            configSubjects={configSubjects}
+          />
         )}
 
         {/* Overview */}
-        {viewMode === "overview" && (
+        {viewMode === "overview" && activeSection === "report-cards" && (
+          <>
+            <BulkReportCardsPanel />
+            <Card className="border border-slate-200 dark:border-slate-700">
+              <CardContent className="py-8 text-center text-sm text-slate-500">
+                For session-based report cards, open an exam session and use the
+                Report Cards tab after running results processing.
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {viewMode === "overview" && activeSection === "rankings" && (
+          <Card className="border border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Trophy className="h-4 w-4" />
+                Session rankings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExamsSessionScopedPanel
+                subdomain={subdomain}
+                sessions={filteredSessions}
+                mode="rankings"
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {viewMode === "overview" && activeSection === "analytics" && (
+          <Card className="border border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Session analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExamsSessionScopedPanel
+                subdomain={subdomain}
+                sessions={filteredSessions}
+                mode="analytics"
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {viewMode === "overview" && activeSection === "sessions" && (
+          <>
           <Card className="border border-slate-200 dark:border-slate-700">
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center gap-3">
@@ -423,64 +648,82 @@ export default function ExamsPage() {
                 </CardTitle>
                 <div className="flex flex-wrap gap-2 ml-auto">
                   <select
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                    className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
-                  >
-                    <option value="">All Classes</option>
-                    {classes.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <select
                     value={selectedTerm}
                     onChange={(e) => setSelectedTerm(e.target.value)}
                     className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
                   >
-                    {terms.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
+                    <option value="">All terms</option>
+                    {availableTerms.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
                       </option>
                     ))}
                   </select>
                   <select
                     value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedYear(e.target.value);
+                      setSelectedTerm("");
+                    }}
                     className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
                   >
-                    {years.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
+                    <option value="">All years</option>
+                    {academicYears.map((y) => (
+                      <option key={y.id} value={y.name}>
+                        {y.name}
                       </option>
                     ))}
+                  </select>
+                  <select
+                    value={examTypeFilter}
+                    onChange={(e) => setExamTypeFilter(e.target.value)}
+                    className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
+                  >
+                    <option value="all">All types</option>
+                    <option value="CA">CA</option>
+                    <option value="EXAM">Exam</option>
+                  </select>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="text-xs border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 bg-white dark:bg-slate-900"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="DRAFT">Draft</option>
+                    <option value="SCHEDULED">Scheduled</option>
+                    <option value="MARKING">Marking</option>
+                    <option value="PUBLISHED">Published</option>
                   </select>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              {filteredExams.length === 0 ? (
+              {examsLoading ? (
+                <div className="flex items-center justify-center py-16 text-sm text-slate-500">
+                  Loading exam sessions…
+                </div>
+              ) : filteredSessions.length === 0 ? (
                 <EmptyState
                   icon={<BookOpen className="h-10 w-10" />}
                   title={
-                    exams.length === 0
-                      ? "No exams yet"
-                      : "No exams match your filters"
+                    examSessions.length === 0
+                      ? "No exam sessions yet"
+                      : "No sessions match your filters"
                   }
                   description={
-                    exams.length === 0
-                      ? "Create your first exam to start tracking student performance."
+                    examSessions.length === 0
+                      ? "Create a named exam (e.g. Term 3 End-of-Year) linked to grades and subjects."
                       : "Try adjusting your filters to see more results."
                   }
                   action={
-                    exams.length === 0 ? (
-                      <CreateExamDrawer
-                        onExamCreated={handleExamCreated}
+                    examSessions.length === 0 ? (
+                      <CreateExamSessionDrawer
+                        onCreated={handleExamCreated}
+                        initialGradeId={selectedGradeId}
                         trigger={
                           <Button>
                             <Plus className="h-4 w-4 mr-2" />
-                            Create First Exam
+                            Create first exam
                           </Button>
                         }
                       />
@@ -493,93 +736,109 @@ export default function ExamsPage() {
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700 text-left">
                         <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                          Exam
+                          Exam session
                         </th>
                         <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                          Subject
+                          Term / Year
                         </th>
                         <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                          Type
+                          Scope
                         </th>
                         <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                          Date
-                        </th>
-                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
-                          Marks
+                          Dates
                         </th>
                         <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300">
                           Status
                         </th>
-                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300 w-[100px]"></th>
+                        <th className="py-3 px-3 font-semibold text-slate-700 dark:text-slate-300 w-[140px]"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredExams.map((exam) => (
+                      {filteredSessions.map((session) => (
                         <tr
-                          key={exam.id}
+                          key={session.id}
                           className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         >
                           <td className="py-3 px-3">
-                            <div className="font-medium text-slate-900 dark:text-slate-100">
-                              {exam.title}
-                            </div>
-                            {exam.description && (
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
-                                {exam.description}
+                            <Link
+                              href={examSessionPath(subdomain, session.id)}
+                              className="font-medium text-slate-900 dark:text-slate-100 hover:underline"
+                            >
+                              {session.name}
+                            </Link>
+                            {session.description && (
+                              <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                                {session.description}
                               </div>
                             )}
-                          </td>
-                          <td className="py-3 px-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
-                                <BookOpen className="h-3.5 w-3.5 text-slate-500" />
-                              </div>
-                              <span className="text-slate-900 dark:text-slate-100">
-                                {exam.subject.name}
-                              </span>
+                            <div className="mt-1">
+                              <Badge variant="outline" className="text-[10px]">
+                                {session.type}
+                              </Badge>
                             </div>
-                          </td>
-                          <td className="py-3 px-3">
-                            <Badge variant="outline" className="text-xs">
-                              {exam.examType}
-                            </Badge>
                           </td>
                           <td className="py-3 px-3 text-slate-600 dark:text-slate-400 text-xs">
-                            {format(
-                              new Date(exam.dateAdministered),
-                              "MMM dd, yyyy",
-                            )}
+                            Term {session.term}
+                            <br />
+                            {session.academicYear}
                           </td>
-                          <td className="py-3 px-3 font-medium text-slate-900 dark:text-slate-100">
-                            {exam.totalMarks}
+                          <td className="py-3 px-3 text-xs text-slate-600 dark:text-slate-400">
+                            {session.gradesCount} grade
+                            {session.gradesCount === 1 ? "" : "s"} ·{" "}
+                            {session.subjectsCount} subject
+                            {session.subjectsCount === 1 ? "" : "s"} ·{" "}
+                            {session.papersCount} papers
+                          </td>
+                          <td className="py-3 px-3 text-xs text-slate-600 dark:text-slate-400">
+                            {session.startDate
+                              ? new Date(session.startDate).toLocaleDateString()
+                              : "—"}
+                            {session.endDate &&
+                            session.endDate !== session.startDate
+                              ? ` – ${new Date(session.endDate).toLocaleDateString()}`
+                              : ""}
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              {session.scheduledSlotsCount} timetable slot
+                              {session.scheduledSlotsCount === 1 ? "" : "s"}
+                            </div>
                           </td>
                           <td className="py-3 px-3">
-                            <Badge
-                              variant={
-                                exam.status === "completed"
-                                  ? "default"
-                                  : "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {exam.status}
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge variant="outline" className="text-xs w-fit">
+                                {statusLabel(session.status)}
+                              </Badge>
+                              {session.resultsPublished ? (
+                                <span className="text-[10px] text-emerald-600">
+                                  Results published
+                                </span>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="py-3 px-3">
-                            <div className="flex items-center gap-0.5">
+                            <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-7 p-0"
+                                className="h-7 px-2 text-xs"
+                                asChild
                               >
-                                <Eye className="h-3.5 w-3.5" />
+                                <Link href={examSessionPath(subdomain, session.id)}>
+                                  Open
+                                </Link>
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-7 p-0"
+                                className="h-7 px-2 text-xs"
+                                disabled={publishingId === session.id}
+                                onClick={() =>
+                                  handleTogglePublish(
+                                    session.id,
+                                    session.resultsPublished,
+                                  )
+                                }
                               >
-                                <Edit className="h-3.5 w-3.5" />
+                                {session.resultsPublished ? "Unpublish" : "Publish"}
                               </Button>
                             </div>
                           </td>
@@ -591,9 +850,62 @@ export default function ExamsPage() {
               )}
             </CardContent>
           </Card>
+          </>
         )}
+            </div>
+          </div>
+        </div>
       </div>
-    </DashboardLayout>
+
+      <DashboardGradeSheet
+        open={isGradeSheetOpen}
+        onOpenChange={setIsGradeSheetOpen}
+        onGradeSelect={handleGradeSelect}
+        onStreamSelect={handleStreamSelect}
+        selectedGradeId={selectedGradeId ?? ""}
+        selectedStreamId={selectedStreamId}
+        isLoading={configLoading}
+      />
+
+      {/* Publish/Unpublish Confirmation Dialog */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-lg">
+                {confirmAction.publish ? "Publish Results?" : "Unpublish Results?"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                {confirmAction.publish
+                  ? "Students and parents will be able to see these marks immediately. Are you sure?"
+                  : "Students and parents will no longer be able to see these marks. Are you sure?"}
+              </p>
+            </CardContent>
+            <div className="flex justify-end gap-2 p-6 pt-0">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmAction(null)}
+                disabled={!!publishingId}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={executePublishAction}
+                disabled={!!publishingId}
+                variant={confirmAction.publish ? "default" : "destructive"}
+              >
+                {publishingId ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                {confirmAction.publish ? "Publish" : "Unpublish"}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }
 

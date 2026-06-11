@@ -1,10 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  publishAssessmentResults,
+  unpublishAssessmentResults,
+} from "@/lib/exams/assessmentResults";
 import {
   useTeacherActivity,
   type AssesStatus,
@@ -22,6 +28,9 @@ import {
   FileText,
   RefreshCw,
   Sparkles,
+  Eye,
+  EyeOff,
+  Loader2,
 } from "lucide-react";
 
 interface TeacherActivityPanelProps {
@@ -152,11 +161,40 @@ function NoteRow({ note }: { note: TeacherActivityNote }) {
   );
 }
 
-function AssessmentRow({ assessment }: { assessment: TeacherActivityAssessment }) {
+function AssessmentRow({
+  assessment,
+  subdomain,
+  onUpdated,
+}: {
+  assessment: TeacherActivityAssessment;
+  subdomain: string;
+  onUpdated: () => void;
+}) {
+  const [publishing, setPublishing] = useState(false);
   const subjectName =
     assessment.tenantSubject?.subject?.name ?? "Unknown subject";
   const gradeName =
     assessment.tenantGradeLevel?.gradeLevel?.name ?? "Unknown grade";
+
+  const handleTogglePublish = async () => {
+    setPublishing(true);
+    try {
+      if (assessment.resultsPublished) {
+        await unpublishAssessmentResults(subdomain, assessment.id);
+        toast.success("Results unpublished");
+      } else {
+        await publishAssessmentResults(subdomain, assessment.id);
+        toast.success("Results published to students");
+      }
+      onUpdated();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update results status",
+      );
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-3 dark:border-slate-800 dark:bg-slate-800/30">
@@ -175,6 +213,18 @@ function AssessmentRow({ assessment }: { assessment: TeacherActivityAssessment }
           ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          {assessment.resultsPublished ? (
+            <Badge
+              variant="outline"
+              className="border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px]"
+            >
+              Published
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-[10px]">
+              Draft
+            </Badge>
+          )}
           {assessmentTypeBadge(assessment.type)}
           {assessmentStatusBadge(assessment.status)}
         </div>
@@ -191,6 +241,24 @@ function AssessmentRow({ assessment }: { assessment: TeacherActivityAssessment }
           <span>Cutoff {assessment.cutoff}</span>
         ) : null}
         <span>Updated {formatTeacherDate(assessment.updatedAt)}</span>
+        {assessment.type === "EXAM" ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-[11px]"
+            disabled={publishing}
+            onClick={() => void handleTogglePublish()}
+          >
+            {publishing ? (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            ) : assessment.resultsPublished ? (
+              <EyeOff className="mr-1 h-3 w-3" />
+            ) : (
+              <Eye className="mr-1 h-3 w-3" />
+            )}
+            {assessment.resultsPublished ? "Unpublish" : "Publish results"}
+          </Button>
+        ) : null}
       </div>
     </div>
   );
@@ -212,6 +280,8 @@ export function TeacherActivityPanel({
   tenantSubjectIds,
   tenantGradeLevelIds,
 }: TeacherActivityPanelProps) {
+  const params = useParams();
+  const subdomain = params.subdomain as string;
   const { notes, assessments, loading, error, refetch, hasTeachingScope } =
     useTeacherActivity({
       teacherUserId,
@@ -319,7 +389,12 @@ export function TeacherActivityPanel({
           ) : (
             <div className="space-y-3">
               {assessments.map((assessment) => (
-                <AssessmentRow key={assessment.id} assessment={assessment} />
+                <AssessmentRow
+                  key={assessment.id}
+                  assessment={assessment}
+                  subdomain={subdomain}
+                  onUpdated={refetch}
+                />
               ))}
             </div>
           )}

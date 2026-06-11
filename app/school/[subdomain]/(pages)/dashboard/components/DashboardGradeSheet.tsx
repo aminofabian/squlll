@@ -17,6 +17,9 @@ interface DashboardGradeSheetProps {
   selectedGradeId: string;
   selectedStreamId: string;
   isLoading?: boolean;
+  allowedGradeIds?: string[];
+  allClassesSelected?: boolean;
+  onSelectAllClasses?: () => void;
 }
 
 export function DashboardGradeSheet({
@@ -27,6 +30,9 @@ export function DashboardGradeSheet({
   selectedGradeId,
   selectedStreamId,
   isLoading,
+  allowedGradeIds,
+  allClassesSelected,
+  onSelectAllClasses,
 }: DashboardGradeSheetProps) {
   const handleGradeSelect = (gradeId: string, levelId: string) => {
     onGradeSelect(gradeId, levelId);
@@ -59,9 +65,12 @@ export function DashboardGradeSheet({
             type="grades"
             onGradeSelect={handleGradeSelect}
             onStreamSelect={handleStreamSelect}
+            onSelectAllClasses={onSelectAllClasses}
             isLoading={isLoading}
             selectedGradeId={selectedGradeId}
             selectedStreamId={selectedStreamId}
+            allClassesSelected={allClassesSelected}
+            allowedGradeIds={allowedGradeIds}
           />
         </div>
       </SheetContent>

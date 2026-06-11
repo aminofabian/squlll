@@ -60,8 +60,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate required fields
-    const requiredFields = ['email', 'fullName', 'firstName', 'lastName', 'role', 'gender', 'department', 'phoneNumber', 'employeeId', 'dateOfBirth', 'qualifications'];
+    // Validate required fields (align with GraphQL CreateTeacherInvitationDto)
+    const requiredFields = [
+      'email',
+      'fullName',
+      'firstName',
+      'lastName',
+      'gender',
+      'department',
+      'phoneNumber',
+    ];
     const missingFields = requiredFields.filter(field => !createTeacherDto[field]);
     
     if (missingFields.length > 0) {
@@ -74,26 +82,8 @@ export async function POST(request: Request) {
       );
     }
     
-    // Validate arrays
-    if (!createTeacherDto.tenantSubjectIds || !Array.isArray(createTeacherDto.tenantSubjectIds) || createTeacherDto.tenantSubjectIds.length === 0) {
-      return NextResponse.json(
-        { 
-          error: 'tenantSubjectIds must be a non-empty array',
-          details: [{ field: 'tenantSubjectIds', message: 'tenantSubjectIds must be a non-empty array' }]
-        },
-        { status: 400 }
-      );
-    }
-    
-    if (!createTeacherDto.tenantGradeLevelIds || !Array.isArray(createTeacherDto.tenantGradeLevelIds) || createTeacherDto.tenantGradeLevelIds.length === 0) {
-      return NextResponse.json(
-        { 
-          error: 'tenantGradeLevelIds must be a non-empty array',
-          details: [{ field: 'tenantGradeLevelIds', message: 'tenantGradeLevelIds must be a non-empty array' }]
-        },
-        { status: 400 }
-      );
-    }
+    // Grades, subjects, and profile extras are optional at invite time
+    createTeacherDto.role = 'TEACHER';
     
     // Validate field formats
     if (createTeacherDto.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(createTeacherDto.email)) {
@@ -127,10 +117,6 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-    }
-    
-    if (createTeacherDto.role !== 'TEACHER') {
-      createTeacherDto.role = 'TEACHER'; // Force role to be TEACHER
     }
     
     if (createTeacherDto.gender && !['MALE', 'FEMALE'].includes(createTeacherDto.gender)) {

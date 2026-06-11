@@ -45,6 +45,7 @@ export interface StudentTestApi {
   startTime: string
   endTime?: string | null
   duration: number
+  effectiveDuration?: number | null
   totalMarks: number
   status: string
   instructions?: string | null
@@ -56,7 +57,8 @@ export interface StudentTestApi {
 
 export interface StudentTestSubmissionApi {
   id: string
-  submitted_at: string
+  submitted_at?: string | null
+  started_at?: string | null
   file_url?: string | null
   comments?: string | null
   submission_text?: string | null
@@ -101,6 +103,8 @@ export interface StudentAssignmentItem {
   status: 'pending' | 'overdue' | 'submitted' | 'graded'
   teacher: string
   maxScore: number
+  duration?: number
+  startedAt?: string | null
   grade?: number
   feedback?: string
   gradedAt?: string
