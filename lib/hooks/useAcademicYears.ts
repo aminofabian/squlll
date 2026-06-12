@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react'
 export interface Term {
   id: string
   name: string
+  startDate: string
+  endDate: string
+  isActive: boolean
+  isCurrent: boolean
 }
 
 export interface AcademicYear {
@@ -11,6 +15,7 @@ export interface AcademicYear {
   startDate: string
   endDate: string
   isActive: boolean
+  isCurrent: boolean
   terms: Term[]
 }
 
@@ -47,9 +52,14 @@ export const useAcademicYears = (): UseAcademicYearsReturn => {
                 startDate
                 endDate
                 isActive
+                isCurrent
                 terms {
                   id
                   name
+                  startDate
+                  endDate
+                  isActive
+                  isCurrent
                 }
               }
             }

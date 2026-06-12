@@ -3,14 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
-  ArrowLeft,
-  Calendar,
   BookOpen,
-  GraduationCap,
   ClipboardList,
   PenLine,
   BarChart3,
@@ -23,14 +18,9 @@ import {
   TrendingUp,
   FileText,
   Layers,
-  Filter,
 } from 'lucide-react'
 import { useExamSession } from '@/lib/hooks/useExamSessions'
-import {
-  getSessionGrades,
-  publicationStateLabel,
-  statusLabel,
-} from '@/lib/exams/examSessions'
+import { getSessionGrades } from '@/lib/exams/examSessions'
 import { examsListPath } from '@/lib/school/schoolRoutes'
 import { SchoolSearchFilter } from '@/components/dashboard/SchoolSearchFilter'
 import { DashboardGradeSheet } from '../../dashboard/components/DashboardGradeSheet'
@@ -50,6 +40,18 @@ import { SessionProcessingPanel } from '../components/SessionProcessingPanel'
 import { SessionRankingsPanel } from '../components/SessionRankingsPanel'
 import { SessionAnalyticsPanel } from '../components/SessionAnalyticsPanel'
 import { SessionReportCardsPanel } from '../components/SessionReportCardsPanel'
+import { ExamSessionTabNav } from '../components/ExamSessionTabNav'
+import { ExamSessionOverview } from '../components/ExamSessionOverview'
+import {
+  ExamSessionHero,
+  ExamSessionLoadingState,
+} from '../components/ExamSessionHero'
+import {
+  examCreativeSurfaceClass,
+  examPageShellClass,
+  examPanelBodyClass,
+  examSessionMicroScopeClass,
+} from '../components/exam-session-ui'
 
 type Tab =
   | 'overview'
@@ -171,25 +173,38 @@ export default function ExamSessionDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-sm text-slate-500">
-        Loading exam session…
+      <div className={examPageShellClass}>
+        <ExamSessionLoadingState />
       </div>
     )
   }
 
   if (error || !session) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-slate-600">Exam session not found.</p>
-        <Button variant="outline" className="mt-4" asChild>
-          <Link href={examsListPath(subdomain)}>Back to exams</Link>
-        </Button>
+      <div className={cn(examPageShellClass, 'items-center justify-center')}>
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8">
+          <p className="text-slate-600 dark:text-slate-400">Exam session not found.</p>
+          <Button variant="outline" className="rounded-xl" asChild>
+            <Link href={examsListPath(subdomain)}>Back to exams</Link>
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f8f9fb] dark:bg-slate-950">
+    <div className={cn(examPageShellClass, examSessionMicroScopeClass)}>
+      {/* Ambient dot grid */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.35] dark:opacity-[0.12]"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle, rgba(36,106,89,0.35) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+        aria-hidden
+      />
+
       <div className="flex min-w-0 flex-1">
         <aside
           className={cn(
@@ -218,177 +233,33 @@ export default function ExamSessionDetailPage() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-3 py-2 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 sm:px-4">
-            <div className="mx-auto flex max-w-6xl items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 shrink-0 p-0"
-                asChild
-              >
-                <Link href={examsListPath(subdomain)}>
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
+          <ExamSessionHero
+            subdomain={subdomain}
+            session={session}
+            subtitle={headerSubtitle}
+            selectedGradeLabel={selectedGrade?.displayName}
+            showGradeControls={sessionGradeIds.length > 0}
+            showMobileGradeButton={sessionGradeIds.length > 0}
+            gradePanelOpen={isGradePanelOpen}
+            onOpenGrades={() => setIsGradeSheetOpen(true)}
+            onToggleGradePanel={() => setIsGradePanelOpen((open) => !open)}
+          />
 
-              <div className="min-w-0 flex-1">
-                <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-[15px]">
-                  {session.name}
-                </h1>
-                <p className="hidden truncate text-[11px] text-slate-400 sm:block">
-                  {headerSubtitle}
-                </p>
-              </div>
+          <div className="flex-1 pb-8 sm:pb-10">
+            <div className="mx-auto max-w-6xl px-3 sm:px-6">
+              <div className={examCreativeSurfaceClass}>
+                <ExamSessionTabNav
+                  tabs={TABS}
+                  activeTab={tab}
+                  onTabChange={(id) => setTab(id as Tab)}
+                />
 
-              <div className="flex shrink-0 items-center gap-1">
-                {sessionGradeIds.length > 0 ? (
-                  <Button
-                    type="button"
-                    variant={selectedGradeId ? 'secondary' : 'outline'}
-                    size="sm"
-                    className="h-7 gap-1 px-2 text-xs lg:hidden"
-                    onClick={() => setIsGradeSheetOpen(true)}
-                  >
-                    <Filter className="h-3.5 w-3.5" />
-                    <span className="hidden min-[380px]:inline">
-                      {selectedGradeId ? 'Grades' : 'Browse'}
-                    </span>
-                  </Button>
-                ) : null}
-
-                {sessionGradeIds.length > 0 ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="hidden h-7 px-2 text-xs lg:inline-flex"
-                    onClick={() => setIsGradePanelOpen((open) => !open)}
-                  >
-                    {isGradePanelOpen ? 'Hide panel' : 'Grades'}
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-500">
-                      {session.academicYear} · Term {session.term} · {session.type}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline">{statusLabel(session.status)}</Badge>
-                      <Badge variant="outline">
-                        {publicationStateLabel(session.publicationState ?? 'HIDDEN')}
-                      </Badge>
-                      {session.resultsPublished ? (
-                        <Badge className="bg-emerald-600">Results published</Badge>
-                      ) : (
-                        <Badge variant="secondary">Hidden from portal</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-700">
-                {TABS.map(({ id, label, icon: Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setTab(id)}
-                    className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium -mb-px ${
-                      tab === id
-                        ? 'border-slate-900 text-slate-900 dark:border-slate-100 dark:text-slate-100'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-
+                <div className={examPanelBodyClass}>
               {tab === 'overview' && (
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <GraduationCap className="h-4 w-4" />
-                        Scope
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm text-slate-600 space-y-2">
-                      <p>
-                        {session.gradesCount} grades · {session.subjectsCount} subjects
-                        <br />
-                        {session.papersCount} exam papers
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() => setTab('papers')}
-                      >
-                        Manage papers
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Dates
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm text-slate-600">
-                      {session.startDate
-                        ? new Date(session.startDate).toLocaleDateString()
-                        : 'Not set'}
-                      {session.endDate && session.endDate !== session.startDate && (
-                        <>
-                          {' – '}
-                          {new Date(session.endDate).toLocaleDateString()}
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4" />
-                        Marking
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm text-slate-600">
-                      Max {session.defaultMaxScore ?? '—'} · Pass{' '}
-                      {session.defaultPassMark ?? '—'}
-                    </CardContent>
-                  </Card>
-                  {session.description && (
-                    <Card className="sm:col-span-3">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Description</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-slate-600 whitespace-pre-wrap">
-                        {session.description}
-                      </CardContent>
-                    </Card>
-                  )}
-                  {session.instructions && (
-                    <Card className="sm:col-span-3">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Instructions</CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm text-slate-600 whitespace-pre-wrap">
-                        {session.instructions}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                <ExamSessionOverview
+                  session={session}
+                  onNavigate={(next) => setTab(next)}
+                />
               )}
 
               {tab === 'papers' && (
@@ -422,7 +293,12 @@ export default function ExamSessionDetailPage() {
               )}
 
               {tab === 'marks' && (
-                <SessionMarksPanel subdomain={subdomain} sessionId={sessionId} />
+                <SessionMarksPanel
+                  subdomain={subdomain}
+                  sessionId={sessionId}
+                  session={session}
+                  gradeFilter={gradeFilter}
+                />
               )}
 
               {tab === 'approvals' && (
@@ -464,6 +340,8 @@ export default function ExamSessionDetailPage() {
               {tab === 'settings' && (
                 <SessionSettingsPanel subdomain={subdomain} session={session} />
               )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

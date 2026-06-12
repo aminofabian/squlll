@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { StyledDatePicker } from '@/components/ui/styled-date-picker'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -52,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import type { AssessType } from '@/lib/hooks/useTeacherActivity'
 import { useAcademicYears } from '@/lib/hooks/useAcademicYears'
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig'
 import { useTenantSubjects } from '@/lib/hooks/useTenantSubjects'
@@ -76,9 +78,20 @@ import { ExamDaysSelector } from './ExamDaysSelector'
 import { DEFAULT_EXAM_DAYS_OF_WEEK } from '@/lib/exams/examDaysOfWeek'
 import {
   fetchGradingScales,
-  SESSION_TEMPLATE_LABELS,
+  formatGradingScaleSummary,
+  getDefaultGradingScale,
 } from '@/lib/exams/gradingScales'
-import type { AssessType } from '@/lib/hooks/useTeacherActivity'
+import {
+  resolveDefaultExamPeriod,
+  resolveDefaultTerm,
+} from '@/lib/exams/resolveAcademicYear'
+import {
+  buildSuggestedExamSessionName,
+  SESSION_TEMPLATE_HINTS,
+  SESSION_TEMPLATE_LABELS,
+  SESSION_TEMPLATE_ORDER,
+  SESSION_TEMPLATE_PRESETS,
+} from '@/lib/exams/sessionTemplatePresets'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import {
@@ -90,7 +103,17 @@ const schema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   description: z.string().optional(),
   sessionTemplate: z
-    .enum(['END_OF_TERM', 'MID_TERM', 'MOCK_EXAM', 'KCSE_TRIAL'])
+    .enum([
+      'CAT',
+      'QUIZ',
+      'ASSIGNMENT',
+      'PRACTICAL',
+      'PROJECT',
+      'END_OF_TERM',
+      'MID_TERM',
+      'MOCK_EXAM',
+      'KCSE_TRIAL',
+    ])
     .optional(),
   gradingSchemeId: z.string().optional(),
   examType: z.enum(['CA', 'EXAM']),
@@ -104,8 +127,8 @@ const schema = z.object({
   dailyStartTime: z.string().min(1, 'Set daily start time'),
   dailyEndTime: z.string().min(1, 'Set daily end time'),
   examDaysOfWeek: z.array(z.number()).min(1, 'Select at least one exam day'),
-  totalMarks: z.coerce.number().min(1).default(100),
-  passingMarks: z.coerce.number().min(1).default(40),
+  totalMarks: z.coerce.number().min(1),
+  passingMarks: z.coerce.number().min(1),
   instructions: z.string().optional(),
 }).refine((data) => !data.startDate || !data.endDate || data.endDate >= data.startDate, {
   message: 'End date must be on or after start date',
@@ -113,6 +136,9 @@ const schema = z.object({
 }).refine((data) => data.dailyEndTime > data.dailyStartTime, {
   message: 'Daily end time must be after start time',
   path: ['dailyEndTime'],
+}).refine((data) => data.passingMarks <= data.totalMarks, {
+  message: 'Pass mark cannot exceed total marks',
+  path: ['passingMarks'],
 })
 
 type FormValues = z.infer<typeof schema>
@@ -123,12 +149,8 @@ const STEPS = [
   { id: 3, label: 'Papers', icon: BookOpen },
 ] as const
 
-const TEMPLATE_HINTS: Record<string, string> = {
-  END_OF_TERM: 'Full term assessment for report cards',
-  MID_TERM: 'Half-term progress check',
-  MOCK_EXAM: 'Practice run before national exams',
-  KCSE_TRIAL: 'KCSE-style trial for Form 4',
-}
+const LABEL = 'text-[11px] font-semibold uppercase tracking-wide text-slate-500'
+const INPUT_H = 'h-9'
 
 interface CreateExamSessionDrawerProps {
   onCreated?: () => void
@@ -146,14 +168,19 @@ export function CreateExamSessionDrawer({
   const [loading, setLoading] = useState(false)
   const [subjectSearch, setSubjectSearch] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [templateAppliedSummary, setTemplateAppliedSummary] = useState<string[]>(
+    SESSION_TEMPLATE_PRESETS.END_OF_TERM.appliedSummary,
+  )
   const [subjectPaperConfigs, setSubjectPaperConfigs] = useState<
     Record<string, PaperComponentSelection[]>
   >({})
+  const nameManuallyEditedRef = useRef(false)
+  const lastSuggestedNameRef = useRef('')
   const params = useParams()
   const subdomain = params.subdomain as string
   const queryClient = useQueryClient()
 
-  const { academicYears, getActiveAcademicYear } = useAcademicYears()
+  const { academicYears } = useAcademicYears()
   useSchoolConfig(open)
   const { data: tenantSubjects = [] } = useTenantSubjects(open)
   const {
@@ -216,6 +243,46 @@ export function CreateExamSessionDrawer({
   const selectedStreamIds = form.watch('streamIds') ?? []
   const selectedSubjectIds = form.watch('subjectIds')
   const sessionTemplate = form.watch('sessionTemplate')
+  const watchedName = form.watch('name')
+  const watchedStartDate = form.watch('startDate')
+  const watchedEndDate = form.watch('endDate')
+  const watchedTerm = form.watch('term')
+  const watchedTotalMarks = form.watch('totalMarks')
+  const watchedPassingMarks = form.watch('passingMarks')
+
+  const defaultGradingScale = useMemo(
+    () => getDefaultGradingScale(gradingScalesQuery.data),
+    [gradingScalesQuery.data],
+  )
+
+  const canContinueStep1 = Boolean(
+    watchedName?.trim().length >= 3 &&
+      selectedYear &&
+      watchedTerm &&
+      watchedStartDate &&
+      watchedEndDate &&
+      watchedTotalMarks >= 1 &&
+      watchedPassingMarks >= 1 &&
+      watchedPassingMarks <= watchedTotalMarks,
+  )
+
+  const applySessionTemplate = useCallback(
+    (template: ExamSessionTemplate, options?: { overwriteName?: boolean }) => {
+      const preset = SESSION_TEMPLATE_PRESETS[template]
+      form.setValue('sessionTemplate', template, { shouldDirty: true })
+      form.setValue('examType', preset.examType, { shouldDirty: true })
+      form.setValue('totalMarks', preset.totalMarks, { shouldDirty: true })
+      form.setValue('passingMarks', preset.passingMarks, { shouldDirty: true })
+
+      const currentDescription = form.getValues('description')?.trim()
+      if (!currentDescription || options?.overwriteName) {
+        form.setValue('description', preset.description, { shouldDirty: true })
+      }
+
+      setTemplateAppliedSummary(preset.appliedSummary)
+    },
+    [form],
+  )
 
   const eligibleSubjects = useMemo(
     () =>
@@ -307,6 +374,20 @@ export function CreateExamSessionDrawer({
     return academicYears.find((y) => y.name === selectedYear)?.terms ?? []
   }, [academicYears, selectedYear])
 
+  const selectedTermName = useMemo(
+    () => availableTerms.find((term) => term.id === watchedTerm)?.name ?? null,
+    [availableTerms, watchedTerm],
+  )
+
+  const suggestedExamName = useMemo(() => {
+    if (!sessionTemplate || !selectedYear || !selectedTermName) return ''
+    return buildSuggestedExamSessionName({
+      template: sessionTemplate,
+      termName: selectedTermName,
+      academicYearName: selectedYear,
+    })
+  }, [sessionTemplate, selectedYear, selectedTermName])
+
   const scopeSummary = useMemo(() => {
     const gradeCount = selectedGradeIds.length
     const streamCount = selectedStreamIds.length
@@ -330,25 +411,61 @@ export function CreateExamSessionDrawer({
   ])
 
   useEffect(() => {
-    const active = getActiveAcademicYear()
-    if (active && !form.getValues('academicYear')) {
-      form.setValue('academicYear', active.name)
-      if (active.terms[0]) form.setValue('term', active.terms[0].id)
-    }
-  }, [academicYears, form, getActiveAcademicYear])
-
-  useEffect(() => {
     if (!open) {
       setStep(1)
       setSubjectSearch('')
       setShowAdvanced(false)
       setSubjectPaperConfigs({})
+      setTemplateAppliedSummary(SESSION_TEMPLATE_PRESETS.END_OF_TERM.appliedSummary)
+      nameManuallyEditedRef.current = false
+      lastSuggestedNameRef.current = ''
       return
     }
+
+    nameManuallyEditedRef.current = false
+    lastSuggestedNameRef.current = ''
+
+    form.setValue('startDate', '')
+    form.setValue('endDate', '')
+
+    if (academicYears.length > 0) {
+      const period = resolveDefaultExamPeriod(academicYears)
+      if (period) {
+        form.setValue('academicYear', period.year.name)
+        form.setValue('term', period.termId)
+      }
+    }
+
     if (initialGradeId) {
       form.setValue('gradeIds', [initialGradeId], { shouldValidate: true })
     }
-  }, [open, initialGradeId, form])
+    applySessionTemplate(
+      (form.getValues('sessionTemplate') as ExamSessionTemplate | undefined) ??
+        'END_OF_TERM',
+      { overwriteName: true },
+    )
+  }, [open, initialGradeId, academicYears, form, applySessionTemplate])
+
+  useEffect(() => {
+    if (!open || !suggestedExamName) return
+
+    const currentName = form.getValues('name')?.trim()
+    const shouldApply =
+      !nameManuallyEditedRef.current ||
+      !currentName ||
+      currentName === lastSuggestedNameRef.current
+
+    if (shouldApply) {
+      form.setValue('name', suggestedExamName, { shouldDirty: true })
+      lastSuggestedNameRef.current = suggestedExamName
+    }
+  }, [open, suggestedExamName, form])
+
+  useEffect(() => {
+    if (watchedStartDate && watchedEndDate && watchedEndDate < watchedStartDate) {
+      form.setValue('endDate', '', { shouldValidate: true })
+    }
+  }, [watchedStartDate, watchedEndDate, form])
 
   useEffect(() => {
     const eligible = new Set(eligibleSubjects.map((s) => s.id))
@@ -436,11 +553,11 @@ export function CreateExamSessionDrawer({
         'name',
         'academicYear',
         'term',
-        'examType',
         'startDate',
         'endDate',
         'dailyStartTime',
         'dailyEndTime',
+        'examDaysOfWeek',
       ])
     }
     if (currentStep === 2) {
@@ -587,23 +704,22 @@ export function CreateExamSessionDrawer({
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-xl lg:max-w-2xl"
       >
-        <SheetHeader className="shrink-0 space-y-4 border-b border-slate-200/80 px-6 py-5 pr-14 dark:border-slate-800">
+        <SheetHeader className="shrink-0 space-y-2 border-b border-slate-200/80 px-4 py-3 pr-12 dark:border-slate-800">
           <div>
-            <SheetTitle className="text-lg font-semibold tracking-tight">
+            <SheetTitle className="text-base font-semibold tracking-tight">
               New exam session
             </SheetTitle>
-            <SheetDescription className="text-xs leading-relaxed">
-              Set up a named exam — candidates, timetable, marks and results all
-              live under one session.
+            <SheetDescription className="text-[11px] leading-snug">
+              Candidates, timetable, marks and results under one session.
             </SheetDescription>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             {STEPS.map(({ id, label, icon: Icon }, index) => {
               const active = step === id
               const done = step > id
               return (
-                <div key={id} className="flex min-w-0 flex-1 items-center gap-1">
+                <div key={id} className="flex min-w-0 flex-1 items-center gap-0.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -611,7 +727,7 @@ export function CreateExamSessionDrawer({
                     }}
                     disabled={id > step}
                     className={cn(
-                      'flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors',
+                      'flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors',
                       active && 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900',
                       done && !active && 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
                       !active && !done && 'text-slate-400',
@@ -620,18 +736,18 @@ export function CreateExamSessionDrawer({
                   >
                     <span
                       className={cn(
-                        'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold',
+                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold',
                         active && 'bg-white/15',
                         done && !active && 'bg-white dark:bg-slate-900',
                         !active && !done && 'bg-slate-100 dark:bg-slate-800',
                       )}
                     >
-                      {done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                      {done ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
                     </span>
-                    <span className="truncate text-xs font-semibold">{label}</span>
+                    <span className="truncate text-[11px] font-semibold">{label}</span>
                   </button>
                   {index < STEPS.length - 1 ? (
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                    <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" />
                   ) : null}
                 </div>
               )
@@ -645,22 +761,24 @@ export function CreateExamSessionDrawer({
             className="flex min-h-0 flex-1 flex-col"
           >
             <ScrollArea className="min-h-0 flex-1">
-              <div className="space-y-6 px-6 py-5">
+              <div className="space-y-4 px-4 py-3">
                 {step === 1 && (
                   <>
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            Exam name
-                          </FormLabel>
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className={LABEL}>Exam name</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Term 3 End-of-Year Examination 2026"
-                              className="h-11"
+                              placeholder="e.g. Term 2 End of Term Examination 2025-2026"
+                              className={INPUT_H}
                               {...field}
+                              onChange={(event) => {
+                                nameManuallyEditedRef.current = true
+                                field.onChange(event)
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -672,67 +790,100 @@ export function CreateExamSessionDrawer({
                       control={form.control}
                       name="sessionTemplate"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            Quick start template
-                          </FormLabel>
-                          <div className="grid grid-cols-2 gap-2">
-                            {Object.entries(SESSION_TEMPLATE_LABELS).map(
-                              ([value, label]) => {
-                                const selected = field.value === value
-                                return (
-                                  <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => field.onChange(value)}
-                                    className={cn(
-                                      'rounded-xl border px-3 py-3 text-left transition-all',
-                                      selected
-                                        ? 'border-slate-900 bg-slate-900 text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900',
-                                    )}
-                                  >
-                                    <span className="block text-sm font-semibold">{label}</span>
-                                    <span
-                                      className={cn(
-                                        'mt-0.5 block text-[11px] leading-snug',
-                                        selected
-                                          ? 'text-white/70 dark:text-slate-600'
-                                          : 'text-slate-500',
-                                      )}
-                                    >
-                                      {TEMPLATE_HINTS[value]}
-                                    </span>
-                                  </button>
-                                )
-                              },
-                            )}
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className={LABEL}>Quick start template</FormLabel>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {SESSION_TEMPLATE_ORDER.map((value) => {
+                              const label = SESSION_TEMPLATE_LABELS[value]
+                              const selected = field.value === value
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  title={SESSION_TEMPLATE_HINTS[value]}
+                                  onClick={() => {
+                                    nameManuallyEditedRef.current = false
+                                    field.onChange(value)
+                                    applySessionTemplate(value)
+                                  }}
+                                  className={cn(
+                                    'rounded-lg border px-2 py-1.5 text-left transition-all',
+                                    selected
+                                      ? 'border-slate-900 bg-slate-900 text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900',
+                                  )}
+                                >
+                                  <span className="block truncate text-xs font-semibold">
+                                    {label}
+                                  </span>
+                                </button>
+                              )
+                            })}
                           </div>
+                          {sessionTemplate && templateAppliedSummary.length > 0 ? (
+                            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-md border border-[#246a59]/25 bg-[#246a59]/5 px-2 py-1 text-[10px] text-slate-600 dark:text-slate-400">
+                              <span className="font-semibold text-[#246a59]">
+                                {SESSION_TEMPLATE_LABELS[sessionTemplate]}
+                              </span>
+                              {templateAppliedSummary.map((line) => (
+                                <span key={line} className="contents">
+                                  <span className="text-slate-300">·</span>
+                                  <span>{line}</span>
+                                </span>
+                              ))}
+                              <span className="text-slate-300">·</span>
+                              <span>
+                                {watchedTotalMarks} marks · pass {watchedPassingMarks}
+                              </span>
+                            </div>
+                          ) : null}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <FormField
                         control={form.control}
-                        name="examType"
+                        name="totalMarks"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Type
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="h-10">
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="EXAM">End-of-term exam</SelectItem>
-                                <SelectItem value="CA">Continuous assessment</SelectItem>
-                              </SelectContent>
-                            </Select>
+                          <FormItem className="space-y-1">
+                            <FormLabel className={LABEL}>Total marks</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                className={INPUT_H}
+                                value={field.value ?? ''}
+                                onChange={(event) => {
+                                  const next = event.target.value
+                                  field.onChange(next === '' ? '' : Number(next))
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="passingMarks"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel className={LABEL}>Pass mark</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={watchedTotalMarks || undefined}
+                                className={INPUT_H}
+                                value={field.value ?? ''}
+                                onChange={(event) => {
+                                  const next = event.target.value
+                                  field.onChange(next === '' ? '' : Number(next))
+                                }}
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -741,24 +892,27 @@ export function CreateExamSessionDrawer({
                         control={form.control}
                         name="gradingSchemeId"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Grading
-                            </FormLabel>
+                          <FormItem className="space-y-1 sm:col-span-2">
+                            <FormLabel className={LABEL}>Grading</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="h-10">
+                                <SelectTrigger className={INPUT_H}>
                                   <SelectValue placeholder="Default scale" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="_default">Default scale</SelectItem>
-                                {(gradingScalesQuery.data ?? []).map((scale) => (
-                                  <SelectItem key={scale.id} value={scale.id}>
-                                    {scale.name}
-                                    {scale.isDefault ? ' (default)' : ''}
-                                  </SelectItem>
-                                ))}
+                                <SelectItem value="_default">
+                                  {defaultGradingScale
+                                    ? formatGradingScaleSummary(defaultGradingScale)
+                                    : 'School default scale'}
+                                </SelectItem>
+                                {(gradingScalesQuery.data ?? [])
+                                  .filter((scale) => !scale.isDefault)
+                                  .map((scale) => (
+                                    <SelectItem key={scale.id} value={scale.id}>
+                                      {formatGradingScaleSummary(scale)}
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -767,18 +921,26 @@ export function CreateExamSessionDrawer({
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <FormField
                         control={form.control}
                         name="academicYear"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Academic year
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                          <FormItem className="space-y-1">
+                            <FormLabel className={LABEL}>Academic year</FormLabel>
+                            <Select
+                              onValueChange={(value) => {
+                                field.onChange(value)
+                                const year = academicYears.find((y) => y.name === value)
+                                if (year) {
+                                  const termId = resolveDefaultTerm(year.terms)
+                                  if (termId) form.setValue('term', termId)
+                                }
+                              }}
+                              value={field.value}
+                            >
                               <FormControl>
-                                <SelectTrigger className="h-10">
+                                <SelectTrigger className={INPUT_H}>
                                   <SelectValue placeholder="Year" />
                                 </SelectTrigger>
                               </FormControl>
@@ -786,6 +948,11 @@ export function CreateExamSessionDrawer({
                                 {academicYears.map((y) => (
                                   <SelectItem key={y.id} value={y.name}>
                                     {y.name}
+                                    {y.isCurrent
+                                      ? ' · current'
+                                      : y.isActive
+                                        ? ' · active'
+                                        : ''}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -798,13 +965,11 @@ export function CreateExamSessionDrawer({
                         control={form.control}
                         name="term"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Term
-                            </FormLabel>
+                          <FormItem className="space-y-1">
+                            <FormLabel className={LABEL}>Term</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="h-10">
+                                <SelectTrigger className={INPUT_H}>
                                   <SelectValue placeholder="Term" />
                                 </SelectTrigger>
                               </FormControl>
@@ -812,6 +977,7 @@ export function CreateExamSessionDrawer({
                                 {availableTerms.map((t) => (
                                   <SelectItem key={t.id} value={t.id}>
                                     {t.name}
+                                    {t.isCurrent ? ' · current' : ''}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -822,28 +988,25 @@ export function CreateExamSessionDrawer({
                       />
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/40">
-                      <div className="mb-3 flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-primary" />
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            Exam period
-                          </p>
-                          <p className="text-[11px] text-slate-500">
-                            Dates and daily session window apply to the whole exam — not
-                            per subject. Individual paper durations are set in step 3.
-                          </p>
-                        </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-700 dark:bg-slate-900/40">
+                      <div className="mb-2 flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                        <p className={LABEL}>Exam period</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         <FormField
                           control={form.control}
                           name="startDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Start date</FormLabel>
                               <FormControl>
-                                <Input type="date" className="h-9" {...field} />
+                                <StyledDatePicker
+                                  label="Start date *"
+                                  size="sm"
+                                  value={field.value}
+                                  clearable={false}
+                                  onChange={field.onChange}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -854,9 +1017,15 @@ export function CreateExamSessionDrawer({
                           name="endDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">End date</FormLabel>
                               <FormControl>
-                                <Input type="date" className="h-9" {...field} />
+                                <StyledDatePicker
+                                  label="End date *"
+                                  size="sm"
+                                  value={field.value}
+                                  minDate={form.watch('startDate') || undefined}
+                                  clearable={false}
+                                  onChange={field.onChange}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -889,14 +1058,7 @@ export function CreateExamSessionDrawer({
                           )}
                         />
                       </div>
-                      <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
-                        <p className="mb-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                          Which days have exams?
-                        </p>
-                        <p className="mb-3 text-[11px] text-slate-500">
-                          Weekdays only by default. Include Saturday or Sunday only if
-                          your school runs exams then.
-                        </p>
+                      <div className="mt-2 border-t border-slate-200 pt-2 dark:border-slate-700">
                         <ExamDaysSelector
                           value={form.watch('examDaysOfWeek')}
                           onChange={(days) =>
@@ -912,16 +1074,9 @@ export function CreateExamSessionDrawer({
 
                 {step === 2 && (
                   <>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Who sits this exam?
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                        Pick whole-school shortcuts or drill into grades and streams.
-                      </p>
-                    </div>
+                    <p className={LABEL}>Who sits this exam?</p>
 
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-3 gap-1.5">
                       <ScopeShortcut
                         icon={School}
                         title="All grades"
@@ -952,7 +1107,7 @@ export function CreateExamSessionDrawer({
                       />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/50">
+                    <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-900/50">
                       <span className="text-xs font-medium text-slate-500">Current scope</span>
                       <Badge variant="secondary" className="text-xs font-normal">
                         {scopeSummary}
@@ -979,9 +1134,9 @@ export function CreateExamSessionDrawer({
                       control={form.control}
                       name="gradeIds"
                       render={() => (
-                        <FormItem className="space-y-4">
+                        <FormItem className="space-y-3">
                           {gradeLevels.map((level) => (
-                            <div key={level.levelId} className="space-y-2">
+                            <div key={level.levelId} className="space-y-1.5">
                               <div className="flex items-center justify-between gap-2">
                                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                   {level.levelName}
@@ -1031,16 +1186,9 @@ export function CreateExamSessionDrawer({
                         control={form.control}
                         name="streamIds"
                         render={() => (
-                          <FormItem className="space-y-3">
+                          <FormItem className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <div>
-                                <FormLabel className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Streams (optional)
-                                </FormLabel>
-                                <p className="text-[11px] text-slate-500">
-                                  Leave empty to include all streams in selected grades.
-                                </p>
-                              </div>
+                              <FormLabel className={LABEL}>Streams (optional)</FormLabel>
                               <Button
                                 type="button"
                                 variant="outline"
@@ -1083,24 +1231,17 @@ export function CreateExamSessionDrawer({
                 {step === 3 && (
                   <>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Subjects &amp; papers
-                        </p>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                          {selectedSubjectIds.length} subject
-                          {selectedSubjectIds.length === 1 ? '' : 's'} · {paperCount}{' '}
-                          exam paper{paperCount === 1 ? '' : 's'} across{' '}
-                          {selectedGradeIds.length} grade
-                          {selectedGradeIds.length === 1 ? '' : 's'}
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5">
+                      <p className={LABEL}>
+                        Subjects &amp; papers · {selectedSubjectIds.length} subject
+                        {selectedSubjectIds.length === 1 ? '' : 's'} · {paperCount} paper
+                        {paperCount === 1 ? '' : 's'}
+                      </p>
+                      <div className="flex gap-1">
                         <Button
                           type="button"
                           variant={isAllSubjectsSelected ? 'default' : 'outline'}
                           size="sm"
-                          className="h-8 text-xs"
+                          className="h-7 px-2 text-[11px]"
                           onClick={selectAllSubjects}
                         >
                           All subjects
@@ -1109,7 +1250,7 @@ export function CreateExamSessionDrawer({
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-8 text-xs"
+                          className="h-7 px-2 text-[11px]"
                           onClick={clearSubjects}
                         >
                           Clear
@@ -1129,7 +1270,7 @@ export function CreateExamSessionDrawer({
                         placeholder="Search subjects…"
                         value={subjectSearch}
                         onChange={(e) => setSubjectSearch(e.target.value)}
-                        className="h-10 pl-9"
+                        className="h-9 pl-9"
                       />
                     </div>
 
@@ -1137,23 +1278,23 @@ export function CreateExamSessionDrawer({
                       control={form.control}
                       name="subjectIds"
                       render={() => (
-                        <FormItem className="space-y-4">
+                        <FormItem className="space-y-3">
                           {subjectSectionsByGrade.length === 0 ? (
-                            <p className="py-6 text-center text-xs text-slate-400">
+                            <p className="py-4 text-center text-xs text-slate-400">
                               Select grades first to see their subjects
                             </p>
                           ) : (
                             subjectSectionsByGrade.map((section) => (
                               <div
                                 key={section.gradeId}
-                                className="rounded-xl border border-slate-200 dark:border-slate-700"
+                                className="rounded-lg border border-slate-200 dark:border-slate-700"
                               >
-                                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-800">
+                                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-2.5 py-2 dark:border-slate-800">
                                   <div>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                    <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                                       {section.gradeName}
                                     </p>
-                                    <p className="text-[11px] text-slate-500">
+                                    <p className="text-[10px] text-slate-500">
                                       {section.levelName} · {section.selectedCount}/
                                       {section.totalSubjects} subjects
                                     </p>
@@ -1261,15 +1402,15 @@ export function CreateExamSessionDrawer({
                       )}
                     />
 
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700">
                       <button
                         type="button"
                         onClick={() => setShowAdvanced((v) => !v)}
-                        className="flex w-full items-center justify-between px-4 py-3 text-left"
+                        className="flex w-full items-center justify-between px-3 py-2 text-left"
                       >
-                        <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                          <Settings2 className="h-4 w-4" />
-                          Marking defaults
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                          <Settings2 className="h-3.5 w-3.5" />
+                          Session notes
                         </span>
                         <ChevronRight
                           className={cn(
@@ -1279,45 +1420,15 @@ export function CreateExamSessionDrawer({
                         />
                       </button>
                       {showAdvanced ? (
-                        <div className="space-y-4 border-t border-slate-200 px-4 py-4 dark:border-slate-700">
-                          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400">
-                            Exact day and time for each paper is placed on the Timetable
-                            grid after creation, within the exam period you set in step 1.
-                          </p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <FormField
-                              control={form.control}
-                              name="totalMarks"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-xs">Total marks</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" className="h-9" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="passingMarks"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-xs">Pass mark</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" className="h-9" {...field} />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+                        <div className="space-y-2 border-t border-slate-200 px-3 py-2.5 dark:border-slate-700">
                           <FormField
                             control={form.control}
                             name="description"
                             render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">Notes (optional)</FormLabel>
+                              <FormItem className="space-y-1">
+                                <FormLabel className="text-[11px]">Notes (optional)</FormLabel>
                                 <FormControl>
-                                  <Textarea rows={2} className="resize-none" {...field} />
+                                  <Textarea rows={2} className="min-h-0 resize-none text-sm" {...field} />
                                 </FormControl>
                               </FormItem>
                             )}
@@ -1330,7 +1441,7 @@ export function CreateExamSessionDrawer({
               </div>
             </ScrollArea>
 
-            <div className="shrink-0 border-t border-slate-200/80 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-950">
+            <div className="shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
               {step < 3 ? (
                 <div className="flex items-center justify-between gap-3">
                   <Button
@@ -1339,25 +1450,36 @@ export function CreateExamSessionDrawer({
                     size="sm"
                     onClick={goBack}
                     disabled={step === 1}
-                    className="h-9"
+                    className="h-8"
                   >
                     <ChevronLeft className="mr-1 h-4 w-4" />
                     Back
                   </Button>
-                  <div className="hidden text-xs text-slate-500 sm:block">
-                    {step === 1 && sessionTemplate
-                      ? SESSION_TEMPLATE_LABELS[sessionTemplate]
-                      : step === 2
-                        ? scopeSummary
-                        : null}
+                  <div className="min-w-0 text-center text-[11px] text-slate-500">
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      Step {step} of 3
+                    </span>
+                    <span className="text-slate-400"> · </span>
+                    {STEPS[step - 1]?.label}
+                    {step === 1 && !canContinueStep1 ? (
+                      <span className="mt-0.5 block text-[11px] text-amber-700 dark:text-amber-400">
+                        Name, year, term, exam dates, and valid marks required
+                      </span>
+                    ) : null}
                   </div>
-                  <Button type="button" size="sm" onClick={goNext} className="h-9">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={goNext}
+                    disabled={step === 1 && !canContinueStep1}
+                    className="h-8"
+                  >
                     Continue
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <PaperCountNotice
                     paperCount={paperCount}
                     gradeCount={selectedGradeIds.length}
@@ -1387,7 +1509,7 @@ export function CreateExamSessionDrawer({
                       variant="ghost"
                       size="sm"
                       onClick={goBack}
-                      className="h-9"
+                      className="h-8"
                     >
                       <ChevronLeft className="mr-1 h-4 w-4" />
                       Back
@@ -1395,7 +1517,7 @@ export function CreateExamSessionDrawer({
                     <Button
                       type="submit"
                       disabled={loading || paperCountOverLimit || paperCount === 0}
-                      className="h-9 min-w-[140px]"
+                      className="h-8 min-w-[132px]"
                     >
                       {loading ? (
                         <>
@@ -1500,7 +1622,7 @@ function ScopeShortcut({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'rounded-xl border px-3 py-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50',
+        'rounded-lg border px-2.5 py-2 text-left transition-all disabled:cursor-not-allowed disabled:opacity-50',
         selected && variant === 'default'
           ? 'border-slate-900 bg-slate-900 text-white shadow-sm dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
           : selected && variant === 'muted'
@@ -1510,21 +1632,23 @@ function ScopeShortcut({
     >
       <Icon
         className={cn(
-          'mb-2 h-4 w-4',
+          'mb-1 h-3.5 w-3.5',
           selected && variant === 'default' ? 'text-white dark:text-slate-900' : 'text-slate-500',
         )}
       />
-      <span className="block text-sm font-semibold">{title}</span>
-      <span
-        className={cn(
-          'mt-0.5 block text-[11px] leading-snug',
-          selected && variant === 'default'
-            ? 'text-white/70 dark:text-slate-600'
-            : 'text-slate-500',
-        )}
-      >
-        {hint ?? description}
-      </span>
+      <span className="block text-xs font-semibold">{title}</span>
+      {hint ? (
+        <span
+          className={cn(
+            'mt-0.5 block text-[10px] leading-snug',
+            selected && variant === 'default'
+              ? 'text-white/70 dark:text-slate-600'
+              : 'text-slate-500',
+          )}
+        >
+          {hint}
+        </span>
+      ) : null}
     </button>
   )
 }

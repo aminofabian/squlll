@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { StyledDatePicker } from '@/components/ui/styled-date-picker'
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,9 @@ interface ExamScheduleDialogProps {
   draft: ExamTimetableDraft | null
   clashMessages: string[]
   saving?: boolean
+  minDate?: string
+  maxDate?: string
+  allowedWeekdays?: number[]
   onSave: (paperId: string, patch: Partial<ExamTimetableDraft>) => void
   onDone?: () => Promise<boolean>
   onClear?: (paperId: string) => Promise<boolean>
@@ -31,6 +35,9 @@ export function ExamScheduleDialog({
   draft,
   clashMessages,
   saving = false,
+  minDate,
+  maxDate,
+  allowedWeekdays,
   onSave,
   onDone,
   onClear,
@@ -64,15 +71,17 @@ export function ExamScheduleDialog({
         ) : null}
 
         <div className="grid gap-4 py-2">
+          <StyledDatePicker
+            label="Exam date"
+            size="sm"
+            value={draft.date}
+            minDate={minDate}
+            maxDate={maxDate}
+            allowedWeekdays={allowedWeekdays}
+            onChange={(date) => onSave(draft.paperId, { date })}
+            placeholder="Pick exam day"
+          />
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Date</Label>
-              <Input
-                type="date"
-                value={draft.date}
-                onChange={(e) => onSave(draft.paperId, { date: e.target.value })}
-              />
-            </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Start time</Label>
               <Input
@@ -81,8 +90,6 @@ export function ExamScheduleDialog({
                 onChange={(e) => onSave(draft.paperId, { startTime: e.target.value })}
               />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Duration (minutes)</Label>
               <Input
@@ -95,14 +102,14 @@ export function ExamScheduleDialog({
                 }
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Room / hall</Label>
-              <Input
-                placeholder="e.g. Hall A"
-                value={draft.roomName}
-                onChange={(e) => onSave(draft.paperId, { roomName: e.target.value })}
-              />
-            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Room / hall</Label>
+            <Input
+              placeholder="e.g. Hall A"
+              value={draft.roomName}
+              onChange={(e) => onSave(draft.paperId, { roomName: e.target.value })}
+            />
           </div>
         </div>
 

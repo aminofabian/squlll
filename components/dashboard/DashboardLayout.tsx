@@ -38,11 +38,10 @@ export function DashboardLayout({
   subdomain: _subdomain,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isFilterMinimized, setIsFilterMinimized] = useState(false);
 
   // If old-style sidebar prop is provided, render the old layout for backward compat
   if (_sidebar) {
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [isFilterMinimized, setIsFilterMinimized] = useState(false);
     return (
       <div className={cn("min-h-screen bg-background", _shellClassName)}>
         <div className="lg:hidden sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">

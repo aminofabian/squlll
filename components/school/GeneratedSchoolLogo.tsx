@@ -1,13 +1,14 @@
 'use client'
 
-import { useId } from 'react'
 import { cn } from '@/lib/utils'
-import { getSchoolColor, getSchoolInitials } from '@/lib/schoolLogo'
+import { getSchoolColor, getSchoolInitials, toSvgIdPart } from '@/lib/schoolLogo'
 
 type GeneratedSchoolLogoProps = {
   /** Use the same key as sidebar: `getLayoutSchoolName(subdomain)` */
   schoolKey: string
   className?: string
+  /** Distinguish multiple logos on one page (e.g. drawer vs sidebar). */
+  instance?: string
 }
 
 /**
@@ -17,12 +18,14 @@ type GeneratedSchoolLogoProps = {
 export function GeneratedSchoolLogo({
   schoolKey,
   className = 'w-12 h-12',
+  instance,
 }: GeneratedSchoolLogoProps) {
   const initials = getSchoolInitials(schoolKey)
   const { from, to } = getSchoolColor(schoolKey)
-  const uid = useId().replace(/:/g, '')
-  const gradId = `shield-${uid}`
-  const goldId = `gold-${uid}`
+  const slug = toSvgIdPart(schoolKey)
+  const suffix = instance ? `-${toSvgIdPart(instance)}` : ''
+  const gradId = `shield-${slug}${suffix}`
+  const goldId = `gold-${slug}${suffix}`
 
   return (
     <div

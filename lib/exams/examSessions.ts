@@ -40,7 +40,8 @@ export interface ExamPaperRecord {
   passMark?: number | null
   tenantSubject?: {
     id: string
-    subject?: { name: string } | null
+    subject?: { name: string; code?: string | null } | null
+    customSubject?: { name: string; code?: string | null } | null
   } | null
   tenantGradeLevel?: {
     id: string
@@ -84,6 +85,11 @@ export interface ExamSessionRecord {
 }
 
 export type ExamSessionTemplate =
+  | 'CAT'
+  | 'QUIZ'
+  | 'ASSIGNMENT'
+  | 'PRACTICAL'
+  | 'PROJECT'
   | 'END_OF_TERM'
   | 'MID_TERM'
   | 'MOCK_EXAM'
@@ -180,7 +186,8 @@ const EXAM_SESSION_QUERY = `
         passMark
         tenantSubject {
           id
-          subject { name }
+          subject { name code }
+          customSubject { name code }
         }
         tenantGradeLevel {
           id
@@ -867,6 +874,16 @@ export function statusLabel(status: ExamSessionStatus): string {
   return labels[status] ?? status
 }
 
+/** Share of exam papers that have at least one timetable slot. */
+export function examTimetableFill(
+  session: Pick<ExamSessionRecord, 'papersCount' | 'scheduledSlotsCount'>,
+) {
+  const total = session.papersCount ?? 0
+  const scheduled = Math.min(session.scheduledSlotsCount ?? 0, total)
+  const percent = total > 0 ? Math.round((scheduled / total) * 100) : 0
+  return { scheduled, total, percent }
+}
+
 export function publicationStateLabel(state: PublicationState): string {
   const labels: Record<PublicationState, string> = {
     HIDDEN: 'Hidden',
@@ -948,9 +965,29 @@ const LOCK_EXAM_PAPER_MARKS = `
   }
 `
 
+const RETURN_EXAM_PAPER_MARKS = `
+  mutation ReturnExamPaperMarks($submissionId: String!, $notes: String) {
+    returnExamPaperMarks(submissionId: $submissionId, notes: $notes) {
+      id
+      status
+      reviewNotes
+      reviewedAt
+    }
+  }
+`
+
 const LOCK_ALL_EXAM_SESSION_MARKS = `
   mutation LockAllExamSessionMarks($sessionId: String!) {
     lockAllExamSessionMarks(sessionId: $sessionId) {
+      id
+      status
+    }
+  }
+`
+
+const APPROVE_ALL_EXAM_SESSION_MARKS = `
+  mutation ApproveAllExamSessionMarks($sessionId: String!) {
+    approveAllExamSessionMarks(sessionId: $sessionId) {
       id
       status
     }
@@ -1001,11 +1038,26 @@ export async function lockExamPaperMarks(
   await chatGraphqlFetch(LOCK_EXAM_PAPER_MARKS, { submissionId }, subdomain)
 }
 
+export async function returnExamPaperMarks(
+  subdomain: string,
+  submissionId: string,
+  notes?: string,
+): Promise<void> {
+  await chatGraphqlFetch(RETURN_EXAM_PAPER_MARKS, { submissionId, notes }, subdomain)
+}
+
 export async function lockAllExamSessionMarks(
   subdomain: string,
   sessionId: string,
 ): Promise<void> {
   await chatGraphqlFetch(LOCK_ALL_EXAM_SESSION_MARKS, { sessionId }, subdomain)
+}
+
+export async function approveAllExamSessionMarks(
+  subdomain: string,
+  sessionId: string,
+): Promise<void> {
+  await chatGraphqlFetch(APPROVE_ALL_EXAM_SESSION_MARKS, { sessionId }, subdomain)
 }
 
 export interface ProcessedSubjectScore {
@@ -1273,4 +1325,72 @@ export async function scheduleExamSessionPublication(
   },
 ): Promise<void> {
   await chatGraphqlFetch(SCHEDULE_EXAM_SESSION_PUBLICATION, { input }, subdomain)
+}
+
+
+const TEACHER_EXAM_ASSIGNMENTS_QUERY = `
+  query TeacherExamAssignments {
+    teacherExamAssignments {
+      teacherId
+      subjectIds
+      gradeLevelIds
+      streamIds
+      hodSubjectIds
+      classTeacherStreamIds
+    }
+  }
+`
+
+export interface TeacherExamAssignments {
+  teacherId?: string | null
+  subjectIds: string[]
+  gradeLevelIds: string[]
+  streamIds: string[]
+  hodSubjectIds: string[]
+  classTeacherStreamIds: string[]
+}
+
+export interface MarkSubmissionAuditLogRecord {
+  id: string
+  markSubmissionId: string
+  actorId: string
+  action: 'SUBMIT' | 'RETURN' | 'APPROVE' | 'LOCK'
+  oldStatus: MarkSubmissionStatus
+  newStatus: MarkSubmissionStatus
+  notes?: string | null
+  createdAt: string
+}
+
+const MARK_SUBMISSION_AUDIT_LOG_QUERY = `
+  query MarkSubmissionAuditLog($submissionId: String!) {
+    markSubmissionAuditLog(submissionId: $submissionId) {
+      id
+      markSubmissionId
+      actorId
+      action
+      oldStatus
+      newStatus
+      notes
+      createdAt
+    }
+  }
+`
+
+export async function fetchMarkSubmissionAuditLog(
+  subdomain: string,
+  submissionId: string,
+): Promise<MarkSubmissionAuditLogRecord[]> {
+  const data = await chatGraphqlFetch<{
+    markSubmissionAuditLog: MarkSubmissionAuditLogRecord[]
+  }>(MARK_SUBMISSION_AUDIT_LOG_QUERY, { submissionId }, subdomain)
+  return data.markSubmissionAuditLog ?? []
+}
+
+export async function fetchTeacherExamAssignments(
+  subdomain: string,
+): Promise<TeacherExamAssignments> {
+  const data = await chatGraphqlFetch<{
+    teacherExamAssignments: TeacherExamAssignments
+  }>(TEACHER_EXAM_ASSIGNMENTS_QUERY, {}, subdomain)
+  return data.teacherExamAssignments
 }

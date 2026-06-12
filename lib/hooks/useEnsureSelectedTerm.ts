@@ -41,10 +41,10 @@ function mapNestedTerms(
   return terms.map((t) => ({
     id: t.id,
     name: t.name,
-    startDate: "",
-    endDate: "",
-    isActive: false,
-    isCurrent: false,
+    startDate: t.startDate ?? "",
+    endDate: t.endDate ?? "",
+    isActive: t.isActive ?? false,
+    isCurrent: t.isCurrent ?? false,
     academicYear: { name: year.name },
   }));
 }

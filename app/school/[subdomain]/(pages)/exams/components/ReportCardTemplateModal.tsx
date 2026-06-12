@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Printer, X } from "lucide-react";
+import { Download, Eye, Printer, X, Loader2 } from "lucide-react";
 import SchoolReportCard from '../../students/components/ReportCard';
 import { useSchoolConfig } from '@/lib/hooks/useSchoolConfig';
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore';
+import { useParams } from 'next/navigation';
+import { generateReportCardPdf, downloadPdfDataUrl } from '@/lib/exams/reportCards';
+import { toast } from 'sonner';
 
 interface ReportCardTemplateModalProps {
   student: {
@@ -63,6 +66,10 @@ export function ReportCardTemplateModal({
 }: ReportCardTemplateModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'compact' | 'uganda-classic'>('modern');
   const [isOpen, setIsOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const params = useParams();
+  const subdomain = params.subdomain as string;
 
   // Fetch actual school configuration data
   const { data: schoolConfig } = useSchoolConfig();
@@ -78,16 +85,53 @@ export function ReportCardTemplateModal({
   // Get actual subjects from the store, filtered by student's grade/level
   const actualSubjects = config?.selectedLevels?.flatMap(level => level.subjects) || subjects;
 
-  const handleDownload = (template: string) => {
-    // TODO: Implement actual PDF download functionality
-    console.log(`Downloading ${template} template for ${student.name}`);
-    // Here you would typically call a PDF generation service
+  const handleDownload = async () => {
+    if (!subdomain || !student.id) {
+      toast.error('Cannot generate PDF', { description: 'Missing school or student information.' });
+      return;
+    }
+    setPdfLoading(true);
+    try {
+      const pdf = await generateReportCardPdf(subdomain, {
+        studentId: student.id,
+        academicYear: year,
+        term: Number(term),
+      });
+      downloadPdfDataUrl(pdf, `report-card-${student.admissionNumber}-${year}-t${term}.pdf`);
+      toast.success('Report card PDF downloaded');
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to generate PDF',
+      );
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
-  const handlePrint = (template: string) => {
-    // TODO: Implement print functionality
-    console.log(`Printing ${template} template for ${student.name}`);
-    // Here you would typically trigger browser print
+  const handlePrint = () => {
+    if (!previewRef.current) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Unable to open print window. Please allow popups.');
+      return;
+    }
+    const content = previewRef.current.innerHTML;
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Report Card - ${student.name}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+        </head>
+        <body class="bg-white p-8">
+          ${content}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   };
 
   return (
@@ -158,17 +202,22 @@ export function ReportCardTemplateModal({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => handlePrint(selectedTemplate)}
+                onClick={handlePrint}
                 className="border-blue-300 text-blue-700 hover:bg-blue-50"
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Print Preview
               </Button>
               <Button
-                onClick={() => handleDownload(selectedTemplate)}
+                onClick={handleDownload}
+                disabled={pdfLoading}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Download className="h-4 w-4 mr-2" />
+                {pdfLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
                 Download PDF
               </Button>
             </div>
@@ -187,14 +236,16 @@ export function ReportCardTemplateModal({
             </div>
                           <div className="p-4 bg-white">
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <SchoolReportCard
-                    student={student}
-                    school={actualSchoolData}
-                    subjects={actualSubjects}
-                    term={term}
-                    year={year}
-                    template={selectedTemplate}
-                  />
+                  <div ref={previewRef}>
+                    <SchoolReportCard
+                      student={student}
+                      school={actualSchoolData}
+                      subjectGrades={[]}
+                      term={term}
+                      year={year}
+                      template={selectedTemplate}
+                    />
+                  </div>
                 </div>
               </div>
           </div>

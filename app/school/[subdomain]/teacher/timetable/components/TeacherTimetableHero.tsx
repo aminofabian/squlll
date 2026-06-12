@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CalendarDays, GraduationCap, Printer } from "lucide-react";
+import { CalendarDays, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
@@ -9,9 +9,6 @@ import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
 interface TeacherTimetableHeroProps {
   formattedDate: string;
   termName?: string;
-  completionPercent: number;
-  completedCount: number;
-  totalLessons: number;
   onPrint?: () => void;
   showPrint?: boolean;
 }
@@ -19,93 +16,53 @@ interface TeacherTimetableHeroProps {
 export function TeacherTimetableHero({
   formattedDate,
   termName,
-  completionPercent,
-  completedCount,
-  totalLessons,
   onPrint,
   showPrint = false,
 }: TeacherTimetableHeroProps) {
   return (
-    <div className="rounded-lg border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-800/90">
-      <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3.5 sm:px-5">
-        <div className="min-w-0">
-          <div className="mb-1 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary dark:bg-primary/20">
-              <GraduationCap className="h-3 w-3" />
-              Teacher
-            </span>
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50 sm:text-2xl">
-            My Teaching Schedule
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
-            {formattedDate}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <RealtimeLiveIndicator className="hidden lg:inline-flex" />
-          {showPrint && onPrint ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-              onClick={onPrint}
-            >
-              <Printer className="h-3.5 w-3.5" />
-              Print
-            </Button>
-          ) : null}
-
-          {termName && (
-            <div className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm dark:border-slate-600 dark:bg-slate-900/50 dark:text-slate-200">
-              <CalendarDays className="h-3.5 w-3.5 text-primary" />
+    <header className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-2xl">
+          My Teaching Schedule
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {formattedDate}
+          {termName ? (
+            <>
+              <span className="mx-2 text-slate-300 dark:text-slate-600" aria-hidden>
+                ·
+              </span>
               {termName}
-            </div>
-          )}
-
-          {totalLessons > 0 && (
-            <div className="flex items-center gap-2.5 rounded-md border border-slate-200/80 bg-slate-50/50 px-3 py-2 dark:border-slate-600 dark:bg-slate-900/40">
-              <div className="relative h-10 w-10">
-                <svg className="h-10 w-10 -rotate-90" viewBox="0 0 36 36">
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="15"
-                    fill="none"
-                    className="stroke-slate-200 dark:stroke-slate-700"
-                    strokeWidth="3"
-                  />
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="15"
-                    fill="none"
-                    className="stroke-primary transition-all duration-700"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray={`${(completionPercent / 100) * 94.2} 94.2`}
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-slate-800 dark:text-slate-100">
-                  {completionPercent}%
-                </span>
-              </div>
-              <div className="text-left leading-tight">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Marked taught
-                </p>
-                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {completedCount}
-                  <span className="font-normal text-slate-400"> / {totalLessons}</span>
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+            </>
+          ) : null}
+        </p>
       </div>
-    </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <RealtimeLiveIndicator
+          className="hidden lg:inline-flex"
+          showLabel={false}
+        />
+        {showPrint && onPrint ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-2.5 text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            onClick={onPrint}
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Print
+          </Button>
+        ) : null}
+        {termName ? (
+          <div className="hidden items-center gap-1.5 rounded-md border border-slate-200/70 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 sm:flex dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            {termName}
+          </div>
+        ) : null}
+      </div>
+    </header>
   );
 }
 
@@ -119,10 +76,10 @@ export function StatusNote({
   return (
     <p
       className={cn(
-        "rounded-md px-3 py-2 text-sm",
+        "text-sm",
         variant === "weekend"
-          ? "border border-indigo-200/60 bg-indigo-50/80 text-indigo-900 dark:border-indigo-900/50 dark:bg-indigo-950/30 dark:text-indigo-200"
-          : "text-slate-600 dark:text-slate-400",
+          ? "rounded-md border border-indigo-200/60 bg-indigo-50/80 px-3 py-2 text-indigo-900 dark:border-indigo-900/50 dark:bg-indigo-950/30 dark:text-indigo-200"
+          : "text-slate-500 dark:text-slate-400",
       )}
     >
       {children}

@@ -2,8 +2,6 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { CalendarDays, Users, BookOpen, CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useTeacherTimetable } from "../hooks/useTeacherTimetable";
 import { useSelectedTerm } from "@/lib/hooks/useSelectedTerm";
 
@@ -11,16 +9,13 @@ import {
   useTimetableCore,
   transformTeacherTimetable,
   transformTeacherTimetableMerged,
-  DAY_NAMES,
   type CompleteTimetable,
-  type TimetableStats,
   type TimetableLesson,
+  type TimetableStats,
 } from "@/lib/timetable";
 
 import {
-  CurrentLessonBanner,
   TimetableGrid,
-  NextLessonPreview,
   TeacherMobileSchedule,
   TimetablePrintStyles,
 } from "@/components/timetable";
@@ -28,6 +23,7 @@ import {
   TeacherTimetableHero,
   StatusNote,
 } from "./components/TeacherTimetableHero";
+import { TeacherTimetableSidebar } from "./components/TeacherTimetableSidebar";
 import { TeacherTimetableSkeleton } from "./components/TeacherTimetableSkeleton";
 import {
   TeacherLessonDetailSheet,
@@ -239,8 +235,6 @@ const TeacherTimetable = () => {
       ? stats.dayDistribution[core.currentDayName] ?? 0
       : null;
 
-  const completionPercent = stats?.completionPercentage ?? 0;
-
   const emptyLessons = (
     <div className="rounded-lg border border-amber-200/70 bg-amber-50/50 px-6 py-10 text-center dark:border-amber-900/40 dark:bg-amber-950/20">
       <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
@@ -258,27 +252,20 @@ const TeacherTimetable = () => {
     unifiedTimetable && !hasNoLessons ? (
       <>
         {/* Mobile: floating schedule shell */}
-        <section className="overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-200/60 dark:bg-slate-800/95 dark:shadow-none dark:ring-slate-700/80 lg:rounded-lg lg:border lg:border-slate-200/80 lg:shadow-sm">
-          <div className="hidden border-b border-slate-100 px-4 py-2.5 dark:border-slate-700/80 lg:block">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Weekly schedule
-                </h2>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Tap a lesson for details
-                </p>
-              </div>
-              <div className="flex items-center gap-3 text-[10px] text-slate-500">
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-primary" />
-                  Today
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
-                  Taught
-                </span>
-              </div>
+        <section className="overflow-hidden rounded-2xl bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-200/60 dark:bg-slate-800/95 dark:shadow-none dark:ring-slate-700/80 lg:rounded-xl lg:border lg:border-slate-200/70 lg:bg-white lg:shadow-none lg:ring-0 dark:lg:border-slate-800 dark:lg:bg-slate-900/50">
+          <div className="hidden items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 lg:flex">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              Weekly schedule
+            </h2>
+            <div className="flex items-center gap-3 text-[10px] text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Today
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/80" />
+                Taught
+              </span>
             </div>
           </div>
           <TimetableGrid
@@ -294,40 +281,6 @@ const TeacherTimetable = () => {
             onLessonClick={handleLessonClick}
           />
         </section>
-      </>
-    ) : null;
-
-  const statsBlock =
-    stats && stats.totalLessons > 0 ? (
-      <>
-        <WeeklyLoadBar stats={stats} currentDay={core.currentDayOfWeek} />
-        <div className="grid grid-cols-2 gap-2">
-          <QuickStat
-            icon={<BookOpen className="h-4 w-4" />}
-            label="Weekly classes"
-            value={stats.totalLessons}
-            accent="primary"
-          />
-          <QuickStat
-            icon={<Users className="h-4 w-4" />}
-            label="Subjects"
-            value={stats.totalSubjects}
-            accent="violet"
-          />
-          <QuickStat
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            label="Marked taught"
-            value={`${stats.completedLessons}/${stats.totalLessons}`}
-            accent="emerald"
-          />
-          <QuickStat
-            icon={<CalendarDays className="h-4 w-4" />}
-            label="Classes today"
-            value={isWeekend ? "—" : classesToday ?? 0}
-            hint={isWeekend ? "Weekend" : undefined}
-            accent="amber"
-          />
-        </div>
       </>
     ) : null;
 
@@ -351,7 +304,7 @@ const TeacherTimetable = () => {
         }}
       />
       <div
-        className="min-h-screen overflow-x-hidden bg-[#f2f2f7] lg:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] lg:from-primary/[0.06] lg:via-slate-50 lg:to-white dark:lg:from-primary/10 dark:lg:via-slate-900 dark:lg:to-slate-950"
+        className="min-h-screen overflow-x-hidden bg-[#f2f2f7] lg:bg-slate-50 dark:lg:bg-slate-950"
         data-timetable-no-print
       >
       <div className="mx-auto w-full max-w-7xl max-lg:overflow-hidden max-lg:p-0 lg:px-6 lg:py-5">
@@ -380,13 +333,10 @@ const TeacherTimetable = () => {
         </div>
 
         {/* Desktop */}
-        <div className="hidden flex-col gap-4 lg:flex">
+        <div className="hidden flex-col gap-5 lg:flex">
           <TeacherTimetableHero
             formattedDate={core.formattedDate}
             termName={selectedTerm?.name}
-            completionPercent={completionPercent}
-            completedCount={stats?.completedLessons ?? 0}
-            totalLessons={stats?.totalLessons ?? 0}
             showPrint={canPrint}
             onPrint={handlePrint}
           />
@@ -395,24 +345,18 @@ const TeacherTimetable = () => {
               Outside school hours — your next class is in Up Next below.
             </StatusNote>
           )}
-          <div className="grid grid-cols-[minmax(0,340px)_1fr] items-start gap-4">
-            <div className="sticky top-4 z-0 space-y-3">
-              <NextLessonPreview
-                nextLesson={core.nextLesson}
-                viewType="teacher"
-                dense
-              />
-              {showLiveBanner && (
-                <CurrentLessonBanner
-                  status={core.currentStatus}
-                  formattedTime={core.formattedTime}
-                  viewType="teacher"
-                  showClock={false}
-                />
-              )}
-              {statsBlock}
-            </div>
-            <div className="min-w-0 space-y-3">
+          <div className="grid grid-cols-[minmax(0,280px)_1fr] items-start gap-5 xl:grid-cols-[minmax(0,300px)_1fr]">
+            <TeacherTimetableSidebar
+              nextLesson={core.nextLesson}
+              currentStatus={core.currentStatus}
+              formattedTime={core.formattedTime}
+              showLiveBanner={showLiveBanner}
+              stats={stats}
+              currentDayOfWeek={core.currentDayOfWeek}
+              classesToday={classesToday}
+              isWeekend={isWeekend}
+            />
+            <div className="min-w-0">
               {hasNoLessons ? emptyLessons : scheduleGrid}
             </div>
           </div>
@@ -447,140 +391,5 @@ const TeacherTimetable = () => {
     </>
   );
 };
-
-function WeeklyLoadBar({
-  stats,
-  currentDay,
-}: {
-  stats: TimetableStats;
-  currentDay: number | null;
-}) {
-  const dayKeys = [1, 2, 3, 4, 5] as const;
-  const counts = dayKeys.map((d) => stats.dayDistribution[DAY_NAMES[d]] ?? 0);
-  const maxLessons = Math.max(...counts, 1);
-  const totalWeekly = counts.reduce((a, b) => a + b, 0);
-
-  if (totalWeekly === 0) {
-    return (
-      <div className="rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-white px-3 py-3 dark:bg-slate-800">
-        <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
-          Weekly load
-        </p>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          No lessons counted for this week yet.
-        </p>
-      </div>
-    );
-  }
-
-  const dayLabels: Record<number, string> = {
-    1: "Mon",
-    2: "Tue",
-    3: "Wed",
-    4: "Thu",
-    5: "Fri",
-  };
-
-  return (
-    <div className="rounded-md border border-slate-200/80 bg-white px-3 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800/90">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-          Weekly load
-        </p>
-        <p className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
-          <span className="font-semibold text-slate-800 dark:text-slate-100">
-            {totalWeekly}
-          </span>{" "}
-          classes
-        </p>
-      </div>
-
-      <div className="grid grid-cols-5 gap-1.5">
-        {dayKeys.map((day) => {
-          const count = stats.dayDistribution[DAY_NAMES[day]] ?? 0;
-          const fillPct =
-            maxLessons > 0 && count > 0
-              ? Math.max((count / maxLessons) * 100, 12)
-              : 0;
-          const isToday = currentDay === day;
-
-          return (
-            <div key={day} className="flex min-w-0 flex-col gap-1.5">
-              <div
-                className="flex h-12 w-full items-end overflow-hidden rounded-sm bg-slate-100 dark:bg-slate-700/80"
-                aria-label={`${dayLabels[day]}: ${count} classes`}
-              >
-                {count > 0 ? (
-                  <div
-                    className={cn(
-                      "w-full transition-[height] duration-300",
-                      isToday ? "bg-primary" : "bg-primary/45 dark:bg-primary/35",
-                    )}
-                    style={{ height: `${fillPct}%` }}
-                  />
-                ) : null}
-              </div>
-              <div className="text-center leading-none">
-                <p
-                  className={cn(
-                    "text-[11px] font-medium",
-                    isToday
-                      ? "text-primary"
-                      : "text-slate-600 dark:text-slate-400",
-                  )}
-                >
-                  {dayLabels[day]}
-                </p>
-                <p className="mt-0.5 text-[10px] tabular-nums text-slate-400 dark:text-slate-500">
-                  {count}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-const STAT_ACCENTS = {
-  primary: "bg-primary/10 text-primary dark:bg-primary/20",
-  violet: "bg-violet-500/10 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300",
-  emerald: "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
-  amber: "bg-amber-500/10 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
-} as const;
-
-function QuickStat({
-  icon,
-  label,
-  value,
-  hint,
-  accent = "primary",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  hint?: string;
-  accent?: keyof typeof STAT_ACCENTS;
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-slate-200/80 bg-white px-2.5 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-800/90">
-      <div className={cn("shrink-0 rounded-md p-1.5", STAT_ACCENTS[accent])}>
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p className="text-base font-bold leading-tight text-slate-900 dark:text-slate-100">
-          {value}
-        </p>
-        <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-400">
-          {label}
-        </p>
-        {hint && (
-          <p className="mt-0.5 text-[9px] leading-snug text-slate-400">{hint}</p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default TeacherTimetable;

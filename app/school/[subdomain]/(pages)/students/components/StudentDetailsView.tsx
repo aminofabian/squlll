@@ -70,7 +70,6 @@ interface StudentDetailsViewProps {
 }
 
 type ReportCardProps = ComponentProps<typeof SchoolReportCard>
-type Subject = ReportCardProps["subjects"][number]
 
 function DetailField({
   label,
@@ -663,12 +662,7 @@ export function StudentDetailsView({
                           subdomain:
                             schoolConfig?.tenant?.subdomain || "school",
                         }}
-                        subjects={
-                          (schoolConfig?.selectedLevels?.flatMap(
-                            (level) =>
-                              (level as { subjects?: unknown[] }).subjects ?? [],
-                          ) || []) as Subject[]
-                        }
+                        subjectGrades={[]}
                         term="1"
                         year="2024"
                         template={selectedTemplate}

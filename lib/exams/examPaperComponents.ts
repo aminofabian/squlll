@@ -279,3 +279,26 @@ export function formatPaperDisplayName(
   if (!paperLabel) return subjectName
   return `${subjectName} — ${paperLabel}`
 }
+
+export type ExamPrintSubjectLabelMode = 'full' | 'code'
+
+/** Print timetable label — full subject name or subject code */
+export function formatPrintPaperLabel(
+  subjectName: string,
+  subjectCode: string | undefined,
+  paperLabel: string | null | undefined,
+  mode: ExamPrintSubjectLabelMode,
+): string {
+  if (mode === 'full') {
+    return formatPaperDisplayName(subjectName, paperLabel)
+  }
+
+  const code = (subjectCode ?? '').trim().toUpperCase()
+  const base = code || subjectName
+  if (!paperLabel || paperLabel === 'Paper 1') {
+    const components = getPaperComponentsForSubject(subjectName)
+    if (components.length === 1) return base
+  }
+  if (!paperLabel) return base
+  return `${base} — ${paperLabel}`
+}

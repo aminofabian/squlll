@@ -102,8 +102,12 @@ export function CurrentLessonBanner({
               </p>
             )}
 
-            {/* Remaining time */}
-            {status.remainingMinutes > 0 && status.status !== 'weekend' && status.status !== 'outside' && !compact && (
+            {/* Remaining time — skip when break/free copy already covers it */}
+            {status.remainingMinutes > 0 &&
+              status.status !== 'weekend' &&
+              status.status !== 'outside' &&
+              status.status === 'lesson' &&
+              !compact && (
               <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 {status.remainingMinutes} min remaining
               </p>

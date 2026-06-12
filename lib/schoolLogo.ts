@@ -1,6 +1,12 @@
 /** Default motto on fee letters when none is configured. */
 export const DEFAULT_SCHOOL_MOTTO = 'Knowledge • Character • Excellence'
 
+/** Stable fragment for SVG gradient / mask ids (SSR-safe, no useId). */
+export function toSvgIdPart(value: string): string {
+  const part = value.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase()
+  return part || 'school'
+}
+
 /** Same display name as dashboard sidebar/header (`layout.tsx`). */
 export function getLayoutSchoolName(subdomain: string): string {
   if (!subdomain?.trim()) return 'School'

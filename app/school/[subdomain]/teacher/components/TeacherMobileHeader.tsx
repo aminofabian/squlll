@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,28 +9,42 @@ import { Sidebar } from "@/components/dashboard/TeacherSidebar";
 import { getTeacherPageTitle } from "@/lib/teacher/teacherNavConfig";
 import { RealtimeLiveIndicator } from "@/lib/realtime/RealtimeLiveIndicator";
 
+const menuButtonClassName =
+  "h-9 w-9 shrink-0 p-0 text-slate-600 dark:text-slate-300";
+
+function MenuButton() {
+  return (
+    <Button variant="ghost" size="sm" className={menuButtonClassName}>
+      <Menu className="h-5 w-5" />
+      <span className="sr-only">Open menu</span>
+    </Button>
+  );
+}
+
 export function TeacherMobileHeader() {
   const pathname = usePathname();
   const title = getTeacherPageTitle(pathname);
   const showLive = pathname.includes("/timetable");
+  const [sheetReady, setSheetReady] = useState(false);
+
+  useEffect(() => {
+    setSheetReady(true);
+  }, []);
 
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 lg:hidden">
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 w-9 shrink-0 p-0 text-slate-600 dark:text-slate-300"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
-          <Sidebar />
-        </SheetContent>
-      </Sheet>
+      {sheetReady ? (
+        <Sheet>
+          <SheetTrigger asChild>
+            <MenuButton />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-72 p-0">
+            <Sidebar logoInstance="drawer" />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <MenuButton />
+      )}
 
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">

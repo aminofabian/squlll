@@ -10,9 +10,25 @@ export const SCHOOL_SHELL = {
   border: "border-slate-200/70",
 } as const;
 
-export function getSchoolPageTitle(pathname: string): string {
+const UUID_SEGMENT =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function schoolPathSegments(pathname: string): string[] {
   const parts = pathname.split("?")[0].split("/").filter(Boolean);
-  const segment = parts[parts.length - 1] ?? "dashboard";
+  if (parts[0] === "school" && parts.length > 2) {
+    return parts.slice(2);
+  }
+  return parts;
+}
+
+export function getSchoolPageTitle(pathname: string): string {
+  const segments = schoolPathSegments(pathname);
+  let segment = segments[segments.length - 1] ?? "dashboard";
+
+  if (UUID_SEGMENT.test(segment) || /^\d+$/.test(segment)) {
+    segment = segments[segments.length - 2] ?? "dashboard";
+  }
+
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     classes: "Classes",

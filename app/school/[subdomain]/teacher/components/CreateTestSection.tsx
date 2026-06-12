@@ -231,22 +231,13 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
   const handleGenerateAI = () => {
     if (!aiPrompt.trim() || aiNumQuestions < 1) return;
     setAiLoading(true);
+    // TODO: Integrate with actual AI backend service
     setTimeout(() => {
-      // Example: Add generated questions based on prompt, number, and sample
-      setQuestions(qs => [
-        ...qs,
-        ...Array.from({ length: aiNumQuestions }).map((_, i) => ({
-          text: `AI: ${aiPrompt} (Q${i + 1})${aiSample ? `\nSample: ${aiSample}` : ""}`,
-          type: "mcq",
-          options: ["Option 1", "Option 2", "Option 3", "Option 4"],
-          correct: 0,
-        })),
-      ]);
       setAiLoading(false);
-      setAiPrompt("");
-      setAiSample("");
-      setAiNumQuestions(5);
-    }, 1800);
+      toast.error('AI question generation is not yet configured', {
+        description: 'Please enter questions manually or contact your administrator to set up AI integration.',
+      });
+    }, 800);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,8 +263,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
 
     try {
       // Get grade level IDs from selected grade names with additional validation
-      console.log('Selected grade names:', selectedGrades);
-      console.log('Available flat grades:', flatGrades);
+      // Grade selection validation
       
       // Verify we have all grade data loaded before proceeding
       if (flatGrades.length === 0) {
@@ -293,9 +283,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
       }
       
       // Map valid grade names to IDs with strict validation
-      console.log('=== Grade Level ID Mapping Debug ===');
-      console.log('Valid grade names to map:', validGradeNames);
-      console.log('Available flatGrades:', flatGrades.map(g => ({ name: g.name, id: g.id })));
+      // Map grade names to tenant grade level IDs
       
       const gradeLevelIds = validGradeNames.map(gradeName => {
         const gradeLevel = flatGrades.find(g => g.name === gradeName);
@@ -307,18 +295,10 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
           console.error(`Grade level found for ${gradeName}, but it has no ID`);
           return null;
         }
-        console.log(`Mapping grade '${gradeName}' to tenant grade level ID: ${gradeLevel.id}`);
-        
-        // Check if this ID is known to be problematic
-        if (gradeLevel.id === '022011a6-58c3-4e07-9f97-9ab2e0e655c7') {
-          console.warn(`⚠️  FOUND PROBLEMATIC ID: ${gradeLevel.id} for grade: ${gradeName}`);
-        }
-        
         return gradeLevel.id;
       }).filter(id => !!id); // Remove any null values
 
-      console.log('Final tenant grade level IDs to be used:', gradeLevelIds);
-      console.log('=== End Grade Level ID Mapping Debug ===');
+      // End grade mapping
 
       if (gradeLevelIds.length === 0) {
         throw new Error('No valid grade levels were found. Please select grades again.');
@@ -359,7 +339,7 @@ export default function CreateTestSection({ subdomain, onBack, onAssignHomework 
         referenceMaterials
       };
 
-      console.log('Submitting createTestInput:', createTestInput);
+      // Submit test creation
 
       const response = await fetch('/api/teacher-portal/create-test', {
         method: 'POST',

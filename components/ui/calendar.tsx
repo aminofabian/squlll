@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker, type CustomComponents } from "react-day-picker"
+import { DayPicker, getDefaultClassNames, type ClassNames } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -11,66 +11,85 @@ function Calendar({
   className,
   classNames,
   showOutsideDays = true,
-  components,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
-  const customComponents: Partial<CustomComponents> = {
-    Chevron: ({ className, orientation, ...chevronProps }) => {
-      if (orientation === "left") {
-        return <ChevronLeft className={cn("size-4", className)} {...chevronProps} />
-      }
-      return <ChevronRight className={cn("size-4", className)} {...chevronProps} />
-    },
-    ...components,
-  }
+  const defaults = getDefaultClassNames()
+  const overrides = classNames ?? {}
+
+  const merge = (key: keyof ClassNames, base: string) =>
+    cn(base, defaults[key], overrides[key])
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      navLayout="around"
+      className={cn("p-2", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row gap-2",
-        month: "flex flex-col gap-4",
-        caption: "flex justify-center pt-1 relative items-center w-full",
-        caption_label: "text-sm font-medium",
-        nav: "flex items-center gap-1",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "size-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+        root: merge("root", "w-fit"),
+        months: merge("months", "relative flex flex-col"),
+        month: merge("month", "relative flex w-full flex-col gap-1"),
+        month_caption: merge(
+          "month_caption",
+          "relative flex h-8 w-full items-center justify-center",
         ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-x-1",
-        head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: cn(
-          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-range-end)]:rounded-r-md",
-          props.mode === "range"
-            ? "[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
-            : "[&:has([aria-selected])]:rounded-md"
+        caption_label: merge("caption_label", "text-sm font-semibold"),
+        nav: merge("nav", "hidden"),
+        button_previous: merge(
+          "button_previous",
+          cn(
+            buttonVariants({ variant: "outline" }),
+            "absolute left-0 top-0 z-10 h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
+          ),
         ),
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "size-8 p-0 font-normal aria-selected:opacity-100"
+        button_next: merge(
+          "button_next",
+          cn(
+            buttonVariants({ variant: "outline" }),
+            "absolute right-0 top-0 z-10 h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
+          ),
         ),
-        day_range_start:
-          "day-range-start aria-selected:bg-primary aria-selected:text-primary-foreground",
-        day_range_end:
-          "day-range-end aria-selected:bg-primary aria-selected:text-primary-foreground",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside:
-          "day-outside text-muted-foreground aria-selected:text-muted-foreground",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        ...classNames,
+        month_grid: merge("month_grid", "w-full border-collapse"),
+        weekdays: merge("weekdays", defaults.weekdays),
+        weekday: merge(
+          "weekday",
+          "w-9 pb-1 text-center text-[0.7rem] font-medium uppercase tracking-wide text-muted-foreground",
+        ),
+        week: merge("week", defaults.week),
+        day: merge("day", "relative p-0 text-center align-middle"),
+        day_button: merge(
+          "day_button",
+          cn(
+            buttonVariants({ variant: "ghost" }),
+            "h-8 w-8 p-0 text-sm font-normal",
+          ),
+        ),
+        selected: merge(
+          "selected",
+          "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary [&>button]:hover:text-primary-foreground",
+        ),
+        today: merge(
+          "today",
+          "[&>button]:bg-accent [&>button]:font-semibold [&>button]:text-accent-foreground",
+        ),
+        outside: merge(
+          "outside",
+          "[&>button]:text-muted-foreground [&>button]:opacity-50",
+        ),
+        disabled: merge(
+          "disabled",
+          "[&>button]:text-muted-foreground [&>button]:opacity-40",
+        ),
+        hidden: merge("hidden", "invisible"),
+        range_start: merge("range_start", "rounded-l-md"),
+        range_middle: merge("range_middle", "rounded-none"),
+        range_end: merge("range_end", "rounded-r-md"),
       }}
-      components={customComponents}
+      components={{
+        Chevron: ({ className, orientation, ...chevronProps }) => {
+          const Icon = orientation === "left" ? ChevronLeft : ChevronRight
+          return <Icon className={cn("h-4 w-4", className)} {...chevronProps} />
+        },
+      }}
       {...props}
     />
   )

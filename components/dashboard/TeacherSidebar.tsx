@@ -1,5 +1,6 @@
 "use client"
 
+import React, { useMemo } from "react";
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -14,6 +15,8 @@ import {
   ClipboardList,
   BookMarked,
   MessageSquare,
+  FileText,
+  ClipboardCheck,
   User,
   Settings,
   LogOut
@@ -22,9 +25,11 @@ import { DynamicLogo } from '../../app/school/[subdomain]/parent/components/Dyna
 import { useParams } from 'next/navigation';
 import { useSignout } from "@/lib/hooks/useSignout";
 import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
+import { useTeacherExamAssignments } from "@/lib/hooks/useTeacherExamAssignments";
 
 interface SidebarProps {
   className?: string
+  logoInstance?: string
 }
 
 const navigation = [
@@ -49,6 +54,11 @@ const navigation = [
     icon: GraduationCap,
   },
   {
+    title: "Exams",
+    href: "/teacher/exams",
+    icon: FileText,
+  },
+  {
     title: "Attendance",
     href: "/teacher/attendance",
     icon: ClipboardList,
@@ -65,12 +75,27 @@ const navigation = [
   },
 ]
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, logoInstance }: SidebarProps) {
   const pathname = usePathname();
   const params = useParams();
   const subdomain = typeof params.subdomain === 'string' ? params.subdomain : Array.isArray(params.subdomain) ? params.subdomain[0] : '';
   const { signOut, isSigningOut } = useSignout();
   const unreadTotal = useChatUnreadTotal();
+  const { data: assignments } = useTeacherExamAssignments();
+  const isHod = assignments && assignments.hodSubjectIds.length > 0;
+
+  const navItems = useMemo(() => {
+    const items = [...navigation];
+    if (isHod) {
+      const examsIndex = items.findIndex((item) => item.href === "/teacher/exams");
+      items.splice(examsIndex + 1, 0, {
+        title: "HOD Review",
+        href: "/teacher/exams/review",
+        icon: ClipboardCheck,
+      });
+    }
+    return items;
+  }, [isHod]);
 
   return (
     <div className={cn(
@@ -79,12 +104,17 @@ export function Sidebar({ className }: SidebarProps) {
     )}>
       {/* Header */}
       <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-b dark:border-slate-700 shadow-sm flex flex-col items-center">
-        <DynamicLogo subdomain={subdomain} size="md" showText={true} />
+        <DynamicLogo
+          subdomain={subdomain}
+          size="md"
+          showText={true}
+          logoInstance={logoInstance}
+        />
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
-        {navigation.map((item, index) => {
+        {navItems.map((item, index) => {
           const Icon = item.icon
           const isActive = pathname === item.href || 
             (item.href !== "/teacher/dashboard" && pathname.startsWith(item.href))

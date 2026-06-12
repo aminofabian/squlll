@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatUnreadTotal } from "@/lib/chat/ChatProvider";
+import { useTeacherExamAssignments } from "@/lib/hooks/useTeacherExamAssignments";
 import {
   isTeacherNavActive,
   TEACHER_HOME_TAB,
@@ -18,6 +19,22 @@ export function TeacherMobileBottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const chatUnread = useChatUnreadTotal();
+  const { data: assignments } = useTeacherExamAssignments();
+  const isHod = assignments && assignments.hodSubjectIds.length > 0;
+
+  const moreItems = useMemo(() => {
+    const items = [...TEACHER_MORE_ITEMS];
+    if (isHod) {
+      const examsIndex = items.findIndex((item) => item.href === "/teacher/exams");
+      items.splice(examsIndex + 1, 0, {
+        title: "HOD Review",
+        href: "/teacher/exams/review",
+        icon: ClipboardCheck,
+        tab: "more",
+      });
+    }
+    return items;
+  }, [isHod]);
 
   const leftTabs = TEACHER_PRIMARY_TABS.filter((item) => !item.center).slice(
     0,
@@ -27,7 +44,7 @@ export function TeacherMobileBottomNav() {
     2,
   );
 
-  const isMoreActive = TEACHER_MORE_ITEMS.some((item) =>
+  const isMoreActive = moreItems.some((item) =>
     isTeacherNavActive(pathname, item.href),
   );
 
@@ -57,7 +74,7 @@ export function TeacherMobileBottomNav() {
             </button>
           </div>
           <div className="grid grid-cols-4 gap-1 p-3">
-            {TEACHER_MORE_ITEMS.map((item) => {
+            {moreItems.map((item) => {
               const Icon = item.icon;
               const active = isTeacherNavActive(pathname, item.href);
               return (

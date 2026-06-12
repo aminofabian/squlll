@@ -1,9 +1,17 @@
 import { chatGraphqlFetch } from '@/lib/chat/graphql'
 
+export interface GradingScaleThresholdRecord {
+  grade: string
+  min: number
+  max: number
+  description?: string | null
+}
+
 export interface GradingScaleRecord {
   id: string
   name: string
   isDefault: boolean
+  thresholds?: GradingScaleThresholdRecord[]
 }
 
 const GRADING_SCALES_QUERY = `
@@ -12,6 +20,12 @@ const GRADING_SCALES_QUERY = `
       id
       name
       isDefault
+      thresholds {
+        grade
+        min
+        max
+        description
+      }
     }
   }
 `
@@ -46,9 +60,25 @@ export async function seedCurriculumGradingSchemes(
   return data.seedCurriculumGradingSchemes ?? []
 }
 
-export const SESSION_TEMPLATE_LABELS: Record<string, string> = {
-  END_OF_TERM: 'End of term',
-  MID_TERM: 'Mid-term',
-  MOCK_EXAM: 'Mock exam',
-  KCSE_TRIAL: 'KCSE trial',
+export function formatGradingScaleSummary(scale: GradingScaleRecord): string {
+  const thresholds = scale.thresholds ?? []
+  if (thresholds.length === 0) return scale.name
+
+  const sorted = [...thresholds].sort((a, b) => b.min - a.min)
+  const top = sorted[0]?.grade
+  const bottom = sorted[sorted.length - 1]?.grade
+  const letterRange =
+    top && bottom && top !== bottom ? `${top}–${bottom}` : top ?? bottom
+
+  if (letterRange) {
+    return `${scale.name} (${letterRange} letter scale)`
+  }
+  return scale.name
+}
+
+export function getDefaultGradingScale(
+  scales: GradingScaleRecord[] | undefined,
+): GradingScaleRecord | null {
+  if (!scales?.length) return null
+  return scales.find((scale) => scale.isDefault) ?? scales[0]
 }

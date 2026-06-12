@@ -10,20 +10,23 @@ import {
 } from '@/lib/exams/examSessions'
 import type { AssessType } from '@/lib/hooks/useTeacherActivity'
 
-export function useExamSessions(filter?: {
-  academicYear?: string
-  term?: number
-  type?: AssessType
-  status?: ExamSessionStatus
-  tenantGradeLevelId?: string
-}) {
+export function useExamSessions(
+  filter?: {
+    academicYear?: string
+    term?: number
+    type?: AssessType
+    status?: ExamSessionStatus
+    tenantGradeLevelId?: string
+  },
+  options?: { enabled?: boolean },
+) {
   const params = useParams()
   const subdomain = params.subdomain as string
 
   return useQuery({
     queryKey: ['examSessions', subdomain, filter],
     queryFn: () => fetchExamSessions(subdomain, filter),
-    enabled: Boolean(subdomain),
+    enabled: options?.enabled !== false && Boolean(subdomain),
     staleTime: 30_000,
   })
 }

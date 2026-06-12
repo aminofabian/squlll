@@ -231,10 +231,10 @@ export function NextLessonPreview({
   return (
     <div
       className={cn(
-        'rounded-md border bg-white shadow-sm dark:bg-slate-800',
+        'rounded-lg border bg-white dark:bg-slate-800/90',
         isTeacherDense
-          ? 'border-slate-200/80 dark:border-slate-700/80'
-          : cn('border-slate-200 dark:border-slate-700', palette.border, 'border-l-[3px]'),
+          ? 'border-slate-200/70 shadow-none dark:border-slate-700/70'
+          : cn('border-slate-200 shadow-sm dark:border-slate-700', palette.border, 'border-l-[3px]'),
         className,
       )}
     >
@@ -284,13 +284,14 @@ export function NextLessonPreview({
 
           <div className="shrink-0 border-t border-slate-100 pt-2 sm:border-t-0 sm:border-l sm:pl-3 sm:pt-0 dark:border-slate-700">
             <div className="flex items-start justify-end gap-1 sm:flex-col sm:items-end">
-              <div className="flex items-start gap-1">
-                <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <NextLessonCountdown
-                  startsAt={nextLesson.startsAt}
-                  compact={isTeacherDense}
-                />
-              </div>
+              {isTeacherDense ? (
+                <MinimalCountdownText startsAt={nextLesson.startsAt} />
+              ) : (
+                <div className="flex items-start gap-1">
+                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <NextLessonCountdown startsAt={nextLesson.startsAt} />
+                </div>
+              )}
               <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 sm:text-right">
                 {nextLesson.time}
               </div>

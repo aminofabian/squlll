@@ -4,22 +4,27 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   BookOpen,
-  CalendarClock,
-  ChevronRight,
+  Calendar,
+  ChevronDown,
   Loader2,
   Printer,
   Save,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { StyledDatePicker } from '@/components/ui/styled-date-picker'
 import {
   saveExamSessionTimetable,
   removeExamSessionTimetableSlot,
   updateExamSessionSchedule,
+  getSessionGrades,
   type ExamPaperRecord,
   type ExamSessionRecord,
 } from '@/lib/exams/examSessions'
@@ -29,8 +34,16 @@ import {
 } from '@/lib/exams/examDaysOfWeek'
 import { ExamDaysSelector } from './ExamDaysSelector'
 import { formatGradeDisplayName } from '@/lib/utils/grade-display'
-import { formatPaperDisplayName } from '@/lib/exams/examPaperComponents'
+import {
+  formatPaperDisplayName,
+  type ExamPrintSubjectLabelMode,
+} from '@/lib/exams/examPaperComponents'
 import { ExamTimetableGrid } from './ExamTimetableGrid'
+import { ExamSchoolTimetableGrid } from './ExamSchoolTimetableGrid'
+import { ExamTimetableDesktopLayout } from './ExamTimetableDesktopLayout'
+import { ExamUnscheduledPanel } from './ExamUnscheduledPanel'
+import { ExamTimetablePrintView, type ExamPrintOrientation } from './ExamTimetablePrintView'
+import { ExamTimetablePrintStyles } from './ExamTimetablePrintStyles'
 import { ExamScheduleDialog } from './ExamScheduleDialog'
 import { ExamPaperPickDialog } from './ExamPaperPickDialog'
 import {
@@ -42,6 +55,14 @@ import {
   toDateInput,
   type ExamTimetableDraft,
 } from './exam-timetable.utils'
+import {
+  examTimetableMobileEditorClass,
+  examTimetableMobileStripClass,
+  examTimetablePanelHeaderClass,
+  examTimetablePeriodBarClass,
+  examTimetablePeriodChipClass,
+  examTimetableProgressPillClass,
+} from './exam-session-ui'
 import { cn } from '@/lib/utils'
 
 interface SessionTimetablePanelProps {
@@ -66,13 +87,23 @@ function draftsToSlots(rows: ExamTimetableDraft[]) {
 
 function paperToDraft(paper: ExamPaperRecord): ExamTimetableDraft {
   const slot = paper.timetableSlots?.[0]
-  const subjectName = paper.tenantSubject?.subject?.name ?? 'Subject'
+  const subjectName =
+    paper.tenantSubject?.subject?.name ??
+    paper.tenantSubject?.customSubject?.name ??
+    'Subject'
+  const subjectCode =
+    paper.tenantSubject?.subject?.code ??
+    paper.tenantSubject?.customSubject?.code ??
+    undefined
   const defaultDuration =
     slot?.durationMinutes ?? paper.defaultDurationMinutes ?? 120
 
   return {
     paperId: paper.id,
     subject: formatPaperDisplayName(subjectName, paper.paperLabel),
+    subjectName,
+    subjectCode,
+    paperLabel: paper.paperLabel,
     grade: formatGradeDisplayName(
       paper.tenantGradeLevel?.gradeLevel?.name ?? 'Grade',
     ),
@@ -100,6 +131,7 @@ export function SessionTimetablePanel({
   const [pendingSlot, setPendingSlot] = useState<{
     date: string
     time: string
+    gradeId?: string
   } | null>(null)
   const [examDaysOfWeek, setExamDaysOfWeek] = useState<number[]>(
     normalizeExamDaysOfWeek(session.examDaysOfWeek),
@@ -109,6 +141,11 @@ export function SessionTimetablePanel({
   )
   const [periodEnd, setPeriodEnd] = useState(() => toDateInput(session.endDate))
   const [savingDays, setSavingDays] = useState(false)
+  const [periodExpanded, setPeriodExpanded] = useState(false)
+  const [printOrientation, setPrintOrientation] =
+    useState<ExamPrintOrientation>('auto')
+  const [printSubjectLabel, setPrintSubjectLabel] =
+    useState<ExamPrintSubjectLabelMode>('full')
 
   useEffect(() => {
     setDrafts((session.papers ?? []).map(paperToDraft))
@@ -148,10 +185,27 @@ export function SessionTimetablePanel({
     return formatExamDaysLabel(examDaysOfWeek)
   }, [periodStart, periodEnd, examDaysOfWeek, examDayColumns.length])
 
+  const periodShortLabel = useMemo(() => {
+    const fmt = (iso: string) =>
+      new Date(`${iso}T12:00:00`).toLocaleDateString('en-KE', {
+        day: 'numeric',
+        month: 'short',
+      })
+    if (periodStart && periodEnd) {
+      return `${fmt(periodStart)} – ${fmt(periodEnd)}`
+    }
+    if (periodStart) return fmt(periodStart)
+    return 'Set dates'
+  }, [periodStart, periodEnd])
+
+  const isSchoolView = gradeFilter === 'all'
+
+  const sessionGrades = useMemo(() => getSessionGrades(session), [session])
+
   const visibleDrafts = useMemo(() => {
-    if (gradeFilter === 'all') return drafts
+    if (isSchoolView) return drafts
     return drafts.filter((row) => row.gradeId === gradeFilter)
-  }, [drafts, gradeFilter])
+  }, [drafts, gradeFilter, isSchoolView])
 
   const scheduledCount = useMemo(
     () => visibleDrafts.filter(isCompleteDraft).length,
@@ -174,6 +228,11 @@ export function SessionTimetablePanel({
     () =>
       editingDraft ? getClashesForPaper(editingDraft, drafts) : [],
     [editingDraft, drafts],
+  )
+
+  const placingPaper = useMemo(
+    () => drafts.find((row) => row.paperId === placingPaperId) ?? null,
+    [drafts, placingPaperId],
   )
 
   const updateRow = (paperId: string, patch: Partial<ExamTimetableDraft>) => {
@@ -284,6 +343,36 @@ export function SessionTimetablePanel({
     setPickOpen(true)
   }
 
+  const handleSchoolCellClick = (gradeId: string, date: string, time: string) => {
+    if (placingPaperId) {
+      const placing = drafts.find((row) => row.paperId === placingPaperId)
+      if (placing && placing.gradeId !== gradeId) {
+        toast.error('Wrong grade column', {
+          description: `Select a paper for ${placing.grade} or clear placement mode.`,
+        })
+        return
+      }
+      placePaperAtSlot(placingPaperId, date, time)
+      return
+    }
+
+    const gradeUnscheduled = unscheduled.filter((row) => row.gradeId === gradeId)
+    if (gradeUnscheduled.length === 0) {
+      toast.message('Nothing to schedule here', {
+        description: 'This grade has no unscheduled papers, or pick another column.',
+      })
+      return
+    }
+
+    if (gradeUnscheduled.length === 1) {
+      placePaperAtSlot(gradeUnscheduled[0].paperId, date, time)
+      return
+    }
+
+    setPendingSlot({ date, time, gradeId })
+    setPickOpen(true)
+  }
+
   const handlePickPaper = (paperId: string) => {
     if (!pendingSlot) return
     setPickOpen(false)
@@ -359,149 +448,331 @@ export function SessionTimetablePanel({
     })
   }
 
+  const printGrades = useMemo(() => {
+    if (isSchoolView) return sessionGrades
+    return sessionGrades.filter((g) => g.id === gradeFilter)
+  }, [isSchoolView, sessionGrades, gradeFilter])
+
+  const sessionMetaLabel = `${session.academicYear} · Term ${session.term} · ${session.type}`
+
   return (
     <>
-      <Card>
-        <CardHeader className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                Exam timetable
-              </CardTitle>
-              <p className="mt-1 text-xs text-slate-500">
-                Select a paper, click a slot, then save in the dialog — each
-                placement is stored immediately. Overlaps for the same class are
-                blocked.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 print:hidden">
-              <Badge variant="outline" className="text-xs font-normal">
-                {scheduledCount}/{visibleDrafts.length} scheduled
-              </Badge>
-              <Button variant="outline" size="sm" onClick={() => window.print()}>
-                <Printer className="h-4 w-4 mr-2" />
-                Print
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Save timetable
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+      <ExamTimetablePrintStyles />
+      <div className="space-y-1.5 sm:space-y-4" data-exam-timetable-no-print>
+        {/* Mobile: one-line control strip */}
+        <div className={examTimetableMobileStripClass}>
+          <span className={examTimetableProgressPillClass}>
+            {scheduledCount}/{visibleDrafts.length}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPeriodExpanded((open) => !open)}
+            className={examTimetablePeriodChipClass}
+          >
+            <Calendar className="h-3 w-3 shrink-0 text-slate-400" />
+            <span className="min-w-0 flex-1 truncate text-[8px] text-slate-600 dark:text-slate-300">
+              {periodShortLabel}
+              <span className="text-slate-400"> · {formatExamDaysLabel(examDaysOfWeek)}</span>
+            </span>
+            <ChevronDown
+              className={cn(
+                'h-3 w-3 shrink-0 text-slate-400 transition-transform',
+                periodExpanded && 'rotate-180',
+              )}
+            />
+          </button>
+          <Button
+            size="sm"
+            className="h-7 w-7 shrink-0 rounded-lg bg-gradient-to-br from-[#246a59] to-[#1a4c40] p-0 text-white shadow-md shadow-[#246a59]/30 hover:from-[#1a4c40] hover:to-[#143830]"
+            onClick={handleSave}
+            disabled={saving}
+            title="Save timetable"
+          >
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </div>
 
-        <CardContent id="exam-timetable-print" className="space-y-4">
-          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 print:hidden dark:border-slate-700 dark:bg-slate-900/40">
-            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Exam period &amp; days
-                </p>
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-                  {periodLabel}
-                </p>
-              </div>
-              {savingDays ? (
-                <span className="text-xs text-slate-400">Updating days…</span>
-              ) : null}
-            </div>
-            <div className="mb-4 grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-500">Period start</Label>
-                <Input
-                  type="date"
-                  className="h-9"
-                  value={periodStart}
-                  disabled={savingDays}
-                  onChange={(e) => handlePeriodDateChange('startDate', e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-500">Period end</Label>
-                <Input
-                  type="date"
-                  className="h-9"
-                  value={periodEnd}
-                  disabled={savingDays}
-                  onChange={(e) => handlePeriodDateChange('endDate', e.target.value)}
-                />
-              </div>
+        {periodExpanded ? (
+          <div className={examTimetableMobileEditorClass}>
+            <div className="grid grid-cols-2 gap-1">
+              <StyledDatePicker
+                variant="inline"
+                size="sm"
+                label="Start"
+                className="min-w-0"
+                value={periodStart}
+                maxDate={periodEnd || undefined}
+                disabled={savingDays}
+                clearable={false}
+                showQuickPicks={false}
+                onChange={(value) => handlePeriodDateChange('startDate', value)}
+              />
+              <StyledDatePicker
+                variant="inline"
+                size="sm"
+                label="End"
+                className="min-w-0"
+                value={periodEnd}
+                minDate={periodStart || undefined}
+                disabled={savingDays}
+                clearable={false}
+                showQuickPicks={false}
+                onChange={(value) => handlePeriodDateChange('endDate', value)}
+              />
             </div>
             <ExamDaysSelector
               value={examDaysOfWeek}
               onChange={handleExamDaysChange}
               compact
+              inline
             />
           </div>
+        ) : null}
 
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <div className="min-w-0 flex-1">
-              <ExamTimetableGrid
-                drafts={visibleDrafts}
-                sessionStart={periodStart}
-                sessionEnd={periodEnd}
-                dailyStartTime={session.dailyStartTime}
-                dailyEndTime={session.dailyEndTime}
-                examDaysOfWeek={examDaysOfWeek}
-                clashingPaperIds={clashIds}
-                placementActive={Boolean(placingPaperId)}
-                onCellClick={handleCellClick}
-                onExamClick={(draft) => openEditor(draft.paperId)}
-              />
+        {/* Desktop header */}
+        <div className={cn(examTimetablePanelHeaderClass, 'hidden sm:block print:hidden')}>
+          <div
+            className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#246a59]/10 blur-2xl"
+            aria-hidden
+          />
+          <div className="relative flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#246a59]/20 to-[#0073ea]/10 ring-1 ring-[#246a59]/20">
+                <BookOpen className="h-3.5 w-3.5 text-[#246a59]" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                  Exam timetable
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-600">
+                  Click a slot to schedule — class overlaps are blocked automatically.
+                </p>
+              </div>
             </div>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[#246a59]/10 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[#246a59] ring-1 ring-[#246a59]/15">
+                {scheduledCount}/{visibleDrafts.length} scheduled
+              </span>
+              <Select
+                value={printSubjectLabel}
+                onValueChange={(value) =>
+                  setPrintSubjectLabel(value as ExamPrintSubjectLabelMode)
+                }
+              >
+                <SelectTrigger
+                  className="h-8 w-[7.25rem] rounded-xl border-slate-200/80 bg-white/80 text-xs"
+                  aria-label="Print subject labels"
+                >
+                  <SelectValue placeholder="Labels" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="full">Full names</SelectItem>
+                  <SelectItem value="code">Subject codes</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={printOrientation}
+                onValueChange={(value) =>
+                  setPrintOrientation(value as ExamPrintOrientation)
+                }
+              >
+                <SelectTrigger
+                  className="h-8 w-[6.75rem] rounded-xl border-slate-200/80 bg-white/80 text-xs"
+                  aria-label="Print orientation"
+                >
+                  <SelectValue placeholder="Orientation" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="auto">Auto</SelectItem>
+                  <SelectItem value="portrait">Portrait</SelectItem>
+                  <SelectItem value="landscape">Landscape</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-xl border-slate-200/80 bg-white/80 text-xs"
+                onClick={() => window.print()}
+              >
+                <Printer className="mr-1.5 h-3 w-3" />
+                Print
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 rounded-xl bg-gradient-to-r from-[#246a59] to-[#1a4c40] text-xs text-white shadow-md shadow-[#246a59]/25 hover:from-[#1a4c40] hover:to-[#143830]"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                ) : (
+                  <Save className="mr-1.5 h-3 w-3" />
+                )}
+                Save timetable
+              </Button>
+            </div>
+          </div>
+        </div>
 
-            {unscheduled.length > 0 ? (
-              <aside className="w-full shrink-0 lg:w-64 print:hidden">
-                <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-900 dark:text-amber-100">
-                    <CalendarClock className="h-4 w-4" />
-                    Unscheduled ({unscheduled.length})
-                  </div>
-                  <p className="mb-3 text-xs text-amber-800/80 dark:text-amber-200/70">
-                    {placingPaperId
-                      ? 'Click a time slot on the grid to place the selected paper.'
-                      : 'Select a paper, then click a slot — or click a slot to pick from the list.'}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {unscheduled.map((row) => (
-                      <li key={row.paperId}>
-                        <button
-                          type="button"
-                          className={cn(
-                            'flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-left text-xs transition-colors',
-                            placingPaperId === row.paperId
-                              ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                              : 'border-amber-200/80 bg-white hover:border-primary/40 hover:bg-primary/5 dark:border-amber-800 dark:bg-slate-900',
-                          )}
-                          onClick={() =>
-                            setPlacingPaperId((id) =>
-                              id === row.paperId ? null : row.paperId,
-                            )
-                          }
-                          onDoubleClick={() => openEditor(row.paperId)}
-                        >
-                          <span>
-                            <span className="font-medium text-slate-900 dark:text-slate-100">
-                              {row.subject}
-                            </span>
-                            <span className="block text-slate-500">{row.grade}</span>
-                          </span>
-                          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+        <div id="exam-timetable-print" className="space-y-1.5 sm:space-y-3">
+          {/* Desktop period bar */}
+          <div className={cn(examTimetablePeriodBarClass, 'hidden print:hidden sm:block')}>
+            <button
+              type="button"
+              onClick={() => setPeriodExpanded((open) => !open)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left"
+            >
+              <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <span className="min-w-0 flex-1 truncate text-xs text-slate-600 dark:text-slate-300">
+                {periodLabel}
+              </span>
+              {savingDays ? (
+                <span className="shrink-0 text-[10px] text-slate-500">Saving…</span>
+              ) : null}
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform',
+                  periodExpanded && 'rotate-180',
+                )}
+              />
+            </button>
+
+            {periodExpanded ? (
+              <div className="space-y-2 border-t border-slate-200 px-3 py-2.5 dark:border-slate-700">
+                <div className="flex flex-wrap items-end gap-2">
+                  <StyledDatePicker
+                    variant="inline"
+                    size="sm"
+                    label="Start"
+                    className="w-[8.5rem]"
+                    value={periodStart}
+                    maxDate={periodEnd || undefined}
+                    disabled={savingDays}
+                    clearable={false}
+                    showQuickPicks={false}
+                    onChange={(value) => handlePeriodDateChange('startDate', value)}
+                  />
+                  <span className="pb-2 text-xs text-slate-500">→</span>
+                  <StyledDatePicker
+                    variant="inline"
+                    size="sm"
+                    label="End"
+                    className="w-[8.5rem]"
+                    value={periodEnd}
+                    minDate={periodStart || undefined}
+                    disabled={savingDays}
+                    clearable={false}
+                    showQuickPicks={false}
+                    onChange={(value) => handlePeriodDateChange('endDate', value)}
+                  />
                 </div>
-              </aside>
+                <ExamDaysSelector
+                  value={examDaysOfWeek}
+                  onChange={handleExamDaysChange}
+                  compact
+                  inline
+                />
+              </div>
             ) : null}
           </div>
-        </CardContent>
-      </Card>
+
+          {placingPaper ? (
+            <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#246a59]/30 bg-gradient-to-r from-[#246a59]/10 via-[#246a59]/5 to-transparent px-3 py-2 shadow-sm print:hidden">
+              <p className="min-w-0 truncate text-xs text-[#246a59]">
+                <span className="font-semibold">Placing {placingPaper.subject}</span>
+                <span className="hidden sm:inline"> — click a slot on the grid</span>
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 shrink-0 px-2 text-xs text-[#246a59] hover:bg-[#246a59]/10"
+                onClick={() => setPlacingPaperId(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : null}
+
+          <div className="flex flex-col gap-2 sm:gap-4 lg:items-stretch">
+            <div className="-mx-3 min-w-0 flex-1 sm:mx-0">
+              {isSchoolView ? (
+                <ExamSchoolTimetableGrid
+                  drafts={drafts}
+                  grades={sessionGrades}
+                  sessionStart={periodStart}
+                  sessionEnd={periodEnd}
+                  dailyStartTime={session.dailyStartTime}
+                  dailyEndTime={session.dailyEndTime}
+                  examDaysOfWeek={examDaysOfWeek}
+                  clashingPaperIds={clashIds}
+                  placementActive={Boolean(placingPaperId)}
+                  onCellClick={handleSchoolCellClick}
+                  onExamClick={(draft) => openEditor(draft.paperId)}
+                  sidePanel={
+                    unscheduled.length > 0 ? (
+                      <ExamUnscheduledPanel
+                        papers={unscheduled}
+                        placingPaperId={placingPaperId}
+                        onSelectPaper={(paperId) =>
+                          setPlacingPaperId((id) => (id === paperId ? null : paperId))
+                        }
+                        onOpenEditor={openEditor}
+                      />
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <ExamTimetableDesktopLayout
+                  table={
+                    <ExamTimetableGrid
+                      drafts={visibleDrafts}
+                      sessionStart={periodStart}
+                      sessionEnd={periodEnd}
+                      dailyStartTime={session.dailyStartTime}
+                      dailyEndTime={session.dailyEndTime}
+                      examDaysOfWeek={examDaysOfWeek}
+                      clashingPaperIds={clashIds}
+                      placementActive={Boolean(placingPaperId)}
+                      onCellClick={handleCellClick}
+                      onExamClick={(draft) => openEditor(draft.paperId)}
+                    />
+                  }
+                  sidebar={
+                    unscheduled.length > 0 ? (
+                      <ExamUnscheduledPanel
+                        papers={unscheduled}
+                        placingPaperId={placingPaperId}
+                        onSelectPaper={(paperId) =>
+                          setPlacingPaperId((id) => (id === paperId ? null : paperId))
+                        }
+                        onOpenEditor={openEditor}
+                      />
+                    ) : undefined
+                  }
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ExamTimetablePrintView
+        sessionName={session.name}
+        sessionMeta={sessionMetaLabel}
+        periodLabel={periodLabel}
+        grades={printGrades}
+        drafts={visibleDrafts}
+        isSchoolView={isSchoolView}
+        orientation={printOrientation}
+        subjectLabelMode={printSubjectLabel}
+        dailyStartTime={session.dailyStartTime}
+        dailyEndTime={session.dailyEndTime}
+      />
 
       <ExamPaperPickDialog
         open={pickOpen}
@@ -511,7 +782,11 @@ export function SessionTimetablePanel({
         }}
         date={pendingSlot?.date ?? ''}
         time={pendingSlot?.time ?? ''}
-        papers={unscheduled}
+        papers={
+          pendingSlot?.gradeId
+            ? unscheduled.filter((row) => row.gradeId === pendingSlot.gradeId)
+            : unscheduled
+        }
         onPick={handlePickPaper}
       />
 
@@ -521,6 +796,9 @@ export function SessionTimetablePanel({
         draft={editingDraft}
         clashMessages={editingClashes}
         saving={saving}
+        minDate={periodStart || undefined}
+        maxDate={periodEnd || undefined}
+        allowedWeekdays={examDaysOfWeek}
         onSave={updateRow}
         onDone={handleScheduleDone}
         onClear={clearRow}

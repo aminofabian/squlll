@@ -8,6 +8,8 @@ interface DynamicLogoProps {
   size?: 'sm' | 'md' | 'lg'
   showText?: boolean
   className?: string
+  /** Passed to `GeneratedSchoolLogo` when multiple marks appear on one page. */
+  logoInstance?: string
 }
 
 const sizeClasses = {
@@ -21,6 +23,7 @@ export const DynamicLogo = ({
   size = 'md',
   showText = true,
   className = '',
+  logoInstance,
 }: DynamicLogoProps) => {
   const schoolKey = getLayoutSchoolName(subdomain)
   const { from: fromColor, to: toColor } = getSchoolColor(schoolKey)
@@ -28,7 +31,11 @@ export const DynamicLogo = ({
   return (
     <div className={`flex items-center gap-3 group relative ${className}`}>
       <div className="relative transform transition-all duration-300 ease-out group-hover:scale-105 group-hover:rotate-2">
-        <GeneratedSchoolLogo schoolKey={schoolKey} className={sizeClasses[size]} />
+        <GeneratedSchoolLogo
+          schoolKey={schoolKey}
+          className={sizeClasses[size]}
+          instance={logoInstance}
+        />
         <div
           className="absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-300 pointer-events-none"
           style={{

@@ -3,6 +3,7 @@ import {
   BookMarked,
   BookOpen,
   CalendarDays,
+  ClipboardCheck,
   ClipboardList,
   GraduationCap,
   Home,
@@ -44,6 +45,7 @@ export const TEACHER_PAGE_TITLES: Record<string, string> = {
   "/teacher/lesson-plans": "Lesson Plans",
   "/teacher/messages": "Messages",
   "/teacher/exams": "Exams",
+  "/teacher/exams/review": "HOD Review",
   "/teacher/profile": "Profile",
   "/teacher/settings": "Settings",
 };
@@ -90,6 +92,12 @@ export const TEACHER_NAV_ITEMS: TeacherNavItem[] = [
     title: "Attendance",
     href: "/teacher/attendance",
     icon: ClipboardList,
+    tab: "more",
+  },
+  {
+    title: "Exams",
+    href: "/teacher/exams",
+    icon: GraduationCap,
     tab: "more",
   },
   {

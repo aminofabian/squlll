@@ -3,14 +3,58 @@ import {
   isoDateToExamDay,
   normalizeExamDaysOfWeek,
 } from '@/lib/exams/examDaysOfWeek'
+import {
+  abbreviateGradeShort,
+  formatGradeDisplayName,
+  getGradeSortOrder,
+} from '@/lib/utils/grade-display'
 
 export const EXAM_SLOT_MINUTES = 30
 export const DEFAULT_DAY_START = 7 * 60
 export const DEFAULT_DAY_END = 17 * 60
 
+/** Desktop timetable grid density */
+export const EXAM_GRID_ROW_HEIGHT = 28
+export const EXAM_GRID_TIME_COL = 52
+export const EXAM_GRID_GRADE_COL = 96
+export const EXAM_GRID_DAY_COL = 112
+
+export function minutesToDisplayTime(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+/** Human-readable duration, e.g. "2 hours", "30 min", "1 hour 30 min" */
+export function formatDurationMinutes(minutes: number | string): string {
+  const total = Number(minutes)
+  if (Number.isNaN(total) || total <= 0) return ''
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  if (h === 0) return `${m} min`
+  if (m === 0) return h === 1 ? '1 hour' : `${h} hours`
+  const hourPart = h === 1 ? '1 hour' : `${h} hours`
+  return `${hourPart} ${m} min`
+}
+
+/** Compact duration for small grid cells */
+export function formatDurationMinutesShort(minutes: number | string): string {
+  const total = Number(minutes)
+  if (Number.isNaN(total) || total <= 0) return ''
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
 export type ExamTimetableDraft = {
   paperId: string
+  /** Display label used on screen (full subject + paper) */
   subject: string
+  subjectName: string
+  subjectCode?: string
+  paperLabel?: string | null
   grade: string
   gradeId: string
   date: string
@@ -42,6 +86,15 @@ export function formatExamDayHeader(dateStr: string): {
     label: d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' }),
     year: d.toLocaleDateString('en-KE', { year: 'numeric' }),
   }
+}
+
+export function totalDurationForDay(
+  drafts: ExamTimetableDraft[],
+  day: string,
+): number {
+  return drafts
+    .filter((d) => d.date === day && isCompleteDraft(d))
+    .reduce((sum, d) => sum + Number(d.durationMinutes), 0)
 }
 
 export function addDays(dateStr: string, days: number): string {
@@ -151,6 +204,13 @@ export function buildTimeSlots(
   for (let t = min; t < max; t += slotMinutes) {
     slots.push(minutesToTime(t))
   }
+
+  if (slots.length === 0) {
+    for (let t = DEFAULT_DAY_START; t < DEFAULT_DAY_END; t += slotMinutes) {
+      slots.push(minutesToTime(t))
+    }
+  }
+
   return slots
 }
 
@@ -207,6 +267,98 @@ export function placeExamBlocks(
       placed.push({
         draft: current.draft,
         dayIndex,
+        rowStart: current.rowStart,
+        rowSpan: current.rowSpan,
+        column: column >= 0 ? column + 1 : 0,
+        columnCount,
+      })
+    }
+  }
+
+  return placed
+}
+
+export type ExamGradeColumn = {
+  id: string
+  name: string
+  shortLabel: string
+  displayName: string
+}
+
+export function buildGradeColumns(
+  grades: Array<{ id: string; name: string }>,
+): ExamGradeColumn[] {
+  return [...grades]
+    .sort((a, b) => getGradeSortOrder(a.name) - getGradeSortOrder(b.name))
+    .map((grade) => ({
+      id: grade.id,
+      name: grade.name,
+      shortLabel: abbreviateGradeShort(grade.name),
+      displayName: formatGradeDisplayName(grade.name),
+    }))
+}
+
+export type PlacedExamGradeBlock = {
+  draft: ExamTimetableDraft
+  gradeIndex: number
+  rowStart: number
+  rowSpan: number
+  column: number
+  columnCount: number
+}
+
+export function placeExamBlocksByGrade(
+  drafts: ExamTimetableDraft[],
+  gradeColumns: ExamGradeColumn[],
+  selectedDay: string,
+  timeSlots: string[],
+): PlacedExamGradeBlock[] {
+  if (!selectedDay || gradeColumns.length === 0) return []
+
+  const scheduled = drafts.filter(
+    (draft) => isCompleteDraft(draft) && draft.date === selectedDay,
+  )
+  const slotMinutes = EXAM_SLOT_MINUTES
+  const placed: PlacedExamGradeBlock[] = []
+  const baseMinutes = timeToMinutes(timeSlots[0] ?? '07:00')
+
+  for (let gradeIndex = 0; gradeIndex < gradeColumns.length; gradeIndex++) {
+    const gradeId = gradeColumns[gradeIndex].id
+    const gradeExams = scheduled
+      .filter((draft) => draft.gradeId === gradeId)
+      .map((draft) => {
+        const start = timeToMinutes(draft.startTime)
+        const rowStart = Math.max(
+          0,
+          Math.floor((start - baseMinutes) / slotMinutes),
+        )
+        const rowSpan = Math.max(
+          1,
+          Math.ceil(Number(draft.durationMinutes) / slotMinutes),
+        )
+        return { draft, rowStart, rowSpan, start }
+      })
+      .sort((a, b) => a.start - b.start)
+
+    for (let i = 0; i < gradeExams.length; i++) {
+      const current = gradeExams[i]
+      const overlapping = gradeExams.filter((other, idx) => {
+        if (idx === i) return false
+        const a0 = current.rowStart
+        const a1 = current.rowStart + current.rowSpan
+        const b0 = other.rowStart
+        const b1 = other.rowStart + other.rowSpan
+        return a0 < b1 && b0 < a1
+      })
+      const columnCount = Math.max(1, overlapping.length + 1)
+      const column = overlapping.findIndex(
+        (other) =>
+          other.start < current.start &&
+          other.draft.paperId < current.draft.paperId,
+      )
+      placed.push({
+        draft: current.draft,
+        gradeIndex,
         rowStart: current.rowStart,
         rowSpan: current.rowSpan,
         column: column >= 0 ? column + 1 : 0,

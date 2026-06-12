@@ -52,6 +52,11 @@ import {
   type ExamPaperSpecPayload,
   type ExamSessionRecord,
 } from '@/lib/exams/examSessions'
+import {
+  buildGradeOrderMap,
+  organizeSessionPapers,
+  sessionScopeStats,
+} from '@/lib/exams/examSessionOrganize'
 import { formatGradeDisplayName } from '@/lib/utils/grade-display'
 import {
   allTemplatesForSubject,
@@ -63,6 +68,14 @@ import { subjectsForGrade } from '@/lib/exams/examPaperPairs'
 import { useSchoolConfigStore } from '@/lib/stores/useSchoolConfigStore'
 import { useTenantSubjects } from '@/lib/hooks/useTenantSubjects'
 import { SubjectPaperConfigurator } from './SubjectPaperConfigurator'
+import {
+  SessionClassSection,
+  SessionClassTable,
+  SessionClassTableCell,
+  SessionClassTableRow,
+  SessionOrganizerEmpty,
+  SessionScopeStrip,
+} from './SessionClassOrganizer'
 interface SessionPapersPanelProps {
   subdomain: string
   sessionId: string
@@ -115,30 +128,14 @@ export function SessionPapersPanel({
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [papers])
 
-  const visiblePapers = useMemo(() => {
-    if (gradeFilter === 'all') return papers
-    return papers.filter((p) => p.tenantGradeLevelId === gradeFilter)
-  }, [papers, gradeFilter])
+  const gradeOrder = useMemo(() => buildGradeOrderMap(session), [session])
 
-  const grouped = useMemo(() => {
-    const byGrade = new Map<string, ExamPaperRecord[]>()
-    for (const paper of visiblePapers) {
-      const gid = paper.tenantGradeLevelId
-      if (!byGrade.has(gid)) byGrade.set(gid, [])
-      byGrade.get(gid)!.push(paper)
-    }
-    return Array.from(byGrade.entries()).map(([gradeId, gradePapers]) => ({
-      gradeId,
-      gradeName: formatGradeDisplayName(
-        gradePapers[0]?.tenantGradeLevel?.gradeLevel?.name ?? gradeId,
-      ),
-      papers: gradePapers.sort((a, b) => {
-        const sa = a.tenantSubject?.subject?.name ?? ''
-        const sb = b.tenantSubject?.subject?.name ?? ''
-        return sa.localeCompare(sb)
-      }),
-    }))
-  }, [visiblePapers])
+  const classGroups = useMemo(
+    () => organizeSessionPapers(papers, { gradeFilter, gradeOrder }),
+    [papers, gradeFilter, gradeOrder],
+  )
+
+  const scopeStats = useMemo(() => sessionScopeStats(session), [session])
 
   const suggested = useMemo((): SuggestedPaper[] => {
     const list: SuggestedPaper[] = []
@@ -177,6 +174,16 @@ export function SessionPapersPanel({
     }
     return list.slice(0, 12)
   }, [papers, grades, tenantSubjects])
+
+  const suggestedByClass = useMemo(() => {
+    const map = new Map<string, SuggestedPaper[]>()
+    for (const item of suggested) {
+      const list = map.get(item.gradeName) ?? []
+      list.push(item)
+      map.set(item.gradeName, list)
+    }
+    return Array.from(map.entries())
+  }, [suggested])
 
   const subjectsForAddGrade = useMemo(() => {
     if (!addGradeId) return []
@@ -412,155 +419,220 @@ export function SessionPapersPanel({
         </CardHeader>
 
         <CardContent className="space-y-4">
+          <SessionScopeStrip
+            gradeCount={
+              gradeFilter === 'all' ? scopeStats.gradeCount : classGroups.length
+            }
+            subjectCount={classGroups.reduce((n, g) => n + g.subjectCount, 0)}
+            paperCount={classGroups.reduce((n, g) => n + g.paperCount, 0)}
+            extra={
+              scopeStats.paperCount > 0 ? (
+                <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                  <span>
+                    {scopeStats.scheduledCount}/{scopeStats.paperCount} on timetable
+                  </span>
+                  {gradeFilter !== 'all' && classGroups[0] ? (
+                    <span className="font-medium text-[#246a59]">
+                      Filtered: {classGroups[0].gradeName}
+                    </span>
+                  ) : null}
+                </div>
+              ) : undefined
+            }
+          />
+
           {suggested.length > 0 ? (
-            <div className="rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 to-orange-50/50 p-3 dark:border-amber-900 dark:from-amber-950/30 dark:to-orange-950/20">
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-100">
-                <Sparkles className="h-3.5 w-3.5" />
-                Suggested papers missing from this session
+            <div className="overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-3 dark:border-amber-900 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-slate-900">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-100">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Suggested papers missing
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[11px] text-amber-800 hover:bg-amber-100/80 dark:text-amber-200"
+                  disabled={busy}
+                  onClick={addAllSuggested}
+                >
+                  Add all {suggested.length}
+                </Button>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {suggested.map((s) => (
-                  <button
-                    key={paperKey(s)}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => openAddSheet(s)}
-                    className="rounded-full border border-amber-200/80 bg-white px-2.5 py-1 text-[11px] font-medium text-amber-900 transition-colors hover:border-primary/40 hover:bg-primary/5 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
-                  >
-                    + {s.gradeName} · {s.subjectName} · {s.paperLabel}
-                  </button>
+              <div className="space-y-2">
+                {suggestedByClass.map(([gradeName, items]) => (
+                  <div key={gradeName}>
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-amber-800/70 dark:text-amber-300/70">
+                      {gradeName}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((s) => (
+                        <button
+                          key={paperKey(s)}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => openAddSheet(s)}
+                          className="rounded-lg border border-amber-200/80 bg-white/90 px-2 py-1 text-[10px] font-medium text-amber-900 transition-colors hover:border-[#246a59]/30 hover:bg-[#246a59]/5 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-100"
+                        >
+                          + {s.subjectName} · {s.paperLabel}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
           ) : null}
 
-          {grouped.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500">
-              No papers for this filter.{' '}
-              <button
-                type="button"
-                className="text-primary underline"
-                onClick={() => openAddSheet()}
-              >
-                Add the first paper
-              </button>
-            </div>
+          {classGroups.length === 0 ? (
+            <SessionOrganizerEmpty
+              title="No papers for this view"
+              description="Add exam papers organized by class and subject."
+              action={
+                <Button size="sm" onClick={() => openAddSheet()} disabled={busy}>
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Add first paper
+                </Button>
+              }
+            />
           ) : (
-            grouped.map((group) => (
-              <div
-                key={group.gradeId}
-                className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700"
-              >
-                <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {group.gradeName}
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    {group.papers.length} paper
-                    {group.papers.length === 1 ? '' : 's'}
-                  </p>
-                </div>
-                <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {group.papers.map((paper) => {
-                    const subjectName =
-                      paper.tenantSubject?.subject?.name ?? 'Subject'
-                    const label = formatPaperDisplayName(
-                      subjectName,
-                      paper.paperLabel,
-                    )
-                    const scheduled = (paper.timetableSlots?.length ?? 0) > 0
-                    const duration =
-                      paper.timetableSlots?.[0]?.durationMinutes ??
-                      paper.defaultDurationMinutes ??
-                      120
+            <div className="space-y-3">
+              {classGroups.map((group, groupIndex) => {
+                const scheduledInGrade = group.subjects.reduce(
+                  (n, subject) =>
+                    n +
+                    subject.papers.filter((p) => (p.timetableSlots?.length ?? 0) > 0)
+                      .length,
+                  0,
+                )
+                const schedulePct =
+                  group.paperCount > 0
+                    ? Math.round((scheduledInGrade / group.paperCount) * 100)
+                    : 0
 
-                    return (
-                      <li
-                        key={paper.id}
-                        className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm text-slate-900 dark:text-slate-100">
-                            {label}
-                          </p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2">
-                            {scheduled ? (
-                              <Badge
-                                variant="outline"
-                                className="gap-1 text-[10px] font-normal text-emerald-700 border-emerald-200"
-                              >
-                                <CalendarClock className="h-3 w-3" />
-                                Scheduled
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] font-normal text-slate-500"
-                              >
-                                Not on timetable
-                              </Badge>
-                            )}
-                            {paper.maxScore ? (
-                              <span className="text-[10px] text-slate-400">
-                                /{paper.maxScore} marks
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
+                return (
+                  <SessionClassSection
+                    key={group.gradeId}
+                    gradeName={group.gradeName}
+                    gradeIndex={groupIndex}
+                    subjectCount={group.subjectCount}
+                    paperCount={group.paperCount}
+                    progress={schedulePct}
+                    progressLabel={`${scheduledInGrade}/${group.paperCount} scheduled on timetable`}
+                    variant="table"
+                  >
+                    <SessionClassTable
+                      columns={[
+                        'Subject',
+                        'Paper',
+                        'Duration',
+                        'Max',
+                        'Timetable',
+                        '',
+                      ]}
+                    >
+                      {group.subjects.flatMap((subject) =>
+                        subject.papers.map((paper, paperIndex) => {
+                          const scheduled = (paper.timetableSlots?.length ?? 0) > 0
+                          const duration =
+                            paper.timetableSlots?.[0]?.durationMinutes ??
+                            paper.defaultDurationMinutes ??
+                            120
 
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 dark:border-slate-700">
-                            <Clock className="h-3 w-3 text-slate-400" />
-                            <Input
-                              type="number"
-                              min={15}
-                              step={5}
-                              defaultValue={duration}
-                              className="h-7 w-14 border-0 p-0 text-xs shadow-none focus-visible:ring-0"
-                              onBlur={(e) => {
-                                const next = Number(e.target.value)
-                                if (
-                                  !Number.isNaN(next) &&
-                                  next > 0 &&
-                                  next !== duration
-                                ) {
-                                  void updateDuration(paper, next)
-                                }
-                              }}
-                            />
-                            <span className="text-[10px] text-slate-400">min</span>
-                          </div>
-
-                          {grades.length > 1 ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs"
-                              disabled={busy}
-                              onClick={() => duplicateToOtherGrades(paper)}
-                              title="Copy to other grades in this session"
-                            >
-                              <Copy className="h-3.5 w-3.5 mr-1" />
-                              All grades
-                            </Button>
-                          ) : null}
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                            disabled={busy}
-                            onClick={() => setRemoveTarget(paper)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))
+                          return (
+                            <SessionClassTableRow key={paper.id}>
+                              {paperIndex === 0 ? (
+                                <SessionClassTableCell
+                                  rowSpan={subject.papers.length}
+                                  className="font-medium text-slate-900 dark:text-slate-100"
+                                >
+                                  {subject.subjectName}
+                                </SessionClassTableCell>
+                              ) : null}
+                              <SessionClassTableCell className="font-medium text-slate-900 dark:text-slate-100">
+                                {(() => {
+                                  if (
+                                    subject.papers.length === 1 &&
+                                    (!paper.paperLabel ||
+                                      paper.paperLabel === 'Paper 1')
+                                  ) {
+                                    return '—'
+                                  }
+                                  return paper.paperLabel ?? `Paper ${paperIndex + 1}`
+                                })()}
+                              </SessionClassTableCell>
+                              <SessionClassTableCell>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3 text-slate-400" />
+                                  <Input
+                                    type="number"
+                                    min={15}
+                                    step={5}
+                                    defaultValue={duration}
+                                    className="h-7 w-14 border-slate-200 text-xs"
+                                    onBlur={(e) => {
+                                      const next = Number(e.target.value)
+                                      if (
+                                        !Number.isNaN(next) &&
+                                        next > 0 &&
+                                        next !== duration
+                                      ) {
+                                        void updateDuration(paper, next)
+                                      }
+                                    }}
+                                  />
+                                  <span className="text-[10px] text-slate-400">min</span>
+                                </div>
+                              </SessionClassTableCell>
+                              <SessionClassTableCell className="tabular-nums">
+                                {paper.maxScore ?? '—'}
+                              </SessionClassTableCell>
+                              <SessionClassTableCell>
+                                {scheduled ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="gap-1 text-[10px] font-normal text-emerald-700 border-emerald-200"
+                                  >
+                                    <CalendarClock className="h-3 w-3" />
+                                    Scheduled
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs text-slate-400">Not set</span>
+                                )}
+                              </SessionClassTableCell>
+                              <SessionClassTableCell align="right">
+                                <div className="flex items-center justify-end gap-1">
+                                  {grades.length > 1 ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-slate-400"
+                                      disabled={busy}
+                                      onClick={() => duplicateToOtherGrades(paper)}
+                                      title="Copy to other grades"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </Button>
+                                  ) : null}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    disabled={busy}
+                                    onClick={() => setRemoveTarget(paper)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </SessionClassTableCell>
+                            </SessionClassTableRow>
+                          )
+                        }),
+                      )}
+                    </SessionClassTable>
+                  </SessionClassSection>
+                )
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
