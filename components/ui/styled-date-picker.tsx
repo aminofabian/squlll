@@ -284,7 +284,7 @@ export function StyledDatePicker({
             selected={selected}
             onSelect={pickDate}
             disabled={disabledMatchers.length ? disabledMatchers : undefined}
-            defaultMonth={selected ?? parseIsoDate(minDate) ?? new Date()}
+            defaultMonth={selected ?? (minDate ? parseIsoDate(minDate) : undefined) ?? new Date()}
             showOutsideDays
             className="bg-white p-1 dark:bg-slate-900"
             classNames={onboardingCalendarClassNames}

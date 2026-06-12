@@ -30,7 +30,7 @@ type GradeLookup = (
 type SubjectsByLevel = (levelId: string) => Subject[]
 
 function subjectLabel(ts: TenantSubject): string {
-  return ts.subject?.name ?? ts.customSubject?.name ?? ts.name ?? 'Subject'
+  return ts.subject?.name ?? ts.customSubject?.name ?? 'Subject'
 }
 
 function subjectCode(ts: TenantSubject): string {
