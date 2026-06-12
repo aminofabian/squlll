@@ -263,6 +263,7 @@ export function SchoolOnboardingWizard() {
         startDate: result.startDate,
         endDate: result.endDate,
         isActive: true,
+        isCurrent: true,
         terms: [],
       });
       setTermDrafts([]);
