@@ -115,7 +115,7 @@ const LANDING_PLATFORM_MODULES: {
 
 function LandingPlatformIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-md ring-1 ring-[#1d5547]/30">
+    <div className="mb-5 flex h-12 w-12 shrink-0 items-center justify-center bg-[#1d5547] shadow-md ring-1 ring-[#1d5547]/30">
       <Icon size={22} strokeWidth={2} className="text-white" aria-hidden />
     </div>
   )
@@ -169,7 +169,7 @@ const LANDING_WORKFLOW_BLOCKS: {
 
 function LandingWorkflowIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#1d5547] shadow-md ring-1 ring-[#1d5547]/25">
+    <div className="flex h-14 w-14 shrink-0 items-center justify-center bg-[#1d5547] shadow-md ring-1 ring-[#1d5547]/25">
       <Icon size={26} strokeWidth={2} className="text-white" aria-hidden />
     </div>
   )
@@ -184,8 +184,8 @@ function LandingWorkflowCard({
 }: (typeof LANDING_WORKFLOW_BLOCKS)[number]) {
   return (
     <div className="group relative h-full">
-      <div className="relative flex h-full flex-col rounded-xl border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1d5547]/20 hover:shadow-md">
-        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-sm border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
+      <div className="relative flex h-full flex-col border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#1d5547]/20 hover:shadow-md">
+        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
           {num}
         </div>
         <div className="mb-6 flex items-start gap-5">
@@ -199,7 +199,7 @@ function LandingWorkflowCard({
         <ul className="mt-auto grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {bullets.map((item) => (
             <li key={item} className="flex items-center gap-2 text-sm text-slate-600">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600/70" />
+              <span className="h-1.5 w-1.5 shrink-0 bg-emerald-600/70" />
               {item}
             </li>
           ))}
@@ -351,7 +351,7 @@ const LANDING_FOOTER_SCHOOL_LINKS: { label: string; href: string }[] = [
 
 function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1d5547] shadow-sm">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1d5547] shadow-sm">
       <Icon size={18} strokeWidth={2} className="text-white" aria-hidden />
     </div>
   )
@@ -359,7 +359,7 @@ function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
 
 function LandingFaqCard({ icon, question, answer }: (typeof LANDING_FAQ_ITEMS)[number]) {
   return (
-    <div className="rounded-xl border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
+    <div className="border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
       <div className="flex gap-4">
         <LandingFaqIcon icon={icon} />
         <div className="min-w-0">
@@ -393,7 +393,7 @@ function LandingDeepDiveBlock({
         {items.map((item) => (
           <div
             key={item.title}
-            className="rounded-lg border border-emerald-900/10 bg-white px-5 py-4 shadow-sm"
+            className="border border-emerald-900/10 bg-white px-5 py-4 shadow-sm"
           >
             <h4 className="font-ui text-sm font-semibold text-[#1d5547]">{item.title}</h4>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.description}</p>
@@ -404,7 +404,7 @@ function LandingDeepDiveBlock({
   )
 
   const visual = (
-    <div className="relative overflow-hidden rounded-2xl border border-emerald-900/10 shadow-[0_20px_50px_rgba(10,31,26,0.12)]">
+    <div className="relative overflow-hidden border border-emerald-900/10 shadow-[0_20px_50px_rgba(10,31,26,0.12)]">
       <img src={image} alt={imageAlt} className="h-[min(380px,55vw)] w-full object-cover md:h-[420px]" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#0a1f1a]/50 via-transparent to-transparent" />
     </div>
@@ -447,8 +447,8 @@ function LandingBursarSnapshot({
 
   return (
     <div className="group relative">
-      <div className="relative overflow-hidden rounded-xl border border-[#1d5547]/15 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-md">
-        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-sm border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
+      <div className="relative overflow-hidden border border-[#1d5547]/15 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-md">
+        <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
           03
         </div>
         <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-start">
@@ -466,7 +466,7 @@ function LandingBursarSnapshot({
             return (
               <div
                 key={tile.label}
-                className="rounded-lg border border-emerald-900/8 bg-emerald-50/50 px-4 py-4 transition-colors group-hover:bg-emerald-50"
+                className="border border-emerald-900/8 bg-emerald-50/50 px-4 py-4 transition-colors group-hover:bg-emerald-50"
               >
                 <div className="mb-2 flex items-center gap-2">
                   <Icon className={`h-4 w-4 ${tile.tone}`} strokeWidth={2} />
@@ -489,8 +489,8 @@ function LandingTermReadyBadge() {
       role="img"
       aria-label="Term ready for 2026"
     >
-      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#e8f5f0] via-white to-[#dceee6] shadow-[0_10px_40px_rgba(29,85,71,0.14)] ring-1 ring-[#1d5547]/20" />
-      <div className="absolute inset-[5px] rounded-full border border-[#1d5547]/12" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#e8f5f0] via-white to-[#dceee6] shadow-[0_10px_40px_rgba(29,85,71,0.14)] ring-1 ring-[#1d5547]/20" />
+      <div className="absolute inset-[5px] border border-[#1d5547]/12" />
       <div className="relative text-center">
         <p className="font-ui text-[8px] font-semibold uppercase tracking-[0.22em] text-[#1d5547]/65">
           Term
@@ -590,7 +590,7 @@ function HeroDashboardPanel({
         }`}
       >
         <span
-          className={`flex items-center justify-center rounded-lg ${
+          className={`flex items-center justify-center ${
             compact ? "h-8 w-8" : "h-8 w-8 sm:h-9 sm:w-9"
           } ${isActive || isLinked ? "bg-[#dcebfd]" : ""}`}
         >
@@ -610,11 +610,11 @@ function HeroDashboardPanel({
   return (
     <div
       key={student.id}
-      className="hero-profile-in flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]"
+      className="hero-profile-in rounded-none flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]"
     >
       {/* Icon rail — desktop / tablet */}
       <aside className="hidden shrink-0 flex-col items-center border-slate-200/70 bg-white py-2.5 md:flex md:w-[52px] lg:w-[56px] md:border-r">
-        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-[10px] font-bold text-white">
+        <div className="mb-2 flex h-8 w-8 items-center justify-center bg-emerald-600 text-[10px] font-bold text-white">
           SQ
         </div>
         <nav className="flex flex-1 flex-col items-center gap-0.5">
@@ -635,18 +635,18 @@ function HeroDashboardPanel({
               Overview of your school · Term 2, 2026
             </p>
           </div>
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 ring-1 ring-emerald-100 sm:px-2">
+          <span className="flex shrink-0 items-center gap-1 bg-emerald-50 px-1.5 py-0.5 ring-1 ring-emerald-100 sm:px-2">
             <Radio className="h-2.5 w-2.5 text-emerald-600 sm:h-3 sm:w-3" />
             <span className="text-[8px] font-bold uppercase tracking-wide text-emerald-700 sm:text-[9px]">Live</span>
           </span>
           <button
             type="button"
-            className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 sm:flex"
+            className="hidden h-7 w-7 shrink-0 items-center justify-center text-slate-400 hover:bg-slate-50 sm:flex"
             aria-hidden
           >
             <Bell className="h-3.5 w-3.5" />
           </button>
-          <div className="h-6 w-6 shrink-0 rounded-full bg-emerald-100 ring-1 ring-emerald-200 sm:h-7 sm:w-7" />
+          <div className="h-6 w-6 shrink-0 bg-emerald-100 ring-1 ring-emerald-200 sm:h-7 sm:w-7" />
         </header>
 
         <div className="space-y-2 overflow-y-auto bg-slate-50 p-2 sm:space-y-2.5 sm:p-2.5 md:p-3 lg:overflow-visible [scrollbar-width:thin]">
@@ -660,7 +660,7 @@ function HeroDashboardPanel({
             ].map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-md border border-slate-100 bg-white px-2 py-1.5 sm:px-2.5 sm:py-2"
+                className="border border-slate-100 bg-white px-2 py-1.5 sm:px-2.5 sm:py-2"
               >
                 <p className="text-[7px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
                   {stat.label}
@@ -673,20 +673,20 @@ function HeroDashboardPanel({
           </div>
 
           {/* Student search */}
-          <div className="rounded-lg border border-slate-200/80 bg-white p-2 shadow-sm sm:p-2.5 md:p-3">
+          <div className="border border-slate-200/80 bg-white p-2 shadow-sm sm:p-2.5 md:p-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-800 sm:text-sm">
                 {student.name}
               </span>
               <span
-                className={`max-w-[42%] shrink-0 truncate rounded-full px-1.5 py-0.5 text-[8px] font-semibold sm:max-w-none sm:px-2 sm:text-[10px] ${HERO_STUDENT_STATUS_COLORS[student.statusType]}`}
+                className={`max-w-[42%] shrink-0 truncate px-1.5 py-0.5 text-[8px] font-semibold sm:max-w-none sm:px-2 sm:text-[10px] ${HERO_STUDENT_STATUS_COLORS[student.statusType]}`}
               >
                 {student.status}
               </span>
             </div>
             <p className="mt-1 flex items-center gap-1.5 text-[9px] text-slate-500 sm:mt-1.5 sm:text-[11px]">
-              <span className="h-1 w-1 shrink-0 rounded-full bg-emerald-500" />
+              <span className="h-1 w-1 shrink-0 bg-emerald-500" />
               <span className="line-clamp-2 sm:truncate">{student.detail}</span>
             </p>
           </div>
@@ -702,12 +702,12 @@ function HeroDashboardPanel({
                   key={mod.label}
                   onMouseEnter={() => onModuleHover(mod.module)}
                   onMouseLeave={() => onModuleHover(null)}
-                  className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 transition-colors sm:px-2.5 sm:py-2 ${
+                  className={`flex items-center gap-2 border px-2 py-1.5 transition-colors sm:px-2.5 sm:py-2 ${
                     isLinked ? "border-emerald-200 bg-emerald-50/90" : "border-slate-200/70 bg-white"
                   }`}
                 >
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md sm:h-8 sm:w-8 ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center sm:h-8 sm:w-8 ${
                       isLinked ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"
                     }`}
                   >
@@ -735,7 +735,7 @@ function HeroDashboardPanel({
           </div>
 
           {/* Activity feed — scroll on small screens; full list on desktop */}
-          <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white">
+          <div className="overflow-hidden border border-slate-200/80 bg-white">
             <div className="flex items-center justify-between border-b border-slate-100 px-2 py-1.5 sm:px-2.5 sm:py-2 md:px-3">
               <p className="text-[10px] font-semibold text-slate-700 sm:text-[11px]">Recent activity</p>
               <p className="text-[9px] text-slate-400">Today</p>
@@ -751,7 +751,7 @@ function HeroDashboardPanel({
                       isSelected ? "bg-emerald-50/60" : ""
                     }`}
                   >
-                    <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200 sm:h-6 sm:w-6 md:h-7 md:w-7">
+                    <div className="h-5 w-5 shrink-0 overflow-hidden bg-slate-100 ring-1 ring-slate-200 sm:h-6 sm:w-6 md:h-7 md:w-7">
                       <img
                         src={rowStudent.src}
                         alt=""
@@ -780,7 +780,7 @@ function HeroDashboardPanel({
 
         {/* Status footer */}
         <div className="flex shrink-0 items-center gap-1.5 border-t border-slate-200/60 bg-slate-50/80 px-2.5 py-1.5 sm:gap-2 sm:px-3 sm:py-2 md:px-4">
-          <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200 sm:h-6 sm:w-6">
+          <div className="h-5 w-5 shrink-0 overflow-hidden ring-1 ring-slate-200 sm:h-6 sm:w-6">
             <img src={student.src} alt="" className="h-full w-full object-cover object-[center_20%] scale-[1.55]" />
           </div>
           <p className="min-w-0 text-[9px] leading-snug text-slate-600 sm:text-[10px] md:text-[11px]">
@@ -809,7 +809,7 @@ function HeroLiveDemoStrip({
   onSelectStudent: (id: string) => void
 }) {
   return (
-    <div className="mt-5 w-full rounded-xl border border-white/15 bg-black/25 p-3.5 sm:p-4">
+    <div className="mt-5 w-full border border-white/15 bg-black/25 p-3.5 sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
           See it update live
@@ -825,7 +825,7 @@ function HeroLiveDemoStrip({
                 key={student.id}
                 type="button"
                 onClick={() => onSelectStudent(student.id)}
-                className={`hero-stat-pop relative h-9 w-9 overflow-hidden rounded-full ring-2 transition-all hover:z-10 hover:scale-105 sm:h-10 sm:w-10 ${
+                className={`hero-stat-pop rounded-none relative h-9 w-9 overflow-hidden ring-2 transition-all hover:z-10 hover:scale-105 sm:h-10 sm:w-10 ${
                   isSelected
                     ? "ring-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.35)]"
                     : "ring-[#0a1f1a]/80 hover:ring-emerald-400/60"
@@ -845,7 +845,7 @@ function HeroLiveDemoStrip({
         </div>
         <p
           key={selectedStudent.id}
-          className="hero-profile-in min-w-0 flex-1 text-left text-sm font-medium leading-snug text-white"
+          className="hero-profile-in rounded-none min-w-0 flex-1 text-left text-sm font-medium leading-snug text-white"
         >
           {selectedStudent.pitchLine}
         </p>
@@ -856,7 +856,7 @@ function HeroLiveDemoStrip({
 
 function HeroTrustBar() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/15 bg-[#0a1f1a]/92 shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg">
+    <div className="overflow-hidden border border-white/15 bg-[#0a1f1a]/92 shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg">
       <div className="border-b border-white/10 px-4 py-3 text-center sm:px-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/70">
           Trusted across Kenya
@@ -1143,12 +1143,12 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-7 sm:gap-8 lg:grid-cols-12 lg:items-start lg:gap-8 lg:pt-3 xl:gap-10">
             {/* Left — pitch */}
             <div
-              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center rounded-2xl border border-white/15 bg-[#0a1f1a]/92 px-5 py-6 text-center shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg sm:px-6 sm:py-7 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:text-left xl:col-span-5"
+              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center border border-white/15 bg-[#0a1f1a]/92 px-5 py-6 text-center shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg sm:px-6 sm:py-7 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:text-left xl:col-span-5"
               onMouseEnter={() => setDemoPaused(true)}
               onMouseLeave={() => setDemoPaused(false)}
             >
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border-0 bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1f1a] shadow-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <div className="mb-2 inline-flex items-center gap-2 border-0 bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1f1a] shadow-sm">
+                <span className="h-1.5 w-1.5 bg-emerald-500" />
                 Built for Kenyan schools
               </div>
 
@@ -1175,7 +1175,7 @@ export default function Home() {
                 <Link href="/register" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="h-12 w-full border-0 bg-emerald-500 px-8 text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
+                    className="rounded-none h-12 w-full border-0 bg-emerald-500 px-8 text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
                   >
                     Start Your Free Term
                   </Button>
@@ -1184,7 +1184,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="h-11 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:w-auto"
+                    className="rounded-none h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:w-auto"
                   >
                     <Play className="mr-2 h-3.5 w-3.5 fill-white" />
                     See a demo
@@ -1227,9 +1227,9 @@ export default function Home() {
               {LANDING_FEATURE_CARDS.map(({ icon: Icon, title, description }) => (
                 <div
                   key={title}
-                  className="flex h-full flex-col rounded-2xl border border-white/15 bg-[#0a1f1a]/88 p-9 shadow-[0_16px_48px_rgba(0,0,0,0.4)] backdrop-blur-lg transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-[#0a1f1a]/95 sm:p-10"
+                  className="flex h-full flex-col border border-white/15 bg-[#0a1f1a]/88 p-9 shadow-[0_16px_48px_rgba(0,0,0,0.4)] backdrop-blur-lg transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-[#0a1f1a]/95 sm:p-10"
                 >
-                  <div className="mb-7 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-600 shadow-sm sm:h-[3.25rem] sm:w-[3.25rem]">
+                  <div className="mb-7 flex h-12 w-12 shrink-0 items-center justify-center bg-emerald-600 shadow-sm sm:h-[3.25rem] sm:w-[3.25rem]">
                     <Icon className="h-6 w-6 text-white sm:h-7 sm:w-7" strokeWidth={1.75} aria-hidden />
                   </div>
                   <h3 className="mb-4 shrink-0 text-lg text-white sm:text-xl">{title}</h3>
@@ -1261,7 +1261,7 @@ export default function Home() {
 
           <div className="relative z-10 mx-auto max-w-7xl px-4 pt-12 sm:px-6 sm:pt-14 lg:px-8 lg:pt-16">
             <div className="relative mb-12 sm:mb-14">
-              <div className="overflow-hidden rounded-2xl border border-white/30 bg-white/95 shadow-[0_24px_64px_rgba(10,31,26,0.18)] backdrop-blur-md">
+              <div className="overflow-hidden border border-white/30 bg-white/95 shadow-[0_24px_64px_rgba(10,31,26,0.18)] backdrop-blur-md">
                 <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-emerald-700/40 sm:block" />
                 <div className="px-6 py-8 sm:px-8 sm:py-9 lg:pl-10">
                   <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:text-left">
@@ -1287,9 +1287,9 @@ export default function Home() {
               {LANDING_PLATFORM_MODULES.map((feature, index) => {
                 return (
                   <div key={feature.title} className="group relative">
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-600/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="relative flex h-full flex-col rounded-xl border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#1d5547]/25 group-hover:shadow-md">
-                      <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center rounded-sm border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="relative flex h-full flex-col border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#1d5547]/25 group-hover:shadow-md">
+                      <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
                         {String(index + 1).padStart(2, "0")}
                       </div>
                       <LandingPlatformIcon icon={feature.icon} />
@@ -1299,7 +1299,7 @@ export default function Home() {
                       <p className="mb-6 flex-grow text-sm leading-relaxed text-slate-600">
                         {feature.description}
                       </p>
-                      <span className="font-ui w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-[#1d5547] ring-1 ring-emerald-100">
+                      <span className="font-ui w-fit bg-emerald-50 px-3 py-1 text-xs font-semibold text-[#1d5547] ring-1 ring-emerald-100">
                         {feature.highlight}
                       </span>
                     </div>
@@ -1308,7 +1308,7 @@ export default function Home() {
               })}
             </div>
 
-            <div className="relative mt-16 overflow-hidden rounded-2xl border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-20">
+            <div className="relative mt-16 overflow-hidden border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-20">
               <div className="relative flex flex-col items-center gap-8 p-8 sm:p-10 md:flex-row md:justify-between md:gap-10">
                 <div className="text-center md:text-left">
                   <h3 className="font-display text-2xl tracking-tight text-slate-900 sm:text-[1.65rem]">
@@ -1323,7 +1323,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
+                      className="rounded-none h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
                     >
                       See Platform
                     </Button>
@@ -1331,7 +1331,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
+                      className="rounded-none h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
                     >
                       Start Free
                     </Button>
@@ -1346,7 +1346,7 @@ export default function Home() {
         <section className="relative border-t border-emerald-900/8 bg-gradient-to-b from-white via-[#f6faf8] to-white py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="relative mb-12 sm:mb-14">
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-900/10 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-9">
+              <div className="relative overflow-hidden border border-emerald-900/10 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-9">
                 <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
                 <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
                   How schools run day to day
@@ -1382,7 +1382,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative mt-16 overflow-hidden rounded-2xl border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-20">
+            <div className="relative mt-16 overflow-hidden border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-20">
               <div className="relative flex flex-col items-center gap-8 p-8 sm:p-10 md:flex-row md:justify-between">
                 <div className="text-center md:text-left">
                   <h3 className="font-display text-2xl tracking-tight text-slate-900">
@@ -1397,7 +1397,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
+                      className="rounded-none h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
                     >
                       Book a walkthrough
                     </Button>
@@ -1405,7 +1405,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
+                      className="rounded-none h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
                     >
                       Start free term
                     </Button>
@@ -1420,7 +1420,7 @@ export default function Home() {
         <section className="relative border-t border-emerald-900/10 bg-white py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="relative mb-14 sm:mb-20">
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-900/10 bg-[#f6faf8] px-6 py-8 sm:px-8 sm:py-9">
+              <div className="relative overflow-hidden border border-emerald-900/10 bg-[#f6faf8] px-6 py-8 sm:px-8 sm:py-9">
                 <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
                 <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
                   Built for real schoolrooms
@@ -1447,7 +1447,7 @@ export default function Home() {
         <section className="relative border-t border-emerald-900/10 bg-gradient-to-b from-[#f6faf8] to-white py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="relative mb-12 sm:mb-14">
-              <div className="relative overflow-hidden rounded-2xl border border-emerald-900/10 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-9">
+              <div className="relative overflow-hidden border border-emerald-900/10 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-9">
                 <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
                 <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
                   Before you sign up
@@ -1468,7 +1468,7 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="relative mt-14 overflow-hidden rounded-2xl border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-16">
+            <div className="relative mt-14 overflow-hidden border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-16">
               <div className="relative flex flex-col items-center gap-8 p-8 sm:p-10 md:flex-row md:justify-between">
                 <div className="text-center md:text-left">
                   <h3 className="font-display text-2xl tracking-tight text-slate-900">
@@ -1483,7 +1483,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
+                      className="rounded-none h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
                     >
                       Ask a question
                     </Button>
@@ -1491,7 +1491,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
+                      className="rounded-none h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
                     >
                       Start free term
                     </Button>
@@ -1512,7 +1512,7 @@ export default function Home() {
             <div className="grid gap-12 py-16 sm:py-20 lg:grid-cols-12 lg:gap-10">
               <div className="lg:col-span-5">
                 <Link href="/" className="inline-flex items-center gap-3 transition-opacity hover:opacity-90">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
+                  <div className="flex h-10 w-10 items-center justify-center border border-[#2d8570]/40 bg-gradient-to-b from-[#246a59] to-[#1a4c40]">
                     <GraduationCap size={20} className="text-white" aria-hidden />
                   </div>
                   <span className="font-display text-2xl tracking-wide text-white">SQUL</span>
@@ -1527,7 +1527,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="h-11 w-full border-0 bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#2d8570] sm:w-auto"
+                      className="rounded-none h-11 w-full border-0 bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#2d8570] sm:w-auto"
                     >
                       Start free term
                     </Button>
@@ -1536,7 +1536,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-11 w-full border-white/25 bg-transparent px-6 font-semibold text-white hover:bg-white/10 sm:w-auto"
+                      className="rounded-none h-11 w-full border-white/25 bg-transparent px-6 font-semibold text-white hover:bg-white/10 sm:w-auto"
                     >
                       Sign in
                     </Button>
@@ -1591,7 +1591,7 @@ export default function Home() {
                         href="mailto:support@squl.edu"
                         className="flex items-start gap-3 text-sm text-white/65 transition-colors hover:text-emerald-200"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/8 ring-1 ring-white/10">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
                           <Mail size={16} className="text-emerald-300/90" aria-hidden />
                         </span>
                         <span className="pt-1.5">support@squl.edu</span>
@@ -1602,14 +1602,14 @@ export default function Home() {
                         href="tel:+254700000000"
                         className="flex items-start gap-3 text-sm text-white/65 transition-colors hover:text-emerald-200"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/8 ring-1 ring-white/10">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
                           <Phone size={16} className="text-emerald-300/90" aria-hidden />
                         </span>
                         <span className="pt-1.5">+254 700 000 000</span>
                       </a>
                     </li>
                     <li className="flex items-start gap-3 text-sm text-white/65">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/8 ring-1 ring-white/10">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center bg-white/8 ring-1 ring-white/10">
                         <MapPin size={16} className="text-emerald-300/90" aria-hidden />
                       </span>
                       <span className="pt-1.5 leading-relaxed">
