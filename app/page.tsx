@@ -26,6 +26,7 @@ import {
   NotebookPen,
   CalendarClock,
   Smartphone,
+  Monitor,
   Star,
   UserCheck,
   Shield,
@@ -611,6 +612,70 @@ function useAnimatedNumber(
   return { value, done }
 }
 
+type HeroPreviewMode = "phone" | "desktop"
+
+function HeroPreviewToggle({
+  mode,
+  onChange,
+}: {
+  mode: HeroPreviewMode
+  onChange: (mode: HeroPreviewMode) => void
+}) {
+  return (
+    <div
+      className="mx-auto flex w-fit items-center gap-1 rounded-full border border-white/15 bg-[#0a1f1a]/80 p-1 shadow-lg backdrop-blur-md"
+      role="group"
+      aria-label="Preview layout"
+    >
+      <button
+        type="button"
+        onClick={() => onChange("phone")}
+        aria-pressed={mode === "phone"}
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+          mode === "phone"
+            ? "bg-emerald-500 text-white shadow-sm"
+            : "text-white/60 hover:text-white"
+        }`}
+      >
+        <Smartphone className="h-3.5 w-3.5" strokeWidth={2} />
+        App
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("desktop")}
+        aria-pressed={mode === "desktop"}
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+          mode === "desktop"
+            ? "bg-emerald-500 text-white shadow-sm"
+            : "text-white/60 hover:text-white"
+        }`}
+      >
+        <Monitor className="h-3.5 w-3.5" strokeWidth={2} />
+        Desktop
+      </button>
+    </div>
+  )
+}
+
+function HeroPhoneFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="hero-phone-frame relative mx-auto w-full max-w-[340px] sm:max-w-[360px]">
+      <div className="relative overflow-hidden rounded-[2.15rem] bg-[#0b1210] p-[10px] shadow-[0_28px_80px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/15">
+        {/* Side buttons */}
+        <div className="pointer-events-none absolute -left-[2px] top-28 h-8 w-[3px] rounded-l-sm bg-white/20" />
+        <div className="pointer-events-none absolute -left-[2px] top-40 h-12 w-[3px] rounded-l-sm bg-white/20" />
+        <div className="pointer-events-none absolute -right-[2px] top-36 h-14 w-[3px] rounded-r-sm bg-white/20" />
+
+        <div className="relative overflow-hidden rounded-[1.65rem] bg-white">
+          {/* Dynamic Island */}
+          <div className="pointer-events-none absolute left-1/2 top-2 z-30 h-[22px] w-[96px] -translate-x-1/2 rounded-full bg-black" />
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function HeroDashboardPanel({
   student,
   linkedModule,
@@ -621,6 +686,7 @@ function HeroDashboardPanel({
   attendanceMetric,
   searchQuery,
   notificationsOpen,
+  previewMode,
   onModuleHover,
   onSelectModule,
   onSelectStudent,
@@ -636,6 +702,7 @@ function HeroDashboardPanel({
   attendanceMetric: number
   searchQuery: string
   notificationsOpen: boolean
+  previewMode: HeroPreviewMode
   onModuleHover: (module: string | null) => void
   onSelectModule: (module: string | null) => void
   onSelectStudent: (id: string) => void
@@ -643,6 +710,7 @@ function HeroDashboardPanel({
   onToggleNotifications: () => void
 }) {
   const [searchFocused, setSearchFocused] = useState(false)
+  const isPhone = previewMode === "phone"
   const activeModule = hoveredModule ?? linkedModule
 
   const searchMatches = useMemo(() => {
@@ -665,6 +733,32 @@ function HeroDashboardPanel({
     const isActive =
       item.module === activeModule || (item.module === null && activeModule === null)
     const isLinked = item.module !== null && item.module === linkedModule
+
+    if (compact && isPhone) {
+      return (
+        <button
+          key={`p-${item.label}`}
+          type="button"
+          onClick={() => onSelectModule(item.module)}
+          aria-pressed={isActive}
+          aria-label={item.label}
+          className={`flex min-w-0 flex-1 flex-col items-center gap-1 py-2 transition-colors ${
+            isActive ? "text-emerald-600" : "text-slate-400"
+          }`}
+        >
+          <span
+            className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
+              isActive ? "bg-emerald-50 text-emerald-600" : ""
+            }`}
+          >
+            <Icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2.25 : 1.75} />
+          </span>
+          <span className="max-w-[56px] truncate text-center text-[10px] font-semibold leading-none">
+            {item.shortLabel}
+          </span>
+        </button>
+      )
+    }
 
     return (
       <button
@@ -709,46 +803,113 @@ function HeroDashboardPanel({
     { label: "Students", value: studentsMetric.toLocaleString(), module: "Students" as const },
     { label: "Teachers", value: teacherMetric.toLocaleString(), module: "Timetable" as const },
     { label: "Fees", value: `${feeMetric}%`, module: "Fees" as const },
-    { label: "Attendance", value: `${attendanceMetric}%`, module: "Students" as const, studentId: "brian" },
+    {
+      label: "Attendance",
+      value: `${attendanceMetric}%`,
+      module: "Students" as const,
+      studentId: "brian",
+    },
   ]
 
-  return (
-    <div className="rounded-none flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]">
-      {/* Icon rail — desktop / tablet */}
-      <aside className="hidden shrink-0 flex-col items-center border-slate-200/70 bg-white py-2.5 md:flex md:w-[52px] lg:w-[56px] md:border-r">
-        <button
-          type="button"
-          onClick={() => onSelectModule(null)}
-          className="mb-2 flex h-8 w-8 items-center justify-center bg-emerald-600 text-[10px] font-bold text-white transition-opacity hover:opacity-90"
-          aria-label="Home"
-        >
-          SQ
-        </button>
-        <nav className="flex flex-1 flex-col items-center gap-0.5">
-          {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item))}
-        </nav>
-      </aside>
+  const panel = (
+    <div
+      className={
+        isPhone
+          ? "flex h-[560px] w-full flex-col bg-[#f4f6f5] sm:h-[600px]"
+          : "rounded-none flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]"
+      }
+    >
+      {/* Icon rail — desktop only */}
+      {!isPhone && (
+        <aside className="hidden shrink-0 flex-col items-center border-slate-200/70 bg-white py-2.5 md:flex md:w-[52px] lg:w-[56px] md:border-r">
+          <button
+            type="button"
+            onClick={() => onSelectModule(null)}
+            className="mb-2 flex h-8 w-8 items-center justify-center bg-emerald-600 text-[10px] font-bold text-white transition-opacity hover:opacity-90"
+            aria-label="Home"
+          >
+            SQ
+          </button>
+          <nav className="flex flex-1 flex-col items-center gap-0.5">
+            {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item))}
+          </nav>
+        </aside>
+      )}
 
       {/* Main canvas */}
-      <div className="flex min-w-0 flex-col bg-white md:flex-1">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+        {/* Phone status bar */}
+        {isPhone && (
+          <div className="flex shrink-0 items-end justify-between px-6 pb-1 pt-3 text-[11px] font-semibold text-slate-900">
+            <span className="tabular-nums">9:41</span>
+            <div className="flex items-center gap-1.5 text-slate-800">
+              <span className="text-[9px] font-bold tracking-tight">5G</span>
+              <span className="flex h-2.5 items-end gap-[2px]" aria-hidden>
+                <span className="h-1 w-[3px] rounded-sm bg-slate-900" />
+                <span className="h-1.5 w-[3px] rounded-sm bg-slate-900" />
+                <span className="h-2 w-[3px] rounded-sm bg-slate-900" />
+                <span className="h-2.5 w-[3px] rounded-sm bg-slate-900/35" />
+              </span>
+              <span className="relative h-[11px] w-[22px] rounded-[3px] border border-slate-900/80">
+                <span className="absolute inset-[2px] right-[3px] rounded-[1px] bg-emerald-500" />
+                <span className="absolute -right-[3px] top-1/2 h-[5px] w-[1.5px] -translate-y-1/2 rounded-r-sm bg-slate-900/80" />
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* App header */}
-        <header className="flex shrink-0 items-center gap-1.5 border-b border-slate-200/60 px-2.5 py-2 sm:gap-2 sm:px-3 sm:py-2.5 md:px-4">
+        <header
+          className={`flex shrink-0 items-center gap-2 border-b border-slate-200/60 ${
+            isPhone ? "px-4 pb-3 pt-2" : "px-2.5 py-2 sm:gap-2 sm:px-3 sm:py-2.5 md:px-4"
+          }`}
+        >
+          {isPhone && (
+            <button
+              type="button"
+              onClick={() => onSelectModule(null)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-[11px] font-bold text-white shadow-sm"
+              aria-label="Home"
+            >
+              SQ
+            </button>
+          )}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-900 sm:text-sm">
+            <p
+              className={`truncate font-semibold text-slate-900 ${
+                isPhone ? "text-[15px]" : "text-xs sm:text-sm"
+              }`}
+            >
               {linkedModule ?? "Dashboard"}
             </p>
-            <p className="truncate text-[9px] text-slate-400 sm:text-[10px] md:hidden">
+            <p
+              className={`truncate text-slate-400 ${
+                isPhone ? "text-[11px]" : "text-[9px] sm:text-[10px] md:hidden"
+              }`}
+            >
               Term 2, 2026
             </p>
-            <p className="hidden truncate text-[10px] text-slate-400 md:block">
-              {linkedModule
-                ? `${linkedModule} · Term 2, 2026`
-                : "Overview of your school · Term 2, 2026"}
-            </p>
+            {!isPhone && (
+              <p className="hidden truncate text-[10px] text-slate-400 md:block">
+                {linkedModule
+                  ? `${linkedModule} · Term 2, 2026`
+                  : "Overview of your school · Term 2, 2026"}
+              </p>
+            )}
           </div>
-          <span className="flex shrink-0 items-center gap-1 bg-emerald-50 px-1.5 py-0.5 ring-1 ring-emerald-100 sm:px-2">
-            <Radio className="h-2.5 w-2.5 text-emerald-600 sm:h-3 sm:w-3" />
-            <span className="text-[8px] font-bold uppercase tracking-wide text-emerald-700 sm:text-[9px]">
+          <span
+            className={`flex shrink-0 items-center gap-1 bg-emerald-50 ring-1 ring-emerald-100 ${
+              isPhone ? "rounded-full px-2.5 py-1" : "px-1.5 py-0.5 sm:px-2"
+            }`}
+          >
+            <Radio
+              className={`text-emerald-600 ${isPhone ? "h-3 w-3" : "h-2.5 w-2.5 sm:h-3 sm:w-3"}`}
+            />
+            <span
+              className={`font-bold uppercase tracking-wide text-emerald-700 ${
+                isPhone ? "text-[10px]" : "text-[8px] sm:text-[9px]"
+              }`}
+            >
               Live
             </span>
           </span>
@@ -757,21 +918,35 @@ function HeroDashboardPanel({
             onClick={onToggleNotifications}
             aria-pressed={notificationsOpen}
             aria-label={notificationsOpen ? "Hide notifications" : "Show notifications"}
-            className={`relative hidden h-7 w-7 shrink-0 items-center justify-center transition-colors sm:flex ${
-              notificationsOpen
-                ? "bg-emerald-50 text-emerald-700"
-                : "text-slate-400 hover:bg-slate-50"
+            className={`relative shrink-0 items-center justify-center transition-colors ${
+              isPhone
+                ? `flex h-9 w-9 rounded-full ${
+                    notificationsOpen
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-slate-100 text-slate-500"
+                  }`
+                : `hidden h-7 w-7 sm:flex ${
+                    notificationsOpen
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "text-slate-400 hover:bg-slate-50"
+                  }`
             }`}
           >
-            <Bell className="h-3.5 w-3.5" />
+            <Bell className={isPhone ? "h-4 w-4" : "h-3.5 w-3.5"} />
             {!notificationsOpen && (
-              <span className="absolute right-1 top-1 h-1.5 w-1.5 bg-emerald-500" />
+              <span
+                className={`absolute bg-emerald-500 ${
+                  isPhone ? "right-2 top-2 h-2 w-2 rounded-full" : "right-1 top-1 h-1.5 w-1.5"
+                }`}
+              />
             )}
           </button>
           <button
             type="button"
             onClick={() => onSelectStudent(student.id)}
-            className="h-6 w-6 shrink-0 overflow-hidden bg-emerald-100 ring-1 ring-emerald-200 transition-shadow hover:ring-emerald-400 sm:h-7 sm:w-7"
+            className={`shrink-0 overflow-hidden bg-emerald-100 ring-1 ring-emerald-200 transition-shadow hover:ring-emerald-400 ${
+              isPhone ? "h-9 w-9 rounded-full" : "h-6 w-6 sm:h-7 sm:w-7"
+            }`}
             aria-label={`Focus ${student.name}`}
           >
             <img
@@ -783,17 +958,35 @@ function HeroDashboardPanel({
         </header>
 
         {notificationsOpen && (
-          <div className="border-b border-emerald-100 bg-emerald-50/80 px-2.5 py-2 sm:px-3">
-            <p className="text-[10px] font-semibold text-emerald-800">3 new updates today</p>
-            <p className="mt-0.5 text-[9px] text-emerald-700/80">
+          <div
+            className={`border-b border-emerald-100 bg-emerald-50/80 ${
+              isPhone ? "px-4 py-3" : "px-2.5 py-2 sm:px-3"
+            }`}
+          >
+            <p className={`font-semibold text-emerald-800 ${isPhone ? "text-xs" : "text-[10px]"}`}>
+              3 new updates today
+            </p>
+            <p className={`mt-0.5 text-emerald-700/80 ${isPhone ? "text-[11px]" : "text-[9px]"}`}>
               M-Pesa matched · Admission #2043 · CBC reminder sent
             </p>
           </div>
         )}
 
-        <div className="space-y-2 overflow-y-auto bg-slate-50 p-2 sm:space-y-2.5 sm:p-2.5 md:p-3 lg:overflow-visible [scrollbar-width:thin]">
+        <div
+          className={`min-h-0 flex-1 space-y-2.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            isPhone
+              ? "bg-[#f4f6f5] px-3 py-3"
+              : "space-y-2 bg-slate-50 p-2 sm:space-y-2.5 sm:p-2.5 md:p-3 lg:overflow-visible [scrollbar-width:thin]"
+          }`}
+        >
           {/* Stat bar */}
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <div
+            className={
+              isPhone
+                ? "flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                : "grid grid-cols-2 gap-1.5 sm:grid-cols-4"
+            }
+          >
             {stats.map((stat) => {
               const isActive =
                 linkedModule === stat.module &&
@@ -809,16 +1002,32 @@ function HeroDashboardPanel({
                       onSelectModule(stat.module)
                     }
                   }}
-                  className={`border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
-                    isActive
-                      ? "border-emerald-200 bg-emerald-50/90"
-                      : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
-                  }`}
+                  className={
+                    isPhone
+                      ? `min-w-[88px] shrink-0 rounded-2xl border px-3 py-2.5 text-left transition-all active:scale-[0.98] ${
+                          isActive
+                            ? "border-emerald-300 bg-white shadow-sm shadow-emerald-900/5"
+                            : "border-transparent bg-white/80"
+                        }`
+                      : `border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
+                          isActive
+                            ? "border-emerald-200 bg-emerald-50/90"
+                            : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
+                        }`
+                  }
                 >
-                  <p className="text-[7px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
+                  <p
+                    className={`font-medium uppercase tracking-wide text-slate-400 ${
+                      isPhone ? "text-[9px]" : "text-[7px] sm:text-[9px]"
+                    }`}
+                  >
                     {stat.label}
                   </p>
-                  <p className="mt-0.5 text-[11px] font-semibold tabular-nums text-slate-800 sm:text-sm">
+                  <p
+                    className={`mt-0.5 font-semibold tabular-nums text-slate-800 ${
+                      isPhone ? "text-base" : "text-[11px] sm:text-sm"
+                    }`}
+                  >
                     {stat.value}
                   </p>
                 </button>
@@ -827,9 +1036,17 @@ function HeroDashboardPanel({
           </div>
 
           {/* Student search */}
-          <div className="relative border border-slate-200/80 bg-white p-2 shadow-sm sm:p-2.5 md:p-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <div
+            className={`relative bg-white shadow-sm ${
+              isPhone
+                ? "rounded-2xl border border-slate-200/70 p-3"
+                : "border border-slate-200/80 p-2 sm:p-2.5 md:p-3"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Search
+                className={`shrink-0 text-slate-400 ${isPhone ? "h-4 w-4" : "h-3.5 w-3.5"}`}
+              />
               <input
                 type="search"
                 value={searchFocused || searchQuery ? searchQuery : student.name}
@@ -846,27 +1063,39 @@ function HeroDashboardPanel({
                 }}
                 placeholder="Search students…"
                 aria-label="Search students"
-                className="min-w-0 flex-1 truncate bg-transparent text-[11px] font-medium text-slate-800 outline-none placeholder:text-slate-400 sm:text-sm"
+                className={`min-w-0 flex-1 truncate bg-transparent font-medium text-slate-800 outline-none placeholder:text-slate-400 ${
+                  isPhone ? "text-sm" : "text-[11px] sm:text-sm"
+                }`}
               />
               <span
                 key={student.id}
-                className={`hero-profile-in max-w-[42%] shrink-0 truncate px-1.5 py-0.5 text-[8px] font-semibold sm:max-w-none sm:px-2 sm:text-[10px] ${HERO_STUDENT_STATUS_COLORS[student.statusType]}`}
+                className={`hero-profile-in shrink-0 truncate font-semibold ${
+                  isPhone
+                    ? "max-w-[40%] rounded-full px-2.5 py-1 text-[10px]"
+                    : `max-w-[42%] px-1.5 py-0.5 text-[8px] sm:max-w-none sm:px-2 sm:text-[10px] ${HERO_STUDENT_STATUS_COLORS[student.statusType]}`
+                } ${isPhone ? HERO_STUDENT_STATUS_COLORS[student.statusType] : ""}`}
               >
                 {student.status}
               </span>
             </div>
             <p
               key={`${student.id}-detail`}
-              className="hero-profile-in mt-1 flex items-center gap-1.5 text-[9px] text-slate-500 sm:mt-1.5 sm:text-[11px]"
+              className={`hero-profile-in mt-1.5 flex items-center gap-1.5 text-slate-500 ${
+                isPhone ? "text-xs" : "text-[9px] sm:text-[11px]"
+              }`}
             >
-              <span className="h-1 w-1 shrink-0 bg-emerald-500" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
               <span className="line-clamp-2 sm:truncate">{student.detail}</span>
             </p>
 
             {showSearchResults && (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden border border-slate-200 bg-white shadow-lg">
+              <div
+                className={`absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden border border-slate-200 bg-white shadow-lg ${
+                  isPhone ? "rounded-2xl" : ""
+                }`}
+              >
                 {searchMatches.length === 0 ? (
-                  <p className="px-3 py-2 text-[10px] text-slate-500">
+                  <p className="px-3 py-2.5 text-[11px] text-slate-500">
                     No students match “{searchQuery}”
                   </p>
                 ) : (
@@ -880,11 +1109,15 @@ function HeroDashboardPanel({
                         onSearchChange("")
                         setSearchFocused(false)
                       }}
-                      className={`flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-emerald-50 ${
+                      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-emerald-50 ${
                         match.id === student.id ? "bg-emerald-50/70" : ""
                       }`}
                     >
-                      <div className="h-6 w-6 shrink-0 overflow-hidden bg-slate-100 ring-1 ring-slate-200">
+                      <div
+                        className={`h-8 w-8 shrink-0 overflow-hidden bg-slate-100 ring-1 ring-slate-200 ${
+                          isPhone ? "rounded-full" : ""
+                        }`}
+                      >
                         <img
                           src={match.src}
                           alt=""
@@ -892,10 +1125,8 @@ function HeroDashboardPanel({
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[11px] font-medium text-slate-800">
-                          {match.name}
-                        </p>
-                        <p className="truncate text-[9px] text-slate-500">
+                        <p className="truncate text-sm font-medium text-slate-800">{match.name}</p>
+                        <p className="truncate text-[11px] text-slate-500">
                           {match.class} · {match.status}
                         </p>
                       </div>
@@ -907,7 +1138,7 @@ function HeroDashboardPanel({
           </div>
 
           {/* Module summary */}
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className={`grid grid-cols-2 ${isPhone ? "gap-2" : "gap-1.5"}`}>
             {HERO_DASHBOARD_MODULES.map((mod) => {
               const isLinked = mod.module === linkedModule || mod.module === activeModule
               const metric = getHeroModuleMetric(
@@ -923,34 +1154,42 @@ function HeroDashboardPanel({
                   key={mod.label}
                   type="button"
                   onClick={() => onSelectModule(mod.module)}
-                  onMouseEnter={() => onModuleHover(mod.module)}
-                  onMouseLeave={() => onModuleHover(null)}
+                  onMouseEnter={() => !isPhone && onModuleHover(mod.module)}
+                  onMouseLeave={() => !isPhone && onModuleHover(null)}
                   aria-pressed={mod.module === linkedModule}
-                  className={`flex items-center gap-2 border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
-                    isLinked
-                      ? "border-emerald-200 bg-emerald-50/90"
-                      : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50"
-                  }`}
+                  className={
+                    isPhone
+                      ? `flex items-center gap-2.5 rounded-2xl border px-3 py-3 text-left transition-all active:scale-[0.98] ${
+                          isLinked
+                            ? "border-emerald-300 bg-emerald-50 shadow-sm"
+                            : "border-transparent bg-white"
+                        }`
+                      : `flex items-center gap-2 border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
+                          isLinked
+                            ? "border-emerald-200 bg-emerald-50/90"
+                            : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50"
+                        }`
+                  }
                 >
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center sm:h-8 sm:w-8 ${
-                      isLinked ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"
-                    }`}
+                    className={`flex shrink-0 items-center justify-center ${
+                      isPhone ? "h-10 w-10 rounded-2xl" : "h-7 w-7 sm:h-8 sm:w-8"
+                    } ${isLinked ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"}`}
                   >
-                    <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    <Icon className={isPhone ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={1.75} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p
-                      className={`truncate text-[10px] sm:text-[11px] ${
-                        isLinked ? "font-semibold text-slate-900" : "font-medium text-slate-600"
-                      }`}
+                      className={`truncate ${
+                        isPhone ? "text-[13px]" : "text-[10px] sm:text-[11px]"
+                      } ${isLinked ? "font-semibold text-slate-900" : "font-medium text-slate-600"}`}
                     >
                       {mod.label}
                     </p>
                     <p
-                      className={`truncate text-[9px] tabular-nums sm:text-[10px] ${
-                        isLinked ? "font-semibold text-emerald-700" : "text-slate-500"
-                      }`}
+                      className={`truncate tabular-nums ${
+                        isPhone ? "text-[11px]" : "text-[9px] sm:text-[10px]"
+                      } ${isLinked ? "font-semibold text-emerald-700" : "text-slate-500"}`}
                     >
                       {metric}
                     </p>
@@ -960,15 +1199,35 @@ function HeroDashboardPanel({
             })}
           </div>
 
-          {/* Activity feed — scroll on small screens; full list on desktop */}
-          <div className="overflow-hidden border border-slate-200/80 bg-white">
-            <div className="flex items-center justify-between border-b border-slate-100 px-2 py-1.5 sm:px-2.5 sm:py-2 md:px-3">
-              <p className="text-[10px] font-semibold text-slate-700 sm:text-[11px]">
+          {/* Activity feed */}
+          <div
+            className={`overflow-hidden bg-white ${
+              isPhone
+                ? "rounded-2xl border border-slate-200/70"
+                : "border border-slate-200/80"
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between border-b border-slate-100 ${
+                isPhone ? "px-3.5 py-2.5" : "px-2 py-1.5 sm:px-2.5 sm:py-2 md:px-3"
+              }`}
+            >
+              <p
+                className={`font-semibold text-slate-700 ${
+                  isPhone ? "text-[13px]" : "text-[10px] sm:text-[11px]"
+                }`}
+              >
                 Recent activity
               </p>
-              <p className="text-[9px] text-slate-400">Today</p>
+              <p className={`text-slate-400 ${isPhone ? "text-[11px]" : "text-[9px]"}`}>Today</p>
             </div>
-            <div className="max-h-[108px] divide-y divide-slate-100 overflow-y-auto sm:max-h-[132px] md:max-h-[148px] lg:max-h-none lg:overflow-visible [scrollbar-width:thin]">
+            <div
+              className={
+                isPhone
+                  ? "divide-y divide-slate-100"
+                  : "max-h-[108px] divide-y divide-slate-100 overflow-y-auto sm:max-h-[132px] md:max-h-[148px] lg:max-h-none lg:overflow-visible [scrollbar-width:thin]"
+              }
+            >
               {HERO_ACTIVITY_ROWS.map((row) => {
                 const rowStudent = HERO_STUDENTS.find((s) => s.id === row.id)!
                 const isSelected = row.id === student.id
@@ -978,13 +1237,25 @@ function HeroDashboardPanel({
                     type="button"
                     onClick={() => onSelectStudent(row.id)}
                     aria-pressed={isSelected}
-                    className={`flex w-full items-center gap-1.5 px-2 py-1.5 text-left transition-colors sm:gap-2 sm:px-2.5 sm:py-2 md:px-3 md:py-2.5 ${
-                      isSelected ? "bg-emerald-50/60" : "hover:bg-slate-50"
+                    className={`flex w-full items-center text-left transition-colors ${
+                      isPhone
+                        ? `gap-3 px-3.5 py-3 active:bg-slate-50 ${
+                            isSelected ? "bg-emerald-50" : ""
+                          }`
+                        : `gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2 md:px-3 md:py-2.5 ${
+                            isSelected ? "bg-emerald-50/60" : "hover:bg-slate-50"
+                          }`
                     }`}
                   >
                     <div
-                      className={`h-5 w-5 shrink-0 overflow-hidden bg-slate-100 ring-1 sm:h-6 sm:w-6 md:h-7 md:w-7 ${
-                        isSelected ? "ring-emerald-300" : "ring-slate-200"
+                      className={`shrink-0 overflow-hidden bg-slate-100 ring-1 ${
+                        isPhone
+                          ? `h-10 w-10 rounded-full ${
+                              isSelected ? "ring-emerald-400" : "ring-slate-200"
+                            }`
+                          : `h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 ${
+                              isSelected ? "ring-emerald-300" : "ring-slate-200"
+                            }`
                       }`}
                     >
                       <img
@@ -995,7 +1266,9 @@ function HeroDashboardPanel({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p
-                        className={`truncate text-[9px] sm:text-[10px] md:text-[11px] ${
+                        className={`truncate ${
+                          isPhone ? "text-[13px]" : "text-[9px] sm:text-[10px] md:text-[11px]"
+                        } ${
                           isSelected
                             ? "font-semibold text-slate-900"
                             : "font-medium text-slate-700"
@@ -1003,11 +1276,19 @@ function HeroDashboardPanel({
                       >
                         {row.title}
                       </p>
-                      <p className="hidden truncate text-[9px] text-slate-500 sm:block sm:text-[10px]">
+                      <p
+                        className={`truncate text-slate-500 ${
+                          isPhone ? "mt-0.5 text-[11px]" : "hidden text-[9px] sm:block sm:text-[10px]"
+                        }`}
+                      >
                         {row.meta}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[8px] tabular-nums text-slate-400 sm:text-[9px]">
+                    <span
+                      className={`shrink-0 tabular-nums text-slate-400 ${
+                        isPhone ? "text-[11px]" : "text-[8px] sm:text-[9px]"
+                      }`}
+                    >
                       {row.time}
                     </span>
                   </button>
@@ -1017,39 +1298,87 @@ function HeroDashboardPanel({
           </div>
         </div>
 
-        {/* Status footer */}
-        <button
-          type="button"
-          onClick={() => onSelectStudent(student.id)}
-          className="flex shrink-0 items-center gap-1.5 border-t border-slate-200/60 bg-slate-50/80 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50/50 sm:gap-2 sm:px-3 sm:py-2 md:px-4"
-        >
-          <div
-            key={student.id}
-            className="hero-profile-in h-5 w-5 shrink-0 overflow-hidden ring-1 ring-slate-200 sm:h-6 sm:w-6"
+        {/* Status footer — desktop / non-phone */}
+        {!isPhone && (
+          <button
+            type="button"
+            onClick={() => onSelectStudent(student.id)}
+            className="flex shrink-0 items-center gap-1.5 border-t border-slate-200/60 bg-slate-50/80 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50/50 sm:gap-2 sm:px-3 sm:py-2 md:px-4"
           >
-            <img
-              src={student.src}
-              alt=""
-              className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
-            />
-          </div>
-          <p
-            key={`${student.id}-insight`}
-            className="hero-profile-in min-w-0 text-[9px] leading-snug text-slate-600 sm:text-[10px] md:text-[11px]"
-          >
-            <span className="font-semibold text-slate-800">{student.shortName}</span>
-            <span className="text-slate-400"> — </span>
-            <span className="line-clamp-2 md:truncate">{student.insight}</span>
-          </p>
-        </button>
+            <div
+              key={student.id}
+              className="hero-profile-in h-5 w-5 shrink-0 overflow-hidden ring-1 ring-slate-200 sm:h-6 sm:w-6"
+            >
+              <img
+                src={student.src}
+                alt=""
+                className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
+              />
+            </div>
+            <p
+              key={`${student.id}-insight`}
+              className="hero-profile-in min-w-0 text-[9px] leading-snug text-slate-600 sm:text-[10px] md:text-[11px]"
+            >
+              <span className="font-semibold text-slate-800">{student.shortName}</span>
+              <span className="text-slate-400"> — </span>
+              <span className="line-clamp-2 md:truncate">{student.insight}</span>
+            </p>
+          </button>
+        )}
 
-        {/* Mobile bottom nav — matches school app */}
-        <nav className="flex shrink-0 items-center border-t border-slate-200/70 bg-white px-1 py-0.5 md:hidden">
+        {/* Phone context chip above tab bar */}
+        {isPhone && (
+          <button
+            type="button"
+            onClick={() => onSelectStudent(student.id)}
+            className="mx-3 mb-1 flex shrink-0 items-center gap-2.5 rounded-2xl border border-emerald-100 bg-white px-3 py-2.5 text-left shadow-sm"
+          >
+            <div
+              key={student.id}
+              className="hero-profile-in h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-emerald-100"
+            >
+              <img
+                src={student.src}
+                alt=""
+                className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
+              />
+            </div>
+            <p
+              key={`${student.id}-insight`}
+              className="hero-profile-in min-w-0 text-xs leading-snug text-slate-600"
+            >
+              <span className="font-semibold text-slate-800">{student.shortName}</span>
+              <span className="text-slate-400"> · </span>
+              <span className="line-clamp-1">{student.insight}</span>
+            </p>
+          </button>
+        )}
+
+        {/* Bottom nav */}
+        <nav
+          className={`flex shrink-0 items-center border-t border-slate-200/70 bg-white ${
+            isPhone
+              ? "px-1 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1"
+              : "px-1 py-0.5 md:hidden"
+          }`}
+        >
           {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item, true))}
         </nav>
+
+        {isPhone && (
+          <div className="flex shrink-0 justify-center bg-white pb-2 pt-0.5" aria-hidden>
+            <div className="h-1 w-28 rounded-full bg-slate-900/80" />
+          </div>
+        )}
       </div>
     </div>
   )
+
+  if (isPhone) {
+    return <HeroPhoneFrame>{panel}</HeroPhoneFrame>
+  }
+
+  return panel
 }
 
 
@@ -1336,6 +1665,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("")
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [demoPaused, setDemoPaused] = useState(false)
+  const [previewMode, setPreviewMode] = useState<HeroPreviewMode>("phone")
   const studentsMetric = useAnimatedNumber(HERO_DEMO_STATS.students.target, { delay: 400 })
   const feeMetric = useAnimatedNumber(HERO_DEMO_STATS.feeCollection.target, { delay: 500 })
   const teacherMetric = useAnimatedNumber(48, { delay: 600 })
@@ -1483,28 +1813,45 @@ export default function Home() {
               onMouseEnter={() => setDemoPaused(true)}
               onMouseLeave={() => setDemoPaused(false)}
             >
-              <HeroDashboardPanel
-                student={selectedStudent}
-                linkedModule={linkedModule}
-                hoveredModule={hoveredModule}
-                studentsMetric={studentsMetric.value}
-                feeMetric={feeMetric.value}
-                teacherMetric={teacherMetric.value}
-                attendanceMetric={attendanceMetric.value}
-                searchQuery={searchQuery}
-                notificationsOpen={notificationsOpen}
-                onModuleHover={setHoveredModule}
-                onSelectModule={selectModule}
-                onSelectStudent={selectStudent}
-                onSearchChange={(query) => {
-                  setDemoPaused(true)
-                  setSearchQuery(query)
-                }}
-                onToggleNotifications={() => {
-                  setDemoPaused(true)
-                  setNotificationsOpen((open) => !open)
-                }}
-              />
+              <div className="mb-4 flex justify-center lg:mb-5">
+                <HeroPreviewToggle
+                  mode={previewMode}
+                  onChange={(mode) => {
+                    setPreviewMode(mode)
+                    setDemoPaused(true)
+                  }}
+                />
+              </div>
+              <div
+                key={previewMode}
+                className={`hero-profile-in ${
+                  previewMode === "phone" ? "flex justify-center" : ""
+                }`}
+              >
+                <HeroDashboardPanel
+                  student={selectedStudent}
+                  linkedModule={linkedModule}
+                  hoveredModule={hoveredModule}
+                  studentsMetric={studentsMetric.value}
+                  feeMetric={feeMetric.value}
+                  teacherMetric={teacherMetric.value}
+                  attendanceMetric={attendanceMetric.value}
+                  searchQuery={searchQuery}
+                  notificationsOpen={notificationsOpen}
+                  previewMode={previewMode}
+                  onModuleHover={setHoveredModule}
+                  onSelectModule={selectModule}
+                  onSelectStudent={selectStudent}
+                  onSearchChange={(query) => {
+                    setDemoPaused(true)
+                    setSearchQuery(query)
+                  }}
+                  onToggleNotifications={() => {
+                    setDemoPaused(true)
+                    setNotificationsOpen((open) => !open)
+                  }}
+                />
+              </div>
             </div>
           </div>
 

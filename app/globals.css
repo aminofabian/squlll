@@ -268,6 +268,16 @@
   animation: hero-profile-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.hero-phone-frame {
+  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.35));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-phone-frame {
+    filter: none;
+  }
+}
+
 /* Landing page: Instrument Serif headlines, Figtree body */
 .squl-marketing {
   font-family: var(--font-figtree), sans-serif;
