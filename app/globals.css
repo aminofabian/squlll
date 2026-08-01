@@ -166,10 +166,6 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer utilities {
   .animate-tilt {
     animation: tilt 10s infinite linear;
