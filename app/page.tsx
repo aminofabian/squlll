@@ -1,15 +1,13 @@
 'use client'
 
 import { Header } from "@/components/Header"
-import { AuthWrapper } from "@/components/auth/AuthFormWrapper"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useStudentsStore } from "@/lib/stores/useStudentsStore"
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
 import { mockClasses } from "@/lib/data/mockclasses"
 import { useEffect, useMemo, useState } from "react"
+import type { ReactNode } from "react"
 import {
   Users,
   GraduationCap,
@@ -28,6 +26,7 @@ import {
   NotebookPen,
   CalendarClock,
   Smartphone,
+  Star,
   UserCheck,
   Shield,
   Building2,
@@ -366,6 +365,45 @@ function LandingFaqCard({ icon, question, answer }: (typeof LANDING_FAQ_ITEMS)[n
           <h3 className="font-ui text-base font-semibold leading-snug text-slate-900">{question}</h3>
           <p className="mt-3 text-sm leading-relaxed text-slate-600">{answer}</p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function LandingSectionHeader({
+  kicker,
+  title,
+  description,
+  tone = "white",
+  wide = false,
+}: {
+  kicker: string
+  title: ReactNode
+  description: ReactNode
+  tone?: "white" | "soft"
+  wide?: boolean
+}) {
+  return (
+    <div className="relative mb-12 sm:mb-14">
+      <div
+        className={`relative overflow-hidden border border-emerald-900/10 px-6 py-8 sm:px-8 sm:py-9 ${
+          tone === "soft" ? "bg-[#f6faf8]" : "bg-white shadow-sm"
+        }`}
+      >
+        <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
+        <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
+          {kicker}
+        </p>
+        <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
+          {title}
+        </h2>
+        <p
+          className={`mx-auto mt-5 text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left ${
+            wide ? "max-w-3xl" : "max-w-2xl"
+          }`}
+        >
+          {description}
+        </p>
       </div>
     </div>
   )
@@ -1308,58 +1346,22 @@ export default function Home() {
               })}
             </div>
 
-            <div className="relative mt-16 overflow-hidden border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-20">
-              <div className="relative flex flex-col items-center gap-8 p-8 sm:p-10 md:flex-row md:justify-between md:gap-10">
-                <div className="text-center md:text-left">
-                  <h3 className="font-display text-2xl tracking-tight text-slate-900 sm:text-[1.65rem]">
-                    Ready to run your next term on SQUL?
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    90-day free trial · full term access · no credit card
-                  </p>
-                </div>
-                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                  <Link href="/login" className="w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="rounded-none h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
-                    >
-                      See Platform
-                    </Button>
-                  </Link>
-                  <Link href="/register" className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="rounded-none h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
-                    >
-                      Start Free
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
         {/* Third screen — day-to-day workflows */}
         <section className="relative border-t border-emerald-900/8 bg-gradient-to-b from-white via-[#f6faf8] to-white py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="relative mb-12 sm:mb-14">
-              <div className="relative overflow-hidden border border-emerald-900/10 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-9">
-                <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
-                <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
-                  How schools run day to day
-                </p>
-                <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
+            <LandingSectionHeader
+              kicker="How schools run day to day"
+              title={
+                <>
                   Everything your admin team touches—
                   <span className="block text-[#1d5547]">in one Kenyan-built system</span>
-                </h2>
-                <p className="mx-auto mt-5 max-w-2xl text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left">
-                  From CBC marks in the staff room to M-Pesa in the bursar&apos;s office—SQUL connects the workflows your team already runs, without forcing a new way of working.
-                </p>
-              </div>
-            </div>
+                </>
+              }
+              description="From CBC marks in the staff room to M-Pesa in the bursar&apos;s office—SQUL connects the workflows your team already runs, without forcing a new way of working."
+            />
 
             <div className="grid gap-8">
               <div className="grid gap-8 md:grid-cols-2">
@@ -1382,58 +1384,52 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative mt-16 overflow-hidden border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-20">
-              <div className="relative flex flex-col items-center gap-8 p-8 sm:p-10 md:flex-row md:justify-between">
-                <div className="text-center md:text-left">
-                  <h3 className="font-display text-2xl tracking-tight text-slate-900">
-                    See how SQUL fits your school
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    Walk through fees, admissions, and CBC with your team—free for a full term.
-                  </p>
-                </div>
-                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                  <Link href="/login" className="w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="rounded-none h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
-                    >
-                      Book a walkthrough
-                    </Button>
-                  </Link>
-                  <Link href="/register" className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="rounded-none h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
-                    >
-                      Start free term
-                    </Button>
-                  </Link>
-                </div>
+          </div>
+        </section>
+
+        {/* Testimonial */}
+        <section className="relative border-t border-emerald-900/10 bg-[#f6faf8] py-20 sm:py-24">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <figure className="text-center">
+              <div className="mb-8 flex items-center justify-center gap-4">
+                <span className="h-px w-10 bg-[#1d5547]/30" aria-hidden />
+                <span className="font-ui text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547]">
+                  What a bursar says
+                </span>
+                <span className="h-px w-10 bg-[#1d5547]/30" aria-hidden />
               </div>
-            </div>
+              <blockquote className="font-display text-2xl leading-snug tracking-tight text-slate-900 sm:text-[1.75rem]">
+                “We stopped chasing parents for fees in the office. SQUL matches the M-Pesa
+                payments and the SMS reminders do the chasing for us.”
+              </blockquote>
+              <figcaption className="mt-8">
+                <div className="mb-3 flex items-center justify-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden />
+                  ))}
+                </div>
+                <p className="font-ui text-sm font-semibold text-slate-900">Jane Njeri</p>
+                <p className="mt-0.5 text-sm text-slate-500">Bursar, Unity Secondary School · Nakuru</p>
+              </figcaption>
+            </figure>
           </div>
         </section>
 
         {/* Fourth screen — in the schoolroom */}
         <section className="relative border-t border-emerald-900/10 bg-white py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="relative mb-14 sm:mb-20">
-              <div className="relative overflow-hidden border border-emerald-900/10 bg-[#f6faf8] px-6 py-8 sm:px-8 sm:py-9">
-                <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
-                <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
-                  Built for real schoolrooms
-                </p>
-                <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
+            <LandingSectionHeader
+              tone="soft"
+              wide
+              kicker="Built for real schoolrooms"
+              title={
+                <>
                   See SQUL in the work
                   <span className="block text-[#1d5547]">your team already does</span>
-                </h2>
-                <p className="mx-auto mt-5 max-w-3xl text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left">
-                  Kenyan classrooms, bursar counters, and staff rooms—not stock photos of generic offices. Each block below maps to a job your administrators run every week.
-                </p>
-              </div>
-            </div>
+                </>
+              }
+              description="Kenyan classrooms, bursar counters, and staff rooms—not stock photos of generic offices. Each block below maps to a job your administrators run every week."
+            />
 
             <div className="space-y-20 sm:space-y-24">
               {LANDING_DEEP_DIVES.map((dive) => (
@@ -1446,21 +1442,16 @@ export default function Home() {
         {/* Fifth screen — questions principals & bursars ask */}
         <section className="relative border-t border-emerald-900/10 bg-gradient-to-b from-[#f6faf8] to-white py-20 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="relative mb-12 sm:mb-14">
-              <div className="relative overflow-hidden border border-emerald-900/10 bg-white px-6 py-8 shadow-sm sm:px-8 sm:py-9">
-                <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
-                <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
-                  Before you sign up
-                </p>
-                <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
+            <LandingSectionHeader
+              kicker="Before you sign up"
+              title={
+                <>
                   Questions principals
                   <span className="block text-[#1d5547]">and bursars ask us</span>
-                </h2>
-                <p className="mx-auto mt-5 max-w-2xl text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left">
-                  Straight answers about data, timelines, parents, and phones—no enterprise jargon.
-                </p>
-              </div>
-            </div>
+                </>
+              }
+              description="Straight answers about data, timelines, parents, and phones—no enterprise jargon."
+            />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {LANDING_FAQ_ITEMS.map((item) => (
@@ -1468,35 +1459,47 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="relative mt-14 overflow-hidden border border-[#1d5547]/15 bg-gradient-to-r from-[#1d5547]/8 via-white to-[#1d5547]/8 sm:mt-16">
-              <div className="relative flex flex-col items-center gap-8 p-8 sm:p-10 md:flex-row md:justify-between">
-                <div className="text-center md:text-left">
-                  <h3 className="font-display text-2xl tracking-tight text-slate-900">
-                    Still deciding for next term?
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    Talk to us about your learner list, fee structure, and go-live date—90-day trial, no card required.
-                  </p>
-                </div>
-                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <div className="relative mt-14 overflow-hidden bg-[#0a1f1a] sm:mt-16">
+              <div
+                className="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px]"
+                aria-hidden
+              />
+              <div className="absolute -top-28 left-1/2 h-64 w-[560px] -translate-x-1/2 bg-[#1d5547]/45 blur-[120px]" aria-hidden />
+              <div className="relative flex flex-col items-center px-6 py-16 text-center sm:px-10 sm:py-20">
+                <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
+                  Next term starts here
+                </p>
+                <h3 className="font-display mt-5 text-3xl leading-[1.12] tracking-tight text-white sm:text-4xl md:text-5xl">
+                  Ready to run your next term
+                  <span className="block text-emerald-200">on SQUL?</span>
+                </h3>
+                <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
+                  Import your learner list, match your fee structure, and go live before
+                  parents&apos; reporting day. No IT project, no consultants.
+                </p>
+                <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
+                  <Link href="/register" className="w-full sm:w-auto">
+                    <Button
+                      size="lg"
+                      className="rounded-none h-12 w-full border-0 bg-emerald-500 px-8 font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:w-auto sm:px-10 sm:text-base"
+                    >
+                      Start Your Free Term
+                    </Button>
+                  </Link>
                   <Link href="/login" className="w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="lg"
-                      className="rounded-none h-12 w-full border-[#1d5547]/30 px-6 font-semibold text-[#1d5547] hover:bg-emerald-50 sm:w-auto"
+                      className="rounded-none h-12 w-full border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
                     >
-                      Ask a question
-                    </Button>
-                  </Link>
-                  <Link href="/register" className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="rounded-none h-12 w-full border-0 bg-[#1d5547] px-8 font-semibold text-white shadow-md hover:bg-[#2d8570] sm:w-auto"
-                    >
-                      Start free term
+                      <Play className="mr-2 h-3.5 w-3.5 fill-white" />
+                      See a demo
                     </Button>
                   </Link>
                 </div>
+                <p className="mt-6 font-ui text-xs font-medium uppercase tracking-[0.14em] text-white/45">
+                  90-day free trial · full term access · no credit card
+                </p>
               </div>
             </div>
           </div>
