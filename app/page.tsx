@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useStudentsStore } from "@/lib/stores/useStudentsStore"
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore"
 import { mockClasses } from "@/lib/data/mockclasses"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react"
 import {
   Users,
@@ -36,31 +36,6 @@ import {
   Phone,
   type LucideIcon,
 } from "lucide-react"
-
-const LANDING_FEATURE_CARDS: {
-  icon: LucideIcon
-  title: string
-  description: string
-}[] = [
-  {
-    icon: ClipboardList,
-    title: "Digital Admissions & Records",
-    description:
-      "Admission #2043 in minutes—issue numbers, assign class, and file the profile. No stack of forms in the bursar's office.",
-  },
-  {
-    icon: NotebookPen,
-    title: "Academic Performance",
-    description:
-      "Capture CBC rubrics, exam marks, and report cards in one place—parents and auditors get the full picture without retyping.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Staff & Operations",
-    description:
-      "Timetables, attendance, and duty rosters in one hub—no more WhatsApp threads about who is teaching, when, or where.",
-  },
-]
 
 const LANDING_PLATFORM_MODULES: {
   icon: LucideIcon
@@ -358,7 +333,7 @@ function LandingFaqIcon({ icon: Icon }: { icon: LucideIcon }) {
 
 function LandingFaqCard({ icon, question, answer }: (typeof LANDING_FAQ_ITEMS)[number]) {
   return (
-    <div className="border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
+    <div className="h-full border border-emerald-900/10 bg-white p-6 shadow-sm transition-shadow hover:border-[#1d5547]/20 hover:shadow-md">
       <div className="flex gap-4">
         <LandingFaqIcon icon={icon} />
         <div className="min-w-0">
@@ -366,6 +341,53 @@ function LandingFaqCard({ icon, question, answer }: (typeof LANDING_FAQ_ITEMS)[n
           <p className="mt-3 text-sm leading-relaxed text-slate-600">{answer}</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: ReactNode
+  className?: string
+  delay?: number
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (typeof IntersectionObserver === "undefined") {
+      const raf = requestAnimationFrame(() => setVisible(true))
+      return () => cancelAnimationFrame(raf)
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true)
+            observer.disconnect()
+          }
+        })
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`${className} transition-all duration-700 ease-out will-change-transform motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+      }`}
+    >
+      {children}
     </div>
   )
 }
@@ -384,28 +406,30 @@ function LandingSectionHeader({
   wide?: boolean
 }) {
   return (
-    <div className="relative mb-12 sm:mb-14">
-      <div
-        className={`relative overflow-hidden border border-emerald-900/10 px-6 py-8 sm:px-8 sm:py-9 ${
-          tone === "soft" ? "bg-[#f6faf8]" : "bg-white shadow-sm"
-        }`}
-      >
-        <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
-        <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
-          {kicker}
-        </p>
-        <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
-          {title}
-        </h2>
-        <p
-          className={`mx-auto mt-5 text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left ${
-            wide ? "max-w-3xl" : "max-w-2xl"
+    <Reveal>
+      <div className="relative mb-12 sm:mb-14">
+        <div
+          className={`relative overflow-hidden border border-emerald-900/10 px-6 py-8 sm:px-8 sm:py-9 ${
+            tone === "soft" ? "bg-[#f6faf8]" : "bg-white shadow-sm"
           }`}
         >
-          {description}
-        </p>
+          <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-[#1d5547]/40 sm:block" />
+          <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1d5547] sm:pl-6 sm:text-left">
+            {kicker}
+          </p>
+          <h2 className="font-display text-center text-4xl leading-[1.1] tracking-tight text-slate-900 sm:pl-6 sm:text-left md:text-5xl">
+            {title}
+          </h2>
+          <p
+            className={`mx-auto mt-5 text-center text-lg leading-relaxed text-slate-600 sm:pl-6 sm:text-left ${
+              wide ? "max-w-3xl" : "max-w-2xl"
+            }`}
+          >
+            {description}
+          </p>
+        </div>
       </div>
-    </div>
+    </Reveal>
   )
 }
 
@@ -593,30 +617,66 @@ function HeroDashboardPanel({
   hoveredModule,
   studentsMetric,
   feeMetric,
+  teacherMetric,
+  attendanceMetric,
+  searchQuery,
+  notificationsOpen,
   onModuleHover,
+  onSelectModule,
+  onSelectStudent,
+  onSearchChange,
+  onToggleNotifications,
 }: {
   student: HeroStudent
-  linkedModule: string
+  linkedModule: string | null
   hoveredModule: string | null
   studentsMetric: number
   feeMetric: number
+  teacherMetric: number
+  attendanceMetric: number
+  searchQuery: string
+  notificationsOpen: boolean
   onModuleHover: (module: string | null) => void
+  onSelectModule: (module: string | null) => void
+  onSelectStudent: (id: string) => void
+  onSearchChange: (query: string) => void
+  onToggleNotifications: () => void
 }) {
+  const [searchFocused, setSearchFocused] = useState(false)
   const activeModule = hoveredModule ?? linkedModule
+
+  const searchMatches = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return []
+    return HERO_STUDENTS.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.shortName.toLowerCase().includes(q) ||
+        s.class.toLowerCase().includes(q) ||
+        s.status.toLowerCase().includes(q) ||
+        s.guardian.toLowerCase().includes(q)
+    )
+  }, [searchQuery])
+
+  const showSearchResults = searchFocused && searchQuery.trim().length > 0
 
   const renderNavItem = (item: (typeof HERO_SIDEBAR_NAV)[number], compact = false) => {
     const Icon = item.icon
-    const isActive = item.module === activeModule
-    const isLinked = item.module === linkedModule
+    const isActive =
+      item.module === activeModule || (item.module === null && activeModule === null)
+    const isLinked = item.module !== null && item.module === linkedModule
 
     return (
       <button
         key={`${compact ? "m" : "d"}-${item.label}`}
         type="button"
+        onClick={() => onSelectModule(item.module)}
         onMouseEnter={() => item.module && onModuleHover(item.module)}
         onMouseLeave={() => onModuleHover(null)}
         onFocus={() => item.module && onModuleHover(item.module)}
         onBlur={() => onModuleHover(null)}
+        aria-pressed={isActive}
+        aria-label={item.label}
         className={`flex transition-colors ${
           compact
             ? `min-w-0 flex-1 flex-col items-center gap-0.5 py-1.5 ${
@@ -645,16 +705,25 @@ function HeroDashboardPanel({
     )
   }
 
+  const stats = [
+    { label: "Students", value: studentsMetric.toLocaleString(), module: "Students" as const },
+    { label: "Teachers", value: teacherMetric.toLocaleString(), module: "Timetable" as const },
+    { label: "Fees", value: `${feeMetric}%`, module: "Fees" as const },
+    { label: "Attendance", value: `${attendanceMetric}%`, module: "Students" as const, studentId: "brian" },
+  ]
+
   return (
-    <div
-      key={student.id}
-      className="hero-profile-in rounded-none flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]"
-    >
+    <div className="rounded-none flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]">
       {/* Icon rail — desktop / tablet */}
       <aside className="hidden shrink-0 flex-col items-center border-slate-200/70 bg-white py-2.5 md:flex md:w-[52px] lg:w-[56px] md:border-r">
-        <div className="mb-2 flex h-8 w-8 items-center justify-center bg-emerald-600 text-[10px] font-bold text-white">
+        <button
+          type="button"
+          onClick={() => onSelectModule(null)}
+          className="mb-2 flex h-8 w-8 items-center justify-center bg-emerald-600 text-[10px] font-bold text-white transition-opacity hover:opacity-90"
+          aria-label="Home"
+        >
           SQ
-        </div>
+        </button>
         <nav className="flex flex-1 flex-col items-center gap-0.5">
           {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item))}
         </nav>
@@ -665,83 +734,202 @@ function HeroDashboardPanel({
         {/* App header */}
         <header className="flex shrink-0 items-center gap-1.5 border-b border-slate-200/60 px-2.5 py-2 sm:gap-2 sm:px-3 sm:py-2.5 md:px-4">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-900 sm:text-sm">Dashboard</p>
+            <p className="truncate text-xs font-semibold text-slate-900 sm:text-sm">
+              {linkedModule ?? "Dashboard"}
+            </p>
             <p className="truncate text-[9px] text-slate-400 sm:text-[10px] md:hidden">
               Term 2, 2026
             </p>
             <p className="hidden truncate text-[10px] text-slate-400 md:block">
-              Overview of your school · Term 2, 2026
+              {linkedModule
+                ? `${linkedModule} · Term 2, 2026`
+                : "Overview of your school · Term 2, 2026"}
             </p>
           </div>
           <span className="flex shrink-0 items-center gap-1 bg-emerald-50 px-1.5 py-0.5 ring-1 ring-emerald-100 sm:px-2">
             <Radio className="h-2.5 w-2.5 text-emerald-600 sm:h-3 sm:w-3" />
-            <span className="text-[8px] font-bold uppercase tracking-wide text-emerald-700 sm:text-[9px]">Live</span>
+            <span className="text-[8px] font-bold uppercase tracking-wide text-emerald-700 sm:text-[9px]">
+              Live
+            </span>
           </span>
           <button
             type="button"
-            className="hidden h-7 w-7 shrink-0 items-center justify-center text-slate-400 hover:bg-slate-50 sm:flex"
-            aria-hidden
+            onClick={onToggleNotifications}
+            aria-pressed={notificationsOpen}
+            aria-label={notificationsOpen ? "Hide notifications" : "Show notifications"}
+            className={`relative hidden h-7 w-7 shrink-0 items-center justify-center transition-colors sm:flex ${
+              notificationsOpen
+                ? "bg-emerald-50 text-emerald-700"
+                : "text-slate-400 hover:bg-slate-50"
+            }`}
           >
             <Bell className="h-3.5 w-3.5" />
+            {!notificationsOpen && (
+              <span className="absolute right-1 top-1 h-1.5 w-1.5 bg-emerald-500" />
+            )}
           </button>
-          <div className="h-6 w-6 shrink-0 bg-emerald-100 ring-1 ring-emerald-200 sm:h-7 sm:w-7" />
+          <button
+            type="button"
+            onClick={() => onSelectStudent(student.id)}
+            className="h-6 w-6 shrink-0 overflow-hidden bg-emerald-100 ring-1 ring-emerald-200 transition-shadow hover:ring-emerald-400 sm:h-7 sm:w-7"
+            aria-label={`Focus ${student.name}`}
+          >
+            <img
+              src={student.src}
+              alt=""
+              className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
+            />
+          </button>
         </header>
+
+        {notificationsOpen && (
+          <div className="border-b border-emerald-100 bg-emerald-50/80 px-2.5 py-2 sm:px-3">
+            <p className="text-[10px] font-semibold text-emerald-800">3 new updates today</p>
+            <p className="mt-0.5 text-[9px] text-emerald-700/80">
+              M-Pesa matched · Admission #2043 · CBC reminder sent
+            </p>
+          </div>
+        )}
 
         <div className="space-y-2 overflow-y-auto bg-slate-50 p-2 sm:space-y-2.5 sm:p-2.5 md:p-3 lg:overflow-visible [scrollbar-width:thin]">
           {/* Stat bar */}
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-            {[
-              { label: "Students", value: studentsMetric.toLocaleString() },
-              { label: "Teachers", value: "48" },
-              { label: "Fees", value: `${feeMetric}%` },
-              { label: "Attendance", value: "96%" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="border border-slate-100 bg-white px-2 py-1.5 sm:px-2.5 sm:py-2"
-              >
-                <p className="text-[7px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
-                  {stat.label}
-                </p>
-                <p className="mt-0.5 text-[11px] font-semibold tabular-nums text-slate-800 sm:text-sm">
-                  {stat.value}
-                </p>
-              </div>
-            ))}
+            {stats.map((stat) => {
+              const isActive =
+                linkedModule === stat.module &&
+                (!("studentId" in stat) || student.id === stat.studentId)
+              return (
+                <button
+                  key={stat.label}
+                  type="button"
+                  onClick={() => {
+                    if ("studentId" in stat && stat.studentId) {
+                      onSelectStudent(stat.studentId)
+                    } else {
+                      onSelectModule(stat.module)
+                    }
+                  }}
+                  className={`border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
+                    isActive
+                      ? "border-emerald-200 bg-emerald-50/90"
+                      : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <p className="text-[7px] font-medium uppercase tracking-wide text-slate-400 sm:text-[9px]">
+                    {stat.label}
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-semibold tabular-nums text-slate-800 sm:text-sm">
+                    {stat.value}
+                  </p>
+                </button>
+              )
+            })}
           </div>
 
           {/* Student search */}
-          <div className="border border-slate-200/80 bg-white p-2 shadow-sm sm:p-2.5 md:p-3">
+          <div className="relative border border-slate-200/80 bg-white p-2 shadow-sm sm:p-2.5 md:p-3">
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-              <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-800 sm:text-sm">
-                {student.name}
-              </span>
+              <input
+                type="search"
+                value={searchFocused || searchQuery ? searchQuery : student.name}
+                onChange={(e) => onSearchChange(e.target.value)}
+                onFocus={() => {
+                  setSearchFocused(true)
+                  if (!searchQuery) onSearchChange("")
+                }}
+                onBlur={() => {
+                  window.setTimeout(() => {
+                    setSearchFocused(false)
+                    onSearchChange("")
+                  }, 150)
+                }}
+                placeholder="Search students…"
+                aria-label="Search students"
+                className="min-w-0 flex-1 truncate bg-transparent text-[11px] font-medium text-slate-800 outline-none placeholder:text-slate-400 sm:text-sm"
+              />
               <span
-                className={`max-w-[42%] shrink-0 truncate px-1.5 py-0.5 text-[8px] font-semibold sm:max-w-none sm:px-2 sm:text-[10px] ${HERO_STUDENT_STATUS_COLORS[student.statusType]}`}
+                key={student.id}
+                className={`hero-profile-in max-w-[42%] shrink-0 truncate px-1.5 py-0.5 text-[8px] font-semibold sm:max-w-none sm:px-2 sm:text-[10px] ${HERO_STUDENT_STATUS_COLORS[student.statusType]}`}
               >
                 {student.status}
               </span>
             </div>
-            <p className="mt-1 flex items-center gap-1.5 text-[9px] text-slate-500 sm:mt-1.5 sm:text-[11px]">
+            <p
+              key={`${student.id}-detail`}
+              className="hero-profile-in mt-1 flex items-center gap-1.5 text-[9px] text-slate-500 sm:mt-1.5 sm:text-[11px]"
+            >
               <span className="h-1 w-1 shrink-0 bg-emerald-500" />
               <span className="line-clamp-2 sm:truncate">{student.detail}</span>
             </p>
+
+            {showSearchResults && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden border border-slate-200 bg-white shadow-lg">
+                {searchMatches.length === 0 ? (
+                  <p className="px-3 py-2 text-[10px] text-slate-500">
+                    No students match “{searchQuery}”
+                  </p>
+                ) : (
+                  searchMatches.map((match) => (
+                    <button
+                      key={match.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        onSelectStudent(match.id)
+                        onSearchChange("")
+                        setSearchFocused(false)
+                      }}
+                      className={`flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-emerald-50 ${
+                        match.id === student.id ? "bg-emerald-50/70" : ""
+                      }`}
+                    >
+                      <div className="h-6 w-6 shrink-0 overflow-hidden bg-slate-100 ring-1 ring-slate-200">
+                        <img
+                          src={match.src}
+                          alt=""
+                          className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-medium text-slate-800">
+                          {match.name}
+                        </p>
+                        <p className="truncate text-[9px] text-slate-500">
+                          {match.class} · {match.status}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {/* Module summary */}
           <div className="grid grid-cols-2 gap-1.5">
             {HERO_DASHBOARD_MODULES.map((mod) => {
-              const isLinked = mod.module === linkedModule
-              const metric = getHeroModuleMetric(mod.label, student, studentsMetric, feeMetric)
+              const isLinked = mod.module === linkedModule || mod.module === activeModule
+              const metric = getHeroModuleMetric(
+                mod.label,
+                student,
+                studentsMetric,
+                feeMetric,
+                linkedModule
+              )
               const Icon = mod.icon
               return (
-                <div
+                <button
                   key={mod.label}
+                  type="button"
+                  onClick={() => onSelectModule(mod.module)}
                   onMouseEnter={() => onModuleHover(mod.module)}
                   onMouseLeave={() => onModuleHover(null)}
-                  className={`flex items-center gap-2 border px-2 py-1.5 transition-colors sm:px-2.5 sm:py-2 ${
-                    isLinked ? "border-emerald-200 bg-emerald-50/90" : "border-slate-200/70 bg-white"
+                  aria-pressed={mod.module === linkedModule}
+                  className={`flex items-center gap-2 border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
+                    isLinked
+                      ? "border-emerald-200 bg-emerald-50/90"
+                      : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
                   <span
@@ -767,7 +955,7 @@ function HeroDashboardPanel({
                       {metric}
                     </p>
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
@@ -775,7 +963,9 @@ function HeroDashboardPanel({
           {/* Activity feed — scroll on small screens; full list on desktop */}
           <div className="overflow-hidden border border-slate-200/80 bg-white">
             <div className="flex items-center justify-between border-b border-slate-100 px-2 py-1.5 sm:px-2.5 sm:py-2 md:px-3">
-              <p className="text-[10px] font-semibold text-slate-700 sm:text-[11px]">Recent activity</p>
+              <p className="text-[10px] font-semibold text-slate-700 sm:text-[11px]">
+                Recent activity
+              </p>
               <p className="text-[9px] text-slate-400">Today</p>
             </div>
             <div className="max-h-[108px] divide-y divide-slate-100 overflow-y-auto sm:max-h-[132px] md:max-h-[148px] lg:max-h-none lg:overflow-visible [scrollbar-width:thin]">
@@ -783,13 +973,20 @@ function HeroDashboardPanel({
                 const rowStudent = HERO_STUDENTS.find((s) => s.id === row.id)!
                 const isSelected = row.id === student.id
                 return (
-                  <div
+                  <button
                     key={row.id}
-                    className={`flex items-center gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-2.5 sm:py-2 md:px-3 md:py-2.5 ${
-                      isSelected ? "bg-emerald-50/60" : ""
+                    type="button"
+                    onClick={() => onSelectStudent(row.id)}
+                    aria-pressed={isSelected}
+                    className={`flex w-full items-center gap-1.5 px-2 py-1.5 text-left transition-colors sm:gap-2 sm:px-2.5 sm:py-2 md:px-3 md:py-2.5 ${
+                      isSelected ? "bg-emerald-50/60" : "hover:bg-slate-50"
                     }`}
                   >
-                    <div className="h-5 w-5 shrink-0 overflow-hidden bg-slate-100 ring-1 ring-slate-200 sm:h-6 sm:w-6 md:h-7 md:w-7">
+                    <div
+                      className={`h-5 w-5 shrink-0 overflow-hidden bg-slate-100 ring-1 sm:h-6 sm:w-6 md:h-7 md:w-7 ${
+                        isSelected ? "ring-emerald-300" : "ring-slate-200"
+                      }`}
+                    >
                       <img
                         src={rowStudent.src}
                         alt=""
@@ -799,7 +996,9 @@ function HeroDashboardPanel({
                     <div className="min-w-0 flex-1">
                       <p
                         className={`truncate text-[9px] sm:text-[10px] md:text-[11px] ${
-                          isSelected ? "font-semibold text-slate-900" : "font-medium text-slate-700"
+                          isSelected
+                            ? "font-semibold text-slate-900"
+                            : "font-medium text-slate-700"
                         }`}
                       >
                         {row.title}
@@ -808,8 +1007,10 @@ function HeroDashboardPanel({
                         {row.meta}
                       </p>
                     </div>
-                    <span className="shrink-0 text-[8px] tabular-nums text-slate-400 sm:text-[9px]">{row.time}</span>
-                  </div>
+                    <span className="shrink-0 text-[8px] tabular-nums text-slate-400 sm:text-[9px]">
+                      {row.time}
+                    </span>
+                  </button>
                 )
               })}
             </div>
@@ -817,16 +1018,30 @@ function HeroDashboardPanel({
         </div>
 
         {/* Status footer */}
-        <div className="flex shrink-0 items-center gap-1.5 border-t border-slate-200/60 bg-slate-50/80 px-2.5 py-1.5 sm:gap-2 sm:px-3 sm:py-2 md:px-4">
-          <div className="h-5 w-5 shrink-0 overflow-hidden ring-1 ring-slate-200 sm:h-6 sm:w-6">
-            <img src={student.src} alt="" className="h-full w-full object-cover object-[center_20%] scale-[1.55]" />
+        <button
+          type="button"
+          onClick={() => onSelectStudent(student.id)}
+          className="flex shrink-0 items-center gap-1.5 border-t border-slate-200/60 bg-slate-50/80 px-2.5 py-1.5 text-left transition-colors hover:bg-emerald-50/50 sm:gap-2 sm:px-3 sm:py-2 md:px-4"
+        >
+          <div
+            key={student.id}
+            className="hero-profile-in h-5 w-5 shrink-0 overflow-hidden ring-1 ring-slate-200 sm:h-6 sm:w-6"
+          >
+            <img
+              src={student.src}
+              alt=""
+              className="h-full w-full object-cover object-[center_20%] scale-[1.55]"
+            />
           </div>
-          <p className="min-w-0 text-[9px] leading-snug text-slate-600 sm:text-[10px] md:text-[11px]">
+          <p
+            key={`${student.id}-insight`}
+            className="hero-profile-in min-w-0 text-[9px] leading-snug text-slate-600 sm:text-[10px] md:text-[11px]"
+          >
             <span className="font-semibold text-slate-800">{student.shortName}</span>
             <span className="text-slate-400"> — </span>
             <span className="line-clamp-2 md:truncate">{student.insight}</span>
           </p>
-        </div>
+        </button>
 
         {/* Mobile bottom nav — matches school app */}
         <nav className="flex shrink-0 items-center border-t border-slate-200/70 bg-white px-1 py-0.5 md:hidden">
@@ -836,6 +1051,7 @@ function HeroDashboardPanel({
     </div>
   )
 }
+
 
 function HeroLiveDemoStrip({
   selectedStudent,
@@ -847,7 +1063,7 @@ function HeroLiveDemoStrip({
   onSelectStudent: (id: string) => void
 }) {
   return (
-    <div className="mt-5 w-full border border-white/15 bg-black/25 p-3.5 sm:p-4">
+    <div className="mt-6 w-full border-t border-white/10 pt-5">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
           See it update live
@@ -863,7 +1079,7 @@ function HeroLiveDemoStrip({
                 key={student.id}
                 type="button"
                 onClick={() => onSelectStudent(student.id)}
-                className={`hero-stat-pop rounded-none relative h-9 w-9 overflow-hidden ring-2 transition-all hover:z-10 hover:scale-105 sm:h-10 sm:w-10 ${
+                className={`hero-stat-pop rounded-full relative h-9 w-9 overflow-hidden ring-2 transition-all hover:z-10 hover:scale-105 sm:h-10 sm:w-10 ${
                   isSelected
                     ? "ring-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.35)]"
                     : "ring-[#0a1f1a]/80 hover:ring-emerald-400/60"
@@ -974,6 +1190,13 @@ const HERO_STUDENT_MODULE_MAP: Record<HeroStudent["statusType"], string> = {
   exams: "Exams",
 }
 
+const HERO_MODULE_STUDENT_MAP: Record<string, string> = {
+  Students: "grace",
+  Fees: "amina",
+  Exams: "david",
+  Timetable: "brian",
+}
+
 const HERO_DEMO_STATS = {
   students: { target: 1284, delta: "+156 this term" },
   feeCollection: { target: 94, delta: "+12% vs last term" },
@@ -997,9 +1220,9 @@ const HERO_SIDEBAR_NAV = [
 
 const HERO_ACTIVITY_ROWS = [
   { id: "amina", time: "10:14 AM", title: "M-Pesa payment received", meta: "KES 12,400 · receipt sent to parent" },
-  { id: "brian", time: "8:02 AM", title: "Attendance marked present", meta: "Parent notified via SMS" },
   { id: "grace", time: "8:45 AM", title: "Admission #2043 created", meta: "Class assigned · ID issued" },
-  { id: "david", time: "7:30 AM", title: "CBC assessment scheduled", meta: "Fee reminder sent · parent notified" },
+  { id: "brian", time: "8:02 AM", title: "Attendance marked present", meta: "Parent notified via SMS" },
+  { id: "david", time: "7:30 AM", title: "CBC assessment scheduled", meta: "CBC assessment Fri 9 AM · parent notified" },
 ] as const
 
 const HERO_TRUST_STATS = [
@@ -1088,10 +1311,12 @@ function getHeroModuleMetric(
   modLabel: string,
   selectedStudent: HeroStudent,
   studentsMetric: number,
-  feeMetric: number
+  feeMetric: number,
+  activeLinkedModule?: string | null
 ) {
-  const linkedModule = HERO_STUDENT_MODULE_MAP[selectedStudent.statusType]
-  if (modLabel === linkedModule) return selectedStudent.moduleMetric
+  const studentModule = HERO_STUDENT_MODULE_MAP[selectedStudent.statusType]
+  const highlightModule = activeLinkedModule ?? studentModule
+  if (modLabel === highlightModule) return selectedStudent.moduleMetric
 
   const mod = HERO_DASHBOARD_MODULES.find((m) => m.label === modLabel)
   if (!mod) return ""
@@ -1106,15 +1331,36 @@ export default function Home() {
   const { config } = useSchoolConfigStore()
   const [hoveredModule, setHoveredModule] = useState<string | null>(null)
   const [selectedStudentId, setSelectedStudentId] = useState(HERO_DEFAULT_STUDENT_ID)
+  // undefined = derive from student; null = Home overview; string = explicit module
+  const [moduleOverride, setModuleOverride] = useState<string | null | undefined>(undefined)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [demoPaused, setDemoPaused] = useState(false)
   const studentsMetric = useAnimatedNumber(HERO_DEMO_STATS.students.target, { delay: 400 })
   const feeMetric = useAnimatedNumber(HERO_DEMO_STATS.feeCollection.target, { delay: 500 })
+  const teacherMetric = useAnimatedNumber(48, { delay: 600 })
+  const attendanceMetric = useAnimatedNumber(96, { delay: 700 })
 
   const selectedStudent = HERO_STUDENTS.find((s) => s.id === selectedStudentId) ?? HERO_STUDENTS[0]
-  const linkedModule = HERO_STUDENT_MODULE_MAP[selectedStudent.statusType]
+  const linkedModule =
+    moduleOverride === undefined
+      ? HERO_STUDENT_MODULE_MAP[selectedStudent.statusType]
+      : moduleOverride
 
   const selectStudent = (id: string) => {
+    setDemoPaused(true)
     setSelectedStudentId(id)
+    setModuleOverride(undefined)
+    setSearchQuery("")
+  }
+
+  const selectModule = (module: string | null) => {
+    setDemoPaused(true)
+    setModuleOverride(module)
+    if (module && HERO_MODULE_STUDENT_MAP[module]) {
+      setSelectedStudentId(HERO_MODULE_STUDENT_MAP[module])
+    }
+    setSearchQuery("")
   }
 
   useEffect(() => {
@@ -1125,6 +1371,7 @@ export default function Home() {
         const next = HERO_STUDENTS[(idx + 1) % HERO_STUDENTS.length]
         return next.id
       })
+      setModuleOverride(undefined)
     }, 6500)
     return () => window.clearInterval(timer)
   }, [demoPaused])
@@ -1177,24 +1424,19 @@ export default function Home() {
           <div className="landing-hero-tail pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-40 sm:h-48 lg:h-56" aria-hidden />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-0 pt-[4.5rem] sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-7 sm:gap-8 lg:grid-cols-12 lg:items-start lg:gap-8 lg:pt-3 xl:gap-10">
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-16 pt-[4.5rem] sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
+          <div className="grid grid-cols-1 gap-7 sm:gap-8 lg:grid-cols-12 lg:items-center lg:gap-8 lg:pt-3 xl:gap-10">
             {/* Left — pitch */}
             <div
-              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center border border-white/15 bg-[#0a1f1a]/92 px-5 py-6 text-center shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg sm:px-6 sm:py-7 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:text-left xl:col-span-5"
+              className="relative z-20 order-1 flex w-full min-w-0 flex-col justify-self-center border border-white/15 bg-[#0a1f1a]/92 px-6 py-8 text-center shadow-[0_16px_56px_rgba(0,0,0,0.55)] backdrop-blur-lg sm:px-8 sm:py-10 lg:order-none lg:col-span-6 lg:h-auto lg:justify-self-auto lg:text-left"
               onMouseEnter={() => setDemoPaused(true)}
               onMouseLeave={() => setDemoPaused(false)}
             >
-              <div className="mb-2 inline-flex items-center gap-2 border-0 bg-white px-3 py-1.5 text-xs font-semibold text-[#0a1f1a] shadow-sm">
-                <span className="h-1.5 w-1.5 bg-emerald-500" />
-                Built for Kenyan schools
-              </div>
-
-              <h1 className="font-display w-full leading-[1.06] tracking-tight text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.9)]">
-                <span className="block text-[1.7rem] tracking-[0.01em] sm:text-[2rem] lg:whitespace-nowrap lg:text-[2.28rem] xl:text-[2.35rem]">
+              <h1 className="font-display w-full leading-[1.08] tracking-tight text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.9)]">
+                <span className="block text-[1.7rem] tracking-[0.01em] sm:text-[2rem] lg:text-[2.3rem] xl:text-[2.35rem]">
                   Stop running your school through
                 </span>
-                <span className="mt-1 block text-[1.7rem] italic text-emerald-200 drop-shadow-[0_2px_20px_rgba(0,0,0,0.85)] sm:text-[2rem] sm:whitespace-nowrap lg:text-[2.35rem] xl:text-[2.42rem]">
+                <span className="mt-1.5 block text-[1.7rem] italic text-emerald-200 drop-shadow-[0_2px_20px_rgba(0,0,0,0.85)] sm:text-[2rem] lg:text-[2.3rem] xl:text-[2.35rem]">
                   WhatsApp, Excel &amp; paper
                 </span>
               </h1>
@@ -1213,7 +1455,7 @@ export default function Home() {
                 <Link href="/register" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="rounded-none h-12 w-full border-0 bg-emerald-500 px-8 text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
+                    className="rounded-lg h-12 w-full border-0 bg-emerald-500 px-8 text-sm font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:h-[3.25rem] sm:w-auto sm:px-10 sm:text-base"
                   >
                     Start Your Free Term
                   </Button>
@@ -1222,7 +1464,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     size="lg"
-                    className="rounded-none h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:w-auto"
+                    className="rounded-lg h-12 w-full border-white/50 bg-white/10 px-6 text-sm font-semibold text-white shadow-sm backdrop-blur-sm hover:bg-white/20 hover:text-white sm:h-[3.25rem] sm:w-auto sm:px-8 sm:text-base"
                   >
                     <Play className="mr-2 h-3.5 w-3.5 fill-white" />
                     See a demo
@@ -1237,7 +1479,7 @@ export default function Home() {
 
             {/* Right — dashboard preview */}
             <div
-              className="relative order-2 z-10 w-full min-w-0 lg:order-none lg:col-span-6 xl:col-span-7"
+              className="relative order-2 z-10 w-full min-w-0 lg:order-none lg:col-span-6"
               onMouseEnter={() => setDemoPaused(true)}
               onMouseLeave={() => setDemoPaused(false)}
             >
@@ -1247,36 +1489,27 @@ export default function Home() {
                 hoveredModule={hoveredModule}
                 studentsMetric={studentsMetric.value}
                 feeMetric={feeMetric.value}
+                teacherMetric={teacherMetric.value}
+                attendanceMetric={attendanceMetric.value}
+                searchQuery={searchQuery}
+                notificationsOpen={notificationsOpen}
                 onModuleHover={setHoveredModule}
+                onSelectModule={selectModule}
+                onSelectStudent={selectStudent}
+                onSearchChange={(query) => {
+                  setDemoPaused(true)
+                  setSearchQuery(query)
+                }}
+                onToggleNotifications={() => {
+                  setDemoPaused(true)
+                  setNotificationsOpen((open) => !open)
+                }}
               />
             </div>
           </div>
 
-          <div className="mt-6 sm:mt-7 lg:mt-8">
+          <div className="mt-8 sm:mt-9 lg:mt-10">
             <HeroTrustBar />
-          </div>
-
-          {/* Feature cards — dark zone, continuous with hero */}
-          <div className="relative mt-8 pb-10 sm:mt-10 sm:pb-12 lg:mt-10 lg:pb-14">
-            <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55 sm:mb-7">
-              What you get
-            </p>
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-7 [&>div]:md:min-h-[19.5rem]">
-              {LANDING_FEATURE_CARDS.map(({ icon: Icon, title, description }) => (
-                <div
-                  key={title}
-                  className="flex h-full flex-col border border-white/15 bg-[#0a1f1a]/88 p-9 shadow-[0_16px_48px_rgba(0,0,0,0.4)] backdrop-blur-lg transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-[#0a1f1a]/95 sm:p-10"
-                >
-                  <div className="mb-7 flex h-12 w-12 shrink-0 items-center justify-center bg-emerald-600 shadow-sm sm:h-[3.25rem] sm:w-[3.25rem]">
-                    <Icon className="h-6 w-6 text-white sm:h-7 sm:w-7" strokeWidth={1.75} aria-hidden />
-                  </div>
-                  <h3 className="mb-4 shrink-0 text-lg text-white sm:text-xl">{title}</h3>
-                  <p className="min-h-[6.5rem] flex-1 text-sm leading-[1.7] text-white/75 sm:min-h-[6.75rem] sm:text-[15px]">
-                    {description}
-                  </p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -1298,6 +1531,7 @@ export default function Home() {
           </div>
 
           <div className="relative z-10 mx-auto max-w-7xl px-4 pt-12 sm:px-6 sm:pt-14 lg:px-8 lg:pt-16">
+            <Reveal>
             <div className="relative mb-12 sm:mb-14">
               <div className="overflow-hidden border border-white/30 bg-white/95 shadow-[0_24px_64px_rgba(10,31,26,0.18)] backdrop-blur-md">
                 <div className="absolute left-0 top-0 hidden h-full w-1 bg-gradient-to-b from-emerald-500 to-emerald-700/40 sm:block" />
@@ -1320,11 +1554,13 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            </Reveal>
 
             <div className="grid gap-6 md:grid-cols-2 md:gap-7 lg:grid-cols-3 lg:gap-8">
               {LANDING_PLATFORM_MODULES.map((feature, index) => {
                 return (
-                  <div key={feature.title} className="group relative">
+                  <Reveal key={feature.title} delay={index * 60}>
+                  <div className="group relative h-full">
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="relative flex h-full flex-col border border-emerald-900/10 bg-white p-8 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:border-[#1d5547]/25 group-hover:shadow-md">
                       <div className="absolute -right-3 -top-3 flex h-8 w-8 items-center justify-center border border-emerald-900/10 bg-white font-ui text-xs font-semibold tabular-nums text-[#1d5547] shadow-sm">
@@ -1342,6 +1578,7 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
+                  </Reveal>
                 )
               })}
             </div>
@@ -1365,21 +1602,27 @@ export default function Home() {
 
             <div className="grid gap-8">
               <div className="grid gap-8 md:grid-cols-2">
-                {LANDING_WORKFLOW_BLOCKS.slice(0, 2).map((block) => (
-                  <LandingWorkflowCard key={block.id} {...block} />
+                {LANDING_WORKFLOW_BLOCKS.slice(0, 2).map((block, i) => (
+                  <Reveal key={block.id} delay={i * 80} className="h-full">
+                    <LandingWorkflowCard {...block} />
+                  </Reveal>
                 ))}
               </div>
 
-              <LandingBursarSnapshot
-                activeStudents={stats.activeStudents}
-                feeCollectionRate={stats.feeCollectionRate}
-                totalClasses={stats.totalClasses}
-                totalSubjects={stats.totalSubjects}
-              />
+              <Reveal>
+                <LandingBursarSnapshot
+                  activeStudents={stats.activeStudents}
+                  feeCollectionRate={stats.feeCollectionRate}
+                  totalClasses={stats.totalClasses}
+                  totalSubjects={stats.totalSubjects}
+                />
+              </Reveal>
 
               <div className="grid gap-8 md:grid-cols-2">
-                {LANDING_WORKFLOW_BLOCKS.slice(2, 4).map((block) => (
-                  <LandingWorkflowCard key={block.id} {...block} />
+                {LANDING_WORKFLOW_BLOCKS.slice(2, 4).map((block, i) => (
+                  <Reveal key={block.id} delay={i * 80} className="h-full">
+                    <LandingWorkflowCard {...block} />
+                  </Reveal>
                 ))}
               </div>
             </div>
@@ -1390,6 +1633,7 @@ export default function Home() {
         {/* Testimonial */}
         <section className="relative border-t border-emerald-900/10 bg-[#f6faf8] py-20 sm:py-24">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            <Reveal>
             <figure className="text-center">
               <div className="mb-8 flex items-center justify-center gap-4">
                 <span className="h-px w-10 bg-[#1d5547]/30" aria-hidden />
@@ -1412,6 +1656,7 @@ export default function Home() {
                 <p className="mt-0.5 text-sm text-slate-500">Bursar, Unity Secondary School · Nakuru</p>
               </figcaption>
             </figure>
+            </Reveal>
           </div>
         </section>
 
@@ -1432,8 +1677,10 @@ export default function Home() {
             />
 
             <div className="space-y-20 sm:space-y-24">
-              {LANDING_DEEP_DIVES.map((dive) => (
-                <LandingDeepDiveBlock key={dive.id} {...dive} />
+              {LANDING_DEEP_DIVES.map((dive, i) => (
+                <Reveal key={dive.id} delay={i * 80}>
+                  <LandingDeepDiveBlock {...dive} />
+                </Reveal>
               ))}
             </div>
           </div>
@@ -1454,11 +1701,14 @@ export default function Home() {
             />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {LANDING_FAQ_ITEMS.map((item) => (
-                <LandingFaqCard key={item.question} {...item} />
+              {LANDING_FAQ_ITEMS.map((item, i) => (
+                <Reveal key={item.question} delay={i * 50} className="h-full">
+                  <LandingFaqCard {...item} />
+                </Reveal>
               ))}
             </div>
 
+            <Reveal>
             <div className="relative mt-14 overflow-hidden bg-[#0a1f1a] sm:mt-16">
               <div
                 className="absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:44px_44px]"
@@ -1481,7 +1731,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="rounded-none h-12 w-full border-0 bg-emerald-500 px-8 font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:w-auto sm:px-10 sm:text-base"
+                      className="rounded-lg h-12 w-full border-0 bg-emerald-500 px-8 font-semibold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-400 sm:w-auto sm:px-10 sm:text-base"
                     >
                       Start Your Free Term
                     </Button>
@@ -1490,7 +1740,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="rounded-none h-12 w-full border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
+                      className="rounded-lg h-12 w-full border-white/25 bg-transparent px-8 font-semibold text-white hover:bg-white/10 sm:w-auto"
                     >
                       <Play className="mr-2 h-3.5 w-3.5 fill-white" />
                       See a demo
@@ -1502,6 +1752,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
+            </Reveal>
           </div>
         </section>
 
@@ -1530,7 +1781,7 @@ export default function Home() {
                   <Link href="/register" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="rounded-none h-11 w-full border-0 bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#2d8570] sm:w-auto"
+                      className="rounded-lg h-11 w-full border-0 bg-[#1d5547] px-6 font-semibold text-white hover:bg-[#2d8570] sm:w-auto"
                     >
                       Start free term
                     </Button>
@@ -1539,7 +1790,7 @@ export default function Home() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="rounded-none h-11 w-full border-white/25 bg-transparent px-6 font-semibold text-white hover:bg-white/10 sm:w-auto"
+                      className="rounded-lg h-11 w-full border-white/25 bg-transparent px-6 font-semibold text-white hover:bg-white/10 sm:w-auto"
                     >
                       Sign in
                     </Button>
@@ -1627,7 +1878,7 @@ export default function Home() {
 
             <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 py-8 sm:flex-row">
               <p className="text-center text-sm text-white/50 sm:text-left">
-                © {new Date().getFullYear()} SQUL. Built for Kenyan schools.
+                © {new Date().getFullYear()} SQUL. All rights reserved.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
                 {["Privacy", "Terms"].map((text) => (
