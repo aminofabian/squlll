@@ -33,6 +33,14 @@ export function sanitizeTimetableUserMessage(error: unknown): string {
     return "Something went wrong. Please try again.";
   }
 
+  if (
+    /CreateTeacherLessonAllocationInput|createTeacherLessonAllocation|Unknown type|Cannot query field/i.test(
+      raw,
+    )
+  ) {
+    return "Weekly lesson saving is not available on the API this page is using. Start the local timetable API (port 3001) and restart the app, then try again.";
+  }
+
   const technical =
     /uuid|daytemplateperiod|graphql|timeslot|time slot|not found in store|invalid id|badrequest|internal server/i.test(
       raw,

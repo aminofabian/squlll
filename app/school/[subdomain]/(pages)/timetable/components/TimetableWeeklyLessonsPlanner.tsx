@@ -33,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSchoolConfigStore } from "@/lib/stores/useSchoolConfigStore";
 import type { Grade, Subject, Teacher } from "@/lib/types/timetable";
 import type { TeacherLessonAllocation } from "@/lib/types/timetable-allocation";
+import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import { tt } from "../utils/timetableTheme";
 import { subjectsForTimetableGrade } from "../utils/resolveGradeForSchoolConfig";
 import {
@@ -573,10 +574,7 @@ export function TimetableWeeklyLessonsPlanner({
     } catch (error) {
       toast({
         title: "We couldn't save everything",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Please check your connection and try again.",
+        description: sanitizeTimetableUserMessage(error),
         variant: "destructive",
       });
     } finally {
