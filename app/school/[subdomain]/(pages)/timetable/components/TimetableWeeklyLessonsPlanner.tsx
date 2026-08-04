@@ -35,7 +35,12 @@ import type { Grade, Subject, Teacher } from "@/lib/types/timetable";
 import type { TeacherLessonAllocation } from "@/lib/types/timetable-allocation";
 import { sanitizeTimetableUserMessage } from "@/lib/utils/timetable-user-messages";
 import { tt } from "../utils/timetableTheme";
-import { subjectsForTimetableGrade } from "../utils/resolveGradeForSchoolConfig";
+import {
+  isSameGrade,
+  resolveTenantGradeLevelIdForApi,
+  resolveTenantStreamIdForApi,
+  subjectsForTimetableGrade,
+} from "../utils/resolveGradeForSchoolConfig";
 import {
   gradeBandFor,
   suggestWeeklyLessons,
@@ -161,7 +166,9 @@ export function TimetableWeeklyLessonsPlanner({
 
   const firstGradeWithLessons = useMemo(
     () =>
-      grades.find((g) => allocations.some((a) => a.gradeLevelId === g.id))?.id,
+      grades.find((g) =>
+        allocations.some((a) => isSameGrade(a.gradeLevelId, g.id, grades)),
+      )?.id,
     [grades, allocations],
   );
 
@@ -229,7 +236,9 @@ export function TimetableWeeklyLessonsPlanner({
   const baseRowsFor = useCallback(
     (gradeId: string): PlannerRow[] => {
       const grade = grades.find((g) => g.id === gradeId);
-      const saved = allocations.filter((a) => a.gradeLevelId === gradeId);
+      const saved = allocations.filter((a) =>
+        isSameGrade(a.gradeLevelId, gradeId, grades),
+      );
       const subjectName = (id: string) =>
         subjects.find((s) => s.id === id)?.name ?? "Subject";
 
@@ -510,12 +519,16 @@ export function TimetableWeeklyLessonsPlanner({
             continue;
           }
 
+          // The API keys allocations by tenant ids; the UI works in master ids.
           const payload = {
             termId,
             teacherId: row.teacherId,
             subjectId: row.subjectId,
-            gradeLevelId: gradeId,
-            streamId: row.streamId ?? undefined,
+            gradeLevelId:
+              resolveTenantGradeLevelIdForApi(gradeId, grades) ?? gradeId,
+            streamId:
+              resolveTenantStreamIdForApi(row.streamId, gradeId, grades) ??
+              undefined,
             lessonsPerWeek: row.lessonsPerWeek,
             preferredDoubleLessons: row.doubleLessons,
           };

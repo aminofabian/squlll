@@ -10,13 +10,23 @@ export function computeLocalPreflight(params: {
   rules: TeacherWorkloadRules[];
   availableSlotsPerClass: number;
   schoolDays?: number;
+  /**
+   * How many classes a grade-wide allocation becomes — one per stream. A
+   * teacher taking 5 lessons in a grade with 3 streams teaches 15.
+   */
+  classCountFor?: (gradeLevelId: string) => number;
 }): TimetablePreflightResult {
   const { allocations, rules, availableSlotsPerClass } = params;
   const schoolDays = params.schoolDays ?? 5;
   const issues: TimetablePreflightIssue[] = [];
 
+  const classesFor = (alloc: TeacherLessonAllocation) =>
+    alloc.streamId
+      ? 1
+      : Math.max(1, params.classCountFor?.(alloc.gradeLevelId) ?? 1);
+
   const totalAllocatedLessons = allocations.reduce(
-    (sum, a) => sum + a.lessonsPerWeek,
+    (sum, a) => sum + a.lessonsPerWeek * classesFor(a),
     0,
   );
 
@@ -32,7 +42,7 @@ export function computeLocalPreflight(params: {
   for (const a of allocations) {
     byTeacher.set(
       a.teacherId,
-      (byTeacher.get(a.teacherId) ?? 0) + a.lessonsPerWeek,
+      (byTeacher.get(a.teacherId) ?? 0) + a.lessonsPerWeek * classesFor(a),
     );
   }
 

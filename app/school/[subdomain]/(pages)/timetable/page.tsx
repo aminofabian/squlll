@@ -60,8 +60,10 @@ import {
 } from "./utils/timetableSummaryText";
 import { getTimeSlotForDayAndPeriod } from "./utils/timetableSlots";
 import {
+  isSameGrade,
   resolveSchoolConfigGradeId,
   resolveStreamEntityIdForSidebar,
+  tenantStreamIdsForGrade,
 } from "./utils/resolveGradeForSchoolConfig";
 import { formatBreakTypeLabel } from "@/lib/utils/timetable-user-messages";
 import { LessonEditDialog } from "./components/LessonEditDialog";
@@ -858,6 +860,22 @@ export default function SmartTimetableNew() {
     return days * periods;
   }, [daysPerWeekFromStore, lessonPeriodsPerDay, periodNumbers.length, timeSlots]);
 
+  /** Grade names keyed by both id forms, since allocations store the tenant id. */
+  const gradeNamesById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const g of grades) {
+      map.set(g.id, g.name);
+      if (g.tenantGradeLevelId) map.set(g.tenantGradeLevelId, g.name);
+    }
+    return map;
+  }, [grades]);
+
+  const streamCountForGrade = useCallback(
+    (gradeLevelId: string) =>
+      Math.max(1, tenantStreamIdsForGrade(gradeLevelId, grades).length),
+    [grades],
+  );
+
   const quotaIssues = useMemo(() => {
     if (allocations.length === 0) return [];
     return computeAllocationQuotas({
@@ -865,9 +883,19 @@ export default function SmartTimetableNew() {
       entries: storeEntries,
       teacherNames: new Map(teachers.map((t) => [t.id, t.name])),
       subjectNames: new Map(subjects.map((s) => [s.id, s.name])),
-      gradeNames: new Map(grades.map((g) => [g.id, g.name])),
+      gradeNames: gradeNamesById,
+      sameGrade: (a, b) => isSameGrade(a, b, grades),
+      classCountFor: streamCountForGrade,
     });
-  }, [allocations, storeEntries, teachers, subjects, grades]);
+  }, [
+    allocations,
+    storeEntries,
+    teachers,
+    subjects,
+    grades,
+    gradeNamesById,
+    streamCountForGrade,
+  ]);
 
   const workloadBreaches = useMemo(() => {
     if (workloadRules.length === 0) return [];

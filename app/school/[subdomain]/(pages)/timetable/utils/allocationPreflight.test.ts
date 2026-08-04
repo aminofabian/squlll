@@ -128,6 +128,39 @@ describe("allocationPreflight", () => {
       true,
     );
   });
+
+  it("multiplies a teacher's load by the streams they repeat a lesson for", () => {
+    const result = computeLocalPreflight({
+      allocations: [
+        {
+          id: "1",
+          termId: "t",
+          teacherId: "teach1",
+          subjectId: "sub1",
+          gradeLevelId: "g1",
+          lessonsPerWeek: 6,
+        },
+      ],
+      rules: [
+        {
+          id: "r1",
+          termId: "t",
+          teacherId: "teach1",
+          maxLessonsPerDay: 4,
+        },
+      ],
+      availableSlotsPerClass: 40,
+      schoolDays: 5,
+      classCountFor: () => 3,
+    });
+    // 6 lessons × 3 streams = 18, still inside 4/day × 5 days.
+    expect(result.totalAllocatedLessons).toBe(18);
+    expect(result.issues.some((i) => i.code === "MAX_DAY_OVERFLOW")).toBe(false);
+    // Class demand stays 6 — each stream is its own class.
+    expect(result.issues.some((i) => i.code === "CLASS_OVERCAPACITY")).toBe(
+      false,
+    );
+  });
 });
 
 describe("computeAllocationQuotas", () => {
@@ -172,6 +205,50 @@ describe("computeAllocationQuotas", () => {
     expect(issues[0].type).toBe("under");
     expect(issues[0].placed).toBe(3);
     expect(issues[0].required).toBe(7);
+  });
+
+  it("requires a grade-wide allocation once per stream", () => {
+    const issues = computeAllocationQuotas({
+      allocations: [
+        {
+          id: "a1",
+          termId: "t",
+          teacherId: "teach1",
+          subjectId: "sub1",
+          gradeLevelId: "g1",
+          lessonsPerWeek: 2,
+        },
+      ],
+      entries: [
+        { ...entries[0], streamId: "s1" },
+        { ...entries[0], id: "e2", timeSlotId: "p2", streamId: "s1" },
+        { ...entries[0], id: "e3", timeSlotId: "p3", streamId: "s2" },
+      ],
+      classCountFor: () => 2,
+    });
+    // 2 lessons × 2 streams = 4 required, 3 placed across both streams.
+    expect(issues).toHaveLength(1);
+    expect(issues[0].required).toBe(4);
+    expect(issues[0].placed).toBe(3);
+  });
+
+  it("counts lessons stored under the tenant grade id", () => {
+    const issues = computeAllocationQuotas({
+      allocations: [
+        {
+          id: "a1",
+          termId: "t",
+          teacherId: "teach1",
+          subjectId: "sub1",
+          gradeLevelId: "tenant-g1",
+          lessonsPerWeek: 1,
+        },
+      ],
+      entries: [entries[0]],
+      sameGrade: (a, b) =>
+        a === b || [a, b].every((id) => ["g1", "tenant-g1"].includes(id)),
+    });
+    expect(issues).toHaveLength(0);
   });
 });
 

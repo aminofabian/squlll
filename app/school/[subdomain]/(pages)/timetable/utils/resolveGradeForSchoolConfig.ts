@@ -63,6 +63,37 @@ export function resolveStreamEntityIdForSidebar(
 /** Tenant grade level id required by timetable GraphQL mutations. */
 export const resolveTenantGradeLevelIdForApi = resolveSchoolConfigGradeId;
 
+/**
+ * A class is addressed by two ids — the master gradeLevel.id used in the UI and
+ * the tenantGradeLevel.id the API stores. Rows written before either id was
+ * normalised can hold the other form, so compare both.
+ */
+export function isSameGrade(
+  a: string | null | undefined,
+  b: string | null | undefined,
+  grades: Grade[],
+): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const grade = grades.find((g) => g.id === a || g.tenantGradeLevelId === a);
+  if (!grade) return false;
+  return grade.id === b || grade.tenantGradeLevelId === b;
+}
+
+/** Tenant stream ids for a class, in sidebar order. */
+export function tenantStreamIdsForGrade(
+  gradeId: string | null | undefined,
+  grades: Grade[],
+): string[] {
+  if (!gradeId) return [];
+  const grade = grades.find(
+    (g) => g.id === gradeId || g.tenantGradeLevelId === gradeId,
+  );
+  return (grade?.streams ?? [])
+    .map((s) => s.tenantStreamId ?? s.streamId)
+    .filter((id): id is string => Boolean(id));
+}
+
 /** Map API tenant grade id → master grade id used in the timetable UI. */
 export function resolveCanonicalGradeId(
   gradeIdFromApi: string,

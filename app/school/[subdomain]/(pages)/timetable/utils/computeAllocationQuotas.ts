@@ -16,6 +16,10 @@ export function computeAllocationQuotas(params: {
   teacherNames?: Map<string, string>;
   subjectNames?: Map<string, string>;
   gradeNames?: Map<string, string>;
+  /** Treat the two grade id forms as the same class. */
+  sameGrade?: (a: string, b: string) => boolean;
+  /** Classes a grade-wide allocation covers — one per stream. */
+  classCountFor?: (gradeLevelId: string) => number;
 }): AllocationQuotaIssue[] {
   const {
     allocations,
@@ -24,36 +28,42 @@ export function computeAllocationQuotas(params: {
     subjectNames,
     gradeNames,
   } = params;
+  const sameGrade = params.sameGrade ?? ((a, b) => a === b);
   const issues: AllocationQuotaIssue[] = [];
 
   for (const alloc of allocations) {
+    // A grade-wide allocation is taught once per stream, so it is satisfied by
+    // lessons in every stream of the grade.
+    const classCount = alloc.streamId
+      ? 1
+      : Math.max(1, params.classCountFor?.(alloc.gradeLevelId) ?? 1);
+    const required = alloc.lessonsPerWeek * classCount;
+
     const placed = entries
       .filter(
         (e) =>
           e.teacherId === alloc.teacherId &&
           e.subjectId === alloc.subjectId &&
-          e.gradeId === alloc.gradeLevelId &&
-          (alloc.streamId
-            ? e.streamId === alloc.streamId
-            : !e.streamId || e.streamId === alloc.streamId),
+          sameGrade(e.gradeId, alloc.gradeLevelId) &&
+          (alloc.streamId ? e.streamId === alloc.streamId : true),
       )
       .reduce((sum, e) => sum + entryPeriodCount(e), 0);
 
-    if (placed === alloc.lessonsPerWeek) continue;
+    if (placed === required) continue;
 
     const teacher = teacherNames?.get(alloc.teacherId) ?? "Teacher";
     const subject = subjectNames?.get(alloc.subjectId) ?? "Subject";
     const grade = gradeNames?.get(alloc.gradeLevelId) ?? "Class";
-    const type = placed < alloc.lessonsPerWeek ? "under" : "over";
+    const type = placed < required ? "under" : "over";
     issues.push({
       type,
       teacherId: alloc.teacherId,
       subjectId: alloc.subjectId,
       gradeLevelId: alloc.gradeLevelId,
       streamId: alloc.streamId,
-      required: alloc.lessonsPerWeek,
+      required,
       placed,
-      message: `${teacher} · ${subject} · ${grade}: ${placed}/${alloc.lessonsPerWeek} lessons (${type}-filled)`,
+      message: `${teacher} · ${subject} · ${grade}: ${placed}/${required} lessons (${type}-filled)`,
     });
   }
 
