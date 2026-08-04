@@ -105,6 +105,20 @@ export function resolveCanonicalGradeId(
   return match?.id ?? gradeIdFromApi;
 }
 
+/** Whether two stream ids refer to the same class stream (tenant or master). */
+export function isSameStream(
+  a: string | null | undefined,
+  b: string | null | undefined,
+  gradeId: string | null | undefined,
+  grades: Grade[],
+): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const resolvedA = resolveTenantStreamIdForApi(a, gradeId, grades);
+  const resolvedB = resolveTenantStreamIdForApi(b, gradeId, grades);
+  return !!resolvedA && resolvedA === resolvedB;
+}
+
 /** Whether a stored entry belongs to the selected grade (and stream, if any). */
 export function entryMatchesGradeScope(
   entry: { gradeId: string; streamId?: string | null },
@@ -118,10 +132,13 @@ export function entryMatchesGradeScope(
   );
   const gradeMatch =
     entry.gradeId === selectedGradeId ||
-    (!!tenantGradeLevelId && entry.gradeId === tenantGradeLevelId);
+    (!!tenantGradeLevelId && entry.gradeId === tenantGradeLevelId) ||
+    isSameGrade(entry.gradeId, selectedGradeId, grades);
   if (!gradeMatch) return false;
-  if (selectedStreamId) return entry.streamId === selectedStreamId;
-  return !entry.streamId;
+  if (!selectedStreamId) return !entry.streamId;
+  // Grade-wide placements (null stream) stay visible on every stream grid.
+  if (!entry.streamId) return true;
+  return isSameStream(entry.streamId, selectedStreamId, selectedGradeId, grades);
 }
 
 export function resolveGradeForSchoolConfig(

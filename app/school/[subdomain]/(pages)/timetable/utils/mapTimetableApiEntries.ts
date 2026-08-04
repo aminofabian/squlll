@@ -38,33 +38,50 @@ export function mapApiTimetableEntries(
     const periodId = row.dayTemplatePeriodId || row.period?.id;
     if (!periodId) continue;
 
-    const slot = timeSlots.find((ts) => ts.id === periodId);
     const entryGradeLevelId = row.gradeLevel?.id;
     if (!entryGradeLevelId) continue;
 
+    const dayOfWeekFromMap = periodDayMap?.get(periodId);
+    const periodNumber = row.period?.periodNumber;
+    // Shared-bell: entry may reference another grade's period id. Remap onto
+    // the slots currently shown for this class via day + period number.
+    const slot =
+      timeSlots.find((ts) => ts.id === periodId) ??
+      (periodNumber != null && dayOfWeekFromMap != null
+        ? timeSlots.find(
+            (ts) =>
+              ts.periodNumber === periodNumber &&
+              ts.dayOfWeek === dayOfWeekFromMap,
+          )
+        : undefined) ??
+      (periodNumber != null
+        ? timeSlots.find((ts) => ts.periodNumber === periodNumber)
+        : undefined);
+
     const canonicalGradeId = resolveCanonicalGradeId(entryGradeLevelId, grades);
     const entryStreamId = row.streamId ?? null;
+    const dayOfWeek =
+      dayOfWeekFromMap ??
+      slot?.dayOfWeek ??
+      (row.period?.dayTemplateId
+        ? timeSlots.find((ts) => ts.dayTemplateId === row.period?.dayTemplateId)
+            ?.dayOfWeek
+        : undefined) ??
+      1;
 
     const entry: TimetableEntry = {
       id: row.id,
       subjectId: row.subjectId,
       teacherId: row.teacherId,
-      timeSlotId: periodId,
-      periodNumber: row.period?.periodNumber ?? slot?.periodNumber,
+      timeSlotId: slot?.id ?? periodId,
+      periodNumber: periodNumber ?? slot?.periodNumber,
       gradeId: canonicalGradeId,
       streamId: entryStreamId,
       gradeName:
         row.gradeLevel?.gradeLevel?.name ||
         row.gradeLevel?.name ||
         undefined,
-      dayOfWeek:
-        periodDayMap?.get(periodId) ??
-        slot?.dayOfWeek ??
-        (row.period?.dayTemplateId
-          ? timeSlots.find((ts) => ts.dayTemplateId === row.period?.dayTemplateId)
-              ?.dayOfWeek
-          : undefined) ??
-        1,
+      dayOfWeek,
       roomNumber: row.room?.name || undefined,
       isDoublePeriod: row.isDoublePeriod ?? false,
     };

@@ -2927,7 +2927,7 @@ export default function SmartTimetableNew() {
                 id: row.id,
                 subjectId: row.subjectId,
                 teacherId: row.teacherId,
-                timeSlotId: row.dayTemplatePeriodId,
+                timeSlotId: slot?.id ?? row.dayTemplatePeriodId,
                 periodNumber: slot?.periodNumber,
                 gradeId: row.gradeLevelId,
                 streamId: row.streamId ?? null,
