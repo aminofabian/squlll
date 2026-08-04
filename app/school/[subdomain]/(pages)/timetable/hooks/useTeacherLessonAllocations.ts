@@ -8,19 +8,41 @@ import type {
   TimetablePreflightResult,
 } from "@/lib/types/timetable-allocation";
 
+function clientAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const headers: Record<string, string> = {};
+  try {
+    const token = window.localStorage.getItem("accessToken");
+    if (token) headers.Authorization = `Bearer ${token}`;
+  } catch {
+    /* ignore */
+  }
+  const cookie = typeof document !== "undefined" ? document.cookie : "";
+  const tenantId = cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith("tenantId="))
+    ?.slice("tenantId=".length);
+  if (tenantId) headers["x-tenant-id"] = decodeURIComponent(tenantId);
+  return headers;
+}
+
 async function gql<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
   const response = await fetch("/api/graphql", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...clientAuthHeaders(),
+    },
     credentials: "include",
     body: JSON.stringify({ query, variables }),
   });
   const result = await response.json();
   if (result.errors?.length) {
-    throw new Error(result.errors.map((e: { message: string }) => e.message).join(", "));
+    throw new Error(result.errors.map((e: { message: string }) => e.message).join("\n"));
   }
   return result.data as T;
 }

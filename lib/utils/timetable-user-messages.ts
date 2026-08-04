@@ -33,12 +33,16 @@ export function sanitizeTimetableUserMessage(error: unknown): string {
     return "Something went wrong. Please try again.";
   }
 
+  if (/Tenant context required|AUTHENTICATION_REQUIRED|Authentication required/i.test(raw)) {
+    return "Sign in again so we know which school these lessons belong to, then save.";
+  }
+
   if (
-    /CreateTeacherLessonAllocationInput|createTeacherLessonAllocation|Unknown type|Cannot query field/i.test(
+    /CreateTeacherLessonAllocationInput|createTeacherLessonAllocation|UpdateTeacherLessonAllocationInput|Unknown type|Cannot query field/i.test(
       raw,
     )
   ) {
-    return "Weekly lesson saving is not available on the API this page is using. Start the local timetable API (port 3001) and restart the app, then try again.";
+    return "Weekly lesson saving needs the local timetable API. Make sure it is running on port 3001, restart this app, and try again.";
   }
 
   const technical =

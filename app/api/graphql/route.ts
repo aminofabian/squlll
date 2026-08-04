@@ -2,13 +2,32 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { resolveUpstreamGraphqlEndpoint } from '@/lib/graphql-endpoint';
 
+/** Best-effort tenantId from a JWT payload (dual-flow local Nest has no JWT strategy). */
+function tenantIdFromJwt(token?: string): string | undefined {
+  if (!token) return undefined;
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return undefined;
+    const json = JSON.parse(
+      Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString(
+        'utf8',
+      ),
+    ) as { tenantId?: string; tenant_id?: string };
+    const id = json.tenantId || json.tenant_id;
+    return typeof id === 'string' && id.trim() ? id.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers':
+        'Content-Type, Authorization, x-tenant-id, x-tenant-subdomain',
     },
   });
 }
@@ -23,8 +42,13 @@ export async function POST(request: Request) {
       : undefined;
     const token =
       tokenFromHeader ?? cookieStore.get('accessToken')?.value;
-    const tenantId = cookieStore.get('tenantId')?.value;
-    let tenantSubdomain = cookieStore.get('tenantSubdomain')?.value;
+    const tenantId =
+      request.headers.get('x-tenant-id')?.trim() ||
+      cookieStore.get('tenantId')?.value ||
+      tenantIdFromJwt(token);
+    let tenantSubdomain =
+      request.headers.get('x-tenant-subdomain')?.trim() ||
+      cookieStore.get('tenantSubdomain')?.value;
     if (!tenantSubdomain) {
       const host = request.headers.get('host') ?? '';
       const sub = host.match(/^([^.]+)\.localhost(?::\d+)?$/)?.[1];
@@ -210,11 +234,13 @@ export async function POST(request: Request) {
       // Check if any error is an authentication error (Unauthorized or Forbidden)
       const hasAuthError = data.errors.some((error: any) => 
         error.message?.includes('Unauthorized') ||
+        error.message?.includes('Tenant context required') ||
         error.message?.includes('Forbidden resource') ||
         error.extensions?.code === 'UNAUTHORIZEDEXCEPTION' ||
         error.extensions?.code === 'FORBIDDENEXCEPTION' ||
         error.extensions?.code === 'FORBIDDEN' ||
-        error.extensions?.code === 'UNAUTHORIZED'
+        error.extensions?.code === 'UNAUTHORIZED' ||
+        error.extensions?.code === 'UNAUTHENTICATED'
       );
       
       if (hasAuthError) {
