@@ -2944,12 +2944,12 @@ export default function SmartTimetableNew() {
           toast({
             title: created
               ? `${created} lesson${created === 1 ? "" : "s"} added to the timetable`
-              : "No lessons could be placed",
+              : "Nothing placed yet",
             description: created
               ? unresolved > 0
-                ? `${unresolved} allocation${unresolved === 1 ? "" : "s"} could not be placed — check the review panel below.`
-                : "Everything fitted. Review the grid, then publish for teachers."
-              : "Check that teachers have allocations and that the school day has enough periods.",
+                ? `${unresolved} left empty for you to fill later.`
+                : "Review the grid, then publish for teachers."
+              : "Subjects without a teacher, or lessons that could not fit, stay empty for later.",
           });
 
           requestAnimationFrame(() => {

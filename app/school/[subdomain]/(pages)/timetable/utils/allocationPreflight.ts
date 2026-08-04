@@ -62,9 +62,9 @@ export function computeLocalPreflight(params: {
     if (rule?.maxLessonsPerDay != null && sum > rule.maxLessonsPerDay * schoolDays) {
       issues.push({
         code: "MAX_DAY_OVERFLOW",
-        severity: "error",
+        severity: "warning",
         teacherId,
-        message: `Allocated ${sum} lessons exceed max ${rule.maxLessonsPerDay}/day × ${schoolDays} days.`,
+        message: `Allocated ${sum} lessons exceed max ${rule.maxLessonsPerDay}/day × ${schoolDays} days — we'll place what fits and leave the rest empty.`,
       });
     }
 
@@ -83,9 +83,9 @@ export function computeLocalPreflight(params: {
     if (availableSlotsPerClass > 0 && demand > availableSlotsPerClass) {
       issues.push({
         code: "CLASS_OVERCAPACITY",
-        severity: "error",
+        severity: "warning",
         gradeLevelId,
-        message: `Class needs ${demand} lessons but only ${availableSlotsPerClass} slots are available.`,
+        message: `Class needs ${demand} lessons but only ${availableSlotsPerClass} slots are available — extras stay empty for later.`,
       });
     }
   }

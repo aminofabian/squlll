@@ -108,7 +108,7 @@ describe("allocationPreflight", () => {
     );
   });
 
-  it("errors when class demand exceeds available slots", () => {
+  it("warns when class demand exceeds available slots", () => {
     const result = computeLocalPreflight({
       allocations: [
         {
@@ -123,7 +123,7 @@ describe("allocationPreflight", () => {
       rules: [],
       availableSlotsPerClass: 40,
     });
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
     expect(result.issues.some((i) => i.code === "CLASS_OVERCAPACITY")).toBe(
       true,
     );
