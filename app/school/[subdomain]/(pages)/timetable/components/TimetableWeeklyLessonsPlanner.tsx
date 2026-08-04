@@ -951,11 +951,19 @@ export function TimetableWeeklyLessonsPlanner({
       >
         <div className="min-w-0">
           <p className="text-[12px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
-            {activeTotal} of {availableSlotsPerClass} lesson slots used
-            {activeGrade ? ` in ${activeGrade.name}` : ""}
+            {availableSlotsPerClass === 0
+              ? activeTotal > 0
+                ? `${activeTotal} weekly ${activeTotal === 1 ? "lesson" : "lessons"} set${activeGrade ? ` for ${activeGrade.name}` : ""} — no periods on the school day yet`
+                : `No lesson periods on the school day yet${activeGrade ? ` for ${activeGrade.name}` : ""}`
+              : `${activeTotal} of ${availableSlotsPerClass} lesson slots used${activeGrade ? ` in ${activeGrade.name}` : ""}`}
           </p>
           <p className={cn(tt.caption, "mt-0.5 text-[11px]")}>
-            {overCapacity > 0 ? (
+            {availableSlotsPerClass === 0 ? (
+              <span className="text-red-600 dark:text-red-400">
+                Set up lesson times first — until the school day has periods,
+                there&apos;s nowhere to place these lessons.
+              </span>
+            ) : overCapacity > 0 ? (
               <span className="text-red-600 dark:text-red-400">
                 That&apos;s {overCapacity} more than this class has room for —
                 lower some subjects or add periods to your school day.
