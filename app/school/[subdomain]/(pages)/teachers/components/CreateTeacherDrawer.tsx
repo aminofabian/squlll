@@ -32,22 +32,11 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  UserPlus,
-  GraduationCap,
-  Loader2,
-  X,
-  Mail,
-  Phone,
-  User,
-  Sparkles,
-  BookOpen,
-} from "lucide-react";
+import { UserPlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSchoolConfig } from "@/lib/hooks/useSchoolConfig";
 import { InvitationSuccessModal } from "./InvitationSuccessModal";
-import { teachersPanel } from "./teachers-ui";
 
 const DEPARTMENTS = [
   "English",
@@ -125,26 +114,13 @@ function splitName(fullName: string): {
   };
 }
 
-function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 const fieldShell =
-  "h-11 rounded-xl border-0 bg-slate-100/80 pl-10 text-sm shadow-none ring-1 ring-inset ring-slate-200/70 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-primary/40 dark:bg-slate-800/60 dark:ring-slate-700/60 dark:placeholder:text-slate-500";
+  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-1 focus-visible:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#0c1a17] dark:placeholder:text-white/40";
 
 const selectShell =
-  "h-11 rounded-xl border-0 bg-slate-100/80 text-sm shadow-none ring-1 ring-inset ring-slate-200/70 focus:ring-2 focus:ring-primary/40 dark:bg-slate-800/60 dark:ring-slate-700/60";
+  "h-10 rounded-none border border-[#1a4d42]/15 bg-white text-sm shadow-none focus:ring-1 focus:ring-[#246a59]/25 dark:border-white/15 dark:bg-[#0c1a17]";
 
-function FieldIcon({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-      {children}
-    </span>
-  );
-}
+const labelClass = "text-xs font-medium text-[#0a1f1a] dark:text-white/80";
 
 function GenderPills({
   value,
@@ -166,10 +142,10 @@ function GenderPills({
             type="button"
             onClick={() => onChange(option.id)}
             className={cn(
-              "rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+              "h-10 rounded-none px-3 text-sm font-medium transition-colors",
               active
-                ? "bg-primary text-white shadow-md shadow-primary/25 ring-2 ring-primary/30"
-                : "bg-slate-100/80 text-slate-600 ring-1 ring-inset ring-slate-200/70 hover:bg-slate-200/60 dark:bg-slate-800/60 dark:text-slate-300 dark:ring-slate-700/60",
+                ? "bg-[#0a1f1a] text-white"
+                : "border border-[#1a4d42]/15 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/55",
             )}
           >
             {option.label}
@@ -212,10 +188,6 @@ export function CreateTeacherDrawer({
       department: "",
     },
   });
-
-  const watchedName = form.watch("fullName");
-  const watchedEmail = form.watch("email");
-  const watchedDepartment = form.watch("department");
 
   const finishInvitation = useCallback(
     async (inviteData: {
@@ -316,16 +288,13 @@ export function CreateTeacherDrawer({
     [finishInvitation, schoolConfig?.tenant?.id],
   );
 
-  const previewName = watchedName.trim() || "New teacher";
-  const previewDept = watchedDepartment || "Department not selected";
-
   return (
     <>
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <DrawerTrigger asChild>
           <Button
             variant="default"
-            className="flex items-center gap-2 bg-primary text-white shadow-sm hover:bg-primary-dark"
+            className="flex items-center gap-2 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
             disabled={isLoading}
           >
             <UserPlus className="h-4 w-4" />
@@ -333,43 +302,32 @@ export function CreateTeacherDrawer({
           </Button>
         </DrawerTrigger>
         <DrawerContent
-          className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col border-l border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-950 sm:max-w-[440px]"
+          className="ml-auto flex h-[100dvh] max-h-[100dvh] w-full flex-col border-l border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#071411] sm:max-w-[400px]"
           data-vaul-drawer-direction="right"
         >
-          <DrawerHeader className="relative shrink-0 overflow-hidden border-0 px-0 pb-0 pt-0">
-            <div className="relative border-b border-primary/10 bg-gradient-to-br from-primary/[0.08] via-white to-primary/[0.04] px-5 pb-5 pt-5 dark:from-primary/15 dark:via-slate-900 dark:to-primary/5">
-              <div
-                className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/15 blur-3xl"
-                aria-hidden
-              />
-              <div className="relative flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
-                    <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
-                  </div>
-                  <div className="min-w-0">
-                    <DrawerTitle className="text-left text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-                      Invite a teacher
-                    </DrawerTitle>
-                    <DrawerDescription className="mt-0.5 text-left text-sm text-slate-500 dark:text-slate-400">
-                      Five fields — they&apos;ll get an email to join
-                    </DrawerDescription>
-                  </div>
-                </div>
-                <DrawerClose asChild>
-                  <button
-                    type="button"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-800"
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </DrawerClose>
+          <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 px-5 py-4 dark:border-white/10">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <DrawerTitle className="font-display text-left text-lg tracking-tight text-[#0a1f1a] dark:text-white">
+                  Add teacher
+                </DrawerTitle>
+                <DrawerDescription className="mt-0.5 text-left text-sm text-[#1a4d42]/55 dark:text-white/45">
+                  They&apos;ll get an email to join
+                </DrawerDescription>
               </div>
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center text-[#1a4d42]/40 hover:bg-[#f3f7f5] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </DrawerClose>
             </div>
           </DrawerHeader>
 
-          <div className="relative flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+          <div className="relative flex-1 overflow-y-auto px-5 py-5">
             <Form {...form}>
               <form
                 id="invite-teacher-form"
@@ -377,189 +335,121 @@ export function CreateTeacherDrawer({
                 className="space-y-4"
               >
                 {isLoading && (
-                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#f5f6f8]/80 backdrop-blur-[2px] dark:bg-slate-950/80">
-                    <div className="rounded-2xl border border-slate-200/80 bg-white px-6 py-5 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900">
-                      <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                        Sending invitation…
-                      </p>
+                  <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-[#071411]/80">
+                    <div className="flex items-center gap-2 text-sm text-[#0a1f1a] dark:text-white">
+                      <Loader2 className="h-4 w-4 animate-spin text-[#246a59]" />
+                      Sending invitation…
                     </div>
                   </div>
                 )}
 
-                {/* Preview card */}
-                <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dark via-slate-800 to-primary/70 p-[1px] shadow-md shadow-primary/10">
-                  <div className="rounded-[15px] bg-gradient-to-br from-primary-dark to-slate-800 px-4 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-white ring-1 ring-white/20">
-                        {initialsFromName(watchedName)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-white">{previewName}</p>
-                        <p className="mt-0.5 truncate text-xs text-white/55">
-                          {watchedEmail.trim() || "email@school.com"}
-                        </p>
-                        <p className="mt-1 truncate text-[11px] text-primary-light/90">
-                          {previewDept}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className={labelClass}>Full name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. Jane Wanjiku"
+                          {...field}
+                          className={fieldShell}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
 
-                <div className={cn(teachersPanel, "space-y-4 p-4")}>
-                  <FormField
-                    control={form.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          Full name
-                        </FormLabel>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className={labelClass}>Work email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="teacher@school.com"
+                          {...field}
+                          className={fieldShell}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className={labelClass}>Phone</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="+254700000000"
+                          value={field.value}
+                          onChange={(e) =>
+                            field.onChange(formatPhoneNumber(e.target.value))
+                          }
+                          className={fieldShell}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className={labelClass}>Gender</FormLabel>
+                      <FormControl>
+                        <GenderPills value={field.value} onChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel className={labelClass}>Department</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || undefined}>
                         <FormControl>
-                          <div className="relative">
-                            <FieldIcon>
-                              <User className="h-4 w-4" />
-                            </FieldIcon>
-                            <Input
-                              placeholder="e.g. Jane Wanjiku"
-                              {...field}
-                              className={fieldShell}
-                            />
-                          </div>
+                          <SelectTrigger className={selectShell}>
+                            <SelectValue placeholder="Select department" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          Work email
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <FieldIcon>
-                              <Mail className="h-4 w-4" />
-                            </FieldIcon>
-                            <Input
-                              type="email"
-                              placeholder="teacher@school.com"
-                              {...field}
-                              className={fieldShell}
-                            />
-                          </div>
-                        </FormControl>
-                        <p className="text-[11px] text-slate-400">
-                          Invitation and login link will be sent here.
-                        </p>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          Phone
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <FieldIcon>
-                              <Phone className="h-4 w-4" />
-                            </FieldIcon>
-                            <Input
-                              placeholder="+254700000000"
-                              value={field.value}
-                              onChange={(e) =>
-                                field.onChange(formatPhoneNumber(e.target.value))
-                              }
-                              className={fieldShell}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          Gender
-                        </FormLabel>
-                        <FormControl>
-                          <GenderPills value={field.value} onChange={field.onChange} />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                          Department
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || undefined}>
-                          <FormControl>
-                            <SelectTrigger className={selectShell}>
-                              <SelectValue placeholder="Select department" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {DEPARTMENTS.map((dept) => (
-                              <SelectItem key={dept} value={dept}>
-                                {dept}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className={cn(teachersPanel, "p-4")}>
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                    After they join
-                  </p>
-                  <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                    <li className="flex items-start gap-2">
-                      <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                      Assign grades and subjects from their teacher profile.
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                      Set class teacher role and timetable from Classes.
-                    </li>
-                  </ul>
-                </div>
+                        <SelectContent>
+                          {DEPARTMENTS.map((dept) => (
+                            <SelectItem key={dept} value={dept}>
+                              {dept}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
               </form>
             </Form>
           </div>
 
-          <DrawerFooter className="shrink-0 border-t border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 sm:px-5">
-            <div className="flex w-full flex-col gap-2 sm:flex-row">
+          <DrawerFooter className="shrink-0 border-t border-[#1a4d42]/12 px-5 py-4 dark:border-white/10">
+            <div className="flex w-full gap-2">
               <Button
                 type="submit"
                 form="invite-teacher-form"
                 disabled={isLoading}
-                className="h-11 flex-1 gap-2 rounded-full bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary-dark disabled:opacity-50"
+                className="h-10 flex-1 gap-2 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59] disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
@@ -567,10 +457,7 @@ export function CreateTeacherDrawer({
                     Sending…
                   </>
                 ) : (
-                  <>
-                    <UserPlus className="h-4 w-4" />
-                    Send invitation
-                  </>
+                  "Send invitation"
                 )}
               </Button>
               <DrawerClose asChild>
@@ -578,15 +465,12 @@ export function CreateTeacherDrawer({
                   type="button"
                   variant="ghost"
                   disabled={isLoading}
-                  className="h-11 rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 sm:flex-none sm:px-5"
+                  className="h-10 rounded-none px-4 text-[#1a4d42]/70 hover:bg-[#f3f7f5] dark:text-white/55 dark:hover:bg-white/10"
                 >
                   Cancel
                 </Button>
               </DrawerClose>
             </div>
-            <p className="text-center text-[11px] text-slate-400">
-              They&apos;ll set their password from the invitation email.
-            </p>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

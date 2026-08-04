@@ -1,63 +1,63 @@
 import { cn } from "@/lib/utils";
 
 export const parentsPanel =
-  "overflow-hidden rounded-xl border border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-900/50";
+  "overflow-hidden border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]";
 
 export const parentsTh =
-  "px-4 py-2.5 text-[11px] font-medium uppercase tracking-wide text-slate-400";
+  "px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45";
 
 export const parentsControlShell =
-  "rounded-xl border border-slate-200/50 bg-slate-100/35 p-3 dark:border-slate-800/60 dark:bg-slate-900/25";
+  "border border-[#1a4d42]/12 bg-[#f3f7f5] p-2.5 dark:border-white/10 dark:bg-[#071411]";
 
 export const parentsSearchInput =
-  "h-9 border-0 bg-slate-100/90 pl-8 pr-8 text-sm shadow-none ring-1 ring-inset ring-slate-200/50 placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-slate-300/70 dark:bg-slate-800/55 dark:ring-slate-700/60 dark:placeholder:text-slate-500 dark:focus-visible:ring-slate-600";
+  "h-8 rounded-none border border-[#1a4d42]/15 bg-white pl-8 pr-8 text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17] dark:placeholder:text-white/40";
 
 export const parentsSearchClearBtn =
-  "absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-200/70 hover:text-slate-600 dark:hover:bg-slate-700/80 dark:hover:text-slate-300";
+  "absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-none text-[#1a4d42]/40 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10 dark:hover:text-white";
 
 export function parentsFilterPill(active: boolean) {
   return cn(
-    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs transition-colors",
+    "inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs transition-colors",
     active
-      ? "bg-slate-800/95 text-white shadow-sm dark:bg-slate-200 dark:text-slate-900"
-      : "bg-slate-200/45 text-slate-600 hover:bg-slate-200/75 dark:bg-slate-800/45 dark:text-slate-400 dark:hover:bg-slate-800/70",
+      ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+      : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/55",
   );
 }
 
 export const parentsSelect =
-  "h-8 cursor-pointer appearance-none rounded-lg border-0 bg-slate-200/45 px-2.5 pr-7 text-xs text-slate-700 ring-1 ring-inset ring-slate-200/40 transition-colors hover:bg-slate-200/65 focus:outline-none focus:ring-2 focus:ring-slate-300/60 dark:bg-slate-800/55 dark:text-slate-200 dark:ring-slate-700/55 dark:hover:bg-slate-800/75";
+  "h-8 cursor-pointer appearance-none rounded-none border border-[#1a4d42]/15 bg-white px-2.5 pr-7 text-xs text-[#0a1f1a] transition-colors hover:border-[#246a59]/40 focus:outline-none focus:ring-2 focus:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white";
 
 export const parentsActionButton =
-  "h-8 gap-1.5 border-0 bg-slate-200/45 text-xs font-normal text-slate-700 shadow-none ring-1 ring-inset ring-slate-200/40 hover:bg-slate-200/70 dark:bg-slate-800/55 dark:text-slate-200 dark:ring-slate-700/55 dark:hover:bg-slate-800/75";
+  "h-8 gap-1.5 rounded-none border border-[#1a4d42]/15 bg-white text-xs font-normal text-[#1a4d42]/80 shadow-none hover:border-[#246a59]/40 hover:bg-[#f3f7f5] dark:border-white/15 dark:bg-[#0c1a17] dark:text-white/70";
 
 export const parentsGhostButton =
-  "h-7 w-full text-xs font-normal text-slate-500 hover:bg-slate-200/50 hover:text-slate-700 dark:hover:bg-slate-800/50 dark:hover:text-slate-300";
+  "h-7 w-full rounded-none text-xs font-normal text-[#1a4d42]/55 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white";
 
 export const parentsIconButton =
-  "h-8 w-8 p-0 text-slate-500 hover:bg-slate-200/50 hover:text-slate-700 dark:hover:bg-slate-800/50 dark:hover:text-slate-300";
+  "h-8 w-8 rounded-none p-0 text-[#1a4d42]/50 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white";
 
 export const parentsDirectoryMeta =
-  "mb-3 shrink-0 rounded-lg bg-slate-100/50 px-3 py-2 dark:bg-slate-800/35";
+  "mb-2.5 shrink-0 border border-[#1a4d42]/10 bg-[#f8fbfa] px-2.5 py-2 dark:border-white/10 dark:bg-[#071411]";
 
 export function parentsSidebarItem(selected: boolean) {
   return cn(
-    "w-full rounded-lg px-2.5 py-2 text-left transition-colors",
+    "relative w-full rounded-none border border-transparent px-2 py-1.5 text-left transition-colors",
     selected
-      ? "bg-white/90 ring-1 ring-slate-200/70 dark:bg-slate-900/80 dark:ring-slate-600/80"
-      : "hover:bg-slate-200/40 dark:hover:bg-slate-800/45",
+      ? "border-[#246a59]/25 bg-[#246a59]/10 dark:bg-[#246a59]/15"
+      : "hover:border-[#1a4d42]/10 hover:bg-white dark:hover:bg-white/5",
   );
 }
 
 export const parentsSearchChip =
-  "inline-flex items-center gap-1 rounded-full bg-slate-200/50 px-2.5 py-0.5 text-slate-700 transition-colors hover:bg-slate-200/80 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:bg-slate-800/70";
+  "inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-[#1a4d42]/80 transition-colors hover:border-[#246a59]/35 dark:border-white/10 dark:bg-[#0c1a17] dark:text-white/70";
 
 export const parentsControlDivider =
-  "mt-3 border-t border-slate-200/45 pt-3 dark:border-slate-800/50";
+  "mt-2.5 border-t border-[#1a4d42]/10 pt-2.5 dark:border-white/10";
 
 export const parentsInviteLink =
-  "inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs font-medium text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary-dark hover:text-white dark:hover:text-white";
+  "inline-flex items-center gap-1 rounded-none bg-[#0a1f1a] px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-[#246a59] hover:text-white";
 
 export const parentsPageContainer = "mx-auto w-full max-w-6xl";
 
 export const parentsSectionLabel =
-  "text-[11px] font-medium uppercase tracking-wide text-slate-400";
+  "text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45";

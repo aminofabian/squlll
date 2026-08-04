@@ -440,62 +440,62 @@ export function SchoolSearchFilter({
   const gradeButtonClass = (selected: boolean) => {
     if (!isMinimal) {
       return cn(
-        "relative h-8 w-full rounded-lg border px-2.5 text-xs font-medium transition-all",
+        "relative h-8 w-full rounded-none border px-2.5 text-xs font-medium transition-all",
         selected
-          ? "border-primary bg-primary text-white shadow-sm"
-          : "border-input bg-background hover:border-primary/30 hover:bg-primary/5 hover:text-primary",
+          ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+          : "border-[#1a4d42]/15 bg-white hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06] hover:text-[#246a59]",
       );
     }
 
     return cn(
-      "flex h-10 w-full items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold transition-colors active:scale-[0.98]",
+      "flex h-7 w-full items-center justify-center gap-1 rounded-none border text-[11px] font-semibold transition-colors",
       selected
-        ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-        : "bg-slate-100 text-slate-700 active:bg-slate-200 dark:bg-slate-800 dark:text-slate-200",
+        ? "border-[#246a59] bg-[#0a1f1a] text-white"
+        : "border-[#1a4d42]/10 bg-[#f8fbfa] text-[#1a4d42]/80 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#071411] dark:text-white/70",
     );
   };
 
   const streamButtonClass = (selected: boolean) => {
     if (isMinimal) {
       return cn(
-        "flex-1 rounded-lg py-2 text-center text-[13px] font-semibold transition-all active:scale-[0.98]",
+        "flex-1 rounded-none py-1.5 text-center text-[11px] font-semibold transition-colors",
         selected
-          ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-slate-50"
-          : "text-slate-500 dark:text-slate-400",
+          ? "bg-[#0a1f1a] text-white"
+          : "text-[#1a4d42]/55 hover:bg-white hover:text-[#0a1f1a] dark:text-white/45",
       );
     }
 
     return cn(
-      "inline-flex items-center justify-center rounded-lg px-3 text-xs font-medium transition-colors active:opacity-80",
+      "inline-flex items-center justify-center rounded-none border px-3 text-xs font-medium transition-colors",
       "h-8 min-w-[2.25rem]",
       selected
-        ? "bg-slate-200/80 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
-        : "text-slate-600 hover:bg-slate-100/80 dark:text-slate-400",
+        ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
+        : "border-[#1a4d42]/12 text-[#1a4d42]/65 hover:border-[#246a59]/30 hover:bg-[#f3f7f5]",
     );
   };
 
   return (
-    <div className={cn("flex flex-col h-full", className)}>
+    <div className={cn("flex h-full flex-col bg-[#f3f7f5] dark:bg-[#071411]", className)}>
       <div
         className={cn(
           "flex flex-col",
           isMinimal
             ? isMobileDrawer
-              ? "gap-3 pb-1"
-              : "gap-3 pb-3"
-            : "space-y-3 p-4 border-b",
+              ? "gap-1.5 border-b border-[#1a4d42]/10 pb-2"
+              : "gap-1.5 border-b border-[#1a4d42]/10 pb-2"
+            : "space-y-3 border-b border-[#1a4d42]/12 p-4",
         )}
       >
         {isMinimal ? (
           <div className="flex items-center justify-between gap-2 px-0.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
               Browse grades
             </p>
             {searchTerm ? (
               <button
                 type="button"
                 onClick={clearSearch}
-                className="text-xs font-semibold text-primary active:opacity-60"
+                className="text-[11px] font-semibold text-[#246a59] hover:text-[#1a4d42]"
               >
                 Clear
               </button>
@@ -503,14 +503,16 @@ export function SchoolSearchFilter({
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-semibold">Grade Levels</h3>
+            <h3 className="font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
+              Grade Levels
+            </h3>
             <div className="flex items-center gap-1">
               {searchTerm && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearSearch}
-                  className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                  className="h-7 rounded-none px-2 text-[#1a4d42]/55 hover:text-[#0a1f1a]"
                 >
                   Clear
                   <X className="ml-1 h-3.5 w-3.5" />
@@ -520,7 +522,7 @@ export function SchoolSearchFilter({
                 variant="outline"
                 size="sm"
                 onClick={refreshConfig}
-                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                className="h-8 rounded-none border-[#1a4d42]/20 px-2 text-[#1a4d42]/55 hover:text-[#0a1f1a]"
               >
                 Refresh
               </Button>
@@ -533,31 +535,32 @@ export function SchoolSearchFilter({
             type="button"
             onClick={onSelectAllClasses}
             className={cn(
-              "flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors active:scale-[0.99]",
-              "bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900",
-              allClassesSelected && "ring-2 ring-slate-900/10 dark:ring-slate-100/10",
+              "flex w-full items-center gap-2 border px-2 py-1.5 text-left transition-colors",
+              allClassesSelected
+                ? "border-[#246a59]/30 bg-[#246a59]/10"
+                : "border-[#1a4d42]/12 bg-white hover:border-[#246a59]/30 dark:bg-[#0c1a17]",
             )}
           >
             <span
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                "flex h-6 w-6 shrink-0 items-center justify-center border",
                 allClassesSelected
-                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+                  ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+                  : "border-[#1a4d42]/15 bg-[#f8fbfa] text-[#246a59] dark:bg-[#071411]",
               )}
             >
-              <LayoutGrid className="h-4 w-4" />
+              <LayoutGrid className="h-3 w-3" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <span className="block text-[11px] font-semibold text-[#0a1f1a] dark:text-white">
                 All classes
               </span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="block text-[10px] text-[#1a4d42]/50">
                 Whole-school overview
               </span>
             </span>
             {allClassesSelected ? (
-              <Check className="h-4 w-4 shrink-0 text-primary" strokeWidth={2.5} />
+              <Check className="h-3.5 w-3.5 shrink-0 text-[#246a59]" strokeWidth={2.5} />
             ) : null}
           </button>
         ) : null}
@@ -565,20 +568,20 @@ export function SchoolSearchFilter({
         <div
           className={cn(
             isMinimal &&
-              "overflow-hidden rounded-2xl bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900",
+              "border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]",
           )}
         >
-          <div className={cn("relative", isMinimal ? "flex items-center px-3" : "")}>
+          <div className={cn("relative", isMinimal ? "flex items-center px-2" : "")}>
             <Search
-              className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/40"
             />
             <Input
               placeholder="Search grades..."
               className={cn(
-                "pl-9",
+                "rounded-none pl-7",
                 isMinimal
-                  ? "h-11 border-0 bg-transparent text-sm shadow-none focus-visible:ring-0 dark:bg-transparent"
-                  : "h-10",
+                  ? "h-8 border-0 bg-transparent text-[12px] shadow-none focus-visible:ring-0 dark:bg-transparent"
+                  : "h-10 border-[#1a4d42]/15 focus-visible:ring-[#246a59]/20",
               )}
               value={searchTerm}
               onChange={handleSearchChange}
@@ -589,43 +592,37 @@ export function SchoolSearchFilter({
       
       {/* Grades List */}
       <ScrollArea
-        className={cn("flex-1", isMinimal ? "px-1" : "px-4")}
+        className={cn("flex-1", isMinimal ? "px-0.5" : "px-4")}
       >
         <div
           className={cn(
-            isMinimal ? "space-y-3 py-2" : "space-y-6 py-4",
+            isMinimal ? "space-y-1.5 py-1.5" : "space-y-4 py-3",
           )}
         >
           {isLoading ? (
-            <div className={cn("grid gap-2 py-2", isMinimal ? "grid-cols-3" : "grid-cols-2")}>
+            <div className={cn("grid gap-1 py-1", isMinimal ? "grid-cols-3" : "grid-cols-2")}>
               {[...Array(12)].map((_, j) => (
                 <div
                   key={j}
-                  className={cn(
-                    "h-8 w-full rounded-lg animate-pulse",
-                    variant === "minimal"
-                      ? "bg-slate-100 dark:bg-slate-800"
-                      : "border border-primary/20 bg-muted-foreground/5",
-                  )}
+                  className="h-7 w-full animate-pulse bg-[#1a4d42]/10 dark:bg-white/10"
                 />
               ))}
             </div>
           ) : filteredGrades.length === 0 ? (
             <div
               className={cn(
-                "text-center py-8 rounded-lg",
-                variant === "minimal"
-                  ? "border border-dashed border-slate-200 dark:border-slate-800"
-                  : "border-2 border-dashed",
+                "border border-dashed border-[#1a4d42]/20 py-6 text-center",
               )}
             >
-              <p className="text-xs text-slate-400">No grades found</p>
+              <p className="text-xs text-[#1a4d42]/40">No grades found</p>
             </div>
           ) : (
-            <div className={cn(isMinimal ? "space-y-3 py-1" : "space-y-6 py-2")}>
+            <div className={cn(isMinimal ? "space-y-1.5" : "space-y-4")}>
               {(() => {
-                const levelDivider = isMinimal ? null : (
-                  <div className="my-2 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                const levelDivider = isMinimal ? (
+                  <div className="mx-0.5 my-0.5 border-t border-[#1a4d42]/10 dark:border-white/10" />
+                ) : (
+                  <div className="my-2 h-px bg-[#1a4d42]/10" />
                 );
 
                 const renderGradeGroup = (
@@ -640,33 +637,33 @@ export function SchoolSearchFilter({
                       : null;
 
                   return (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <div className="flex items-center justify-between gap-2 px-0.5">
                         {!isMinimal && (
-                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                          <div className="h-px flex-1 bg-[#1a4d42]/15" />
                         )}
                         <h4
                           className={cn(
                             isMinimal
-                              ? "text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500"
-                              : "px-2 text-xs font-semibold uppercase tracking-wider text-primary/80",
+                              ? "text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45"
+                              : "px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#246a59]",
                           )}
                         >
                           {groupTitle}
                         </h4>
                         {!isMinimal && (
-                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+                          <div className="h-px flex-1 bg-[#1a4d42]/15" />
                         )}
                         {isMinimal && (
-                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-500 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900 dark:text-slate-400">
+                          <span className="border border-[#1a4d42]/12 bg-white px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-[#1a4d42]/50 dark:border-white/10 dark:bg-[#0c1a17]">
                             {grades.length}
                           </span>
                         )}
                       </div>
 
                       {isMinimal ? (
-                        <div className="overflow-hidden rounded-2xl bg-white p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900">
-                          <div className="grid grid-cols-3 gap-2">
+                        <div className="border border-[#1a4d42]/10 bg-white p-1.5 dark:border-white/10 dark:bg-[#0c1a17]">
+                          <div className="grid grid-cols-3 gap-1">
                             {grades.map((grade) => (
                               <button
                                 key={grade.id}
@@ -680,10 +677,10 @@ export function SchoolSearchFilter({
                                 {grade.streams?.length > 0 ? (
                                   <span
                                     className={cn(
-                                      "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold tabular-nums",
+                                      "flex h-3.5 min-w-3.5 items-center justify-center px-0.5 text-[8px] font-bold tabular-nums",
                                       selectedGradeId === grade.id
                                         ? "bg-white/20 text-white"
-                                        : "bg-white text-slate-500 dark:bg-slate-700 dark:text-slate-300",
+                                        : "bg-[#e8f2ef] text-[#246a59] dark:bg-[#246a59]/20 dark:text-emerald-300",
                                     )}
                                   >
                                     {grade.streams.length}
@@ -706,10 +703,10 @@ export function SchoolSearchFilter({
                                 <div className="flex min-w-0 items-center gap-1.5">
                                   <div
                                     className={cn(
-                                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition-colors",
+                                      "flex h-4 w-4 shrink-0 items-center justify-center transition-colors",
                                       selectedGradeId === grade.id
                                         ? "bg-white/20"
-                                        : "bg-muted group-hover:bg-primary/10",
+                                        : "bg-[#f3f7f5]",
                                     )}
                                   >
                                     <GraduationCap
@@ -717,7 +714,7 @@ export function SchoolSearchFilter({
                                         "h-2.5 w-2.5 shrink-0",
                                         selectedGradeId === grade.id
                                           ? "text-white"
-                                          : "text-muted-foreground group-hover:text-primary",
+                                          : "text-[#246a59]",
                                       )}
                                     />
                                   </div>
@@ -729,7 +726,7 @@ export function SchoolSearchFilter({
                                         "text-[10px] tabular-nums",
                                         selectedGradeId === grade.id
                                           ? "text-white/80"
-                                          : "text-slate-400",
+                                          : "text-[#1a4d42]/40",
                                       )}
                                     >
                                       ·{grade.streams.length}
@@ -750,10 +747,10 @@ export function SchoolSearchFilter({
                                         key={stream.id}
                                         type="button"
                                         className={cn(
-                                          "h-6 w-full truncate rounded-md border px-2 py-0 text-[10px] font-medium transition-colors",
+                                          "h-6 w-full truncate rounded-none border px-2 py-0 text-[10px] font-medium transition-colors",
                                           isSelected
-                                            ? "border-primary bg-white text-primary shadow-sm dark:bg-slate-800"
-                                            : "border-dashed hover:border-primary/40 hover:bg-primary/5",
+                                            ? "border-[#246a59] bg-[#246a59]/10 text-[#246a59]"
+                                            : "border-dashed border-[#1a4d42]/20 hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.05]",
                                         )}
                                         onClick={() =>
                                           handleStreamClick(
@@ -778,18 +775,18 @@ export function SchoolSearchFilter({
                         <div
                           className={cn(
                             isMinimal
-                              ? "space-y-2 rounded-2xl bg-white p-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] dark:bg-slate-900"
-                              : "space-y-2 border-t border-slate-100 pt-3 dark:border-slate-800",
+                              ? "space-y-1.5 border border-[#1a4d42]/12 bg-white p-2 dark:border-white/10 dark:bg-[#0c1a17]"
+                              : "space-y-2 border-t border-[#1a4d42]/10 pt-2",
                           )}
                         >
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                          <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
                             Streams in {abbreviateGradeShort(activeGrade.name)}
                           </p>
                           <div
                             className={cn(
                               isMinimal
-                                ? "flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
-                                : "flex flex-wrap gap-2",
+                                ? "flex gap-0.5 border border-[#1a4d42]/10 bg-[#f3f7f5] p-0.5 dark:bg-[#071411]"
+                                : "flex flex-wrap gap-1.5",
                             )}
                           >
                             {activeGrade.streams.map((stream) => {

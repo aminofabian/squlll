@@ -17,6 +17,13 @@ export interface SchoolSetupStep {
 
 export const SCHOOL_SETUP_STEPS: SchoolSetupStep[] = [
   {
+    id: "teachers",
+    label: "Teachers",
+    description: "Invite and manage teaching staff",
+    icon: GraduationCap,
+    path: "/teachers?action=add",
+  },
+  {
     id: "classes",
     label: "Classes",
     description: "Add grades, streams, and class structure",
@@ -29,13 +36,6 @@ export const SCHOOL_SETUP_STEPS: SchoolSetupStep[] = [
     description: "Register and enroll students",
     icon: UserPlus,
     path: "/students?action=add",
-  },
-  {
-    id: "teachers",
-    label: "Teachers",
-    description: "Invite and manage teaching staff",
-    icon: GraduationCap,
-    path: "/teachers?action=add",
   },
   {
     id: "subjects",

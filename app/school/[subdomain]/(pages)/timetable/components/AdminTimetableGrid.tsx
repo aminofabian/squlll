@@ -52,7 +52,7 @@ const BREAK_CHANNEL =
   "max-lg:py-2 max-lg:px-0 dark:max-lg:bg-transparent";
 
 const LINK_ACTION =
-  "inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:pointer-events-none disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200";
+  "inline-flex items-center gap-0.5 rounded-none px-1 py-0.5 text-[10px] font-medium text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:pointer-events-none disabled:opacity-30 dark:text-slate-500 dark:hover:bg-slate-800/60 dark:hover:text-slate-200";
 
 type BreakVisual = {
   Icon: LucideIcon;
@@ -338,8 +338,8 @@ function doubleBlockSurfaceClass({
 
   return cn(
     "ring-1 ring-inset ring-violet-200/40 dark:ring-violet-800/30",
-    connectsBelow && "rounded-b-none border-b-0",
-    isDoubleContinuation && "rounded-t-none border-t-0",
+    connectsBelow && "rounded-none border-b-0",
+    isDoubleContinuation && "rounded-none border-t-0",
   );
 }
 
@@ -476,19 +476,28 @@ export function AdminTimetableGrid({
   const isMobile = useIsMobile();
   const accentFor = resolveAccent ?? getSubjectAccent;
 
+  // Resolved after mount so server and client markup match.
+  const [todayIndex, setTodayIndex] = useState<number | null>(null);
+
   const visibleDayIndices = useMemo(
     () => (isMobile ? [mobileDayIndex] : days.map((_, index) => index)),
     [isMobile, mobileDayIndex, days],
   );
 
   useEffect(() => {
-    setMobileDayIndex(0);
-  }, [days.length]);
+    setTodayIndex((new Date().getDay() + 6) % 7);
+  }, []);
+
+  useEffect(() => {
+    setMobileDayIndex(
+      todayIndex != null && todayIndex < days.length ? todayIndex : 0,
+    );
+  }, [days.length, todayIndex]);
 
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-50/40 dark:border-zinc-800 dark:bg-zinc-950/40",
+        "overflow-hidden rounded-none border border-zinc-200/90 bg-zinc-50/40 dark:border-zinc-800 dark:bg-zinc-950/40",
         className,
       )}
     >
@@ -507,13 +516,19 @@ export function AdminTimetableGrid({
               onClick={() => setMobileDayIndex(index)}
               className={cn(
                 T_CELL_SM,
-                "flex-1 min-w-0 rounded-lg px-1.5 py-1 font-semibold tracking-tight transition-colors",
+                "relative flex-1 min-w-0 rounded-none px-1.5 py-1 font-semibold tracking-tight transition-colors",
                 index === mobileDayIndex
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  ? "bg-[#246a59] text-white"
                   : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800",
               )}
             >
               {day.slice(0, 3)}
+              {todayIndex === index && index !== mobileDayIndex ? (
+                <span
+                  className="absolute left-1/2 bottom-0.5 h-1 w-1 -translate-x-1/2 rounded-none bg-[#246a59]"
+                  aria-hidden
+                />
+              ) : null}
             </button>
           ))}
         </div>
@@ -542,27 +557,42 @@ export function AdminTimetableGrid({
                   When
                 </span>
               </th>
-              {visibleDayIndices.map((index) => (
-                <th
-                  key={days[index]}
-                  scope="col"
-                  className={cn(
-                    "border-r border-zinc-200/60 bg-zinc-100/70 px-1 py-1.5 text-center last:border-r-0 dark:border-zinc-800 dark:bg-zinc-900/70",
-                    schoolCombined
-                      ? "min-w-[68px] md:min-w-[76px]"
-                      : "min-w-[80px] md:min-w-[92px]",
-                  )}
-                >
-                  <span
+              {visibleDayIndices.map((index) => {
+                const isToday = todayIndex === index;
+                return (
+                  <th
+                    key={days[index]}
+                    scope="col"
+                    aria-current={isToday ? "date" : undefined}
                     className={cn(
-                      T_CELL,
-                      "block font-semibold text-zinc-800 dark:text-zinc-100",
+                      "border-r border-zinc-200/60 px-1 py-1.5 text-center last:border-r-0 dark:border-zinc-800",
+                      isToday
+                        ? "bg-[#246a59]/10 dark:bg-[#246a59]/15"
+                        : "bg-zinc-100/70 dark:bg-zinc-900/70",
+                      schoolCombined
+                        ? "min-w-[68px] md:min-w-[76px]"
+                        : "min-w-[80px] md:min-w-[92px]",
                     )}
                   >
-                    {days[index].slice(0, 3)}
-                  </span>
-                </th>
-              ))}
+                    <span
+                      className={cn(
+                        T_CELL,
+                        "block font-semibold",
+                        isToday
+                          ? "text-[#246a59] dark:text-[#7eb8a8]"
+                          : "text-zinc-800 dark:text-zinc-100",
+                      )}
+                    >
+                      {days[index].slice(0, 3)}
+                    </span>
+                    {isToday ? (
+                      <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.1em] text-[#246a59]/70 dark:text-[#7eb8a8]/70">
+                        Today
+                      </span>
+                    ) : null}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -576,7 +606,7 @@ export function AdminTimetableGrid({
                     <div
                       className={cn(
                         ROW_H,
-                        "animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800",
+                        "animate-pulse rounded-none bg-zinc-100 dark:bg-zinc-800",
                       )}
                     />
                   </td>
@@ -585,7 +615,7 @@ export function AdminTimetableGrid({
                       <div
                         className={cn(
                           ROW_H,
-                          "animate-pulse rounded-md bg-zinc-100/80 dark:bg-zinc-800/60",
+                          "animate-pulse rounded-none bg-zinc-100/80 dark:bg-zinc-800/60",
                         )}
                       />
                     </td>
@@ -596,7 +626,7 @@ export function AdminTimetableGrid({
               <tr>
                 <td colSpan={days.length + 1} className="p-12 text-center">
                   <div className="mx-auto flex max-w-xs flex-col items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-none bg-zinc-100 dark:bg-zinc-800">
                       <Clock className="h-5 w-5 text-zinc-400" />
                     </div>
                     <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
@@ -838,16 +868,16 @@ export function AdminTimetableGrid({
                                   }}
                                   className={cn(
                                     ROW_H,
-                                    "group/empty flex w-full items-center justify-center gap-1 rounded-md border border-dashed border-zinc-300/90 bg-zinc-50/80 text-zinc-400 transition-colors",
-                                    "hover:border-slate-400 hover:bg-white hover:text-slate-700",
-                                    "focus-visible:border-slate-900 focus-visible:bg-white focus-visible:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20",
-                                    "active:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-900/40 dark:hover:border-zinc-500 dark:hover:bg-zinc-900",
+                                    "group/empty flex w-full items-center justify-center gap-1 rounded-none border border-dashed border-zinc-200 bg-zinc-50/50 text-zinc-300 transition-colors dark:border-zinc-700/70 dark:bg-zinc-900/30 dark:text-zinc-600",
+                                    "hover:border-[#246a59]/50 hover:bg-[#246a59]/5 hover:text-[#246a59]",
+                                    "focus-visible:border-[#246a59] focus-visible:bg-[#246a59]/5 focus-visible:text-[#246a59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/25",
+                                    "disabled:cursor-not-allowed disabled:opacity-50",
                                   )}
                                   title="Add a lesson"
                                   aria-label="Add a lesson"
                                 >
-                                  <Plus className="h-3.5 w-3.5 opacity-50 transition-opacity group-hover/empty:opacity-100 group-focus-visible/empty:opacity-100" />
-                                  <span className="text-[10px] font-medium opacity-70 transition-opacity group-hover/empty:opacity-100 group-focus-visible/empty:opacity-100">
+                                  <Plus className="h-3.5 w-3.5" />
+                                  <span className="hidden text-[10px] font-medium group-hover/empty:inline group-focus-visible/empty:inline max-sm:inline">
                                     Add lesson
                                   </span>
                                 </button>
@@ -986,7 +1016,7 @@ function TimeColumnCell({
       <button
         type="button"
         onClick={() => onEdit?.(slot)}
-        className="w-full rounded-md px-1 py-0.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+        className="w-full rounded-none px-1 py-0.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
         title={`Edit times · ${timeLabel}`}
       >
         <p
@@ -1037,7 +1067,7 @@ function CombinedLessonCell({
   if (entries.length === 0) {
     return (
       <div
-        className="relative flex min-h-[36px] items-center justify-center overflow-hidden rounded border border-dashed border-zinc-200/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.9)_25%,transparent_25%,transparent_50%,rgba(248,250,252,0.9)_50%,rgba(248,250,252,0.9)_75%,transparent_75%,transparent)] bg-[length:8px_8px] dark:border-zinc-700/60 dark:bg-zinc-900/20"
+        className="relative flex min-h-[36px] items-center justify-center overflow-hidden rounded-none border border-dashed border-zinc-200/70 bg-[linear-gradient(135deg,rgba(248,250,252,0.9)_25%,transparent_25%,transparent_50%,rgba(248,250,252,0.9)_50%,rgba(248,250,252,0.9)_75%,transparent_75%,transparent)] bg-[length:8px_8px] dark:border-zinc-700/60 dark:bg-zinc-900/20"
         role="presentation"
         aria-label="No classes configured"
       >
@@ -1063,7 +1093,7 @@ function CombinedLessonCell({
         className={cn(
           "grid min-h-[36px] overscroll-contain",
           multiClass
-            ? "gap-1 max-lg:rounded-lg max-lg:bg-zinc-100/50 max-lg:p-1 max-lg:ring-1 max-lg:ring-inset max-lg:ring-zinc-200/60 dark:max-lg:bg-zinc-900/30 dark:max-lg:ring-zinc-700/50"
+            ? "gap-1 max-lg:rounded-none max-lg:bg-zinc-100/50 max-lg:p-1 max-lg:ring-1 max-lg:ring-inset max-lg:ring-zinc-200/60 dark:max-lg:bg-zinc-900/30 dark:max-lg:ring-zinc-700/50"
             : "",
           twoColumn ? "grid-cols-2" : "grid-cols-1",
           manyEntries && !expanded
@@ -1126,7 +1156,7 @@ function CombinedLessonCell({
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="col-span-2 flex items-center justify-center gap-1 rounded border border-dashed border-slate-200/70 bg-slate-50/60 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-zinc-700/50 dark:bg-zinc-900/30 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/40"
+            className="col-span-2 flex items-center justify-center gap-1 rounded-none border border-dashed border-slate-200/70 bg-slate-50/60 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-100/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50 dark:border-zinc-700/50 dark:bg-zinc-900/30 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/40"
             aria-expanded={expanded}
           >
             <ChevronDown
@@ -1208,7 +1238,7 @@ function CombinedShortcodeChip({
       onClick={onSelect}
       aria-label={chipLabel}
       className={cn(
-        "group/chip relative flex min-w-0 items-stretch overflow-hidden rounded-md border text-left",
+        "group/chip relative flex min-w-0 items-stretch overflow-hidden rounded-none border text-left",
         "transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/50",
         compact ? "min-h-[30px]" : "min-h-[34px]",
@@ -1249,7 +1279,7 @@ function CombinedShortcodeChip({
         <div className="flex min-w-0 items-center gap-1 leading-none">
           <span
             className={cn(
-              "inline-flex shrink-0 items-center rounded px-1 py-px font-semibold uppercase tracking-wide",
+              "inline-flex shrink-0 items-center rounded-none px-1 py-px font-semibold uppercase tracking-wide",
               compact ? "text-[8px]" : "text-[9px]",
             )}
             style={{
@@ -1305,7 +1335,7 @@ function CombinedShortcodeChip({
       {isDoubleStart ? (
         <span
           className={cn(
-            "absolute right-0.5 top-0.5 rounded px-1 font-semibold leading-none",
+            "absolute right-0.5 top-0.5 rounded-none px-1 font-semibold leading-none",
             "bg-violet-100/90 text-violet-700 ring-1 ring-violet-200/80",
             "dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60",
             compact ? "py-px text-[7px]" : "py-0.5 text-[8px]",
@@ -1318,7 +1348,7 @@ function CombinedShortcodeChip({
       {isDoubleCont ? (
         <span
           className={cn(
-            "absolute right-0.5 top-0.5 rounded px-1 font-medium leading-none",
+            "absolute right-0.5 top-0.5 rounded-none px-1 font-medium leading-none",
             "text-violet-600/80 dark:text-violet-400/80",
             compact ? "py-px text-[7px]" : "py-0.5 text-[8px]",
           )}
@@ -1371,7 +1401,7 @@ function AdminLessonCell({
   return (
     <div
       className={cn(
-        "group/lesson relative flex cursor-pointer items-start gap-0.5 rounded-md border px-2",
+        "group/lesson relative flex cursor-pointer items-start gap-0.5 rounded-none border px-2",
         LESSON_CELL_MIN,
         (isDoubleStart || isDoubleContinuation) && "pr-6",
         isDimmed && "opacity-40 saturate-[0.65]",
@@ -1415,7 +1445,7 @@ function AdminLessonCell({
         {entry.subject.name}
       </p>
       {isDoubleStart ? (
-        <span className="absolute right-0.5 top-0.5 rounded bg-violet-100/90 px-1 py-0.5 text-[8px] font-semibold leading-none text-violet-700 ring-1 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60">
+        <span className="absolute right-0.5 top-0.5 rounded-none bg-violet-100/90 px-1 py-0.5 text-[8px] font-semibold leading-none text-violet-700 ring-1 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60">
           2×
         </span>
       ) : null}
@@ -1518,7 +1548,7 @@ function BreakRow({
               disabled={!canMoveUp}
               onClick={() => onMoveBreak(primary, -1)}
               className={cn(
-                "pointer-events-auto rounded p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
+                "pointer-events-auto rounded-none p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
                 visual.iconColor,
               )}
               title="Move break earlier in the day"
@@ -1535,7 +1565,7 @@ function BreakRow({
               disabled={!canMoveDown}
               onClick={() => onMoveBreak(primary, 1)}
               className={cn(
-                "pointer-events-auto rounded p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
+                "pointer-events-auto rounded-none p-0.5 transition-colors hover:bg-black/[0.06] disabled:opacity-30",
                 visual.iconColor,
               )}
               title="Move break later in the day"
@@ -1568,7 +1598,7 @@ function BreakRow({
                     })
                   }
                   className={cn(
-                    "rounded-full px-2.5 py-1 text-[10px] font-medium text-slate-500 transition-colors",
+                    "rounded-none px-2.5 py-1 text-[10px] font-medium text-slate-500 transition-colors",
                     "hover:bg-black/[0.04] hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
                   )}
                   title={`Add ${visual.label} on this day`}

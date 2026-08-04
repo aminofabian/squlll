@@ -378,13 +378,13 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                       onClick={() => slot && onTimeSlotClick(slot.id)}
                     >
                       {slot && editingTimeSlot === slot.id ? (
-                        <div className="bg-gray-900 rounded-xl px-3 py-2 space-y-1">
+                        <div className="bg-gray-900 rounded-none px-3 py-2 space-y-1">
                           <input
                             type="text"
                             value={timeSlotEditValue}
                             onChange={(e) => onTimeSlotEditChange(e.target.value)}
                             onKeyDown={onTimeSlotKeyPress}
-                            className="w-20 px-1 py-0.5 text-xs bg-white rounded border-0 focus:outline-none text-gray-900"
+                            className="w-20 px-1 py-0.5 text-xs bg-white rounded-none border-0 focus:outline-none text-gray-900"
                             autoFocus
                           />
                           <div className="flex gap-1">
@@ -393,7 +393,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                 e.stopPropagation();
                                 if (slot) onTimeSlotSave(slot.id);
                               }}
-                              className="p-0.5 bg-green-500 text-white rounded text-xs"
+                              className="p-0.5 bg-green-500 text-white rounded-none text-xs"
                             >
                               <Save className="w-2 h-2" />
                             </button>
@@ -402,14 +402,14 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                 e.stopPropagation();
                                 onCancelTimeSlotEdit();
                               }}
-                              className="p-0.5 bg-red-500 text-white rounded text-xs"
+                              className="p-0.5 bg-red-500 text-white rounded-none text-xs"
                             >
                               <X className="w-2 h-2" />
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-gray-900 text-white rounded-xl px-3 py-2 min-w-[80px] text-center shadow-sm hover:bg-gray-800 transition-colors">
+                        <div className="bg-gray-900 text-white rounded-none px-3 py-2 min-w-[80px] text-center shadow-sm hover:bg-gray-800 transition-colors">
                           <div className="text-xs font-medium leading-tight">
                             {(displaySlot?.time || '').split(' – ')[0]}
                           </div>
@@ -423,20 +423,20 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                     {/* Subject Card */}
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
-                        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 space-y-3">
+                        <div className="bg-white rounded-none p-4 shadow-sm border border-gray-200 space-y-3">
                           <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => onInputChange(e.target.value)}
                             onKeyDown={onKeyPress}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                             placeholder="Enter subject name..."
                             autoFocus
                           />
                           <select
                             value={selectedTeacher}
                             onChange={(e) => onTeacherChange(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white"
                           >
                             <option value="">Select teacher...</option>
                             {Object.entries(teachers).map(([name, teacher]) => (
@@ -448,13 +448,13 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                           <div className="flex gap-2">
                             <button
                               onClick={onInputSubmit}
-                              className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                              className="flex-1 bg-gray-900 text-white py-2 rounded-none text-sm font-medium hover:bg-gray-800 transition-colors"
                             >
                               Save
                             </button>
                             <button
                               onClick={onCancelEdit}
-                              className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                              className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-none text-sm font-medium hover:bg-gray-200 transition-colors"
                             >
                               Cancel
                             </button>
@@ -462,7 +462,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                         </div>
                       ) : (
                         <div
-                        className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all relative group"
+                        className="bg-white rounded-none p-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-all relative group"
                         onClick={() => slot && onCellClick(slot.id, mobileViewDay)}
                         >
                           {cellData ? (
@@ -489,7 +489,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                                     {cellData.teacher ? `Teacher: ${cellData.teacher}` : 'No teacher assigned'}
                                   </p>
                                   {teacher && (
-                                    <div className={`inline-block mt-2 px-2 py-1 rounded-full text-xs text-white ${teacher.color}`}>
+                                    <div className={`inline-block mt-2 px-2 py-1 rounded-none text-xs text-white ${teacher.color}`}>
                                       {teacher.subjects.slice(0, 2).join(', ')}
                                       {teacher.subjects.length > 2 && '...'}
                                     </div>
@@ -498,7 +498,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
                               )}
                               
                               {hasConflict && (
-                                <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                                <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-none flex items-center justify-center">
                                   <AlertTriangle className="w-2 h-2 text-white" />
                                 </div>
                               )}
@@ -529,7 +529,7 @@ export const TimetableGrid: React.FC<TimetableGridProps> = ({
         <div className="flex-shrink-0 p-4 bg-white border-t border-gray-200">
           <button
             onClick={onStartAddTimeSlot}
-            className="w-full py-3 px-4 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-gray-900 text-white rounded-none font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Add Time Slot

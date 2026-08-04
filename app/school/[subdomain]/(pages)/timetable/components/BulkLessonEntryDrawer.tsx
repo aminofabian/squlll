@@ -480,7 +480,7 @@ export function BulkLessonEntryDrawer({
                   <label
                     key={d.value}
                     className={cn(
-                      "flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                      "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 text-xs font-medium transition-colors",
                       active
                         ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
                         : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
@@ -544,7 +544,7 @@ export function BulkLessonEntryDrawer({
                       <label
                         key={d.value}
                         className={cn(
-                          "flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition-colors",
+                          "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1.5 text-xs transition-colors",
                           active
                             ? "border-slate-700 bg-slate-100 text-slate-800 dark:border-slate-400 dark:bg-slate-800 dark:text-slate-100"
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900",
@@ -582,7 +582,7 @@ export function BulkLessonEntryDrawer({
             </Button>
           </div>
 
-          <div className="rounded-lg border border-dashed border-slate-200 p-3 dark:border-slate-700">
+          <div className="rounded-none border border-dashed border-slate-200 p-3 dark:border-slate-700">
             <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Or load into the form
             </p>
@@ -634,7 +634,7 @@ export function BulkLessonEntryDrawer({
             </div>
 
             {entries.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-200 py-8 text-center dark:border-slate-700">
+              <div className="rounded-none border border-dashed border-slate-200 py-8 text-center dark:border-slate-700">
                 <BookOpen className="mx-auto mb-2 h-7 w-7 text-slate-300" />
                 <p className="text-xs text-slate-500">No lessons added yet</p>
                 <Button
@@ -651,7 +651,7 @@ export function BulkLessonEntryDrawer({
                 {sortedEntryRows.map((entry) => (
                   <div
                     key={entry.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-700 dark:bg-slate-900/40"
+                    className="rounded-none border border-slate-200 bg-slate-50/50 p-2.5 dark:border-slate-700 dark:bg-slate-900/40"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <span className={tt.label}>
@@ -663,7 +663,7 @@ export function BulkLessonEntryDrawer({
                         <button
                           type="button"
                           onClick={() => removeEntry(entry.id)}
-                          className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                          className="rounded-none p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
                           aria-label="Remove lesson row"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -756,7 +756,7 @@ export function BulkLessonEntryDrawer({
           </datalist>
 
           {entries.length > 0 && selectedGrade ? (
-            <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
+            <div className="flex items-start gap-2 rounded-none border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
               <Calendar className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span>
                 <strong className="font-semibold text-slate-800 dark:text-slate-100">

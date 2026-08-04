@@ -19,7 +19,7 @@ type LessonSubject = {
 };
 
 export const lessonSelectTriggerClass = cn(
-  "h-8 rounded-md border-slate-200 bg-white px-2.5 text-xs shadow-none",
+  "h-8 rounded-none border-slate-200 bg-white px-2.5 text-xs shadow-none",
   "focus:ring-1 focus:ring-slate-200 focus:ring-offset-0",
   "dark:border-slate-700 dark:bg-slate-900",
 );
@@ -30,12 +30,12 @@ export const lessonSelectTriggerCompactClass = cn(
 );
 
 const selectContentClass = cn(
-  "rounded-md border border-slate-200 bg-white p-0.5 shadow-sm",
+  "rounded-none border border-slate-200 bg-white p-0.5 shadow-sm",
   "dark:border-slate-700 dark:bg-slate-900",
 );
 
 const selectItemClass = cn(
-  "rounded-sm py-1.5 pl-7 pr-2 text-xs text-slate-700",
+  "rounded-none py-1.5 pl-7 pr-2 text-xs text-slate-700",
   "focus:bg-slate-50 data-[highlighted]:bg-slate-50",
   "dark:text-slate-200 dark:focus:bg-slate-800 dark:data-[highlighted]:bg-slate-800",
 );

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   BookOpen,
+  ChevronRight,
   GraduationCap,
   Megaphone,
   UserPlus,
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 interface QuickAction {
   id: string;
   label: string;
+  description: string;
   href?: string;
   icon: typeof UserPlus;
   variant?: "primary" | "sheet";
@@ -20,27 +22,31 @@ interface QuickAction {
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
-    id: "add-student",
-    label: "Student",
-    href: "/students?action=add",
-    icon: UserPlus,
+    id: "add-teacher",
+    label: "Add teacher",
+    description: "Invite teaching staff",
+    href: "/teachers?action=add",
+    icon: GraduationCap,
     variant: "primary",
   },
   {
-    id: "add-teacher",
-    label: "Teacher",
-    href: "/teachers?action=add",
-    icon: GraduationCap,
+    id: "add-student",
+    label: "Add student",
+    description: "Enroll a new learner",
+    href: "/students?action=add",
+    icon: UserPlus,
   },
   {
     id: "classes",
-    label: "Classes",
+    label: "Manage classes",
+    description: "Grades and streams",
     href: "/classes",
     icon: BookOpen,
   },
   {
     id: "announce",
-    label: "Announce",
+    label: "Send announcement",
+    description: "Broadcast to the school",
     icon: Megaphone,
     variant: "sheet",
   },
@@ -52,26 +58,57 @@ interface DashboardQuickActionsProps {
 
 export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps) {
   return (
-    <div
-      className="grid grid-cols-2 gap-2 sm:grid-cols-2"
-      aria-label="Quick actions"
-    >
+    <div className="space-y-0.5" aria-label="Quick actions">
       {QUICK_ACTIONS.map((action) => {
         const Icon = action.icon;
         const isPrimary = action.variant === "primary";
+
+        const className = cn(
+          "group flex w-full items-center gap-2 border border-transparent px-2 py-1.5 text-left transition-colors",
+          "hover:border-[#1a4d42]/12 hover:bg-[#f3f7f5] dark:hover:bg-white/[0.04]",
+          isPrimary &&
+            "border-[#246a59]/20 bg-[#246a59]/[0.06] hover:border-[#246a59]/35 hover:bg-[#246a59]/10",
+        );
+
+        const content = (
+          <>
+            <span
+              className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center border",
+                isPrimary
+                  ? "border-[#246a59] bg-[#0a1f1a] text-white"
+                  : "border-[#1a4d42]/15 bg-[#f3f7f5] text-[#246a59] dark:border-white/15 dark:bg-[#071411]",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12px] font-medium text-[#0a1f1a] dark:text-white">
+                {action.label}
+              </span>
+              <span className="block truncate text-[10px] text-[#1a4d42]/50 dark:text-white/40">
+                {action.description}
+              </span>
+            </span>
+            <ChevronRight
+              className={cn(
+                "h-3.5 w-3.5 shrink-0 text-[#1a4d42]/25 transition-transform group-hover:translate-x-0.5",
+                isPrimary && "text-[#246a59]/60",
+              )}
+            />
+          </>
+        );
 
         if (action.variant === "sheet") {
           return (
             <DashboardBroadcastSheet
               key={action.id}
               subdomain={subdomain}
-              triggerClassName={cn(
-                "group flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200",
-                "border-slate-200/80 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/60",
-              )}
+              triggerClassName={className}
               triggerLabel={action.label}
               triggerIcon={Icon}
               compact
+              triggerContent={content}
             />
           );
         }
@@ -80,27 +117,9 @@ export function DashboardQuickActions({ subdomain }: DashboardQuickActionsProps)
           <Link
             key={action.id}
             href={action.href ?? "#"}
-            className={cn(
-              "group flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-all duration-200",
-              "hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]",
-              isPrimary
-                ? "border-[#0073ea]/35 bg-gradient-to-b from-[#0073ea]/15 to-[#0073ea]/5 text-[#0073ea] shadow-sm dark:from-[#0073ea]/25 dark:to-transparent"
-                : "border-slate-200/80 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-200",
-            )}
+            className={className}
           >
-            <span
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
-                isPrimary
-                  ? "bg-[#0073ea]/15 group-hover:bg-[#0073ea]/25"
-                  : "bg-slate-100 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-            </span>
-            <span className="text-[11px] font-semibold leading-none">
-              {action.label}
-            </span>
+            {content}
           </Link>
         );
       })}

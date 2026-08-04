@@ -137,7 +137,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-gray-200">
+      <div className="bg-white rounded-none p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-gray-200">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <Coffee className="w-5 h-5 text-primary" />
@@ -152,13 +152,13 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
         </div>
         
         {/* Add New Break */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mb-6 p-4 bg-gray-50 rounded-none border border-gray-200">
           <h4 className="text-sm font-medium text-gray-700 mb-3">Add New Break</h4>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
             <select
               value={editType}
               onChange={(e) => setEditType(e.target.value as Break['type'])}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="border border-gray-300 rounded-none px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               {breakTypes.map(type => (
                 <option key={type.value} value={type.value}>
@@ -171,7 +171,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onKeyDown={handleKeyPress}
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="flex-1 border border-gray-300 rounded-none px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="Break name (e.g., Morning Recess)"
             />
             <input
@@ -179,7 +179,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
               min={0}
               value={editAfterPeriod}
               onChange={(e) => setEditAfterPeriod(parseInt(e.target.value, 10) || 0)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="border border-gray-300 rounded-none px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="After period"
               title="Occurs after period"
             />
@@ -188,13 +188,13 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
               min={1}
               value={editDuration}
               onChange={(e) => setEditDuration(parseInt(e.target.value, 10) || 0)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="border border-gray-300 rounded-none px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="Minutes"
               title="Duration minutes"
             />
             <button
               onClick={handleAdd}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-none hover:bg-primary-dark"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -215,7 +215,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
           )
             .sort(([a], [b]) => Number(a) - Number(b))
             .map(([afterPeriod, breaksInGroup]) => (
-              <div key={afterPeriod} className="border border-gray-200 rounded-lg bg-gray-50/60">
+              <div key={afterPeriod} className="border border-gray-200 rounded-none bg-gray-50/60">
                 <div className="px-4 py-2 border-b border-gray-200 text-xs font-semibold text-gray-700 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-primary" />
                   {Number(afterPeriod) === -1 ? 'No period placement' : `After Period ${afterPeriod}`}
@@ -225,7 +225,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
                     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
                     .map((breakItem) => (
                       <div key={breakItem.id} className="flex items-center gap-3 p-3">
-                        <div className={`w-8 h-8 ${breakItem.color} rounded-lg flex items-center justify-center text-white text-sm`}>
+                        <div className={`w-8 h-8 ${breakItem.color} rounded-none flex items-center justify-center text-white text-sm`}>
                           {breakItem.icon}
                         </div>
                         
@@ -234,7 +234,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
                             <select
                               value={editType}
                               onChange={(e) => setEditType(e.target.value as Break['type'])}
-                              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              className="border border-gray-300 rounded-none px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                             >
                               {breakTypes.map(type => (
                                 <option key={type.value} value={type.value}>
@@ -247,7 +247,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
                               value={editName}
                               onChange={(e) => setEditName(e.target.value)}
                               onKeyDown={handleKeyPress}
-                              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              className="border border-gray-300 rounded-none px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                               placeholder="Break name"
                               autoFocus
                             />
@@ -256,7 +256,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
                               min={0}
                               value={editAfterPeriod}
                               onChange={(e) => setEditAfterPeriod(parseInt(e.target.value, 10) || 0)}
-                              className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              className="border border-gray-300 rounded-none px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                               placeholder="After period"
                               title="Occurs after period"
                             />
@@ -266,7 +266,7 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
                                 min={1}
                                 value={editDuration}
                                 onChange={(e) => setEditDuration(parseInt(e.target.value, 10) || 0)}
-                                className="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="flex-1 border border-gray-300 rounded-none px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                 placeholder="Minutes"
                                 title="Duration minutes"
                               />
@@ -329,13 +329,13 @@ export const BreakManager: React.FC<BreakManagerProps> = ({
         <div className="flex gap-2 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+            className="px-4 py-2 border border-gray-300 rounded-none hover:bg-gray-50 text-gray-700"
           >
             Close
           </button>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="mt-4 p-3 bg-blue-50 rounded-none border border-blue-200">
           <p className="text-sm text-blue-800">
             💡 <strong>Tip:</strong> After adding breaks, you can assign them to time slots in the timetable by typing the break name in any cell.
           </p>

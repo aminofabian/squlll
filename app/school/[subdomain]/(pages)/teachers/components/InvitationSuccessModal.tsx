@@ -78,20 +78,14 @@ export function InvitationSuccessModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="gap-0 overflow-hidden border-0 p-0 sm:max-w-[460px]">
+      <DialogContent className="gap-0 overflow-hidden rounded-none border border-[#1a4d42]/12 p-0 sm:max-w-[460px]">
         {/* Header */}
-        <div className="relative overflow-hidden border-b border-primary/10 bg-gradient-to-br from-primary/[0.08] via-white to-primary/[0.04] px-6 pb-5 pt-6 dark:from-primary/15 dark:via-slate-900 dark:to-primary/5">
-          <div
-            className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-primary/15 blur-3xl"
-            aria-hidden
-          />
+        <div className="relative overflow-hidden border-b border-[#1a4d42]/12 bg-[#f8fbfa] px-6 pb-5 pt-6 dark:border-white/10 dark:bg-[#071411]">
           <div className="relative flex flex-col items-center text-center">
             <div
               className={cn(
-                "mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg",
-                emailFailed
-                  ? "bg-amber-500 shadow-amber-500/25"
-                  : "bg-primary shadow-primary/30",
+                "mb-3 flex h-14 w-14 items-center justify-center rounded-none text-white",
+                emailFailed ? "bg-amber-600" : "bg-[#0a1f1a]",
               )}
             >
               {emailFailed ? (
@@ -100,20 +94,20 @@ export function InvitationSuccessModal({
                 <CheckCircle2 className="h-7 w-7" strokeWidth={1.75} />
               )}
             </div>
-            <DialogTitle className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            <DialogTitle className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
               {emailFailed ? "Teacher registered" : "Invitation sent"}
             </DialogTitle>
-            <DialogDescription className="mt-1 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+            <DialogDescription className="mt-1 max-w-xs text-sm text-[#1a4d42]/55 dark:text-white/45">
               {emailFailed ? (
                 <>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                  <span className="font-medium text-[#0a1f1a] dark:text-white/80">
                     {invitationData.fullName}
                   </span>{" "}
                   is saved — resend the invite when email is working.
                 </>
               ) : (
                 <>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                  <span className="font-medium text-[#0a1f1a] dark:text-white/80">
                     {invitationData.fullName}
                   </span>{" "}
                   will get an email to set up their account.
@@ -123,54 +117,52 @@ export function InvitationSuccessModal({
           </div>
         </div>
 
-        <div className="max-h-[min(70vh,520px)] space-y-4 overflow-y-auto bg-slate-50/80 px-5 py-5 dark:bg-slate-950/80">
+        <div className="max-h-[min(70vh,520px)] space-y-4 overflow-y-auto bg-[#f3f7f5] px-5 py-5 dark:bg-[#071411]/80">
           {/* Teacher card */}
-          <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-dark via-slate-800 to-primary/70 p-[1px] shadow-md shadow-primary/10">
-            <div className="rounded-[15px] bg-gradient-to-br from-primary-dark to-slate-800 px-4 py-3.5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-base font-bold text-white ring-1 ring-white/20">
-                  {initialsFromName(invitationData.fullName)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-white">
-                    {invitationData.fullName}
-                  </p>
-                  <p className="mt-0.5 truncate font-mono text-xs text-white/55">
-                    {invitationData.email}
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <Badge
-                      className={cn(
-                        "h-5 border-0 px-2 text-[10px] font-medium capitalize hover:bg-transparent",
-                        emailFailed
-                          ? "bg-amber-500/20 text-amber-100"
-                          : "bg-primary-light/30 text-white/90",
-                      )}
-                    >
-                      {invitationData.status.toLowerCase()}
-                    </Badge>
-                    <span className="flex items-center gap-1 text-[10px] text-white/45">
-                      <Clock className="h-3 w-3" />
-                      {formatSentAt(invitationData.createdAt)}
-                    </span>
-                  </div>
+          <div className="overflow-hidden rounded-none border border-[#1a4d42]/20 bg-[#0a1f1a] px-4 py-3.5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-none bg-[#246a59] text-base font-bold text-white">
+                {initialsFromName(invitationData.fullName)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold text-white">
+                  {invitationData.fullName}
+                </p>
+                <p className="mt-0.5 truncate font-mono text-xs text-white/55">
+                  {invitationData.email}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <Badge
+                    className={cn(
+                      "h-5 rounded-none border-0 px-2 text-[10px] font-medium capitalize hover:bg-transparent",
+                      emailFailed
+                        ? "bg-amber-500/20 text-amber-100"
+                        : "bg-white/10 text-white/90",
+                    )}
+                  >
+                    {invitationData.status.toLowerCase()}
+                  </Badge>
+                  <span className="flex items-center gap-1 text-[10px] text-white/45">
+                    <Clock className="h-3 w-3" />
+                    {formatSentAt(invitationData.createdAt)}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Email copy */}
-          <div className="overflow-hidden rounded-2xl border border-primary/15 bg-primary/[0.04] dark:border-primary/20 dark:bg-primary/10">
-            <div className="flex items-center justify-between border-b border-primary/10 px-4 py-3 dark:border-primary/15">
+          <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17]">
+            <div className="flex items-center justify-between border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="flex h-7 w-7 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
                   <Mail className="h-3.5 w-3.5" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                     Invitation email
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[#1a4d42]/55">
                     {emailFailed ? "Copy and share manually if needed" : "Sent to this address"}
                   </p>
                 </div>
@@ -180,7 +172,7 @@ export function InvitationSuccessModal({
                 size="sm"
                 variant="outline"
                 onClick={() => void copyEmail()}
-                className="h-8 gap-1.5 rounded-full border-primary/20 bg-white text-xs text-primary hover:bg-primary/5 dark:bg-slate-900"
+                className="h-8 gap-1.5 rounded-none border-[#1a4d42]/15 bg-white text-xs text-[#246a59] hover:bg-[#246a59]/[0.06] dark:border-white/15 dark:bg-[#0c1a17]"
               >
                 {copied ? (
                   <>
@@ -196,11 +188,11 @@ export function InvitationSuccessModal({
               </Button>
             </div>
             <div className="p-3">
-              <p className="truncate rounded-xl bg-white/80 px-3 py-2.5 font-mono text-sm text-slate-800 ring-1 ring-inset ring-primary/10 dark:bg-slate-900/60 dark:text-slate-100">
+              <p className="truncate rounded-none bg-white px-3 py-2.5 font-mono text-sm text-[#0a1f1a] ring-1 ring-inset ring-[#1a4d42]/12 dark:bg-[#071411] dark:text-white dark:ring-white/10">
                 {invitationData.email}
               </p>
               {!emailFailed && (
-                <p className="mt-2 truncate font-mono text-[11px] text-slate-500">
+                <p className="mt-2 truncate font-mono text-[11px] text-[#1a4d42]/55">
                   Portal: {portalUrl}
                 </p>
               )}
@@ -208,11 +200,11 @@ export function InvitationSuccessModal({
           </div>
 
           {/* Next steps — single panel */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          <div className="rounded-none border border-[#1a4d42]/12 bg-white p-4 dark:border-white/10 dark:bg-[#0c1a17]">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-[#1a4d42]/45">
               What happens next
             </p>
-            <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2.5 text-xs text-[#1a4d42]/70 dark:text-white/55">
               {emailFailed ? (
                 <>
                   <li className="flex items-start gap-2">
@@ -220,7 +212,7 @@ export function InvitationSuccessModal({
                     Open{" "}
                     <Link
                       href="/teachers"
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-[#246a59] hover:underline"
                       onClick={onClose}
                     >
                       Pending invitations
@@ -228,22 +220,22 @@ export function InvitationSuccessModal({
                     on the Teachers page and tap Resend.
                   </li>
                   <li className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
                     The teacher record is already saved — nothing else to re-enter.
                   </li>
                 </>
               ) : (
                 <>
                   <li className="flex items-start gap-2">
-                    <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
                     They&apos;ll receive a link to create their password and join.
                   </li>
                   <li className="flex items-start gap-2">
-                    <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
                     Assign grades and subjects from their profile once they sign in.
                   </li>
                   <li className="flex items-start gap-2">
-                    <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                    <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#246a59]" />
                     They&apos;ll appear in your teachers list after accepting.
                   </li>
                 </>
@@ -252,7 +244,7 @@ export function InvitationSuccessModal({
           </div>
 
           {emailFailed && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <div className="flex items-start gap-2.5 rounded-none border border-amber-200/80 bg-amber-50/80 px-3.5 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200/90">
                 Email delivery failed — often a mail config issue in dev. Resend from Pending invitations when ready.
@@ -261,10 +253,10 @@ export function InvitationSuccessModal({
           )}
         </div>
 
-        <div className="border-t border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="border-t border-[#1a4d42]/12 bg-white px-5 py-4 dark:border-white/10 dark:bg-[#0c1a17]">
           <Button
             onClick={onClose}
-            className="h-11 w-full rounded-full bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary-dark"
+            className="h-11 w-full rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
           >
             {emailFailed ? "Got it — I'll resend later" : "Done"}
           </Button>

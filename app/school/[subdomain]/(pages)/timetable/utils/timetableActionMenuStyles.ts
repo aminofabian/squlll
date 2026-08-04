@@ -3,14 +3,14 @@ import { cn } from "@/lib/utils";
 /** Compact action menu styling for timetable toolbar dropdowns */
 export const ttMenu = {
   content: cn(
-    "w-44 rounded-lg border-slate-200/90 p-1 shadow-sm",
-    "dark:border-slate-700 dark:bg-slate-900",
+    "w-48 rounded-none border-[#1a4d42]/15 bg-white p-1.5 shadow-[3px_3px_0_0_rgba(10,31,26,0.06)]",
+    "dark:border-white/10 dark:bg-[#0c1a17]",
   ),
   item: cn(
-    "h-7 gap-2 rounded-md px-2 text-xs font-normal text-slate-600",
-    "focus:bg-slate-50 focus:text-slate-900",
-    "dark:text-slate-300 dark:focus:bg-slate-800 dark:focus:text-slate-100",
-    "[&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:text-slate-400",
+    "h-8 gap-2 rounded-none px-2.5 text-[13px] font-normal text-[#1a4d42]/70",
+    "focus:bg-[#f3f7f5] focus:text-[#0a1f1a]",
+    "dark:text-white/60 dark:focus:bg-white/5 dark:focus:text-white",
+    "[&_svg]:size-3.5 [&_svg]:shrink-0 [&_svg]:text-[#1a4d42]/40",
   ),
   itemWarn: "text-amber-800 focus:text-amber-900 dark:text-amber-200",
   itemDestructive: cn(
@@ -18,7 +18,6 @@ export const ttMenu = {
     "dark:text-red-400 dark:focus:bg-red-950/40 dark:focus:text-red-300",
     "[&_svg]:text-red-500 dark:[&_svg]:text-red-400",
   ),
-  label:
-    "px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400",
-  separator: "my-0.5 bg-slate-100 dark:bg-slate-800",
+  label: "px-2.5 py-1 text-[11px] font-medium text-[#1a4d42]/45",
+  separator: "my-1 bg-[#1a4d42]/10 dark:bg-white/10",
 } as const;

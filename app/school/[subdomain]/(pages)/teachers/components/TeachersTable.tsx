@@ -146,13 +146,13 @@ export function TeachersTable({
 
       {teachers.length === 0 ? (
         <div className="px-4 py-14 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <User className="h-5 w-5 text-slate-400" />
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10">
+            <User className="h-5 w-5 text-[#246a59]" />
           </div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+          <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
             No teachers match
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[#1a4d42]/50 dark:text-white/45">
             Try a different filter or search term.
           </p>
         </div>

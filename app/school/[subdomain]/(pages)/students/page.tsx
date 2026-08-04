@@ -363,12 +363,12 @@ export default function StudentsPage() {
 
   if (pageError) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50/80 dark:bg-slate-950">
-        <div className="rounded-xl border border-red-200 bg-white px-6 py-8 text-center dark:border-red-900 dark:bg-slate-900">
-          <h2 className="mb-1 text-base font-semibold text-red-600">
+      <div className="flex h-screen items-center justify-center bg-[#f3f7f5] dark:bg-[#071411]">
+        <div className="rounded-none border border-red-300/80 bg-white px-6 py-8 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+          <h2 className="mb-1 font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading students
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[#1a4d42]/55 dark:text-white/45">
             {pageError instanceof Error ? pageError.message : "An error occurred"}
           </p>
         </div>
@@ -377,17 +377,17 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f8f9fb] dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] transition-all duration-300 dark:border-white/10 dark:bg-[#0c1a17]",
           "md:relative md:translate-x-0",
           isSidebarMinimized ? "w-14" : "w-64",
         )}
       >
         <div
           className={cn(
-            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+            "flex shrink-0 border-b border-[#1a4d42]/10 px-2 py-2 dark:border-white/10",
             isSidebarMinimized ? "justify-center" : "justify-end",
           )}
         >
@@ -423,14 +423,17 @@ export default function StudentsPage() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-4 py-3 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-950/90 sm:px-6">
+        <div className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-6">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
+                  Enrollment
+                </p>
+                <h1 className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
                   {selectedStudent ? "Student profile" : "Students"}
                 </h1>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/45">
                   {selectedStudent
                     ? `${selectedStudent.name} · ${selectedStudent.admissionNumber}`
                     : students.length > 0
@@ -454,9 +457,9 @@ export default function StudentsPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+          <div className="mx-auto max-w-6xl space-y-3 p-4 sm:p-5">
             {pageLoading && students.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-[#1a4d42]/55">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading students…
               </div>
@@ -531,10 +534,10 @@ export default function StudentsPage() {
                 {!pageLoading && students.length > 0 ? (
                   <div className={studentsControlShell}>
                     {gradeIdFilter ? (
-                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#0073ea]/25 bg-[#0073ea]/[0.06] px-3 py-2.5 text-xs text-slate-600 dark:text-slate-300">
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-[#246a59]/25 bg-[#246a59]/[0.06] px-3 py-2.5 text-xs text-[#1a4d42]/70 dark:text-white/60">
                         <span>
                           Filtered to class{" "}
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-[#0a1f1a] dark:text-white">
                             {gradeFilter !== "all" ? gradeFilter : "selected grade"}
                           </span>
                           {streamIdFilter
@@ -566,7 +569,7 @@ export default function StudentsPage() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-[11px] text-[#0073ea]"
+                          className="h-7 rounded-none text-[11px] text-[#246a59] hover:bg-[#246a59]/10 hover:text-[#1a4d42]"
                           onClick={clearFilters}
                         >
                           Clear class filter

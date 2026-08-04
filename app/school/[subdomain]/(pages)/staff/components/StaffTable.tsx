@@ -82,19 +82,19 @@ export function StaffTable({
 
   return (
     <div className={staffPanel}>
-      <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-        <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+      <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10">
+        <h2 className="text-sm font-medium text-[#0a1f1a] dark:text-white">
           {title}
         </h2>
-        <p className="mt-0.5 text-xs text-slate-400">{defaultDescription}</p>
+        <p className="mt-0.5 text-xs text-[#1a4d42]/45">{defaultDescription}</p>
       </div>
 
       {staff.length === 0 ? (
         <div className="px-4 py-14 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <User className="h-5 w-5 text-slate-400" />
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10">
+            <User className="h-5 w-5 text-[#246a59]" />
           </div>
-          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+          <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
             {emptyMessage}
           </p>
           {showAddAction ? (

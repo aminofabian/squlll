@@ -295,7 +295,7 @@ export function WeekTemplateManager() {
                         {template.dayTemplates
                           .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
                           .map((day) => (
-                            <div key={day.id} className="border rounded-lg p-3">
+                            <div key={day.id} className="border rounded-none p-3">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline">
@@ -322,7 +322,7 @@ export function WeekTemplateManager() {
                                   {day.periods.map((period) => (
                                     <div 
                                       key={period.id}
-                                      className="text-xs bg-muted rounded p-2"
+                                      className="text-xs bg-muted rounded-none p-2"
                                     >
                                       <div className="font-medium">Period {period.periodNumber}</div>
                                       <div className="text-muted-foreground">
@@ -390,7 +390,7 @@ export function WeekTemplateManager() {
           </DialogHeader>
           
           {rebuildError && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-none p-3 text-sm text-destructive">
               {rebuildError}
             </div>
           )}

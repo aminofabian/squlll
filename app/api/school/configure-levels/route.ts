@@ -191,9 +191,13 @@ export async function POST(request: Request) {
       // Check if the school is already configured
       const alreadyConfiguredError = result.errors.find((error) => {
         const e = toGraphQLError(error);
+        const message = (e.message || '').toLowerCase();
+        const code = String(e.extensions?.code || '').toUpperCase();
         return (
-          e.extensions?.code === 'BADREQUESTEXCEPTION' &&
-          e.message === 'School has already been configured'
+          message.includes('already configured') ||
+          message.includes('already been configured') ||
+          ((code === 'BADREQUEST' || code === 'BADREQUESTEXCEPTION') &&
+            message.includes('already'))
         );
       });
       
@@ -201,7 +205,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { 
             error: 'SCHOOL_ALREADY_CONFIGURED',
-            message: 'School has already been configured',
+            message: 'Your school is already set up. You can continue to the next step.',
             action: 'redirect_to_dashboard'
           },
           { status: 400 }

@@ -23,7 +23,7 @@ export function TeacherTimetableHero({
     <header className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
       <div className="min-w-0">
         <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-2xl">
-          My Teaching Schedule
+          My Teaching Timetable
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {formattedDate}

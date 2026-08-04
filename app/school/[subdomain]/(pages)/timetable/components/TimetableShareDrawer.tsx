@@ -135,7 +135,7 @@ export function TimetableShareDrawer({
         </DrawerHeader>
 
         <div className="px-4 pb-2 space-y-4 overflow-y-auto">
-          <div className="flex gap-2 rounded-lg border border-zinc-200/90 bg-zinc-50/80 px-3 py-2.5 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
+          <div className="flex gap-2 rounded-none border border-zinc-200/90 bg-zinc-50/80 px-3 py-2.5 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" />
             <p>
               Publishing unlocks the timetable for teachers. You can still edit
@@ -147,7 +147,7 @@ export function TimetableShareDrawer({
           {sharedAt && (
             <div
               className={cn(
-                "rounded-lg px-3 py-2 text-xs border",
+                "rounded-none px-3 py-2 text-xs border",
                 hasChangesSinceShare
                   ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
                   : "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100",
@@ -210,7 +210,7 @@ export function TimetableShareDrawer({
           </div>
 
           {incompleteGrades.length > 0 && (
-            <div className="rounded-lg border border-amber-200/90 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-800 px-3 py-2.5">
+            <div className="rounded-none border border-amber-200/90 bg-amber-50/80 dark:bg-amber-950/30 dark:border-amber-800 px-3 py-2.5">
               <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 flex items-center gap-1.5">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Classes still sparse

@@ -28,7 +28,7 @@ function GradeListLabel({ label, query }: { label: string; query: string }) {
   return (
     <span>
       {parts.before}
-      <span className="rounded-sm bg-zinc-200/90 px-0.5 font-semibold text-zinc-900 dark:bg-zinc-600 dark:text-zinc-50">
+      <span className="rounded-none bg-zinc-200/90 px-0.5 font-semibold text-zinc-900 dark:bg-zinc-600 dark:text-zinc-50">
         {parts.match}
       </span>
       {parts.after}
@@ -49,8 +49,8 @@ export function TimetableClassSidebar({
 }: TimetableClassSidebarProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-zinc-100 px-3 py-3 dark:border-zinc-800">
-        <p className={cn(tt.caption, "mb-2.5")}>
+      <div className="border-b border-zinc-100 px-2.5 py-2 dark:border-zinc-800">
+        <p className={cn(tt.caption, "mb-1.5 text-[11px]")}>
           Select a class to edit its weekly grid.
         </p>
         <GradeClassSearch
@@ -61,14 +61,14 @@ export function TimetableClassSidebar({
           totalCount={allGradesCount}
         />
       </div>
-      <ul className="flex-1 space-y-0.5 overflow-y-auto p-2" role="listbox" aria-label="Classes">
+      <ul className="flex-1 space-y-px overflow-y-auto p-1.5" role="listbox" aria-label="Classes">
         {onSelectAllClasses ? (
           <li role="option" aria-selected={selectedGradeId === null}>
             <button
               type="button"
               onClick={onSelectAllClasses}
               className={cn(
-                "mb-1 w-full rounded-lg px-3 py-2.5 text-left text-[13px] font-medium tracking-tight transition-colors",
+                "mb-0.5 w-full rounded-none px-2.5 py-1.5 text-left text-[12px] font-medium tracking-tight transition-colors",
                 selectedGradeId === null
                   ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
@@ -77,7 +77,7 @@ export function TimetableClassSidebar({
               All classes
               <span
                 className={cn(
-                  "mt-0.5 block text-[11px] font-normal",
+                  "mt-0.5 block text-[10px] font-normal",
                   selectedGradeId === null
                     ? "text-zinc-300 dark:text-zinc-500"
                     : "text-zinc-400",
@@ -114,7 +114,7 @@ export function TimetableClassSidebar({
                   type="button"
                   onClick={() => onSelectGrade(g.id)}
                   className={cn(
-                    "w-full rounded-lg px-3 py-2.5 text-left text-[13px] font-medium tracking-tight transition-colors",
+                    "w-full rounded-none px-2.5 py-1.5 text-left text-[12px] font-medium tracking-tight transition-colors",
                     active
                       ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                       : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
@@ -122,7 +122,7 @@ export function TimetableClassSidebar({
                   )}
                 >
                   {isPinned && (
-                    <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                    <span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-zinc-400">
                       Current class
                     </span>
                   )}
@@ -130,7 +130,7 @@ export function TimetableClassSidebar({
                   {g.name && label !== g.name && (
                     <span
                       className={cn(
-                        "mt-0.5 block text-[11px] font-normal",
+                        "mt-0.5 block text-[10px] font-normal",
                         active
                           ? "text-zinc-300 dark:text-zinc-500"
                           : "text-zinc-400",

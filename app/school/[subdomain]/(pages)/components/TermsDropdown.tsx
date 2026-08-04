@@ -81,32 +81,30 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
         onClick={() => setModalOpen(true)}
         aria-label="Manage current term"
         className={cn(
-          "group hidden md:flex items-center gap-2.5 h-10 pl-1.5 pr-3 rounded-xl",
-          "border border-amber-200/80 dark:border-amber-800/60",
-          "bg-gradient-to-r from-amber-50/90 via-white to-white",
-          "dark:from-amber-950/40 dark:via-slate-900 dark:to-slate-900",
-          "hover:border-amber-300 dark:hover:border-amber-700",
-          "hover:shadow-md hover:shadow-amber-500/10",
-          "transition-all duration-200",
+          "group hidden md:flex items-center gap-2 h-8 pl-1 pr-2",
+          "border border-[#1a4d42]/15 bg-white",
+          "hover:border-[#246a59]/40 hover:bg-[#f3f7f5]",
+          "dark:border-white/15 dark:bg-[#0c1a17] dark:hover:bg-white/5",
+          "transition-colors",
           className,
         )}
       >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/50 ring-1 ring-amber-200/60 dark:ring-amber-700/50 group-hover:bg-amber-200/80 dark:group-hover:bg-amber-900/70 transition-colors">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center bg-[#246a59]/10 text-[#246a59] dark:bg-[#246a59]/20">
           {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <CalendarDays className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+            <CalendarDays className="h-3.5 w-3.5" />
           )}
         </div>
 
-        <div className="flex flex-col items-start min-w-0 leading-none">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-700/70 dark:text-amber-400/80">
+        <div className="flex min-w-0 flex-col items-start leading-none">
+          <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#246a59]/80">
             Current term
           </span>
-          <span className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[140px] lg:max-w-[180px]">
+          <span className="mt-0.5 max-w-[120px] truncate text-xs font-semibold text-[#0a1f1a] lg:max-w-[160px] dark:text-white">
             {termName}
             {yearName && (
-              <span className="font-normal text-slate-500 dark:text-slate-400">
+              <span className="font-normal text-[#1a4d42]/50 dark:text-white/45">
                 {" "}
                 · {yearName}
               </span>
@@ -114,7 +112,7 @@ export function TermsDropdown({ className }: TermsDropdownProps) {
           </span>
         </div>
 
-        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-amber-600/60 dark:text-amber-400/60 group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors ml-0.5" />
+        <ChevronDown className="ml-0.5 h-3 w-3 shrink-0 text-[#1a4d42]/40 group-hover:text-[#246a59]" />
       </button>
 
       <TermManagementModal

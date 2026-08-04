@@ -35,28 +35,28 @@ export function TimetableClassDrawer({
         data-timetable-no-print
         className={cn(
           "fixed inset-y-0 left-0 z-[61] flex flex-col",
-          "bg-[#f2f2f7] dark:bg-slate-950",
-          "max-lg:shadow-[4px_0_24px_rgba(0,0,0,0.12)]",
-          "border-r border-slate-200/60 dark:border-slate-800",
+          "bg-[#f8fbfa] dark:bg-[#0c1a17]",
+          "max-lg:shadow-[4px_0_24px_rgba(10,31,26,0.12)]",
+          "border-r border-[#1a4d42]/12 dark:border-white/10",
           "transition-transform duration-300 ease-out",
           "max-lg:w-[min(88vw,20rem)] max-lg:pb-[env(safe-area-inset-bottom)]",
           open
             ? "max-lg:translate-x-0"
             : "max-lg:-translate-x-full max-lg:pointer-events-none",
-          "lg:relative lg:translate-x-0 lg:bg-[#f2f2f7] lg:dark:bg-slate-950",
+          "lg:relative lg:translate-x-0 lg:bg-[#f8fbfa] lg:dark:bg-[#0c1a17]",
           desktopMinimized ? "lg:w-14" : "lg:w-[17.5rem]",
         )}
       >
         {/* Mobile sheet header */}
-        <div className="shrink-0 border-b border-slate-200/60 bg-[#f2f2f7] px-4 pb-3 pt-[max(0.625rem,env(safe-area-inset-top))] lg:hidden dark:border-slate-800 dark:bg-slate-950">
+        <div className="shrink-0 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 pb-3 pt-[max(0.625rem,env(safe-area-inset-top))] lg:hidden dark:border-white/10 dark:bg-[#0c1a17]">
           <div className="flex items-center justify-between gap-3 py-1.5">
-            <h2 className="text-[17px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            <h2 className="font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
               Choose a class
             </h2>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-2 py-1 text-[15px] font-semibold text-primary active:opacity-60"
+              className="rounded-none px-2 py-1 text-[15px] font-semibold text-[#246a59] active:opacity-60"
             >
               Done
             </button>
@@ -66,14 +66,14 @@ export function TimetableClassDrawer({
         {/* Desktop collapse */}
         <div
           className={cn(
-            "hidden shrink-0 border-b border-slate-200/60 px-2 py-2 dark:border-slate-800 lg:flex",
+            "hidden shrink-0 border-b border-[#1a4d42]/10 px-2 py-2 dark:border-white/10 lg:flex",
             desktopMinimized ? "justify-center" : "justify-end",
           )}
         >
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+            className="h-8 w-8 rounded-none p-0 text-[#1a4d42]/50 hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/5 dark:hover:text-white"
             onClick={onToggleDesktop}
             aria-label={desktopMinimized ? "Expand sidebar" : "Collapse sidebar"}
           >

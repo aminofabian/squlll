@@ -62,15 +62,16 @@ export function NotificationBell({
           variant="ghost"
           size="icon"
           className={cn(
-            'relative bg-white/60 dark:bg-slate-950/40',
-            iconButtonClass,
+            'relative',
+            iconButtonClass ??
+              'rounded-none text-[#1a4d42]/55 hover:bg-[#f3f7f5] hover:text-[#0a1f1a]',
             className,
           )}
           aria-label={`Notifications${totalUnread ? `, ${totalUnread} unread` : ''}`}
         >
-          <Bell className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+          <Bell className="h-4 w-4" />
           {totalUnread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-[#071411]">
               {totalUnread > 99 ? '99+' : totalUnread}
             </span>
           )}

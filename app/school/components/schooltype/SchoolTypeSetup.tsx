@@ -74,6 +74,50 @@ const levelNameMapping: Record<string, Record<string, string>> = {
   }
 }
 
+function collectErrorText(data: any): string {
+  const parts: string[] = [];
+  if (typeof data?.error === 'string') parts.push(data.error);
+  if (typeof data?.message === 'string') parts.push(data.message);
+  if (Array.isArray(data?.errors)) {
+    for (const err of data.errors) {
+      if (typeof err?.message === 'string') parts.push(err.message);
+      else if (typeof err === 'string') parts.push(err);
+    }
+  }
+  if (Array.isArray(data?.details)) {
+    for (const err of data.details) {
+      if (typeof err?.message === 'string') parts.push(err.message);
+      else if (typeof err === 'string') parts.push(err);
+    }
+  }
+  return parts.join(' ').toLowerCase();
+}
+
+function isSchoolAlreadyConfiguredError(data: any): boolean {
+  if (data?.error === 'SCHOOL_ALREADY_CONFIGURED') return true;
+  const text = collectErrorText(data);
+  return (
+    text.includes('already configured') ||
+    text.includes('already been configured')
+  );
+}
+
+function friendlyConfigureError(data: any): string {
+  if (isSchoolAlreadyConfiguredError(data)) {
+    return 'Your school is already set up. You can continue to the next step.';
+  }
+  if (data?.error === 'PERMISSION_DENIED' || data?.error === 'UNAUTHORIZED') {
+    return (
+      data.message ||
+      'You need to sign in again to finish school setup.'
+    );
+  }
+  if (typeof data?.message === 'string' && data.message.length < 160) {
+    return data.message;
+  }
+  return 'We could not finish setting up your curriculum levels. Please try again.';
+}
+
 // Fallback mappings to try if the main mapping fails
 const fallbackLevelMapping: Record<string, Record<string, string[]>> = {
   cbc: {
@@ -729,29 +773,26 @@ export const SchoolTypeSetup = () => {
         }
         
         // Handle school already configured - don't throw, return it
-        if (responseData.error === 'SCHOOL_ALREADY_CONFIGURED') {
-          return { response, responseData };
+        if (
+          responseData.error === 'SCHOOL_ALREADY_CONFIGURED' ||
+          isSchoolAlreadyConfiguredError(responseData)
+        ) {
+          return {
+            response,
+            responseData: {
+              ...responseData,
+              error: 'SCHOOL_ALREADY_CONFIGURED',
+            },
+          };
         }
         
-        // For other errors, throw with details
+        // For other errors, throw with a short message (no GraphQL dumps)
         if (!response.ok) {
-          // Extract detailed error message
-          let errorMessage = responseData.error || responseData.message || 'Unknown error';
-          
-          // If there are GraphQL errors, include them
-          if (responseData.errors && Array.isArray(responseData.errors)) {
-            const graphqlErrors = responseData.errors.map((err: any) => err.message || err).join('; ');
-            errorMessage = `${errorMessage}. GraphQL errors: ${graphqlErrors}`;
-          }
-          
-          // If there are error details, include them
-          if (responseData.details) {
-            errorMessage = `${errorMessage}. Details: ${JSON.stringify(responseData.details)}`;
-          }
-          
-          const error = new Error(`Attempt ${attemptNumber} failed: ${errorMessage}`);
+          const error = new Error(friendlyConfigureError(responseData));
           (error as any).responseData = responseData;
           (error as any).status = response.status;
+          (error as any).isAlreadyConfigured =
+            isSchoolAlreadyConfiguredError(responseData);
           throw error;
         }
         
@@ -789,9 +830,23 @@ export const SchoolTypeSetup = () => {
         if (primaryError.isAuthError) {
           throw primaryError;
         }
-        
+
+        // Already configured — surface via the success-path handler below
+        if (
+          primaryError.isAlreadyConfigured ||
+          isSchoolAlreadyConfiguredError(primaryError.responseData)
+        ) {
+          configResult = {
+            response: { ok: false, status: 400 },
+            responseData: {
+              error: 'SCHOOL_ALREADY_CONFIGURED',
+              message: friendlyConfigureError(primaryError.responseData || {}),
+            },
+          };
+          successful = true;
+        }
         // Try fallback mappings for CBC system (only for mapping/validation errors)
-        if (selectedType === 'cbc' && fallbackLevelMapping.cbc) {
+        else if (selectedType === 'cbc' && fallbackLevelMapping.cbc) {
           for (let attempt = 0; attempt < 4; attempt++) {
             try {
               const fallbackNames = selectedLevelsList.map(levelName => {
@@ -811,9 +866,28 @@ export const SchoolTypeSetup = () => {
               if (fallbackError.isAuthError) {
                 throw fallbackError;
               }
+
+              if (
+                fallbackError.isAlreadyConfigured ||
+                isSchoolAlreadyConfiguredError(fallbackError.responseData)
+              ) {
+                configResult = {
+                  response: { ok: false, status: 400 },
+                  responseData: {
+                    error: 'SCHOOL_ALREADY_CONFIGURED',
+                    message: friendlyConfigureError(
+                      fallbackError.responseData || {},
+                    ),
+                  },
+                };
+                successful = true;
+                break;
+              }
               
               if (attempt === 3) {
-                throw new Error(`All configuration attempts failed. Last error: ${fallbackError.message || fallbackError}`);
+                throw new Error(friendlyConfigureError(fallbackError.responseData || {
+                  message: fallbackError.message,
+                }));
               }
             }
           }
@@ -823,7 +897,9 @@ export const SchoolTypeSetup = () => {
       }
       
       if (!successful) {
-        throw new Error('Failed to configure school levels with any mapping approach');
+        throw new Error(
+          'We could not finish setting up your curriculum levels. Please try again.',
+        );
       }
 
       const { response: finalResponse, responseData: finalResponseData } = configResult;
@@ -934,12 +1010,67 @@ export const SchoolTypeSetup = () => {
           }
         );
       } else {
-        // Handle other errors
-        const errorMessage = error instanceof Error ? error.message : 'Please try again.';
-        toast.error(
-          `Failed to configure school levels. ${errorMessage}`,
-          { duration: 5000 }
-        );
+        // Handle other errors — keep the toast short and readable
+        const raw = error instanceof Error ? error.message : '';
+        const looksTechnical =
+          /GraphQL|Attempt \d+ failed|Details:\s*\[|stacktrace|configureSchoolLevels/i.test(
+            raw,
+          );
+        const errorMessage = looksTechnical
+          ? isSchoolAlreadyConfiguredError(error?.responseData) ||
+            /already configured/i.test(raw)
+            ? 'Your school is already set up. You can continue to the next step.'
+            : 'We could not finish setting up your curriculum levels. Please try again.'
+          : raw || 'Please try again.';
+
+        if (
+          isSchoolAlreadyConfiguredError(error?.responseData) ||
+          /already configured/i.test(raw)
+        ) {
+          toast.error(
+            <div className="space-y-3 p-2">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <School className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+                    School Already Configured
+                  </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    Your school has already been set up. You can continue to your dashboard.
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    toast.dismiss();
+                    router.push(`/onboarding`);
+                  }}
+                  className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+                >
+                  Continue Setup
+                </button>
+              </div>
+            </div>,
+            {
+              duration: 10000,
+              style: {
+                maxWidth: '420px',
+                background: 'white',
+                border: '1px solid #e2e8f0',
+                borderRadius: '12px',
+                boxShadow:
+                  '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              },
+            },
+          );
+        } else {
+          toast.error(`Failed to configure school levels. ${errorMessage}`, {
+            duration: 5000,
+          });
+        }
       }
     } finally {
       setIsLoading(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Megaphone, type LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import {
   Sheet,
   SheetContent,
@@ -19,6 +20,7 @@ interface DashboardBroadcastSheetProps {
   triggerLabel?: string;
   triggerIcon?: LucideIcon;
   compact?: boolean;
+  triggerContent?: ReactNode;
 }
 
 export function DashboardBroadcastSheet({
@@ -27,6 +29,7 @@ export function DashboardBroadcastSheet({
   triggerLabel = "Announcement",
   triggerIcon: TriggerIcon = Megaphone,
   compact = false,
+  triggerContent,
 }: DashboardBroadcastSheetProps) {
   const defaultTriggerClass =
     "inline-flex h-auto items-center gap-1 rounded px-1 py-0.5 font-medium text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white";
@@ -36,13 +39,19 @@ export function DashboardBroadcastSheet({
       <SheetTrigger asChild>
         {triggerClassName ? (
           <button type="button" className={triggerClassName}>
-            <TriggerIcon className={cn("shrink-0", compact ? "h-4 w-4" : "h-4 w-4")} />
-            {compact ? (
-              <span className="text-[10px] font-medium leading-none">
-                {triggerLabel}
-              </span>
-            ) : (
-              triggerLabel
+            {triggerContent ?? (
+              <>
+                <TriggerIcon
+                  className={cn("shrink-0", compact ? "h-4 w-4" : "h-4 w-4")}
+                />
+                {compact ? (
+                  <span className="text-[10px] font-medium leading-none">
+                    {triggerLabel}
+                  </span>
+                ) : (
+                  triggerLabel
+                )}
+              </>
             )}
           </button>
         ) : (

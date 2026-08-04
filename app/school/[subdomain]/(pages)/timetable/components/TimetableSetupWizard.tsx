@@ -115,13 +115,14 @@ type BreakOption = {
   badge?: string;
 };
 
-/** Shown inside collapsed “preset” section — not the main flow. */
+/** Alternate day shapes — only shown when the user says the default doesn't fit. */
 const QUICK_PRESET_OPTIONS: BreakOption[] = [
   {
     mode: "full-day",
     title: "Typical day",
     subtitle: "Assembly, short break, lunch",
     emoji: "📋",
+    badge: "Most common",
   },
   {
     mode: "assembly-lunch",
@@ -137,17 +138,19 @@ const QUICK_PRESET_OPTIONS: BreakOption[] = [
   },
   {
     mode: "none",
-    title: "No breaks yet",
-    subtitle: "Add lessons only for now",
+    title: "No breaks",
+    subtitle: "Lessons only — add breaks later",
     emoji: "📚",
   },
   {
     mode: "custom",
     title: "Build my own",
-    subtitle: "Add and place each break yourself",
+    subtitle: "Start from an empty list",
     emoji: "✏️",
   },
 ];
+
+type BreaksPanel = "review" | "edit" | "patterns";
 
 const BREAK_TYPE_CHIPS = [
   "ASSEMBLY",
@@ -167,7 +170,7 @@ function formatTimeFriendly(hhmm: string): string {
 
 function wizardChipClass(selected: boolean) {
   return cn(
-    "shrink-0 rounded-lg border px-2.5 py-1.5 text-sm font-medium transition-colors",
+    "shrink-0 rounded-none border px-2.5 py-1.5 text-sm font-medium transition-colors",
     selected
       ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900"
       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
@@ -188,11 +191,11 @@ function WizardQuestion({
   return (
     <section
       aria-labelledby={`wizard-q-${number}-title`}
-      className="rounded-xl border border-slate-200/70 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40 sm:p-4"
+      className="rounded-none border border-slate-200/70 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/40 sm:p-4"
     >
       <div className="mb-3 flex items-start gap-2.5">
         <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-slate-100 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
           aria-hidden
         >
           {number}
@@ -270,14 +273,14 @@ function BreakDayPreview({
             row.kind === "period" ? (
               <span
                 key={`p-${i}`}
-                className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                className="rounded-none border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
               >
                 Lesson {row.period}
               </span>
             ) : (
               <span
                 key={`b-${i}`}
-                className="rounded-md border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100"
+                className="rounded-none border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-100"
                 title={`${row.durationMinutes} min`}
               >
                 {row.icon} {row.label}
@@ -511,6 +514,8 @@ export function TimetableSetupWizard({
   const [periodDuration, setPeriodDuration] = useState("40");
   const [periodCount, setPeriodCount] = useState("8");
   const [breakMode, setBreakMode] = useState<BreakMode>("full-day");
+  /** Which card the user chose — stays put even if they tweak times (which flips breakMode to custom). */
+  const [selectedPreset, setSelectedPreset] = useState<BreakMode>("full-day");
   const [breaks, setBreaks] = useState<TimetableBreakDraft[]>(() =>
     breaksForMode("full-day", 8),
   );
@@ -521,6 +526,7 @@ export function TimetableSetupWizard({
     () => new Set([1, 2, 3, 4, 5]),
   );
   const [showPickDays, setShowPickDays] = useState(false);
+  const [breaksPanel, setBreaksPanel] = useState<BreaksPanel>("review");
   const breaksListEndRef = useRef<HTMLDivElement>(null);
 
   const isCustomLessonLength = !PRESET_LESSON_LENGTH_VALUES.has(periodDuration);
@@ -602,25 +608,24 @@ export function TimetableSetupWizard({
   }, [breakMode, periodCountNum]);
 
   const selectBreakMode = (mode: BreakMode) => {
+    setSelectedPreset(mode);
     if (mode === "custom") {
       setBreakMode("custom");
-      setBreaks((prev) =>
-        prev.length > 0
-          ? prev
-          : [
-              newBreakDraft({
-                type: "LUNCH",
-                label: "Lunch",
-                icon: "🍽️",
-                color: "#F59E0B",
-                afterPeriod: lunchAfterPeriod(periodCountNum),
-                durationMinutes: "40",
-              }),
-            ],
-      );
+      setBreaksPanel("edit");
+      setBreaks([
+        newBreakDraft({
+          type: "LUNCH",
+          label: "Lunch",
+          icon: "🍽️",
+          color: "#F59E0B",
+          afterPeriod: lunchAfterPeriod(periodCountNum),
+          durationMinutes: "40",
+        }),
+      ]);
       return;
     }
     setBreakMode(mode);
+    setBreaksPanel("review");
   };
 
   const updateBreakDraft = (
@@ -628,6 +633,7 @@ export function TimetableSetupWizard({
     patch: Partial<TimetableBreakDraft>,
   ) => {
     setBreakMode("custom");
+    setBreaksPanel("edit");
     setBreaks((prev) =>
       prev.map((b) => (b.id === id ? { ...b, ...patch } : b)),
     );
@@ -635,6 +641,7 @@ export function TimetableSetupWizard({
 
   const addAnotherBreak = () => {
     setBreakMode("custom");
+    setBreaksPanel("edit");
     const lastAfter = breaks[breaks.length - 1]?.afterPeriod ?? 0;
     const nextAfter = Math.min(periodCountNum, Math.max(0, lastAfter + 1));
     setBreaks((prev) => [
@@ -657,6 +664,8 @@ export function TimetableSetupWizard({
   };
 
   const removeCustomBreakRow = (id: string) => {
+    setBreakMode("custom");
+    setBreaksPanel("edit");
     setBreaks((prev) => prev.filter((b) => b.id !== id));
   };
 
@@ -812,7 +821,10 @@ export function TimetableSetupWizard({
     if (step > 1) setStep((s) => s - 1);
   };
 
-  const renderBreakCard = (b: TimetableBreakDraft, index: number) => {
+  const whenLabel = (afterPeriod: number) =>
+    afterPeriod === 0 ? "Before lesson 1" : `After lesson ${afterPeriod}`;
+
+  const renderBreakRow = (b: TimetableBreakDraft) => {
     const isCustomType = b.type === TIMETABLE_BREAK_TYPE_CUSTOM;
     const displayName =
       b.label.trim() ||
@@ -822,153 +834,292 @@ export function TimetableSetupWizard({
     return (
       <li
         key={b.id}
-        className="rounded-xl border border-slate-200/70 bg-slate-50/50 p-3 dark:border-slate-700/80 dark:bg-slate-900/30"
+        className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-2.5 dark:border-white/10 dark:bg-[#071411]"
       >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            Break {index + 1}
-            <span className="font-normal text-slate-400"> · {displayName}</span>
-          </p>
-          {breaks.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={b.type}
+            onChange={(e) => onCustomBreakTypeChange(b.id, e.target.value)}
+            className={cn(onboardingInputClass, "h-9 min-w-[8.5rem] flex-1 text-sm")}
+            aria-label={`${displayName} type`}
+          >
+            {BREAK_TYPE_CHIPS.map((typeValue) => {
+              const opt = getWizardBreakTypeOption(typeValue);
+              if (!opt) return null;
+              const shortLabel =
+                typeValue === TIMETABLE_BREAK_TYPE_CUSTOM
+                  ? "Other"
+                  : opt.label.replace(" break", "").replace(" / sports", "");
+              return (
+                <option key={typeValue} value={typeValue}>
+                  {shortLabel}
+                </option>
+              );
+            })}
+          </select>
+
+          <label className="inline-flex items-center gap-1.5 text-xs text-[#1a4d42]/55">
+            <Input
+              type="number"
+              min={1}
+              max={240}
+              inputMode="numeric"
+              value={b.durationMinutes}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/\D/g, "");
+                updateBreakDraft(b.id, { durationMinutes: raw });
+              }}
+              className={cn(onboardingInputClass, "h-9 w-14 px-2 text-sm")}
+              aria-label={`${displayName} duration in minutes`}
+            />
+            min
+          </label>
+
+          <select
+            value={b.afterPeriod}
+            onChange={(e) =>
+              updateBreakDraft(b.id, {
+                afterPeriod: Number(e.target.value),
+              })
+            }
+            className={cn(onboardingInputClass, "h-9 min-w-[9rem] flex-1 text-sm")}
+            aria-label={`When ${displayName} happens`}
+          >
+            <option value={0}>Before lesson 1</option>
+            {Array.from({ length: periodCountNum }, (_, i) => i + 1).map(
+              (lesson) => (
+                <option key={lesson} value={lesson}>
+                  After lesson {lesson}
+                </option>
+              ),
+            )}
+          </select>
+
+          {breaks.length > 1 ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+              className="h-9 w-9 shrink-0 rounded-none p-0 text-[#1a4d42]/40 hover:bg-red-50 hover:text-red-600"
               onClick={() => removeCustomBreakRow(b.id)}
               aria-label={`Remove ${displayName}`}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-          )}
+          ) : null}
         </div>
 
-        <div className="space-y-3">
-          <FieldRow label="Type">
-            <div className="flex flex-wrap gap-2">
-              {BREAK_TYPE_CHIPS.map((typeValue) => {
-                const opt = getWizardBreakTypeOption(typeValue);
-                if (!opt) return null;
-                const shortLabel =
-                  typeValue === TIMETABLE_BREAK_TYPE_CUSTOM
-                    ? "Other"
-                    : opt.label.replace(" break", "").replace(" / sports", "");
-                return (
-                  <button
-                    key={typeValue}
-                    type="button"
-                    onClick={() => onCustomBreakTypeChange(b.id, typeValue)}
-                    className={wizardChipClass(b.type === typeValue)}
-                  >
-                    {opt.icon} {shortLabel}
-                  </button>
-                );
-              })}
-            </div>
-            {isCustomType && (
-              <Input
-                id={`break-custom-name-${b.id}`}
-                value={b.label}
-                onChange={(e) =>
-                  updateBreakDraft(b.id, { label: e.target.value })
-                }
-                placeholder="Name this break"
-                className={cn(onboardingInputClass, "mt-2 h-9 max-w-xs")}
-              />
-            )}
-          </FieldRow>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FieldRow label="Duration">
-              <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                <Input
-                  type="number"
-                  min={1}
-                  max={240}
-                  inputMode="numeric"
-                  value={b.durationMinutes}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    updateBreakDraft(b.id, { durationMinutes: raw });
-                  }}
-                  className={cn(onboardingInputClass, "h-9 w-16 px-2 text-sm")}
-                  aria-label={`${displayName} duration in minutes`}
-                />
-                minutes
-              </label>
-            </FieldRow>
-
-            <FieldRow label="When">
-              <select
-                value={b.afterPeriod}
-                onChange={(e) =>
-                  updateBreakDraft(b.id, {
-                    afterPeriod: Number(e.target.value),
-                  })
-                }
-                className={cn(onboardingInputClass, "h-9 w-full max-w-xs text-sm")}
-                aria-label={`When ${displayName} happens`}
-              >
-                <option value={0}>Before lesson 1</option>
-                {Array.from({ length: periodCountNum }, (_, i) => i + 1).map(
-                  (lesson) => (
-                    <option key={lesson} value={lesson}>
-                      After lesson {lesson}
-                    </option>
-                  ),
-                )}
-              </select>
-            </FieldRow>
-          </div>
-        </div>
+        {isCustomType ? (
+          <Input
+            id={`break-custom-name-${b.id}`}
+            value={b.label}
+            onChange={(e) =>
+              updateBreakDraft(b.id, { label: e.target.value })
+            }
+            placeholder="Name this break"
+            className={cn(onboardingInputClass, "mt-2 h-9")}
+          />
+        ) : null}
       </li>
     );
   };
 
-  const renderBreaksStep = () => (
-    <div className="space-y-3">
-      <WizardQuestion
-        number={1}
-        title="Break pattern"
-      >
-        <div className="flex flex-wrap gap-2">
-          {QUICK_PRESET_OPTIONS.map((opt) => (
-            <button
-              key={opt.mode}
-              type="button"
-              onClick={() => selectBreakMode(opt.mode)}
-              className={wizardChipClass(breakMode === opt.mode)}
-              title={opt.subtitle}
-            >
-              {opt.title}
-            </button>
-          ))}
-        </div>
-      </WizardQuestion>
+  const renderBreaksStep = () => {
+    const presetLabel =
+      QUICK_PRESET_OPTIONS.find((o) => o.mode === selectedPreset)?.title ??
+      "Custom";
+    const isCustomized =
+      breakMode === "custom" || selectedPreset === "custom";
 
-      {breakMode === "none" ? (
-        <p className="rounded-xl border border-slate-200/70 bg-slate-50/50 px-3 py-2.5 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
-          No breaks — add them later from the timetable.
-        </p>
-      ) : (
-        <WizardQuestion
-          number={2}
-          title="Adjust breaks"
-        >
-          <ul className="space-y-2.5">{breaks.map(renderBreakCard)}</ul>
+    if (breaksPanel === "patterns") {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+              Pick a different day shape
+            </p>
+            <button
+              type="button"
+              onClick={() => setBreaksPanel("review")}
+              className="text-xs font-medium text-[#246a59] hover:underline"
+            >
+              Cancel
+            </button>
+          </div>
+          <ul className="space-y-1.5">
+            {QUICK_PRESET_OPTIONS.map((opt) => {
+              const selected = selectedPreset === opt.mode;
+              return (
+                <li key={opt.mode}>
+                  <button
+                    type="button"
+                    onClick={() => selectBreakMode(opt.mode)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-none border px-3 py-2.5 text-left transition-colors",
+                      selected
+                        ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+                        : "border-[#1a4d42]/12 bg-white text-[#0a1f1a] hover:border-[#246a59]/35 dark:border-white/12 dark:bg-[#0c1a17] dark:text-white",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border",
+                        selected
+                          ? "border-white bg-white"
+                          : "border-[#1a4d42]/30 dark:border-white/30",
+                      )}
+                      aria-hidden
+                    >
+                      {selected ? (
+                        <span className="h-2 w-2 rounded-full bg-[#0a1f1a]" />
+                      ) : null}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium">{opt.title}</span>
+                        {opt.badge ? (
+                          <span
+                            className={cn(
+                              "text-[10px] font-semibold uppercase tracking-wide",
+                              selected ? "text-white/55" : "text-[#246a59]",
+                            )}
+                          >
+                            {opt.badge}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-0.5 block text-xs",
+                          selected
+                            ? "text-white/65"
+                            : "text-[#1a4d42]/50 dark:text-white/45",
+                        )}
+                      >
+                        {opt.subtitle}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      );
+    }
+
+    if (breaksPanel === "edit") {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+              Edit breaks
+            </p>
+            <button
+              type="button"
+              onClick={() => setBreaksPanel("review")}
+              className="text-xs font-medium text-[#246a59] hover:underline"
+            >
+              Done
+            </button>
+          </div>
+          {breaks.length === 0 ? (
+            <p className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-3 text-sm text-[#1a4d42]/55 dark:border-white/10 dark:bg-[#071411]">
+              No breaks yet — add one below, or pick a day shape.
+            </p>
+          ) : (
+            <ul className="space-y-2">{breaks.map(renderBreakRow)}</ul>
+          )}
           <button
             type="button"
             onClick={addAnotherBreak}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+            className="flex w-full items-center justify-center gap-2 rounded-none border border-dashed border-[#1a4d42]/25 bg-transparent px-3 py-2 text-sm font-medium text-[#1a4d42]/70 transition-colors hover:border-[#246a59]/40 hover:bg-[#f3f7f5] dark:text-white/60"
           >
             <Plus className="h-4 w-4" />
-            Add another break
+            Add break
+          </button>
+          <button
+            type="button"
+            onClick={() => setBreaksPanel("patterns")}
+            className="w-full text-center text-xs font-medium text-[#1a4d42]/45 hover:text-[#246a59] hover:underline dark:text-white/40"
+          >
+            Or start from a different day shape
           </button>
           <div ref={breaksListEndRef} className="h-px" aria-hidden />
-        </WizardQuestion>
-      )}
-    </div>
-  );
+        </div>
+      );
+    }
+
+    /* review — confirm-first: default is already applied */
+    return (
+      <div className="space-y-4">
+        <div className="rounded-none border border-[#1a4d42]/12 bg-white p-3 dark:border-white/10 dark:bg-[#0c1a17] sm:p-4">
+          <div className="mb-3">
+            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
+              {selectedPreset === "none"
+                ? "No breaks for now"
+                : isCustomized
+                  ? "Your breaks"
+                  : presetLabel}
+            </p>
+            {selectedPreset !== "none" && !isCustomized ? (
+              <p className="mt-0.5 text-xs text-[#1a4d42]/45">
+                Pre-filled for you — continue if this matches your school
+              </p>
+            ) : null}
+          </div>
+
+          {selectedPreset === "none" || breaks.length === 0 ? (
+            <p className="text-sm text-[#1a4d42]/55 dark:text-white/50">
+              Lessons only. You can add breaks later from the timetable.
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {breaks.map((b) => {
+                const name =
+                  b.label.trim() ||
+                  getWizardBreakTypeOption(b.type)?.label ||
+                  "Break";
+                const icon =
+                  b.icon || getWizardBreakTypeOption(b.type)?.icon || "☕";
+                return (
+                  <li
+                    key={b.id}
+                    className="flex items-center justify-between gap-2 border border-[#1a4d42]/10 bg-[#f8fbfa] px-2.5 py-2.5 text-sm dark:border-white/10 dark:bg-[#071411]"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 truncate font-medium text-[#0a1f1a] dark:text-white">
+                      <span aria-hidden>{icon}</span>
+                      <span className="truncate">{name}</span>
+                    </span>
+                    <span className="shrink-0 text-xs text-[#1a4d42]/50 dark:text-white/45">
+                      {b.durationMinutes || "—"} min · {whenLabel(b.afterPeriod)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={() => setBreaksPanel("edit")}
+            className="text-left text-sm font-medium text-[#246a59] hover:underline"
+          >
+            {breaks.length === 0 ? "Add breaks" : "Change times or names"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setBreaksPanel("patterns")}
+            className="text-left text-sm text-[#1a4d42]/50 hover:text-[#246a59] hover:underline dark:text-white/40 sm:text-right"
+          >
+            This isn&apos;t our day shape
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const renderClassesStep = () => {
     const allScopeKeys = buildDefaultScopeKeys(gradeLevelsWithStreams);
@@ -1005,7 +1156,7 @@ export function TimetableSetupWizard({
               Loading classes…
             </p>
           ) : gradeLevelsWithStreams.length === 0 ? (
-            <p className="rounded-xl border border-slate-200/70 bg-slate-50/50 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
+            <p className="rounded-none border border-slate-200/70 bg-slate-50/50 px-3 py-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
               No classes yet — finish school setup first.
             </p>
           ) : (
@@ -1034,7 +1185,7 @@ export function TimetableSetupWizard({
                           <li key={key}>
                             <label
                               className={cn(
-                                "flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors",
+                                "flex cursor-pointer items-center gap-2.5 rounded-none border px-3 py-2 transition-colors",
                                 checked
                                   ? "border-slate-900 bg-slate-50 dark:border-slate-100 dark:bg-slate-800/60"
                                   : "border-slate-200/70 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/30",
@@ -1284,7 +1435,12 @@ export function TimetableSetupWizard({
       case 2:
         return (
           <>
-            <StepIntro compact icon={Coffee} title="School breaks" />
+            <StepIntro
+              compact
+              icon={Coffee}
+              title="School breaks"
+              description="We've set a typical day. Continue if it looks right — or tweak it."
+            />
             <BreakDayPreview dayPreview={dayPreview} />
             <StepBody className="space-y-3 py-4 sm:py-5">
               {renderBreaksStep()}

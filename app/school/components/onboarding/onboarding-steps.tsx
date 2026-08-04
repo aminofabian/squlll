@@ -18,7 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import type { TermDraft } from "@/lib/utils/school-calendar-presets";
-import { STREAM_NAME_SUGGESTIONS } from "@/lib/utils/school-calendar-presets";
 import {
   DateField,
   FieldGroup,
@@ -36,15 +35,15 @@ export function DoneBanner({
   detail: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-emerald-200/80 bg-emerald-50/80 dark:bg-emerald-950/40 dark:border-emerald-800 p-5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/50">
-        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+    <div className="flex items-start gap-3 border border-emerald-600/25 bg-emerald-50/90 dark:bg-emerald-950/40 dark:border-emerald-700/40 p-5 shadow-[3px_3px_0_0_rgba(5,150,105,0.15)]">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-emerald-600/30 bg-emerald-100 dark:bg-emerald-900/50">
+        <CheckCircle2 className="h-5 w-5 text-emerald-700" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+        <p className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">
           {label}
         </p>
-        <p className="text-sm text-emerald-700/90 dark:text-emerald-300/90 mt-1">
+        <p className="text-sm text-emerald-800/85 dark:text-emerald-300/90 mt-1">
           {detail}
         </p>
       </div>
@@ -186,10 +185,10 @@ export function AcademicYearStepContent({
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center" aria-hidden>
-            <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+            <div className="w-full border-t border-[#1a4d42]/12 dark:border-white/10" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white dark:bg-slate-900 px-3 text-xs text-slate-400">
+            <span className="bg-white dark:bg-[#0c1a17] px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/45">
               or customize
             </span>
           </div>
@@ -240,14 +239,14 @@ export function AcademicYearStepContent({
         </section>
 
         {preview && (
-          <div className="rounded-xl border border-[#246a59]/20 bg-[#246a59]/5 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="border border-[#246a59]/25 bg-[#246a59]/[0.06] px-4 py-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+              <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                 {form.name || "Untitled year"}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">{preview.range}</p>
+              <p className="text-xs text-[#1a4d42]/65 mt-0.5">{preview.range}</p>
             </div>
-            <span className="text-xs font-medium text-[#246a59] bg-white dark:bg-slate-800 px-2.5 py-1 rounded-full border border-[#246a59]/15">
+            <span className="text-xs font-semibold tabular-nums text-[#246a59] bg-white dark:bg-[#0a1f1a] px-2.5 py-1 border border-[#246a59]/20">
               {preview.days} days
             </span>
           </div>
@@ -256,7 +255,7 @@ export function AcademicYearStepContent({
         <Button
           onClick={onCreate}
           disabled={isCreating || !isValid}
-          className="w-full h-12 rounded-xl text-base font-medium bg-[#246a59] hover:bg-[#1a4d42] shadow-sm"
+          className="w-full h-12 rounded-none text-base font-medium bg-[#0a1f1a] hover:bg-[#246a59] shadow-[3px_3px_0_0_rgba(36,106,89,0.35)]"
         >
           {isCreating ? (
             <>
@@ -315,7 +314,7 @@ export function TermsStepContent({
 }: TermsStepProps) {
   if (!hasAcademicYear) {
     return (
-      <p className="text-sm text-slate-500 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4">
+      <p className="text-sm text-[#1a4d42]/70 border border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/5 dark:text-white/60 p-4">
         Go back and create an academic year first.
       </p>
     );
@@ -366,16 +365,16 @@ export function TermsStepContent({
         into teaching periods. Pick a template, edit the list, then save.
       </p>
 
-      <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 gap-1">
+      <div className="flex p-1 bg-[#eef3f1] dark:bg-white/5 gap-1 border border-[#1a4d42]/10">
         {modeOptions.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             onClick={() => onTermModeChange(id)}
-            className={`flex-1 text-xs sm:text-sm font-medium py-2.5 px-2 rounded-lg transition-all ${
+            className={`flex-1 text-xs sm:text-sm font-medium py-2.5 px-2 transition-all ${
               termMode === id
-                ? "bg-white dark:bg-slate-900 text-[#246a59] shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-[#0a1f1a] text-white dark:bg-emerald-400 dark:text-[#0a1f1a]"
+                : "text-[#1a4d42]/55 hover:text-[#0a1f1a] dark:text-white/50"
             }`}
           >
             {label}
@@ -384,7 +383,7 @@ export function TermsStepContent({
       </div>
 
       {termMode === "suggested" && (
-        <Card>
+        <Card className="rounded-none shadow-none">
           <CardContent className="pt-4 space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <Label className="text-sm">Number of terms</Label>
@@ -394,6 +393,7 @@ export function TermsStepContent({
                   type="button"
                   size="sm"
                   variant={suggestedTermCount === n ? "secondary" : "ghost"}
+                  className="rounded-none"
                   onClick={() => onSuggestedTermCountChange(n)}
                 >
                   {n}
@@ -403,6 +403,7 @@ export function TermsStepContent({
                 type="button"
                 size="sm"
                 variant="outline"
+                className="rounded-none"
                 onClick={onApplySuggested}
               >
                 <Pencil className="h-3.5 w-3.5 mr-1" />
@@ -418,7 +419,7 @@ export function TermsStepContent({
       )}
 
       {termMode === "moe" && (
-        <Card className="border-dashed">
+        <Card className="border-dashed rounded-none shadow-none">
           <CardContent className="pt-4">
             <p className="text-sm text-muted-foreground mb-3">
               Optional shortcut for Kenyan public schools — official {moeYear}{" "}
@@ -428,6 +429,7 @@ export function TermsStepContent({
               type="button"
               size="sm"
               variant="outline"
+              className="rounded-none"
               onClick={onApplyMoe}
             >
               <Sparkles className="h-3.5 w-3.5 mr-1.5" />
@@ -438,7 +440,7 @@ export function TermsStepContent({
       )}
 
       {termMode === "custom" && (
-        <Card>
+        <Card className="rounded-none shadow-none">
           <CardContent className="pt-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1">
@@ -449,6 +451,7 @@ export function TermsStepContent({
                   onChange={(e) =>
                     onCustomTermChange({ ...customTerm, name: e.target.value })
                   }
+                  className="rounded-none"
                 />
               </div>
               <div className="space-y-1">
@@ -479,6 +482,7 @@ export function TermsStepContent({
               type="button"
               size="sm"
               variant="secondary"
+              className="rounded-none"
               onClick={onAddCustomTerm}
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
@@ -495,11 +499,11 @@ export function TermsStepContent({
               Terms to create ({termDrafts.filter((t) => t.included).length})
             </Label>
           </div>
-          <ul className="rounded-xl border border-slate-200 dark:border-slate-700 divide-y">
+          <ul className="border border-[#1a4d42]/15 dark:border-white/10 divide-y divide-[#1a4d42]/10">
             {termDrafts.map((term, i) => (
               <li
                 key={`${term.name}-${i}`}
-                className="p-3 bg-white dark:bg-slate-900"
+                className="p-3 bg-white dark:bg-[#0c1a17]"
               >
                 <div className="flex items-center gap-3 mb-2">
                   <Checkbox
@@ -511,7 +515,7 @@ export function TermsStepContent({
                   />
                   <Label
                     htmlFor={`include-term-${i}`}
-                    className="flex-1 text-sm font-medium text-slate-900 cursor-pointer"
+                    className="flex-1 text-sm font-medium text-[#0a1f1a] dark:text-white cursor-pointer"
                   >
                     {term.name || "Unnamed term"}
                   </Label>
@@ -521,10 +525,10 @@ export function TermsStepContent({
                       onClick={() => {
                         setActiveTerm(activeTerm === i ? -1 : i);
                       }}
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                      className={`text-xs font-medium px-2.5 py-1 border transition-colors ${
                         activeTerm === i
-                          ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                          : "bg-slate-100 text-slate-500 border-slate-200 hover:border-emerald-200 hover:text-emerald-600"
+                          ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                          : "bg-[#f3f7f5] text-[#1a4d42]/55 border-[#1a4d42]/12 hover:border-emerald-300 hover:text-emerald-700"
                       }`}
                     >
                       {activeTerm === i ? "Active term" : "Set as active"}
@@ -534,13 +538,13 @@ export function TermsStepContent({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0"
+                    className="h-8 w-8 shrink-0 rounded-none"
                     onClick={() =>
                       onTermDraftsChange(termDrafts.filter((_, j) => j !== i))
                     }
                     aria-label="Remove term"
                   >
-                    <Trash2 className="h-4 w-4 text-slate-400" />
+                    <Trash2 className="h-4 w-4 text-[#1a4d42]/40" />
                   </Button>
                 </div>
                 <div className="ml-8 grid gap-2 sm:grid-cols-2">
@@ -570,7 +574,7 @@ export function TermsStepContent({
             disabled={
               isCreating || termDrafts.filter((t) => t.included).length === 0
             }
-            className="w-full h-12 rounded-xl bg-[#246a59] hover:bg-[#1a4d42]"
+            className="w-full h-12 rounded-none bg-[#0a1f1a] hover:bg-[#246a59] shadow-[3px_3px_0_0_rgba(36,106,89,0.35)]"
           >
             {isCreating ? (
               <>
@@ -602,9 +606,14 @@ type StreamsStepProps = {
   gradeRows: GradeRow[];
   gradeStreamPlans: GradeStreamPlans;
   onGradeStreamPlansChange: (plans: GradeStreamPlans) => void;
-  isCreating: boolean;
-  onCreateSelected: () => void;
 };
+
+const LETTER_PRESETS = ["A", "B", "C", "D"] as const;
+const BULK_PRESETS: { label: string; names: string[]; hint: string }[] = [
+  { label: "1 stream", names: ["A"], hint: "One class per grade" },
+  { label: "2 streams", names: ["A", "B"], hint: "Common split" },
+  { label: "3 streams", names: ["A", "B", "C"], hint: "Larger school" },
+];
 
 function newStreamDraft(name = "", capacity = "30"): StreamDraft {
   return {
@@ -614,11 +623,16 @@ function newStreamDraft(name = "", capacity = "30"): StreamDraft {
   };
 }
 
-function cloneDrafts(drafts: StreamDraft[]): StreamDraft[] {
-  return drafts.map((d) => newStreamDraft(d.name, d.capacity));
+function nextLetterName(used: Set<string>): string {
+  for (const letter of LETTER_PRESETS) {
+    if (!used.has(letter.toLowerCase())) return letter;
+  }
+  let n = 1;
+  while (used.has(`stream ${n}`)) n++;
+  return `Stream ${n}`;
 }
 
-function countPlannedCreates(
+export function countPlannedStreamCreates(
   gradeRows: GradeRow[],
   plans: GradeStreamPlans,
 ): number {
@@ -639,50 +653,65 @@ function countPlannedCreates(
   return total;
 }
 
+function gradePendingNames(
+  grade: GradeRow,
+  drafts: StreamDraft[],
+): string[] {
+  return drafts
+    .map((d) => d.name.trim())
+    .filter(
+      (name) =>
+        name &&
+        !grade.existingStreams.some(
+          (s) => s.toLowerCase() === name.toLowerCase(),
+        ),
+    );
+}
+
 export function StreamsStepContent({
   gradeRows,
   gradeStreamPlans,
   onGradeStreamPlansChange,
-  isCreating,
-  onCreateSelected,
 }: StreamsStepProps) {
   if (gradeRows.length === 0) {
     return (
-      <p className="text-sm text-slate-500 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4">
+      <p className="text-sm text-[#1a4d42]/70 border border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/5 dark:text-white/60 p-4">
         No grades found from your curriculum setup. Finish setup first or add
         levels on the Classes page.
       </p>
     );
   }
 
-  const plannedCreates = countPlannedCreates(gradeRows, gradeStreamPlans);
-  const sourceGradeId = gradeRows[0]?.gradeId;
+  const plannedCreates = countPlannedStreamCreates(gradeRows, gradeStreamPlans);
+  const gradesWithPlans = gradeRows.filter(
+    (g) => gradePendingNames(g, gradeStreamPlans[g.gradeId] || []).length > 0,
+  ).length;
 
   const setGradePlans = (gradeId: string, drafts: StreamDraft[]) => {
     onGradeStreamPlansChange({ ...gradeStreamPlans, [gradeId]: drafts });
   };
 
-  const addStreamToGrade = (gradeId: string, name = "", capacity = "30") => {
-    const current = gradeStreamPlans[gradeId] || [];
-    setGradePlans(gradeId, [...current, newStreamDraft(name, capacity)]);
+  const applyBulkToAll = (names: string[]) => {
+    const next: GradeStreamPlans = { ...gradeStreamPlans };
+    for (const g of gradeRows) {
+      const existing = new Set(g.existingStreams.map((s) => s.toLowerCase()));
+      next[g.gradeId] = names
+        .filter((n) => !existing.has(n.toLowerCase()))
+        .map((n) => newStreamDraft(n, "30"));
+    }
+    onGradeStreamPlansChange(next);
   };
 
-  const addPresetsToGrade = (
-    gradeId: string,
-    names: string[],
-    existing: string[],
-  ) => {
+  const addStreamToGrade = (gradeId: string, grade: GradeRow) => {
     const current = gradeStreamPlans[gradeId] || [];
-    const have = new Set([
-      ...existing.map((s) => s.toLowerCase()),
+    const used = new Set([
+      ...grade.existingStreams.map((s) => s.toLowerCase()),
       ...current.map((d) => d.name.trim().toLowerCase()).filter(Boolean),
     ]);
-    const toAdd = names
-      .filter((n) => !have.has(n.toLowerCase()))
-      .map((n) => newStreamDraft(n, "30"));
-    if (toAdd.length > 0) {
-      setGradePlans(gradeId, [...current, ...toAdd]);
-    }
+    setGradePlans(gradeId, [
+      ...current,
+      newStreamDraft(nextLetterName(used), "30"),
+    ]);
   };
 
   const updateGradeDraft = (
@@ -700,104 +729,141 @@ export function StreamsStepContent({
 
   const removeGradeDraft = (gradeId: string, draftId: string) => {
     const current = gradeStreamPlans[gradeId] || [];
-    if (current.length <= 1) return;
     setGradePlans(
       gradeId,
       current.filter((d) => d.id !== draftId),
     );
   };
 
-  const copyPlansToAllGrades = () => {
-    const template = gradeStreamPlans[sourceGradeId] || [];
-    if (template.length === 0) return;
-    const next = { ...gradeStreamPlans };
-    for (const g of gradeRows) {
-      if (g.gradeId === sourceGradeId) continue;
-      const cloned = cloneDrafts(template).filter(
-        (d) =>
-          !g.existingStreams.some(
-            (s) => s.toLowerCase() === d.name.trim().toLowerCase(),
-          ),
-      );
-      next[g.gradeId] = cloned;
-    }
-    onGradeStreamPlansChange(next);
-  };
+  const sampleGrade = gradeRows[0]?.gradeName ?? "Grade 4";
 
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        Set up streams <strong>per grade</strong>. Grade 4 might have A and B,
-        while Grade 5 only has A — configure each class separately below.
-      </p>
+    <div className="space-y-4">
+      {/* What is a stream? */}
+      <div className="border border-[#1a4d42]/12 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 p-3 sm:p-3.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#246a59] mb-2">
+          What you&apos;re creating
+        </p>
+        <div className="flex flex-wrap items-center gap-2 text-sm text-[#0a1f1a] dark:text-white">
+          <span className="font-medium">{sampleGrade}</span>
+          <span className="text-[#1a4d42]/35" aria-hidden>
+            →
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="border border-[#246a59]/30 bg-[#246a59]/10 px-2 py-0.5 text-xs font-semibold text-[#246a59]">
+              {sampleGrade}A
+            </span>
+            <span className="border border-[#246a59]/30 bg-[#246a59]/10 px-2 py-0.5 text-xs font-semibold text-[#246a59]">
+              {sampleGrade}B
+            </span>
+          </span>
+        </div>
+        <p className="mt-2 text-xs text-[#1a4d42]/60 dark:text-white/45 leading-relaxed">
+          Each stream is a class section students join. Pick a quick pattern for
+          every grade, then tweak any row.
+        </p>
+      </div>
 
-      {gradeRows.length > 1 &&
-        (gradeStreamPlans[sourceGradeId]?.length ?? 0) > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-            onClick={copyPlansToAllGrades}
-          >
-            Copy {gradeRows[0]?.gradeName}&apos;s streams to all grades
-          </Button>
-        )}
-
-      <ul className="space-y-4 max-h-[min(28rem,60vh)] overflow-y-auto pr-1">
-        {gradeRows.map((grade) => {
-          const drafts = gradeStreamPlans[grade.gradeId] || [];
-          const pendingNames = drafts
-            .map((d) => d.name.trim())
-            .filter(
-              (name) =>
-                name &&
-                !grade.existingStreams.some(
-                  (s) => s.toLowerCase() === name.toLowerCase(),
-                ),
+      {/* Bulk apply */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45 mb-2">
+          Quick start — all {gradeRows.length} grades
+        </p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {BULK_PRESETS.map((preset) => {
+            const active =
+              gradeRows.length > 0 &&
+              gradeRows.every((g) => {
+                const pending = gradePendingNames(
+                  g,
+                  gradeStreamPlans[g.gradeId] || [],
+                );
+                return (
+                  pending.length === preset.names.length &&
+                  preset.names.every((n) =>
+                    pending.some((p) => p.toLowerCase() === n.toLowerCase()),
+                  )
+                );
+              });
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyBulkToAll(preset.names)}
+                className={`border px-2 py-2.5 text-center transition-colors ${
+                  active
+                    ? "border-[#246a59] bg-[#246a59] text-white"
+                    : "border-[#1a4d42]/12 bg-white hover:border-[#246a59]/40 dark:bg-[#0c1a17] dark:border-white/10"
+                }`}
+              >
+                <span className="block text-xs font-semibold">{preset.label}</span>
+                <span
+                  className={`block text-[10px] mt-0.5 ${
+                    active ? "text-white/75" : "text-[#1a4d42]/45"
+                  }`}
+                >
+                  {preset.names.join(" · ")}
+                </span>
+              </button>
             );
+          })}
+        </div>
+      </div>
 
-          return (
-            <li
-              key={grade.gradeId}
-              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-800/20 overflow-hidden"
-            >
-              <div className="px-4 py-3 border-b border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">
+      {/* Compact grade roster */}
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
+            Per grade
+          </p>
+          <p className="text-[10px] text-[#1a4d42]/40 tabular-nums">
+            Cap. = max learners
+          </p>
+        </div>
+
+        <ul className="border border-[#1a4d42]/12 dark:border-white/10 divide-y divide-[#1a4d42]/10 max-h-[min(22rem,50vh)] overflow-y-auto">
+          {gradeRows.map((grade) => {
+            const drafts = gradeStreamPlans[grade.gradeId] || [];
+            const pending = gradePendingNames(grade, drafts);
+
+            return (
+              <li
+                key={grade.gradeId}
+                className="bg-white dark:bg-[#0c1a17] px-3 py-2.5"
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="min-w-0 flex items-baseline gap-2">
+                    <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white truncate">
                       {grade.gradeName}
                     </p>
-                    <p className="text-xs text-slate-500">{grade.levelName}</p>
+                    <p className="text-[10px] text-[#1a4d42]/45 truncate hidden sm:block">
+                      {grade.levelName}
+                    </p>
                   </div>
-                  {grade.existingStreams.length > 0 && (
-                    <div className="flex flex-wrap gap-1 justify-end">
-                      {grade.existingStreams.map((s) => (
-                        <span
-                          key={s}
-                          className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-                        >
-                          {s} ✓
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {grade.existingStreams.length > 0 && (
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5">
+                        has {grade.existingStreams.join(", ")}
+                      </span>
+                    )}
+                    {pending.length > 0 && (
+                      <span className="text-[10px] font-semibold tabular-nums text-[#246a59] bg-[#246a59]/10 px-1.5 py-0.5">
+                        +{pending.length} new
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="p-4 space-y-2">
-                {drafts.length === 0 ? (
-                  <p className="text-xs text-slate-500 py-2">
-                    No new streams — add one below.
-                  </p>
-                ) : (
-                  drafts.map((draft) => (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {drafts.map((draft) => (
                     <div
                       key={draft.id}
-                      className="grid gap-2 sm:grid-cols-[1fr_88px_auto] sm:items-center"
+                      className="inline-flex items-center border border-[#246a59]/25 bg-[#f3f7f5] dark:bg-[#071411] dark:border-[#246a59]/35"
                     >
+                      <span className="pl-2 pr-1 text-[10px] font-semibold uppercase tracking-wide text-[#246a59]/70">
+                        Stream
+                      </span>
                       <Input
-                        placeholder="Stream name"
                         value={draft.name}
                         onChange={(e) =>
                           updateGradeDraft(
@@ -807,12 +873,14 @@ export function StreamsStepContent({
                             e.target.value,
                           )
                         }
-                        className={`h-10 ${onboardingInputClass}`}
+                        aria-label={`${grade.gradeName} stream name`}
+                        className="h-8 w-10 rounded-none border-0 bg-transparent px-0 text-center text-sm font-bold text-[#0a1f1a] shadow-none focus-visible:ring-0 dark:text-white"
+                        placeholder="?"
                       />
+                      <span className="h-5 w-px bg-[#1a4d42]/15" aria-hidden />
                       <Input
                         type="number"
                         min={1}
-                        placeholder="Cap."
                         value={draft.capacity}
                         onChange={(e) =>
                           updateGradeDraft(
@@ -822,108 +890,85 @@ export function StreamsStepContent({
                             e.target.value,
                           )
                         }
-                        className={`h-10 ${onboardingInputClass}`}
+                        aria-label={`${grade.gradeName} ${draft.name || "stream"} capacity`}
+                        className="h-8 w-11 rounded-none border-0 bg-transparent px-1 text-center text-xs tabular-nums text-[#1a4d42]/70 shadow-none focus-visible:ring-0"
+                        title="Capacity"
                       />
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 text-slate-400 hover:text-red-600"
-                        disabled={drafts.length <= 1}
                         onClick={() =>
                           removeGradeDraft(grade.gradeId, draft.id)
                         }
-                        aria-label={`Remove stream from ${grade.gradeName}`}
+                        className="flex h-8 w-7 items-center justify-center text-[#1a4d42]/35 hover:bg-red-50 hover:text-red-600"
+                        aria-label={`Remove stream ${draft.name || ""} from ${grade.gradeName}`}
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => addStreamToGrade(grade.gradeId)}
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Add stream
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() =>
-                      addPresetsToGrade(
-                        grade.gradeId,
-                        ["A", "B", "C"],
-                        grade.existingStreams,
-                      )
-                    }
-                  >
-                    A, B, C
-                  </Button>
-                  {STREAM_NAME_SUGGESTIONS.filter(
-                    (s) =>
-                      !grade.existingStreams.some(
-                        (x) => x.toLowerCase() === s.toLowerCase(),
-                      ) &&
-                      !drafts.some(
-                        (d) => d.name.trim().toLowerCase() === s.toLowerCase(),
-                      ),
-                  )
-                    .slice(0, 4)
-                    .map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => addStreamToGrade(grade.gradeId, s, "30")}
-                        className="text-xs px-2 py-1 border border-slate-200 rounded-full bg-white hover:border-[#246a59]/40 hover:text-[#246a59] dark:bg-slate-900"
-                      >
-                        + {s}
+                        <X className="h-3 w-3" />
                       </button>
-                    ))}
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => addStreamToGrade(grade.gradeId, grade)}
+                    className="inline-flex h-8 items-center gap-1 border border-dashed border-[#1a4d42]/25 px-2 text-[11px] font-medium text-[#1a4d42]/55 hover:border-[#246a59]/50 hover:text-[#246a59]"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add
+                  </button>
                 </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
-                {pendingNames.length > 0 && (
-                  <p className="text-xs text-[#246a59] pt-1">
-                    Will add: {pendingNames.join(", ")}
-                  </p>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {plannedCreates > 0 && (
-        <p className="text-sm text-center text-slate-600 dark:text-slate-400 rounded-lg bg-[#246a59]/5 border border-[#246a59]/15 py-2.5 px-3">
-          Ready to create{" "}
-          <strong className="text-[#246a59]">{plannedCreates}</strong> stream
-          {plannedCreates === 1 ? "" : "s"} across your grades
-        </p>
-      )}
-
-      <Button
-        onClick={onCreateSelected}
-        disabled={isCreating || plannedCreates === 0}
-        className="w-full h-12 rounded-xl bg-[#246a59] hover:bg-[#1a4d42]"
+      {/* Creation ticket */}
+      <div
+        className={`border px-3 py-2.5 ${
+          plannedCreates > 0
+            ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+            : "border-[#1a4d42]/12 bg-[#f3f7f5] dark:bg-white/[0.03]"
+        }`}
       >
-        {isCreating ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Creating streams...
-          </>
-        ) : plannedCreates > 0 ? (
-          `Create ${plannedCreates} stream${plannedCreates === 1 ? "" : "s"}`
+        {plannedCreates > 0 ? (
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300/90">
+                Creating on Continue
+              </p>
+              <p className="mt-1 text-sm font-medium leading-snug">
+                <span className="tabular-nums">{plannedCreates}</span> stream
+                {plannedCreates === 1 ? "" : "s"} across{" "}
+                <span className="tabular-nums">{gradesWithPlans}</span> grade
+                {gradesWithPlans === 1 ? "" : "s"}
+              </p>
+              <p className="mt-1 text-[11px] text-white/55 truncate">
+                {gradeRows
+                  .map((g) => {
+                    const names = gradePendingNames(
+                      g,
+                      gradeStreamPlans[g.gradeId] || [],
+                    );
+                    if (names.length === 0) return null;
+                    return `${g.gradeName} ${names.join("/")}`;
+                  })
+                  .filter(Boolean)
+                  .slice(0, 6)
+                  .join(" · ")}
+                {gradesWithPlans > 6 ? "…" : ""}
+              </p>
+            </div>
+            <span className="shrink-0 font-display text-2xl tabular-nums text-emerald-300">
+              {String(plannedCreates).padStart(2, "0")}
+            </span>
+          </div>
         ) : (
-          "Add streams to at least one grade"
+          <p className="text-sm text-[#1a4d42]/65 dark:text-white/50 leading-snug">
+            Pick a quick start above to create streams, or continue and add them
+            later from Classes.
+          </p>
         )}
-      </Button>
+      </div>
     </div>
   );
 }

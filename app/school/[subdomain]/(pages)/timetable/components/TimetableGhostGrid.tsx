@@ -14,7 +14,7 @@ export function TimetableGhostGrid({ className }: TimetableGhostGridProps) {
   return (
     <div
       className={cn(
-        "overflow-x-auto rounded-lg border border-dashed border-zinc-200/90 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/30",
+        "overflow-x-auto rounded-none border border-dashed border-zinc-200/90 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/30",
         className,
       )}
       aria-hidden
@@ -45,13 +45,13 @@ export function TimetableGhostGrid({ className }: TimetableGhostGridProps) {
               className="border-b border-zinc-100 dark:border-zinc-800/80"
             >
               <td className="sticky left-0 border-r border-zinc-200/90 bg-white px-1 py-1 dark:border-zinc-800 dark:bg-zinc-900">
-                <div className="flex h-[10pt] min-h-[10pt] items-center justify-start rounded-[1px] bg-zinc-100/80 px-1 text-[6.5pt] font-medium leading-none text-zinc-400 dark:bg-zinc-800">
+                <div className="flex h-[10pt] min-h-[10pt] items-center justify-start rounded-none bg-zinc-100/80 px-1 text-[6.5pt] font-medium leading-none text-zinc-400 dark:bg-zinc-800">
                   Period {period}
                 </div>
               </td>
               {PREVIEW_DAYS.map((day) => (
                 <td key={day} className="p-px">
-                  <div className="h-[10pt] min-h-[10pt] rounded-[1px] border border-dashed border-zinc-200/80 bg-white/60 dark:border-zinc-700 dark:bg-zinc-900/40" />
+                  <div className="h-[10pt] min-h-[10pt] rounded-none border border-dashed border-zinc-200/80 bg-white/60 dark:border-zinc-700 dark:bg-zinc-900/40" />
                 </td>
               ))}
             </tr>

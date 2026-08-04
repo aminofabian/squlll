@@ -15,27 +15,27 @@ interface StudentsEnrollTriggerProps
 
 const variantStyles: Record<EnrollTriggerVariant, string> = {
   header: cn(
-    "group relative h-9 gap-2 overflow-hidden rounded-full px-3.5 text-xs font-medium text-white",
-    "bg-primary shadow-sm shadow-primary/20 ring-1 ring-inset ring-white/15",
-    "transition-all duration-200 hover:bg-primary-dark hover:text-white hover:shadow-md hover:shadow-primary/25",
+    "group relative h-9 gap-2 overflow-hidden rounded-none px-3.5 text-xs font-medium text-white",
+    "bg-[#0a1f1a]",
+    "transition-colors duration-200 hover:bg-[#246a59] hover:text-white",
     "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60",
   ),
   hero: cn(
-    "group relative h-11 gap-2.5 overflow-hidden rounded-full px-6 text-sm font-medium text-white",
-    "bg-primary shadow-lg shadow-primary/30 ring-1 ring-inset ring-white/20",
-    "transition-all duration-200 hover:bg-primary-light hover:text-white hover:shadow-xl hover:shadow-primary/35",
+    "group relative h-11 gap-2.5 overflow-hidden rounded-none px-6 text-sm font-medium text-white",
+    "bg-[#0a1f1a]",
+    "transition-colors duration-200 hover:bg-[#246a59] hover:text-white",
     "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60",
   ),
   toolbar: cn(
-    "group h-8 gap-1.5 rounded-full px-3 text-xs font-medium text-white",
-    "bg-primary ring-1 ring-inset ring-white/10",
-    "transition-colors hover:bg-primary-dark hover:text-white",
+    "group h-8 gap-1.5 rounded-none px-3 text-xs font-medium text-white",
+    "bg-[#0a1f1a]",
+    "transition-colors hover:bg-[#246a59] hover:text-white",
     "disabled:pointer-events-none disabled:opacity-60",
   ),
   inline: cn(
-    "group inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-white",
-    "bg-primary ring-1 ring-inset ring-white/10",
-    "transition-colors hover:bg-primary-dark hover:text-white",
+    "group inline-flex items-center gap-1 rounded-none px-2.5 py-1 text-xs font-medium text-white",
+    "bg-[#0a1f1a]",
+    "transition-colors hover:bg-[#246a59] hover:text-white",
     "disabled:pointer-events-none disabled:opacity-60",
   ),
 };
@@ -90,7 +90,7 @@ export const StudentsEnrollTrigger = forwardRef<
           {variant === "toolbar" ? (
             <Sparkles className="h-3 w-3 shrink-0 text-white/80" />
           ) : (
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-white/20">
               <UserPlus className="h-3 w-3 text-white" />
             </span>
           )}

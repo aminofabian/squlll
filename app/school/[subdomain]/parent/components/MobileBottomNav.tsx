@@ -79,7 +79,7 @@ export function MobileBottomNav({
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   const primaryItems: NavItem[] = [
-    { icon: Calendar, label: "Schedule", key: "schedule" },
+    { icon: Calendar, label: "Timetable", key: "schedule" },
     { icon: GraduationCap, label: "Grades", key: "grades" },
     { icon: MessageCircle, label: "Messages", key: "messages" },
     { icon: DollarSign, label: "Fees", key: "payments" },

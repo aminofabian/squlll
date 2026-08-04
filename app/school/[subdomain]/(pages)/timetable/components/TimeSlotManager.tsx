@@ -88,7 +88,7 @@ export const TimeSlotManager: React.FC<TimeSlotManagerProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-gray-200">
+      <div className="bg-white rounded-none p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-gray-200">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <Clock className="w-5 h-5 text-primary" />
@@ -104,8 +104,8 @@ export const TimeSlotManager: React.FC<TimeSlotManagerProps> = ({
         
         <div className="space-y-3">
           {localTimeSlots.map((slot) => (
-            <div key={slot.id} className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg">
-              <div className={`w-4 h-4 rounded-full ${slot.color.replace('border-l-', 'bg-')}`} />
+            <div key={slot.id} className="flex items-center gap-3 p-4 border border-gray-200 rounded-none">
+              <div className={`w-4 h-4 rounded-none ${slot.color.replace('border-l-', 'bg-')}`} />
               
               {editingSlot === slot.id ? (
                 <div className="flex-1 flex items-center gap-2">
@@ -114,7 +114,7 @@ export const TimeSlotManager: React.FC<TimeSlotManagerProps> = ({
                     value={editTime}
                     onChange={(e) => setEditTime(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    className="flex-1 border-2 border-primary rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="flex-1 border-2 border-primary rounded-none px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                     placeholder="Enter time (e.g., 8:00 AM – 9:00 AM)"
                     autoFocus
                   />
@@ -159,20 +159,20 @@ export const TimeSlotManager: React.FC<TimeSlotManagerProps> = ({
         <div className="flex gap-2 mt-6">
           <button
             onClick={handleAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-none hover:bg-primary-dark"
           >
             <Plus className="w-4 h-4" />
             Add Time Slot
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+            className="px-4 py-2 border border-gray-300 rounded-none hover:bg-gray-50 text-gray-700"
           >
             Close
           </button>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="mt-4 p-3 bg-blue-50 rounded-none border border-blue-200">
           <p className="text-sm text-blue-800">
             💡 <strong>Tip:</strong> Use formats like "8:00 AM – 9:00 AM" or "14:00 – 15:30" for clear time display.
           </p>

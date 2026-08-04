@@ -119,17 +119,17 @@ export default function SchoolDashboard() {
 
   if (error) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center p-4">
-        <div className="w-full max-w-sm rounded-lg border border-red-200 bg-white px-4 py-6 text-center dark:border-red-900 dark:bg-slate-900">
-          <h2 className="text-sm font-semibold text-red-600">
+      <div className="flex min-h-[40vh] items-center justify-center bg-[#f3f7f5] p-6 dark:bg-[#071411]">
+        <div className="w-full max-w-sm border border-red-300/80 bg-white px-5 py-7 text-center shadow-[4px_4px_0_0_rgba(185,28,28,0.12)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+          <h2 className="font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Could not load dashboard
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1.5 text-[13px] leading-relaxed text-[#1a4d42]/60">
             {error instanceof Error ? error.message : "Unknown error"}
           </p>
           <Button
             onClick={() => window.location.reload()}
-            className="mt-3 h-8"
+            className="mt-4 h-9 rounded-none bg-[#0a1f1a] hover:bg-[#246a59]"
             size="sm"
           >
             Try again
@@ -142,17 +142,28 @@ export default function SchoolDashboard() {
   if (!config?.selectedLevels?.length) return null;
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f8f9fb] dark:bg-slate-950">
-      <div className="flex min-w-0 flex-1">
+    <div className="relative flex min-h-full flex-col bg-[#f3f7f5] dark:bg-[#071411]">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.35] dark:opacity-[0.2]"
+        aria-hidden
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(36,106,89,0.06) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(36,106,89,0.06) 1px, transparent 1px)
+          `,
+          backgroundSize: "48px 48px",
+        }}
+      />
+      <div className="relative flex min-w-0 flex-1">
         <aside
           className={cn(
-            "hidden shrink-0 flex-col border-r border-slate-200/60 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-900 lg:flex",
-            isGradePanelOpen ? "w-56" : "w-0 overflow-hidden border-r-0",
+            "hidden shrink-0 flex-col border-r border-[#1a4d42]/12 bg-[#f3f7f5] dark:border-white/10 dark:bg-[#071411] lg:flex",
+            isGradePanelOpen ? "w-60" : "w-0 overflow-hidden border-r-0",
           )}
           aria-label="Grade navigation"
         >
           {isGradePanelOpen ? (
-            <div className="sticky top-[2.75rem] flex max-h-[calc(100vh-5.5rem)] flex-col overflow-hidden px-2 py-2">
+            <div className="sticky top-[3.25rem] flex max-h-[calc(100vh-5.5rem)] flex-col overflow-hidden px-3 py-3">
               <SchoolSearchFilter
                 className="h-full"
                 variant="minimal"
@@ -182,7 +193,7 @@ export default function SchoolDashboard() {
           />
 
           <div className="flex-1">
-            <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+            <div className="mx-auto max-w-6xl space-y-3 p-3 sm:p-4 lg:p-5">
               {!selectedGrade ? (
                 <>
                   <DashboardPulseHero
@@ -196,12 +207,12 @@ export default function SchoolDashboard() {
                   <DashboardSetupBanner />
 
                   {statsError ? (
-                    <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-2.5 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
-                      <span>Stats unavailable</span>
+                    <div className="flex items-center justify-between gap-3 border border-amber-300/80 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-200">
+                      <span>Stats unavailable right now.</span>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-6 px-2 text-xs"
+                        className="h-7 rounded-none px-2.5 text-xs"
                         onClick={() => void refetchStats()}
                       >
                         Retry
@@ -209,13 +220,22 @@ export default function SchoolDashboard() {
                     </div>
                   ) : null}
 
-                  <div className="grid gap-4 lg:grid-cols-5">
-                    <div className="space-y-4 lg:col-span-3">
+                  <div className="grid gap-3 lg:grid-cols-12">
+                    <div className="lg:col-span-5">
                       <DashboardActivityFeed />
+                    </div>
+                    <div className="lg:col-span-3">
+                      <DashboardSection
+                        title="Quick tasks"
+                        bodyClassName="p-1.5"
+                      >
+                        <DashboardQuickActions subdomain={subdomain} />
+                      </DashboardSection>
+                    </div>
+                    <div className="lg:col-span-4">
                       <DashboardSection
                         title="School snapshot"
-                        description="Term, fees, enrollment mix, and where to go next"
-                        bodyClassName="p-2.5 sm:p-3"
+                        bodyClassName="p-3"
                       >
                         <DashboardSchoolSnapshot
                           config={schoolConfig}
@@ -225,21 +245,11 @@ export default function SchoolDashboard() {
                         />
                       </DashboardSection>
                     </div>
-
-                    <div className="space-y-4 lg:col-span-2">
-                      <DashboardSection
-                        title="Quick tasks"
-                        description="Jump in with one tap"
-                        bodyClassName="p-2.5"
-                      >
-                        <DashboardQuickActions subdomain={subdomain} />
-                      </DashboardSection>
-                    </div>
                   </div>
                 </>
               ) : (
                 selectedGradeInfo && (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <ClassesContextBar
                       levelName={selectedGradeInfo.level.name}
                       gradeName={selectedGradeInfo.displayName}

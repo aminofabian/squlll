@@ -26,7 +26,7 @@ export const ConflictsPanel: React.FC<ConflictsPanelProps> = ({
   if (Object.keys(conflicts).length === 0) return null;
 
   return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+    <div className="bg-red-50 border border-red-200 rounded-none p-6 mb-6">
       <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
         <AlertTriangle className="w-5 h-5" />
         Teacher Scheduling Conflicts
@@ -38,7 +38,7 @@ export const ConflictsPanel: React.FC<ConflictsPanelProps> = ({
           const day = days[parseInt(dayIndex)];
           
           return (
-            <div key={cellKey} className="bg-white p-4 rounded-lg border border-red-200">
+            <div key={cellKey} className="bg-white p-4 rounded-none border border-red-200">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="font-medium text-red-800">{conflict.teacher}</span>

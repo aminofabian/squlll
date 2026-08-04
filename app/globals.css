@@ -272,9 +272,25 @@
   filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.35));
 }
 
+.hero-desktop-window {
+  transform: perspective(1400px) rotateX(2deg);
+  transform-origin: 50% 100%;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hero-desktop-scene:hover .hero-desktop-window {
+  transform: perspective(1400px) rotateX(0deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-phone-frame {
     filter: none;
+  }
+
+  .hero-desktop-window,
+  .hero-desktop-scene:hover .hero-desktop-window {
+    transform: none;
+    transition: none;
   }
 }
 
@@ -329,7 +345,7 @@
 @keyframes dashboard-feed-enter {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
@@ -338,5 +354,5 @@
 }
 
 .dashboard-feed-enter {
-  animation: dashboard-feed-enter 0.45s ease-out;
+  animation: dashboard-feed-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }

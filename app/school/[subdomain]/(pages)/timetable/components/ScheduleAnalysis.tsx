@@ -26,7 +26,7 @@ export const ScheduleAnalysis: React.FC<ScheduleAnalysisProps> = ({
   const maxSubjectCount = Math.max(...Object.values(subjectDistribution), 1);
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+    <div className="bg-white rounded-none shadow-lg p-6 border border-gray-200">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
         <CalendarDays className="w-5 h-5 text-primary" />
         Schedule Analysis
@@ -43,9 +43,9 @@ export const ScheduleAnalysis: React.FC<ScheduleAnalysisProps> = ({
                 <div key={day} className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{day}</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-20 h-2 bg-gray-200 rounded-none overflow-hidden">
                       <div 
-                        className="h-full bg-primary rounded-full"
+                        className="h-full bg-primary rounded-none"
                         style={{ width: `${(count / maxDayCount) * 100}%` }}
                       />
                     </div>
@@ -64,9 +64,9 @@ export const ScheduleAnalysis: React.FC<ScheduleAnalysisProps> = ({
               .sort((a, b) => b[1] - a[1])
               .slice(0, 3)
               .map(([time, count], index) => (
-                <div key={time} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div key={time} className="flex items-center justify-between p-2 bg-gray-50 rounded-none">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${
+                    <span className={`w-2 h-2 rounded-none ${
                       index === 0 ? 'bg-red-500' : 
                       index === 1 ? 'bg-orange-500' : 'bg-yellow-500'
                     }`} />
@@ -86,9 +86,9 @@ export const ScheduleAnalysis: React.FC<ScheduleAnalysisProps> = ({
               .sort((a, b) => b[1] - a[1])
               .slice(0, 5)
               .map(([subject, count], index) => (
-                <div key={subject} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div key={subject} className="flex items-center justify-between p-2 bg-gray-50 rounded-none">
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${
+                    <div className={`w-3 h-3 rounded-none ${
                       index === 0 ? 'bg-primary' : 
                       index === 1 ? 'bg-emerald-600' : 
                       index === 2 ? 'bg-amber-500' : 

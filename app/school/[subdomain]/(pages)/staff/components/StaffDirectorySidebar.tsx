@@ -37,7 +37,7 @@ function StaffInitials({ name }: { name: string }) {
       : name.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200/60 text-[11px] font-semibold text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10 text-[11px] font-semibold text-[#246a59]">
       {initials || "?"}
     </div>
   );

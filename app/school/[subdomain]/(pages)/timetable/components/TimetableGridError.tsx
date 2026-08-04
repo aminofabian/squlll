@@ -28,7 +28,7 @@ export function TimetableGridError({
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-red-200/70 bg-red-50/60 px-3 py-2 text-sm text-red-700",
+          "flex items-center gap-2 rounded-none border border-red-200/70 bg-red-50/60 px-3 py-2 text-sm text-red-700",
           "dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400",
           className,
         )}
@@ -54,13 +54,13 @@ export function TimetableGridError({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl border border-red-200/80 bg-red-50/40 px-6 py-12 text-center",
+        "flex flex-col items-center justify-center rounded-none border border-red-200/80 bg-red-50/40 px-6 py-12 text-center",
         "dark:border-red-900/50 dark:bg-red-950/20",
         className,
       )}
       role="alert"
     >
-      <div className="mb-3 rounded-full bg-red-100 p-3 dark:bg-red-900/40">
+      <div className="mb-3 rounded-none bg-red-100 p-3 dark:bg-red-900/40">
         <AlertCircle className="h-6 w-6 text-red-500 dark:text-red-400" />
       </div>
       <h3 className={cn(tt.label, "mb-1 text-base font-semibold text-red-800 dark:text-red-300")}>

@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Eye, EyeOff, Plus } from "lucide-react";
+import { Eye, EyeOff, Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TimetableMobileActionStripProps = {
   onAddLessons?: () => void;
+  onAutoGenerate?: () => void;
   showConflicts: boolean;
   conflictCount: number;
   onToggleConflicts: () => void;
@@ -16,6 +17,7 @@ type TimetableMobileActionStripProps = {
 /** Slim blended action row — sits under the class header on mobile grade view. */
 export function TimetableMobileActionStrip({
   onAddLessons,
+  onAutoGenerate,
   showConflicts,
   conflictCount,
   onToggleConflicts,
@@ -43,14 +45,33 @@ export function TimetableMobileActionStrip({
         </>
       ) : null}
 
+      {onAutoGenerate ? (
+        <>
+          <button
+            type="button"
+            onClick={onAutoGenerate}
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium text-[#246a59] transition-colors active:bg-[#246a59]/5"
+          >
+            <Sparkles className="h-4 w-4" strokeWidth={1.75} />
+            Auto
+          </button>
+          <div
+            className="w-px shrink-0 bg-slate-100 dark:bg-slate-800"
+            aria-hidden
+          />
+        </>
+      ) : null}
+
       <button
         type="button"
         onClick={onToggleConflicts}
         className={cn(
           "flex min-w-0 flex-1 items-center justify-center gap-2 py-4 text-[13px] font-medium transition-colors active:bg-slate-50 dark:active:bg-slate-900",
-          showConflicts
-            ? "text-primary"
-            : "text-slate-600 dark:text-slate-400",
+          conflictCount > 0
+            ? "text-red-600 dark:text-red-400"
+            : showConflicts
+              ? "text-primary"
+              : "text-slate-600 dark:text-slate-400",
         )}
       >
         {showConflicts ? (

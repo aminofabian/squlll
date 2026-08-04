@@ -12,7 +12,6 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   useAcademicYears,
   type AcademicYear,
@@ -38,12 +37,13 @@ import {
   formatDisplayDate,
   StreamsStepContent,
   TermsStepContent,
+  countPlannedStreamCreates,
 } from "./onboarding-steps";
 
 const ONBOARDING_STEPS = [
   { id: 1, name: "Academic Year", description: "When does your year run?" },
   { id: 2, name: "Terms", description: "Teaching periods" },
-  { id: 3, name: "Classes", description: "Streams per grade" },
+  { id: 3, name: "Classes", description: "Create streams" },
   { id: 4, name: "Next Steps", description: "Optional setup" },
   { id: 5, name: "Done", description: "Open your dashboard" },
 ];
@@ -370,7 +370,7 @@ export function SchoolOnboardingWizard() {
     setIsCreatingTerms(false);
   };
 
-  const handleCreateStreams = async () => {
+  const handleCreateStreams = async (): Promise<boolean> => {
     const jobs: {
       gradeId: string;
       gradeName: string;
@@ -390,7 +390,7 @@ export function SchoolOnboardingWizard() {
         const key = name.toLowerCase();
         if (namesInGrade.has(key)) {
           toast.error(`Duplicate stream "${name}" on ${grade.gradeName}`);
-          return;
+          return false;
         }
         namesInGrade.add(key);
 
@@ -402,7 +402,7 @@ export function SchoolOnboardingWizard() {
           toast.error(
             `Capacity for "${name}" on ${grade.gradeName} must be at least 1`,
           );
-          return;
+          return false;
         }
 
         jobs.push({
@@ -415,8 +415,7 @@ export function SchoolOnboardingWizard() {
     }
 
     if (jobs.length === 0) {
-      toast.error("Add at least one new stream to a grade");
-      return;
+      return true;
     }
 
     setIsCreatingStreams(true);
@@ -442,14 +441,16 @@ export function SchoolOnboardingWizard() {
       }
     }
 
+    setIsCreatingStreams(false);
+
     if (created > 0) {
       toast.success(`Created ${created} stream${created === 1 ? "" : "s"}`);
       await refetchConfig();
-    } else {
-      toast.error("No streams were created. Check names and try again.");
+      return true;
     }
 
-    setIsCreatingStreams(false);
+    toast.error("No streams were created. Check names and try again.");
+    return false;
   };
 
   const finishOnboarding = useCallback(() => {
@@ -465,6 +466,16 @@ export function SchoolOnboardingWizard() {
 
   const goBack = () => {
     if (currentStep > 1) setCurrentStep((s) => s - 1);
+  };
+
+  const handleStreamsContinue = async () => {
+    const planned = countPlannedStreamCreates(gradeRows, gradeStreamPlans);
+    if (planned === 0) {
+      goNext();
+      return;
+    }
+    const ok = await handleCreateStreams();
+    if (ok) goNext();
   };
 
   const renderStepContent = () => {
@@ -531,15 +542,13 @@ export function SchoolOnboardingWizard() {
         return (
           <OnboardingStep
             icon={GraduationCap}
-            title="Class streams"
-            description="Add streams per grade — each class can have different sections."
+            title="Create class streams"
+            description="Streams are the sections inside a grade — e.g. Grade 4A and Grade 4B."
           >
             <StreamsStepContent
               gradeRows={gradeRows}
               gradeStreamPlans={gradeStreamPlans}
               onGradeStreamPlansChange={setGradeStreamPlans}
-              isCreating={isCreatingStreams}
-              onCreateSelected={handleCreateStreams}
             />
           </OnboardingStep>
         );
@@ -595,14 +604,12 @@ export function SchoolOnboardingWizard() {
               />
               <SummaryRow done label="Curriculum levels" />
             </div>
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Your dashboard is where you manage daily operations. You can
-                  return to any skipped step from the sidebar.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="border border-[#246a59]/20 bg-[#246a59]/[0.06] p-4">
+              <p className="text-sm text-[#1a4d42]/75 dark:text-white/60 leading-relaxed">
+                Your dashboard is where you manage daily operations. You can
+                return to any skipped step from the sidebar.
+              </p>
+            </div>
           </OnboardingStep>
         );
 
@@ -613,18 +620,47 @@ export function SchoolOnboardingWizard() {
 
   if (yearsLoading && currentStep === 1 && !hasAcademicYear) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[#f4f7f6] dark:bg-slate-950">
-        <Loader2 className="h-8 w-8 animate-spin text-[#246a59]" />
-        <p className="text-sm text-slate-500">Loading your school…</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#f3f7f5] dark:bg-[#071411]">
+        <div className="relative">
+          <div className="h-12 w-12 border-2 border-[#246a59]/20" />
+          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-[#246a59]" />
+        </div>
+        <p className="text-[11px] tracking-[0.14em] text-[#1a4d42]/60 uppercase font-semibold">
+          Loading your school…
+        </p>
       </div>
     );
   }
 
+  const plannedStreamCreates = countPlannedStreamCreates(
+    gradeRows,
+    gradeStreamPlans,
+  );
+
   const skipLabel =
-    currentStep === 3 && gradeRows.length > 0 ? "Skip streams" : "Skip";
+    currentStep === 3 && plannedStreamCreates > 0 ? "Skip streams" : "Skip";
 
   const continueDisabled =
     (currentStep === 1 && !hasAcademicYear) || (currentStep === 2 && !hasTerms);
+
+  const continueLabel =
+    currentStep === 5
+      ? "Open dashboard"
+      : currentStep === 3 && plannedStreamCreates > 0
+        ? `Save ${plannedStreamCreates} & continue`
+        : "Continue";
+
+  const handleContinue = () => {
+    if (currentStep === 5) {
+      finishOnboarding();
+      return;
+    }
+    if (currentStep === 3) {
+      void handleStreamsContinue();
+      return;
+    }
+    goNext();
+  };
 
   return (
     <OnboardingShell
@@ -635,10 +671,14 @@ export function SchoolOnboardingWizard() {
       onBack={goBack}
       onSkip={currentStep < 5 ? goNext : undefined}
       skipLabel={skipLabel}
-      showSkip={currentStep < 5}
-      onContinue={currentStep === 5 ? finishOnboarding : goNext}
-      continueLabel={currentStep === 5 ? "Open dashboard" : "Continue"}
+      showSkip={
+        currentStep < 5 &&
+        !(currentStep === 3 && plannedStreamCreates === 0)
+      }
+      onContinue={handleContinue}
+      continueLabel={continueLabel}
       isContinueDisabled={continueDisabled}
+      isLoading={currentStep === 3 && isCreatingStreams}
     >
       {renderStepContent()}
     </OnboardingShell>
@@ -655,16 +695,20 @@ function SummaryRow({
   hint?: string;
 }) {
   return (
-    <div className="flex items-start gap-2 text-sm">
+    <div className="flex items-start gap-3 text-sm border border-[#1a4d42]/10 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 px-3 py-2.5">
       <span
-        className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${done ? "bg-emerald-500" : "bg-slate-300"}`}
-      />
+        className={`mt-0.5 h-3.5 w-3.5 shrink-0 flex items-center justify-center ${done ? "bg-[#246a59]" : "border border-[#1a4d42]/25 bg-transparent"}`}
+      >
+        {done ? (
+          <span className="block h-1.5 w-1.5 bg-white" />
+        ) : null}
+      </span>
       <span>
-        <span className={done ? "text-foreground" : "text-muted-foreground"}>
+        <span className={done ? "text-[#0a1f1a] dark:text-white font-medium" : "text-[#1a4d42]/50"}>
           {label}
         </span>
         {hint && (
-          <span className="block text-xs text-muted-foreground">{hint}</span>
+          <span className="block text-xs text-[#1a4d42]/50 mt-0.5">{hint}</span>
         )}
       </span>
     </div>
@@ -682,16 +726,16 @@ function ChecklistItem({
 }) {
   const router = useRouter();
   return (
-    <li className="flex items-start justify-between gap-4 border p-3 bg-slate-50 dark:bg-slate-800/50">
+    <li className="flex items-start justify-between gap-4 border border-[#1a4d42]/12 p-3.5 bg-[#f8fbfa] dark:bg-white/[0.03] dark:border-white/10 transition-colors hover:border-[#246a59]/35">
       <div>
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">{title}</p>
+        <p className="text-xs text-[#1a4d42]/55 dark:text-white/45 mt-0.5">{description}</p>
       </div>
       <Button
         type="button"
         variant="outline"
         size="sm"
-        className="shrink-0 rounded-none"
+        className="shrink-0 rounded-none border-[#1a4d42]/20 hover:bg-[#246a59] hover:text-white hover:border-[#246a59]"
         onClick={() => router.push(href)}
       >
         Open

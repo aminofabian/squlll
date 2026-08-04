@@ -53,36 +53,33 @@ export function DashboardHeader({
     : "Dashboard";
 
   return (
-    <div className="sticky top-0 z-10 shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 sm:px-6">
-      <div className="mx-auto flex max-w-6xl items-center gap-2">
+    <div className="sticky top-0 z-10 shrink-0 border-b border-[#1a4d42]/12 bg-[#f3f7f5]/95 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2 sm:px-4 lg:px-5">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-[15px]">
+          <h1 className="truncate font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
             {title}
           </h1>
           {!hasGradeSelected ? (
-            <p className="hidden items-center gap-1.5 truncate text-[11px] text-slate-400 sm:flex">
+            <p className="mt-0 hidden items-center gap-1.5 truncate text-[11px] text-[#1a4d42]/50 sm:flex dark:text-white/40">
               {connected ? (
-                <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                </span>
+                <span className="h-1.5 w-1.5 shrink-0 bg-emerald-500" />
               ) : null}
-              Live overview · updates as your school moves
+              School day at a glance
             </p>
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
           <Button
             type="button"
             variant={hasGradeSelected ? "secondary" : "outline"}
             size="sm"
-            className="h-7 gap-1 px-2 text-xs lg:hidden"
+            className="h-8 gap-1.5 rounded-none border-[#1a4d42]/20 px-2.5 text-xs lg:hidden"
             onClick={onOpenGradePicker}
           >
             <Filter className="h-3.5 w-3.5" />
             <span className="hidden min-[380px]:inline">
-              {hasGradeSelected ? "Grades" : "Browse"}
+              {hasGradeSelected ? "Grades" : "Browse grades"}
             </span>
           </Button>
 
@@ -91,26 +88,28 @@ export function DashboardHeader({
               type="button"
               variant="ghost"
               size="sm"
-              className="hidden h-7 px-2 text-xs lg:inline-flex"
+              className="hidden h-8 rounded-none px-2.5 text-xs text-[#1a4d42]/70 lg:inline-flex dark:text-white/60"
               onClick={onToggleGradePanel}
             >
-              {isGradePanelOpen ? "Hide panel" : "Grades"}
+              {isGradePanelOpen ? "Hide grades" : "Show grades"}
             </Button>
           ) : null}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className="h-7 w-7"
+                className="h-8 w-8 rounded-none border-[#1a4d42]/20 bg-white dark:border-white/15 dark:bg-[#0c1a17]"
                 aria-label="Dashboard actions"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs">Tasks</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-52 rounded-none">
+              <DropdownMenuLabel className="text-xs text-[#1a4d42]/55">
+                Tasks
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <ViewAcademicYearsDrawer
                 onAcademicYearCreated={() => {}}
@@ -140,7 +139,7 @@ export function DashboardHeader({
                 <DashboardBroadcastSheet
                   subdomain={subdomain}
                   triggerClassName={cn(
-                    "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
+                    "flex w-full cursor-pointer items-center gap-2 rounded-none px-2 py-1.5 text-sm",
                     "hover:bg-accent hover:text-accent-foreground",
                   )}
                   triggerLabel="Announcement"
@@ -148,10 +147,10 @@ export function DashboardHeader({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="text-sm">
-                <a href="/students?action=add">Add student</a>
+                <a href="/teachers?action=add">Add teacher</a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="text-sm">
-                <a href="/teachers?action=add">Add teacher</a>
+                <a href="/students?action=add">Add student</a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="text-sm">
                 <a href="/classes">Manage classes</a>

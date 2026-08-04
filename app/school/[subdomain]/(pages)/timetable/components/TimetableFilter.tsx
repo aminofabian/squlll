@@ -262,7 +262,7 @@ export function TimetableFilter({
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
+          <div className="p-2 bg-primary/10 rounded-none">
             <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -315,7 +315,7 @@ export function TimetableFilter({
                 <div key={level.levelId} className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="p-1 bg-gray-100 rounded">
+                      <div className="p-1 bg-gray-100 rounded-none">
                         <School className="h-3 w-3 text-gray-600" />
                       </div>
                       <Label className="text-xs font-medium text-gray-700 uppercase tracking-wider">
@@ -362,7 +362,7 @@ export function TimetableFilter({
         <Card className="bg-gray-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
+              <div className="p-2 bg-primary/10 rounded-none">
                 <BookOpen className="h-4 w-4 text-primary" />
               </div>
               <div>

@@ -54,7 +54,7 @@ export function TimetableTeacherWorkload({
                     }
                   : {})}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors",
+                  "flex w-full items-center gap-3 rounded-none px-2.5 py-2 text-left transition-colors",
                   onTeacherClick &&
                     "active:bg-slate-100 dark:active:bg-slate-800/60",
                   isHighlighted
@@ -64,7 +64,7 @@ export function TimetableTeacherWorkload({
               >
                 <span
                   className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-none text-[10px] font-bold tabular-nums",
                     index === 0
                       ? "bg-primary/15 text-primary dark:bg-primary/20"
                       : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
@@ -77,9 +77,9 @@ export function TimetableTeacherWorkload({
                   <span className="block truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                     {teacher.name}
                   </span>
-                  <span className="mt-1 block h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <span className="mt-1 block h-1 overflow-hidden rounded-none bg-slate-100 dark:bg-slate-800">
                     <span
-                      className="block h-full rounded-full bg-primary/60 dark:bg-primary/50"
+                      className="block h-full rounded-none bg-primary/60 dark:bg-primary/50"
                       style={{
                         width: `${Math.max(8, (teacher.lessonCount / maxLessons) * 100)}%`,
                       }}

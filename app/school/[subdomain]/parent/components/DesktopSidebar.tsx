@@ -74,7 +74,7 @@ export function DesktopSidebar({
       items: [
         {
           icon: Calendar,
-          label: "Schedule",
+          label: "Timetable",
           key: "schedule",
           description: "Class timetable",
         },

@@ -44,14 +44,14 @@ export function ParentsSearchSidebar({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-3 flex items-center gap-2 px-0.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="flex h-8 w-8 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
           <Users className="h-4 w-4" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <p className="truncate text-sm font-semibold text-[#0a1f1a] dark:text-white">
             Directory
           </p>
-          <p className="text-[11px] text-slate-400">Quick jump to a parent</p>
+          <p className="text-[11px] text-[#1a4d42]/45">Quick jump to a parent</p>
         </div>
       </div>
 
@@ -78,19 +78,19 @@ export function ParentsSearchSidebar({
 
       <div className={parentsDirectoryMeta}>
         <p className={parentsSectionLabel}>Showing</p>
-        <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
+        <p className="mt-0.5 text-xs text-[#1a4d42]/60 dark:text-white/50">
+          <span className="font-semibold text-[#0a1f1a] dark:text-white">
             {parents.length}
           </span>
           {hasFilters ? (
-            <span className="text-slate-400"> of {totalCount}</span>
+            <span className="text-[#1a4d42]/40"> of {totalCount}</span>
           ) : null}{" "}
           parent{parents.length !== 1 ? "s" : ""}
           {activeCount > 0 ? (
             <>
               {" "}
               ·{" "}
-              <span className="text-emerald-600 dark:text-emerald-400">
+              <span className="text-[#246a59]">
                 {activeCount} active
               </span>
             </>
@@ -100,7 +100,7 @@ export function ParentsSearchSidebar({
 
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
         {parents.length === 0 ? (
-          <p className="py-8 text-center text-xs text-slate-400">
+          <p className="py-8 text-center text-xs text-[#1a4d42]/45">
             {searchTerm || hasFilters
               ? "No matches for current filters"
               : "No parents yet"}
@@ -119,12 +119,12 @@ export function ParentsSearchSidebar({
                   <ParentAvatar name={parent.name} size="sm" ring={isSelected} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                      <span className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white">
                         {parent.name}
                       </span>
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                          "h-1.5 w-1.5 shrink-0",
                           parent.status === "active"
                             ? "bg-emerald-500"
                             : "bg-amber-400",
@@ -132,7 +132,7 @@ export function ParentsSearchSidebar({
                         aria-hidden
                       />
                     </div>
-                    <p className="truncate text-[11px] text-slate-400">
+                    <p className="truncate text-[11px] text-[#1a4d42]/45">
                       {parent.studentCount} child
                       {parent.studentCount !== 1 ? "ren" : ""}
                       {parent.grades[0] ? ` · ${parent.grades[0]}` : ""}
@@ -146,7 +146,7 @@ export function ParentsSearchSidebar({
       </div>
 
       {parents.length > displayedParentsCount ? (
-        <div className="mt-2 shrink-0 border-t border-slate-200/45 pt-2 dark:border-slate-800/50">
+        <div className="mt-2 shrink-0 border-t border-[#1a4d42]/10 pt-2 dark:border-white/10">
           <Button
             variant="ghost"
             size="sm"

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { parentsInviteLink } from "./parents-ui";
+import { parentsInviteLink, parentsPanel } from "./parents-ui";
 
 interface ParentsOverviewBarProps {
   total: number;
@@ -22,12 +22,12 @@ export function ParentsOverviewBar({
 }: ParentsOverviewBarProps) {
   if (isLoading) {
     return (
-      <div className="overflow-hidden rounded-xl border border-slate-200/50 bg-slate-100/35 dark:border-slate-800/60 dark:bg-slate-900/25">
-        <div className="grid grid-cols-2 gap-px bg-slate-200/40 dark:bg-slate-800/60 lg:grid-cols-4">
+      <div className={parentsPanel}>
+        <div className="grid grid-cols-2 gap-px bg-[#1a4d42]/10 dark:bg-white/10 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white/60 px-4 py-3 dark:bg-slate-900/30">
-              <div className="h-3 w-16 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
-              <div className="mt-2 h-4 w-12 animate-pulse rounded bg-slate-50 dark:bg-slate-800/60" />
+            <div key={i} className="bg-white px-4 py-3 dark:bg-[#0c1a17]">
+              <div className="h-3 w-16 animate-pulse bg-[#e8f2ef] dark:bg-white/10" />
+              <div className="mt-2 h-4 w-12 animate-pulse bg-[#f3f7f5] dark:bg-white/5" />
             </div>
           ))}
         </div>
@@ -44,17 +44,17 @@ export function ParentsOverviewBar({
       label: "Registered",
       content:
         total > 0 ? (
-          <p className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+          <p className="mt-1 text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
             {total}
             {needsSetup > 0 ? (
-              <span className="ml-1.5 text-xs font-normal text-slate-400">
+              <span className="ml-1.5 text-xs font-normal text-[#1a4d42]/45">
                 · {needsSetup} awaiting activation
               </span>
             ) : null}
           </p>
         ) : (
           <div className="mt-1">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-[#1a4d42]/55 dark:text-white/45">
               No parents registered yet.
             </p>
             <Link href="/parents?action=add" className={cn(parentsInviteLink, "mt-2")}>
@@ -86,18 +86,14 @@ export function ParentsOverviewBar({
   ];
 
   return (
-    <div
-      className="overflow-hidden rounded-xl border border-slate-200/50 bg-slate-100/35 dark:border-slate-800/60 dark:bg-slate-900/25"
-      role="group"
-      aria-label="Parent statistics"
-    >
-      <div className="grid grid-cols-2 gap-px bg-slate-200/40 dark:bg-slate-800/60 lg:grid-cols-4">
+    <div className={parentsPanel} role="group" aria-label="Parent statistics">
+      <div className="grid grid-cols-2 gap-px bg-[#1a4d42]/10 dark:bg-white/10 lg:grid-cols-4">
         {cells.map((cell) => (
           <div
             key={cell.label}
-            className="bg-white/60 px-4 py-3 dark:bg-slate-900/30"
+            className="bg-white px-4 py-3 dark:bg-[#0c1a17]"
           >
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
               {cell.label}
             </p>
             {"content" in cell && cell.content ? (
@@ -108,16 +104,16 @@ export function ParentsOverviewBar({
                   className={cn(
                     "mt-1 text-sm font-semibold tabular-nums",
                     cell.muted
-                      ? "text-slate-400"
+                      ? "text-[#1a4d42]/40"
                       : cell.accent
-                        ? "text-amber-600 dark:text-amber-400"
-                        : "text-slate-800 dark:text-slate-100",
+                        ? "text-amber-700 dark:text-amber-400"
+                        : "text-[#0a1f1a] dark:text-white",
                   )}
                 >
                   {cell.value}
                 </p>
                 {cell.hint ? (
-                  <p className="mt-0.5 truncate text-[11px] text-slate-400">
+                  <p className="mt-0.5 truncate text-[11px] text-[#1a4d42]/45">
                     {cell.hint}
                   </p>
                 ) : null}

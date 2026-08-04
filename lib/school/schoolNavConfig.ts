@@ -47,7 +47,7 @@ export const SCHOOL_RAIL_GROUPS: SchoolNavGroup[] = [
   },
   {
     items: [
-      { title: "Timetable", shortLabel: "Schedule", href: "/timetable", icon: Clock },
+      { title: "Timetable", shortLabel: "Timetable", href: "/timetable", icon: Clock },
       { title: "Fees & Invoices", shortLabel: "Fees", href: "/fees?section=plans", icon: CreditCard },
       { title: "Exams", shortLabel: "Exams", href: "/exams", icon: FileCheck },
     ],

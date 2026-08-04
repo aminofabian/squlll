@@ -1,12 +1,12 @@
-/** Shared panel styles — aligned with Classes page */
+/** Shared panel styles — ledger / forest system */
 export const teachersPanel =
-  "overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40";
+  "overflow-hidden border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]";
 
 export const teachersPanelMuted =
-  "rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/40";
+  "border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]";
 
 export const teachersSectionHead =
-  "border-b border-slate-100 bg-slate-50/80 text-left dark:border-slate-800 dark:bg-slate-900/60";
+  "border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]";
 
 export const teachersTh =
-  "px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-slate-400";
+  "px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45";

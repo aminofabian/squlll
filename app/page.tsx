@@ -676,6 +676,48 @@ function HeroPhoneFrame({ children }: { children: ReactNode }) {
   )
 }
 
+function HeroDesktopFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="hero-desktop-scene relative mx-auto w-full max-w-[820px] xl:max-w-[880px]">
+      <div
+        className="pointer-events-none absolute inset-x-[10%] -bottom-2 h-12 rounded-[100%] bg-black/35 blur-2xl"
+        aria-hidden
+      />
+
+      {/* Desktop app window */}
+      <div className="hero-desktop-window relative overflow-hidden rounded-xl bg-[#e8ecea] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.65)] ring-1 ring-white/20">
+        {/* Title bar */}
+        <div className="flex h-9 items-center gap-3 border-b border-black/5 bg-gradient-to-b from-[#f4f6f5] to-[#e4e9e7] px-3">
+          <div className="flex items-center gap-1.5" aria-hidden>
+            <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57] shadow-[inset_0_-0.5px_0_rgba(0,0,0,0.15)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e] shadow-[inset_0_-0.5px_0_rgba(0,0,0,0.15)]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#28c840] shadow-[inset_0_-0.5px_0_rgba(0,0,0,0.15)]" />
+          </div>
+          <div className="flex min-w-0 flex-1 items-center justify-center">
+            <div className="flex max-w-[240px] items-center gap-1.5 truncate rounded-md bg-white/70 px-3 py-1 text-[11px] font-medium text-slate-600 shadow-sm ring-1 ring-black/5">
+              <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm bg-emerald-600 text-[7px] font-bold text-white">
+                SQ
+              </span>
+              <span className="truncate">SQUL — School Admin</span>
+            </div>
+          </div>
+          <div className="w-[42px]" aria-hidden />
+        </div>
+
+        {/* App content */}
+        <div className="overflow-hidden bg-white">{children}</div>
+      </div>
+
+      {/* Monitor chin + stand */}
+      <div className="relative mx-auto mt-0 flex flex-col items-center">
+        <div className="h-2 w-full rounded-b-lg bg-gradient-to-b from-[#2a3330] to-[#141a18] shadow-md ring-1 ring-white/10" />
+        <div className="h-8 w-16 bg-gradient-to-b from-[#3a4441] to-[#1c2220] sm:h-9 sm:w-[4.5rem]" />
+        <div className="h-1.5 w-36 rounded-full bg-gradient-to-b from-[#2a3330] to-[#0e1211] shadow-[0_4px_12px_rgba(0,0,0,0.4)] ring-1 ring-white/10 sm:w-44" />
+      </div>
+    </div>
+  )
+}
+
 function HeroDashboardPanel({
   student,
   linkedModule,
@@ -816,23 +858,58 @@ function HeroDashboardPanel({
       className={
         isPhone
           ? "flex h-[560px] w-full flex-col bg-[#f4f6f5] sm:h-[600px]"
-          : "rounded-none flex w-full min-h-[320px] max-h-[min(520px,68dvh)] flex-col overflow-hidden border border-slate-200 bg-white shadow-[0_20px_56px_-10px_rgba(0,0,0,0.42)] sm:min-h-[380px] sm:max-h-[min(580px,68dvh)] md:min-h-[420px] md:max-h-[min(640px,72dvh)] md:flex-row md:items-start lg:min-h-[480px] lg:max-h-none xl:min-h-[520px] xl:shadow-[0_28px_72px_-14px_rgba(0,0,0,0.5)]"
+          : "flex h-[380px] w-full flex-col overflow-hidden bg-white sm:h-[400px] md:h-[420px] md:flex-row md:items-stretch lg:h-[440px] xl:h-[460px]"
       }
     >
-      {/* Icon rail — desktop only */}
+      {/* Desktop sidebar with labels */}
       {!isPhone && (
-        <aside className="hidden shrink-0 flex-col items-center border-slate-200/70 bg-white py-2.5 md:flex md:w-[52px] lg:w-[56px] md:border-r">
+        <aside className="flex w-[132px] shrink-0 flex-col border-r border-slate-200/80 bg-[#f7f9f8] py-3 sm:w-[148px]">
           <button
             type="button"
             onClick={() => onSelectModule(null)}
-            className="mb-2 flex h-8 w-8 items-center justify-center bg-emerald-600 text-[10px] font-bold text-white transition-opacity hover:opacity-90"
+            className="mx-3 mb-3 flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white"
             aria-label="Home"
           >
-            SQ
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-[11px] font-bold text-white shadow-sm">
+              SQ
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-xs font-semibold text-slate-900">SQUL</span>
+              <span className="block truncate text-[10px] text-slate-400">Admin</span>
+            </span>
           </button>
-          <nav className="flex flex-1 flex-col items-center gap-0.5">
-            {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item))}
+          <nav className="flex flex-1 flex-col gap-0.5 px-2">
+            {HERO_SIDEBAR_NAV.map((item) => {
+              const Icon = item.icon
+              const isActive =
+                item.module === activeModule ||
+                (item.module === null && activeModule === null)
+              return (
+                <button
+                  key={`desk-${item.label}`}
+                  type="button"
+                  onClick={() => onSelectModule(item.module)}
+                  onMouseEnter={() => item.module && onModuleHover(item.module)}
+                  onMouseLeave={() => onModuleHover(null)}
+                  aria-pressed={isActive}
+                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12px] transition-colors ${
+                    isActive
+                      ? "bg-white font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100"
+                      : "font-medium text-slate-500 hover:bg-white/80 hover:text-slate-800"
+                  }`}
+                >
+                  <Icon
+                    className={`h-4 w-4 shrink-0 ${isActive ? "text-emerald-600" : "text-slate-400"}`}
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              )
+            })}
           </nav>
+          <div className="mx-3 mt-2 border-t border-slate-200/80 pt-2">
+            <p className="truncate px-1 text-[10px] text-slate-400">Term 2 · 2026</p>
+          </div>
         </aside>
       )}
 
@@ -861,7 +938,7 @@ function HeroDashboardPanel({
         {/* App header */}
         <header
           className={`flex shrink-0 items-center gap-2 border-b border-slate-200/60 ${
-            isPhone ? "px-4 pb-3 pt-2" : "px-2.5 py-2 sm:gap-2 sm:px-3 sm:py-2.5 md:px-4"
+            isPhone ? "px-4 pb-3 pt-2" : "gap-3 px-4 py-3"
           }`}
         >
           {isPhone && (
@@ -877,37 +954,34 @@ function HeroDashboardPanel({
           <div className="min-w-0 flex-1">
             <p
               className={`truncate font-semibold text-slate-900 ${
-                isPhone ? "text-[15px]" : "text-xs sm:text-sm"
+                isPhone ? "text-[15px]" : "text-sm"
               }`}
             >
               {linkedModule ?? "Dashboard"}
             </p>
             <p
               className={`truncate text-slate-400 ${
-                isPhone ? "text-[11px]" : "text-[9px] sm:text-[10px] md:hidden"
+                isPhone ? "text-[11px]" : "text-xs"
               }`}
             >
-              Term 2, 2026
-            </p>
-            {!isPhone && (
-              <p className="hidden truncate text-[10px] text-slate-400 md:block">
-                {linkedModule
-                  ? `${linkedModule} · Term 2, 2026`
+              {isPhone
+                ? "Term 2, 2026"
+                : linkedModule
+                  ? `${linkedModule} overview · Term 2, 2026`
                   : "Overview of your school · Term 2, 2026"}
-              </p>
-            )}
+            </p>
           </div>
           <span
             className={`flex shrink-0 items-center gap-1 bg-emerald-50 ring-1 ring-emerald-100 ${
-              isPhone ? "rounded-full px-2.5 py-1" : "px-1.5 py-0.5 sm:px-2"
+              isPhone ? "rounded-full px-2.5 py-1" : "rounded-md px-2.5 py-1"
             }`}
           >
             <Radio
-              className={`text-emerald-600 ${isPhone ? "h-3 w-3" : "h-2.5 w-2.5 sm:h-3 sm:w-3"}`}
+              className={`text-emerald-600 ${isPhone ? "h-3 w-3" : "h-3.5 w-3.5"}`}
             />
             <span
               className={`font-bold uppercase tracking-wide text-emerald-700 ${
-                isPhone ? "text-[10px]" : "text-[8px] sm:text-[9px]"
+                isPhone ? "text-[10px]" : "text-[10px]"
               }`}
             >
               Live
@@ -918,25 +992,25 @@ function HeroDashboardPanel({
             onClick={onToggleNotifications}
             aria-pressed={notificationsOpen}
             aria-label={notificationsOpen ? "Hide notifications" : "Show notifications"}
-            className={`relative shrink-0 items-center justify-center transition-colors ${
+            className={`relative flex shrink-0 items-center justify-center transition-colors ${
               isPhone
-                ? `flex h-9 w-9 rounded-full ${
+                ? `h-9 w-9 rounded-full ${
                     notificationsOpen
                       ? "bg-emerald-50 text-emerald-700"
                       : "bg-slate-100 text-slate-500"
                   }`
-                : `hidden h-7 w-7 sm:flex ${
+                : `h-8 w-8 rounded-lg ${
                     notificationsOpen
                       ? "bg-emerald-50 text-emerald-700"
-                      : "text-slate-400 hover:bg-slate-50"
+                      : "text-slate-400 hover:bg-slate-100"
                   }`
             }`}
           >
-            <Bell className={isPhone ? "h-4 w-4" : "h-3.5 w-3.5"} />
+            <Bell className={isPhone ? "h-4 w-4" : "h-4 w-4"} />
             {!notificationsOpen && (
               <span
                 className={`absolute bg-emerald-500 ${
-                  isPhone ? "right-2 top-2 h-2 w-2 rounded-full" : "right-1 top-1 h-1.5 w-1.5"
+                  isPhone ? "right-2 top-2 h-2 w-2 rounded-full" : "right-1.5 top-1.5 h-2 w-2 rounded-full"
                 }`}
               />
             )}
@@ -945,7 +1019,7 @@ function HeroDashboardPanel({
             type="button"
             onClick={() => onSelectStudent(student.id)}
             className={`shrink-0 overflow-hidden bg-emerald-100 ring-1 ring-emerald-200 transition-shadow hover:ring-emerald-400 ${
-              isPhone ? "h-9 w-9 rounded-full" : "h-6 w-6 sm:h-7 sm:w-7"
+              isPhone ? "h-9 w-9 rounded-full" : "h-8 w-8 rounded-lg"
             }`}
             aria-label={`Focus ${student.name}`}
           >
@@ -976,7 +1050,7 @@ function HeroDashboardPanel({
           className={`min-h-0 flex-1 space-y-2.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
             isPhone
               ? "bg-[#f4f6f5] px-3 py-3"
-              : "space-y-2 bg-slate-50 p-2 sm:space-y-2.5 sm:p-2.5 md:p-3 lg:overflow-visible [scrollbar-width:thin]"
+              : "space-y-3 bg-slate-50 p-3.5 [scrollbar-width:thin]"
           }`}
         >
           {/* Stat bar */}
@@ -984,7 +1058,7 @@ function HeroDashboardPanel({
             className={
               isPhone
                 ? "flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                : "grid grid-cols-2 gap-1.5 sm:grid-cols-4"
+                : "grid grid-cols-4 gap-2.5"
             }
           >
             {stats.map((stat) => {
@@ -1009,23 +1083,23 @@ function HeroDashboardPanel({
                             ? "border-emerald-300 bg-white shadow-sm shadow-emerald-900/5"
                             : "border-transparent bg-white/80"
                         }`
-                      : `border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
+                      : `rounded-lg border px-3 py-2.5 text-left transition-colors ${
                           isActive
-                            ? "border-emerald-200 bg-emerald-50/90"
-                            : "border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50"
+                            ? "border-emerald-200 bg-emerald-50/90 shadow-sm"
+                            : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50"
                         }`
                   }
                 >
                   <p
                     className={`font-medium uppercase tracking-wide text-slate-400 ${
-                      isPhone ? "text-[9px]" : "text-[7px] sm:text-[9px]"
+                      isPhone ? "text-[9px]" : "text-[10px]"
                     }`}
                   >
                     {stat.label}
                   </p>
                   <p
                     className={`mt-0.5 font-semibold tabular-nums text-slate-800 ${
-                      isPhone ? "text-base" : "text-[11px] sm:text-sm"
+                      isPhone ? "text-base" : "text-lg"
                     }`}
                   >
                     {stat.value}
@@ -1040,7 +1114,7 @@ function HeroDashboardPanel({
             className={`relative bg-white shadow-sm ${
               isPhone
                 ? "rounded-2xl border border-slate-200/70 p-3"
-                : "border border-slate-200/80 p-2 sm:p-2.5 md:p-3"
+                : "rounded-lg border border-slate-200/80 p-3"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -1138,7 +1212,7 @@ function HeroDashboardPanel({
           </div>
 
           {/* Module summary */}
-          <div className={`grid grid-cols-2 ${isPhone ? "gap-2" : "gap-1.5"}`}>
+          <div className={`grid grid-cols-2 ${isPhone ? "gap-2" : "gap-2.5"}`}>
             {HERO_DASHBOARD_MODULES.map((mod) => {
               const isLinked = mod.module === linkedModule || mod.module === activeModule
               const metric = getHeroModuleMetric(
@@ -1164,31 +1238,31 @@ function HeroDashboardPanel({
                             ? "border-emerald-300 bg-emerald-50 shadow-sm"
                             : "border-transparent bg-white"
                         }`
-                      : `flex items-center gap-2 border px-2 py-1.5 text-left transition-colors sm:px-2.5 sm:py-2 ${
+                      : `flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
                           isLinked
-                            ? "border-emerald-200 bg-emerald-50/90"
-                            : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50"
+                            ? "border-emerald-200 bg-emerald-50/90 shadow-sm"
+                            : "border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50"
                         }`
                   }
                 >
                   <span
                     className={`flex shrink-0 items-center justify-center ${
-                      isPhone ? "h-10 w-10 rounded-2xl" : "h-7 w-7 sm:h-8 sm:w-8"
+                      isPhone ? "h-10 w-10 rounded-2xl" : "h-9 w-9 rounded-lg"
                     } ${isLinked ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"}`}
                   >
-                    <Icon className={isPhone ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={1.75} />
+                    <Icon className={isPhone ? "h-4 w-4" : "h-4 w-4"} strokeWidth={1.75} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p
                       className={`truncate ${
-                        isPhone ? "text-[13px]" : "text-[10px] sm:text-[11px]"
+                        isPhone ? "text-[13px]" : "text-[13px]"
                       } ${isLinked ? "font-semibold text-slate-900" : "font-medium text-slate-600"}`}
                     >
                       {mod.label}
                     </p>
                     <p
                       className={`truncate tabular-nums ${
-                        isPhone ? "text-[11px]" : "text-[9px] sm:text-[10px]"
+                        isPhone ? "text-[11px]" : "text-xs"
                       } ${isLinked ? "font-semibold text-emerald-700" : "text-slate-500"}`}
                     >
                       {metric}
@@ -1225,7 +1299,7 @@ function HeroDashboardPanel({
               className={
                 isPhone
                   ? "divide-y divide-slate-100"
-                  : "max-h-[108px] divide-y divide-slate-100 overflow-y-auto sm:max-h-[132px] md:max-h-[148px] lg:max-h-none lg:overflow-visible [scrollbar-width:thin]"
+                  : "max-h-[120px] divide-y divide-slate-100 overflow-y-auto [scrollbar-width:thin]"
               }
             >
               {HERO_ACTIVITY_ROWS.map((row) => {
@@ -1354,16 +1428,12 @@ function HeroDashboardPanel({
           </button>
         )}
 
-        {/* Bottom nav */}
-        <nav
-          className={`flex shrink-0 items-center border-t border-slate-200/70 bg-white ${
-            isPhone
-              ? "px-1 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1"
-              : "px-1 py-0.5 md:hidden"
-          }`}
-        >
-          {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item, true))}
-        </nav>
+        {/* Bottom nav — phone only */}
+        {isPhone && (
+          <nav className="flex shrink-0 items-center border-t border-slate-200/70 bg-white px-1 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1">
+            {HERO_SIDEBAR_NAV.map((item) => renderNavItem(item, true))}
+          </nav>
+        )}
 
         {isPhone && (
           <div className="flex shrink-0 justify-center bg-white pb-2 pt-0.5" aria-hidden>
@@ -1378,7 +1448,7 @@ function HeroDashboardPanel({
     return <HeroPhoneFrame>{panel}</HeroPhoneFrame>
   }
 
-  return panel
+  return <HeroDesktopFrame>{panel}</HeroDesktopFrame>
 }
 
 
@@ -1544,7 +1614,7 @@ const HERO_SIDEBAR_NAV = [
   { label: "Students", shortLabel: "Students", icon: Users2, module: "Students" },
   { label: "Fees", shortLabel: "Fees", icon: CreditCard, module: "Fees" },
   { label: "Exams", shortLabel: "Exams", icon: FileCheck, module: "Exams" },
-  { label: "Schedule", shortLabel: "Schedule", icon: Clock, module: "Timetable" },
+  { label: "Timetable", shortLabel: "Timetable", icon: Clock, module: "Timetable" },
 ] as const
 
 const HERO_ACTIVITY_ROWS = [
@@ -1809,7 +1879,7 @@ export default function Home() {
 
             {/* Right — dashboard preview */}
             <div
-              className="relative order-2 z-10 w-full min-w-0 lg:order-none lg:col-span-6"
+              className="relative order-2 z-10 w-full min-w-0 overflow-visible lg:order-none lg:col-span-6"
               onMouseEnter={() => setDemoPaused(true)}
               onMouseLeave={() => setDemoPaused(false)}
             >
@@ -1825,7 +1895,9 @@ export default function Home() {
               <div
                 key={previewMode}
                 className={`hero-profile-in ${
-                  previewMode === "phone" ? "flex justify-center" : ""
+                  previewMode === "phone"
+                    ? "flex justify-center"
+                    : "overflow-visible pb-8 pt-1"
                 }`}
               >
                 <HeroDashboardPanel

@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { resolveGraphqlEndpoint } from '@/lib/graphql-endpoint';
-
-const GRAPHQL_ENDPOINT = resolveGraphqlEndpoint();
+import { resolveUpstreamGraphqlEndpoint } from '@/lib/graphql-endpoint';
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -16,6 +14,7 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: Request) {
+  let GRAPHQL_ENDPOINT = resolveUpstreamGraphqlEndpoint();
   try {
     const cookieStore = await cookies();
     const authHeader = request.headers.get('authorization');
@@ -50,11 +49,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const queryText = typeof body.query === 'string' ? body.query : '';
+    GRAPHQL_ENDPOINT = resolveUpstreamGraphqlEndpoint(queryText);
+
     console.log('GraphQL API Route - Request body:', {
       query: body.query?.substring(0, 100) + '...',
       operationName: body.operationName,
       hasTenantId: !!tenantId,
-      hasToken: !!token
+      hasToken: !!token,
+      upstream: GRAPHQL_ENDPOINT,
     });
 
     // Add tenantId to variables if it exists and isn't already provided
@@ -83,7 +86,6 @@ export async function POST(request: Request) {
         upstreamHeaders['x-tenant-subdomain'] = tenantSubdomain;
       }
 
-      const queryText = typeof body.query === 'string' ? body.query : '';
       const isBatchMutation =
         queryText.includes('createAssessmentsBatch') ||
         queryText.includes('CreateAssessmentsBatch') ||
@@ -174,7 +176,7 @@ export async function POST(request: Request) {
           {
             errors: [{
               message: isHtml
-                ? `GraphQL proxy received HTML from ${GRAPHQL_ENDPOINT}. Set GRAPHQL_API_URL=http://localhost:3001/graphql (Nest), restart Next dev server, and ensure the backend is running.`
+                ? `GraphQL proxy received HTML from ${GRAPHQL_ENDPOINT}. Check GRAPHQL_API_URL / LOCAL_GRAPHQL_API_URL, restart Next, and ensure the target Nest API is running.`
                 : 'Invalid JSON response from GraphQL endpoint',
               extensions: {
                 code: 'INVALID_JSON_RESPONSE',

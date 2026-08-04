@@ -41,7 +41,7 @@ export const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 transition-colors rounded"
+            className="p-2 hover:bg-white/20 transition-colors rounded-none"
           >
             <X className="w-5 h-5" />
           </button>
@@ -140,13 +140,13 @@ export const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
         <div className="bg-white dark:bg-slate-900 px-6 py-4 flex gap-3 border-t border-slate-300 dark:border-slate-600">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10 rounded"
+            className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10 rounded-none"
           >
             Cancel
           </button>
           <button
             onClick={onAdd}
-            className="flex-1 px-4 py-2 bg-primary text-white font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 h-10 rounded"
+            className="flex-1 px-4 py-2 bg-primary text-white font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 h-10 rounded-none"
           >
             <Plus className="w-4 h-4" />
             Add Time Slot

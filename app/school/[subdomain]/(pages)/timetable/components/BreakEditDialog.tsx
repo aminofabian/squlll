@@ -434,7 +434,7 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
           </div>
 
           {/* Apply to All Days */}
-          <div className="flex items-center space-x-3 p-4 border rounded-lg bg-muted/50">
+          <div className="flex items-center space-x-3 p-4 border rounded-none bg-muted/50">
             <Checkbox
               id="applyToAllDays"
               checked={applyToAllDays}
@@ -450,11 +450,11 @@ export function BreakEditDialog({ breakData, onClose }: BreakEditDialogProps) {
 
           {/* Preview */}
           <div
-            className="border-l-4 p-4 rounded-r-lg"
+            className="border-l-4 p-4 rounded-none"
             style={{ borderColor: formData.color }}
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded">
+              <div className="w-12 h-12 flex items-center justify-center text-3xl bg-muted rounded-none">
                 {formData.icon}
               </div>
               <div className="flex-1">

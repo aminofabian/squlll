@@ -53,14 +53,14 @@ export const TeacherManagementModal: React.FC<TeacherManagementModalProps> = ({
         <div className="flex gap-3 mt-6 pt-4 border-t border-slate-300 dark:border-slate-600">
           <button
             onClick={onAddTeacher}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium hover:bg-primary/90 transition-colors h-10 rounded"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium hover:bg-primary/90 transition-colors h-10 rounded-none"
           >
             <Plus className="w-4 h-4" />
             Add Teacher
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10 rounded"
+            className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10 rounded-none"
           >
             Close
           </button>

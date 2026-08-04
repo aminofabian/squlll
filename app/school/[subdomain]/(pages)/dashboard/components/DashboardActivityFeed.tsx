@@ -19,42 +19,42 @@ import {
 
 const toneConfig: Record<
   FeedTone,
-  { icon: typeof Activity; dot: string; bg: string }
+  { icon: typeof Activity; iconClass: string }
 > = {
   payment: {
     icon: Banknote,
-    dot: "bg-emerald-500",
-    bg: "bg-emerald-50 dark:bg-emerald-950/30",
+    iconClass:
+      "text-emerald-700 bg-emerald-50 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50",
   },
   lesson: {
     icon: BookOpenCheck,
-    dot: "bg-sky-500",
-    bg: "bg-sky-50 dark:bg-sky-950/30",
+    iconClass:
+      "text-[#246a59] bg-[#246a59]/10 border-[#246a59]/20 dark:bg-[#246a59]/15",
   },
   invite: {
     icon: UserPlus,
-    dot: "bg-violet-500",
-    bg: "bg-violet-50 dark:bg-violet-950/30",
+    iconClass:
+      "text-[#1a4d42] bg-[#f3f7f5] border-[#1a4d42]/15 dark:bg-white/5 dark:text-emerald-200 dark:border-white/10",
   },
   assignment: {
     icon: GraduationCap,
-    dot: "bg-[#0073ea]",
-    bg: "bg-[#0073ea]/8 dark:bg-[#0073ea]/15",
+    iconClass:
+      "text-[#246a59] bg-[#246a59]/10 border-[#246a59]/20 dark:bg-[#246a59]/15",
   },
   attendance: {
     icon: ClipboardCheck,
-    dot: "bg-amber-500",
-    bg: "bg-amber-50 dark:bg-amber-950/30",
+    iconClass:
+      "text-amber-800 bg-amber-50 border-amber-200/80 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/40",
   },
   exam: {
     icon: Sparkles,
-    dot: "bg-fuchsia-500",
-    bg: "bg-fuchsia-50 dark:bg-fuchsia-950/30",
+    iconClass:
+      "text-[#0a1f1a] bg-[#e8f2ef] border-[#246a59]/20 dark:bg-[#246a59]/20 dark:text-emerald-200",
   },
   default: {
     icon: Activity,
-    dot: "bg-slate-400",
-    bg: "bg-slate-50 dark:bg-slate-800/40",
+    iconClass:
+      "text-[#1a4d42]/70 bg-[#f3f7f5] border-[#1a4d42]/12 dark:bg-white/5 dark:text-white/70 dark:border-white/10",
   },
 };
 
@@ -75,83 +75,70 @@ export function DashboardActivityFeed() {
   const { connected } = useRealtime();
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-slate-200/70 bg-white dark:border-slate-800 dark:bg-slate-900/50">
-      <div
-        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[#0073ea]/10 blur-2xl"
-        aria-hidden
-      />
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 dark:border-slate-800">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            {connected ? (
-              <>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </>
-            ) : (
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-slate-300" />
-            )}
-          </span>
-          <h3 className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">
-            Happening now
-          </h3>
-        </div>
+    <section
+      className="overflow-hidden border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] dark:border-white/10 dark:bg-[#0c1a17]"
+      aria-label="Live activity"
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]">
+        <h3 className="font-display text-base tracking-tight text-[#0a1f1a] dark:text-white">
+          Happening now
+        </h3>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+            "inline-flex items-center gap-1 border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
             connected
-              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
-              : "bg-slate-100 text-slate-500",
+              ? "border-emerald-300/60 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50"
+              : "border-[#1a4d42]/15 bg-[#f3f7f5] text-[#1a4d42]/55 dark:bg-white/5",
           )}
         >
-          <Radio className="h-3 w-3" />
-          {connected ? "Live" : "Connecting"}
+          {connected ? (
+            <span className="h-1.5 w-1.5 bg-emerald-500" />
+          ) : (
+            <Radio className="h-3 w-3" />
+          )}
+          {connected ? "Live" : "…"}
         </span>
       </div>
 
-      <ul className="max-h-[220px] space-y-0 overflow-y-auto p-1.5 sm:max-h-[260px]">
-        {items.map((item, index) => {
+      <ul className="max-h-[min(220px,32vh)] divide-y divide-[#1a4d42]/10 overflow-y-auto dark:divide-white/10">
+        {items.slice(0, 5).map((item, index) => {
           const cfg = toneConfig[item.tone];
           const Icon = cfg.icon;
           return (
             <li
               key={item.id}
               className={cn(
-                "flex gap-2.5 rounded-lg px-2 py-2 transition-colors",
-                cfg.bg,
+                "flex gap-2.5 px-3 py-2 transition-colors hover:bg-[#f3f7f5]/80 dark:hover:bg-white/[0.03]",
                 index === 0 && item.id !== "welcome" && "dashboard-feed-enter",
               )}
             >
               <div
                 className={cn(
-                  "mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/80 shadow-sm dark:bg-slate-900/60",
+                  "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border",
+                  cfg.iconClass,
                 )}
               >
-                <Icon className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
+                <Icon className="h-3 w-3" strokeWidth={2} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-medium text-slate-800 dark:text-slate-100">
+                  <p className="text-[12px] font-medium leading-snug text-[#0a1f1a] dark:text-white line-clamp-1">
                     {item.message}
                   </p>
-                  <span className="shrink-0 font-mono text-[9px] tabular-nums text-slate-400">
+                  <time className="shrink-0 text-[10px] tabular-nums text-[#1a4d42]/40">
                     {formatFeedTime(item.at)}
-                  </span>
+                  </time>
                 </div>
                 {item.detail ? (
-                  <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 line-clamp-1 text-[11px] text-[#1a4d42]/50 dark:text-white/40">
                     {item.detail}
                   </p>
                 ) : null}
               </div>
-              <span
-                className={cn("mt-2 h-1.5 w-1.5 shrink-0 rounded-full", cfg.dot)}
-                aria-hidden
-              />
             </li>
           );
         })}
       </ul>
-    </div>
+    </section>
   );
 }

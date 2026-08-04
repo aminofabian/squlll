@@ -308,7 +308,7 @@ export function LessonEditDialog({ lesson, onClose }: LessonEditDialogProps) {
           toast({
             title: "This period is not set up for this class",
             description:
-              "The timetable structure for this grade may be missing. Open “Set up schedule” and include this class, or pick a different class.",
+              "The timetable structure for this grade may be missing. Open “Set up timetable” and include this class, or pick a different class.",
             variant: "destructive",
           });
           setIsSaving(false);
@@ -679,7 +679,7 @@ Check the browser console for detailed debugging information.`;
                   message.includes("Conflict") ||
                   message.includes("already scheduled")
                 ) {
-                  detailedMessage = `Schedule conflict detected. The teacher or grade may already be scheduled at this time. Please choose a different time slot or teacher.`;
+                  detailedMessage = `Timetable conflict detected. The teacher or grade may already be scheduled at this time. Please choose a different time slot or teacher.`;
                 } else if (
                   message.includes("not qualified") ||
                   message.includes("cannot teach")
@@ -1350,6 +1350,14 @@ Check the browser console for detailed input information.`;
     });
   };
 
+  const saveBlockedReason = scheduleConflict
+    ? "Resolve the clash above before saving."
+    : !formData.teacherId
+      ? "Pick a teacher to continue."
+      : !formData.subjectId
+        ? "Pick a subject to continue."
+        : null;
+
   return (
     <Drawer
       open={!!lesson}
@@ -1362,7 +1370,7 @@ Check the browser console for detailed input information.`;
         className={cn(
           "flex flex-col bg-white dark:bg-slate-950",
           isLgDown
-            ? "max-h-[min(92dvh,720px)] rounded-t-[1.25rem] border-t border-slate-100 dark:border-slate-800"
+            ? "max-h-[min(92dvh,720px)] rounded-none border-t border-slate-100 dark:border-slate-800"
             : "ml-auto h-[100dvh] max-h-[100dvh] w-full max-w-md",
         )}
         data-vaul-drawer-direction={isLgDown ? "bottom" : "right"}
@@ -1401,7 +1409,7 @@ Check the browser console for detailed input information.`;
               size="icon"
               className={cn(
                 "shrink-0 text-slate-400",
-                isLgDown ? "h-10 w-10 rounded-full" : "h-7 w-7",
+                isLgDown ? "h-10 w-10 rounded-none" : "h-7 w-7",
               )}
               onClick={onClose}
               aria-label="Close"
@@ -1419,8 +1427,8 @@ Check the browser console for detailed input information.`;
               className={cn(
                 "inline-flex items-center gap-1 font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300",
                 isLgDown
-                  ? "rounded-full bg-slate-100 px-3 py-1 text-xs"
-                  : "rounded-md bg-slate-100 px-2 py-0.5 text-[11px]",
+                  ? "rounded-none bg-slate-100 px-3 py-1 text-xs"
+                  : "rounded-none bg-slate-100 px-2 py-0.5 text-[11px]",
               )}
             >
               <Clock className="h-3 w-3 text-slate-400" />
@@ -1434,8 +1442,8 @@ Check the browser console for detailed input information.`;
                 className={cn(
                   "font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300",
                   isLgDown
-                    ? "rounded-full bg-slate-100 px-3 py-1 text-xs"
-                    : "rounded-md bg-slate-100 px-2 py-0.5 text-[11px]",
+                    ? "rounded-none bg-slate-100 px-3 py-1 text-xs"
+                    : "rounded-none bg-slate-100 px-2 py-0.5 text-[11px]",
                 )}
               >
                 {grade.displayName || grade.name}
@@ -1452,7 +1460,7 @@ Check the browser console for detailed input information.`;
           )}
         >
           {scheduleConflict ? (
-            <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/50 dark:bg-red-950/40">
+            <div className="flex gap-2 rounded-none border border-red-200 bg-red-50 px-3 py-2.5 dark:border-red-900/50 dark:bg-red-950/40">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
               <div className="min-w-0 text-xs text-red-800 dark:text-red-200">
                 <p className="font-semibold">{scheduleConflict.title}</p>
@@ -1552,7 +1560,7 @@ Check the browser console for detailed input information.`;
 
             {busyButQualifiedTeachers.length > 0 &&
             availableTeachers.length > 0 ? (
-              <div className="rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 dark:border-amber-900/40 dark:bg-amber-950/30">
+              <div className="rounded-none border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 dark:border-amber-900/40 dark:bg-amber-950/30">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
                   Already booked
                 </p>
@@ -1565,7 +1573,7 @@ Check the browser console for detailed input information.`;
 
           <FormSection title="Subject">
             {!formData.teacherId ? (
-              <p className="rounded-lg border border-dashed border-slate-200 px-3 py-2.5 text-[11px] text-slate-500 dark:border-slate-700">
+              <p className="rounded-none border border-dashed border-slate-200 px-3 py-2.5 text-[11px] text-slate-500 dark:border-slate-700">
                 Select a teacher to see their subjects.
               </p>
             ) : (
@@ -1634,7 +1642,7 @@ Check the browser console for detailed input information.`;
 
           <label
             className={cn(
-              "flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-colors",
+              "flex cursor-pointer items-start gap-2.5 rounded-none border px-3 py-2.5 transition-colors",
               formData.isDoublePeriod
                 ? "border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-900/60"
                 : "border-slate-200 hover:border-slate-300 dark:border-slate-700",
@@ -1670,14 +1678,20 @@ Check the browser console for detailed input information.`;
               : "px-4 py-3",
           )}
         >
+          {saveBlockedReason ? (
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <AlertCircle className="h-3 w-3 shrink-0 text-slate-400" />
+              {saveBlockedReason}
+            </p>
+          ) : null}
           <div className={cn("flex w-full gap-2", isLgDown && "gap-3")}>
             {!isNew ? (
               <Button
-                variant="destructive"
+                variant="ghost"
                 size="sm"
                 onClick={handleDelete}
                 className={cn(
-                  "h-9 shrink-0 px-3 text-xs",
+                  "h-9 shrink-0 px-3 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40",
                   isLgDown && "h-11 text-sm",
                 )}
               >
@@ -1696,18 +1710,14 @@ Check the browser console for detailed input information.`;
             <Button
               size="sm"
               onClick={handleSave}
-              disabled={
-                !formData.subjectId ||
-                !formData.teacherId ||
-                isSaving ||
-                !!scheduleConflict
-              }
+              disabled={!!saveBlockedReason || isSaving}
               className={cn(
-                "h-9 flex-1 bg-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200",
+                "h-9 flex-1 text-xs font-medium",
+                tt.accentBtn,
                 isLgDown && "h-11 text-sm",
               )}
             >
-              {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save"}
+              {isSaving ? "Saving…" : isNew ? "Add lesson" : "Save changes"}
             </Button>
           </div>
         </DrawerFooter>

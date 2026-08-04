@@ -139,15 +139,15 @@ export default function StaffPage() {
 
   if (error && staff.length === 0 && !loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50/80 px-4 dark:bg-slate-950">
-        <div className="max-w-md rounded-xl border border-red-200 bg-white px-6 py-8 text-center dark:border-red-900 dark:bg-slate-900">
-          <h2 className="mb-1 text-base font-semibold text-red-600">
+      <div className="flex h-screen items-center justify-center bg-[#f3f7f5] px-4 dark:bg-[#071411]">
+        <div className="max-w-md rounded-none border border-red-300/80 bg-white px-6 py-8 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+          <h2 className="mb-1 font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading staff
           </h2>
-          <p className="text-sm text-slate-500">{error}</p>
+          <p className="text-sm text-[#1a4d42]/55 dark:text-white/45">{error}</p>
           <Button
             size="sm"
-            className="mt-4"
+            className="mt-4 rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]"
             onClick={() => void refetchStaff()}
           >
             Retry
@@ -158,17 +158,17 @@ export default function StaffPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/80 bg-slate-50/50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] transition-all duration-300 dark:border-white/10 dark:bg-[#0c1a17]",
           "md:relative md:translate-x-0",
           isSidebarMinimized ? "w-14" : "w-64",
         )}
       >
         <div
           className={cn(
-            "flex shrink-0 border-b border-slate-200/80 px-2 py-2 dark:border-slate-800",
+            "flex shrink-0 border-b border-[#1a4d42]/10 px-2 py-2 dark:border-white/10",
             isSidebarMinimized ? "justify-center" : "justify-end",
           )}
         >
@@ -202,16 +202,19 @@ export default function StaffPage() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-slate-200/50 bg-slate-50/80 px-4 py-3 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-950/80 sm:px-6">
+        <div className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-6">
           <div className="mx-auto max-w-5xl">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
+                  Workforce
+                </p>
+                <h1 className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
                   {selectedStaff
                     ? staffDisplayName(selectedStaff)
                     : "Staff"}
                 </h1>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/45">
                   {selectedStaff
                     ? `${selectedStaff.department || "No department"} · ${selectedStaff.isActive ? "Active" : "Inactive"}`
                     : "Manage non-teaching staff, administrators, and support roles"}
@@ -234,16 +237,16 @@ export default function StaffPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+          <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-5">
             {error ? (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+              <div className="flex items-center gap-2 border border-amber-300/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
                 <Info className="h-4 w-4 shrink-0" />
                 {error}
               </div>
             ) : null}
 
             {loading && staff.length === 0 ? (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-[#1a4d42]/55">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading staff…
               </div>
@@ -263,7 +266,7 @@ export default function StaffPage() {
                 }}
               />
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <StaffOverviewBar
                   total={staff.length}
                   active={activeCount}
@@ -293,7 +296,7 @@ export default function StaffPage() {
                       )}
                     >
                       {searchTerm ? (
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-2 text-xs text-[#1a4d42]/55">
                           <span>Filtering by</span>
                           <button
                             type="button"
@@ -301,7 +304,7 @@ export default function StaffPage() {
                             className={staffSearchChip}
                           >
                             &ldquo;{searchTerm}&rdquo;
-                            <X className="h-3 w-3 text-slate-400" />
+                            <X className="h-3 w-3 text-[#1a4d42]/40" />
                           </button>
                         </div>
                       ) : (

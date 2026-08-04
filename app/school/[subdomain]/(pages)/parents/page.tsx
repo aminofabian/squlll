@@ -186,19 +186,19 @@ export default function ParentsPage() {
       : `${parents.length} parent${parents.length !== 1 ? "s" : ""} · ${pendingInvitations.length} pending invite${pendingInvitations.length !== 1 ? "s" : ""}`;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50/80 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden bg-[#f3f7f5] dark:bg-[#071411]">
       {!isSidebarMinimized ? (
         <button
           type="button"
           aria-label="Close directory"
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[1px] md:hidden"
+          className="fixed inset-0 z-40 bg-[#0a1f1a]/20 backdrop-blur-[1px] md:hidden"
           onClick={() => setIsSidebarMinimized(true)}
         />
       ) : null}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200/60 bg-slate-50/90 transition-all duration-300 dark:border-slate-800 dark:bg-slate-950",
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] transition-all duration-300 dark:border-white/10 dark:bg-[#0c1a17]",
           "md:relative md:translate-x-0",
           isSidebarMinimized
             ? "w-14 -translate-x-full md:translate-x-0"
@@ -207,12 +207,12 @@ export default function ParentsPage() {
       >
         <div
           className={cn(
-            "flex shrink-0 items-center border-b border-slate-200/60 px-2 py-2 dark:border-slate-800",
+            "flex shrink-0 items-center border-b border-[#1a4d42]/10 px-2 py-2 dark:border-white/10",
             isSidebarMinimized ? "justify-center" : "justify-between gap-2",
           )}
         >
           {!isSidebarMinimized ? (
-            <p className="truncate px-1 text-xs font-medium text-slate-500">
+            <p className="truncate px-1 text-xs font-medium text-[#1a4d42]/55">
               Parents
             </p>
           ) : null}
@@ -248,7 +248,7 @@ export default function ParentsPage() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="shrink-0 border-b border-slate-200/50 bg-slate-50/80 px-4 py-3 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-950/80 sm:px-6">
+        <header className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-6">
           <div className={parentsPageContainer}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-start gap-3">
@@ -264,10 +264,15 @@ export default function ParentsPage() {
                   </Button>
                 ) : null}
                 <div className="min-w-0">
-                  <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-                    {selectedParent ? selectedParent.name : "Parents & guardians"}
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
+                    Guardians
+                  </p>
+                  <h1 className="truncate font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
+                    {selectedParent ? selectedParent.name : "Parents"}
                   </h1>
-                  <p className="mt-0.5 text-xs text-slate-400">{listSubtitle}</p>
+                  <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/45">
+                    {listSubtitle}
+                  </p>
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
@@ -283,23 +288,23 @@ export default function ParentsPage() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className={cn(parentsPageContainer, "space-y-5 p-4 sm:p-6")}>
+          <div className={cn(parentsPageContainer, "space-y-4 p-4 sm:p-5")}>
             {!tenantId ? (
-              <div className="flex items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="flex items-center gap-2 border border-amber-300/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
                 <Info className="h-4 w-4 shrink-0" />
                 Tenant ID not found. Please log in again.
               </div>
             ) : null}
 
             {loading && tenantId ? (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 text-sm text-[#1a4d42]/55">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading parents…
               </div>
             ) : null}
 
             {error ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200/80 bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+              <div className="flex flex-wrap items-center justify-between gap-3 border border-red-300/80 bg-red-50 px-3 py-2.5 text-sm text-red-700">
                 <span className="flex items-center gap-2">
                   <Info className="h-4 w-4 shrink-0" />
                   Error loading parents: {error}
@@ -308,7 +313,7 @@ export default function ParentsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => void refetchParents()}
-                  className="h-7 border-red-200 text-red-700 hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-950/50"
+                  className="h-7 rounded-none border-red-200 text-red-700 hover:bg-red-100"
                 >
                   Retry
                 </Button>
@@ -316,7 +321,7 @@ export default function ParentsPage() {
             ) : null}
 
             {parentCreated ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+              <div className="flex items-center gap-2 border border-emerald-300/80 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800">
                 <CheckCircle className="h-4 w-4 shrink-0" />
                 Parent invitation sent successfully.
               </div>
@@ -331,14 +336,14 @@ export default function ParentsPage() {
                 onUpdated={handleParentUpdated}
               />
             ) : parents.length === 0 && !loading ? (
-              <div className="rounded-xl border border-dashed border-slate-200/80 bg-white/60 px-6 py-16 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                  <Users className="h-6 w-6 text-slate-400" />
+              <div className="rounded-none border border-dashed border-[#1a4d42]/20 bg-white px-6 py-14 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-white/15 dark:bg-[#0c1a17]">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
+                  <Users className="h-5 w-5" />
                 </div>
-                <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                <h2 className="font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
                   No parents yet
                 </h2>
-                <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
+                <p className="mx-auto mt-1 max-w-sm text-xs text-[#1a4d42]/55 dark:text-white/45">
                   Invite your first parent to connect them with their
                   children&apos;s school records.
                 </p>
@@ -350,7 +355,7 @@ export default function ParentsPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <ParentsOverviewBar
                   total={parents.length}
                   active={overviewStats.active}
@@ -377,7 +382,7 @@ export default function ParentsPage() {
                       )}
                     >
                       {hasActiveFilters ? (
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-[#1a4d42]/55">
                           <span>Filtered results</span>
                           {searchTerm ? (
                             <button
@@ -386,21 +391,21 @@ export default function ParentsPage() {
                               className={parentsSearchChip}
                             >
                               &ldquo;{searchTerm}&rdquo;
-                              <X className="h-3 w-3 text-slate-400" />
+                              <X className="h-3 w-3 text-[#1a4d42]/40" />
                             </button>
                           ) : null}
                           {(parentFilter !== "all" || gradeFilter !== "all") ? (
                             <button
                               type="button"
                               onClick={clearFilters}
-                              className="text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline dark:hover:text-slate-300"
+                              className="text-[#1a4d42]/55 underline-offset-2 hover:text-[#0a1f1a] hover:underline"
                             >
                               Clear filters
                             </button>
                           ) : null}
                         </div>
                       ) : (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-[#1a4d42]/45">
                           Use the directory or filters to narrow the list
                         </span>
                       )}

@@ -40,7 +40,7 @@ const navigation = [
     icon: LayoutDashboard,
   },
   {
-    title: "Schedule",
+    title: "Timetable",
     href: "/staff-portal/schedule",
     icon: CalendarDays,
   },

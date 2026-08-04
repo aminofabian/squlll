@@ -63,7 +63,7 @@ export const GradeClassSearch = forwardRef<HTMLInputElement, GradeClassSearchPro
             <button
               type="button"
               onClick={() => onChange("")}
-              className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
+              className="absolute right-1.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-none text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800"
               aria-label="Clear class search"
             >
               <X className="h-3.5 w-3.5" />

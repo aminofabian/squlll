@@ -540,7 +540,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
       >
         <SheetHeader className="border-b pb-2.5 px-4 pt-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-7 w-7 items-center justify-center rounded-none bg-primary/10">
               <Calendar className="h-3.5 w-3.5 text-primary" />
             </div>
             <div className="flex-1">
@@ -557,14 +557,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
         </SheetHeader>
 
         {weekTemplatesLoading && effectiveTermId && (
-          <div className="mx-4 mt-3 flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+          <div className="mx-4 mt-3 flex items-center gap-2 rounded-none border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
             Checking for existing timetables…
           </div>
         )}
 
         {!weekTemplatesLoading && existingWeekTemplate && effectiveTermId && (
-          <div className="sticky top-0 z-10 mx-4 mt-3 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-3 text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
+          <div className="sticky top-0 z-10 mx-4 mt-3 flex items-start gap-2.5 rounded-none border border-amber-300 bg-amber-50 px-3 py-3 text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-xs leading-relaxed">
               A timetable already exists for <span className="font-semibold">{selectedTerm?.name ?? 'this term'}</span>{' '}
@@ -579,22 +579,22 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           {/* Step 1 - Term Selection */}
           <div className="space-y-1.5 pb-4 border-b-2 border-border/50">
             <div className="flex items-center gap-1.5">
-              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
+              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
                 1
               </div>
               <Label className="text-[10px] font-semibold uppercase tracking-wide">Select Term</Label>
             </div>
             {termsLoading ? (
-              <div className="flex items-center justify-center gap-1.5 rounded-md border bg-muted/50 p-2 text-[11px] text-muted-foreground">
+              <div className="flex items-center justify-center gap-1.5 rounded-none border bg-muted/50 p-2 text-[11px] text-muted-foreground">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Loading terms...
               </div>
             ) : !currentAcademicYear ? (
-              <div className="rounded-md border bg-muted/50 p-2 text-center text-[11px] text-muted-foreground">
+              <div className="rounded-none border bg-muted/50 p-2 text-center text-[11px] text-muted-foreground">
                 No academic year available
               </div>
             ) : !terms || terms.length === 0 ? (
-              <div className="rounded-md border bg-muted/50 p-2 text-center text-[11px] text-muted-foreground">
+              <div className="rounded-none border bg-muted/50 p-2 text-center text-[11px] text-muted-foreground">
                 No terms available
               </div>
             ) : (
@@ -610,7 +610,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       key={term.id}
                       type="button"
                       onClick={() => selectTerm(term.id)}
-                      className={`group relative flex flex-col items-start gap-1 rounded-lg border-2 p-2.5 text-left transition-all duration-200 cursor-pointer ${
+                      className={`group relative flex flex-col items-start gap-1 rounded-none border-2 p-2.5 text-left transition-all duration-200 cursor-pointer ${
                         isSelected
                           ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.02]'
                           : 'border-border bg-card hover:border-primary/60 hover:bg-primary/5 hover:shadow-sm active:scale-[0.98]'
@@ -626,12 +626,12 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           </div>
                         )}
                         {!isSelected && term.isActive && (
-                          <span className="flex-shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          <span className="flex-shrink-0 rounded-none bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             Active
                           </span>
                         )}
                         {termTemplate && (
-                          <span className="flex-shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                          <span className="flex-shrink-0 rounded-none bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
                             Has timetable
                           </span>
                         )}
@@ -649,7 +649,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                         )}
                       </div>
                       {isSelected && (
-                        <div className="absolute inset-0 rounded-lg bg-primary/5 pointer-events-none" />
+                        <div className="absolute inset-0 rounded-none bg-primary/5 pointer-events-none" />
                       )}
                     </button>
                   );
@@ -660,9 +660,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
           {/* Step 2 - Timetable Name */}
           {effectiveTermId && (
-            <div className="space-y-1.5 rounded-md border bg-card p-2.5 transition-all pb-4 border-b-2 border-border/50">
+            <div className="space-y-1.5 rounded-none border bg-card p-2.5 transition-all pb-4 border-b-2 border-border/50">
               <div className="flex items-center gap-1.5">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-none bg-primary text-[10px] font-semibold text-primary-foreground text-teal-100">
                   2
                 </div>
                 <Label className="text-[10px] font-semibold uppercase tracking-wide">Timetable Name</Label>
@@ -671,14 +671,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
                 placeholder="e.g., TERM 1 TIMETABLE 2016"
-                className="h-8 rounded-md border focus:border-border text-xs uppercase font-normal tracking-wide"
+                className="h-8 rounded-none border focus:border-border text-xs uppercase font-normal tracking-wide"
               />
             </div>
           )}
 
           {/* Grades Selection */}
           {effectiveTermId && (
-            <div className="space-y-2 rounded-md border bg-card p-3 pb-4 border-b-2 border-border/50">
+            <div className="space-y-2 rounded-none border bg-card p-3 pb-4 border-b-2 border-border/50">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-4 w-4 text-primary" />
@@ -693,7 +693,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   variant="ghost"
                   onClick={handleSelectAllGrades}
                   disabled={grades.length === 0}
-                  className="h-6 rounded-md text-[10px] px-1.5"
+                  className="h-6 rounded-none text-[10px] px-1.5"
                 >
                   All
                 </Button>
@@ -703,14 +703,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   variant="ghost"
                   onClick={handleClearGrades}
                   disabled={selectedGradeIds.length === 0}
-                  className="h-6 rounded-md text-[10px] px-1.5"
+                  className="h-6 rounded-none text-[10px] px-1.5"
                 >
                   Clear
                 </Button>
               </div>
             </div>
             {grades.length === 0 ? (
-              <div className="rounded-md border bg-muted/50 p-1.5 text-center text-[11px] text-muted-foreground">
+              <div className="rounded-none border bg-muted/50 p-1.5 text-center text-[11px] text-muted-foreground">
                 No grades available
               </div>
             ) : (
@@ -720,7 +720,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                   return (
                     <label
                       key={grade.id}
-                      className={`group flex cursor-pointer items-center gap-1 rounded-md border-2 px-2 py-1 transition-all hover:border-primary/60 ${
+                      className={`group flex cursor-pointer items-center gap-1 rounded-none border-2 px-2 py-1 transition-all hover:border-primary/60 ${
                         isSelected
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border bg-card hover:bg-accent/50'
@@ -744,9 +744,9 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
 
           {/* Step 3 - Lesson Periods Configuration */}
           {effectiveTermId && (
-            <div className="space-y-2 rounded-md border bg-card p-2.5">
+            <div className="space-y-2 rounded-none border bg-card p-2.5">
               <div className="flex items-center gap-1.5">
-                <div className="flex h-5 w-5 text-teal-100 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                <div className="flex h-5 w-5 text-teal-100 shrink-0 items-center justify-center rounded-none bg-primary text-[10px] font-semibold text-primary-foreground">
                   3
                 </div>
                 <Label className="text-[10px] font-semibold uppercase tracking-wide">Lesson Periods</Label>
@@ -763,7 +763,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="h-8 rounded-md border focus:border-border text-xs"
+                      className="h-8 rounded-none border focus:border-border text-xs"
                     />
                   </div>
                   <div className="space-y-0.5">
@@ -783,7 +783,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           setFormData({ ...formData, periodDuration: value });
                         }
                       }}
-                      className="h-8 rounded-md border focus:border-border text-xs"
+                      className="h-8 rounded-none border focus:border-border text-xs"
                       placeholder="40"
                     />
                   </div>
@@ -806,7 +806,7 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                           setFormData({ ...formData, periodCount: value });
                         }
                       }}
-                      className="h-8 rounded-md border focus:border-border text-xs"
+                      className="h-8 rounded-none border focus:border-border text-xs"
                       placeholder="8"
                     />
                   </div>
@@ -821,13 +821,13 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                       max="7"
                       value={formData.numberOfDays}
                       onChange={(e) => setFormData({ ...formData, numberOfDays: e.target.value })}
-                      className="h-8 rounded-md border focus:border-border text-xs"
+                      className="h-8 rounded-none border focus:border-border text-xs"
                     />
                   </div>
                 </div>
 
                 {/* Preview */}
-                <div className="rounded-md border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-2">
+                <div className="rounded-none border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-2">
                   {(() => {
                     const periodCount = parsePositiveInt(formData.periodCount);
                     const periodDuration = parsePositiveInt(formData.periodDuration);
@@ -883,14 +883,14 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
                 variant="outline"
                 onClick={onClose}
                 disabled={isCreating}
-                className="flex-1 h-8 rounded-md text-xs"
+                className="flex-1 h-8 rounded-none text-xs"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreateClick}
                 disabled={isCreating || !effectiveTermId || selectedGradeIds.length === 0 || weekTemplatesLoading}
-                className="flex-1 h-8 rounded-md text-xs font-semibold"
+                className="flex-1 h-8 rounded-none text-xs font-semibold"
               >
                 {isCreating ? (
                   <>
@@ -910,18 +910,18 @@ export function BulkScheduleDrawer({ open, onClose }: BulkScheduleDrawerProps) {
           {/* Info Popup - Below Actions */}
           {showInfoPopup && (
             <div className="flex justify-end mt-2">
-              <div className="relative bg-white border border-gray-200 shadow-xl text-gray-700 px-3 py-2 max-w-xs rounded-lg">
+              <div className="relative bg-white border border-gray-200 shadow-xl text-gray-700 px-3 py-2 max-w-xs rounded-none">
                 <button
                   type="button"
                   onClick={() => setShowInfoPopup(false)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors p-0.5 rounded-sm hover:bg-gray-100"
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors p-0.5 rounded-none hover:bg-gray-100"
                   aria-label="Close info"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
                 <div className="flex items-start gap-2.5 pr-5">
                   <div className="mt-0.5 flex-shrink-0">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="h-5 w-5 rounded-none bg-primary/10 flex items-center justify-center">
                       <Info className="h-3 w-3 text-primary" />
                     </div>
                   </div>
