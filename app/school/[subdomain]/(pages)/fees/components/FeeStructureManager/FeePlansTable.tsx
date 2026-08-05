@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { FEES_BRAND, FEES_LAYOUT } from "../../lib/fees-ui";
+import { FEES_BRAND, FEES_LAYOUT, FEES_TH } from "../../lib/fees-ui";
 import type { ProcessedFeeStructure } from "./types";
 import {
   feePlanTermProgress,
@@ -68,10 +68,10 @@ const readinessStyles: Record<
   FeePlanReadinessTone,
   { badge: string }
 > = {
-  success: { badge: "bg-emerald-50 text-emerald-800 border-emerald-200/80" },
+  success: { badge: "bg-[#e8f2ef] text-[#1a4d42] border-[#246a59]/25" },
   warn: { badge: "bg-amber-50 text-amber-800 border-amber-200/80" },
-  neutral: { badge: "bg-slate-50 text-slate-700 border-slate-200/80" },
-  muted: { badge: "bg-slate-50 text-slate-500 border-slate-200/60" },
+  neutral: { badge: "bg-[#f8fbfa] text-[#1a4d42]/70 border-[#1a4d42]/12" },
+  muted: { badge: "bg-[#f8fbfa] text-[#1a4d42]/45 border-[#1a4d42]/10" },
 };
 
 function ColumnHint({
@@ -87,7 +87,7 @@ function ColumnHint({
     <Tooltip>
       <TooltipTrigger
         className={cn(
-          "cursor-default text-left text-xs font-semibold uppercase tracking-wide text-slate-500 underline decoration-dotted decoration-slate-400 underline-offset-2",
+          "cursor-default text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45 underline decoration-dotted decoration-[#1a4d42]/30 underline-offset-2",
           className,
         )}
       >
@@ -110,7 +110,7 @@ function PlanAttentionBadge({
 }) {
   if (!structure.isActive) {
     return (
-      <span className="inline-flex rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+      <span className="inline-flex rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-2 py-0.5 text-[11px] font-semibold text-[#1a4d42]/45">
         Inactive
       </span>
     );
@@ -127,7 +127,7 @@ function PlanAttentionBadge({
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "inline-flex cursor-default rounded-md border px-2 py-0.5 text-[11px] font-semibold",
+            "inline-flex cursor-default rounded-none border px-2 py-0.5 text-[11px] font-semibold",
             styles.badge,
           )}
         >
@@ -183,7 +183,7 @@ function NotBilledBadge({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-md border border-amber-200/90 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900",
+        "inline-flex rounded-none border border-amber-200/90 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-900",
         className,
       )}
     >
@@ -229,9 +229,9 @@ function CollectionCellContent({
 
   return (
     <div className="min-w-0 max-w-full space-y-1.5">
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 w-full overflow-hidden rounded-none bg-[#1a4d42]/10">
         <div
-          className="h-full rounded-full transition-all"
+          className="h-full rounded-none transition-all"
           style={{
             width: `${Math.min(100, pct)}%`,
             backgroundColor: FEES_BRAND.primary,
@@ -334,7 +334,7 @@ function PlanRowContent({
       <div className="flex min-w-0 items-start gap-2">
         <span
           className={cn(
-            "min-w-0 font-medium text-slate-900",
+            "min-w-0 font-medium text-[#0a1f1a]",
             "line-clamp-2 md:truncate md:line-clamp-none",
             FEES_LAYOUT.textWrap,
           )}
@@ -451,7 +451,7 @@ export function FeePlansTable({
                     <li key={structure.structureId} className="group">
                       <div
                         className={cn(
-                          "overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-sm",
+                          "overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white",
                           !structure.isActive && "opacity-75",
                         )}
                       >
@@ -474,7 +474,7 @@ export function FeePlansTable({
                           </div>
                         </button>
                         {unbilled && !allPlansUnbilled ? (
-                          <div className="border-t border-slate-100 bg-[#f4f7f5]/80 px-4 py-2">
+                          <div className="border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-2">
                             <Link
                               href={feesOverviewHref()}
                               scroll={false}
@@ -500,23 +500,23 @@ export function FeePlansTable({
                     <col style={{ width: "34%" }} />
                   </colgroup>
                   <TableHeader>
-                    <TableRow className="bg-slate-50/60 hover:bg-slate-50/60">
-                      <TableHead className="min-w-0">
+                    <TableRow className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] hover:bg-[#f8fbfa]">
+                      <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint label="Structure" hint="Fee structure name and status" />
                       </TableHead>
-                      <TableHead className="min-w-0">
+                      <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint
                           label="Terms"
                           hint="Terms with fee amounts configured"
                         />
                       </TableHead>
-                      <TableHead className="min-w-0">
+                      <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint
                           label="Classes"
                           hint="Grades linked to this structure"
                         />
                       </TableHead>
-                      <TableHead className="min-w-0">
+                      <TableHead className={cn("min-w-0", FEES_TH)}>
                         <ColumnHint
                           label="Billing"
                           hint="Collection and whether students have been billed"
@@ -540,7 +540,7 @@ export function FeePlansTable({
                           role="link"
                           tabIndex={0}
                           className={cn(
-                            "group cursor-pointer border-b border-slate-100/80 transition-colors last:border-b-0 hover:bg-[#e8f2ef]/45",
+                            "group cursor-pointer border-b border-[#1a4d42]/8 bg-white transition-colors last:border-b-0 hover:bg-[#e8f2ef]/45",
                             !structure.isActive && "opacity-70",
                           )}
                           onClick={() => navigate(href)}

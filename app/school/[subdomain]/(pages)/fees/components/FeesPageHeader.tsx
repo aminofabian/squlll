@@ -87,7 +87,7 @@ export function FeesPageHeader({
       className={cn(
         integrated
           ? "px-3 pb-2 pt-3 sm:px-3 sm:py-2"
-          : "mb-3 rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3",
+          : "mb-3 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)] sm:px-4 sm:py-3",
       )}
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-2">
@@ -95,7 +95,7 @@ export function FeesPageHeader({
           <div className="flex flex-wrap items-center gap-2">
             <h1
               className={cn(
-                "text-base font-bold tracking-tight text-slate-900 sm:text-lg",
+                "font-display text-xl font-normal tracking-tight text-[#0a1f1a] sm:text-2xl",
                 FEES_MOBILE.largeTitle,
                 FEES_LAYOUT.textWrap,
               )}
@@ -105,10 +105,10 @@ export function FeesPageHeader({
             {showMetricsBadge && (
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums",
+                  "inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[11px] font-semibold tabular-nums",
                   collectionRate >= 70
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-amber-50 text-amber-800",
+                    ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
+                    : "border-amber-200/80 bg-amber-50 text-amber-900",
                 )}
               >
                 <TrendingUp className="h-3 w-3" />
@@ -117,7 +117,12 @@ export function FeesPageHeader({
             )}
           </div>
           {showHint ? (
-            <p className="text-[11px] text-slate-500">{displayHint}</p>
+            <p className="text-[11px] text-[#1a4d42]/50">{displayHint}</p>
+          ) : null}
+          {integrated && activeSection === "plans" ? (
+            <p className="mt-0.5 text-[11px] text-[#1a4d42]/50">
+              Templates for what each class owes — link classes, then bill
+            </p>
           ) : null}
         </div>
 

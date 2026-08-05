@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FEES_LAYOUT } from "../../lib/fees-ui";
+import { FEES_BTN, FEES_LAYOUT } from "../../lib/fees-ui";
 
 interface FeePlansToolbarProps {
   searchQuery: string;
@@ -49,7 +49,7 @@ export function FeePlansToolbar({
     <div
       className={cn(
         FEES_LAYOUT.page,
-        "sticky top-0 z-10 border-b border-slate-100 bg-white/95 px-4 py-2.5 backdrop-blur-sm sm:px-5",
+        "sticky top-0 z-10 border-b border-[#1a4d42]/10 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-sm sm:px-5",
       )}
     >
       <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
@@ -57,7 +57,7 @@ export function FeePlansToolbar({
           <div
             className={cn(
               FEES_LAYOUT.chipStrip,
-              "shrink-0 gap-1 rounded-lg bg-slate-100/90 p-1 lg:max-w-[50%]",
+              "shrink-0 gap-1 rounded-none border border-[#1a4d42]/10 bg-white p-1 lg:max-w-[50%]",
             )}
             role="tablist"
             aria-label="Filter by school year"
@@ -80,17 +80,17 @@ export function FeePlansToolbar({
 
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1a4d42]/40" />
             <Input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search name or year…"
-              className="h-9 border-slate-200 bg-slate-50/60 pl-9 pr-8 text-sm"
+              className="h-9 rounded-none border-[#1a4d42]/15 bg-white pl-9 pr-8 text-sm shadow-none focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20"
             />
             {searchQuery ? (
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-none p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
                 onClick={() => onSearchChange("")}
                 aria-label="Clear search"
               >
@@ -106,10 +106,10 @@ export function FeePlansToolbar({
                 onStatusFilterChange(v as "all" | "active" | "inactive")
               }
             >
-              <SelectTrigger className="h-9 w-full min-w-[7rem] border-slate-200 text-sm sm:w-[7.5rem]">
+              <SelectTrigger className="h-9 w-full min-w-[7rem] rounded-none border-[#1a4d42]/15 text-sm sm:w-[7.5rem]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-none">
                 <SelectItem value="all">All status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
@@ -121,10 +121,10 @@ export function FeePlansToolbar({
                 value={academicYearFilter}
                 onValueChange={onAcademicYearFilterChange}
               >
-                <SelectTrigger className="h-9 w-full min-w-[8rem] border-slate-200 text-sm sm:w-[8.5rem]">
+                <SelectTrigger className="h-9 w-full min-w-[8rem] rounded-none border-[#1a4d42]/15 text-sm sm:w-[8.5rem]">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-none">
                   <SelectItem value="all">All years</SelectItem>
                   {academicYears.map((year) => (
                     <SelectItem key={year} value={year}>
@@ -139,7 +139,7 @@ export function FeePlansToolbar({
               type="button"
               variant="outline"
               size="icon"
-              className="h-9 w-9 shrink-0 border-slate-200"
+              className={cn(FEES_BTN.icon)}
               onClick={onRefresh}
               title="Refresh"
             >
@@ -149,7 +149,10 @@ export function FeePlansToolbar({
         </div>
       </div>
 
-      <p className="mt-1.5 text-[11px] tabular-nums text-slate-500" aria-live="polite">
+      <p
+        className="mt-1.5 text-[11px] tabular-nums text-[#1a4d42]/45"
+        aria-live="polite"
+      >
         {hasFilters ? (
           <>
             {filteredCount} of {totalCount} structures
@@ -179,10 +182,10 @@ function YearChip({
       aria-selected={selected}
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+        "shrink-0 rounded-none px-2.5 py-1.5 text-xs font-medium transition-colors",
         selected
-          ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80"
-          : "text-slate-600 hover:text-slate-900",
+          ? "bg-[#0a1f1a] text-white"
+          : "text-[#1a4d42]/65 hover:bg-[#f3f7f5] hover:text-[#0a1f1a]",
       )}
     >
       {label}

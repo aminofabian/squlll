@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { FEES_LAYOUT, FEES_MOBILE } from "../lib/fees-ui";
+import { FEES_LAYOUT, FEES_MOBILE, FEES_PANEL } from "../lib/fees-ui";
 import { FeesPageHeader } from "./FeesPageHeader";
 import { FeesSectionTabs, type FeesSection } from "./FeesSectionTabs";
 import type { StudentSummary } from "../types";
@@ -46,9 +46,6 @@ export function FeesPageChrome({
     return null;
   }
 
-  const setupSection =
-    feesSection === "plans" || feesSection === "assignments";
-
   return (
     <header
       className={cn(
@@ -58,7 +55,8 @@ export function FeesPageChrome({
     >
       <div
         className={cn(
-          "min-w-0 max-w-full overflow-x-hidden rounded-xl border border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm supports-[backdrop-filter]:bg-white/90",
+          "min-w-0 max-w-full overflow-x-hidden bg-white/95 backdrop-blur-sm supports-[backdrop-filter]:bg-white/90",
+          FEES_PANEL,
           FEES_MOBILE.chrome,
         )}
       >
@@ -76,11 +74,11 @@ export function FeesPageChrome({
         />
 
         {isReadOnly && (
-          <p className="border-t border-slate-100 px-3 py-1.5 text-[10px] text-blue-900/90">
+          <p className="border-t border-[#1a4d42]/10 px-3 py-1.5 text-[10px] text-[#1a4d42]/70">
             View-only ·{" "}
             <button
               type="button"
-              className="font-semibold underline"
+              className="font-semibold text-[#246a59] underline"
               onClick={onNavigateReports}
             >
               Reports

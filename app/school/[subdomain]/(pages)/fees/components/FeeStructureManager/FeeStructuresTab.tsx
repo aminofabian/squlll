@@ -288,7 +288,7 @@ export const FeeStructuresTab = ({
     )
 
     return (
-      <div className="min-w-0 max-w-full overflow-x-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="min-w-0 max-w-full overflow-x-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]">
         <FeePlansSummary
           stats={dashboardStats}
           onCreateNew={onCreateNew}
@@ -330,22 +330,22 @@ export const FeeStructuresTab = ({
             />
           </div>
         ) : (
-          <div className="border-t border-dashed border-slate-200 p-10 text-center">
+          <div className="border-t border-dashed border-[#1a4d42]/15 p-10 text-center">
             <div className="mx-auto max-w-sm">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                <Search className="h-6 w-6 text-slate-400" />
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa]">
+                <Search className="h-6 w-6 text-[#1a4d42]/40" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-900">
-                No plans match your filters
+              <h3 className="text-sm font-semibold text-[#0a1f1a]">
+                No structures match your filters
               </h3>
-              <p className="mt-1 text-xs text-slate-600">
-                Try a different search or clear filters to see all plans.
+              <p className="mt-1 text-xs text-[#1a4d42]/55">
+                Try a different search or clear filters to see all structures.
               </p>
               {(searchQuery || statusFilter !== 'all' || academicYearFilter !== 'all') && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-4 h-8 text-xs"
+                  className="mt-4 h-8 rounded-none border-[#1a4d42]/15 text-xs"
                   onClick={() => {
                     setSearchQuery('')
                     setStatusFilter('all')

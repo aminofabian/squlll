@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FEES_BRAND } from "../../lib/fees-ui";
+import { FEES_BTN, FEES_SECTION_HEAD } from "../../lib/fees-ui";
 import type { FeePlansDashboardStats } from "../../lib/feePlanStats";
 import { feesSectionHref } from "../../lib/feesRoutes";
 
@@ -23,14 +23,14 @@ export function FeePlansSummary({
     stats.totalGrades > 0 && stats.gradesLinked >= stats.totalGrades;
 
   return (
-    <header className="border-b border-slate-100 px-4 py-4 sm:px-5">
+    <header className={cn(FEES_SECTION_HEAD, "px-4 py-4 sm:px-5")}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
+          <h2 className="font-display text-xl font-normal tracking-tight text-[#0a1f1a] sm:text-2xl">
             {stats.totalPlans} fee structure
             {stats.totalPlans === 1 ? "" : "s"}
           </h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">
+          <p className="mt-1 text-xs leading-relaxed text-[#1a4d42]/55">
             {stats.schoolYears} school year
             {stats.schoolYears === 1 ? "" : "s"}
             {stats.totalGrades > 0 ? (
@@ -39,7 +39,7 @@ export function FeePlansSummary({
                 <span
                   className={cn(
                     "font-medium",
-                    allGradesLinked ? "text-emerald-800" : "text-amber-800",
+                    allGradesLinked ? "text-[#246a59]" : "text-amber-800",
                   )}
                 >
                   {stats.gradesLinked}/{stats.totalGrades} grades linked
@@ -59,8 +59,7 @@ export function FeePlansSummary({
         <Button
           type="button"
           size="sm"
-          className="h-9 shrink-0 gap-1.5 text-white shadow-sm"
-          style={{ backgroundColor: FEES_BRAND.primary }}
+          className={cn(FEES_BTN.primary, "shrink-0")}
           disabled={!canCreate}
           onClick={onCreateNew}
         >
@@ -70,12 +69,12 @@ export function FeePlansSummary({
       </div>
 
       <div
-        className="mt-3 flex min-w-0 gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-3 grid grid-cols-2 gap-px border border-[#1a4d42]/12 bg-[#1a4d42]/12 sm:grid-cols-4"
         role="list"
         aria-label="Structure overview"
       >
-        <StatPill label="Active" value={stats.activePlans} />
-        <StatPill
+        <StatCell label="Active" value={stats.activePlans} />
+        <StatCell
           label="With classes"
           value={stats.linkedPlans}
           hint={
@@ -84,13 +83,13 @@ export function FeePlansSummary({
               : undefined
           }
         />
-        <StatPill
+        <StatCell
           label="Not billed"
           value={stats.unbilledCount}
           tone={stats.unbilledCount > 0 ? "warn" : "neutral"}
         />
         {stats.conflictCount > 0 ? (
-          <StatPill
+          <StatCell
             label="Conflicts"
             value={stats.conflictCount}
             tone="danger"
@@ -98,14 +97,14 @@ export function FeePlansSummary({
             hint="Fix in Class links"
           />
         ) : (
-          <StatPill label="Conflicts" value={0} tone="ready" hint="All clear" />
+          <StatCell label="Conflicts" value={0} tone="ready" hint="All clear" />
         )}
       </div>
     </header>
   );
 }
 
-function StatPill({
+function StatCell({
   label,
   value,
   tone = "neutral",
@@ -120,38 +119,39 @@ function StatPill({
 }) {
   const inner = (
     <>
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
         {label}
       </span>
       <span
         className={cn(
-          "text-sm font-bold tabular-nums leading-none",
-          tone === "ready" && "text-emerald-800",
+          "text-lg font-semibold tabular-nums leading-none",
+          tone === "ready" && "text-[#246a59]",
           tone === "warn" && "text-amber-900",
           tone === "danger" && "text-rose-900",
-          tone === "neutral" && "text-slate-900",
+          tone === "neutral" && "text-[#0a1f1a]",
         )}
       >
         {value}
       </span>
       {hint ? (
-        <span className="text-[10px] leading-tight text-slate-500">{hint}</span>
+        <span className="text-[10px] leading-tight text-[#1a4d42]/45">
+          {hint}
+        </span>
       ) : null}
     </>
   );
 
-  const className = cn(
-    "flex min-w-[5.25rem] shrink-0 flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-left transition-colors",
-    tone === "ready" && "border-emerald-200/80 bg-emerald-50/60",
-    tone === "warn" && "border-amber-200/80 bg-amber-50/50",
-    tone === "danger" &&
-      "border-rose-200/90 bg-rose-50/70 hover:bg-rose-50 hover:ring-1 hover:ring-rose-200/80",
-    tone === "neutral" && "border-slate-200/80 bg-slate-50/50",
-  );
+  const className =
+    "flex min-h-[4.25rem] flex-col justify-center gap-1 bg-[#f8fbfa] px-3 py-2.5 text-left transition-colors";
 
   if (href) {
     return (
-      <Link href={href} scroll={false} className={className} role="listitem">
+      <Link
+        href={href}
+        scroll={false}
+        className={cn(className, "hover:bg-[#e8f2ef]")}
+        role="listitem"
+      >
         {inner}
       </Link>
     );

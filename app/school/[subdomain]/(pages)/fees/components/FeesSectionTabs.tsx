@@ -9,7 +9,7 @@ import {
   Link2,
   BarChart3,
 } from "lucide-react";
-import { FEES_BRAND, FEES_LAYOUT, FEES_MOBILE } from "../lib/fees-ui";
+import { FEES_LAYOUT, FEES_MOBILE } from "../lib/fees-ui";
 import { feesSectionHref } from "../lib/feesRoutes";
 
 export type FeesSection =
@@ -91,8 +91,8 @@ export const FeesSectionTabs = ({
       className={cn(
         FEES_LAYOUT.page,
         integrated
-          ? "border-t border-slate-100 px-3 py-2 max-md:border-0 max-md:px-3 max-md:pb-3"
-          : "rounded-xl border border-slate-200/80 bg-white p-2 shadow-sm",
+          ? "border-t border-[#1a4d42]/10 px-3 py-2 max-md:border-0 max-md:px-3 max-md:pb-3"
+          : "rounded-none border border-[#1a4d42]/12 bg-white p-2 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]",
       )}
       aria-label="Fees sections"
     >
@@ -117,7 +117,7 @@ export const FeesSectionTabs = ({
             <span key={tab.id} className="contents">
               {showDivider && (
                 <span
-                  className="mx-0.5 hidden h-5 w-px shrink-0 bg-slate-200 sm:inline-block"
+                  className="mx-0.5 hidden h-5 w-px shrink-0 bg-[#1a4d42]/15 sm:inline-block"
                   aria-hidden
                 />
               )}
@@ -129,7 +129,7 @@ export const FeesSectionTabs = ({
                 aria-current={isActive ? "page" : undefined}
                 title={tab.label}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-[13px]",
+                  "inline-flex items-center gap-1 rounded-none px-2.5 py-1.5 text-xs font-medium transition-colors sm:text-[13px]",
                   integrated && FEES_MOBILE.segmentedTab,
                   integrated &&
                     (isActive
@@ -137,20 +137,15 @@ export const FeesSectionTabs = ({
                       : FEES_MOBILE.segmentedIdle),
                   !integrated &&
                     (isActive
-                      ? "bg-slate-900 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"),
+                      ? "bg-[#0a1f1a] text-white"
+                      : "text-[#1a4d42]/65 hover:bg-[#f3f7f5] hover:text-[#0a1f1a]"),
                   integrated &&
                     isActive &&
-                    "md:bg-slate-900 md:text-white md:shadow-sm",
+                    "md:bg-[#0a1f1a] md:text-white md:shadow-none",
                   integrated &&
                     !isActive &&
-                    "md:text-slate-600 md:hover:bg-slate-100",
+                    "md:text-[#1a4d42]/65 md:hover:bg-[#f3f7f5]",
                 )}
-                style={
-                  isActive && !integrated
-                    ? { backgroundColor: FEES_BRAND.primary }
-                    : undefined
-                }
               >
                 <Icon
                   className={cn(
@@ -167,10 +162,10 @@ export const FeesSectionTabs = ({
                   assignmentCount > 0 && (
                     <span
                       className={cn(
-                        "rounded-full px-1.5 text-[9px] font-bold tabular-nums",
+                        "rounded-none px-1.5 text-[9px] font-bold tabular-nums",
                         isActive
-                          ? "bg-white/25 text-white"
-                          : "bg-emerald-100 text-emerald-800",
+                          ? "bg-white/20 text-white"
+                          : "bg-[#e8f2ef] text-[#1a4d42]",
                       )}
                     >
                       {assignmentCount}

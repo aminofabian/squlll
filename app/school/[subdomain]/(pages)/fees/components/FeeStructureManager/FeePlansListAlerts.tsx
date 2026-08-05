@@ -36,13 +36,13 @@ export function FeePlansListAlerts({
   return (
     <div
       className={cn(
-        "border-b border-slate-100 px-4 py-2 sm:px-5",
+        "border-b border-[#1a4d42]/10 px-4 py-2 sm:px-5",
         className,
       )}
     >
       {showConflicts ? (
         <div
-          className="rounded-lg border border-rose-200/90 bg-rose-50/80"
+          className="rounded-none border border-rose-200/90 bg-rose-50/80"
           role="alert"
         >
           <div className="flex flex-wrap items-center gap-2 px-3 py-2">
@@ -60,14 +60,14 @@ export function FeePlansListAlerts({
             <Link
               href={feesSectionHref("assignments")}
               scroll={false}
-              className="shrink-0 rounded-md bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-900 shadow-sm ring-1 ring-rose-200/90 hover:bg-rose-50"
+              className="shrink-0 rounded-none border border-rose-200/90 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-900 hover:bg-rose-50"
             >
               Class links
             </Link>
             {conflicts.length > 0 ? (
               <button
                 type="button"
-                className="flex shrink-0 items-center gap-0.5 rounded-md px-2 py-1 text-[11px] font-medium text-rose-800 hover:bg-rose-100/60"
+                className="flex shrink-0 items-center gap-0.5 rounded-none px-2 py-1 text-[11px] font-medium text-rose-800 hover:bg-rose-100/60"
                 onClick={() => setExpanded((v) => !v)}
                 aria-expanded={expanded}
               >
@@ -101,7 +101,7 @@ export function FeePlansListAlerts({
 
       {showUnlinked ? (
         <div
-          className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200/90 bg-amber-50/70 px-3 py-2 text-xs text-amber-950"
+          className="mt-2 flex items-start gap-2 rounded-none border border-amber-200/90 bg-amber-50/70 px-3 py-2 text-xs text-amber-950"
           role="status"
         >
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
@@ -116,7 +116,7 @@ export function FeePlansListAlerts({
       ) : null}
 
       {showUnbilled ? (
-        <p className="mt-2 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-xs text-slate-600">
+        <p className="mt-2 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] px-3 py-2 text-xs text-[#1a4d42]/65">
           {unbilledPlanCount} structure
           {unbilledPlanCount === 1 ? " has" : "s have"} no invoices yet.{" "}
           <Link
