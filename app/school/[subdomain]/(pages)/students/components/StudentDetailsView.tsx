@@ -45,7 +45,10 @@ import {
   tabBadge,
   type StudentProfileTab,
 } from "./student-profile-tabs";
-import { studentsPanel } from "./students-ui";
+import {
+  studentsActionButton,
+  studentsPanel,
+} from "./students-ui";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
 import { StudentSnePanel } from "./StudentSnePanel";
@@ -83,13 +86,13 @@ function DetailField({
   copyValue?: string;
 }) {
   return (
-    <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-      <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+    <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#071411]">
+      <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
         {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
         {label}
       </p>
       <div className="mt-1 flex items-start justify-between gap-2">
-        <div className="min-w-0 text-sm text-slate-800 dark:text-slate-100">
+        <div className="min-w-0 text-sm text-[#0a1f1a] dark:text-white">
           {value}
         </div>
         {copyValue ? (
@@ -99,7 +102,7 @@ function DetailField({
               void navigator.clipboard.writeText(copyValue);
               toast.success("Copied to clipboard");
             }}
-            className="shrink-0 rounded p-1 text-slate-400 hover:text-slate-600"
+            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
             aria-label={`Copy ${label}`}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -121,7 +124,7 @@ function InfoGroup({
 }) {
   return (
     <section>
-      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
         <Icon className="h-3.5 w-3.5" />
         {title}
       </h3>
@@ -141,13 +144,13 @@ function EmptyPanel({
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-        <Icon className="h-5 w-5 text-slate-400" />
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#071411]">
+        <Icon className="h-5 w-5 text-[#1a4d42]/40" />
       </div>
-      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+      <p className="text-sm font-medium text-[#1a4d42]/70 dark:text-white/70">
         {title}
       </p>
-      <p className="mt-1 max-w-xs text-xs text-slate-400">{description}</p>
+      <p className="mt-1 max-w-xs text-xs text-[#1a4d42]/45">{description}</p>
     </div>
   );
 }
@@ -207,10 +210,15 @@ export function StudentDetailsView({
 
   if (loading) {
     return (
-      <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+      <div
+        className={cn(
+          studentsPanel,
+          "flex min-h-[240px] items-center justify-center",
+        )}
+      >
         <div className="flex items-center gap-3">
-          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-          <p className="text-sm text-slate-500">Loading student…</p>
+          <Loader2 className="h-5 w-5 animate-spin text-[#1a4d42]/40" />
+          <p className="text-sm text-[#1a4d42]/55">Loading student…</p>
         </div>
       </div>
     );
@@ -218,17 +226,22 @@ export function StudentDetailsView({
 
   if (error || !studentDetail) {
     return (
-      <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/40">
+      <div
+        className={cn(
+          studentsPanel,
+          "flex min-h-[240px] items-center justify-center",
+        )}
+      >
         <div className="text-center">
           <AlertCircle className="mx-auto h-5 w-5 text-red-500" />
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-[#1a4d42]/55">
             {error || "Student not found"}
           </p>
           <Button
             onClick={refetch}
             variant="outline"
             size="sm"
-            className="mt-3 h-8 text-xs"
+            className={cn(studentsActionButton, "mt-3")}
           >
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
             Retry
@@ -247,20 +260,25 @@ export function StudentDetailsView({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-[#0073ea] dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1.5 rounded-none px-1 py-0.5 text-xs font-medium text-[#1a4d42]/55 transition-colors hover:text-[#246a59] dark:hover:text-white"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to roster
         </button>
       ) : (
-        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={onClose}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={studentsActionButton}
+          onClick={onClose}
+        >
           <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
           Back
         </Button>
       )}
 
       {missingStream ? (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="flex items-start gap-3 rounded-none border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">No class assigned</p>
@@ -273,7 +291,7 @@ export function StudentDetailsView({
             type="button"
             size="sm"
             variant="outline"
-            className="h-8 shrink-0 text-xs"
+            className={cn(studentsActionButton, "shrink-0")}
             onClick={() => setShowAssignClassDialog(true)}
           >
             Assign
@@ -292,24 +310,24 @@ export function StudentDetailsView({
         value={activeTab}
         onValueChange={(v) => onTabChange(v as StudentProfileTab)}
       >
-        <TabsList className="mb-4 inline-flex h-auto min-h-10 w-full flex-wrap gap-1 rounded-xl border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60">
+        <TabsList className="mb-4 inline-flex h-auto min-h-10 w-full flex-wrap gap-1 rounded-none border border-[#1a4d42]/12 bg-[#f3f7f5] p-1 dark:border-white/10 dark:bg-[#071411]">
           {STUDENT_PROFILE_TABS.map((tab) => {
             const badge = tabBadge(tab.value, student, missingStream);
             return (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-[#0073ea] data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-[#5ba3ff]"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-none px-3 py-2 text-xs font-medium text-[#1a4d42]/65 data-[state=active]:bg-[#0a1f1a] data-[state=active]:text-white data-[state=active]:shadow-none sm:flex-none sm:px-4 dark:data-[state=active]:bg-white dark:data-[state=active]:text-[#0a1f1a]"
               >
                 {tab.label}
                 {badge ? (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[9px] font-semibold tabular-nums",
+                      "rounded-none px-1.5 py-0.5 text-[9px] font-semibold tabular-nums",
                       tab.value === "money"
                         ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                         : tab.value === "access"
-                          ? "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                          ? "bg-[#e8f2ef] text-[#1a4d42] dark:bg-[#246a59]/20 dark:text-[#d4e8e2]"
                           : "bg-amber-100 text-amber-800",
                     )}
                   >
@@ -332,8 +350,8 @@ export function StudentDetailsView({
 
         <TabsContent value="person" className="mt-0 space-y-4">
           <div className={`${studentsPanel} overflow-hidden`}>
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+              <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                 Personal &amp; contact
               </h3>
             </div>
@@ -378,7 +396,7 @@ export function StudentDetailsView({
                         {student.email}
                       </a>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -392,7 +410,7 @@ export function StudentDetailsView({
                         {student.phone}
                       </a>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -415,12 +433,12 @@ export function StudentDetailsView({
 
         <TabsContent value="enrollment" className="mt-0">
           <div className={`${studentsPanel} overflow-hidden`}>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:px-5">
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                   Class enrollment
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-xs text-[#1a4d42]/45">
                   Grade, curriculum, and stream assignment
                 </p>
               </div>
@@ -428,7 +446,7 @@ export function StudentDetailsView({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 text-xs"
+                className={cn(studentsActionButton, "gap-1.5")}
                 onClick={() => setShowAssignClassDialog(true)}
               >
                 <GraduationCap className="h-3.5 w-3.5" />
@@ -479,13 +497,13 @@ export function StudentDetailsView({
 
         <TabsContent value="documents" className="mt-0">
           <div className={`${studentsPanel} overflow-hidden`}>
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+              <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                 Documents
               </h3>
             </div>
             <div className="space-y-3 p-4 sm:p-5">
-              <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+              <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() =>
@@ -494,33 +512,33 @@ export function StudentDetailsView({
                       "report-card": !prev["report-card"],
                     }))
                   }
-                  className="flex w-full items-center justify-between gap-3 bg-slate-50/50 px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800/30 dark:hover:bg-slate-800/50"
+                  className="flex w-full items-center justify-between gap-3 bg-[#f8fbfa] px-3 py-3 text-left transition-colors hover:bg-[#e8f2ef] dark:bg-[#071411] dark:hover:bg-[#0c1a17]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                      <BookOpen className="h-4 w-4 text-slate-500" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-none bg-[#e8f2ef] dark:bg-[#246a59]/20">
+                      <BookOpen className="h-4 w-4 text-[#246a59]" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                         Academic report card
                       </p>
-                      <p className="text-xs text-slate-400">Term 1, 2024</p>
+                      <p className="text-xs text-[#1a4d42]/45">Term 1, 2024</p>
                     </div>
                   </div>
                   {expandedDocuments["report-card"] ? (
-                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                    <ChevronDown className="h-4 w-4 text-[#1a4d42]/40" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                    <ChevronRight className="h-4 w-4 text-[#1a4d42]/40" />
                   )}
                 </button>
 
                 {expandedDocuments["report-card"] ? (
-                  <div className="border-t border-slate-100 p-4 dark:border-slate-800">
+                  <div className="border-t border-[#1a4d42]/10 p-4 dark:border-white/10">
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                       <select
                         value={reportCardYear}
                         onChange={(e) => setReportCardYear(e.target.value)}
-                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                        className="h-8 rounded-none border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
                       >
                         <option value="2024">2024</option>
                         <option value="2025">2025</option>
@@ -529,7 +547,7 @@ export function StudentDetailsView({
                       <select
                         value={reportCardTerm}
                         onChange={(e) => setReportCardTerm(e.target.value)}
-                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                        className="h-8 rounded-none border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
                       >
                         <option value="1">Term 1</option>
                         <option value="2">Term 2</option>
@@ -542,7 +560,7 @@ export function StudentDetailsView({
                             e.target.value as typeof selectedTemplate,
                           )
                         }
-                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-slate-700 dark:bg-slate-900"
+                        className="h-8 rounded-none border border-[#1a4d42]/15 bg-white px-2 text-xs dark:border-white/15 dark:bg-[#0c1a17]"
                       >
                         <option value="modern">Modern</option>
                         <option value="classic">Classic</option>
@@ -640,11 +658,11 @@ export function StudentDetailsView({
                         value={teacherComment}
                         onChange={(e) => setTeacherComment(e.target.value)}
                         rows={3}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
+                        className="w-full rounded-none border border-[#1a4d42]/15 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-[#0c1a17]"
                         placeholder="Optional comment included in the PDF report card..."
                       />
                     </div>
-                    <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+                    <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 dark:border-slate-800">
                       <SchoolReportCard
                         student={{
                           id: student.id,
@@ -672,7 +690,7 @@ export function StudentDetailsView({
                 ) : null}
               </div>
 
-              <div className="overflow-hidden rounded-lg border border-slate-200/80 dark:border-slate-800">
+              <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() =>
@@ -684,22 +702,22 @@ export function StudentDetailsView({
                   className="flex w-full items-center justify-between gap-3 bg-slate-50/50 px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:bg-slate-800/30 dark:hover:bg-slate-800/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                      <FileText className="h-4 w-4 text-slate-500" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-none bg-[#e8f2ef] dark:bg-slate-800">
+                      <FileText className="h-4 w-4 text-[#1a4d42]/50" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                         Other documents
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-[#1a4d42]/40">
                         Additional uploads
                       </p>
                     </div>
                   </div>
                   {expandedDocuments["other-docs"] ? (
-                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                    <ChevronDown className="h-4 w-4 text-[#1a4d42]/40" />
                   ) : (
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                    <ChevronRight className="h-4 w-4 text-[#1a4d42]/40" />
                   )}
                 </button>
                 {expandedDocuments["other-docs"] ? (

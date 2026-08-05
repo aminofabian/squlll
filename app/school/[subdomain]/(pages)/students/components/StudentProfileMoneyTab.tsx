@@ -57,16 +57,16 @@ export function StudentProfileMoneyTab({
   return (
     <div className="space-y-4">
       <div className={studentsPanel}>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-            <Wallet className="h-4 w-4 text-slate-400" />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#0a1f1a] dark:text-white">
+            <Wallet className="h-4 w-4 text-[#1a4d42]/45" />
             Fee summary
           </h3>
           {balance > 0 ? (
             <Button
               type="button"
               size="sm"
-              className="h-8 bg-[#0073ea] text-xs hover:bg-[#0062c4]"
+              className="h-8 rounded-none bg-[#0a1f1a] text-xs text-white shadow-none hover:bg-[#246a59]"
               asChild
             >
               <Link href="/fees?section=balances">Record payment</Link>
@@ -75,40 +75,40 @@ export function StudentProfileMoneyTab({
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Total owed
               </dt>
-              <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+              <dd className="mt-1 text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
                 {formatCurrency(student.feeSummary.totalOwed)}
               </dd>
             </div>
-            <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Paid
               </dt>
-              <dd className="mt-1 text-sm font-semibold tabular-nums text-emerald-700">
+              <dd className="mt-1 text-sm font-semibold tabular-nums text-[#246a59]">
                 {formatCurrency(student.feeSummary.totalPaid)}
               </dd>
             </div>
-            <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Balance
               </dt>
               <dd
                 className={cn(
                   "mt-1 text-sm font-semibold tabular-nums",
-                  balance > 0 ? "text-amber-700" : "text-emerald-700",
+                  balance > 0 ? "text-amber-700" : "text-[#246a59]",
                 )}
               >
                 {formatCurrency(balance)}
               </dd>
             </div>
-            <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:bg-[#071411]">
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
                 Fee items
               </dt>
-              <dd className="mt-1 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+              <dd className="mt-1 text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
                 {student.feeSummary.numberOfFeeItems}
               </dd>
             </div>
@@ -118,7 +118,7 @@ export function StudentProfileMoneyTab({
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-slate-100 text-left text-slate-400 dark:border-slate-800">
+                  <tr className="border-b border-[#1a4d42]/10 text-left text-[#1a4d42]/45 dark:border-white/10">
                     <th className="pb-2 pr-3 font-medium">Item</th>
                     <th className="pb-2 pr-3 font-medium">Amount</th>
                     <th className="pb-2 pr-3 font-medium">Type</th>
@@ -140,14 +140,14 @@ export function StudentProfileMoneyTab({
                           className={cn(
                             "text-[10px] font-normal",
                             item.isMandatory
-                              ? "border-slate-200 text-slate-600"
+                              ? "border-slate-200 text-[#1a4d42]/60"
                               : "border-sky-200 text-sky-700",
                           )}
                         >
                           {item.isMandatory ? "Mandatory" : "Optional"}
                         </Badge>
                       </td>
-                      <td className="py-2 text-slate-500">
+                      <td className="py-2 text-[#1a4d42]/50">
                         {item.academicYearName}
                       </td>
                     </tr>
@@ -156,7 +156,7 @@ export function StudentProfileMoneyTab({
               </table>
             </div>
           ) : (
-            <p className="py-6 text-center text-xs text-slate-400">
+            <p className="py-6 text-center text-xs text-[#1a4d42]/45">
               No fee items assigned for this student&apos;s grade yet.
             </p>
           )}
@@ -164,11 +164,11 @@ export function StudentProfileMoneyTab({
       </div>
 
       <div className={studentsPanel}>
-        <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
+          <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
             Ledger
           </h3>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-[#1a4d42]/45">
             {activeYear
               ? `${activeYear.name} · ${dateRange.startDate} to ${dateRange.endDate}`
               : "Current calendar year"}
