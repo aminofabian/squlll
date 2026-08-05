@@ -24,7 +24,13 @@ import {
   usePendingInvitationsStore,
   type PendingInvitation,
 } from "@/lib/stores/usePendingInvitationsStore";
-import { teachersPanel } from "./teachers-ui";
+import {
+  teachersActionButton,
+  teachersField,
+  teachersFieldLabel,
+  teachersPanel,
+  teachersSectionHead,
+} from "./teachers-ui";
 import { toast } from "sonner";
 import {
   KeyRound,
@@ -59,7 +65,7 @@ function invitationStatusBadge(invitation: PendingInvitation | undefined) {
     return (
       <Badge
         variant="outline"
-        className="border-slate-200 bg-slate-50 text-[10px] font-medium text-slate-600"
+        className="rounded-none border-[#1a4d42]/12 bg-white text-[10px] font-medium text-[#1a4d42]/60"
       >
         No pending invite
       </Badge>
@@ -73,14 +79,14 @@ function invitationStatusBadge(invitation: PendingInvitation | undefined) {
     <Badge
       variant="outline"
       className={cn(
-        "text-[10px] font-medium capitalize",
+        "rounded-none text-[10px] font-medium capitalize",
         invitation.status === "PENDING"
           ? isExpired
             ? "border-red-200 bg-red-50 text-red-700"
             : "border-amber-200 bg-amber-50 text-amber-700"
           : invitation.status === "ACCEPTED"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : "border-slate-200 bg-slate-50 text-slate-600",
+            ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
+            : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/60",
       )}
     >
       {isExpired && invitation.status === "PENDING"
@@ -174,68 +180,72 @@ export function TeacherAccountPanel({
 
   return (
     <div className={`${teachersPanel} overflow-hidden`}>
-      <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+      <div className={cn(teachersSectionHead, "px-4 py-2.5 sm:px-5")}>
+        <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
           Account &amp; access
         </h3>
-        <p className="mt-0.5 text-xs text-slate-400">
+        <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
           Login status, invitation, and account actions
         </p>
       </div>
 
-      <div className="space-y-4 p-4 sm:p-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-            <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+      <div className="space-y-3 p-3 sm:p-4">
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          <div className={teachersField}>
+            <p className={teachersFieldLabel}>
               <ShieldCheck className="h-3 w-3" />
               Account status
             </p>
-            <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+            <p className="mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white">
               {accountStatus}
             </p>
           </div>
 
-          <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-            <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          <div className={teachersField}>
+            <p className={teachersFieldLabel}>
               <KeyRound className="h-3 w-3" />
               Login linked
             </p>
-            <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+            <p className="mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white">
               {userId ? "Yes — user account exists" : "No — invite not accepted"}
             </p>
           </div>
 
-          <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-            <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          <div className={teachersField}>
+            <p className={teachersFieldLabel}>
               <Mail className="h-3 w-3" />
               Invitation
             </p>
             <div className="mt-1">{invitationStatusBadge(invitation)}</div>
           </div>
 
-          <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-            <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+          <div className={teachersField}>
+            <p className={teachersFieldLabel}>
               <UserCheck className="h-3 w-3" />
               Profile complete
             </p>
-            <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+            <p className="mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white">
               {hasCompletedProfile ? "Yes" : "No — details missing"}
             </p>
           </div>
         </div>
 
         {invitation && (
-          <div className="rounded-lg border border-slate-200/80 bg-slate-50/50 px-3 py-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-400">
+          <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/65 dark:border-white/10 dark:bg-[#071411]">
             <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
-                <dt className="text-slate-400">Sent</dt>
-                <dd className="font-medium text-slate-700 dark:text-slate-200">
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/40">
+                  Sent
+                </dt>
+                <dd className="mt-0.5 font-medium text-[#0a1f1a] dark:text-white">
                   {formatDateTime(invitation.createdAt)}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-400">Expires</dt>
-                <dd className="font-medium text-slate-700 dark:text-slate-200">
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/40">
+                  Expires
+                </dt>
+                <dd className="mt-0.5 font-medium text-[#0a1f1a] dark:text-white">
                   {invitation.expiresAt
                     ? formatTeacherDate(invitation.expiresAt)
                     : "No expiry"}
@@ -243,10 +253,12 @@ export function TeacherAccountPanel({
               </div>
               {invitation.invitedBy && (
                 <div className="sm:col-span-2">
-                  <dt className="text-slate-400">Invited by</dt>
-                  <dd className="font-medium text-slate-700 dark:text-slate-200">
+                  <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/40">
+                    Invited by
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[#0a1f1a] dark:text-white">
                     {invitation.invitedBy.name}
-                    <span className="ml-1 font-normal text-slate-400">
+                    <span className="ml-1 font-normal text-[#1a4d42]/45">
                       ({invitation.invitedBy.email})
                     </span>
                   </dd>
@@ -256,12 +268,12 @@ export function TeacherAccountPanel({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {!isActive && (
             <Button
               type="button"
               size="sm"
-              className="h-8 gap-1.5 text-xs"
+              className="h-8 gap-1.5 rounded-none bg-[#0a1f1a] px-3 text-xs text-white hover:bg-[#246a59]"
               onClick={() => void handleActivate()}
               disabled={isActivating}
             >
@@ -280,7 +292,7 @@ export function TeacherAccountPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 text-xs"
+                className={teachersActionButton}
                 onClick={() => void handleResend()}
                 disabled={isResending}
               >
@@ -295,7 +307,7 @@ export function TeacherAccountPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 border-red-200 text-xs text-red-700 hover:bg-red-50"
+                className="h-8 gap-1.5 rounded-none border-red-200 text-xs text-red-700 hover:bg-red-50"
                 onClick={() => setRevokeOpen(true)}
                 disabled={isRevoking}
               >
@@ -307,23 +319,27 @@ export function TeacherAccountPanel({
       </div>
 
       <AlertDialog open={revokeOpen} onOpenChange={setRevokeOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-[#0a1f1a]">
+              Revoke invitation?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This cancels the invitation for {email}. They will no longer be
               able to accept it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRevoking}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-none" disabled={isRevoking}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 void handleRevoke();
               }}
               disabled={isRevoking}
-              className="bg-red-600 hover:bg-red-700"
+              className="rounded-none bg-red-600 hover:bg-red-700"
             >
               {isRevoking ? "Revoking…" : "Revoke invitation"}
             </AlertDialogAction>

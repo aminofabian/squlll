@@ -53,7 +53,16 @@ import { ClassTeacherAssignments } from "./ClassTeacherAssignments";
 import { TeacherTimetableSummary } from "./TeacherTimetableSummary";
 import { TeacherAccountPanel } from "./TeacherAccountPanel";
 import { TeacherActivityPanel } from "./TeacherActivityPanel";
-import { teachersPanel } from "./teachers-ui";
+import {
+  teachersActionButton,
+  teachersBadge,
+  teachersField,
+  teachersFieldLabel,
+  teachersPanel,
+  teachersSectionHead,
+  teachersTabList,
+  teachersTabTrigger,
+} from "./teachers-ui";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { cn } from "@/lib/utils";
 import { formatTeacherDate, formatTenantSubjectLabel } from "../utils/teachers-utils";
@@ -74,29 +83,29 @@ function formatGender(gender?: string) {
 
 function TeacherDetailSkeleton() {
   return (
-    <div className="space-y-5" aria-busy="true" aria-label="Loading teacher details">
-      <Skeleton className="h-4 w-24" />
-      <div className={`${teachersPanel} p-5`}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <Skeleton className="h-16 w-16 shrink-0 rounded-full" />
-          <div className="flex-1 space-y-3">
-            <Skeleton className="h-6 w-48" />
-            <div className="flex flex-wrap gap-2">
-              <Skeleton className="h-5 w-24 rounded-full" />
-              <Skeleton className="h-5 w-16 rounded-full" />
-              <Skeleton className="h-5 w-20 rounded-full" />
+    <div className="space-y-3" aria-busy="true" aria-label="Loading teacher details">
+      <Skeleton className="h-3 w-20 rounded-none" />
+      <div className={`${teachersPanel} p-4`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <Skeleton className="h-14 w-14 shrink-0 rounded-none" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-6 w-48 rounded-none" />
+            <div className="flex flex-wrap gap-1.5">
+              <Skeleton className="h-5 w-20 rounded-none" />
+              <Skeleton className="h-5 w-14 rounded-none" />
+              <Skeleton className="h-5 w-16 rounded-none" />
             </div>
           </div>
         </div>
       </div>
-      <Skeleton className="h-10 w-full rounded-lg" />
-      <div className={`${teachersPanel} p-5`}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <Skeleton className="h-9 w-full rounded-none" />
+      <div className={`${teachersPanel} p-4`}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-12 w-full rounded-lg" />
-              <Skeleton className="h-12 w-full rounded-lg" />
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-3 w-24 rounded-none" />
+              <Skeleton className="h-10 w-full rounded-none" />
+              <Skeleton className="h-10 w-full rounded-none" />
             </div>
           ))}
         </div>
@@ -117,19 +126,19 @@ function DetailField({
   copyValue?: string;
 }) {
   return (
-    <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-      <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+    <div className={teachersField}>
+      <p className={teachersFieldLabel}>
         {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
         {label}
       </p>
       <div className="mt-1 flex items-center justify-between gap-2">
-        <div className="min-w-0 text-sm font-medium text-slate-800 dark:text-slate-100">
+        <div className="min-w-0 text-sm font-medium text-[#0a1f1a] dark:text-white">
           {value}
         </div>
         {copyValue ? (
           <button
             type="button"
-            className="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-slate-700"
+            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10"
             onClick={() => {
               void navigator.clipboard.writeText(copyValue);
               toast.success(`${label} copied`);
@@ -154,12 +163,12 @@ function InfoGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-2">
-      <h4 className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
-        <Icon className="h-3.5 w-3.5 text-slate-400" />
+    <div className="space-y-1.5">
+      <h4 className="flex items-center gap-1.5 text-xs font-semibold text-[#0a1f1a] dark:text-white">
+        <Icon className="h-3.5 w-3.5 text-[#246a59]" />
         {title}
       </h4>
-      <div className="space-y-2">{children}</div>
+      <div className="space-y-1.5">{children}</div>
     </div>
   );
 }
@@ -174,14 +183,14 @@ function EmptyPanel({
   description: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-        <Icon className="h-5 w-5 text-slate-400" />
+    <div className="flex flex-col items-center justify-center py-10 text-center">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-none bg-[#246a59]/10">
+        <Icon className="h-4 w-4 text-[#246a59]" />
       </div>
-      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+      <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
         {title}
       </p>
-      <p className="mt-1 max-w-xs text-xs text-slate-400">{description}</p>
+      <p className="mt-1 max-w-xs text-xs text-[#1a4d42]/45">{description}</p>
     </div>
   );
 }
@@ -203,23 +212,23 @@ function AcademicSetupCta({
     <button
       type="button"
       onClick={onAction}
-      className="group flex w-full items-center gap-3 rounded-xl border border-dashed border-primary/30 bg-primary/[0.04] px-4 py-3.5 text-left transition-all hover:border-primary/50 hover:bg-primary/[0.08] dark:border-primary/25 dark:bg-primary/10 dark:hover:bg-primary/15"
+      className="group flex w-full items-center gap-3 rounded-none border border-dashed border-[#246a59]/35 bg-[#246a59]/[0.04] px-3 py-3 text-left transition-colors hover:border-[#246a59]/55 hover:bg-[#246a59]/[0.08]"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+        <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
           {title}
         </p>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-xs text-[#1a4d42]/50">
           {description}
         </p>
       </div>
-      <span className="hidden shrink-0 rounded-full bg-primary px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors group-hover:bg-primary-dark sm:inline">
+      <span className="hidden shrink-0 rounded-none bg-[#0a1f1a] px-2.5 py-1.5 text-[11px] font-medium text-white transition-colors group-hover:bg-[#246a59] sm:inline">
         {actionLabel}
       </span>
-      <Plus className="h-4 w-4 shrink-0 text-primary sm:hidden" />
+      <Plus className="h-4 w-4 shrink-0 text-[#246a59] sm:hidden" />
     </button>
   );
 }
@@ -229,10 +238,10 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
     <Badge
       variant="outline"
       className={cn(
-        "text-[11px] font-medium",
+        "rounded-none text-[10px] font-medium",
         isActive
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
-          : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400",
+          ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
+          : "border-amber-200 bg-amber-50 text-amber-800",
       )}
     >
       {isActive ? "Active" : "Not activated"}
@@ -265,21 +274,26 @@ export function TeacherDetailView({
 
   if (error || !teacherDetail) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <div className="max-w-sm space-y-4 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/40">
-            <AlertCircle className="h-6 w-6 text-red-500" />
+      <div className="flex min-h-[280px] items-center justify-center">
+        <div className="max-w-sm space-y-3 text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-none bg-red-50 dark:bg-red-950/40">
+            <AlertCircle className="h-5 w-5 text-red-500" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+            <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
               Could not load teacher
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-[#1a4d42]/50">
               {error || "This teacher may have been removed or you may not have access."}
             </p>
           </div>
-          <Button onClick={refetch} variant="outline" size="sm">
-            <RefreshCw className="mr-2 h-4 w-4" />
+          <Button
+            onClick={refetch}
+            variant="outline"
+            size="sm"
+            className="rounded-none border-[#1a4d42]/15"
+          >
+            <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Try again
           </Button>
         </div>
@@ -323,12 +337,12 @@ export function TeacherDetailView({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {onClose && (
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-[#1a4d42]/50 transition-colors hover:text-[#0a1f1a] dark:hover:text-white"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to list
@@ -336,61 +350,51 @@ export function TeacherDetailView({
       )}
 
       {profileIncomplete && (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="flex items-start gap-2.5 rounded-none border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <p className="font-medium">Profile incomplete</p>
-            <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
-              Some required details are missing. Review employee ID, date of birth,
-              qualifications, and contact information below.
+            <p className="text-xs font-semibold">Profile incomplete</p>
+            <p className="mt-0.5 text-[11px] text-amber-800/90 dark:text-amber-300">
+              Missing employee ID, date of birth, qualifications, or contact details.
             </p>
           </div>
         </div>
       )}
 
-      {/* Profile summary */}
-      <div
-        className={cn(
-          teachersPanel,
-          "overflow-hidden bg-gradient-to-br from-white to-slate-50/80 dark:from-slate-900/40 dark:to-slate-950/40",
-        )}
-      >
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex gap-4">
+      <div className={cn(teachersPanel)}>
+        <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-4 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex gap-3.5">
               <TeacherAvatar name={displayName} size="lg" ring />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-xl">
+                  <h2 className="font-display text-xl font-normal tracking-tight text-[#0a1f1a] dark:text-white sm:text-2xl">
                     {displayName}
                   </h2>
                   <StatusBadge isActive={teacher.isActive ?? false} />
                 </div>
 
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-500">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#1a4d42]/55">
                   {teacher.department && (
                     <span className="inline-flex items-center gap-1 capitalize">
-                      <Award className="h-3.5 w-3.5 text-slate-400" />
+                      <Award className="h-3.5 w-3.5 text-[#246a59]" />
                       {teacher.department}
                     </span>
                   )}
                   {teacher.role && (
-                    <Badge
-                      variant="outline"
-                      className="border-sky-200 bg-sky-50 text-[10px] font-medium capitalize text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
-                    >
+                    <Badge variant="outline" className={teachersBadge}>
                       {teacher.role}
                     </Badge>
                   )}
                   {grades && (
                     <span className="inline-flex items-center gap-1">
-                      <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
+                      <GraduationCap className="h-3.5 w-3.5 text-[#246a59]" />
                       {grades}
                     </span>
                   )}
                   {teacher.tenantSubjects.length > 0 && (
                     <span className="inline-flex items-center gap-1">
-                      <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+                      <BookOpen className="h-3.5 w-3.5 text-[#246a59]" />
                       {teacher.tenantSubjects.length} subject
                       {teacher.tenantSubjects.length !== 1 ? "s" : ""}
                     </span>
@@ -398,36 +402,35 @@ export function TeacherDetailView({
                 </div>
 
                 {email && (
-                  <p className="mt-2 truncate text-xs text-slate-400">{email}</p>
+                  <p className="mt-1.5 truncate text-xs text-[#1a4d42]/45">{email}</p>
                 )}
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
+            <div className="flex shrink-0 flex-col items-start gap-2.5 sm:items-end">
               {teacher.employeeId && (
                 <div className="hidden text-right sm:block">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/45">
                     Employee ID
                   </p>
-                  <p className="font-mono text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  <p className="font-mono text-sm font-semibold text-[#0a1f1a] dark:text-white">
                     {teacher.employeeId}
                   </p>
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-1.5 text-xs"
+                    className={teachersActionButton}
                   >
                     Actions
                     <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-48 rounded-none">
                   {userId ? (
                     <DropdownMenuItem
                       onClick={() => setPasswordDialogOpen(true)}
@@ -448,7 +451,6 @@ export function TeacherDetailView({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              </div>
             </div>
           </div>
         </div>
@@ -468,23 +470,27 @@ export function TeacherDetailView({
       ) : null}
 
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove {displayName}?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-[#0a1f1a]">
+              Remove {displayName}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This removes the teacher from your school and deletes their login
               if it is not used elsewhere. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-none" disabled={isDeleting}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 void handleRemove();
               }}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="rounded-none bg-red-600 hover:bg-red-700"
             >
               {isDeleting ? "Removing…" : "Remove teacher"}
             </AlertDialogAction>
@@ -493,50 +499,35 @@ export function TeacherDetailView({
       </AlertDialog>
 
       <Tabs defaultValue="details">
-        <TabsList className="mb-4 inline-flex h-10 w-full rounded-lg border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60 sm:w-auto">
-          <TabsTrigger
-            value="details"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+        <TabsList className={teachersTabList}>
+          <TabsTrigger value="details" className={teachersTabTrigger}>
             Details
           </TabsTrigger>
-          <TabsTrigger
-            value="academic"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="academic" className={teachersTabTrigger}>
             Academic
           </TabsTrigger>
-          <TabsTrigger
-            value="assignments"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="assignments" className={teachersTabTrigger}>
             Classes
           </TabsTrigger>
-          <TabsTrigger
-            value="schedule"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="schedule" className={teachersTabTrigger}>
             Schedule
           </TabsTrigger>
-          <TabsTrigger
-            value="activity"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="activity" className={teachersTabTrigger}>
             Activity
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="mt-0 space-y-5">
+        <TabsContent value="details" className="mt-0 space-y-3">
           <div className={`${teachersPanel} overflow-hidden`}>
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            <div className={cn(teachersSectionHead, "px-4 py-2.5 sm:px-5")}>
+              <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                 Teacher information
               </h3>
-              <p className="mt-0.5 text-xs text-slate-400">
+              <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
                 Personal and contact details for {displayName}
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-6 p-4 sm:grid-cols-3 sm:p-5">
+            <div className="grid grid-cols-1 gap-4 p-3 sm:grid-cols-3 sm:p-4">
               <InfoGroup title="Personal" icon={User}>
                 <DetailField label="Full name" value={displayName} />
                 {gender && <DetailField label="Gender" value={gender} />}
@@ -545,7 +536,7 @@ export function TeacherDetailView({
                   icon={Calendar}
                   value={
                     dateOfBirth ?? (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -564,7 +555,7 @@ export function TeacherDetailView({
                     teacher.employeeId ? (
                       <span className="font-mono">{teacher.employeeId}</span>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -580,10 +571,7 @@ export function TeacherDetailView({
                   <DetailField
                     label="Role"
                     value={
-                      <Badge
-                        variant="outline"
-                        className="border-sky-200 bg-sky-50 text-[10px] font-medium capitalize text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
-                      >
+                      <Badge variant="outline" className={teachersBadge}>
                         {teacher.role}
                       </Badge>
                     }
@@ -595,7 +583,7 @@ export function TeacherDetailView({
                     teacher.qualifications ? (
                       teacher.qualifications
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -604,7 +592,7 @@ export function TeacherDetailView({
                   icon={Calendar}
                   value={
                     joinDate ?? (
-                      <span className="text-slate-400">Not available</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not available</span>
                     )
                   }
                 />
@@ -620,12 +608,12 @@ export function TeacherDetailView({
                     email ? (
                       <a
                         href={`mailto:${email}`}
-                        className="break-all text-emerald-700 hover:underline dark:text-emerald-400"
+                        className="break-all text-[#246a59] hover:underline"
                       >
                         {email}
                       </a>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -637,12 +625,12 @@ export function TeacherDetailView({
                     teacher.phoneNumber ? (
                       <a
                         href={`tel:${teacher.phoneNumber}`}
-                        className="text-slate-800 hover:underline dark:text-slate-200"
+                        className="text-[#0a1f1a] hover:underline dark:text-white"
                       >
                         {teacher.phoneNumber}
                       </a>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -654,7 +642,7 @@ export function TeacherDetailView({
                     teacher.address?.trim() ? (
                       teacher.address
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="font-normal text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -678,12 +666,12 @@ export function TeacherDetailView({
 
         <TabsContent value="academic" className="mt-0">
           <div className={`${teachersPanel} overflow-hidden`}>
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+            <div className={cn(teachersSectionHead, "flex flex-wrap items-start justify-between gap-3 px-4 py-2.5 sm:px-5")}>
               <div>
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                   Academic information
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-400">
+                <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
                   Subjects, grades, and streams for {displayName}
                 </p>
               </div>
@@ -692,22 +680,22 @@ export function TeacherDetailView({
                 variant="outline"
                 size="sm"
                 onClick={openAcademicEditor}
-                className="h-7 gap-1 px-2.5 text-xs"
+                className="h-7 gap-1 rounded-none border-[#1a4d42]/15 px-2.5 text-xs"
               >
                 <BookOpen className="h-3 w-3" />
                 {isAcademicEmpty ? "Set up" : "Edit"}
               </Button>
             </div>
-            <div className="space-y-5 p-4 sm:p-5">
+            <div className="space-y-3 p-3 sm:p-4">
               {isAcademicEmpty ? (
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/[0.06] via-white to-primary/[0.03] px-4 py-4 dark:from-primary/10 dark:via-slate-900 dark:to-primary/5">
+                <div className="space-y-3">
+                  <div className="rounded-none border border-[#246a59]/25 bg-[#f8fbfa] px-3 py-3 dark:bg-[#071411]">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <p className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                           Teaching assignments not set up
                         </p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <p className="mt-1 text-xs text-[#1a4d42]/50">
                           Choose subjects and grade levels so {displayName.split(" ")[0] || "this teacher"} can be scheduled and assigned classes.
                         </p>
                       </div>
@@ -715,7 +703,7 @@ export function TeacherDetailView({
                         type="button"
                         size="sm"
                         onClick={openAcademicEditor}
-                        className="h-9 shrink-0 gap-1.5 rounded-full bg-primary px-4 text-xs text-white hover:bg-primary-dark"
+                        className="h-8 shrink-0 gap-1.5 rounded-none bg-[#0a1f1a] px-3 text-xs text-white hover:bg-[#246a59]"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Set up assignments
@@ -730,16 +718,16 @@ export function TeacherDetailView({
                     ].map(({ icon: Icon, label, hint }) => (
                       <li
                         key={label}
-                        className="flex items-center gap-2.5 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-800/30"
+                        className="flex items-center gap-2.5 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
                       >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-white text-[#246a59] ring-1 ring-[#1a4d42]/12 dark:bg-[#0c1a17]">
                           <Icon className="h-3.5 w-3.5" />
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                          <p className="text-xs font-medium text-[#0a1f1a] dark:text-white">
                             {label}
                           </p>
-                          <p className="text-[10px] text-slate-400">{hint}</p>
+                          <p className="text-[10px] text-[#1a4d42]/40">{hint}</p>
                         </div>
                       </li>
                     ))}
@@ -747,11 +735,11 @@ export function TeacherDetailView({
                 </div>
               ) : (
                 <>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/30">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <div className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 dark:border-white/10 dark:bg-[#071411]">
+                    <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                       Workload summary
                     </p>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-[#1a4d42]/50">
                       Teaches {teacher.tenantSubjects.length} subject
                       {teacher.tenantSubjects.length !== 1 ? "s" : ""} across{" "}
                       {teacher.tenantGradeLevels.length} grade
@@ -761,7 +749,7 @@ export function TeacherDetailView({
                         : ""}
                     </p>
                     {teacher.updatedAt ? (
-                      <p className="mt-1 text-[11px] text-slate-400">
+                      <p className="mt-1 text-[11px] text-[#1a4d42]/40">
                         Last updated {formatTeacherDate(teacher.updatedAt)}
                       </p>
                     ) : null}
@@ -774,7 +762,7 @@ export function TeacherDetailView({
                           <Badge
                             key={subject.id}
                             variant="outline"
-                            className="border-emerald-200 bg-emerald-50 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+                            className="rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[11px] font-medium text-[#1a4d42]"
                           >
                             {formatTenantSubjectLabel(subject)}
                           </Badge>
@@ -798,7 +786,7 @@ export function TeacherDetailView({
                           <Badge
                             key={gradeLevel.id}
                             variant="outline"
-                            className="border-violet-200 bg-violet-50 text-[11px] font-medium text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-400"
+                            className="rounded-none border-[#1a4d42]/15 bg-[#f8fbfa] text-[11px] font-medium text-[#0a1f1a] dark:text-white"
                           >
                             {gradeLevel.gradeLevel?.name || "Unknown"}
                           </Badge>
@@ -822,7 +810,7 @@ export function TeacherDetailView({
                           <Badge
                             key={stream.id}
                             variant="outline"
-                            className="border-sky-200 bg-sky-50 text-[11px] font-medium text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
+                            className="rounded-none border-[#246a59]/20 bg-white text-[11px] font-medium text-[#1a4d42]"
                           >
                             {stream.stream?.name || "Stream"}
                             {stream.tenantGradeLevel?.gradeLevel?.name
