@@ -152,7 +152,7 @@ export function TimetableHealthPanel({
       : clashCount > 0
         ? `${clashCount} clash${clashCount === 1 ? "" : "es"} to resolve before publishing.`
         : !hasAnyLessons
-          ? "No lessons yet — auto-generate a draft or add them yourself."
+          ? "No lessons have been scheduled yet. Generate a timetable automatically or build one manually."
           : emptySlots > 0
             ? `${emptySlots} empty slot${emptySlots === 1 ? "" : "s"} left to fill.`
             : publishState === "published"
@@ -223,7 +223,7 @@ export function TimetableHealthPanel({
             />
           </div>
           <p className="mt-1.5 text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
-            {filledSlots} of {totalSlots} lesson slots filled
+            {filledSlots} of {totalSlots} lesson periods scheduled
           </p>
         </div>
       ) : null}

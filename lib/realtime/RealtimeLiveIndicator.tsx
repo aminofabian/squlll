@@ -19,7 +19,7 @@ export function RealtimeLiveIndicator({
   const isLive = connected;
   const isOffline = Boolean(connectionError) || (Boolean(socket) && !connected);
 
-  const label = isLive ? "Live" : isConnecting ? "Connecting" : "Offline";
+  const label = isLive ? "Live" : isConnecting ? "Syncing…" : "Offline";
 
   const title = isLive
     ? "Live updates connected"

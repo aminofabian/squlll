@@ -20,6 +20,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { tt } from "../utils/timetableTheme";
 
+/** Human label for a school week of N days. */
+const weekDaysLabel = (days: number) =>
+  days === 5
+    ? "Monday–Friday"
+    : days === 6
+      ? "Monday–Saturday"
+      : days === 7
+        ? "Monday–Sunday"
+        : `${days} days a week`;
+
 type StopId =
   | "day"
   | "classes"
@@ -104,14 +114,14 @@ export function TimetableJourney({
     {
       id: "day",
       label: "School day",
-      title: "Your school day",
+      title: "School day",
       description:
         "Tell us when the first lesson starts, how long a lesson runs, and when school breaks for assembly, break and lunch.",
       icon: Clock,
       done: hasSchoolDay,
       doneHint:
         periodCount > 0
-          ? `${periodCount} lessons a day · ${dayCount || 5} days a week`
+          ? `${periodCount} lessons · ${weekDaysLabel(dayCount || 5)}`
           : undefined,
       actionLabel: "Set up the school day",
       onAction: onSetUpSchoolDay,
@@ -119,45 +129,45 @@ export function TimetableJourney({
     {
       id: "classes",
       label: "Classes",
-      title: "Your classes",
+      title: "Classes",
       description:
         "Check which classes need a timetable. If a grade has more than one stream, like 4A and 4B, add them so each one gets its own timetable.",
       icon: GraduationCap,
       done: classCount > 0,
-      doneHint: classCount > 0 ? `${classCount} classes` : undefined,
+      doneHint: classCount > 0 ? `${classCount} configured` : undefined,
       actionLabel: classCount > 0 ? "Check my classes" : "Add classes",
       onAction: onManageClasses,
     },
     {
       id: "teachers",
       label: "Teachers",
-      title: "Your teachers",
+      title: "Teachers",
       description:
-        "We use your staff list to work out who is free when. Names and the subjects they teach are enough to start.",
+        "Tell us which subjects each teacher handles so we can avoid scheduling conflicts.",
       icon: Users,
       done: teacherCount > 0,
-      doneHint: teacherCount > 0 ? `${teacherCount} teachers` : undefined,
+      doneHint: teacherCount > 0 ? `${teacherCount} on staff` : undefined,
       actionLabel: teacherCount > 0 ? "Check my teachers" : "Add teachers",
       onAction: onManageTeachers,
     },
     {
       id: "subjects",
       label: "Subjects",
-      title: "Your subjects",
+      title: "Subjects",
       description:
         "The subjects each class learns. These are set up together with your classes.",
       icon: BookOpen,
       done: subjectCount > 0,
-      doneHint: subjectCount > 0 ? `${subjectCount} subjects` : undefined,
+      doneHint: subjectCount > 0 ? `${subjectCount} available` : undefined,
       actionLabel: subjectCount > 0 ? "Check my subjects" : "Set up subjects",
       onAction: onManageSubjects,
     },
     {
       id: "lessons",
       label: "Weekly lessons",
-      title: "How many lessons each week",
+      title: "Weekly lessons",
       description:
-        "For one class at a time, set the lessons a week each subject needs and who teaches it — for example Maths 7, taught by Mr Kamau. We suggest the usual numbers, and you can reuse them for your other classes.",
+        "Specify how many lessons each subject has every week and assign a teacher. Use the suggested counts, adjust where needed, then copy them to your other classes.",
       icon: ClipboardList,
       done: weeklyLessonRows > 0,
       doneHint:
@@ -349,8 +359,12 @@ export function TimetableJourney({
           <div className="min-w-0">
             <p className={tt.eyebrow}>Timetable setup</p>
             <h2 className="truncate text-[14px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-100">
-              Let&apos;s create your school timetable
+              Set up your school timetable
             </h2>
+            <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+              Complete these steps to generate a timetable for your entire
+              school.
+            </p>
           </div>
         </div>
         {onHide ? (
@@ -426,7 +440,8 @@ export function TimetableJourney({
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-2.5 dark:border-slate-800 sm:px-6">
         <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          {doneCount} of {stops.length} done
+          {doneCount} of {stops.length} steps completed ·{" "}
+          {Math.round((doneCount / stops.length) * 100)}% done
         </p>
         <p className="text-[11px] text-slate-400 dark:text-slate-500">
           You can leave and come back — nothing is lost.

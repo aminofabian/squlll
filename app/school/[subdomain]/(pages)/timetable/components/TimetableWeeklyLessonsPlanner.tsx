@@ -442,7 +442,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
     });
     setRows(activeGradeId, next);
     toast({
-      title: `Suggested numbers added for ${filled} ${filled === 1 ? "subject" : "subjects"}`,
+      title: `Suggested values added for ${filled} ${filled === 1 ? "subject" : "subjects"}`,
       description: "Change anything that doesn't match your school, then save.",
     });
   };
@@ -711,7 +711,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
             onClick={handleSuggest}
           >
             <Sparkles className="mr-1 h-3 w-3" />
-            Fill in suggested numbers
+            Use suggested values
           </Button>
         )}
 
@@ -768,7 +768,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               disabled={copyCandidates.length === 0}
             >
               <Copy className="mr-1 h-3 w-3" />
-              Use these numbers for…
+              Copy to other classes
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-60 p-2.5">
@@ -934,7 +934,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                     needsTeacher && "border-amber-400",
                   )}
                 >
-                  <SelectValue placeholder="Choose teacher" />
+                  <SelectValue placeholder="Assign teacher" />
                 </SelectTrigger>
                 <SelectContent>
                   {preferred.length > 0 && (
@@ -1009,7 +1009,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
               ? activeTotal > 0
                 ? `${activeTotal} weekly ${activeTotal === 1 ? "lesson" : "lessons"} set${activeGrade ? ` for ${activeGrade.name}` : ""} — no periods on the school day yet`
                 : `No lesson periods on the school day yet${activeGrade ? ` for ${activeGrade.name}` : ""}`
-              : `${activeTotal} of ${availableSlotsPerClass} lesson slots used${activeGrade ? ` in ${activeGrade.name}` : ""}`}
+              : `${activeTotal} of ${availableSlotsPerClass} weekly lessons assigned${activeGrade ? ` in ${activeGrade.name}` : ""}`}
           </p>
           <p className={cn(tt.caption, "mt-0.5 text-[11px]")}>
             {availableSlotsPerClass === 0 ? (
@@ -1029,7 +1029,7 @@ export const TimetableWeeklyLessonsPlanner = forwardRef<
                 teacher before we can timetable {missingTeachers === 1 ? "it" : "them"}.
               </span>
             ) : activeTotal === 0 ? (
-              "Set how many lessons each subject needs each week."
+              "Assign all weekly lessons before continuing."
             ) : (
               `${availableSlotsPerClass - activeTotal} free slots left for study or extra activities.`
             )}

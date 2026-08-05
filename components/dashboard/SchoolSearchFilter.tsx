@@ -489,7 +489,7 @@ export function SchoolSearchFilter({
         {isMinimal ? (
           <div className="flex items-center justify-between gap-2 px-0.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
-              Browse grades
+              Grades &amp; classes
             </p>
             {searchTerm ? (
               <button

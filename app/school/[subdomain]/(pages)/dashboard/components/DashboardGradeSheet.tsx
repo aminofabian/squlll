@@ -52,7 +52,7 @@ export function DashboardGradeSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="flex w-full flex-col p-0 sm:max-w-sm">
         <SheetHeader className="border-b border-slate-200/80 px-4 py-4 text-left dark:border-slate-800">
-          <SheetTitle>Browse grades</SheetTitle>
+          <SheetTitle>Grades &amp; classes</SheetTitle>
           <SheetDescription>
             Select a grade or stream to view class details and activity.
           </SheetDescription>

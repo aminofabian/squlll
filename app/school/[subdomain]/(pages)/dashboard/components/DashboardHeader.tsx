@@ -79,7 +79,7 @@ export function DashboardHeader({
           >
             <Filter className="h-3.5 w-3.5" />
             <span className="hidden min-[380px]:inline">
-              {hasGradeSelected ? "Grades" : "Browse grades"}
+              {hasGradeSelected ? "Grades" : "Grades &amp; classes"}
             </span>
           </Button>
 

@@ -2578,7 +2578,7 @@ export default function SmartTimetableNew() {
                       </h2>
                       <p className="mt-0.5 text-[12px] text-slate-500">
                         {selectedGradeId
-                          ? "Edit lessons directly on the grid"
+                          ? "Click any empty period to add a lesson."
                           : "Whole-school overview across classes"}
                       </p>
                     </div>

@@ -218,7 +218,7 @@ export function ClassesStructureOverview({
               onClick={onOpenGradePicker}
             >
               <Filter className="h-3.5 w-3.5" />
-              Browse grades
+              Grades &amp; classes
             </Button>
           </div>
 
