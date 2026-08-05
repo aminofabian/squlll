@@ -91,16 +91,16 @@ const phaseConfig: Record<
     title: "Portal access enabled",
     description: "This parent can sign in and view linked children.",
     icon: CheckCircle2,
-    accent: "from-emerald-50/90 to-white dark:from-emerald-950/25 dark:to-slate-900/20",
+    accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "Active",
     badgeClass:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300",
+      "rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]",
   },
   pending_invite: {
     title: "Invitation pending",
     description: "Waiting for the parent to accept the email invitation.",
     icon: Mail,
-    accent: "from-amber-50/90 to-white dark:from-amber-950/25 dark:to-slate-900/20",
+    accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "Pending signup",
     badgeClass:
       "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300",
@@ -109,7 +109,7 @@ const phaseConfig: Record<
     title: "Invitation expired",
     description: "Resend a new invitation or revoke and register again.",
     icon: Clock,
-    accent: "from-red-50/80 to-white dark:from-red-950/20 dark:to-slate-900/20",
+    accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "Invite expired",
     badgeClass:
       "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300",
@@ -118,19 +118,19 @@ const phaseConfig: Record<
     title: "Account needs activation",
     description: "A user record exists but portal access is not enabled yet.",
     icon: UserCheck,
-    accent: "from-sky-50/80 to-white dark:from-sky-950/20 dark:to-slate-900/20",
+    accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "Not activated",
     badgeClass:
-      "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300",
+      "rounded-none border-amber-200 bg-amber-50 text-amber-800",
   },
   no_account: {
     title: "No login account",
     description: "Send an invitation from the parents list to enable portal access.",
     icon: LogIn,
-    accent: "from-slate-50/90 to-white dark:from-slate-900/40 dark:to-slate-900/20",
+    accent: "bg-[#f8fbfa] dark:bg-[#071411]",
     badge: "No invite",
     badgeClass:
-      "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400",
+      "border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/70 dark:border-white/15 dark:bg-[#0c1a17] dark:text-[#1a4d42]/45",
   },
 };
 
@@ -146,12 +146,12 @@ function AccountMetric({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-100 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/50">
+    <div className="rounded-none border border-[#1a4d42]/10 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
       <p className={cn(parentsSectionLabel, "flex items-center gap-1")}>
         <Icon className="h-3 w-3 shrink-0" />
         {label}
       </p>
-      <div className={cn("mt-1 text-sm font-medium text-slate-800 dark:text-slate-100", valueClassName)}>
+      <div className={cn("mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white", valueClassName)}>
         {value}
       </div>
     </div>
@@ -163,7 +163,7 @@ function invitationStatusBadge(invitation: ParentInvitation | undefined | null) 
     return (
       <Badge
         variant="outline"
-        className="border-slate-200 bg-slate-50 text-[10px] font-medium text-slate-600"
+        className="border-[#1a4d42]/12 bg-[#f8fbfa] text-[10px] font-medium text-[#1a4d42]/70"
       >
         None
       </Badge>
@@ -183,8 +183,8 @@ function invitationStatusBadge(invitation: ParentInvitation | undefined | null) 
             ? "border-red-200 bg-red-50 text-red-700"
             : "border-amber-200 bg-amber-50 text-amber-700"
           : invitation.status === "ACCEPTED"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-            : "border-slate-200 bg-slate-50 text-slate-600",
+            ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
+            : "border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/70",
       )}
     >
       {isExpired && invitation.status === "PENDING"
@@ -281,7 +281,7 @@ export function ParentAccountPanel({
         <article
           className={cn(
             parentsPanel,
-            "overflow-hidden bg-gradient-to-br",
+            "overflow-hidden",
             config.accent,
           )}
         >
@@ -289,30 +289,30 @@ export function ParentAccountPanel({
             <div className="flex min-w-0 gap-3">
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-none",
                   phase === "active"
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
+                    ? "bg-[#e8f2ef] text-[#246a59]"
                     : phase === "pending_invite" || phase === "expired_invite"
                       ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400"
-                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+                      : "bg-[#e8f2ef] text-[#1a4d42]/70 dark:bg-[#0c1a17] dark:text-[#1a4d42]/45",
                 )}
               >
                 <PhaseIcon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                     {config.title}
                   </h3>
                   <Badge variant="outline" className={cn("text-[10px] font-medium", config.badgeClass)}>
                     {config.badge}
                   </Badge>
                 </div>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-1 text-xs text-[#1a4d42]/55 dark:text-[#1a4d42]/45">
                   {config.description}
                 </p>
-                <p className="mt-2 truncate text-xs text-slate-600 dark:text-slate-300">
-                  <span className="text-slate-400">Login email · </span>
+                <p className="mt-2 truncate text-xs text-[#1a4d42]/70 dark:text-white/70">
+                  <span className="text-[#1a4d42]/45">Login email · </span>
                   {email || "—"}
                 </p>
               </div>
@@ -327,21 +327,18 @@ export function ParentAccountPanel({
         </article>
 
         {!hasCompletedProfile ? (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-200/80 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/25 dark:text-amber-200">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <div>
-              <p className="font-medium">Profile incomplete</p>
-              <p className="mt-0.5 text-xs text-amber-800/90 dark:text-amber-300/90">
-                Add missing contact details on the Details tab before the parent signs up.
-              </p>
-            </div>
+          <div className="flex items-center gap-2 rounded-none border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42]">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#246a59]" />
+            <p>
+              <span className="font-semibold">Profile incomplete.</span> Add
+              contact details on the Details tab before signup.
+            </p>
           </div>
         ) : null}
 
         <div className={parentsPanel}>
-          <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-            <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-              <Shield className="h-4 w-4 text-primary" />
+          <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-2.5 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+            <h4 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
               Access summary
             </h4>
           </div>
@@ -350,7 +347,7 @@ export function ParentAccountPanel({
               label="Portal login"
               icon={LogIn}
               value={userId ? "Linked" : "Not linked"}
-              valueClassName={userId ? "text-emerald-700 dark:text-emerald-400" : undefined}
+              valueClassName={userId ? "text-[#246a59]" : undefined}
             />
             <AccountMetric
               label="Activation"
@@ -358,7 +355,7 @@ export function ParentAccountPanel({
               value={isActive ? "Enabled" : "Disabled"}
               valueClassName={
                 isActive
-                  ? "text-emerald-700 dark:text-emerald-400"
+                  ? "text-[#246a59]"
                   : "text-amber-700 dark:text-amber-400"
               }
             />
@@ -373,7 +370,7 @@ export function ParentAccountPanel({
               value={hasCompletedProfile ? "Complete" : "Incomplete"}
               valueClassName={
                 hasCompletedProfile
-                  ? "text-emerald-700 dark:text-emerald-400"
+                  ? "text-[#246a59]"
                   : "text-amber-700 dark:text-amber-400"
               }
             />
@@ -383,12 +380,12 @@ export function ParentAccountPanel({
         {pendingInvitation ? (
           <div className={cn(parentsPanel, "overflow-hidden")}>
             <div className="border-b border-amber-100/80 bg-amber-50/40 px-4 py-3 dark:border-amber-900/30 dark:bg-amber-950/15 sm:px-5">
-              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-[#0a1f1a] dark:text-white">
                 <CalendarClock className="h-4 w-4 text-amber-600" />
                 Invitation details
               </h4>
               {daysUntilExpiry !== null && pendingInvitation.status === "PENDING" ? (
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-[#1a4d42]/55">
                   {daysUntilExpiry > 0
                     ? `Expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? "s" : ""}`
                     : "Invitation has expired"}
@@ -398,13 +395,13 @@ export function ParentAccountPanel({
             <dl className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-5">
               <div>
                 <dt className={parentsSectionLabel}>Sent</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+                <dd className="mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white">
                   {formatParentDate(pendingInvitation.createdAt) ?? "—"}
                 </dd>
               </div>
               <div>
                 <dt className={parentsSectionLabel}>Expires</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+                <dd className="mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white">
                   {pendingInvitation.expiresAt
                     ? formatParentDate(pendingInvitation.expiresAt)
                     : "No expiry set"}
@@ -413,9 +410,9 @@ export function ParentAccountPanel({
               {pendingInvitation.invitedBy ? (
                 <div className="sm:col-span-2">
                   <dt className={parentsSectionLabel}>Invited by</dt>
-                  <dd className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <dd className="mt-1 text-sm font-medium text-[#0a1f1a] dark:text-white">
                     {pendingInvitation.invitedBy.name}
-                    <span className="ml-1 font-normal text-slate-400">
+                    <span className="ml-1 font-normal text-[#1a4d42]/45">
                       ({pendingInvitation.invitedBy.email})
                     </span>
                   </dd>
@@ -426,11 +423,11 @@ export function ParentAccountPanel({
         ) : null}
 
         <div className={parentsPanel}>
-          <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-            <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
+            <h4 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
               Actions
             </h4>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-[#1a4d42]/55">
               Manage activation, password, and invitations
             </p>
           </div>
@@ -454,8 +451,8 @@ export function ParentAccountPanel({
                     {isActivating ? "Activating…" : "Activate account"}
                   </Button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200/80 bg-emerald-50/50 px-3 py-1.5 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1.5 rounded-none border border-[#246a59]/25 bg-[#e8f2ef] px-3 py-1.5 text-xs text-[#1a4d42]">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#246a59]" />
                     Account is active
                   </span>
                 )}
@@ -473,7 +470,7 @@ export function ParentAccountPanel({
                     Set password
                   </Button>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-200 px-3 py-1.5 text-xs text-slate-400 dark:border-slate-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-none border border-dashed border-[#1a4d42]/12 px-3 py-1.5 text-xs text-[#1a4d42]/45 dark:border-white/15">
                     <KeyRound className="h-3.5 w-3.5" />
                     Set password after signup
                   </span>
@@ -482,7 +479,7 @@ export function ParentAccountPanel({
             </div>
 
             {showInviteActions ? (
-              <div className="border-t border-slate-100 pt-4 dark:border-slate-800">
+              <div className="border-t border-[#1a4d42]/10 pt-4 dark:border-white/10">
                 <p className={cn(parentsSectionLabel, "mb-2")}>Invitation</p>
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -514,8 +511,8 @@ export function ParentAccountPanel({
                 </div>
               </div>
             ) : phase === "no_account" ? (
-              <p className="border-t border-slate-100 pt-4 text-xs text-slate-500 dark:border-slate-800">
-                Use <strong className="font-medium text-slate-700 dark:text-slate-300">Add parent</strong> on the parents list to send a new invitation to {email || "this guardian"}.
+              <p className="border-t border-[#1a4d42]/10 pt-4 text-xs text-[#1a4d42]/55 dark:border-white/10">
+                Use <strong className="font-medium text-[#1a4d42]/80 dark:text-white/70">Add parent</strong> on the parents list to send a new invitation to {email || "this guardian"}.
               </p>
             ) : null}
           </div>
@@ -528,7 +525,7 @@ export function ParentAccountPanel({
             <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
             <AlertDialogDescription>
               This cancels the invitation for{" "}
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-[#1a4d42]/80 dark:text-white/70">
                 {email}
               </span>
               . They will no longer be able to accept it.

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { graphqlClient } from "@/lib/graphql-client";
 import { gql } from "graphql-request";
 import { getTenantInfo } from "@/lib/utils";
-import { parentsPanel } from "./parents-ui";
+import { parentsActionButton, parentsPanel, parentsPrimaryButton, parentsSectionHead } from "./parents-ui";
 import { toast } from "sonner";
 import { Loader2, Plus, Search, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -129,20 +129,18 @@ export function ParentChildrenEditor({
 
   return (
     <div className={`${parentsPanel} overflow-hidden`}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-            Linked children
-          </h3>
-          <p className="mt-0.5 text-xs text-slate-400">
-            {students.length} student{students.length !== 1 ? "s" : ""} linked
-          </p>
-        </div>
+      <div className={cn(parentsSectionHead, "flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 sm:px-5")}>
+        <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+          Linked children
+          <span className="ml-2 text-[11px] font-normal text-[#1a4d42]/45">
+            {students.length}
+          </span>
+        </h3>
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-xs"
+          className={cn(parentsActionButton, "h-7")}
           onClick={() => setShowSearch((v) => !v)}
         >
           <UserPlus className="h-3.5 w-3.5" />
@@ -151,7 +149,7 @@ export function ParentChildrenEditor({
       </div>
 
       {showSearch ? (
-        <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
+        <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
           <div className="flex gap-2">
             <Input
               value={searchTerm}
@@ -160,12 +158,12 @@ export function ParentChildrenEditor({
                 if (e.key === "Enter") void handleSearch();
               }}
               placeholder="Search by student name…"
-              className="h-8 text-xs"
+              className="h-8 rounded-none border-[#1a4d42]/15 text-xs"
             />
             <Button
               type="button"
               size="sm"
-              className="h-8 gap-1 text-xs"
+              className={cn(parentsPrimaryButton, "h-8")}
               onClick={() => void handleSearch()}
               disabled={isSearching || !searchTerm.trim()}
             >
@@ -183,13 +181,13 @@ export function ParentChildrenEditor({
               {results.map((student) => (
                 <li
                   key={student.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2 dark:border-slate-800 dark:bg-slate-800/30"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                       {student.name}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-[#1a4d42]/55">
                       {student.grade} · {student.admissionNumber}
                     </p>
                   </div>
@@ -197,7 +195,7 @@ export function ParentChildrenEditor({
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 gap-1 text-xs"
+                    className={cn(parentsActionButton, "h-7")}
                     disabled={addingId === student.id}
                     onClick={() => void handleAddStudent(student.id)}
                   >
@@ -212,7 +210,7 @@ export function ParentChildrenEditor({
               ))}
             </ul>
           ) : searchTerm && !isSearching ? (
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-[#1a4d42]/45">
               No available students found. Try a different name.
             </p>
           ) : null}
@@ -221,21 +219,21 @@ export function ParentChildrenEditor({
 
       <div className="space-y-3 p-4 sm:p-5">
         {students.length === 0 ? (
-          <p className="rounded-lg bg-slate-50/80 px-3 py-2.5 text-xs text-slate-400 dark:bg-slate-800/30">
+          <p className="rounded-none bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/45 dark:bg-[#071411]">
             No children linked yet. Use &ldquo;Link student&rdquo; to add one.
           </p>
         ) : (
           students.map((student) => (
             <div
               key={student.id}
-              className="rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-3 dark:border-slate-800 dark:bg-slate-800/30"
+              className="rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-3 dark:border-white/10 dark:bg-[#071411]"
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                     {student.name}
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-[#1a4d42]/55">
                     {student.grade} · {student.admissionNumber}
                   </p>
                 </div>
@@ -243,7 +241,7 @@ export function ParentChildrenEditor({
                   {student.isPrimary ? (
                     <Badge
                       variant="outline"
-                      className="border-emerald-200 bg-emerald-50 text-[10px] font-medium text-emerald-700"
+                      className="rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[10px] font-medium text-[#1a4d42]"
                     >
                       Primary contact
                     </Badge>
@@ -261,7 +259,7 @@ export function ParentChildrenEditor({
               </div>
               <a
                 href={`/students?studentId=${student.id}`}
-                className="mt-2 inline-block text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                className="mt-2 inline-block text-xs font-medium text-[#246a59] hover:underline"
               >
                 View in students →
               </a>

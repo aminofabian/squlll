@@ -8,6 +8,7 @@ import type { ParentsListItem } from "../utils/mapGraphqlParent";
 import { exportParentsToCsv } from "../utils/exportParentsCsv";
 import { resendPendingParentInvitations } from "../utils/parentInvitationActions";
 import type { ParentInvitation } from "../types";
+import { cn } from "@/lib/utils";
 import { parentsActionButton } from "./parents-ui";
 
 interface ParentsBulkActionsProps {
@@ -74,18 +75,18 @@ export function ParentsBulkActions({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex shrink-0 flex-wrap items-center gap-1">
       {parents.length > 0 ? (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className={parentsActionButton}
+          className={cn(parentsActionButton, "h-6 px-2 text-[11px]")}
           onClick={handleExport}
         >
-          <Download className="h-3.5 w-3.5" />
+          <Download className="h-3 w-3" />
           Export
-          <span className="text-slate-400">({parents.length})</span>
+          <span className="text-[#1a4d42]/40">({parents.length})</span>
         </Button>
       ) : null}
       {pendingInviteIds.length > 0 ? (
@@ -93,17 +94,17 @@ export function ParentsBulkActions({
           type="button"
           variant="outline"
           size="sm"
-          className={parentsActionButton}
+          className={cn(parentsActionButton, "h-6 px-2 text-[11px]")}
           onClick={() => void handleResendAll()}
           disabled={isResending}
         >
           {isResending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            <Mail className="h-3.5 w-3.5" />
+            <Mail className="h-3 w-3" />
           )}
           Resend invites
-          <span className="text-slate-400">({pendingInviteIds.length})</span>
+          <span className="text-[#1a4d42]/40">({pendingInviteIds.length})</span>
         </Button>
       ) : null}
     </div>

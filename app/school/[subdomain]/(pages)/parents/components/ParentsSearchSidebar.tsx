@@ -56,7 +56,7 @@ export function ParentsSearchSidebar({
       </div>
 
       <div className="relative mb-3">
-        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#1a4d42]/40" />
         <Input
           type="text"
           placeholder="Name, email, child, phone…"

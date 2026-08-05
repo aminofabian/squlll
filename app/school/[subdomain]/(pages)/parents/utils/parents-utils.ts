@@ -38,15 +38,6 @@ export function formatRelationship(relationship: string): string {
   return relationship.charAt(0).toUpperCase() + relationship.slice(1).toLowerCase();
 }
 
-export function relationshipBadgeClass(relationship: string): string {
-  switch (relationship.toLowerCase()) {
-    case "father":
-      return "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400";
-    case "mother":
-      return "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400";
-    case "guardian":
-      return "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-400";
-    default:
-      return "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300";
-  }
+export function relationshipBadgeClass(_relationship: string): string {
+  return "rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]";
 }

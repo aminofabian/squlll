@@ -368,10 +368,11 @@ export function CreateParentDrawer({
     <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <DrawerTrigger asChild>
         <Button
-          className="flex items-center gap-2 rounded-none bg-[#0a1f1a] text-white shadow-none hover:bg-[#246a59]"
+          size="sm"
+          className="h-7 gap-1.5 rounded-none bg-[#0a1f1a] px-2.5 text-xs text-white shadow-none hover:bg-[#246a59]"
           disabled={isLoading}
         >
-          <UserPlus className="h-4 w-4" />
+          <UserPlus className="h-3.5 w-3.5" />
           Add parent
         </Button>
       </DrawerTrigger>

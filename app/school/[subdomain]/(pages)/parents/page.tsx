@@ -29,8 +29,6 @@ import { useParentDetail } from "@/lib/hooks/useParentDetail";
 import { getTenantInfo } from "@/lib/utils";
 import { useDomainRealtime } from "@/lib/realtime/useDomainRealtime";
 import {
-  parentsControlDivider,
-  parentsControlShell,
   parentsIconButton,
   parentsPageContainer,
   parentsSearchChip,
@@ -248,15 +246,15 @@ export default function ParentsPage() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-6">
+        <header className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-1.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
           <div className={parentsPageContainer}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex min-w-0 items-start gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 {isSidebarMinimized ? (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn(parentsIconButton, "shrink-0 md:hidden")}
+                    className={cn(parentsIconButton, "h-7 w-7 shrink-0 md:hidden")}
                     onClick={() => setIsSidebarMinimized(false)}
                     aria-label="Open directory"
                   >
@@ -264,13 +262,10 @@ export default function ParentsPage() {
                   </Button>
                 ) : null}
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
-                    Guardians
-                  </p>
-                  <h1 className="truncate font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
+                  <h1 className="truncate font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
                     {selectedParent ? selectedParent.name : "Parents"}
                   </h1>
-                  <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/45">
+                  <p className="truncate text-[11px] text-[#1a4d42]/50 dark:text-white/45">
                     {listSubtitle}
                   </p>
                 </div>
@@ -288,7 +283,7 @@ export default function ParentsPage() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className={cn(parentsPageContainer, "space-y-4 p-4 sm:p-5")}>
+          <div className={cn(parentsPageContainer, "space-y-2 p-3 sm:space-y-2.5 sm:p-4")}>
             {!tenantId ? (
               <div className="flex items-center gap-2 border border-amber-300/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
                 <Info className="h-4 w-4 shrink-0" />
@@ -355,7 +350,7 @@ export default function ParentsPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <ParentsOverviewBar
                   total={parents.length}
                   active={overviewStats.active}
@@ -365,7 +360,7 @@ export default function ParentsPage() {
                 />
 
                 {!loading && parents.length > 0 ? (
-                  <div className={parentsControlShell}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <ParentsFilterBar
                       filter={parentFilter}
                       onFilterChange={setParentFilter}
@@ -374,16 +369,9 @@ export default function ParentsPage() {
                       gradeFilter={gradeFilter}
                       onGradeFilterChange={setGradeFilter}
                     />
-
-                    <div
-                      className={cn(
-                        parentsControlDivider,
-                        "flex flex-wrap items-center justify-between gap-2",
-                      )}
-                    >
+                    <div className="flex flex-wrap items-center gap-2">
                       {hasActiveFilters ? (
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-[#1a4d42]/55">
-                          <span>Filtered results</span>
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-[#1a4d42]/55">
                           {searchTerm ? (
                             <button
                               type="button"
@@ -394,21 +382,17 @@ export default function ParentsPage() {
                               <X className="h-3 w-3 text-[#1a4d42]/40" />
                             </button>
                           ) : null}
-                          {(parentFilter !== "all" || gradeFilter !== "all") ? (
+                          {parentFilter !== "all" || gradeFilter !== "all" ? (
                             <button
                               type="button"
                               onClick={clearFilters}
                               className="text-[#1a4d42]/55 underline-offset-2 hover:text-[#0a1f1a] hover:underline"
                             >
-                              Clear filters
+                              Clear
                             </button>
                           ) : null}
                         </div>
-                      ) : (
-                        <span className="text-xs text-[#1a4d42]/45">
-                          Use the directory or filters to narrow the list
-                        </span>
-                      )}
+                      ) : null}
                       <ParentsBulkActions
                         parents={filteredParents}
                         invitations={pendingInvitations}

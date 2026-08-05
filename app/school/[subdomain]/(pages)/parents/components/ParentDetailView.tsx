@@ -5,7 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { ParentAvatar } from "./ParentAvatar";
-import { parentsPanel } from "./parents-ui";
+import {
+  parentsBadge,
+  parentsField,
+  parentsFieldLabel,
+  parentsPanel,
+  parentsSectionHead,
+  parentsTabList,
+  parentsTabTrigger,
+} from "./parents-ui";
 import type { ParentsListItem } from "../utils/mapGraphqlParent";
 import type { ParentInvitation } from "../types";
 import {
@@ -20,13 +28,8 @@ import { ParentFeesPanel } from "./ParentFeesPanel";
 import {
   AlertTriangle,
   ArrowLeft,
-  Calendar,
   Copy,
   Loader2,
-  Mail,
-  MapPin,
-  Phone,
-  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,22 +44,17 @@ interface ParentDetailViewProps {
 function DetailField({
   label,
   value,
-  icon: Icon,
   copyValue,
 }: {
   label: string;
   value: React.ReactNode;
-  icon?: React.ComponentType<{ className?: string }>;
   copyValue?: string;
 }) {
   return (
-    <div className="rounded-lg bg-slate-50/80 px-3 py-2.5 dark:bg-slate-800/30">
-      <p className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">
-        {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
-        {label}
-      </p>
+    <div className={parentsField}>
+      <p className={parentsFieldLabel}>{label}</p>
       <div className="mt-1 flex items-start justify-between gap-2">
-        <div className="min-w-0 text-sm text-slate-800 dark:text-slate-100">
+        <div className="min-w-0 text-sm text-[#0a1f1a] dark:text-white">
           {value}
         </div>
         {copyValue ? (
@@ -66,7 +64,7 @@ function DetailField({
               void navigator.clipboard.writeText(copyValue);
               toast.success("Copied to clipboard");
             }}
-            className="shrink-0 rounded p-1 text-slate-400 hover:text-slate-600"
+            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 hover:text-[#246a59]"
             aria-label={`Copy ${label}`}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -79,20 +77,17 @@ function DetailField({
 
 function InfoGroup({
   title,
-  icon: Icon,
   children,
 }: {
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
   return (
     <section>
-      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <Icon className="h-3.5 w-3.5" />
+      <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#246a59]">
         {title}
       </h3>
-      <div className="space-y-2">{children}</div>
+      <div className="space-y-1.5">{children}</div>
     </section>
   );
 }
@@ -108,13 +103,23 @@ export function ParentDetailView({
   const joinDate = formatParentDate(parent.registrationDate);
   const updatedDate = formatParentDate(parent.updatedAt);
 
+  const metaLine = [
+    formatRelationship(parent.relationship),
+    parent.studentCount > 0
+      ? `${parent.studentCount} child${parent.studentCount !== 1 ? "ren" : ""}`
+      : null,
+    parent.occupation?.trim() || null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {onClose ? (
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-1.5 px-0.5 text-[11px] font-medium text-[#1a4d42]/50 transition-colors hover:text-[#0a1f1a] dark:hover:text-white"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to list
@@ -122,35 +127,54 @@ export function ParentDetailView({
       ) : null}
 
       {detailLoading ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="flex items-center gap-2 text-xs text-[#1a4d42]/50">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Refreshing profile…
         </div>
       ) : null}
 
       {profileIncomplete ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <p className="font-medium">Profile incomplete</p>
-            <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
-              Email, phone, or address is missing. Update contact details so
-              the school can reach this parent.
-            </p>
-          </div>
+        <div className="flex items-center gap-2 rounded-none border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/15 dark:text-[#d4e8e2]">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#246a59]" />
+          <p>
+            <span className="font-semibold">Profile incomplete.</span> Add
+            email, phone, or address so the school can reach this parent.
+          </p>
         </div>
       ) : null}
 
-      <div className={`${parentsPanel} overflow-hidden`}>
-        <div className="bg-gradient-to-br from-slate-50/80 to-white px-4 py-5 dark:from-slate-900/40 dark:to-slate-900/20 sm:px-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <ParentAvatar name={parent.name} size="lg" />
+      <div className={cn(parentsPanel)}>
+        <div className="bg-[#f8fbfa] px-4 py-4 dark:bg-[#071411] sm:px-5">
+          <div className="flex gap-3.5">
+            <ParentAvatar name={parent.name} size="lg" ring />
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {parent.name}
-              </h2>
-              <p className="mt-0.5 text-sm text-slate-500">{parent.email}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-display text-xl font-normal tracking-tight text-[#0a1f1a] dark:text-white sm:text-2xl">
+                  {parent.name}
+                </h2>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "rounded-none text-[10px] font-medium",
+                    parent.status === "active"
+                      ? "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]"
+                      : "border-amber-200 bg-amber-50 text-amber-800",
+                  )}
+                >
+                  {parent.status === "active" ? "Active" : "Not activated"}
+                </Badge>
+              </div>
+              {metaLine ? (
+                <p className="mt-1 text-sm capitalize text-[#1a4d42]/55">
+                  {metaLine}
+                </p>
+              ) : null}
+              {parent.email ? (
+                <p className="mt-1 truncate text-xs text-[#1a4d42]/45">
+                  {parent.email}
+                </p>
+              ) : null}
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 <Badge
                   variant="outline"
                   className={cn(
@@ -160,18 +184,7 @@ export function ParentDetailView({
                 >
                   {formatRelationship(parent.relationship)}
                 </Badge>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px] font-medium",
-                    parent.status === "active"
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-amber-200 bg-amber-50 text-amber-700",
-                  )}
-                >
-                  {parent.status === "active" ? "Active" : "Not activated"}
-                </Badge>
-                <Badge variant="secondary" className="text-[10px] font-medium">
+                <Badge variant="outline" className={parentsBadge}>
                   {parent.studentCount} linked child
                   {parent.studentCount !== 1 ? "ren" : ""}
                 </Badge>
@@ -182,98 +195,83 @@ export function ParentDetailView({
       </div>
 
       <Tabs defaultValue="details">
-        <TabsList className="mb-4 inline-flex h-10 w-full flex-wrap rounded-lg border border-slate-200/80 bg-slate-50/80 p-1 dark:border-slate-800 dark:bg-slate-900/60 sm:w-auto">
-          <TabsTrigger
-            value="details"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+        <TabsList className={parentsTabList}>
+          <TabsTrigger value="details" className={parentsTabTrigger}>
             Details
           </TabsTrigger>
-          <TabsTrigger
-            value="children"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="children" className={parentsTabTrigger}>
             Children
           </TabsTrigger>
-          <TabsTrigger
-            value="fees"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="fees" className={parentsTabTrigger}>
             Fees
           </TabsTrigger>
-          <TabsTrigger
-            value="account"
-            className="flex-1 rounded-md px-3 text-xs font-medium data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm sm:flex-none sm:px-4 dark:data-[state=active]:bg-slate-800 dark:data-[state=active]:text-slate-100"
-          >
+          <TabsTrigger value="account" className={parentsTabTrigger}>
             Account
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="mt-0">
           <div className={`${parentsPanel} overflow-hidden`}>
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Contact &amp; personal information
+            <div className={cn(parentsSectionHead, "px-4 py-2.5 sm:px-5")}>
+              <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+                Contact &amp; personal
               </h3>
             </div>
-            <div className="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2 sm:p-5">
-              <InfoGroup title="Contact" icon={Mail}>
+            <div className="grid grid-cols-1 gap-4 p-3 sm:grid-cols-2 sm:p-4">
+              <InfoGroup title="Contact">
                 <DetailField
                   label="Email"
-                  icon={Mail}
                   copyValue={parent.email || undefined}
                   value={
                     parent.email ? (
                       <a
                         href={`mailto:${parent.email}`}
-                        className="break-all text-emerald-700 hover:underline dark:text-emerald-400"
+                        className="break-all text-[#246a59] hover:underline"
                       >
                         {parent.email}
                       </a>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
                 <DetailField
                   label="Phone"
-                  icon={Phone}
                   copyValue={parent.phone || undefined}
                   value={
                     parent.phone ? (
                       <a
                         href={`tel:${parent.phone}`}
-                        className="hover:underline"
+                        className="text-[#0a1f1a] hover:underline dark:text-white"
                       >
                         {parent.phone}
                       </a>
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
                 <DetailField
                   label="Address"
-                  icon={MapPin}
                   copyValue={parent.homeAddress || undefined}
                   value={
                     parent.homeAddress?.trim() ? (
                       parent.homeAddress
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
               </InfoGroup>
 
-              <InfoGroup title="Personal" icon={User}>
+              <InfoGroup title="Personal">
                 <DetailField
                   label="Occupation"
                   value={
                     parent.occupation?.trim() ? (
                       parent.occupation
                     ) : (
-                      <span className="text-slate-400">Not provided</span>
+                      <span className="text-[#1a4d42]/40">Not provided</span>
                     )
                   }
                 />
@@ -283,15 +281,10 @@ export function ParentDetailView({
                 />
                 <DetailField
                   label="Registered"
-                  icon={Calendar}
                   value={joinDate ?? "Not available"}
                 />
                 {updatedDate ? (
-                  <DetailField
-                    label="Last updated"
-                    icon={Calendar}
-                    value={updatedDate}
-                  />
+                  <DetailField label="Last updated" value={updatedDate} />
                 ) : null}
               </InfoGroup>
             </div>

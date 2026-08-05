@@ -101,7 +101,7 @@ function FeeSummaryMetrics({ balance }: { balance: AdminFeeBalance }) {
         <MetricTile
           label="Paid"
           value={formatCurrency(balance.totalPaid)}
-          valueClassName="text-emerald-700 dark:text-emerald-400"
+          valueClassName="text-[#246a59]"
         />
         <MetricTile
           label="Outstanding"
@@ -109,24 +109,24 @@ function FeeSummaryMetrics({ balance }: { balance: AdminFeeBalance }) {
           valueClassName={
             hasOutstanding
               ? "text-amber-700 dark:text-amber-400"
-              : "text-emerald-700 dark:text-emerald-400"
+              : "text-[#246a59]"
           }
         />
       </div>
 
       {totalBilled > 0 ? (
         <div>
-          <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="mb-1 flex items-center justify-between text-[11px] text-[#1a4d42]/55">
             <span>Payment progress</span>
-            <span className="tabular-nums font-medium text-slate-700 dark:text-slate-300">
+            <span className="tabular-nums font-medium text-[#1a4d42]/80 dark:text-white/70">
               {progress}%
             </span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+          <div className="h-1.5 overflow-hidden rounded-none bg-[#e8f2ef] dark:bg-[#0c1a17]">
             <div
               className={cn(
-                "h-full rounded-full transition-all duration-500",
-                hasOutstanding ? "bg-amber-500" : "bg-emerald-500",
+                "h-full rounded-none transition-all duration-500",
+                hasOutstanding ? "bg-amber-500" : "bg-[#246a59]",
               )}
               style={{ width: `${progress}%` }}
             />
@@ -151,14 +151,14 @@ function MetricTile({
   return (
     <div
       className={cn(
-        "rounded-lg border border-slate-100 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/50",
-        muted && "bg-slate-50/80 dark:bg-slate-900/30",
+        "rounded-none border border-[#1a4d42]/10 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]",
+        muted && "bg-[#f8fbfa] dark:bg-[#071411]",
       )}
     >
       <p className={parentsSectionLabel}>{label}</p>
       <p
         className={cn(
-          "mt-1 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100",
+          "mt-1 text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white",
           valueClassName,
         )}
       >
@@ -178,25 +178,25 @@ function FeeBreakdownTable({
   if (lines.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+    <div className="overflow-x-auto rounded-none border border-[#1a4d42]/10 dark:border-white/10">
       <table className="w-full min-w-[420px] text-xs">
         <thead>
-          <tr className="border-b border-slate-100 bg-slate-50/80 text-left dark:border-slate-800 dark:bg-slate-900/60">
-            <th className="px-3 py-2 font-medium uppercase tracking-wide text-slate-400">
+          <tr className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]">
+            <th className="px-3 py-2 font-medium uppercase tracking-wide text-[#1a4d42]/45">
               Fee item
             </th>
-            <th className="px-3 py-2 text-right font-medium uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2 text-right font-medium uppercase tracking-wide text-[#1a4d42]/45">
               Billed
             </th>
-            <th className="px-3 py-2 text-right font-medium uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2 text-right font-medium uppercase tracking-wide text-[#1a4d42]/45">
               Paid
             </th>
-            <th className="px-3 py-2 text-right font-medium uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2 text-right font-medium uppercase tracking-wide text-[#1a4d42]/45">
               Balance
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+        <tbody className="divide-y divide-[#1a4d42]/10 dark:divide-white/10">
           {lines.map((line) => (
             <tr
               key={line.key}
@@ -207,17 +207,17 @@ function FeeBreakdownTable({
               )}
             >
               <td className="px-3 py-2.5">
-                <p className="font-medium text-slate-800 dark:text-slate-100">
+                <p className="font-medium text-[#0a1f1a] dark:text-white">
                   {line.itemName ?? line.bucketName}
                 </p>
                 {line.itemName ? (
-                  <p className="text-[11px] text-slate-400">{line.bucketName}</p>
+                  <p className="text-[11px] text-[#1a4d42]/45">{line.bucketName}</p>
                 ) : null}
                 <div className="mt-1 flex flex-wrap gap-1">
                   {line.isMandatory ? (
                     <Badge
                       variant="outline"
-                      className="h-4 border-slate-200 px-1 text-[9px] font-normal text-slate-500"
+                      className="h-4 border-[#1a4d42]/12 px-1 text-[9px] font-normal text-[#1a4d42]/55"
                     >
                       Required
                     </Badge>
@@ -225,17 +225,17 @@ function FeeBreakdownTable({
                   {line.lineCount > 1 ? (
                     <Badge
                       variant="outline"
-                      className="h-4 border-slate-200 px-1 text-[9px] font-normal text-slate-500"
+                      className="h-4 border-[#1a4d42]/12 px-1 text-[9px] font-normal text-[#1a4d42]/55"
                     >
                       {line.lineCount} charges
                     </Badge>
                   ) : null}
                 </div>
               </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-400">
+              <td className="px-3 py-2.5 text-right tabular-nums text-[#1a4d42]/70 dark:text-[#1a4d42]/45">
                 {formatCurrency(line.amount)}
               </td>
-              <td className="px-3 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-400">
+              <td className="px-3 py-2.5 text-right tabular-nums text-[#1a4d42]/70 dark:text-[#1a4d42]/45">
                 {formatCurrency(line.amountPaid)}
               </td>
               <td
@@ -243,7 +243,7 @@ function FeeBreakdownTable({
                   "px-3 py-2.5 text-right tabular-nums font-medium",
                   line.balance > 0
                     ? "text-amber-700 dark:text-amber-400"
-                    : "text-emerald-700 dark:text-emerald-400",
+                    : "text-[#246a59]",
                 )}
               >
                 {formatCurrency(line.balance)}
@@ -270,23 +270,23 @@ function CollapsibleFeeSection({
   const [open, setOpen] = useState(defaultOpen ?? false);
 
   return (
-    <div className="rounded-lg border border-slate-100 dark:border-slate-800">
+    <div className="rounded-none border border-[#1a4d42]/10 dark:border-white/10">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-800/40"
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#f8fbfa] dark:text-white/70 dark:hover:bg-white/5"
       >
         {open ? (
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#1a4d42]/45" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#1a4d42]/45" />
         )}
         <span>{title}</span>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] tabular-nums text-slate-500 dark:bg-slate-800">
+        <span className="rounded-none bg-[#e8f2ef] px-2 py-0.5 text-[10px] tabular-nums text-[#1a4d42]/55 dark:bg-[#0c1a17]">
           {count}
         </span>
       </button>
-      {open ? <div className="border-t border-slate-100 p-2 dark:border-slate-800">{children}</div> : null}
+      {open ? <div className="border-t border-[#1a4d42]/10 p-2 dark:border-white/10">{children}</div> : null}
     </div>
   );
 }
@@ -318,7 +318,7 @@ function StudentFeeCard({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-6 text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900/30">
+      <div className="flex items-center gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-6 text-sm text-[#1a4d42]/55 dark:border-white/10 dark:bg-[#071411]">
         <Loader2 className="h-4 w-4 animate-spin" />
         Loading fees for {student.name}…
       </div>
@@ -327,7 +327,7 @@ function StudentFeeCard({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-100 bg-red-50/60 px-4 py-4 dark:border-red-900/30 dark:bg-red-950/20">
+      <div className="rounded-none border border-red-100 bg-red-50/60 px-4 py-4 dark:border-red-900/30 dark:bg-red-950/20">
         <p className="text-sm text-red-700 dark:text-red-300">
           Could not load fees for {student.name}.
         </p>
@@ -351,13 +351,13 @@ function StudentFeeCard({
   const hasLines = grouped.length > 0;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-slate-800 sm:px-5">
+    <article className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#1a4d42]/10 px-4 py-3.5 dark:border-white/10 sm:px-5">
         <div className="min-w-0">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <h4 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
             {student.name}
           </h4>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-[#1a4d42]/55">
             {student.grade} · {student.admissionNumber}
           </p>
         </div>
@@ -368,7 +368,7 @@ function StudentFeeCard({
               "text-[10px] font-medium",
               hasOutstanding
                 ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
-                : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300",
+                : "border-[#246a59]/25 bg-[#e8f2ef] text-[#1a4d42]",
             )}
           >
             {hasOutstanding ? "Balance due" : "Cleared"}
@@ -396,16 +396,16 @@ function StudentFeeCard({
             <button
               type="button"
               onClick={() => setShowBreakdown((v) => !v)}
-              className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-300 dark:hover:bg-slate-800/50"
+              className="flex w-full items-center justify-between gap-2 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 text-left text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#e8f2ef] dark:border-white/10 dark:bg-[#071411] dark:text-white/70 dark:hover:bg-[#0c1a17]"
             >
               <span className="flex items-center gap-1.5">
                 {showBreakdown ? (
-                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                  <ChevronDown className="h-3.5 w-3.5 text-[#1a4d42]/45" />
                 ) : (
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                  <ChevronRight className="h-3.5 w-3.5 text-[#1a4d42]/45" />
                 )}
                 Fee breakdown
-                <span className="font-normal text-slate-400">
+                <span className="font-normal text-[#1a4d42]/45">
                   ({grouped.length} item{grouped.length !== 1 ? "s" : ""}
                   {balance.items.length > grouped.length
                     ? ` · ${balance.items.length} charges combined`
@@ -447,7 +447,7 @@ function StudentFeeCard({
             ) : null}
           </div>
         ) : (
-          <p className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400 dark:border-slate-700">
+          <p className="rounded-none border border-dashed border-[#1a4d42]/12 px-3 py-4 text-center text-xs text-[#1a4d42]/45 dark:border-white/15">
             No fee line items yet. Assign a fee structure from the fees page.
           </p>
         )}
@@ -463,13 +463,13 @@ export function ParentFeesPanel({ students }: ParentFeesPanelProps) {
   if (students.length === 0) {
     return (
       <div className={`${parentsPanel} overflow-hidden`}>
-        <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-5">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-            <Wallet className="h-4 w-4 text-slate-400" />
+        <div className="border-b border-[#1a4d42]/10 px-4 py-3 dark:border-white/10 sm:px-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#0a1f1a] dark:text-white">
+            <Wallet className="h-4 w-4 text-[#1a4d42]/45" />
             Fee balances
           </h3>
         </div>
-        <p className="p-4 text-xs text-slate-400 sm:p-5">
+        <p className="p-4 text-xs text-[#1a4d42]/45 sm:p-5">
           Link children to this parent to view fee balances.
         </p>
       </div>
@@ -492,24 +492,24 @@ export function ParentFeesPanel({ students }: ParentFeesPanelProps) {
           "flex flex-wrap items-center gap-2 px-4 py-3 sm:px-5",
         )}
       >
-        <Wallet className="h-4 w-4 shrink-0 text-primary" />
-        <p className="text-xs text-slate-500">
-          <span className="font-medium text-slate-700 dark:text-slate-300">
+        <Wallet className="h-4 w-4 shrink-0 text-[#246a59]" />
+        <p className="text-xs text-[#1a4d42]/55">
+          <span className="font-medium text-[#1a4d42]/80 dark:text-white/70">
             {students.length} children
           </span>{" "}
           — select to view fees
         </p>
-        <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">
+        <div className="flex w-full flex-wrap gap-1 sm:ml-auto sm:w-auto">
           {students.map((student, index) => (
             <button
               key={student.id}
               type="button"
               onClick={() => setSelectedIndex(index)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-none border px-2.5 py-1 text-[11px] font-medium transition-colors",
                 selectedIndex === index
-                  ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700",
+                  ? "border-[#0a1f1a] bg-[#0a1f1a] text-white"
+                  : "border-[#1a4d42]/12 bg-white text-[#1a4d42]/70 hover:border-[#246a59]/35 hover:bg-[#246a59]/[0.06] dark:border-white/10 dark:bg-[#0c1a17]",
               )}
             >
               {student.name}

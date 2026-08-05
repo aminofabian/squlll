@@ -1,7 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { getAvatarPalette, parentInitials } from "../utils/parentAvatar";
+import { parentInitials } from "../utils/parentAvatar";
+
+const sizes = {
+  sm: "h-6 w-6 text-[9px]",
+  md: "h-8 w-8 text-[10px]",
+  lg: "h-14 w-14 text-base",
+} as const;
 
 export function ParentAvatar({
   name,
@@ -9,27 +15,19 @@ export function ParentAvatar({
   ring,
 }: {
   name: string;
-  size?: "sm" | "md" | "lg";
+  size?: keyof typeof sizes;
   ring?: boolean;
 }) {
-  const palette = getAvatarPalette(name);
   const initials = parentInitials(name);
-
-  const sizeClass =
-    size === "sm"
-      ? "h-8 w-8 text-[10px]"
-      : size === "lg"
-        ? "h-16 w-16 text-base"
-        : "h-10 w-10 text-xs";
 
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-semibold",
-        sizeClass,
-        palette.bg,
-        palette.text,
-        ring && "ring-2 ring-white dark:ring-slate-900",
+        "flex shrink-0 items-center justify-center rounded-none font-semibold",
+        sizes[size],
+        ring
+          ? "bg-[#0a1f1a] text-white"
+          : "bg-[#e8f2ef] text-[#1a4d42]",
       )}
       aria-hidden
     >

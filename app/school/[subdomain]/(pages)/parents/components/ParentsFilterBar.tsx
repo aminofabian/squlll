@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { ParentFilter } from "../utils/parents-utils";
-import { parentsFilterPill, parentsSelect, parentsSectionLabel } from "./parents-ui";
+import { parentsFilterPill, parentsSelect } from "./parents-ui";
 
 interface ParentsFilterBarProps {
   filter: ParentFilter;
@@ -49,53 +49,44 @@ export function ParentsFilterBar({
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-      <div className="min-w-0 flex-1">
-        <p className={cn(parentsSectionLabel, "mb-2")}>Status</p>
-        <div className="flex flex-wrap items-center gap-2">
-          {filters.map(({ id, label }) => {
-            const isActive = filter === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onFilterChange(id)}
-                className={parentsFilterPill(isActive)}
-              >
-                {label}
-                <span
-                  className={cn(
-                    "tabular-nums",
-                    isActive ? "opacity-80" : "text-slate-400",
-                  )}
-                >
-                  {countFor(id)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+      {filters.map(({ id, label }) => {
+        const isActive = filter === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onFilterChange(id)}
+            className={parentsFilterPill(isActive)}
+          >
+            {label}
+            <span
+              className={cn(
+                "tabular-nums",
+                isActive ? "opacity-80" : "text-[#1a4d42]/40",
+              )}
+            >
+              {countFor(id)}
+            </span>
+          </button>
+        );
+      })}
 
       {grades.length > 0 ? (
-        <div className="flex shrink-0 flex-col gap-1.5 sm:items-end">
-          <label htmlFor="grade-filter" className={parentsSectionLabel}>
-            Child grade
-          </label>
-          <select
-            id="grade-filter"
-            value={gradeFilter}
-            onChange={(e) => onGradeFilterChange(e.target.value)}
-            className={parentsSelect}
-          >
-            <option value="all">All grades</option>
-            {grades.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          id="grade-filter"
+          aria-label="Child grade"
+          value={gradeFilter}
+          onChange={(e) => onGradeFilterChange(e.target.value)}
+          className={parentsSelect}
+        >
+          <option value="all">All grades</option>
+          {grades.map((grade) => (
+            <option key={grade} value={grade}>
+              {grade}
+            </option>
+          ))}
+        </select>
       ) : null}
     </div>
   );

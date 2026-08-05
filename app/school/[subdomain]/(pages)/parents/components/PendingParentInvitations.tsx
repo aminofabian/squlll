@@ -49,6 +49,7 @@ export function PendingParentInvitations({
   const [confirmRevoke, setConfirmRevoke] = useState<ParentInvitation | null>(
     null,
   );
+  const [expanded, setExpanded] = useState(false);
 
   const handleRevoke = async (invitationId: string) => {
     setRevokingIds((prev) => new Set(prev).add(invitationId));
@@ -96,7 +97,7 @@ export function PendingParentInvitations({
     return (
       <div className={parentsPanel}>
         <div className="flex items-center justify-center px-4 py-10">
-          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          <Loader2 className="h-5 w-5 animate-spin text-[#1a4d42]/45" />
         </div>
       </div>
     );
@@ -115,144 +116,146 @@ export function PendingParentInvitations({
   return (
     <>
       <div className={parentsPanel}>
-        <div
+        <button
+          type="button"
           id="pending-invites-heading"
-          className="border-b border-amber-200/60 bg-amber-50/50 px-4 py-3 dark:border-amber-900/30 dark:bg-amber-950/20 sm:px-5"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 bg-[#f8fbfa] px-3 py-1.5 text-left transition-colors hover:bg-[#eef5f2] dark:bg-[#071411] dark:hover:bg-[#0c1a17]"
         >
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-none bg-amber-400 opacity-40" />
-              <span className="relative inline-flex h-2 w-2 rounded-none bg-amber-500" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-none bg-amber-500" />
             </span>
-            <div>
-              <h2 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
-                Pending invitations
-              </h2>
-              <p className="mt-0.5 text-xs text-[#1a4d42]/55 dark:text-white/45">
-                {invitations.length} awaiting parent signup · resend or revoke
-              </p>
-            </div>
+            <h2 className="text-xs font-semibold text-[#0a1f1a] dark:text-white">
+              Pending invitations
+            </h2>
+            <span className="tabular-nums text-[11px] text-amber-700">
+              {invitations.length}
+            </span>
           </div>
-        </div>
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#1a4d42]/45">
+            {expanded ? "Hide" : "Show"}
+          </span>
+        </button>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/80 text-left dark:border-slate-800 dark:bg-slate-900/60">
-                <th className={parentsTh}>Email</th>
-                <th className={parentsTh}>Role</th>
-                <th className={parentsTh}>Status</th>
-                <th className={cn(parentsTh, "hidden sm:table-cell")}>
-                  Invited by
-                </th>
-                <th className={cn(parentsTh, "hidden md:table-cell")}>Sent</th>
-                <th className={parentsTh}>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {invitations.map((invitation) => {
-                const isRevoking = revokingIds.has(invitation.id);
-                const isResending = resendingIds.has(invitation.id);
-                return (
-                  <tr
-                    key={invitation.id}
-                    className="text-slate-700 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-800/40"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                        <span
-                          className="truncate font-medium text-slate-800 dark:text-slate-100"
-                          title={invitation.email}
+        {expanded ? (
+          <div className="max-h-[180px] overflow-auto border-t border-[#1a4d42]/10">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]">
+                  <th className={cn(parentsTh, "px-2 py-1.5")}>Email</th>
+                  <th className={cn(parentsTh, "px-2 py-1.5")}>Role</th>
+                  <th className={cn(parentsTh, "px-2 py-1.5")}>Status</th>
+                  <th className={cn(parentsTh, "hidden px-2 py-1.5 sm:table-cell")}>
+                    Invited by
+                  </th>
+                  <th className={cn(parentsTh, "hidden px-2 py-1.5 md:table-cell")}>
+                    Sent
+                  </th>
+                  <th className={cn(parentsTh, "px-2 py-1.5")}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1a4d42]/10 dark:divide-white/10">
+                {invitations.map((invitation) => {
+                  const isRevoking = revokingIds.has(invitation.id);
+                  const isResending = resendingIds.has(invitation.id);
+                  return (
+                    <tr
+                      key={invitation.id}
+                      className="text-[#1a4d42]/80 transition-colors hover:bg-[#f8fbfa] dark:text-white/70 dark:hover:bg-white/5"
+                    >
+                      <td className="px-2 py-1.5">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Mail className="h-3 w-3 shrink-0 text-[#246a59]" />
+                          <span
+                            className="truncate text-xs font-medium text-[#0a1f1a] dark:text-white"
+                            title={invitation.email}
+                          >
+                            {invitation.email}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <Badge
+                          variant="outline"
+                          className="rounded-none border-[#246a59]/25 bg-[#e8f2ef] text-[9px] font-normal capitalize text-[#1a4d42]"
                         >
-                          {invitation.email}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant="outline"
-                        className="border-sky-200 bg-sky-50 text-[10px] font-normal capitalize text-sky-700"
-                      >
-                        {invitation.role.toLowerCase()}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        variant="outline"
-                        className="border-amber-200 bg-amber-50 text-[10px] font-normal capitalize text-amber-700"
-                      >
-                        {invitation.status.toLowerCase()}
-                      </Badge>
-                    </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
-                      {invitation.invitedBy ? (
-                        <div className="min-w-0 max-w-[180px]">
-                          <p className="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
+                          {invitation.role.toLowerCase()}
+                        </Badge>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <Badge
+                          variant="outline"
+                          className="rounded-none border-amber-200 bg-amber-50 text-[9px] font-normal capitalize text-amber-700"
+                        >
+                          {invitation.status.toLowerCase()}
+                        </Badge>
+                      </td>
+                      <td className="hidden px-2 py-1.5 sm:table-cell">
+                        {invitation.invitedBy ? (
+                          <p className="max-w-[140px] truncate text-[11px] text-[#1a4d42]/65">
                             {invitation.invitedBy.name}
                           </p>
-                          <p className="truncate text-[11px] text-slate-400">
-                            {invitation.invitedBy.email}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">System</span>
-                      )}
-                    </td>
-                    <td className="hidden px-4 py-3 text-xs text-slate-500 md:table-cell">
-                      {formatDateTime(invitation.createdAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        {invitation.status === "PENDING" ? (
+                        ) : (
+                          <span className="text-[11px] text-[#1a4d42]/45">System</span>
+                        )}
+                      </td>
+                      <td className="hidden px-2 py-1.5 text-[11px] text-[#1a4d42]/55 md:table-cell">
+                        {formatDateTime(invitation.createdAt)}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <div className="flex flex-wrap gap-x-1.5">
+                          {invitation.status === "PENDING" ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleResend(invitation.id, invitation.email)
+                              }
+                              disabled={isResending || isRevoking}
+                              className="text-[11px] text-[#1a4d42]/55 hover:text-[#246a59] disabled:opacity-50"
+                            >
+                              {isResending ? "Sending…" : "Resend"}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
-                            onClick={() =>
-                              void handleResend(invitation.id, invitation.email)
-                            }
-                            disabled={isResending || isRevoking}
-                            className="text-xs text-slate-500 hover:text-emerald-700 disabled:opacity-50"
+                            onClick={() => setConfirmRevoke(invitation)}
+                            disabled={isRevoking || isResending}
+                            className="text-[11px] text-[#1a4d42]/55 hover:text-red-600 disabled:opacity-50"
                           >
-                            {isResending ? "Sending…" : "Resend"}
+                            {isRevoking ? "Revoking…" : "Revoke"}
                           </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => setConfirmRevoke(invitation)}
-                          disabled={isRevoking || isResending}
-                          className="text-xs text-slate-500 hover:text-red-600 disabled:opacity-50"
-                        >
-                          {isRevoking ? "Revoking…" : "Revoke"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
       </div>
 
       <AlertDialog
         open={!!confirmRevoke}
         onOpenChange={(open) => !open && setConfirmRevoke(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
             <AlertDialogDescription>
               This will cancel the invitation for{" "}
-              <span className="font-medium text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-[#1a4d42]/80 dark:text-white/70">
                 {confirmRevoke?.email}
               </span>
               .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep invitation</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-none">Keep invitation</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="rounded-none bg-red-600 hover:bg-red-700"
               onClick={() => {
                 if (confirmRevoke) {
                   void handleRevoke(confirmRevoke.id);
