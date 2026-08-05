@@ -48,17 +48,17 @@ export function ClassStudentsRoster({
   const hasMore = students.length > maxRows;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3.5 dark:border-slate-800 sm:px-5">
+    <section className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1a4d42]/10 px-4 py-3.5 dark:border-white/10 sm:px-5">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0073ea]/10 text-[#0073ea]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-none bg-[#246a59]/10 text-[#246a59]">
             <Users className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
               Students in this class
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#1a4d42]/55">
               {students.length} enrolled
               {streamName ? ` · ${streamName}` : ""}
             </p>
@@ -81,7 +81,7 @@ export function ClassStudentsRoster({
             asChild
             type="button"
             size="sm"
-            className="h-8 gap-1 bg-[#0073ea] text-xs hover:bg-[#0062c4]"
+            className="h-8 gap-1 bg-[#246a59] text-xs hover:bg-[#1a4d42]"
           >
             <Link
               href={studentsClassHref(gradeId, {
@@ -97,17 +97,17 @@ export function ClassStudentsRoster({
 
       {students.length === 0 ? (
         <div className="px-4 py-10 text-center sm:px-5">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          <p className="text-sm font-medium text-[#1a4d42]/80 dark:text-slate-200">
             No students in {displayName}
             {streamName ? ` · ${streamName}` : ""} yet
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-[#1a4d42]/55">
             Enrol learners to activate fees, timetable, and parent visibility.
           </p>
           <Button
             asChild
             size="sm"
-            className="mt-4 h-9 bg-[#0073ea] text-xs"
+            className="mt-4 h-9 bg-[#246a59] text-xs"
           >
             <Link
               href={studentsClassHref(gradeId, {
@@ -122,7 +122,7 @@ export function ClassStudentsRoster({
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="bg-slate-50/90 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-slate-900/80">
+            <thead className="bg-[#f8fbfa] text-left text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45 dark:bg-[#0c1a17]/80">
               <tr>
                 <th className="px-4 py-2.5 sm:px-5">Student</th>
                 <th className="px-4 py-2.5 sm:px-5">Admission #</th>
@@ -138,21 +138,21 @@ export function ClassStudentsRoster({
               {visible.map((student) => (
                 <tr
                   key={student.id}
-                  className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/30"
+                  className="transition-colors hover:bg-[#f8fbfa] dark:hover:bg-slate-800/30"
                 >
                   <td className="px-4 py-2.5 sm:px-5">
                     <Link
                       href={studentProfileHref(student.id)}
-                      className="font-medium text-slate-800 hover:text-[#0073ea] dark:text-slate-100"
+                      className="font-medium text-[#0a1f1a] hover:text-[#246a59] dark:text-white"
                     >
                       {student.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-[11px] text-slate-500 sm:px-5">
+                  <td className="px-4 py-2.5 font-mono text-[11px] text-[#1a4d42]/55 sm:px-5">
                     {student.admissionNumber}
                   </td>
                   {showStreamColumn ? (
-                    <td className="hidden px-4 py-2.5 text-slate-600 sm:table-cell sm:px-5">
+                    <td className="hidden px-4 py-2.5 text-[#1a4d42]/65 sm:table-cell sm:px-5">
                       {student.streamName || "—"}
                     </td>
                   ) : null}
@@ -173,13 +173,13 @@ export function ClassStudentsRoster({
             </tbody>
           </table>
           {hasMore ? (
-            <p className="border-t border-slate-100 px-4 py-2.5 text-center text-[11px] text-slate-500 dark:border-slate-800 sm:px-5">
+            <p className="border-t border-[#1a4d42]/10 px-4 py-2.5 text-center text-[11px] text-[#1a4d42]/55 dark:border-white/10 sm:px-5">
               +{students.length - maxRows} more —{" "}
               <Link
                 href={studentsClassHref(gradeId, {
                   streamId: streamId ?? undefined,
                 })}
-                className="font-medium text-[#0073ea] hover:underline"
+                className="font-medium text-[#246a59] hover:underline"
               >
                 open full roster
               </Link>

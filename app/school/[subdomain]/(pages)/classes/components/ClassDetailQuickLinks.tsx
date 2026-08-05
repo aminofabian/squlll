@@ -78,27 +78,27 @@ export function ClassDetailQuickLinks({
             key={item.id}
             href={hrefFor(item.id)}
             className={cn(
-              "group flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 transition-all",
-              "hover:-translate-y-0.5 hover:border-[#0073ea]/25 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/50",
+              "group flex items-center gap-2.5 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 transition-all",
+              "hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#0c1a17]",
             )}
           >
             <span
               className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-none",
                 item.accent,
               )}
             >
               <Icon className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-xs font-semibold text-slate-800 dark:text-slate-100">
+              <span className="block text-xs font-semibold text-[#0a1f1a] dark:text-white">
                 {item.label}
               </span>
-              <span className="block text-[10px] text-slate-400">
+              <span className="block text-[10px] text-[#1a4d42]/45">
                 {item.description}
               </span>
             </span>
-            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-slate-300 transition-transform group-hover:text-[#0073ea] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[#1a4d42]/30 transition-transform group-hover:text-[#246a59] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         );
       })}

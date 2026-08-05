@@ -355,17 +355,17 @@ export default function ClassesPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center p-4">
-        <div className="w-full max-w-sm rounded-lg border border-red-200 bg-white px-4 py-6 text-center dark:border-red-900 dark:bg-slate-900">
-          <h2 className="text-sm font-semibold text-red-600">
+      <div className="flex min-h-[40vh] items-center justify-center bg-[#f3f7f5] p-4 dark:bg-[#071411]">
+        <div className="w-full max-w-sm rounded-none border border-red-300/80 bg-white px-4 py-6 text-center shadow-[3px_3px_0_0_rgba(10,31,26,0.04)] dark:border-red-900/50 dark:bg-[#0c1a17]">
+          <h2 className="font-display text-lg tracking-tight text-red-700 dark:text-red-400">
             Error loading classes
           </h2>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-[#1a4d42]/55">
             {error instanceof Error ? error.message : "An error occurred"}
           </p>
           <Button
             onClick={() => window.location.reload()}
-            className="mt-3 h-8"
+            className="mt-3 h-8 rounded-none bg-[#0a1f1a] text-white hover:bg-[#246a59]"
             size="sm"
           >
             Try again
@@ -376,11 +376,11 @@ export default function ClassesPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f8f9fb] dark:bg-slate-950">
+    <div className="flex min-h-full flex-col bg-[#f3f7f5] dark:bg-[#071411]">
       <div className="flex min-w-0 flex-1">
         <aside
           className={cn(
-            "hidden shrink-0 flex-col border-r border-slate-200/80 bg-[#f5f6f8] dark:border-slate-800 dark:bg-slate-900 lg:flex",
+            "hidden shrink-0 flex-col border-r border-[#1a4d42]/12 bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] lg:flex",
             isGradePanelOpen ? "w-56" : "w-0 overflow-hidden border-r-0",
           )}
           aria-label="Grade navigation"
@@ -475,14 +475,14 @@ export default function ClassesPage() {
         onOpenChange={setShowSubjectsDrawer}
         direction="right"
       >
-        <DrawerContent className="flex h-[95vh] max-h-[95dvh] flex-col bg-slate-50/50 dark:bg-slate-950 sm:max-w-lg">
-          <DrawerHeader className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+        <DrawerContent className="flex h-[95vh] max-h-[95dvh] flex-col bg-[#f8fbfa] dark:bg-[#071411] sm:max-w-lg">
+          <DrawerHeader className="shrink-0 border-b border-[#1a4d42]/12 bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0c1a17]">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <DrawerTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <DrawerTitle className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                   All subjects
                 </DrawerTitle>
-                <DrawerDescription className="mt-0.5 text-xs text-slate-500">
+                <DrawerDescription className="mt-0.5 text-xs text-[#1a4d42]/55">
                   {selectedGrade
                     ? `${selectedGrade.levelName} · ${selectedGrade.displayName}`
                     : "Core and elective subjects"}

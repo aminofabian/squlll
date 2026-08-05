@@ -77,14 +77,14 @@ export function ClassSubjectsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="flex flex-wrap items-center gap-4 border-b border-slate-100 px-4 py-4 dark:border-slate-800 sm:px-6">
+      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+        <div className="flex flex-wrap items-center gap-4 border-b border-[#1a4d42]/10 px-4 py-4 dark:border-white/10 sm:px-6">
           <ClassDetailProgressRing value={coverage} size={52} stroke={5} />
           <div className="min-w-0 flex-1">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-base font-semibold text-[#0a1f1a] dark:text-white">
               Curriculum & subject teachers
             </h3>
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p className="mt-0.5 text-xs text-[#1a4d42]/55">
               {isLoading
                 ? "Loading subjects…"
                 : totalCount === 0
@@ -143,11 +143,11 @@ export function ClassSubjectsPanel({
 
         <div className="p-4 sm:p-6">
           {totalCount === 0 && !isLoading ? (
-            <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-200/90 py-12 text-center dark:border-slate-700">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            <div className="flex flex-col items-center rounded-none border border-dashed border-[#1a4d42]/15/90 py-12 text-center dark:border-white/15">
+              <p className="text-sm font-medium text-[#1a4d42]/80 dark:text-slate-200">
                 Build your class curriculum
               </p>
-              <p className="mt-1 max-w-xs text-xs text-slate-500">
+              <p className="mt-1 max-w-xs text-xs text-[#1a4d42]/55">
                 Add subjects from your school catalog, then assign teachers per
                 subject.
               </p>
@@ -155,7 +155,7 @@ export function ClassSubjectsPanel({
                 <Button
                   type="button"
                   size="sm"
-                  className="mt-4 bg-[#0073ea] text-xs"
+                  className="mt-4 bg-[#246a59] text-xs"
                   onClick={onAddSubject}
                 >
                   Add first subject
@@ -202,21 +202,21 @@ export function ClassSubjectsPanel({
       </div>
 
       {feeSummary && feeSummary.students.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
+        <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
           <button
             type="button"
             onClick={() => setFeesOpen((o) => !o)}
-            className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 sm:px-6"
+            className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-[#f8fbfa] dark:hover:bg-slate-800/40 sm:px-6"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <span className="flex h-9 w-9 items-center justify-center rounded-none bg-[#e8f2ef] text-[#1a4d42]/65 dark:bg-slate-800 dark:text-[#1a4d42]/30">
                 <Receipt className="h-4 w-4" />
               </span>
               <div>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                <h4 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                   Fee snapshot
                 </h4>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#1a4d42]/55">
                   {feeSummary.students.length} student
                   {feeSummary.students.length !== 1 ? "s" : ""} ·{" "}
                   {outstandingBalances > 0
@@ -227,25 +227,25 @@ export function ClassSubjectsPanel({
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
-                <p className="text-xs text-slate-400">Outstanding</p>
-                <p className="text-sm font-bold tabular-nums text-slate-900 dark:text-white">
+                <p className="text-xs text-[#1a4d42]/45">Outstanding</p>
+                <p className="text-sm font-bold tabular-nums text-[#0a1f1a] dark:text-white">
                   {formatKes(feeSummary.totalFeesOwed - feeSummary.totalFeesPaid)}
                 </p>
               </div>
               {feesOpen ? (
-                <ChevronUp className="h-4 w-4 text-slate-400" />
+                <ChevronUp className="h-4 w-4 text-[#1a4d42]/45" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-slate-400" />
+                <ChevronDown className="h-4 w-4 text-[#1a4d42]/45" />
               )}
             </div>
           </button>
 
           {feesOpen ? (
-            <div className="border-t border-slate-100 dark:border-slate-800">
+            <div className="border-t border-[#1a4d42]/10 dark:border-white/10">
               <div className="max-h-56 overflow-y-auto">
                 <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-slate-50/95 backdrop-blur dark:bg-slate-900/95">
-                    <tr className="text-left text-[10px] uppercase tracking-wide text-slate-400">
+                  <thead className="sticky top-0 bg-[#f8fbfa]/95 backdrop-blur dark:bg-[#0c1a17]/95">
+                    <tr className="text-left text-[10px] uppercase tracking-wide text-[#1a4d42]/45">
                       <th className="px-4 py-2.5 sm:px-6">Student</th>
                       <th className="px-4 py-2.5 text-right sm:px-6">
                         Balance
@@ -256,10 +256,10 @@ export function ClassSubjectsPanel({
                     {feeSummary.students.map((student) => (
                       <tr
                         key={student.admissionNumber}
-                        className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                        className="transition-colors hover:bg-[#f8fbfa] dark:hover:bg-slate-800/30"
                       >
                         <td className="px-4 py-2.5 sm:px-6">
-                          <span className="font-medium text-slate-800 dark:text-slate-100">
+                          <span className="font-medium text-[#0a1f1a] dark:text-white">
                             {student.studentName}
                           </span>
                         </td>
@@ -380,12 +380,12 @@ function SubjectGroup({
     <section>
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <div>
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-[#1a4d42]/80 dark:text-slate-200">
             {title}
           </h4>
-          <p className="text-[10px] text-slate-400">{hint}</p>
+          <p className="text-[10px] text-[#1a4d42]/45">{hint}</p>
         </div>
-        <span className="text-[10px] font-medium tabular-nums text-slate-400">
+        <span className="text-[10px] font-medium tabular-nums text-[#1a4d42]/45">
           {subjects.length}
         </span>
       </div>
@@ -401,16 +401,16 @@ function SubjectGroup({
             <li
               key={s.id}
               className={cn(
-                "flex flex-col gap-3 rounded-xl border border-slate-200/70 border-l-[3px] bg-white px-3 py-3 shadow-sm transition-shadow hover:shadow-md dark:border-slate-700/80 dark:bg-slate-900/30 sm:flex-row sm:items-center sm:justify-between sm:px-4",
+                "flex flex-col gap-3 rounded-none border border-[#1a4d42]/12 border-l-[3px] bg-white px-3 py-3 shadow-none transition-shadow hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#071411] sm:flex-row sm:items-center sm:justify-between sm:px-4",
                 staffed ? borderAccent : "border-l-slate-300 dark:border-l-slate-600",
               )}
             >
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
                   {s.name}
                 </p>
                 {s.code ? (
-                  <p className="mt-0.5 font-mono text-[10px] text-slate-400">
+                  <p className="mt-0.5 font-mono text-[10px] text-[#1a4d42]/45">
                     {s.code}
                   </p>
                 ) : null}

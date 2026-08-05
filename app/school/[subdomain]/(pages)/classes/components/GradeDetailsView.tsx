@@ -32,11 +32,11 @@ function StatCell({
   return (
     <div
       className={cn(
-        "flex min-h-[3.25rem] flex-col justify-center rounded-md bg-slate-50/80 px-2 py-1.5 dark:bg-slate-800/30",
+        "flex min-h-[3.25rem] flex-col justify-center rounded-none bg-[#f8fbfa] px-2 py-1.5 dark:bg-[#071411]",
         className,
       )}
     >
-      <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
         {label}
       </p>
       <div className="mt-0.5">{children}</div>
@@ -78,7 +78,7 @@ export function GradeDetailsView({
               Add →
             </Link>
           ) : (
-            <p className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+            <p className="text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
               {studentsLoading ? "—" : studentCount}
             </p>
           )}
@@ -104,7 +104,7 @@ export function GradeDetailsView({
             )
           ) : (
             <p
-              className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100"
+              className="truncate text-xs font-semibold text-[#0a1f1a] dark:text-white"
               title={classTeacher?.teacher.fullName}
             >
               {teacherLoading ? "—" : classTeacher?.teacher.fullName}
@@ -113,7 +113,7 @@ export function GradeDetailsView({
         </StatCell>
 
         <StatCell label="Streams">
-          <p className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+          <p className="text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
             {selectedStreamId
               ? "1"
               : formatStreamCount(grade.streams?.length || 0)}
@@ -121,21 +121,21 @@ export function GradeDetailsView({
         </StatCell>
 
         <StatCell label="Fees owed" className="hidden sm:flex">
-          <p className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+          <p className="text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
             {studentsLoading ? "—" : `KES ${feesOwed.toLocaleString()}`}
           </p>
         </StatCell>
 
         <StatCell label="Fees paid" className="hidden sm:flex">
-          <p className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+          <p className="text-sm font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
             {studentsLoading ? "—" : `KES ${feesPaid.toLocaleString()}`}
           </p>
         </StatCell>
       </div>
 
       {!selectedStreamId && grade.streams && grade.streams.length > 0 ? (
-        <div className="rounded-lg border border-slate-200/80 bg-white px-2.5 py-2 dark:border-slate-700 dark:bg-slate-900/40">
-          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        <div className="rounded-none border border-[#1a4d42]/12 bg-white px-2.5 py-2 dark:border-white/15 dark:bg-[#0c1a17]">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
             Streams
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -144,7 +144,7 @@ export function GradeDetailsView({
                 key={stream.id}
                 type="button"
                 onClick={() => onStreamSelect?.(stream.id)}
-                className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="rounded-none bg-[#e8f2ef] px-2.5 py-1 text-xs font-medium text-[#1a4d42]/80 transition-colors hover:bg-[#e8f2ef] dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 {stream.name}
               </button>

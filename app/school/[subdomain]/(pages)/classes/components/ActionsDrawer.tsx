@@ -43,14 +43,14 @@ function ActionRow({
 }) {
   const content = (
     <>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-        <Icon className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-[#e8f2ef] dark:bg-slate-800">
+        <Icon className="h-4 w-4 text-[#1a4d42]/65 dark:text-[#1a4d42]/30" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+        <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
           {title}
         </p>
-        <p className="text-[11px] text-slate-400">{description}</p>
+        <p className="text-[11px] text-[#1a4d42]/45">{description}</p>
       </div>
       {children}
     </>
@@ -61,7 +61,7 @@ function ActionRow({
       <button
         type="button"
         onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 text-left transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-800/40"
+        className="flex w-full items-center gap-3 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 text-left transition-colors hover:bg-[#f8fbfa] dark:border-white/10 dark:bg-[#0c1a17] dark:hover:bg-slate-800/40"
       >
         {content}
       </button>
@@ -69,7 +69,7 @@ function ActionRow({
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/40">
+    <div className="flex items-center gap-3 rounded-none border border-[#1a4d42]/12 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-[#0c1a17]">
       {content}
     </div>
   );
@@ -115,19 +115,19 @@ export function ActionsDrawer({
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen} direction="right">
       <DrawerTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 border-slate-200">
+        <Button variant="outline" size="sm" className="h-9 border-[#1a4d42]/15">
           <Menu className="h-4 w-4 mr-2" />
           <span className="hidden sm:inline">Actions</span>
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="max-w-sm h-[95vh] flex flex-col bg-slate-50/50 dark:bg-slate-950">
-        <DrawerHeader className="border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+      <DrawerContent className="max-w-sm h-[95vh] flex flex-col bg-[#f8fbfa] dark:bg-[#071411]">
+        <DrawerHeader className="border-b border-[#1a4d42]/12 bg-white px-5 py-4 dark:border-white/10 dark:bg-[#0c1a17]">
           <div className="flex items-center justify-between">
             <div>
-              <DrawerTitle className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <DrawerTitle className="text-base font-semibold text-[#0a1f1a] dark:text-white">
                 Actions
               </DrawerTitle>
-              <DrawerDescription className="text-xs text-slate-500 mt-0.5">
+              <DrawerDescription className="text-xs text-[#1a4d42]/55 mt-0.5">
                 Manage classes, streams, and teachers
               </DrawerDescription>
             </div>
@@ -141,7 +141,7 @@ export function ActionsDrawer({
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           <section>
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
               General
             </h3>
             <div className="space-y-2">
@@ -185,7 +185,7 @@ export function ActionsDrawer({
             <section>
               <h3
                 className={cn(
-                  "mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400",
+                  "mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#1a4d42]/45",
                 )}
               >
                 {selectedGrade.name}

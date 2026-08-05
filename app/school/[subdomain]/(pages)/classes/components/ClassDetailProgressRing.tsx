@@ -38,7 +38,7 @@ export function ClassDetailProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={stroke}
-          className="text-slate-200/90 dark:text-slate-700"
+          className="text-slate-200/90 dark:text-[#1a4d42]/80"
         />
         <circle
           cx={size / 2}
@@ -52,14 +52,14 @@ export function ClassDetailProgressRing({
           strokeDashoffset={offset}
           className={cn(
             "transition-[stroke-dashoffset] duration-500",
-            complete ? "text-emerald-500" : clamped > 0 ? "text-[#0073ea]" : "text-slate-300",
+            complete ? "text-emerald-500" : clamped > 0 ? "text-[#246a59]" : "text-[#1a4d42]/30",
           )}
         />
       </svg>
       <span
         className={cn(
           "absolute text-[10px] font-bold tabular-nums",
-          complete ? "text-emerald-600" : "text-slate-700 dark:text-slate-200",
+          complete ? "text-emerald-600" : "text-[#1a4d42]/80 dark:text-slate-200",
         )}
       >
         {clamped}%

@@ -61,8 +61,8 @@ export function ClassesStats({
 
   if (isLoading || teachersLoading || studentsLoading) {
     return (
-      <p className="text-xs text-slate-400">
-        <span className="inline-block h-3 w-48 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+      <p className="text-xs text-[#1a4d42]/45">
+        <span className="inline-block h-3 w-48 animate-pulse rounded bg-[#e8f2ef] dark:bg-slate-800" />
       </p>
     );
   }
@@ -82,13 +82,13 @@ export function ClassesStats({
 
   return (
     <p
-      className="text-xs text-slate-500 dark:text-slate-400"
+      className="text-xs text-[#1a4d42]/55 dark:text-[#1a4d42]/45"
       aria-label={`School summary: ${parts.join(", ")}`}
     >
-      <span className="font-medium text-slate-600 dark:text-slate-300">
+      <span className="font-medium text-[#1a4d42]/65 dark:text-[#1a4d42]/30">
         Summary
       </span>
-      <span className="mx-1.5 text-slate-300 dark:text-slate-600">·</span>
+      <span className="mx-1.5 text-[#1a4d42]/30 dark:text-[#1a4d42]/65">·</span>
       {parts.join(" · ")}
     </p>
   );

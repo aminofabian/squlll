@@ -119,15 +119,15 @@ export function ClassesGradeBrowse({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-8 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />
+        <div className="h-8 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-slate-800" />
         {Array.from({ length: 2 }).map((_, index) => (
           <div key={index} className="space-y-2">
-            <div className="h-3 w-24 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+            <div className="h-3 w-24 animate-pulse rounded bg-[#e8f2ef] dark:bg-slate-800" />
             <div className="grid grid-cols-3 gap-1.5">
               {Array.from({ length: 6 }).map((_, chipIndex) => (
                 <div
                   key={chipIndex}
-                  className="h-11 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                  className="h-11 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-slate-800"
                 />
               ))}
             </div>
@@ -139,9 +139,9 @@ export function ClassesGradeBrowse({
 
   if (levelGroups.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center dark:border-slate-700">
-        <p className="text-xs text-slate-500">No grades configured yet.</p>
-        <p className="mt-1 text-[11px] text-slate-400">
+      <div className="rounded-none border border-dashed border-[#1a4d42]/15 px-4 py-6 text-center dark:border-white/15">
+        <p className="text-xs text-[#1a4d42]/55">No grades configured yet.</p>
+        <p className="mt-1 text-[11px] text-[#1a4d42]/45">
           Complete school setup to add class levels.
         </p>
       </div>
@@ -151,18 +151,18 @@ export function ClassesGradeBrowse({
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/45" />
         <Input
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder="Search grades or streams…"
-          className="h-8 border-slate-200/80 bg-slate-50/80 pl-8 pr-8 text-xs dark:border-slate-700 dark:bg-slate-800/40"
+          className="h-8 border-[#1a4d42]/12 bg-[#f8fbfa] pl-8 pr-8 text-xs dark:border-white/15 dark:bg-[#071411]"
         />
         {searchTerm ? (
           <button
             type="button"
             onClick={() => setSearchTerm("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[#1a4d42]/45 hover:text-[#1a4d42]/65"
             aria-label="Clear search"
           >
             <X className="h-3.5 w-3.5" />
@@ -171,17 +171,17 @@ export function ClassesGradeBrowse({
       </div>
 
       {filteredGroups.length === 0 ? (
-        <p className="py-4 text-center text-xs text-slate-400">
+        <p className="py-4 text-center text-xs text-[#1a4d42]/45">
           No grades match &ldquo;{searchTerm}&rdquo;
         </p>
       ) : (
         filteredGroups.map((group) => (
           <div key={group.levelId} className="space-y-2">
             <div className="flex items-center justify-between gap-2 px-0.5">
-              <h3 className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              <h3 className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/45">
                 {group.levelName}
               </h3>
-              <span className="shrink-0 text-[10px] tabular-nums text-slate-400">
+              <span className="shrink-0 text-[10px] tabular-nums text-[#1a4d42]/45">
                 {group.grades.length} grade{group.grades.length !== 1 ? "s" : ""}
                 {group.subjectCount > 0
                   ? ` · ${group.subjectCount} subject${group.subjectCount !== 1 ? "s" : ""}`
@@ -189,7 +189,7 @@ export function ClassesGradeBrowse({
               </span>
             </div>
 
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-2 dark:border-slate-700/80 dark:bg-slate-800/20">
+            <div className="rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-2 dark:border-white/15 dark:bg-[#071411]">
               <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5">
                 {group.grades.map((grade) => {
                   const isExpanded = expandedGradeId === grade.id;
@@ -202,10 +202,10 @@ export function ClassesGradeBrowse({
                       type="button"
                       onClick={() => handleGradeClick(grade)}
                       className={cn(
-                        "relative flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-center transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]",
+                        "relative flex min-h-[2.75rem] flex-col items-center justify-center gap-0.5 rounded-none px-1 py-1.5 text-center transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]",
                         isActive
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200",
+                          ? "bg-slate-900 text-white shadow-none dark:bg-[#e8f2ef] dark:text-[#0a1f1a]"
+                          : "bg-white text-[#1a4d42]/80 dark:bg-[#0c1a17] dark:text-slate-200",
                       )}
                     >
                       <span className="text-[13px] font-semibold leading-none">
@@ -215,8 +215,8 @@ export function ClassesGradeBrowse({
                         className={cn(
                           "flex items-center gap-0.5 text-[9px] leading-none",
                           isActive
-                            ? "text-white/75 dark:text-slate-600"
-                            : "text-slate-400",
+                            ? "text-white/75 dark:text-[#1a4d42]/65"
+                            : "text-[#1a4d42]/45",
                         )}
                       >
                         {streamCount > 0 ? (
@@ -233,10 +233,10 @@ export function ClassesGradeBrowse({
                       {streamCount > 0 ? (
                         <span
                           className={cn(
-                            "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold tabular-nums",
+                            "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-none px-1 text-[9px] font-bold tabular-nums",
                             isActive
-                              ? "bg-white text-slate-900 dark:bg-slate-900 dark:text-white"
-                              : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-200",
+                              ? "bg-white text-[#0a1f1a] dark:bg-[#0c1a17] dark:text-white"
+                              : "bg-[#e8f2ef] text-[#1a4d42]/65 dark:bg-slate-700 dark:text-slate-200",
                           )}
                         >
                           {streamCount}
@@ -252,8 +252,8 @@ export function ClassesGradeBrowse({
       )}
 
       {activeGrade && (activeGrade.streams?.length ?? 0) > 0 ? (
-        <div className="rounded-xl border border-slate-200/80 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900/60">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+        <div className="rounded-none border border-[#1a4d42]/12 bg-white p-2.5 dark:border-white/15 dark:bg-[#0c1a17]">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/45">
             Pick a stream in {abbreviateGradeShort(activeGrade.name)}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -268,10 +268,10 @@ export function ClassesGradeBrowse({
                   type="button"
                   onClick={() => handleStreamClick(stream.id, activeGrade)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                    "rounded-none px-3 py-1.5 text-xs font-medium transition-colors",
                     isSelected
-                      ? "bg-[#0073ea] text-white"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700",
+                      ? "bg-[#246a59] text-white"
+                      : "bg-[#e8f2ef] text-[#1a4d42]/80 hover:bg-[#e8f2ef] dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700",
                   )}
                 >
                   {stream.name}
@@ -285,7 +285,7 @@ export function ClassesGradeBrowse({
               setExpandedGradeId(null);
               onGradeSelect?.(activeGrade.id, activeGrade.levelId);
             }}
-            className="mt-2 text-[11px] font-medium text-[#0073ea] hover:underline"
+            className="mt-2 text-[11px] font-medium text-[#246a59] hover:underline"
           >
             Manage whole grade →
           </button>

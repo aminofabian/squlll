@@ -26,15 +26,15 @@ export function SubjectTeacherBadge({
     return (
       <span
         className={cn(
-          "inline-flex max-w-[11rem] items-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50/90 py-0.5 pl-0.5 pr-2.5 dark:border-slate-600 dark:bg-slate-800/60",
+          "inline-flex max-w-[11rem] items-center gap-1.5 rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] py-0.5 pl-0.5 pr-2.5 dark:border-slate-600 dark:bg-slate-800/60",
           className,
         )}
         title={teacherName}
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0073ea]/15 text-[10px] font-bold text-[#0073ea]">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-[#246a59]/15 text-[10px] font-bold text-[#246a59]">
           {initials(teacherName)}
         </span>
-        <span className="truncate text-xs font-medium text-slate-800 dark:text-slate-100">
+        <span className="truncate text-xs font-medium text-[#0a1f1a] dark:text-white">
           {teacherName}
         </span>
       </span>
@@ -48,7 +48,7 @@ export function SubjectTeacherBadge({
         onClick={onAssign}
         title="Assign teacher for this subject"
         className={cn(
-          "inline-flex shrink-0 items-center gap-1 rounded-full border border-dashed border-amber-300/90 bg-amber-50/90 px-2.5 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+          "inline-flex shrink-0 items-center gap-1 rounded-none border border-dashed border-amber-300/90 bg-amber-50/90 px-2.5 py-1 text-[11px] font-medium text-amber-800 transition-colors hover:border-amber-400 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
           className,
         )}
       >
@@ -61,7 +61,7 @@ export function SubjectTeacherBadge({
   return (
     <span
       className={cn(
-        "shrink-0 whitespace-nowrap text-[11px] text-slate-400",
+        "shrink-0 whitespace-nowrap text-[11px] text-[#1a4d42]/45",
         className,
       )}
     >

@@ -79,7 +79,7 @@ export function ClassActionBar({
           <button
             type="button"
             className={cn(
-              "inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200",
+              "inline-flex h-7 w-7 items-center justify-center rounded-none text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#1a4d42]/65 dark:hover:bg-slate-800 dark:hover:text-slate-200",
               className,
             )}
             aria-label="Actions"
@@ -129,7 +129,7 @@ export function ClassActionBar({
                   action.onClick();
                 }}
                 className={cn(
-                  "inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200",
+                  "inline-flex h-7 w-7 items-center justify-center rounded-none text-[#1a4d42]/45 transition-colors hover:bg-[#e8f2ef] hover:text-[#1a4d42]/80 dark:hover:bg-slate-800 dark:hover:text-slate-200",
                   action.destructive &&
                     "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40",
                   action.disabled && "opacity-40",
@@ -155,7 +155,7 @@ export function ClassActionBar({
         {actions.map((action, index) => (
           <span key={action.id} className="inline-flex items-center gap-1">
             {index > 0 && (
-              <span className="select-none text-slate-300 dark:text-slate-600">
+              <span className="select-none text-[#1a4d42]/30 dark:text-[#1a4d42]/65">
                 ·
               </span>
             )}
@@ -169,8 +169,8 @@ export function ClassActionBar({
                 className={cn(
                   "inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors",
                   index === 0
-                    ? "font-medium text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
-                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
+                    ? "font-medium text-[#1a4d42]/80 hover:text-[#0a1f1a] dark:text-slate-200 dark:hover:text-white"
+                    : "text-[#1a4d42]/55 hover:text-[#1a4d42]/80 dark:text-[#1a4d42]/45 dark:hover:text-slate-200",
                   action.destructive && "text-red-600 hover:text-red-700",
                   action.disabled && "pointer-events-none opacity-40",
                 )}

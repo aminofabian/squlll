@@ -97,7 +97,7 @@ function healthMeta(health: ClassHealth) {
       return {
         label: "No students",
         className:
-          "border-slate-200/80 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-400",
+          "border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/65 dark:border-white/15 dark:bg-[#071411] dark:text-[#1a4d42]/45",
         dot: "bg-slate-400",
       };
   }
@@ -259,23 +259,23 @@ export function ClassesCampusOverview({
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+              className="h-16 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-[#0c1a17]"
             />
           ))}
         </div>
-        <div className="h-64 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+        <div className="h-64 animate-pulse rounded-none bg-[#e8f2ef] dark:bg-[#0c1a17]" />
       </div>
     );
   }
 
   if (classUnits.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center dark:border-slate-700">
-        <GraduationCap className="mx-auto h-8 w-8 text-slate-300" />
-        <p className="mt-3 text-sm font-medium text-slate-600">
+      <div className="rounded-none border border-dashed border-[#1a4d42]/15 px-6 py-12 text-center dark:border-white/15">
+        <GraduationCap className="mx-auto h-8 w-8 text-[#1a4d42]/30" />
+        <p className="mt-3 text-sm font-medium text-[#1a4d42]/65">
           No classes set up yet
         </p>
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-[#1a4d42]/45">
           Add grade levels and streams in school setup first.
         </p>
       </div>
@@ -284,18 +284,18 @@ export function ClassesCampusOverview({
 
   return (
     <section aria-label="Class directory overview" className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="border-b border-slate-100 bg-gradient-to-r from-[#0073ea]/5 to-transparent px-4 py-4 dark:border-slate-800 sm:px-5">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
+        <div className="border-b border-[#1a4d42]/10 bg-gradient-to-r from-[#246a59]/5 to-transparent px-4 py-4 dark:border-white/10 sm:px-5">
+          <h2 className="font-display text-lg font-normal tracking-tight text-[#0a1f1a] dark:text-white">
             Class directory
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 text-xs text-[#1a4d42]/55">
             Every grade and stream is a class — see who teaches it and how many
             students are enrolled.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 dark:divide-slate-800 sm:grid-cols-4 sm:divide-y-0">
+        <div className="grid grid-cols-2 divide-x divide-y divide-[#1a4d42]/10 dark:divide-white/10 sm:grid-cols-4 sm:divide-y-0">
           {[
             { label: "Classes", value: summary.total },
             { label: "Students placed", value: summary.totalStudents },
@@ -310,7 +310,7 @@ export function ClassesCampusOverview({
             },
           ].map((cell) => (
             <div key={cell.label} className="px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
                 {cell.label}
               </p>
               <p
@@ -318,7 +318,7 @@ export function ClassesCampusOverview({
                   "mt-0.5 text-lg font-bold tabular-nums",
                   cell.warn
                     ? "text-amber-700 dark:text-amber-400"
-                    : "text-slate-900 dark:text-white",
+                    : "text-[#0a1f1a] dark:text-white",
                 )}
               >
                 {cell.value}
@@ -330,18 +330,18 @@ export function ClassesCampusOverview({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/45" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search class or teacher…"
-            className="h-9 border-slate-200/80 bg-white pl-8 pr-8 text-sm dark:bg-slate-900"
+            className="h-9 border-[#1a4d42]/12 bg-white pl-8 pr-8 text-sm dark:bg-[#0c1a17]"
           />
           {search ? (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#1a4d42]/45"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" />
@@ -350,7 +350,7 @@ export function ClassesCampusOverview({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg border border-slate-200/80 bg-slate-50/80 p-0.5 dark:border-slate-700 dark:bg-slate-900/60">
+          <div className="inline-flex rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-0.5 dark:border-white/15 dark:bg-[#0c1a17]">
             {(
               [
                 { id: "all" as const, label: "All classes" },
@@ -362,10 +362,10 @@ export function ClassesCampusOverview({
                 type="button"
                 onClick={() => setFilter(tab.id)}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  "rounded-none px-3 py-1.5 text-xs font-medium transition-colors",
                   filter === tab.id
-                    ? "bg-white text-[#0073ea] shadow-sm dark:bg-slate-800"
-                    : "text-slate-500 hover:text-slate-700",
+                    ? "bg-white text-[#246a59] shadow-none dark:bg-[#0c1a17]"
+                    : "text-[#1a4d42]/55 hover:text-[#1a4d42]/80",
                 )}
               >
                 {tab.label}
@@ -391,7 +391,7 @@ export function ClassesCampusOverview({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-slate-400">
+        <p className="py-8 text-center text-sm text-[#1a4d42]/45">
           No classes match your search.
         </p>
       ) : (
@@ -404,45 +404,45 @@ export function ClassesCampusOverview({
                 type="button"
                 onClick={() => openClass(unit)}
                 className={cn(
-                  "group flex flex-col rounded-xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all",
-                  "hover:-translate-y-0.5 hover:border-[#0073ea]/30 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/50",
+                  "group flex flex-col rounded-none border border-[#1a4d42]/12 bg-white p-4 text-left shadow-none transition-all",
+                  "hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#0c1a17]",
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900 group-hover:text-[#0073ea] dark:text-white">
+                    <p className="truncate text-sm font-semibold text-[#0a1f1a] group-hover:text-[#246a59] dark:text-white">
                       {unit.label}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-400">
+                    <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
                       {unit.levelName}
                     </p>
                   </div>
                   <span
                     className={cn(
-                      "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                      "inline-flex shrink-0 items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-medium",
                       meta.className,
                     )}
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
+                    <span className={cn("h-1.5 w-1.5 rounded-none", meta.dot)} />
                     {meta.label}
                   </span>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#1a4d42]/10 pt-3 dark:border-white/10">
                   <div>
-                    <p className="text-[10px] font-medium uppercase text-slate-400">
+                    <p className="text-[10px] font-medium uppercase text-[#1a4d42]/45">
                       Students
                     </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-base font-bold tabular-nums text-slate-800 dark:text-slate-100">
-                      <Users className="h-3.5 w-3.5 text-slate-400" />
+                    <p className="mt-0.5 flex items-center gap-1 text-base font-bold tabular-nums text-[#0a1f1a] dark:text-white">
+                      <Users className="h-3.5 w-3.5 text-[#1a4d42]/45" />
                       {unit.studentCount}
                     </p>
                   </div>
                   <div className="col-span-2 min-w-0">
-                    <p className="text-[10px] font-medium uppercase text-slate-400">
+                    <p className="text-[10px] font-medium uppercase text-[#1a4d42]/45">
                       Class teacher
                     </p>
-                    <p className="mt-0.5 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+                    <p className="mt-0.5 truncate text-xs font-semibold text-[#1a4d42]/80 dark:text-slate-200">
                       {unit.classTeacher ?? (
                         <span className="font-medium text-amber-700 dark:text-amber-400">
                           Not assigned
@@ -452,7 +452,7 @@ export function ClassesCampusOverview({
                   </div>
                 </div>
 
-                <p className="mt-3 flex items-center gap-1 text-[11px] text-slate-400">
+                <p className="mt-3 flex items-center gap-1 text-[11px] text-[#1a4d42]/45">
                   <BookOpen className="h-3 w-3" />
                   {unit.subjectCount === 0
                     ? "No subjects on curriculum"
@@ -465,7 +465,7 @@ export function ClassesCampusOverview({
       )}
 
       {summary.needsAttention > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-amber-50/40 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-none border border-amber-200/70 bg-amber-50/40 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
           <p className="flex items-center gap-2 text-xs text-amber-900 dark:text-amber-200">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {summary.needsAttention} class
@@ -484,7 +484,7 @@ export function ClassesCampusOverview({
           </Button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/40 px-4 py-3 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+        <div className="flex items-center gap-2 rounded-none border border-emerald-200/60 bg-emerald-50/40 px-4 py-3 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           All classes are enrolled, staffed, and subject-ready.
         </div>

@@ -33,18 +33,18 @@ export function ClassSetupStrip({
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200/80 bg-white/60 px-3 py-2.5 backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-900/50",
+        "rounded-none border border-[#1a4d42]/12 bg-white/60 px-3 py-2.5 backdrop-blur-sm dark:border-white/15 dark:bg-[#0c1a17]",
         className,
       )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
           Class readiness
         </p>
         <span
           className={cn(
             "text-[10px] font-semibold tabular-nums",
-            allDone ? "text-emerald-600" : "text-slate-500",
+            allDone ? "text-emerald-600" : "text-[#1a4d42]/55",
           )}
         >
           {doneCount}/{steps.length}
@@ -58,10 +58,10 @@ export function ClassSetupStrip({
             <>
               <span
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-none",
                   step.done
                     ? "bg-emerald-500 text-white"
-                    : "bg-slate-200/80 text-slate-400 dark:bg-slate-700",
+                    : "bg-[#e8f2ef]/80 text-[#1a4d42]/45 dark:bg-slate-700",
                 )}
               >
                 {step.done ? (
@@ -75,7 +75,7 @@ export function ClassSetupStrip({
                   "truncate text-[11px] font-medium",
                   step.done
                     ? "text-emerald-800 dark:text-emerald-200"
-                    : "text-slate-600 dark:text-slate-300",
+                    : "text-[#1a4d42]/65 dark:text-[#1a4d42]/30",
                 )}
               >
                 {step.label}
@@ -83,12 +83,12 @@ export function ClassSetupStrip({
             </>
           );
           const stepClass = cn(
-            "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left sm:min-w-[7rem]",
+            "flex min-w-0 flex-1 items-center gap-2 rounded-none px-2 py-1.5 text-left sm:min-w-[7rem]",
             step.done
               ? "bg-emerald-50/80 dark:bg-emerald-950/25"
-              : "bg-slate-50/90 dark:bg-slate-800/40",
+              : "bg-[#f8fbfa] dark:bg-[#071411]",
             onStepClick &&
-              "cursor-pointer transition-colors hover:ring-1 hover:ring-[#0073ea]/20",
+              "cursor-pointer transition-colors hover:ring-1 hover:ring-[#246a59]/20",
           );
 
           return onStepClick ? (

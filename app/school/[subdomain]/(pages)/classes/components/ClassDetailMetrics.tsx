@@ -39,13 +39,13 @@ export function ClassDetailMetrics({
   }
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100/80 pt-4 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
+    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#1a4d42]/10 pt-4 text-xs text-[#1a4d42]/65 dark:border-white/10 dark:text-[#1a4d42]/45">
       {showEnrollment ? (
         <>
           <span className="inline-flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-[#0073ea]" />
+            <Users className="h-3.5 w-3.5 text-[#246a59]" />
             <span>
-              <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+              <span className="font-semibold tabular-nums text-[#0a1f1a] dark:text-slate-200">
                 {studentCount}
               </span>{" "}
               student{studentCount !== 1 ? "s" : ""}
@@ -53,21 +53,21 @@ export function ClassDetailMetrics({
             </span>
           </span>
           {showFees ? (
-            <span className="hidden h-3 w-px bg-slate-200 sm:inline dark:bg-slate-700" />
+            <span className="hidden h-3 w-px bg-[#e8f2ef] sm:inline dark:bg-slate-700" />
           ) : null}
         </>
       ) : null}
 
       {showFees ? (
         <span className="inline-flex items-center gap-1.5">
-          <Banknote className="h-3.5 w-3.5 text-slate-400" />
-          <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+          <Banknote className="h-3.5 w-3.5 text-[#1a4d42]/45" />
+          <span className="font-semibold tabular-nums text-[#0a1f1a] dark:text-slate-200">
             {formatKes(feesOwed)}
           </span>
           <span>fees billed (grade)</span>
           <Link
             href="/fees"
-            className="font-medium text-[#0073ea] hover:underline"
+            className="font-medium text-[#246a59] hover:underline"
           >
             View fees
           </Link>

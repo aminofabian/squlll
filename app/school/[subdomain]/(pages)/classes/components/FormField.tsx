@@ -24,7 +24,7 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label htmlFor={id} className="text-xs font-medium text-slate-700 dark:text-slate-300">
+      <Label htmlFor={id} className="text-xs font-medium text-[#1a4d42]/80 dark:text-[#1a4d42]/30">
         {label}
         {required && (
           <span className="ml-0.5 text-red-500" aria-hidden="true">
@@ -38,7 +38,7 @@ export function FormField({
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[11px] text-slate-400">{hint}</p>
+        <p className="text-[11px] text-[#1a4d42]/45">{hint}</p>
       ) : null}
     </div>
   );

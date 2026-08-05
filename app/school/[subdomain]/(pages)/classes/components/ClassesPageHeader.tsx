@@ -12,6 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { ClassAction } from "./ClassActionBar";
+import {
+  classesActionButton,
+  classesGhostButton,
+  classesIconButton,
+} from "./classes-ui";
 
 interface ClassesPageHeaderProps {
   title: string;
@@ -35,14 +40,17 @@ export function ClassesPageHeader({
   onToggleGradePanel,
 }: ClassesPageHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 shrink-0 border-b border-slate-200/60 bg-[#f8f9fb]/90 px-3 py-2 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 sm:px-4">
+    <div className="sticky top-0 z-20 shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
       <div className="mx-auto flex max-w-6xl items-center gap-2">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-[15px]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
+            Structure
+          </p>
+          <h1 className="truncate font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
             {title}
           </h1>
           {subtitle ? (
-            <p className="hidden truncate text-[11px] text-slate-400 sm:block">
+            <p className="hidden truncate text-[11px] text-[#1a4d42]/50 sm:block">
               {subtitle}
             </p>
           ) : null}
@@ -51,9 +59,9 @@ export function ClassesPageHeader({
         <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
-            variant={hasGradeSelected ? "secondary" : "outline"}
+            variant="outline"
             size="sm"
-            className="h-7 gap-1 px-2 text-xs lg:hidden"
+            className={cn(classesActionButton, "lg:hidden")}
             onClick={onOpenGradePicker}
           >
             <Filter className="h-3.5 w-3.5" />
@@ -67,7 +75,7 @@ export function ClassesPageHeader({
               type="button"
               variant="ghost"
               size="sm"
-              className="hidden h-7 px-2 text-xs lg:inline-flex"
+              className={cn(classesGhostButton, "hidden lg:inline-flex")}
               onClick={onToggleGradePanel}
             >
               {isGradePanelOpen ? "Hide panel" : "Grades"}
@@ -79,13 +87,13 @@ export function ClassesPageHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className={classesIconButton}
                 aria-label="Class actions"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 rounded-none">
               <DropdownMenuLabel className="text-xs">Class tasks</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {actions.map((action) => {
@@ -106,7 +114,10 @@ export function ClassesPageHeader({
               {!hasGradeSelected ? (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled className="gap-2 text-xs text-slate-400">
+                  <DropdownMenuItem
+                    disabled
+                    className="gap-2 text-xs text-[#1a4d42]/45"
+                  >
                     <BookOpen className="h-3.5 w-3.5" />
                     Select a grade to add subjects or streams
                   </DropdownMenuItem>

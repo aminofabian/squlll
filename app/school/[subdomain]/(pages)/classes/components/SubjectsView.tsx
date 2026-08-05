@@ -148,12 +148,12 @@ export function SubjectsView({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />
+        <div className="h-9 bg-[#e8f2ef] dark:bg-slate-800 rounded-none animate-pulse" />
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="h-11 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse"
+              className="h-11 bg-[#e8f2ef] dark:bg-slate-800 rounded-none animate-pulse"
             />
           ))}
         </div>
@@ -182,12 +182,12 @@ export function SubjectsView({
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1a4d42]/45" />
             <Input
               placeholder="Search subjects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-10 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+              className="pl-9 h-10 border-[#1a4d42]/15 bg-white dark:border-white/15 dark:bg-[#0c1a17]"
             />
           </div>
           {toolbarActions.length > 0 && (
@@ -198,7 +198,7 @@ export function SubjectsView({
             />
           )}
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#1a4d42]/55">
           {filteredSubjects.length} subject
           {filteredSubjects.length !== 1 ? "s" : ""}
           {coreSubjects.length > 0 && electiveSubjects.length > 0
@@ -209,11 +209,11 @@ export function SubjectsView({
 
       {filteredSubjects.length === 0 ? (
         <div className="text-center py-16">
-          <BookOpen className="h-9 w-9 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <BookOpen className="h-9 w-9 text-[#1a4d42]/30 mx-auto mb-3" />
+          <p className="text-sm text-[#1a4d42]/65 dark:text-[#1a4d42]/45">
             No subjects found
           </p>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#1a4d42]/45 mt-1">
             {searchTerm
               ? "Try a different search."
               : "Subjects appear here after school setup."}
@@ -370,20 +370,20 @@ function SubjectSection({
   return (
     <section>
       <div className="mb-2 flex items-center gap-1.5 px-0.5">
-        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", dot)} />
-        <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-none", dot)} />
+        <p className="text-xs font-medium text-[#1a4d42]/65 dark:text-[#1a4d42]/30">
           {title} · {hint}
         </p>
-        <span className="ml-auto text-[11px] text-slate-400">{subjects.length}</span>
+        <span className="ml-auto text-[11px] text-[#1a4d42]/45">{subjects.length}</span>
       </div>
-      <ul className="overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
+      <ul className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:divide-slate-800 dark:border-white/10 dark:bg-[#0c1a17]">
           {subjects.map((s) => (
             <li
               key={s.id}
-              className="group flex items-center gap-2 border-b border-slate-100 px-3 py-2.5 last:border-b-0 hover:bg-slate-50/80 dark:border-slate-800 dark:hover:bg-slate-800/40"
+              className="group flex items-center gap-2 border-b border-[#1a4d42]/10 px-3 py-2.5 last:border-b-0 hover:bg-[#f8fbfa] dark:border-white/10 dark:hover:bg-slate-800/40"
             >
               <span
-                className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800 dark:text-slate-100"
+                className="min-w-0 flex-1 truncate text-sm font-medium text-[#0a1f1a] dark:text-white"
                 title={s.name}
               >
                 {s.name}
