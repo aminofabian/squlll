@@ -29,6 +29,7 @@ import {
   teachersField,
   teachersFieldLabel,
   teachersPanel,
+  teachersPrimaryButton,
   teachersSectionHead,
 } from "./teachers-ui";
 import { toast } from "sonner";
@@ -184,9 +185,6 @@ export function TeacherAccountPanel({
         <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
           Account &amp; access
         </h3>
-        <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
-          Login status, invitation, and account actions
-        </p>
       </div>
 
       <div className="space-y-3 p-3 sm:p-4">
@@ -273,7 +271,7 @@ export function TeacherAccountPanel({
             <Button
               type="button"
               size="sm"
-              className="h-8 gap-1.5 rounded-none bg-[#0a1f1a] px-3 text-xs text-white hover:bg-[#246a59]"
+              className={teachersPrimaryButton}
               onClick={() => void handleActivate()}
               disabled={isActivating}
             >

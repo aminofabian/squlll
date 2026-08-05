@@ -34,7 +34,6 @@ import {
   BookOpen,
   Copy,
   RefreshCw,
-  Loader2,
   AlertCircle,
   KeyRound,
   Trash2,
@@ -59,6 +58,7 @@ import {
   teachersField,
   teachersFieldLabel,
   teachersPanel,
+  teachersPrimaryButton,
   teachersSectionHead,
   teachersTabList,
   teachersTabTrigger,
@@ -117,7 +117,6 @@ function TeacherDetailSkeleton() {
 function DetailField({
   label,
   value,
-  icon: Icon,
   copyValue,
 }: {
   label: string;
@@ -127,18 +126,15 @@ function DetailField({
 }) {
   return (
     <div className={teachersField}>
-      <p className={teachersFieldLabel}>
-        {Icon ? <Icon className="h-3 w-3 shrink-0" /> : null}
-        {label}
-      </p>
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <div className="min-w-0 text-sm font-medium text-[#0a1f1a] dark:text-white">
+      <p className={teachersFieldLabel}>{label}</p>
+      <div className="mt-1 flex items-start justify-between gap-2">
+        <div className="min-w-0 text-sm text-[#0a1f1a] dark:text-white">
           {value}
         </div>
         {copyValue ? (
           <button
             type="button"
-            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 transition-colors hover:bg-[#e8f2ef] hover:text-[#0a1f1a] dark:hover:bg-white/10"
+            className="shrink-0 rounded-none p-1 text-[#1a4d42]/40 transition-colors hover:text-[#246a59]"
             onClick={() => {
               void navigator.clipboard.writeText(copyValue);
               toast.success(`${label} copied`);
@@ -155,43 +151,19 @@ function DetailField({
 
 function InfoGroup({
   title,
-  icon: Icon,
   children,
 }: {
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <h4 className="flex items-center gap-1.5 text-xs font-semibold text-[#0a1f1a] dark:text-white">
-        <Icon className="h-3.5 w-3.5 text-[#246a59]" />
+    <section>
+      <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#246a59]">
         {title}
       </h4>
       <div className="space-y-1.5">{children}</div>
-    </div>
-  );
-}
-
-function EmptyPanel({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-none bg-[#246a59]/10">
-        <Icon className="h-4 w-4 text-[#246a59]" />
-      </div>
-      <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
-        {title}
-      </p>
-      <p className="mt-1 max-w-xs text-xs text-[#1a4d42]/45">{description}</p>
-    </div>
+    </section>
   );
 }
 
@@ -350,21 +322,19 @@ export function TeacherDetailView({
       )}
 
       {profileIncomplete && (
-        <div className="flex items-start gap-2.5 rounded-none border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <p className="text-xs font-semibold">Profile incomplete</p>
-            <p className="mt-0.5 text-[11px] text-amber-800/90 dark:text-amber-300">
-              Missing employee ID, date of birth, qualifications, or contact details.
-            </p>
-          </div>
+        <div className="flex items-center gap-2 rounded-none border border-[#246a59]/20 bg-[#e8f2ef] px-3 py-2 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/15 dark:text-[#d4e8e2]">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#246a59]" />
+          <p>
+            <span className="font-semibold">Profile incomplete.</span>{" "}
+            Add employee ID, date of birth, qualifications, or contact details.
+          </p>
         </div>
       )}
 
       <div className={cn(teachersPanel)}>
-        <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-4 dark:border-white/10 dark:bg-[#071411] sm:px-5">
+        <div className="bg-[#f8fbfa] px-4 py-4 dark:bg-[#071411] sm:px-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex gap-3.5">
+            <div className="flex min-w-0 gap-3.5">
               <TeacherAvatar name={displayName} size="lg" ring />
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -373,61 +343,47 @@ export function TeacherDetailView({
                   </h2>
                   <StatusBadge isActive={teacher.isActive ?? false} />
                 </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#1a4d42]/55">
-                  {teacher.department && (
-                    <span className="inline-flex items-center gap-1 capitalize">
-                      <Award className="h-3.5 w-3.5 text-[#246a59]" />
-                      {teacher.department}
-                    </span>
-                  )}
-                  {teacher.role && (
-                    <Badge variant="outline" className={teachersBadge}>
-                      {teacher.role}
-                    </Badge>
-                  )}
-                  {grades && (
-                    <span className="inline-flex items-center gap-1">
-                      <GraduationCap className="h-3.5 w-3.5 text-[#246a59]" />
-                      {grades}
-                    </span>
-                  )}
-                  {teacher.tenantSubjects.length > 0 && (
-                    <span className="inline-flex items-center gap-1">
-                      <BookOpen className="h-3.5 w-3.5 text-[#246a59]" />
-                      {teacher.tenantSubjects.length} subject
-                      {teacher.tenantSubjects.length !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
-
-                {email && (
-                  <p className="mt-1.5 truncate text-xs text-[#1a4d42]/45">{email}</p>
-                )}
+                <p className="mt-1 text-sm capitalize text-[#1a4d42]/55">
+                  {[
+                    teacher.department,
+                    teacher.role?.toLowerCase(),
+                    grades || null,
+                    teacher.tenantSubjects.length > 0
+                      ? `${teacher.tenantSubjects.length} subject${teacher.tenantSubjects.length !== 1 ? "s" : ""}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                {email ? (
+                  <p className="mt-1 truncate text-xs text-[#1a4d42]/45">
+                    {email}
+                  </p>
+                ) : null}
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-col items-start gap-2.5 sm:items-end">
-              {teacher.employeeId && (
+            <div className="flex shrink-0 items-center gap-2">
+              {teacher.employeeId ? (
                 <div className="hidden text-right sm:block">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/45">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1a4d42]/45">
                     Employee ID
                   </p>
                   <p className="font-mono text-sm font-semibold text-[#0a1f1a] dark:text-white">
                     {teacher.employeeId}
                   </p>
                 </div>
-              )}
+              ) : null}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className={teachersActionButton}
+                    className={cn(teachersActionButton, "h-8 w-8 p-0")}
+                    aria-label="Actions"
                   >
-                    Actions
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 rounded-none">
@@ -523,9 +479,6 @@ export function TeacherDetailView({
               <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
                 Teacher information
               </h3>
-              <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
-                Personal and contact details for {displayName}
-              </p>
             </div>
             <div className="grid grid-cols-1 gap-4 p-3 sm:grid-cols-3 sm:p-4">
               <InfoGroup title="Personal" icon={User}>
@@ -666,21 +619,16 @@ export function TeacherDetailView({
 
         <TabsContent value="academic" className="mt-0">
           <div className={`${teachersPanel} overflow-hidden`}>
-            <div className={cn(teachersSectionHead, "flex flex-wrap items-start justify-between gap-3 px-4 py-2.5 sm:px-5")}>
-              <div>
-                <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
-                  Academic information
-                </h3>
-                <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
-                  Subjects, grades, and streams for {displayName}
-                </p>
-              </div>
+            <div className={cn(teachersSectionHead, "flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 sm:px-5")}>
+              <h3 className="text-sm font-semibold text-[#0a1f1a] dark:text-white">
+                Academic information
+              </h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={openAcademicEditor}
-                className="h-7 gap-1 rounded-none border-[#1a4d42]/15 px-2.5 text-xs"
+                className={cn(teachersActionButton, "h-7")}
               >
                 <BookOpen className="h-3 w-3" />
                 {isAcademicEmpty ? "Set up" : "Edit"}
@@ -703,7 +651,7 @@ export function TeacherDetailView({
                         type="button"
                         size="sm"
                         onClick={openAcademicEditor}
-                        className="h-8 shrink-0 gap-1.5 rounded-none bg-[#0a1f1a] px-3 text-xs text-white hover:bg-[#246a59]"
+                        className={cn(teachersPrimaryButton, "shrink-0")}
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Set up assignments
