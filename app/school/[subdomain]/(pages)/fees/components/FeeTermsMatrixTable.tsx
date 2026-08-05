@@ -124,7 +124,7 @@ export function FeeTermsMatrixTable({
     return (
       <div
         className={cn(
-          "rounded-lg border border-dashed px-4 py-6 text-center text-sm",
+          "rounded-none border border-dashed px-4 py-6 text-center text-sm",
           className,
         )}
         style={{
@@ -132,8 +132,8 @@ export function FeeTermsMatrixTable({
           backgroundColor: `${FEES_BRAND.primaryLight}55`,
         }}
       >
-        <p className="font-medium text-slate-700">No fee amounts yet</p>
-        <p className="mt-0.5 text-xs text-slate-500">
+        <p className="font-medium text-[#1a4d42]/80">No fee amounts yet</p>
+        <p className="mt-0.5 text-xs text-[#1a4d42]/45">
           Use Edit structure to add categories per term
         </p>
       </div>
@@ -153,20 +153,20 @@ export function FeeTermsMatrixTable({
         className={cn(
           "flex flex-col gap-2 text-[11px] sm:flex-row sm:items-center sm:justify-between",
           compact
-            ? "rounded-lg bg-slate-50/90 px-2.5 py-2"
-            : "rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-slate-200/80",
+            ? "rounded-none bg-[#f8fbfa] px-2.5 py-2"
+            : "rounded-none bg-[#f8fbfa] px-3 py-2.5 border border-[#1a4d42]/12",
         )}
       >
-        <p className={cn("min-w-0 leading-snug text-slate-600", FEES_LAYOUT.textWrap)}>
-          <span className="font-medium text-slate-800">
+        <p className={cn("min-w-0 leading-snug text-[#1a4d42]/60", FEES_LAYOUT.textWrap)}>
+          <span className="font-medium text-[#0a1f1a]">
             {rows.length} categor{rows.length === 1 ? "y" : "ies"}
           </span>
           {optionalCount > 0 ? ` · ${optionalCount} optional` : null}
           {totalsVerified ? (
-            <span className="text-emerald-700"> · totals verified</span>
+            <span className="text-[#246a59]"> · totals verified</span>
           ) : null}
           {uniformAcrossTerms ? (
-            <span className="text-slate-500"> · same every term</span>
+            <span className="text-[#1a4d42]/45"> · same every term</span>
           ) : null}
         </p>
         {onEditPlan ? (
@@ -190,7 +190,7 @@ export function FeeTermsMatrixTable({
       {uniformCategories && compact ? (
         <button
           type="button"
-          className="flex w-full items-center gap-1.5 rounded-lg border border-amber-200/70 bg-amber-50/80 px-2.5 py-1.5 text-left text-[10px] font-medium text-amber-950"
+          className="flex w-full items-center gap-1.5 rounded-none border border-amber-200/70 bg-amber-50/80 px-2.5 py-1.5 text-left text-[10px] font-medium text-amber-950"
           onClick={() => setShowUniformHint((v) => !v)}
         >
           <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden />
@@ -208,8 +208,8 @@ export function FeeTermsMatrixTable({
           className={cn(
             "text-[10px] leading-snug text-amber-900/90",
             compact
-              ? "rounded-lg border border-amber-200/60 bg-amber-50/60 px-2.5 py-1.5"
-              : "flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] text-amber-950",
+              ? "rounded-none border border-amber-200/60 bg-amber-50/60 px-2.5 py-1.5"
+              : "flex items-start gap-2 rounded-none border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] text-amber-950",
           )}
           role="status"
         >
@@ -231,7 +231,7 @@ export function FeeTermsMatrixTable({
 
   const footerVerifyNote =
     multiTerm && totalsVerified ? (
-      <p className="mt-1.5 flex items-center justify-end gap-1 text-[10px] text-emerald-700">
+      <p className="mt-1.5 flex items-center justify-end gap-1 text-[10px] text-[#246a59]">
         <Check className="h-3 w-3 shrink-0" aria-hidden />
         Year total = sum of term totals
       </p>
@@ -262,11 +262,11 @@ export function FeeTermsMatrixTable({
             ))}
           </colgroup>
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/95">
+            <tr className="border-b border-[#1a4d42]/12 bg-[#f8fbfa]">
               <th
                 scope="col"
                 className={cn(
-                  "px-2.5 py-2 align-bottom font-semibold text-slate-600",
+                  "px-2.5 py-2 align-bottom font-semibold text-[#1a4d42]/60",
                   FEES_LAYOUT.textWrap,
                 )}
               >
@@ -282,7 +282,7 @@ export function FeeTermsMatrixTable({
                     scope="col"
                     className={cn(
                       "px-1.5 py-2 text-right align-bottom font-semibold",
-                      configured ? "text-slate-700" : "text-amber-800",
+                      configured ? "text-[#1a4d42]/80" : "text-amber-800",
                       FEES_LAYOUT.textWrap,
                     )}
                   >
@@ -292,7 +292,7 @@ export function FeeTermsMatrixTable({
                     <span
                       className={cn(
                         "mt-0.5 block text-[10px] tabular-nums leading-tight",
-                        configured ? "text-emerald-700" : "font-medium",
+                        configured ? "text-[#246a59]" : "font-medium",
                       )}
                     >
                       {configured ? formatKes(total) : "—"}
@@ -309,15 +309,15 @@ export function FeeTermsMatrixTable({
                 <tr
                   key={row.name}
                   className={cn(
-                    "border-b border-slate-100",
-                    idx % 2 === 1 && "bg-slate-50/70",
+                    "border-b border-[#1a4d42]/10",
+                    idx % 2 === 1 && "bg-[#f8fbfa]/70",
                     isTuition && "bg-[#e8f2ef]/35",
                   )}
                 >
                   <th
                     scope="row"
                     className={cn(
-                      "px-2.5 py-2 font-medium text-slate-800",
+                      "px-2.5 py-2 font-medium text-[#0a1f1a]",
                       FEES_LAYOUT.textWrap,
                       isTuition && "bg-[#e8f2ef]/50",
                     )}
@@ -345,8 +345,8 @@ export function FeeTermsMatrixTable({
                         className={cn(
                           "px-1.5 py-2 text-right align-top tabular-nums",
                           has
-                            ? "text-[12px] font-semibold text-slate-900"
-                            : "text-slate-300",
+                            ? "text-[12px] font-semibold text-[#0a1f1a]"
+                            : "text-[#1a4d42]/25",
                         )}
                       >
                         {has ? formatKes(amount) : "—"}
@@ -359,13 +359,13 @@ export function FeeTermsMatrixTable({
           </tbody>
           <tfoot>
             <tr
-              className="border-t border-slate-200"
+              className="border-t border-[#1a4d42]/12"
               style={{ backgroundColor: FEES_BRAND.primaryLight }}
             >
               <th
                 scope="row"
                 className={cn(
-                  "px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-600",
+                  "px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/60",
                   FEES_LAYOUT.textWrap,
                 )}
                 style={{ backgroundColor: FEES_BRAND.primaryLight }}
@@ -387,18 +387,18 @@ export function FeeTermsMatrixTable({
                 <td
                   colSpan={colCount + 1}
                   className={cn(
-                    "px-2.5 py-2 text-right text-[11px] text-slate-600",
+                    "px-2.5 py-2 text-right text-[11px] text-[#1a4d42]/60",
                     FEES_LAYOUT.textWrap,
                   )}
                 >
-                  <span className="font-medium text-slate-500">
+                  <span className="font-medium text-[#1a4d42]/45">
                     School year total
                   </span>{" "}
-                  <span className="font-bold tabular-nums text-slate-900">
+                  <span className="font-bold tabular-nums text-[#0a1f1a]">
                     {formatKes(yearTotal)}
                   </span>
                   {totalsVerified ? (
-                    <span className="ml-1 text-emerald-700" title="Matches term columns">
+                    <span className="ml-1 text-[#246a59]" title="Matches term columns">
                       ✓
                     </span>
                   ) : null}
@@ -415,17 +415,16 @@ export function FeeTermsMatrixTable({
         className={cn(
           FEES_LAYOUT.tableScroll,
           tableScrollClass,
-          "hidden rounded-lg ring-1 ring-slate-200/80 md:block",
+          "hidden rounded-none border border-[#1a4d42]/12 md:block",
         )}
       >
         <table className="w-full table-fixed border-collapse text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/90">
+            <tr className="border-b border-[#1a4d42]/12 bg-[#f8fbfa]">
               <th
                 scope="col"
                 className={cn(
-                  "bg-slate-50/95 px-2.5 py-2 font-semibold text-slate-600",
-                  FEES_LAYOUT.textWrap,
+                  "bg-[#f8fbfa] px-2.5 py-2 font-semibold text-[#1a4d42]/60",
                   FEES_LAYOUT.textWrap,
                 )}
               >
@@ -440,7 +439,7 @@ export function FeeTermsMatrixTable({
                     scope="col"
                     className={cn(
                       "px-2 py-2 text-right font-semibold",
-                      configured ? "text-slate-700" : "text-amber-800",
+                      configured ? "text-[#1a4d42]/80" : "text-amber-800",
                     )}
                   >
                     <span className="block text-[10px] uppercase tracking-wide opacity-80">
@@ -449,7 +448,7 @@ export function FeeTermsMatrixTable({
                     <span
                       className={cn(
                         "mt-0.5 block text-[11px] tabular-nums",
-                        configured ? "text-emerald-700" : "font-medium",
+                        configured ? "text-[#246a59]" : "font-medium",
                       )}
                     >
                       {configured ? formatKes(total) : "Not set"}
@@ -466,17 +465,17 @@ export function FeeTermsMatrixTable({
                 <tr
                   key={row.name}
                   className={cn(
-                    "border-b border-slate-100 last:border-0",
-                    idx % 2 === 1 && "bg-slate-50/50",
+                    "border-b border-[#1a4d42]/10 last:border-0",
+                    idx % 2 === 1 && "bg-[#f8fbfa]/50",
                     isTuition && "bg-[#e8f2ef]/30",
                   )}
                 >
                   <th
                     scope="row"
                     className={cn(
-                      "px-2.5 py-1.5 font-medium text-slate-800",
+                      "px-2.5 py-1.5 font-medium text-[#0a1f1a]",
                       FEES_LAYOUT.textWrap,
-                      idx % 2 === 1 ? "bg-slate-50/95" : "bg-white",
+                      idx % 2 === 1 ? "bg-[#f8fbfa]" : "bg-white",
                       isTuition && "bg-[#e8f2ef]/50",
                     )}
                   >
@@ -503,8 +502,8 @@ export function FeeTermsMatrixTable({
                         className={cn(
                           "px-2 py-1.5 text-right tabular-nums",
                           has
-                            ? "font-semibold text-slate-900"
-                            : "text-slate-300",
+                            ? "font-semibold text-[#0a1f1a]"
+                            : "text-[#1a4d42]/25",
                         )}
                       >
                         {has ? formatKes(amount) : "—"}
@@ -517,13 +516,13 @@ export function FeeTermsMatrixTable({
           </tbody>
           <tfoot>
             <tr
-              className="border-t border-slate-200 font-semibold"
+              className="border-t border-[#1a4d42]/12 font-semibold"
               style={{ backgroundColor: FEES_BRAND.primaryLight }}
             >
               <th
                 scope="row"
                 className={cn(
-                  "px-2.5 py-2 text-left text-[10px] uppercase tracking-wide text-slate-600",
+                  "px-2.5 py-2 text-left text-[10px] uppercase tracking-wide text-[#1a4d42]/60",
                   FEES_LAYOUT.textWrap,
                 )}
                 style={{ backgroundColor: FEES_BRAND.primaryLight }}
@@ -544,16 +543,16 @@ export function FeeTermsMatrixTable({
               <tr className="bg-white">
                 <td
                   colSpan={colCount + 1}
-                  className="px-2.5 py-1.5 text-right text-[10px] text-slate-600"
+                  className="px-2.5 py-1.5 text-right text-[10px] text-[#1a4d42]/60"
                 >
-                  <span className="font-medium text-slate-500">
+                  <span className="font-medium text-[#1a4d42]/45">
                     School year total
                   </span>{" "}
-                  <span className="font-semibold tabular-nums text-slate-800">
+                  <span className="font-semibold tabular-nums text-[#0a1f1a]">
                     {formatKes(yearTotal)}
                   </span>
                   {totalsVerified ? (
-                    <span className="ml-1 text-emerald-700">✓</span>
+                    <span className="ml-1 text-[#246a59]">✓</span>
                   ) : null}
                 </td>
               </tr>

@@ -36,7 +36,7 @@ export function FeePlanSection({
       className={cn(
         FEES_LAYOUT.planScrollMt,
         FEES_MOBILE.planSection,
-        !lead && "border-t border-slate-100/90 max-md:border-0",
+        !lead && "border-t border-[#1a4d42]/10 max-md:border-0",
         className,
       )}
     >
@@ -57,7 +57,7 @@ export function FeePlanSection({
             {step != null && !hideStep ? (
               <span
                 className={cn(
-                  "flex shrink-0 items-center justify-center rounded-lg text-[10px] font-bold text-white max-md:h-7 max-md:w-7 max-md:text-[11px]",
+                  "flex shrink-0 items-center justify-center rounded-none text-[10px] font-bold text-white max-md:h-7 max-md:w-7 max-md:text-[11px]",
                   dense ? "h-5 w-5" : "h-6 w-6",
                 )}
                 style={{ backgroundColor: FEES_BRAND.primary }}
@@ -68,7 +68,7 @@ export function FeePlanSection({
             <div className="min-w-0">
               <h2
                 className={cn(
-                  "font-semibold text-slate-900",
+                  "font-semibold text-[#0a1f1a]",
                   FEES_MOBILE.planSectionTitle,
                   dense ? "text-sm" : "text-[0.9375rem]",
                 )}
@@ -76,12 +76,12 @@ export function FeePlanSection({
                 {title}
               </h2>
               {description ? (
-                <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+                <p className="mt-0.5 text-xs text-[#1a4d42]/50">{description}</p>
               ) : null}
             </div>
           </div>
           {action ? (
-            <div className="max-md:shrink-0 max-md:[&_button]:h-9 max-md:[&_button]:w-auto max-md:[&_button]:rounded-xl sm:[&_button]:w-auto [&_button]:w-full">
+            <div className="max-md:shrink-0 max-md:[&_button]:h-9 max-md:[&_button]:w-auto max-md:[&_button]:rounded-none sm:[&_button]:w-auto [&_button]:w-full">
               {action}
             </div>
           ) : null}
@@ -107,8 +107,8 @@ export function FeePlanDocument({
       className={cn(
         "min-w-0 max-w-full overflow-x-hidden bg-white",
         FEES_DETAIL.cardRadius,
-        FEES_DETAIL.shadowSoft,
-        "ring-1 ring-slate-200/60",
+        FEES_DETAIL.shadow,
+        "border border-[#1a4d42]/12",
         FEES_MOBILE.planDoc,
         className,
       )}

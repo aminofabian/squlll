@@ -21,16 +21,13 @@ export function FeePlanDetailSectionNav({
       aria-label="Structure sections"
       className={cn(
         FEES_LAYOUT.page,
-        "sticky z-20 border-b border-slate-200/80 bg-[#f4f7f5]/95 backdrop-blur-sm",
+        "sticky z-20 border border-[#1a4d42]/12 bg-[#f8fbfa]/95 backdrop-blur-sm",
         "top-[calc(3.25rem+env(safe-area-inset-top,0px))] sm:top-[4.5rem]",
         className,
       )}
     >
       <div
-        className={cn(
-          FEES_LAYOUT.chipStrip,
-          "gap-1 px-1 py-1.5 sm:px-0",
-        )}
+        className={cn(FEES_LAYOUT.chipStrip, "gap-1 px-1 py-1.5 sm:px-1.5")}
         role="tablist"
       >
         {SECTIONS.map((section) => (
@@ -39,9 +36,9 @@ export function FeePlanDetailSectionNav({
             href={`#${section.id}`}
             role="tab"
             className={cn(
-              "inline-flex shrink-0 items-center rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors",
-              "hover:bg-white hover:text-slate-900",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+              "inline-flex shrink-0 items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium text-[#1a4d42]/60 transition-colors",
+              "hover:border-[#1a4d42]/12 hover:bg-white hover:text-[#0a1f1a]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#246a59]/40",
             )}
           >
             <span className="hidden sm:inline">{section.label}</span>

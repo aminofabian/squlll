@@ -214,16 +214,16 @@ export const FeeStructuresTab = ({
   if (graphQLStructures && graphQLStructures.length > 0) {
     if (selectedPlanSlug && !activePlan && hasFetched) {
       return (
-        <div className="space-y-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-          <p className="text-sm font-medium text-slate-800">Fee structure not found</p>
-          <p className="mt-1 text-xs text-slate-500">
+        <div className="space-y-3 rounded-none border border-dashed border-[#1a4d42]/15 bg-[#f8fbfa] p-8 text-center">
+          <p className="text-sm font-medium text-[#0a1f1a]">Fee structure not found</p>
+          <p className="mt-1 text-xs text-[#1a4d42]/50">
             It may have been deleted or renamed.
           </p>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="mt-3"
+            className="mt-3 rounded-none border-[#1a4d42]/15"
             onClick={onBackToPlanList}
           >
             Back to all structures

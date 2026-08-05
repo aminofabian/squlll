@@ -77,10 +77,10 @@ function FieldLabel({
   return (
     <p
       className={cn(
-        'font-semibold uppercase text-slate-400',
+        'font-semibold uppercase text-[#1a4d42]/40',
         dense
           ? 'text-[9px] tracking-wide'
-          : 'text-[10px] tracking-wide text-slate-500',
+          : 'text-[10px] tracking-wide text-[#1a4d42]/50',
       )}
     >
       {children}
@@ -128,14 +128,14 @@ export function FeeLetterSetupPanel({
     >
       <p
         className={cn(
-          'hidden min-w-0 flex-1 text-[11px] text-slate-500 min-[400px]:block',
+          'hidden min-w-0 flex-1 text-[11px] text-[#1a4d42]/50 min-[400px]:block',
           FEES_LAYOUT.textWrap,
         )}
       >
         {readinessMessage ? (
           <span className="font-medium text-amber-800">{readinessMessage}</span>
         ) : (
-          <span className="font-medium text-slate-700">{scopeLabel}</span>
+          <span className="font-medium text-[#1a4d42]/80">{scopeLabel}</span>
         )}
       </p>
       <div className="grid w-full grid-cols-2 gap-2 min-[400px]:ml-auto min-[400px]:w-auto min-[400px]:flex min-[400px]:shrink-0">
@@ -144,7 +144,7 @@ export function FeeLetterSetupPanel({
           size="sm"
           className={cn(
             FEES_BTN.primary,
-            'h-11 gap-1.5 text-xs shadow-md min-[400px]:h-9',
+            'h-11 gap-1.5 text-xs shadow-none min-[400px]:h-9',
           )}
           onClick={onPreview}
           disabled={!letterAmountsReady}
@@ -158,7 +158,7 @@ export function FeeLetterSetupPanel({
           size="sm"
           className={cn(
             FEES_BTN.secondary,
-            'h-11 gap-1.5 border-slate-300 bg-white text-xs shadow-sm min-[400px]:h-9',
+            'h-11 gap-1.5 border-[#1a4d42]/20 bg-white text-xs shadow-none min-[400px]:h-9',
           )}
           onClick={onPrint}
           disabled={!letterAmountsReady}
@@ -188,7 +188,7 @@ export function FeeLetterSetupPanel({
       >
         <div className="max-w-full space-y-3">
           <div
-            className="overflow-hidden rounded-xl bg-white ring-1 ring-slate-200/80"
+            className="overflow-hidden rounded-none bg-white border border-[#1a4d42]/12"
             style={{ backgroundColor: `${FEES_BRAND.primaryLight}40` }}
           >
             <div className="px-3 py-3">
@@ -206,7 +206,7 @@ export function FeeLetterSetupPanel({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200/80 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 rounded-none bg-white p-3 border border-[#1a4d42]/12 sm:grid-cols-2">
             <div className="min-w-0 space-y-1">
               <FieldLabel>Grade on letter</FieldLabel>
               <LetterGradeSelector
@@ -231,7 +231,7 @@ export function FeeLetterSetupPanel({
             ) : null}
           </div>
 
-          <div className="rounded-xl bg-slate-50/90 p-3 ring-1 ring-slate-200/70">
+          <div className="rounded-none bg-[#f8fbfa] p-3 border border-[#1a4d42]/12">
             <LetterTemplateSelector
               value={templateId}
               onChange={onTemplateChange}
@@ -249,34 +249,34 @@ export function FeeLetterSetupPanel({
         <div
           className={cn(
             FEES_MOBILE.card,
-            'md:rounded-lg md:ring-1 md:ring-slate-200/80',
+            'md:rounded-none md:border md:border-[#1a4d42]/12',
             pinActions &&
               'mb-0 max-md:!rounded-none max-md:!bg-transparent max-md:!shadow-none max-md:!ring-0',
             className,
           )}
         >
         <details
-          className="group border-b border-slate-100 bg-white open:bg-slate-50/40"
+          className="group border-b border-[#1a4d42]/10 bg-white open:bg-[#f8fbfa]/60"
           open={!pinActions}
         >
           <summary
             className={cn(
-              "flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-xs font-medium text-slate-700",
+              "flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 text-xs font-medium text-[#1a4d42]/80",
               "[&::-webkit-details-marker]:hidden",
               pinActions && "max-md:px-0",
             )}
             style={{ backgroundColor: `${FEES_BRAND.primaryLight}55` }}
           >
-            <span className="font-semibold text-slate-900">School letterhead</span>
-            <span className="truncate text-[10px] font-normal text-slate-500">
+            <span className="font-semibold text-[#0a1f1a]">School letterhead</span>
+            <span className="truncate text-[10px] font-normal text-[#1a4d42]/50">
               {letterDetails.schoolDetails?.name?.trim() ||
                 schoolLogoKey ||
                 "Edit details"}
             </span>
-            <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
+            <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-[#1a4d42]/40 transition-transform group-open:rotate-180" />
           </summary>
           <div
-            className="border-t border-slate-100 px-3 py-3 sm:px-4"
+            className="border-t border-[#1a4d42]/10 px-3 py-3 sm:px-4"
             style={{ backgroundColor: `${FEES_BRAND.primaryLight}30` }}
           >
             <LetterIdentityPanel
@@ -293,7 +293,7 @@ export function FeeLetterSetupPanel({
           </div>
         </details>
 
-        <div className="divide-y divide-slate-100 bg-white max-md:px-0 md:grid md:grid-cols-1 md:gap-0 md:divide-y-0 md:border-b md:border-slate-100 md:p-2.5 lg:space-y-2">
+        <div className="divide-y divide-[#1a4d42]/10 bg-white max-md:px-0 md:grid md:grid-cols-1 md:gap-0 md:divide-y-0 md:border-b md:border-[#1a4d42]/10 md:p-2.5 lg:space-y-2">
           <div className="min-w-0 space-y-1 px-3 py-2.5 md:px-2.5 md:py-2">
             <FieldLabel dense>Grade</FieldLabel>
             <LetterGradeSelector
@@ -305,7 +305,7 @@ export function FeeLetterSetupPanel({
             />
           </div>
           {terms.length > 0 ? (
-            <div className="min-w-0 space-y-1 border-t border-slate-100 px-3 py-2.5 md:border-t-0 md:px-2.5 md:py-2">
+            <div className="min-w-0 space-y-1 border-t border-[#1a4d42]/10 px-3 py-2.5 md:border-t-0 md:px-2.5 md:py-2">
               <FieldLabel dense>Terms</FieldLabel>
               <LetterTermSelector
                 terms={terms}
@@ -318,7 +318,7 @@ export function FeeLetterSetupPanel({
           ) : null}
         </div>
 
-        <div className="border-t border-slate-100 bg-slate-50/90 px-3 py-3 max-md:px-3 md:px-2.5 md:py-3">
+        <div className="border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-3 max-md:px-3 md:px-2.5 md:py-3">
           <LetterTemplateSelector
             value={templateId}
             onChange={onTemplateChange}
@@ -327,7 +327,7 @@ export function FeeLetterSetupPanel({
         </div>
 
         {showActionBar ? (
-          <div className="border-t border-slate-100">{actionBar}</div>
+          <div className="border-t border-[#1a4d42]/10">{actionBar}</div>
         ) : null}
       </div>
 
@@ -340,7 +340,7 @@ export function FeeLetterSetupPanel({
     <>
     <div
       className={cn(
-        'fee-letter-setup-panel overflow-hidden rounded-2xl bg-slate-100/40 ring-1 ring-slate-200/60',
+        'fee-letter-setup-panel overflow-hidden rounded-none border border-[#1a4d42]/12 bg-[#f3f7f5]/50',
         className,
       )}
     >
@@ -368,19 +368,19 @@ export function FeeLetterSetupPanel({
           portalUrl={portalUrl}
         />
 
-        <section className="fee-letter-style-section overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/90 shadow-sm">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 px-4 py-3 sm:px-5">
+        <section className="fee-letter-style-section overflow-hidden rounded-none bg-white border border-[#1a4d42]/12 shadow-[3px_3px_0_0_rgba(10,31,26,0.05)]">
+          <div className="flex items-center gap-2.5 border-b border-[#1a4d42]/10 px-4 py-3 sm:px-5">
             <div
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-none text-white"
               style={{ backgroundColor: FEES_BRAND.primaryDark }}
             >
               <span className="text-[10px] font-bold">3</span>
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#1a4d42]/50">
                 Letter style
               </p>
-              <p className="text-xs text-slate-600">Layout for print and PDF</p>
+              <p className="text-xs text-[#1a4d42]/60">Layout for print and PDF</p>
             </div>
           </div>
           <div className="p-4 sm:p-5">
@@ -395,7 +395,7 @@ export function FeeLetterSetupPanel({
 
       {showActionBar ? (
         <div
-          className="border-t border-slate-200/80"
+          className="border-t border-[#1a4d42]/12"
           style={{
             background: `linear-gradient(180deg, #fff 0%, ${FEES_BRAND.surface} 100%)`,
           }}

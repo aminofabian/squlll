@@ -25,6 +25,7 @@ import {
   FEES_DETAIL,
   FEES_LAYOUT,
   FEES_MOBILE,
+  FEES_PANEL,
 } from "../../lib/fees-ui";
 import type { ProcessedFeeStructure } from "./types";
 import { feePlanTermProgress } from "../../lib/feePlanSlug";
@@ -105,8 +106,8 @@ export function FeePlanDetailHeader({
 
       <div
         className={cn(
-          "max-w-full overflow-x-hidden bg-white md:rounded-xl md:ring-1 md:ring-slate-200/70",
-          FEES_DETAIL.shadowSoft,
+          "max-w-full overflow-x-hidden bg-white",
+          FEES_PANEL,
           FEES_MOBILE.planHeaderCard,
         )}
       >
@@ -115,27 +116,31 @@ export function FeePlanDetailHeader({
             <Link
               href={feesPlansHref()}
               scroll={false}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-primary active:bg-slate-100 md:h-auto md:w-auto md:gap-1 md:px-0 md:text-xs md:text-slate-500 md:hover:text-primary"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-none text-[#246a59] hover:bg-[#f3f7f5] active:bg-[#e8f2ef] md:h-auto md:w-auto md:gap-1 md:px-1.5 md:py-1 md:text-xs md:text-[#1a4d42]/55 md:hover:text-[#246a59]"
               aria-label="Back to structures"
             >
               <ArrowLeft className="h-5 w-5 md:h-3.5 md:w-3.5" />
               <span className="hidden md:inline">Structures</span>
             </Link>
 
-            <div className="min-w-0 flex-1 md:hidden">
+            <div className="min-w-0 flex-1">
               <p
                 className={cn(
-                  "truncate text-[15px] font-semibold leading-tight text-slate-900",
+                  "truncate font-display text-[1.05rem] font-normal leading-tight text-[#0a1f1a] md:text-xl",
                   FEES_LAYOUT.textWrap,
                 )}
               >
                 {structure.structureName}
               </p>
-              {mobileMeta ? (
-                <p className="mt-0.5 truncate text-[11px] text-slate-500">
-                  {mobileMeta}
-                </p>
-              ) : null}
+              <p className="mt-0.5 truncate text-[11px] text-[#1a4d42]/50">
+                {mobileMeta || structure.academicYear}
+                {total > 0 ? (
+                  <span className="hidden sm:inline">
+                    {" "}
+                    · {configured}/{total} terms
+                  </span>
+                ) : null}
+              </p>
             </div>
 
             {showActions ? (
@@ -224,7 +229,10 @@ export function FeePlanDetailHeader({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-44 rounded-none"
+                    >
                       {!showPrimaryEdit && !showSecondaryEdit && canModifyPlan ? (
                         <DropdownMenuItem onClick={onEdit}>
                           <Edit className="mr-2 h-4 w-4" />
@@ -270,8 +278,8 @@ export function FeePlanDetailHeader({
         </div>
 
         {!structure.isActive && inactiveDetail ? (
-          <div className="border-t border-slate-200/80 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 sm:px-4">
-            <span className="mr-2 inline-flex rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+          <div className="border-t border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2.5 text-xs text-[#1a4d42]/65 sm:px-4">
+            <span className="mr-2 inline-flex rounded-none border border-[#1a4d42]/12 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1a4d42]/45">
               Inactive
             </span>
             {inactiveDetail}. Payments against existing balances remain available
@@ -279,7 +287,7 @@ export function FeePlanDetailHeader({
             <Link
               href={feesBalancesHref()}
               scroll={false}
-              className="font-semibold text-primary hover:underline"
+              className="font-semibold text-[#246a59] hover:underline"
             >
               Balances
             </Link>
@@ -288,26 +296,26 @@ export function FeePlanDetailHeader({
         ) : null}
 
         {hasBilling && collection ? (
-          <div className="border-t border-slate-100/90 px-3 py-2.5 sm:px-4 max-md:bg-slate-50/60">
+          <div className="border-t border-[#1a4d42]/10 px-3 py-2.5 sm:px-4 max-md:bg-[#f8fbfa]/80">
             <div className="flex items-center justify-between gap-2 text-xs">
-              <p className="min-w-0 text-slate-600">
-                <span className="font-semibold tabular-nums text-emerald-800">
+              <p className="min-w-0 text-[#1a4d42]/60">
+                <span className="font-semibold tabular-nums text-[#246a59]">
                   {formatKes(collection.totalCollected)}
                 </span>
                 {collection.totalOutstanding > 0 ? (
-                  <span className="tabular-nums text-slate-600">
+                  <span className="tabular-nums">
                     {" "}
                     / {formatKes(collection.totalOutstanding)} due
                   </span>
                 ) : null}
               </p>
-              <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold tabular-nums text-emerald-800 ring-1 ring-emerald-200/80">
+              <span className="shrink-0 rounded-none border border-[#246a59]/25 bg-[#e8f2ef] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-[#1a4d42]">
                 {collectionPct}%
               </span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200/80">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-none bg-[#1a4d42]/10">
               <div
-                className="h-full rounded-full transition-[width]"
+                className="h-full rounded-none transition-[width]"
                 style={{
                   width: `${Math.min(100, collectionPct)}%`,
                   backgroundColor: FEES_BRAND.primary,
@@ -317,7 +325,7 @@ export function FeePlanDetailHeader({
             <Link
               href={feesBalancesHref()}
               scroll={false}
-              className="mt-2 inline-flex text-[11px] font-semibold text-primary active:opacity-70"
+              className="mt-2 inline-flex text-[11px] font-semibold text-[#246a59] hover:underline active:opacity-70"
             >
               View balances →
             </Link>

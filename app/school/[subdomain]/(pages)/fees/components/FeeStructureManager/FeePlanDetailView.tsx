@@ -365,10 +365,10 @@ export function FeePlanDetailView({
         />
       ) : null}
 
-      <FeePlanDetailSectionNav className="max-md:mx-0 md:rounded-lg md:ring-1 md:ring-slate-200/60" />
+      <FeePlanDetailSectionNav className="max-md:mx-0 md:rounded-none" />
 
-      <FeePlanDocument className="min-w-0 max-md:!bg-transparent">
-        <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:divide-x lg:divide-slate-100">
+      <FeePlanDocument className="min-w-0 max-md:!bg-transparent max-md:!border-0 max-md:!shadow-none">
+        <div className="min-w-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:divide-x lg:divide-[#1a4d42]/10">
           <div className="min-w-0 lg:col-span-1">
             <FeeStructureCard
               structure={structure}
