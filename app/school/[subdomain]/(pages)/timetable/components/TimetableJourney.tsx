@@ -337,101 +337,94 @@ export function TimetableJourney({
       className={cn(tt.panel, "overflow-hidden border-l-[3px] border-l-[#246a59]")}
       aria-label="Create your school timetable"
     >
-      <div className="px-5 pt-6 sm:px-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3.5">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#246a59]/25 bg-[#246a59]/10 text-[#246a59]"
-              aria-hidden
-            >
-              <CalendarDays className="h-5 w-5" strokeWidth={1.75} />
-            </span>
-            <div className="min-w-0 max-w-xl">
-              <p className={tt.eyebrow}>Timetable setup</p>
-              <h2 className="mt-1 text-[1.2rem] font-semibold tracking-[-0.03em] text-slate-900 dark:text-slate-100">
-                Let&apos;s create your school timetable
-              </h2>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
-                We&apos;ll do this together. Start with your school day, then
-                check your classes, teachers and subjects. When you&apos;re
-                ready we create the whole timetable for you — and you can change
-                anything before your staff see it.
-              </p>
-            </div>
+      {/* Header — single compact row */}
+      <div className="flex items-center justify-between gap-3 px-5 pt-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center border border-[#246a59]/25 bg-[#246a59]/10 text-[#246a59]"
+            aria-hidden
+          >
+            <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+          </span>
+          <div className="min-w-0">
+            <p className={tt.eyebrow}>Timetable setup</p>
+            <h2 className="truncate text-[14px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-100">
+              Let&apos;s create your school timetable
+            </h2>
           </div>
-          {onHide ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 shrink-0 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
-              onClick={onHide}
-            >
-              Hide
-            </Button>
-          ) : null}
         </div>
-
-        <div className="mt-5">{spine}</div>
+        {onHide ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 shrink-0 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+            onClick={onHide}
+          >
+            Hide
+          </Button>
+        ) : null}
       </div>
 
+      <div className="px-5 pt-3 sm:px-6">{spine}</div>
+
+      {/* Current step — compact row */}
       {current ? (
-        <div className="mt-5 border-t border-slate-100 bg-slate-50/60 px-5 py-5 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6">
-          <div className="flex items-start gap-3.5">
+        <div className="mt-3 border-t border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/30 sm:px-6">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-[#246a59] text-white"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-none bg-[#246a59] text-white"
               aria-hidden
             >
               <current.icon className="h-4 w-4" strokeWidth={2} />
             </span>
-            <div className="min-w-0 flex-1">
-              <p className={tt.eyebrow}>
-                Next · step {currentIndex + 1} of {stops.length}
-                {current.optional ? " · optional" : ""}
-              </p>
-              <h3 className="mt-1 text-[15px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-slate-100">
+            <div className="min-w-0 flex-1 basis-56">
+              <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-slate-900 dark:text-slate-100">
                 {current.title}
+                <span className="ml-2 font-normal text-slate-400 dark:text-slate-500">
+                  Step {currentIndex + 1} of {stops.length}
+                  {current.optional ? " · optional" : ""}
+                </span>
               </h3>
-              <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-slate-500 dark:text-slate-400">
                 {current.description}
               </p>
-
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                {current.actionLabel && current.onAction ? (
-                  <Button
-                    size="sm"
-                    className={cn("h-9 gap-1.5 text-xs", tt.accentBtn)}
-                    onClick={current.onAction}
-                  >
-                    {current.actionLabel}
-                  </Button>
-                ) : null}
-                {current.secondaryLabel && current.onSecondary ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-9 border-slate-200 text-xs dark:border-slate-700"
-                    onClick={current.onSecondary}
-                  >
-                    {current.secondaryLabel}
-                  </Button>
-                ) : null}
-                {current.optional ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-9 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
-                    onClick={skipCurrent}
-                  >
-                    Skip for now
-                  </Button>
-                ) : null}
-              </div>
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {current.actionLabel && current.onAction ? (
+                <Button
+                  size="sm"
+                  className={cn("h-8 gap-1.5 text-xs", tt.accentBtn)}
+                  onClick={current.onAction}
+                >
+                  {current.actionLabel}
+                </Button>
+              ) : null}
+              {current.secondaryLabel && current.onSecondary ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-slate-200 text-xs dark:border-slate-700"
+                  onClick={current.onSecondary}
+                >
+                  {current.secondaryLabel}
+                </Button>
+              ) : null}
+              {current.optional ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                  onClick={skipCurrent}
+                >
+                  Skip for now
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-3 dark:border-slate-800 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-2.5 dark:border-slate-800 sm:px-6">
         <p className="text-[11px] text-slate-400 dark:text-slate-500">
           {doneCount} of {stops.length} done
         </p>
@@ -440,21 +433,22 @@ export function TimetableJourney({
         </p>
       </div>
 
+      {/* Completed steps — one wrapping row of chips */}
       {doneCount > 0 ? (
-        <ul className="border-t border-slate-100 px-5 py-3 dark:border-slate-800 sm:px-6">
+        <ul className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-slate-100 px-5 py-2.5 dark:border-slate-800 sm:px-6">
           {stops
             .filter((s) => s.done && s.doneHint)
             .map((s) => (
               <li
                 key={s.id}
-                className="flex items-center gap-2 py-1 text-[12px] text-slate-500 dark:text-slate-400"
+                className="flex min-w-0 items-center gap-1.5 text-[12px] text-slate-500 dark:text-slate-400"
               >
                 <Check
                   className="h-3 w-3 shrink-0 text-emerald-600"
                   strokeWidth={3}
                   aria-hidden
                 />
-                <span className="font-medium text-slate-700 dark:text-slate-200">
+                <span className="shrink-0 font-medium text-slate-700 dark:text-slate-200">
                   {s.title}
                 </span>
                 <span className="truncate">· {s.doneHint}</span>
@@ -462,7 +456,7 @@ export function TimetableJourney({
                   <button
                     type="button"
                     onClick={s.onAction}
-                    className="ml-auto shrink-0 text-[11px] font-medium text-[#246a59] hover:underline"
+                    className="ml-1 shrink-0 text-[11px] font-medium text-[#246a59] hover:underline"
                   >
                     Change
                   </button>
