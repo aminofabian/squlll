@@ -72,18 +72,18 @@ export function TeachersBulkActions({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex shrink-0 flex-wrap items-center gap-1">
       {teachers.length > 0 ? (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-xs"
+          className="h-6 gap-1 rounded-none border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]"
           onClick={handleExport}
         >
-          <Download className="h-3.5 w-3.5" />
-          Export staff list
-          <span className="text-slate-400">({teachers.length})</span>
+          <Download className="h-3 w-3" />
+          Export
+          <span className="text-[#1a4d42]/40">({teachers.length})</span>
         </Button>
       ) : null}
       {pendingInviteIds.length > 0 ? (
@@ -91,17 +91,17 @@ export function TeachersBulkActions({
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 text-xs"
+          className="h-6 gap-1 rounded-none border-[#1a4d42]/15 px-2 text-[11px] text-[#0a1f1a] hover:border-[#246a59]/40 hover:bg-[#246a59]/[0.06]"
           onClick={() => void handleResendAll()}
           disabled={isResending}
         >
           {isResending ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
-            <Mail className="h-3.5 w-3.5" />
+            <Mail className="h-3 w-3" />
           )}
-          Resend pending invites
-          <span className="text-slate-400">({pendingInviteIds.length})</span>
+          Resend invites
+          <span className="text-[#1a4d42]/40">({pendingInviteIds.length})</span>
         </Button>
       ) : null}
     </div>

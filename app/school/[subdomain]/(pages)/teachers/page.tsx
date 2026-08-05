@@ -209,22 +209,19 @@ function TeachersPage() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-4 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-6">
+        <div className="shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-1.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
           <div className="mx-auto max-w-5xl">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
-                  Staff
-                </p>
-                <h1 className="font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <h1 className="truncate font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
                   {selectedTeacher
                     ? selectedTeacher.name
                     : "Teachers"}
                 </h1>
-                <p className="mt-0.5 text-xs text-[#1a4d42]/50 dark:text-white/45">
+                <p className="truncate text-[11px] text-[#1a4d42]/50 dark:text-white/45">
                   {selectedTeacher
                     ? `${selectedTeacher.department} · ${selectedTeacher.status === "active" ? "Active" : "Not activated"}`
-                    : "Manage staff, invitations, and assignments"}
+                    : "Staff, invitations, and assignments"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -240,7 +237,7 @@ function TeachersPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-5">
+          <div className="mx-auto max-w-5xl space-y-2 p-3 sm:space-y-2.5 sm:p-4">
             {!tenantId && (
               <div className="flex items-center gap-2 border border-amber-300/80 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
                 <Info className="h-4 w-4 shrink-0" />
@@ -312,7 +309,7 @@ function TeachersPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-2">
                 <TeachersStats
                   teachers={teachers}
                   pendingCount={invitations.length}
@@ -320,37 +317,38 @@ function TeachersPage() {
                 />
 
                 {!teachersLoading && teachers.length > 0 && (
-                  <TeachersFilterBar
-                    filter={staffFilter}
-                    onFilterChange={setStaffFilter}
-                    counts={filterCounts}
-                    departments={departments}
-                    departmentFilter={departmentFilter}
-                    onDepartmentFilterChange={setDepartmentFilter}
-                  />
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <TeachersFilterBar
+                      filter={staffFilter}
+                      onFilterChange={setStaffFilter}
+                      counts={filterCounts}
+                      departments={departments}
+                      departmentFilter={departmentFilter}
+                      onDepartmentFilterChange={setDepartmentFilter}
+                    />
+                    <TeachersBulkActions
+                      teachers={filteredTeachers}
+                      invitations={invitations}
+                      onInvitationsUpdated={() => {
+                        if (tenantId) fetchPendingInvitations(tenantId);
+                      }}
+                    />
+                  </div>
                 )}
 
                 {searchTerm && !selectedTeacherId && (
-                  <div className="flex items-center gap-2 text-xs text-[#1a4d42]/55">
+                  <div className="flex items-center gap-2 text-[11px] text-[#1a4d42]/55">
                     <span>Filtering by</span>
                     <button
                       type="button"
                       onClick={() => setSearchTerm("")}
-                      className="inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/15 bg-white px-2.5 py-0.5 text-[#0a1f1a] hover:border-[#246a59]/40 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
+                      className="inline-flex items-center gap-1 rounded-none border border-[#1a4d42]/15 bg-white px-2 py-0.5 text-[#0a1f1a] hover:border-[#246a59]/40 dark:border-white/15 dark:bg-[#0c1a17] dark:text-white"
                     >
                       &ldquo;{searchTerm}&rdquo;
                       <span className="text-[#1a4d42]/40">×</span>
                     </button>
                   </div>
                 )}
-
-                <TeachersBulkActions
-                  teachers={filteredTeachers}
-                  invitations={invitations}
-                  onInvitationsUpdated={() => {
-                    if (tenantId) fetchPendingInvitations(tenantId);
-                  }}
-                />
 
                 <PendingInvitations
                   invitations={invitations}

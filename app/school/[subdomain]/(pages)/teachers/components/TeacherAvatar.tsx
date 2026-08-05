@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 import { getAvatarPalette, teacherInitials } from "../utils/teachers-utils";
 
 const sizes = {
-  sm: "h-7 w-7 text-[10px]",
-  md: "h-9 w-9 text-xs",
-  lg: "h-16 w-16 text-lg",
+  sm: "h-6 w-6 text-[9px]",
+  md: "h-8 w-8 text-[10px]",
+  lg: "h-14 w-14 text-base",
 } as const;
 
 interface TeacherAvatarProps {
@@ -27,11 +27,11 @@ export function TeacherAvatar({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-semibold",
-        palette.bg,
-        palette.text,
+        "flex shrink-0 items-center justify-center rounded-none font-semibold",
+        ring
+          ? "bg-[#0a1f1a] text-white"
+          : cn(palette.bg, palette.text),
         sizes[size],
-        ring && "ring-2 ring-white dark:ring-slate-900",
         className,
       )}
       aria-hidden

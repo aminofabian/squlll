@@ -84,12 +84,12 @@ export function TeachersSearchSidebar({
 
   return (
     <div className="flex h-full flex-col pt-2">
-      <div className="relative mb-2.5">
-        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#1a4d42]/40" />
+      <div className="relative mb-2">
+        <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-[#1a4d42]/40" />
         <Input
           type="text"
-          placeholder="Search by name, dept…"
-          className="h-9 rounded-none border border-[#1a4d42]/15 bg-white pl-8 text-sm shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
+          placeholder="Search staff…"
+          className="h-8 rounded-none border border-[#1a4d42]/15 bg-white pl-7 text-xs shadow-none placeholder:text-[#1a4d42]/40 focus-visible:border-[#246a59]/50 focus-visible:ring-[#246a59]/20 dark:border-white/15 dark:bg-[#0c1a17]"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
@@ -97,7 +97,7 @@ export function TeachersSearchSidebar({
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute right-2 top-2 rounded-none p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
+            className="absolute right-1.5 top-1.5 rounded-none p-0.5 text-[#1a4d42]/40 hover:text-[#0a1f1a]"
             aria-label="Clear search"
           >
             <X className="h-3.5 w-3.5" />
@@ -105,15 +105,15 @@ export function TeachersSearchSidebar({
         )}
       </div>
 
-      <div className="mb-2.5 rounded-none border border-[#1a4d42]/10 bg-[#f8fbfa] px-2.5 py-2 dark:border-white/10 dark:bg-[#071411]">
-        <p className="text-[10px] font-medium uppercase tracking-wide text-[#1a4d42]/45">
+      <div className="mb-2 flex items-baseline justify-between gap-2 px-0.5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#1a4d42]/45">
           Directory
         </p>
-        <p className="mt-0.5 text-xs text-[#1a4d42]/60 dark:text-white/55">
+        <p className="text-[11px] tabular-nums text-[#1a4d42]/55">
           <span className="font-semibold text-[#0a1f1a] dark:text-white">
             {teachers.length}
-          </span>{" "}
-          staff ·{" "}
+          </span>
+          {" · "}
           <span className="text-[#246a59]">{activeCount} active</span>
         </p>
       </div>
@@ -154,17 +154,17 @@ export function TeachersSearchSidebar({
                 type="button"
                 onClick={() => onTeacherSelect(teacher.id)}
                 className={cn(
-                  "w-full rounded-none border px-2.5 py-2 text-left transition-colors",
+                  "w-full rounded-none border px-2 py-1.5 text-left transition-colors",
                   isSelected
                     ? "border-[#246a59]/25 bg-[#246a59]/10 dark:bg-[#246a59]/15"
                     : "border-transparent hover:border-[#1a4d42]/10 hover:bg-white dark:hover:bg-white/5",
                 )}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <TeacherAvatar name={teacher.name} size="sm" ring={isSelected} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-medium text-[#0a1f1a] dark:text-white">
+                      <span className="truncate text-xs font-medium text-[#0a1f1a] dark:text-white">
                         {teacher.name}
                       </span>
                       <span

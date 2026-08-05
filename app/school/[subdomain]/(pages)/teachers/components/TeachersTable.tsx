@@ -54,12 +54,12 @@ export function hasIncompleteProfile(teacher: Teacher) {
 
 function statusBadge(status: Teacher["status"]) {
   if (status === "active") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    return "rounded-none border-emerald-200/80 bg-emerald-50 text-emerald-800";
   }
   if (status === "inactive") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
+    return "rounded-none border-amber-200/80 bg-amber-50 text-amber-800";
   }
-  return "border-slate-200 bg-slate-50 text-slate-600";
+  return "rounded-none border-[#1a4d42]/12 bg-[#f8fbfa] text-[#1a4d42]/70";
 }
 
 function statusLabel(status: Teacher["status"]) {
@@ -74,31 +74,27 @@ function scheduleBadge(
 ) {
   if (timetableLoading) {
     return (
-      <span className="text-[11px] text-slate-400">Checking…</span>
+      <span className="text-[10px] text-[#1a4d42]/40">Checking…</span>
     );
   }
 
   const count = lessonCounts?.get(teacherId) ?? 0;
   if (count > 0) {
     return (
-      <Badge
-        variant="outline"
-        className="border-emerald-200 bg-emerald-50 text-[10px] font-normal text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
-      >
-        <CalendarDays className="mr-1 h-3 w-3" />
-        {count} lesson{count !== 1 ? "s" : ""}
-      </Badge>
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium tabular-nums text-[#246a59]">
+        <CalendarDays className="h-3 w-3" />
+        {count}
+      </span>
     );
   }
 
   return (
-    <Badge
-      variant="outline"
-      className="border-amber-200 bg-amber-50 text-[10px] font-normal text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+    <span
+      className="text-[10px] text-amber-700"
       title="No lessons scheduled for the current term"
     >
-      No schedule
-    </Badge>
+      None
+    </span>
   );
 }
 
@@ -134,141 +130,129 @@ export function TeachersTable({
 
   return (
     <div className={teachersPanel}>
-      <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-        <h2 className="text-sm font-medium text-slate-800 dark:text-slate-100">
-          All teachers
-        </h2>
-        <p className="mt-0.5 text-xs text-slate-400">
-          Click a row to view full profile · {teachers.length} shown
-          {termName ? ` · Schedule for ${termName}` : ""}
-        </p>
+      <div className="flex items-center justify-between gap-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-1.5 dark:border-white/10 dark:bg-[#071411]">
+        <div className="min-w-0">
+          <h2 className="text-xs font-semibold text-[#0a1f1a] dark:text-white">
+            Directory
+          </h2>
+          <p className="truncate text-[10px] text-[#1a4d42]/45">
+            {teachers.length} shown
+            {termName ? ` · ${termName}` : ""}
+          </p>
+        </div>
       </div>
 
       {teachers.length === 0 ? (
-        <div className="px-4 py-14 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none bg-[#246a59]/10">
-            <User className="h-5 w-5 text-[#246a59]" />
+        <div className="px-3 py-10 text-center">
+          <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-none bg-[#246a59]/10">
+            <User className="h-4 w-4 text-[#246a59]" />
           </div>
           <p className="text-sm font-medium text-[#0a1f1a] dark:text-white">
             No teachers match
           </p>
-          <p className="mt-1 text-xs text-[#1a4d42]/50 dark:text-white/45">
-            Try a different filter or search term.
+          <p className="mt-0.5 text-[11px] text-[#1a4d42]/50">
+            Try a different filter or search.
           </p>
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="max-h-[min(52vh,420px)] overflow-auto">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/80 text-left dark:border-slate-800 dark:bg-slate-900/60">
-                  <th className={cn(teachersTh, "w-10")}>#</th>
-                  <th className={teachersTh}>Teacher</th>
-                  <th className={teachersTh}>Status</th>
-                  <th className={cn(teachersTh, "hidden sm:table-cell")}>Contact</th>
-                  <th className={teachersTh}>Department</th>
-                  <th className={cn(teachersTh, "hidden lg:table-cell")}>Subjects</th>
-                  <th className={cn(teachersTh, "hidden md:table-cell")}>Grades</th>
-                  <th className={cn(teachersTh, "hidden xl:table-cell")}>Schedule</th>
-                  <th className={cn(teachersTh, "w-16")} />
+              <thead className="sticky top-0 z-10">
+                <tr className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]">
+                  <th className={cn(teachersTh, "w-8 px-2 py-1.5")}>#</th>
+                  <th className={cn(teachersTh, "px-2 py-1.5")}>Teacher</th>
+                  <th className={cn(teachersTh, "px-2 py-1.5")}>Status</th>
+                  <th className={cn(teachersTh, "hidden px-2 py-1.5 sm:table-cell")}>
+                    Contact
+                  </th>
+                  <th className={cn(teachersTh, "px-2 py-1.5")}>Dept</th>
+                  <th className={cn(teachersTh, "hidden px-2 py-1.5 lg:table-cell")}>
+                    Subjects
+                  </th>
+                  <th className={cn(teachersTh, "hidden px-2 py-1.5 md:table-cell")}>
+                    Grades
+                  </th>
+                  <th className={cn(teachersTh, "hidden px-2 py-1.5 xl:table-cell")}>
+                    Sched
+                  </th>
+                  <th className={cn(teachersTh, "w-12 px-1 py-1.5")} />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-[#1a4d42]/08 dark:divide-white/10">
                 {teachers.map((teacher, index) => {
                   const isIncomplete = hasIncompleteProfile(teacher);
                   return (
                     <tr
                       key={teacher.id}
                       className={cn(
-                        "group cursor-pointer text-slate-700 transition-colors hover:bg-slate-50/80 dark:text-slate-300 dark:hover:bg-slate-800/40",
-                        isIncomplete && "bg-amber-50/30 dark:bg-amber-950/10",
+                        "group cursor-pointer text-[#1a4d42]/80 transition-colors hover:bg-[#f8fbfa] dark:text-white/70 dark:hover:bg-white/5",
+                        isIncomplete && "bg-amber-50/40 dark:bg-amber-950/10",
                       )}
                       onClick={() => onTeacherSelect(teacher.id)}
                     >
-                      <td className="px-4 py-3 text-xs tabular-nums text-slate-400">
+                      <td className="px-2 py-1.5 text-[10px] tabular-nums text-[#1a4d42]/35">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <TeacherAvatar name={teacher.name} size="md" />
+                      <td className="px-2 py-1.5">
+                        <div className="flex items-center gap-2">
+                          <TeacherAvatar name={teacher.name} size="sm" />
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-slate-800 dark:text-slate-100">
+                            <p className="truncate text-xs font-medium text-[#0a1f1a] dark:text-white">
                               {teacher.name}
                             </p>
-                            <p className="truncate font-mono text-[11px] text-slate-400">
-                              {teacher.employeeId || "No employee ID"}
+                            <p className="truncate font-mono text-[10px] text-[#1a4d42]/40">
+                              {teacher.employeeId || "No ID"}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-2 py-1.5">
                         <Badge
                           variant="outline"
                           className={cn(
-                            "text-[10px] font-normal",
+                            "text-[9px] font-normal",
                             statusBadge(teacher.status),
                           )}
                         >
                           {statusLabel(teacher.status)}
                         </Badge>
                       </td>
-                      <td className="hidden px-4 py-3 sm:table-cell">
+                      <td className="hidden px-2 py-1.5 sm:table-cell">
                         <p
-                          className="truncate max-w-[160px] text-xs text-slate-600"
+                          className="max-w-[140px] truncate text-[11px] text-[#1a4d42]/65"
                           title={teacher.contacts.email}
                         >
                           {teacher.contacts.email || "—"}
                         </p>
                       </td>
-                      <td className="px-4 py-3 capitalize text-slate-600 dark:text-slate-400">
+                      <td className="px-2 py-1.5 text-[11px] capitalize text-[#1a4d42]/65">
                         {teacher.department || "—"}
                       </td>
-                      <td className="hidden px-4 py-3 lg:table-cell">
-                        <div className="flex max-w-[200px] flex-wrap gap-1">
-                          {teacher.subjects.slice(0, 2).map((subject) => (
-                            <Badge
-                              key={subject}
-                              variant="outline"
-                              className="border-emerald-200 bg-emerald-50 px-1.5 py-0 text-[10px] font-normal capitalize text-emerald-700"
-                            >
-                              {subject}
-                            </Badge>
-                          ))}
-                          {teacher.subjects.length > 2 && (
-                            <span className="text-[11px] text-slate-400">
-                              +{teacher.subjects.length - 2}
-                            </span>
-                          )}
-                          {teacher.subjects.length === 0 && (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
-                        </div>
+                      <td className="hidden px-2 py-1.5 lg:table-cell">
+                        <p className="max-w-[160px] truncate text-[11px] capitalize text-[#1a4d42]/65">
+                          {teacher.subjects.length > 0
+                            ? teacher.subjects.slice(0, 2).join(", ") +
+                              (teacher.subjects.length > 2
+                                ? ` +${teacher.subjects.length - 2}`
+                                : "")
+                            : "—"}
+                        </p>
                       </td>
-                      <td className="hidden px-4 py-3 md:table-cell">
-                        <div className="flex max-w-[160px] flex-wrap gap-1">
-                          {teacher.grades.slice(0, 2).map((grade) => (
-                            <Badge
-                              key={grade}
-                              variant="outline"
-                              className="border-sky-200 bg-sky-50 px-1.5 py-0 text-[10px] font-normal text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400"
-                            >
-                              {grade}
-                            </Badge>
-                          ))}
-                          {teacher.grades.length > 2 && (
-                            <span className="text-[11px] text-slate-400">
-                              +{teacher.grades.length - 2}
-                            </span>
-                          )}
-                          {teacher.grades.length === 0 && (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
-                        </div>
+                      <td className="hidden px-2 py-1.5 md:table-cell">
+                        <p className="max-w-[120px] truncate text-[11px] text-[#1a4d42]/65">
+                          {teacher.grades.length > 0
+                            ? teacher.grades.slice(0, 2).join(", ") +
+                              (teacher.grades.length > 2
+                                ? ` +${teacher.grades.length - 2}`
+                                : "")
+                            : "—"}
+                        </p>
                       </td>
-                      <td className="hidden px-4 py-3 xl:table-cell">
+                      <td className="hidden px-2 py-1.5 xl:table-cell">
                         {scheduleBadge(teacher.id, lessonCounts, timetableLoading)}
                       </td>
-                      <td className="px-2 py-3">
+                      <td className="px-1 py-1.5">
                         <div className="flex items-center justify-end gap-0.5">
                           {onTeacherDelete && (
                             <Button
@@ -282,12 +266,12 @@ export function TeachersTable({
                                 });
                               }}
                               disabled={deletingTeacherId === teacher.id}
-                              className="h-7 w-7 p-0 text-slate-300 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
+                              className="h-6 w-6 p-0 text-[#1a4d42]/25 opacity-0 transition-opacity hover:text-red-600 group-hover:opacity-100"
                             >
-                              <Trash className="h-3.5 w-3.5" />
+                              <Trash className="h-3 w-3" />
                             </Button>
                           )}
-                          <ChevronRight className="h-4 w-4 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-500" />
+                          <ChevronRight className="h-3.5 w-3.5 text-[#1a4d42]/25 transition-transform group-hover:translate-x-0.5 group-hover:text-[#246a59]" />
                         </div>
                       </td>
                     </tr>
@@ -298,10 +282,10 @@ export function TeachersTable({
           </div>
 
           {incompleteCount > 0 && (
-            <div className="flex items-center gap-2 border-t border-amber-100 bg-amber-50/50 px-4 py-2.5 text-xs text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-400">
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              {incompleteCount} teacher{incompleteCount !== 1 ? "s have" : " has"}{" "}
-              incomplete profiles — open the profile to review missing details.
+            <div className="flex items-center gap-1.5 border-t border-amber-100 bg-amber-50/50 px-3 py-1.5 text-[10px] text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-400">
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+              {incompleteCount} incomplete profile
+              {incompleteCount !== 1 ? "s" : ""} — open a row to finish.
             </div>
           )}
         </>
@@ -311,19 +295,21 @@ export function TeachersTable({
         open={!!confirmDelete}
         onOpenChange={(open) => !open && setConfirmDelete(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none border border-[#1a4d42]/12">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove {confirmDelete?.name}?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-[#0a1f1a]">
+              Remove {confirmDelete?.name}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This permanently removes them from your school staff list.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!deletingTeacherId}>
+            <AlertDialogCancel className="rounded-none" disabled={!!deletingTeacherId}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="rounded-none bg-red-600 hover:bg-red-700"
               disabled={!!deletingTeacherId}
               onClick={(e) => {
                 e.preventDefault();

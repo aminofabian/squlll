@@ -82,32 +82,32 @@ function InvitationTableRow({
   return (
     <>
       <tr className="text-[#1a4d42]/80 transition-colors hover:bg-[#f8fbfa] dark:text-white/70 dark:hover:bg-white/5">
-        <td className="px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10">
-              <Mail className="h-3.5 w-3.5 text-[#246a59]" />
+        <td className="px-2 py-1.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-none bg-[#246a59]/10">
+              <Mail className="h-3 w-3 text-[#246a59]" />
             </div>
             <p
-              className="truncate font-medium text-[#0a1f1a] dark:text-white"
+              className="truncate text-xs font-medium text-[#0a1f1a] dark:text-white"
               title={invitation.email}
             >
               {invitation.email}
             </p>
           </div>
         </td>
-        <td className="px-4 py-3">
+        <td className="px-2 py-1.5">
           <Badge
             variant="outline"
-            className="rounded-none border-[#246a59]/25 bg-[#246a59]/10 text-[10px] font-normal capitalize text-[#246a59]"
+            className="rounded-none border-[#246a59]/25 bg-[#246a59]/10 text-[9px] font-normal capitalize text-[#246a59]"
           >
             {invitation.role.toLowerCase()}
           </Badge>
         </td>
-        <td className="px-4 py-3">
+        <td className="px-2 py-1.5">
           <Badge
             variant="outline"
             className={cn(
-              "rounded-none text-[10px] font-normal capitalize",
+              "rounded-none text-[9px] font-normal capitalize",
               invitation.status === "PENDING"
                 ? "border-amber-200 bg-amber-50 text-amber-700"
                 : invitation.status === "ACCEPTED"
@@ -118,24 +118,19 @@ function InvitationTableRow({
             {invitation.status.toLowerCase()}
           </Badge>
         </td>
-        <td className="hidden px-4 py-3 sm:table-cell">
+        <td className="hidden px-2 py-1.5 sm:table-cell">
           {invitation.invitedBy ? (
-            <div className="min-w-0 max-w-[180px]">
-              <p className="truncate text-xs font-medium text-[#0a1f1a] dark:text-white">
-                {invitation.invitedBy.name}
-              </p>
-              <p className="truncate text-[11px] text-[#1a4d42]/45" title={invitation.invitedBy.email}>
-                {invitation.invitedBy.email}
-              </p>
-            </div>
+            <p className="max-w-[140px] truncate text-[11px] text-[#1a4d42]/65">
+              {invitation.invitedBy.name}
+            </p>
           ) : (
-            <span className="text-xs text-[#1a4d42]/45">System</span>
+            <span className="text-[11px] text-[#1a4d42]/45">System</span>
           )}
         </td>
-        <td className="hidden px-4 py-3 text-xs text-[#1a4d42]/55 md:table-cell">
+        <td className="hidden px-2 py-1.5 text-[11px] text-[#1a4d42]/55 md:table-cell">
           {formatDateTime(invitation.createdAt)}
         </td>
-        <td className="hidden px-4 py-3 text-xs text-[#1a4d42]/55 lg:table-cell">
+        <td className="hidden px-2 py-1.5 text-[11px] text-[#1a4d42]/55 lg:table-cell">
           {expiresAt ? (
             <span className={isExpired ? "font-medium text-red-600" : undefined}>
               {formatDate(expiresAt)}
@@ -144,16 +139,16 @@ function InvitationTableRow({
             "Never"
           )}
         </td>
-        <td className="px-4 py-3">
+        <td className="px-2 py-1.5">
           {(isPending || isAccepted) && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               {isPending && (
                 <>
                   <button
                     type="button"
                     onClick={() => onResend(invitation.id)}
                     disabled={isResending}
-                    className="text-xs text-[#1a4d42]/55 hover:text-[#246a59] disabled:opacity-50"
+                    className="text-[11px] text-[#1a4d42]/55 hover:text-[#246a59] disabled:opacity-50"
                   >
                     {isResending ? "Sending…" : "Resend"}
                   </button>
@@ -162,7 +157,7 @@ function InvitationTableRow({
                     type="button"
                     onClick={() => setConfirmRevokeOpen(true)}
                     disabled={isRevoking}
-                    className="text-xs text-[#1a4d42]/55 hover:text-red-600 disabled:opacity-50"
+                    className="text-[11px] text-[#1a4d42]/55 hover:text-red-600 disabled:opacity-50"
                   >
                     {isRevoking ? "Revoking…" : "Revoke"}
                   </button>
@@ -173,7 +168,7 @@ function InvitationTableRow({
                 type="button"
                 onClick={() => onActivate(invitation)}
                 disabled={isActivating}
-                className="text-xs font-medium text-[#246a59] hover:text-[#1a4d42] disabled:opacity-50"
+                className="text-[11px] font-medium text-[#246a59] hover:text-[#1a4d42] disabled:opacity-50"
               >
                 {isActivating ? "Activating…" : "Activate"}
               </button>
@@ -216,6 +211,7 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
   const [resendingIds, setResendingIds] = useState<Set<string>>(new Set());
   const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
   const [activatingEmails, setActivatingEmails] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState(false);
   const { activateTeacherRecord } = useTeacherAdminActions();
 
   const resendInvitation = async (invitationId: string) => {
@@ -320,54 +316,65 @@ export function PendingInvitations({ invitations, isLoading, error, onInvitation
 
   return (
     <div className={teachersPanel}>
-      <div className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-4 py-3 dark:border-white/10 dark:bg-[#071411]">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-none bg-amber-400 opacity-40" />
-                <span className="relative inline-flex h-2 w-2 rounded-none bg-amber-500" />
-              </span>
-              <h2 className="font-display text-sm tracking-tight text-[#0a1f1a] dark:text-white">
-                Pending invitations
-              </h2>
-            </div>
-            <p className="mt-0.5 pl-4 text-xs text-[#1a4d42]/45">
-              {invitations.length} awaiting response — resend or activate when ready
-            </p>
-          </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 bg-[#f8fbfa] px-3 py-1.5 text-left transition-colors hover:bg-[#eef5f2] dark:bg-[#071411] dark:hover:bg-[#0c1a17]"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-none bg-amber-400 opacity-40" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-none bg-amber-500" />
+          </span>
+          <h2 className="text-xs font-semibold text-[#0a1f1a] dark:text-white">
+            Pending invitations
+          </h2>
+          <span className="tabular-nums text-[11px] text-amber-700">
+            {invitations.length}
+          </span>
         </div>
-      </div>
+        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-[#1a4d42]/45">
+          {expanded ? "Hide" : "Show"}
+        </span>
+      </button>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]">
-              <th className={teachersTh}>Email</th>
-              <th className={teachersTh}>Role</th>
-              <th className={teachersTh}>Status</th>
-              <th className={cn(teachersTh, "hidden sm:table-cell")}>Invited by</th>
-              <th className={cn(teachersTh, "hidden md:table-cell")}>Created</th>
-              <th className={cn(teachersTh, "hidden lg:table-cell")}>Expires</th>
-              <th className={teachersTh}>Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1a4d42]/10 dark:divide-white/10">
-            {invitations.map((invitation) => (
-              <InvitationTableRow
-                key={invitation.id}
-                invitation={invitation}
-                resendingIds={resendingIds}
-                revokingIds={revokingIds}
-                activatingEmails={activatingEmails}
-                onResend={resendInvitation}
-                onRevoke={revokeInvitation}
-                onActivate={activateTeacher}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {expanded ? (
+        <div className="max-h-[180px] overflow-auto border-t border-[#1a4d42]/10">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-[#1a4d42]/10 bg-[#f8fbfa] text-left dark:border-white/10 dark:bg-[#071411]">
+                <th className={cn(teachersTh, "px-2 py-1.5")}>Email</th>
+                <th className={cn(teachersTh, "px-2 py-1.5")}>Role</th>
+                <th className={cn(teachersTh, "px-2 py-1.5")}>Status</th>
+                <th className={cn(teachersTh, "hidden px-2 py-1.5 sm:table-cell")}>
+                  Invited by
+                </th>
+                <th className={cn(teachersTh, "hidden px-2 py-1.5 md:table-cell")}>
+                  Created
+                </th>
+                <th className={cn(teachersTh, "hidden px-2 py-1.5 lg:table-cell")}>
+                  Expires
+                </th>
+                <th className={cn(teachersTh, "px-2 py-1.5")}>Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1a4d42]/10 dark:divide-white/10">
+              {invitations.map((invitation) => (
+                <InvitationTableRow
+                  key={invitation.id}
+                  invitation={invitation}
+                  resendingIds={resendingIds}
+                  revokingIds={revokingIds}
+                  activatingEmails={activatingEmails}
+                  onResend={resendInvitation}
+                  onRevoke={revokeInvitation}
+                  onActivate={activateTeacher}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </div>
   );
 }
