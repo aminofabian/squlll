@@ -3,12 +3,10 @@
 import { useMemo, useState } from "react";
 import {
   AlertCircle,
-  BookOpen,
   CheckCircle2,
   Filter,
   GraduationCap,
   Search,
-  UserPlus,
   Users,
   X,
 } from "lucide-react";
@@ -283,65 +281,40 @@ export function ClassesCampusOverview({
   }
 
   return (
-    <section aria-label="Class directory overview" className="space-y-4">
-      <div className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white shadow-none dark:border-white/10 dark:bg-[#0c1a17]">
-        <div className="border-b border-[#1a4d42]/10 bg-gradient-to-r from-[#246a59]/5 to-transparent px-4 py-4 dark:border-white/10 sm:px-5">
-          <h2 className="font-display text-lg font-normal tracking-tight text-[#0a1f1a] dark:text-white">
+    <section
+      aria-label="Class directory overview"
+      className="overflow-hidden rounded-none border border-[#1a4d42]/12 bg-white dark:border-white/10 dark:bg-[#0c1a17]"
+    >
+      <div className="flex flex-wrap items-center gap-2 border-b border-[#1a4d42]/10 bg-[#f8fbfa] px-3 py-2 dark:border-white/10 dark:bg-[#071411]">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-base tracking-tight text-[#0a1f1a] dark:text-white">
             Class directory
           </h2>
-          <p className="mt-0.5 text-xs text-[#1a4d42]/55">
-            Every grade and stream is a class — see who teaches it and how many
-            students are enrolled.
+          <p className="text-[11px] tabular-nums text-[#1a4d42]/50">
+            {summary.total} classes · {summary.totalStudents} students ·{" "}
+            {summary.withTeacher} with teacher
+            {summary.needsAttention > 0 ? (
+              <span className="text-amber-700">
+                {" "}
+                · {summary.needsAttention} need attention
+              </span>
+            ) : null}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 divide-x divide-y divide-[#1a4d42]/10 dark:divide-white/10 sm:grid-cols-4 sm:divide-y-0">
-          {[
-            { label: "Classes", value: summary.total },
-            { label: "Students placed", value: summary.totalStudents },
-            {
-              label: "With class teacher",
-              value: summary.withTeacher,
-            },
-            {
-              label: "Need attention",
-              value: summary.needsAttention,
-              warn: summary.needsAttention > 0,
-            },
-          ].map((cell) => (
-            <div key={cell.label} className="px-4 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[#1a4d42]/45">
-                {cell.label}
-              </p>
-              <p
-                className={cn(
-                  "mt-0.5 text-lg font-bold tabular-nums",
-                  cell.warn
-                    ? "text-amber-700 dark:text-amber-400"
-                    : "text-[#0a1f1a] dark:text-white",
-                )}
-              >
-                {cell.value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/45" />
+        <div className="relative min-w-0 w-full sm:w-44">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#1a4d42]/40" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search class or teacher…"
-            className="h-9 border-[#1a4d42]/12 bg-white pl-8 pr-8 text-sm dark:bg-[#0c1a17]"
+            placeholder="Search…"
+            className="h-8 rounded-none border-[#1a4d42]/15 bg-white pl-7 pr-7 text-xs shadow-none dark:bg-[#0c1a17]"
           />
           {search ? (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#1a4d42]/45"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#1a4d42]/40"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" />
@@ -349,144 +322,119 @@ export function ClassesCampusOverview({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-none border border-[#1a4d42]/12 bg-[#f8fbfa] p-0.5 dark:border-white/15 dark:bg-[#0c1a17]">
-            {(
-              [
-                { id: "all" as const, label: "All classes" },
-                { id: "attention" as const, label: "Needs attention" },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilter(tab.id)}
-                className={cn(
-                  "rounded-none px-3 py-1.5 text-xs font-medium transition-colors",
-                  filter === tab.id
-                    ? "bg-white text-[#246a59] shadow-none dark:bg-[#0c1a17]"
-                    : "text-[#1a4d42]/55 hover:text-[#1a4d42]/80",
-                )}
-              >
-                {tab.label}
-                {tab.id === "attention" && summary.needsAttention > 0 ? (
-                  <span className="ml-1 tabular-nums text-amber-600">
-                    ({summary.needsAttention})
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 text-xs lg:hidden"
-            onClick={onOpenGradePicker}
-          >
-            <Filter className="h-3.5 w-3.5" />
-            Grades
-          </Button>
+        <div className="inline-flex rounded-none border border-[#1a4d42]/12 bg-white p-0.5 dark:border-white/15 dark:bg-[#0c1a17]">
+          {(
+            [
+              { id: "all" as const, label: "All" },
+              { id: "attention" as const, label: "Attention" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilter(tab.id)}
+              className={cn(
+                "rounded-none px-2 py-1 text-[11px] font-medium transition-colors",
+                filter === tab.id
+                  ? "bg-[#0a1f1a] text-white"
+                  : "text-[#1a4d42]/55 hover:text-[#0a1f1a]",
+              )}
+            >
+              {tab.label}
+              {tab.id === "attention" && summary.needsAttention > 0 ? (
+                <span className="ml-0.5 tabular-nums">
+                  ({summary.needsAttention})
+                </span>
+              ) : null}
+            </button>
+          ))}
         </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1 rounded-none border-[#1a4d42]/15 text-xs lg:hidden"
+          onClick={onOpenGradePicker}
+        >
+          <Filter className="h-3.5 w-3.5" />
+          Grades
+        </Button>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-[#1a4d42]/45">
+        <p className="py-6 text-center text-sm text-[#1a4d42]/45">
           No classes match your search.
         </p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="max-h-[min(52vh,28rem)] divide-y divide-[#1a4d42]/8 overflow-y-auto dark:divide-white/10">
           {filtered.map((unit) => {
             const meta = healthMeta(unit.health);
             return (
-              <button
-                key={unit.id}
-                type="button"
-                onClick={() => openClass(unit)}
-                className={cn(
-                  "group flex flex-col rounded-none border border-[#1a4d42]/12 bg-white p-4 text-left shadow-none transition-all",
-                  "hover:border-[#246a59]/35 dark:border-white/15 dark:bg-[#0c1a17]",
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-[#0a1f1a] group-hover:text-[#246a59] dark:text-white">
-                      {unit.label}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-[#1a4d42]/45">
+              <li key={unit.id}>
+                <button
+                  type="button"
+                  onClick={() => openClass(unit)}
+                  className="group flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-[#f8fbfa] dark:hover:bg-[#071411]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="truncate text-sm font-medium text-[#0a1f1a] group-hover:text-[#246a59] dark:text-white">
+                        {unit.label}
+                      </p>
+                      <span
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1 rounded-none border px-1.5 py-px text-[10px] font-medium",
+                          meta.className,
+                        )}
+                      >
+                        <span
+                          className={cn("h-1 w-1 rounded-none", meta.dot)}
+                        />
+                        {meta.label}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[11px] text-[#1a4d42]/45">
                       {unit.levelName}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      "inline-flex shrink-0 items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-medium",
-                      meta.className,
-                    )}
-                  >
-                    <span className={cn("h-1.5 w-1.5 rounded-none", meta.dot)} />
-                    {meta.label}
-                  </span>
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#1a4d42]/10 pt-3 dark:border-white/10">
-                  <div>
-                    <p className="text-[10px] font-medium uppercase text-[#1a4d42]/45">
-                      Students
-                    </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-base font-bold tabular-nums text-[#0a1f1a] dark:text-white">
-                      <Users className="h-3.5 w-3.5 text-[#1a4d42]/45" />
-                      {unit.studentCount}
-                    </p>
-                  </div>
-                  <div className="col-span-2 min-w-0">
-                    <p className="text-[10px] font-medium uppercase text-[#1a4d42]/45">
-                      Class teacher
-                    </p>
-                    <p className="mt-0.5 truncate text-xs font-semibold text-[#1a4d42]/80 dark:text-slate-200">
+                      {" · "}
                       {unit.classTeacher ?? (
-                        <span className="font-medium text-amber-700 dark:text-amber-400">
-                          Not assigned
-                        </span>
+                        <span className="text-amber-700">No teacher</span>
                       )}
+                      {" · "}
+                      {unit.subjectCount === 0
+                        ? "No subjects"
+                        : `${unit.subjectsStaffed}/${unit.subjectCount} staffed`}
                     </p>
                   </div>
-                </div>
-
-                <p className="mt-3 flex items-center gap-1 text-[11px] text-[#1a4d42]/45">
-                  <BookOpen className="h-3 w-3" />
-                  {unit.subjectCount === 0
-                    ? "No subjects on curriculum"
-                    : `${unit.subjectsStaffed}/${unit.subjectCount} subjects staffed`}
-                </p>
-              </button>
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-semibold tabular-nums text-[#0a1f1a] dark:text-white">
+                    <Users className="h-3.5 w-3.5 text-[#1a4d42]/40" />
+                    {unit.studentCount}
+                  </span>
+                </button>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
 
       {summary.needsAttention > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-none border border-amber-200/70 bg-amber-50/40 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-950/20">
-          <p className="flex items-center gap-2 text-xs text-amber-900 dark:text-amber-200">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {summary.needsAttention} class
-            {summary.needsAttention !== 1 ? "es" : ""} need students, a class
-            teacher, or subject teachers.
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-amber-200/70 bg-amber-50/50 px-3 py-1.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <p className="flex items-center gap-1.5 text-[11px] text-amber-900 dark:text-amber-200">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            {summary.needsAttention} need setup
           </p>
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1.5 border-amber-200/80 text-xs"
+            className="text-[11px] font-medium text-amber-800 underline-offset-2 hover:underline"
             onClick={() => setFilter("attention")}
           >
-            <Filter className="h-3.5 w-3.5" />
-            Show list
-          </Button>
+            Show them
+          </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2 rounded-none border border-emerald-200/60 bg-emerald-50/40 px-4 py-3 text-xs text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          All classes are enrolled, staffed, and subject-ready.
+        <div className="flex items-center gap-1.5 border-t border-[#246a59]/15 bg-[#e8f2ef]/60 px-3 py-1.5 text-[11px] text-[#1a4d42] dark:border-[#246a59]/30 dark:bg-[#246a59]/10">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          All classes ready
         </div>
       )}
     </section>

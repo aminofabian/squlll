@@ -40,13 +40,10 @@ export function ClassesPageHeader({
   onToggleGradePanel,
 }: ClassesPageHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-2.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
+    <div className="sticky top-0 z-20 shrink-0 border-b border-[#1a4d42]/12 bg-[#f8fbfa]/95 px-3 py-1.5 backdrop-blur-md dark:border-white/10 dark:bg-[#071411]/95 sm:px-4">
       <div className="mx-auto flex max-w-6xl items-center gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#246a59]">
-            Structure
-          </p>
-          <h1 className="truncate font-display text-xl tracking-tight text-[#0a1f1a] dark:text-white">
+          <h1 className="truncate font-display text-lg tracking-tight text-[#0a1f1a] dark:text-white">
             {title}
           </h1>
           {subtitle ? (

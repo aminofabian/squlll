@@ -414,7 +414,7 @@ export default function ClassesPage() {
           />
 
           <div className="flex-1">
-            <div className="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
+            <div className="mx-auto max-w-6xl space-y-2 p-3 sm:space-y-2.5 sm:p-4">
               {!selectedGradeId ? (
                 <>
                   <ClassesPulseHero
