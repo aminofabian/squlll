@@ -1,68 +1,104 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card'
 import { Button } from '../../../../../components/ui/button'
-import { 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
-  Calendar, 
-  TrendingUp,
-  School,
-  ChevronRight,
-  Clock,
-  MapPin,
-  Star,
-  Award,
-  Target,
-  Heart,
-  Sparkles,
+import {
+  Users,
+  GraduationCap,
+  BookOpen,
   ArrowRight,
-  CheckCircle,
-  Globe,
-  Shield,
-  Zap,
-  BarChart3,
-  Settings,
+  MapPin,
+  Heart,
   LogIn,
   Menu,
   X,
-  Home,
-  UserPlus,
   PhoneCall,
   Mail,
   Building2,
-  Library
+  UserPlus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { SchoolConfiguration } from '../../../../../lib/types/school-config'
 import brandingJson from '../../../../../lib/data/tenant-branding.template.json'
+import { SchoolHomepageFeeDownloads } from './SchoolHomepageFeeDownloads'
 
 interface SchoolHomepageProps {
   config?: SchoolConfiguration
+}
+
+function Reveal({
+  children,
+  className = '',
+  delay = 0,
+}: {
+  children: ReactNode
+  className?: string
+  delay?: number
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (typeof IntersectionObserver === 'undefined') {
+      const raf = requestAnimationFrame(() => setVisible(true))
+      return () => cancelAnimationFrame(raf)
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true)
+            observer.disconnect()
+          }
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`${className} transition-all duration-700 ease-out will-change-transform motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+      }`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function isPlaceholderCopy(value?: string | null) {
+  if (!value?.trim()) return true
+  const lower = value.toLowerCase()
+  return (
+    lower.includes('optional short description') ||
+    lower.includes('your school') ||
+    lower.includes('tenant.example')
+  )
 }
 
 export function SchoolHomepage({ config }: SchoolHomepageProps) {
   const params = useParams()
   const subdomain = params.subdomain as string
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [heroReady, setHeroReady] = useState(false)
 
   const branding = brandingJson as any
 
-  // Extract school name from subdomain
-  const getSchoolNameFromSubdomain = (subdomain: string) => {
-    // Convert subdomain to title case and handle special cases
-    const name = subdomain
+  const getSchoolNameFromSubdomain = (value: string) =>
+    value
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ')
-    
-    return name
-  }
 
-  // Resolve school name with fallbacks: branding -> cookie -> subdomain-derived
   const readCookie = (name: string): string | null => {
     if (typeof document === 'undefined') return null
     const value = `; ${document.cookie}`
@@ -71,7 +107,8 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
     return null
   }
 
-  const initialName = (branding?.brand?.name as string) || getSchoolNameFromSubdomain(subdomain)
+  const initialName =
+    (branding?.brand?.name as string) || getSchoolNameFromSubdomain(subdomain)
   const [resolvedSchoolName, setResolvedSchoolName] = useState<string>(initialName)
 
   useEffect(() => {
@@ -84,368 +121,341 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const tagline = (branding?.brand?.tagline as string) || 'Excellence in Education'
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
-  const primary = branding?.colors?.primary
-  const primaryDark = branding?.colors?.primaryDark || primary
-  const primaryLight = branding?.colors?.primaryLight || primary
-  const themeVars: Record<string, string> = {}
-  if (primary) themeVars['--primary'] = primary
-  if (primaryDark) themeVars['--primary-dark'] = primaryDark
-  if (primaryLight) themeVars['--primary-light'] = primaryLight
-  const totalLevels = config?.selectedLevels?.length || 0
-  const totalGrades = config?.selectedLevels?.reduce((acc, level) => acc + level.gradeLevels.length, 0) || 0
-  const totalSubjects = config?.selectedLevels?.reduce((acc, level) => acc + level.subjects.length, 0) || 0
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setHeroReady(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const tagline = isPlaceholderCopy(branding?.brand?.tagline)
+    ? 'Inspiring excellence every day'
+    : ((branding?.brand?.tagline as string) || 'Inspiring excellence every day')
+
+  const description = isPlaceholderCopy(branding?.brand?.description)
+    ? 'A place where curious minds grow into confident learners — through rigorous academics, character, and community.'
+    : (branding?.brand?.description as string)
+
+  // Prefer tenant school theme, then SQUL product greens (globals / onboarding).
+  const schoolTheme = config?.theme?.colors
+  const primary = schoolTheme?.primary || '#246a59'
+  const primaryDark = schoolTheme?.primaryDark || '#1a4c40'
+  const primaryLight = schoolTheme?.primaryLight || '#2d8570'
+  const themeVars: Record<string, string> = {
+    '--primary': primary,
+    '--primary-dark': primaryDark,
+    '--primary-light': primaryLight,
+    '--school-ink': '#0a1f1a',
+    '--school-paper': '#f3f7f5',
+    '--school-accent': '#a7f3d0',
+  }
+
+  const totalSubjects =
+    config?.selectedLevels?.reduce((acc, level) => acc + level.subjects.length, 0) || 0
+  const totalGrades =
+    config?.selectedLevels?.reduce((acc, level) => acc + level.gradeLevels.length, 0) || 0
+
+  const configuredHero = branding?.assets?.heroImage as string | undefined
+  const normalizedHero = configuredHero
+    ?.replace(/^\/public/, '')
+    .trim()
+  const heroImage =
+    normalizedHero &&
+    !normalizedHero.includes('hero.jpg') &&
+    !normalizedHero.includes('example')
+      ? normalizedHero
+      : '/schooll.png'
+
+  const navLinks = [
+    { href: '/', label: 'Home' },
+    { href: '/about', label: 'About' },
+    { href: '/programs', label: 'Programs' },
+    { href: '/admissions', label: 'Admissions' },
+    { href: '/contact', label: 'Contact' },
+  ]
+
+  const offerings = [
+    {
+      icon: BookOpen,
+      title: 'Academic excellence',
+      body: 'A rigorous pathway across core disciplines — designed to challenge, inspire, and prepare every learner.',
+      href: '/academics',
+      cta: 'Explore academics',
+    },
+    {
+      icon: GraduationCap,
+      title: 'Life beyond class',
+      body: 'Sports, arts, clubs, and leadership — space for talent and character to grow outside the timetable.',
+      href: '/activities',
+      cta: 'View activities',
+    },
+    {
+      icon: Heart,
+      title: 'Student support',
+      body: 'Guidance, tutoring, and care so every student has the academic and personal backing they need.',
+      href: '/support',
+      cta: 'Learn more',
+    },
+  ]
+
+  const stats = [
+    { value: '1,200+', label: 'Students' },
+    { value: '98%', label: 'Success rate' },
+    { value: totalSubjects > 0 ? `${totalSubjects}+` : '40+', label: 'Subjects' },
+    { value: '25+', label: 'Years' },
+  ]
+
+  const initials = resolvedSchoolName
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 
   return (
-    <div className="min-h-screen bg-gray-50" style={themeVars}>
+    <div
+      className="school-home min-h-screen bg-[var(--school-paper)] text-[var(--school-ink)]"
+      style={themeVars}
+    >
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .school-home { --school-nav-h: 4.5rem; }
+        .school-home, .school-home * { border-radius: 0 !important; }
+        @keyframes school-hero-rise {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes school-hero-ken {
+          from { transform: scale(1.06); }
+          to { transform: scale(1); }
+        }
+        @keyframes school-line-draw {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
+        .school-hero-copy {
+          animation: school-hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .school-hero-copy-delay { animation-delay: 0.12s; }
+        .school-hero-copy-delay-2 { animation-delay: 0.24s; }
+        .school-hero-media { animation: school-hero-ken 8s ease-out both; }
+        .school-accent-line {
+          transform-origin: left;
+          animation: school-line-draw 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .school-hero-copy, .school-hero-media, .school-accent-line { animation: none !important; }
+        }
+      `}} />
+
       {/* Navigation */}
-      <nav className="bg-white border-b-4 border-primary sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo */}
-            <div className="flex items-center max-w-xs lg:max-w-sm">
-              <div className="flex-shrink-0 flex items-center">
-                <div className="relative">
-                  {/* Main logo */}
-                  {branding?.logos?.primary ? (
-                    <img
-                      src={branding.logos.primary as string}
-                      alt={`${resolvedSchoolName} logo`}
-                      className="w-12 h-12 md:w-14 md:h-14 object-contain border-2 border-white shadow-lg bg-white"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-primary via-primary-light to-primary-dark border-3 border-white shadow-lg flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-white/10"></div>
-                      <Building2 className="h-6 w-6 md:h-7 md:w-7 text-white z-10 relative" />
-                      <div className="absolute top-1 right-1 w-3 h-3 md:w-4 md:h-4 bg-yellow-400 border border-yellow-500 flex items-center justify-center z-20">
-                        <BookOpen className="h-2 w-2 md:h-2.5 md:w-2.5 text-primary-dark" />
-                      </div>
-                      <div className="absolute bottom-1 left-1 w-2.5 h-2.5 md:w-3 md:h-3 bg-white border border-primary-dark flex items-center justify-center z-20">
-                        <Star className="h-1 w-1 md:h-1.5 md:w-1.5 text-primary fill-current" />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* School name abbreviation overlay */}
-                  <div className="absolute -bottom-1.5 -right-0.5 md:-bottom-2 md:-right-1 w-5 h-5 md:w-6 md:h-6 bg-primary-dark border-2 border-white flex items-center justify-center text-xs font-black text-white">
-                    {resolvedSchoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
-                  </div>
-                </div>
-                
-                <div className="ml-3 md:ml-4 min-w-0">
-                  <span className="text-sm md:text-lg font-black text-gray-900 tracking-tight block leading-tight truncate">
-                    {resolvedSchoolName.toUpperCase()}
-                  </span>
-                  <span className="text-xs font-semibold text-primary uppercase tracking-tight truncate block">
-                    {tagline.toUpperCase()}
-                  </span>
-                </div>
+      <nav
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
+          scrolled || isMobileMenuOpen
+            ? 'border-b border-black/10 bg-white/95 backdrop-blur-md'
+            : 'border-b border-transparent bg-transparent'
+        }`}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="group flex min-w-0 items-center gap-3">
+            {branding?.logos?.primary ? (
+              <img
+                src={branding.logos.primary as string}
+                alt={`${resolvedSchoolName} logo`}
+                className="h-10 w-10 object-contain sm:h-11 sm:w-11"
+              />
+            ) : (
+              <div className="relative flex h-10 w-10 items-center justify-center bg-primary text-white sm:h-11 sm:w-11">
+                <Building2 className="h-5 w-5" />
+                <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center bg-[var(--school-ink)] text-[9px] font-semibold text-white">
+                  {initials}
+                </span>
               </div>
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-6">
-                <Link href={`/`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
-                  <Home className="w-4 h-4 inline mr-2" />
-                  HOME
-                </Link>
-                <Link href={`/about`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
-                  <School className="w-4 h-4 inline mr-2" />
-                  ABOUT
-                </Link>
-                <Link href={`/programs`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
-                  <BookOpen className="w-4 h-4 inline mr-2" />
-                  PROGRAMS
-                </Link>
-                <Link href={`/admissions`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
-                  <Users className="w-4 h-4 inline mr-2" />
-                  ADMISSIONS
-                </Link>
-                <Link href={`/contact`} className="text-gray-700 hover:text-primary px-4 py-2 border-2 border-transparent hover:border-primary text-sm font-semibold transition-all">
-                  <PhoneCall className="w-4 h-4 inline mr-2" />
-                  CONTACT
-                </Link>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="hidden md:block">
-              <div className="ml-4 flex items-center md:ml-6 space-x-4">
-                <Button asChild variant="outline" className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-semibold px-6 py-2">
-                  <Link href={`/login`}>
-                    <Users className="w-4 h-4 mr-2" />
-                    STUDENT PORTAL
-                  </Link>
-                </Button>
-                <Button asChild className="bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-2 border-2 border-primary-dark">
-                  <Link href={`/apply`}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    APPLY NOW
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 text-gray-700 hover:text-primary border-2 border-transparent hover:border-primary"
+            )}
+            <div className="min-w-0">
+              <span
+                className={`block truncate font-display text-lg leading-none tracking-tight sm:text-xl ${
+                  scrolled || isMobileMenuOpen ? 'text-[var(--school-ink)]' : 'text-white'
+                }`}
               >
-                {isMobileMenuOpen ? (
-                  <X className="block h-6 w-6" />
-                ) : (
-                  <Menu className="block h-6 w-6" />
-                )}
-              </button>
+                {resolvedSchoolName}
+              </span>
+              <span
+                className={`mt-1 block truncate text-[10px] font-medium uppercase tracking-[0.16em] sm:text-[11px] ${
+                  scrolled || isMobileMenuOpen ? 'text-primary' : 'text-white/70'
+                }`}
+              >
+                {tagline}
+              </span>
             </div>
+          </Link>
+
+          <div className="hidden items-center gap-1 lg:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  scrolled
+                    ? 'text-slate-600 hover:text-primary'
+                    : 'text-white/85 hover:text-white'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className={`h-10 rounded-none border px-4 text-sm font-semibold shadow-none ${
+                scrolled
+                  ? 'border-primary/30 bg-transparent text-primary hover:bg-primary hover:text-white'
+                  : 'border-white/40 bg-white/10 text-white hover:bg-white hover:text-[var(--school-ink)]'
+              }`}
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                Portal
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-none bg-primary px-5 text-sm font-semibold text-white shadow-none hover:bg-primary-dark"
+            >
+              <Link href="/apply">
+                Apply now
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            className={`inline-flex h-10 w-10 items-center justify-center border lg:hidden ${
+              scrolled || isMobileMenuOpen
+                ? 'border-black/10 text-[var(--school-ink)]'
+                : 'border-white/30 text-white'
+            }`}
+            aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t-2 border-primary bg-white">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link href={`/`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
-                <Home className="w-4 h-4 inline mr-2" />
-                HOME
-              </Link>
-              <Link href={`/about`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
-                <School className="w-4 h-4 inline mr-2" />
-                ABOUT
-              </Link>
-              <Link href={`/programs`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
-                <BookOpen className="w-4 h-4 inline mr-2" />
-                PROGRAMS
-              </Link>
-              <Link href={`/admissions`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
-                <Users className="w-4 h-4 inline mr-2" />
-                ADMISSIONS
-              </Link>
-              <Link href={`/contact`} className="text-gray-700 hover:text-primary block px-3 py-2 font-semibold border-2 border-transparent hover:border-primary">
-                <PhoneCall className="w-4 h-4 inline mr-2" />
-                CONTACT
-              </Link>
+          <div className="border-t border-black/10 bg-white lg:hidden">
+            <div className="space-y-1 px-4 py-4">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-2 py-3 text-base font-medium text-slate-700 hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
-            <div className="pt-4 pb-3 border-t-2 border-primary">
-              <div className="px-2 space-y-2">
-                <Button asChild variant="outline" className="w-full justify-start border-2 border-primary text-primary font-semibold">
-                  <Link href={`/login`}>
-                    <Users className="w-4 h-4 mr-2" />
-                    STUDENT PORTAL
-                  </Link>
-                </Button>
-                <Button asChild className="w-full justify-start bg-primary hover:bg-primary-dark border-2 border-primary-dark font-semibold">
-                  <Link href={`/apply`}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    APPLY NOW
-                  </Link>
-                </Button>
-              </div>
+            <div className="grid gap-2 border-t border-black/10 px-4 py-4">
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 w-full justify-center border-primary/30 text-primary shadow-none"
+              >
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  Student / staff portal
+                </Link>
+              </Button>
+              <Button
+                asChild
+                className="h-11 w-full justify-center bg-primary text-white shadow-none hover:bg-primary-dark"
+              >
+                <Link href="/apply" onClick={() => setIsMobileMenuOpen(false)}>
+                  Apply now
+                </Link>
+              </Button>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="bg-primary border-b-4 border-primary-dark">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <div className="flex justify-center mb-8">
-              <div className="bg-white border-4 border-primary-dark px-6 py-3">
-                <span className="text-primary font-bold text-lg flex items-center">
-                  <Award className="w-5 h-5 mr-2" />
-                  {tagline.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-black text-white mb-8 leading-tight tracking-wider">
-              WELCOME TO
+      {/* Hero — brand + one pitch + CTAs on full-bleed campus image */}
+      <section className="relative min-h-[100svh] overflow-hidden bg-[#0a1f1a]">
+        <div className="absolute inset-0">
+          <img
+            src={heroImage}
+            alt=""
+            aria-hidden
+            className={`school-hero-media h-full w-full object-cover object-[58%_30%] ${
+              heroReady ? '' : 'opacity-0'
+            }`}
+          />
+          <div className="absolute inset-0 bg-[#0a1f1a]/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a1f1a]/90 via-[#0a1f1a]/60 to-[#0a1f1a]/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f2923] via-[#0a1f1a]/25 to-[#0a1f1a]/50" />
+        </div>
+
+        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-center px-4 pb-16 pt-[calc(var(--school-nav-h)+2rem)] sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
+          <div className="max-w-2xl lg:max-w-3xl">
+            <p
+              className={`school-hero-copy mb-5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--school-accent)] sm:text-xs ${
+                heroReady ? '' : 'opacity-0'
+              }`}
+            >
+              {tagline}
+            </p>
+            <h1
+              className={`school-hero-copy school-hero-copy-delay font-display text-[3.25rem] leading-[0.95] tracking-tight text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] sm:text-6xl lg:text-[4.5rem] ${
+                heroReady ? '' : 'opacity-0'
+              }`}
+            >
+              {resolvedSchoolName}
             </h1>
-            <h2 className="text-4xl md:text-6xl font-black text-yellow-400 mb-8 leading-tight tracking-wider border-4 border-yellow-400 inline-block px-8 py-4">
-              {resolvedSchoolName.toUpperCase()}
-            </h2>
-            
-            <p className="text-xl md:text-2xl text-green-100 mb-12 max-w-4xl mx-auto leading-relaxed font-semibold">
-              {branding?.brand?.description || "SHAPING TOMORROW'S LEADERS THROUGH QUALITY EDUCATION, INNOVATION, AND CHARACTER DEVELOPMENT. DISCOVER YOUR POTENTIAL WITH US."}
+            <div
+              className={`school-accent-line mt-6 h-0.5 w-20 bg-[var(--school-accent)] ${
+                heroReady ? '' : 'opacity-0'
+              }`}
+            />
+            <p
+              className={`school-hero-copy school-hero-copy-delay-2 mt-6 max-w-lg text-base leading-relaxed text-white/95 sm:text-lg ${
+                heroReady ? '' : 'opacity-0'
+              }`}
+            >
+              {description}
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Button asChild size="lg" className="bg-white text-primary hover:bg-yellow-400 hover:text-primary-dark font-black px-12 py-6 text-xl border-4 border-primary-dark transition-all">
-                <Link href={`/apply`}>
-                  APPLY NOW
-                  <ArrowRight className="ml-3 h-6 w-6" />
+            <div
+              className={`school-hero-copy school-hero-copy-delay-2 mt-9 flex flex-col gap-3 sm:flex-row sm:items-center ${
+                heroReady ? '' : 'opacity-0'
+              }`}
+            >
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-none bg-primary px-8 text-base font-semibold text-white shadow-none hover:bg-primary-dark"
+              >
+                <Link href="/apply">
+                  Apply now
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" className="bg-yellow-400 text-primary-dark hover:bg-white hover:text-primary font-black px-12 py-6 text-xl border-4 border-primary-dark transition-all">
-                <Link href={`/login`}>
-                  <Globe className="mr-3 h-6 w-6" />
-                  Login (Teacher/Student/Parent)                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 bg-white border-b-4 border-gray-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 tracking-wider">
-              OUR SCHOOL AT A GLANCE
-            </h2>
-            <div className="w-24 h-1 bg-primary mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-semibold">
-              DISCOVER THE EXCELLENCE THAT MAKES OUR SCHOOL A LEADER IN EDUCATION
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center bg-white border-4 border-primary p-8 hover:bg-green-50 transition-colors">
-              <div className="bg-primary border-2 border-primary-dark w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <Users className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="text-4xl font-black text-gray-900 mb-3">1,200+</h3>
-              <p className="text-gray-600 font-bold text-lg">STUDENTS</p>
-              <p className="text-sm text-gray-500 font-semibold mt-2">THRIVING LEARNERS</p>
-            </div>
-            
-            <div className="text-center bg-white border-4 border-green-600 p-8 hover:bg-green-50 transition-colors">
-              <div className="bg-green-600 border-2 border-green-800 w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <GraduationCap className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="text-4xl font-black text-gray-900 mb-3">98%</h3>
-              <p className="text-gray-600 font-bold text-lg">SUCCESS RATE</p>
-              <p className="text-sm text-gray-500 font-semibold mt-2">ACADEMIC EXCELLENCE</p>
-            </div>
-            
-            <div className="text-center bg-white border-4 border-purple-600 p-8 hover:bg-purple-50 transition-colors">
-              <div className="bg-purple-600 border-2 border-purple-800 w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <BookOpen className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="text-4xl font-black text-gray-900 mb-3">{totalSubjects}+</h3>
-              <p className="text-gray-600 font-bold text-lg">PROGRAMS</p>
-              <p className="text-sm text-gray-500 font-semibold mt-2">DIVERSE CURRICULUM</p>
-            </div>
-            
-            <div className="text-center bg-white border-4 border-orange-600 p-8 hover:bg-orange-50 transition-colors">
-              <div className="bg-orange-600 border-2 border-orange-800 w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <Award className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="text-4xl font-black text-gray-900 mb-3">25+</h3>
-              <p className="text-gray-600 font-bold text-lg">YEARS</p>
-              <p className="text-sm text-gray-500 font-semibold mt-2">OF EXCELLENCE</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-gray-100 border-b-4 border-gray-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 tracking-wider">
-              WHAT WE OFFER
-            </h2>
-            <div className="w-24 h-1 bg-primary mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto font-semibold">
-              COMPREHENSIVE EDUCATIONAL PROGRAMS DESIGNED TO NURTURE ACADEMIC EXCELLENCE AND PERSONAL GROWTH FOR EVERY STUDENT.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Academic Excellence */}
-            <div className="bg-white border-4 border-primary p-8 hover:bg-green-50 transition-colors">
-              <div className="w-16 h-16 bg-primary border-2 border-primary-dark flex items-center justify-center mb-6">
-                <BookOpen className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-black text-gray-900 mb-4">ACADEMIC EXCELLENCE</h3>
-              <p className="text-gray-600 mb-6 font-semibold">
-                Rigorous curriculum designed to challenge and inspire students across all academic disciplines.
-              </p>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-primary mr-3"></div>
-                  Advanced STEM Programs
-                </div>
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-primary mr-3"></div>
-                  Language Arts & Literature
-                </div>
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-primary mr-3"></div>
-                  Social Sciences & History
-                </div>
-              </div>
-              <Button asChild className="w-full bg-primary hover:bg-primary-dark text-white font-black py-4 text-lg border-2 border-primary-dark">
-                <Link href={`/academics`}>
-                  EXPLORE ACADEMICS
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-
-            {/* Extracurricular Activities */}
-            <div className="bg-white border-4 border-green-600 p-8 hover:bg-green-50 transition-colors">
-              <div className="w-16 h-16 bg-green-600 border-2 border-green-800 flex items-center justify-center mb-6">
-                <Star className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-black text-gray-900 mb-4">EXTRACURRICULAR ACTIVITIES</h3>
-              <p className="text-gray-600 mb-6 font-semibold">
-                Diverse programs to develop talents, build character, and foster leadership skills beyond the classroom.
-              </p>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-green-600 mr-3"></div>
-                  Sports & Athletics
-                </div>
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-green-600 mr-3"></div>
-                  Arts & Music Programs
-                </div>
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-green-600 mr-3"></div>
-                  Student Clubs & Organizations
-                </div>
-              </div>
-              <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 text-lg border-2 border-green-800">
-                <Link href={`/activities`}>
-                  VIEW ACTIVITIES
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-
-            {/* Student Support */}
-            <div className="bg-white border-4 border-purple-600 p-8 hover:bg-purple-50 transition-colors">
-              <div className="w-16 h-16 bg-purple-600 border-2 border-purple-800 flex items-center justify-center mb-6">
-                <Heart className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-2xl font-black text-gray-900 mb-4">STUDENT SUPPORT</h3>
-              <p className="text-gray-600 mb-6 font-semibold">
-                Comprehensive support services to ensure every student's academic, social, and emotional well-being.
-              </p>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-purple-600 mr-3"></div>
-                  Guidance Counseling
-                </div>
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-purple-600 mr-3"></div>
-                  Academic Tutoring
-                </div>
-                <div className="flex items-center text-gray-600 font-semibold">
-                  <div className="w-2 h-2 bg-purple-600 mr-3"></div>
-                  Career Guidance
-                </div>
-              </div>
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-4 text-lg border-2 border-purple-800">
-                <Link href={`/support`}>
-                  LEARN MORE
-                  <ArrowRight className="ml-2 h-5 w-5" />
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-none border-white/50 bg-white/10 px-8 text-base font-semibold text-white shadow-none backdrop-blur-sm hover:bg-white hover:text-[var(--school-ink)]"
+              >
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Parent &amp; student login
                 </Link>
               </Button>
             </div>
@@ -453,178 +463,308 @@ export function SchoolHomepage({ config }: SchoolHomepageProps) {
         </div>
       </section>
 
-      {/* Configuration Overview */}
-      <section className="py-20 bg-white border-b-4 border-gray-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 tracking-wider">
-              OUR EDUCATIONAL PROGRAMS
-            </h2>
-            <div className="w-24 h-1 bg-primary mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto font-semibold">
-              DISCOVER OUR COMPREHENSIVE EDUCATIONAL PATHWAYS DESIGNED TO MEET EVERY STUDENT'S LEARNING JOURNEY.
-            </p>
-          </div>
-          
-          <div className="grid gap-8 lg:grid-cols-2">
-            {config?.selectedLevels?.map((level, index) => (
-              <div key={level.id} className="bg-white border-4 border-gray-600 p-8 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-3xl font-black text-gray-900 mb-2">{level.name.toUpperCase()}</h3>
-                    <p className="text-gray-600 font-semibold">{level.description}</p>
+      {/* Stats — one horizontal composition, not a card grid */}
+      <section className="border-b border-black/10 bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-black/10 lg:grid-cols-4 lg:divide-y-0">
+          {stats.map((stat, index) => (
+            <Reveal key={stat.label} delay={index * 70}>
+              <div className="px-6 py-10 text-center sm:px-8 sm:py-12">
+                <p className="font-display text-4xl tracking-tight text-primary sm:text-5xl">
+                  {stat.value}
+                </p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  {stat.label}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* What we offer */}
+      <section className="relative overflow-hidden py-20 sm:py-24">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-40"
+          aria-hidden
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(36,106,89,0.08) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(36,106,89,0.08) 1px, transparent 1px)
+            `,
+            backgroundSize: '56px 56px',
+          }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                Life at {resolvedSchoolName}
+              </p>
+              <h2 className="mt-3 font-display text-4xl tracking-tight text-[var(--school-ink)] sm:text-5xl">
+                What we offer
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+                Academics, enrichment, and care — the essentials of a complete education, kept
+                clear and close.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 grid gap-px bg-black/10 sm:grid-cols-3">
+            {offerings.map((item, index) => {
+              const Icon = item.icon
+              return (
+                <Reveal key={item.title} delay={index * 80}>
+                  <div className="group flex h-full flex-col bg-[var(--school-paper)] p-8 transition-colors duration-300 hover:bg-white sm:p-10">
+                    <Icon className="h-6 w-6 text-primary" strokeWidth={1.5} />
+                    <h3 className="mt-6 font-display text-2xl tracking-tight text-[var(--school-ink)]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+                      {item.body}
+                    </p>
+                    <Link
+                      href={item.href}
+                      className="mt-8 inline-flex items-center text-sm font-semibold text-primary transition-colors group-hover:text-primary-dark"
+                    >
+                      {item.cta}
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    </Link>
                   </div>
-                  <div className="w-16 h-16 bg-primary border-2 border-primary-dark flex items-center justify-center">
-                    <span className="text-white font-black text-2xl">{index + 1}</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-black text-gray-900 mb-4 text-lg">GRADE LEVELS ({level.gradeLevels.length})</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {level.gradeLevels.map((grade) => (
-                        <span key={grade.id} className="bg-green-100 text-primary-dark border-2 border-primary px-3 py-1 font-bold">
-                          {grade.name}
-                        </span>
-                      ))}
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <SchoolHomepageFeeDownloads
+        subdomain={subdomain}
+        schoolName={resolvedSchoolName}
+      />
+
+      {/* Programs */}
+      <section className="border-y border-black/10 bg-white py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                  Pathways
+                </p>
+                <h2 className="mt-3 font-display text-4xl tracking-tight text-[var(--school-ink)] sm:text-5xl">
+                  Educational programs
+                </h2>
+                <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+                  Structured levels and subjects that meet students where they are — and take them
+                  further.
+                </p>
+              </div>
+              <Button
+                asChild
+                className="h-11 w-fit rounded-none bg-primary px-6 text-sm font-semibold text-white shadow-none hover:bg-primary-dark"
+              >
+                <Link href="/programs">
+                  View all programs
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </Reveal>
+
+          {config?.selectedLevels?.length ? (
+            <div className="mt-12 space-y-4">
+              {config.selectedLevels.map((level, index) => (
+                <Reveal key={level.id} delay={index * 60}>
+                  <div className="border border-black/10 bg-[var(--school-paper)] p-6 transition-colors hover:bg-white sm:p-8">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-3">
+                          <span className="font-ui text-xs font-semibold tabular-nums text-primary">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <h3 className="font-display text-2xl tracking-tight text-[var(--school-ink)] sm:text-3xl">
+                            {level.name}
+                          </h3>
+                        </div>
+                        {level.description && (
+                          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                            {level.description}
+                          </p>
+                        )}
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {level.gradeLevels.map((grade) => (
+                            <span
+                              key={grade.id}
+                              className="border border-primary/20 bg-white px-2.5 py-1 text-xs font-medium text-primary"
+                            >
+                              {grade.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="lg:max-w-md lg:text-right">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                          Subjects · {level.subjects.length}
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                          {level.subjects
+                            .slice(0, 6)
+                            .map((s) => s.name)
+                            .join(' · ')}
+                          {level.subjects.length > 6
+                            ? ` · +${level.subjects.length - 6} more`
+                            : ''}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h4 className="font-black text-gray-900 mb-4 text-lg">SUBJECTS ({level.subjects.length})</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {level.subjects.slice(0, 6).map((subject) => (
-                        <span key={subject.id} className="bg-gray-100 text-gray-800 border-2 border-gray-600 px-3 py-1 font-bold">
-                          {subject.name}
-                        </span>
-                      ))}
-                      {level.subjects.length > 6 && (
-                        <span className="bg-gray-100 text-gray-800 border-2 border-gray-600 px-3 py-1 font-bold">
-                          +{level.subjects.length - 6} MORE
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                </Reveal>
+              ))}
+            </div>
+          ) : (
+            <Reveal>
+              <div className="mt-12 border border-dashed border-black/15 bg-[var(--school-paper)] px-6 py-14 text-center">
+                <Users className="mx-auto h-8 w-8 text-primary/70" strokeWidth={1.5} />
+                <p className="mt-4 font-display text-2xl text-[var(--school-ink)]">
+                  Programs coming soon
+                </p>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+                  {totalGrades > 0
+                    ? `${totalGrades} grade levels configured and ready.`
+                    : 'Ask admissions about our current pathways and intake.'}
+                </p>
               </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12">
-            <Button asChild size="lg" className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-black px-12 py-6 text-xl border-4 border-gray-900">
-              <Link href={`/programs`}>
-                <BookOpen className="mr-3 h-6 w-6" />
-                VIEW ALL PROGRAMS
-              </Link>
-            </Button>
-          </div>
+            </Reveal>
+          )}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-primary border-b-4 border-primary-dark">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-wider">
-            READY TO JOIN OUR COMMUNITY?
-          </h2>
-          <p className="text-xl text-green-100 mb-12 max-w-3xl mx-auto font-semibold">
-            BECOME PART OF OUR THRIVING EDUCATIONAL COMMUNITY. START YOUR JOURNEY WITH US TODAY AND UNLOCK YOUR FULL POTENTIAL.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button asChild size="lg" className="bg-white text-primary hover:bg-yellow-400 hover:text-primary-dark font-black px-12 py-6 text-xl border-4 border-primary-dark">
-              <Link href={`/apply`}>
-                <UserPlus className="mr-3 h-6 w-6" />
-                APPLY FOR ADMISSION
-              </Link>
-            </Button>
-            <Button asChild size="lg" className="bg-yellow-400 text-primary-dark hover:bg-white hover:text-primary font-black px-12 py-6 text-xl border-4 border-primary-dark">
-              <Link href={`/visit`}>
-                <MapPin className="mr-3 h-6 w-6" />
-                SCHEDULE A VISIT
-              </Link>
-            </Button>
-          </div>
+      {/* Closing CTA */}
+      <section className="relative overflow-hidden bg-primary py-20 sm:py-24">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-20"
+          aria-hidden
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)
+            `,
+            backgroundSize: '48px 48px',
+          }}
+        />
+        <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+          <Reveal>
+            <h2 className="font-display text-4xl tracking-tight text-white sm:text-5xl">
+              Ready to join our community?
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
+              Start an application, or visit campus and see how {resolvedSchoolName} feels in person.
+            </p>
+            <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-none bg-white px-8 text-base font-semibold text-primary shadow-none hover:bg-[var(--school-accent)] hover:text-[var(--school-ink)]"
+              >
+                <Link href="/apply">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Apply for admission
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-none border-white/40 bg-transparent px-8 text-base font-semibold text-white shadow-none hover:bg-white/10"
+              >
+                <Link href="/visit">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Schedule a visit
+                </Link>
+              </Button>
+            </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 border-t-4 border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <footer className="bg-[#0a1f1a] py-16 text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 md:grid-cols-3">
             <div>
-              <div className="flex items-center mb-6">
-                <div className="relative">
-                  {/* Footer logo with monochrome styling */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800 border-2 border-gray-400 shadow-lg flex items-center justify-center relative overflow-hidden">
-                    {/* Background pattern */}
-                    <div className="absolute inset-0 bg-white/5"></div>
-                    
-                    {/* Main building icon */}
-                    <Building2 className="h-6 w-6 text-white z-10 relative" />
-                    
-                    {/* Educational elements */}
-                    <div className="absolute top-1 right-1 w-3 h-3 bg-primary border border-primary-dark flex items-center justify-center z-20">
-                      <BookOpen className="h-2 w-2 text-white" />
-                    </div>
-                    
-                    {/* Academic excellence indicator */}
-                    <div className="absolute bottom-1 left-1 w-2.5 h-2.5 bg-gray-300 border border-gray-600 flex items-center justify-center z-20">
-                      <Star className="h-1 w-1 text-gray-800 fill-current" />
-                    </div>
-                  </div>
-                  
-                  {/* School name abbreviation overlay */}
-                  <div className="absolute -bottom-1.5 -right-1 w-5 h-5 bg-primary border-2 border-gray-400 flex items-center justify-center text-xs font-black text-white">
-                    {resolvedSchoolName.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()}
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center bg-primary">
+                  <Building2 className="h-5 w-5 text-white" />
                 </div>
-                
-                <div className="ml-3">
-                  <span className="text-xl font-black text-white block leading-tight">
-                    {resolvedSchoolName.toUpperCase()}
-                  </span>
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">
-                    {tagline.toUpperCase()}
-                  </span>
+                <div>
+                  <p className="font-display text-xl leading-none tracking-tight">
+                    {resolvedSchoolName}
+                  </p>
+                  <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-white/50">
+                    {tagline}
+                  </p>
                 </div>
               </div>
-              <p className="text-gray-400 font-semibold">
-                {branding?.brand?.description || 'EMPOWERING EDUCATION THROUGH INNOVATIVE SCHOOL MANAGEMENT SOLUTIONS.'}
+              <p className="mt-5 max-w-sm text-sm leading-relaxed text-white/60">
+                {description}
               </p>
             </div>
-            
+
             <div>
-              <h3 className="font-black mb-6 text-lg">QUICK LINKS</h3>
-              <ul className="space-y-3 font-semibold">
-                <li><Link href={`/about`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">ABOUT US</Link></li>
-                <li><Link href={`/admissions`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">ADMISSIONS</Link></li>
-                <li><Link href={`/programs`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">PROGRAMS</Link></li>
-                <li><Link href={`/news`} className="text-gray-400 hover:text-white transition-colors border-b-2 border-transparent hover:border-white">NEWS & EVENTS</Link></li>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                Quick links
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm">
+                {[
+                  { href: '/about', label: 'About us' },
+                  { href: '/admissions', label: 'Admissions' },
+                  { href: '/programs', label: 'Programs' },
+                  { href: '/#fee-structure', label: 'Fee structure' },
+                  { href: '/news', label: 'News & events' },
+                ].map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-white/70 transition-colors hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
-            
+
             <div>
-              <h3 className="font-black mb-6 text-lg">CONTACT</h3>
-              <div className="space-y-3 font-semibold text-gray-400">
-                <div className="flex items-center">
-                  <Mail className="w-5 h-5 mr-3" />
-                  {branding?.contact?.email || `info@${subdomain}.edu`}
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                Contact
+              </h3>
+              <div className="mt-4 space-y-3 text-sm text-white/70">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 shrink-0 text-primary-light" />
+                  <span>
+                    {isPlaceholderCopy(branding?.contact?.email)
+                      ? `info@${subdomain}.edu`
+                      : branding?.contact?.email}
+                  </span>
                 </div>
-                <div className="flex items-center">
-                  <PhoneCall className="w-5 h-5 mr-3" />
-                  {branding?.contact?.phone || '+1 (555) 123-4567'}
+                <div className="flex items-center gap-3">
+                  <PhoneCall className="h-4 w-4 shrink-0 text-primary-light" />
+                  <span>
+                    {isPlaceholderCopy(branding?.contact?.phone)
+                      ? '+254 700 000 000'
+                      : branding?.contact?.phone}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="mt-12 pt-8 border-t-2 border-gray-700 text-center font-semibold text-gray-400">
-            <p>&copy; {new Date().getFullYear()} {resolvedSchoolName.toUpperCase()}. ALL RIGHTS RESERVED.</p>
+
+          <div className="mt-12 border-t border-white/10 pt-6 text-center text-xs text-white/40">
+            © {new Date().getFullYear()} {resolvedSchoolName}. All rights reserved.
           </div>
         </div>
       </footer>
     </div>
   )
-} 
+}

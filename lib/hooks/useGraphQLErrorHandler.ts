@@ -20,6 +20,26 @@ export function useGraphQLErrorHandler() {
           error.extensions?.code === 'AUTHENTICATION_REQUIRED' ||
           error.extensions?.redirectToLogin === true
         )) {
+          // Public school marketing surfaces must stay reachable without a session.
+          const path = window.location.pathname
+          const isPublicSurface =
+            path === '/' ||
+            path === '' ||
+            path.startsWith('/about') ||
+            path.startsWith('/programs') ||
+            path.startsWith('/admissions') ||
+            path.startsWith('/contact') ||
+            path.startsWith('/apply') ||
+            path.startsWith('/visit') ||
+            path.startsWith('/news') ||
+            path.startsWith('/login') ||
+            path.startsWith('/signup') ||
+            path.startsWith('/register')
+
+          if (isPublicSurface) {
+            return response
+          }
+
           console.log('Authentication error detected, redirecting to login...')
 
           // Clear any existing authentication cookies
