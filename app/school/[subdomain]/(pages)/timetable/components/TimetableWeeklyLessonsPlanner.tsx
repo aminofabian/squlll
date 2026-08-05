@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import {
   Check,
   Copy,
@@ -82,6 +88,18 @@ interface TimetableWeeklyLessonsPlannerProps {
   onDeleteAllocation: (id: string) => Promise<void>;
 }
 
+/**
+ * Lets a parent (the auto-generate drawer) persist the planner's unsaved
+ * per-class edits — e.g. before leaving the step — instead of losing them
+ * when the planner unmounts.
+ */
+export interface TimetableWeeklyLessonsPlannerHandle {
+  /** Persists every class's unsaved lesson-count edits. */
+  save: () => Promise<void>;
+  /** True while any class has unsaved lesson-count edits. */
+  hasUnsavedChanges: () => boolean;
+}
+
 const normalize = (value: string) =>
   value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -150,17 +168,23 @@ function Stepper({
   );
 }
 
-export function TimetableWeeklyLessonsPlanner({
-  termId,
-  grades,
-  subjects,
-  teachers,
-  allocations,
-  availableSlotsPerClass,
-  onCreateAllocation,
-  onUpdateAllocation,
-  onDeleteAllocation,
-}: TimetableWeeklyLessonsPlannerProps) {
+export const TimetableWeeklyLessonsPlanner = forwardRef<
+  TimetableWeeklyLessonsPlannerHandle,
+  TimetableWeeklyLessonsPlannerProps
+>(function TimetableWeeklyLessonsPlanner(
+  {
+    termId,
+    grades,
+    subjects,
+    teachers,
+    allocations,
+    availableSlotsPerClass,
+    onCreateAllocation,
+    onUpdateAllocation,
+    onDeleteAllocation,
+  }: TimetableWeeklyLessonsPlannerProps,
+  ref,
+) {
   const { toast } = useToast();
   const { getGradeById, getSubjectsByLevelId } = useSchoolConfigStore();
 
@@ -484,7 +508,7 @@ export function TimetableWeeklyLessonsPlanner({
     setCopyOpen(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!dirtyGrades.length) return;
     setSaving(true);
     let created = 0;
@@ -593,7 +617,26 @@ export function TimetableWeeklyLessonsPlanner({
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    dirtyGrades,
+    drafts,
+    allocations,
+    grades,
+    termId,
+    onCreateAllocation,
+    onUpdateAllocation,
+    onDeleteAllocation,
+    toast,
+  ]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: () => handleSave(),
+      hasUnsavedChanges: () => Object.keys(drafts).length > 0,
+    }),
+    [drafts, handleSave],
+  );
 
   if (!grades.length) {
     return (
@@ -1027,4 +1070,4 @@ export function TimetableWeeklyLessonsPlanner({
       </div>
     </div>
   );
-}
+});
