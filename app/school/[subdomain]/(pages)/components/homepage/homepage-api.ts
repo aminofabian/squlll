@@ -4,6 +4,26 @@ import {
   type HomepageConfigRecord,
 } from '@/lib/types/homepage-config'
 
+/** Current school subdomain from the browser host (mirema.squl.co.ke → mirema). */
+function hostSubdomain(): string | undefined {
+  if (typeof window === 'undefined') return undefined
+  const host = window.location.hostname
+  const match = host.match(/^([a-z0-9-]+)\.(localhost|squl\.co\.ke)$/i)
+  const sub = match?.[1]?.toLowerCase()
+  if (!sub || sub === 'www') return undefined
+  return sub
+}
+
+function adminHeaders(extra?: Record<string, string>): HeadersInit {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(extra || {}),
+  }
+  const subdomain = hostSubdomain()
+  if (subdomain) headers['x-tenant-subdomain'] = subdomain
+  return headers
+}
+
 export async function fetchPublicHomepageConfig(
   subdomain: string,
   schoolName?: string,
@@ -35,7 +55,7 @@ export async function fetchPublicHomepageConfig(
 export async function fetchAdminHomepageConfig(): Promise<HomepageConfigRecord> {
   const res = await fetch('/api/graphql', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminHeaders(),
     credentials: 'include',
     body: JSON.stringify({
       query: `
@@ -70,7 +90,7 @@ export async function saveHomepageDraft(
 ): Promise<HomepageConfigRecord> {
   const res = await fetch('/api/graphql', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminHeaders(),
     credentials: 'include',
     body: JSON.stringify({
       query: `
@@ -104,7 +124,7 @@ export async function publishHomepageConfig(
 ): Promise<HomepageConfigRecord> {
   const res = await fetch('/api/graphql', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: adminHeaders(),
     credentials: 'include',
     body: JSON.stringify({
       query: `

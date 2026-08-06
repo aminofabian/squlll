@@ -51,9 +51,12 @@ export async function POST(request: Request) {
       cookieStore.get('tenantSubdomain')?.value;
     if (!tenantSubdomain) {
       const host = request.headers.get('host') ?? '';
-      const sub = host.match(/^([^.]+)\.localhost(?::\d+)?$/)?.[1];
-      if (sub && sub !== 'localhost') {
-        tenantSubdomain = sub;
+      // Local: school.localhost:3000 · Prod: school.squl.co.ke
+      const sub = host.match(
+        /^([a-z0-9-]+)\.(localhost|squl\.co\.ke)(?::\d+)?$/i,
+      )?.[1];
+      if (sub && sub !== 'localhost' && sub !== 'www') {
+        tenantSubdomain = sub.toLowerCase();
       }
     }
 
