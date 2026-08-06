@@ -34,6 +34,7 @@ export function SchoolAuthShell({
 }) {
   const isAssembly = config.templateId === 'assembly-hall'
   const isPlayfield = config.templateId === 'playfield'
+  const isGarden = config.templateId === 'garden-court'
   const initials = schoolName
     .split(' ')
     .map((w) => w[0])
@@ -41,6 +42,7 @@ export function SchoolAuthShell({
     .slice(0, 2)
     .toUpperCase()
   const soft = config.theme.radiusMode === 'soft'
+  const themed = isAssembly || isPlayfield || isGarden
 
   return (
     <div
@@ -50,11 +52,16 @@ export function SchoolAuthShell({
           'flex min-h-screen flex-col',
           isAssembly && 'assembly-hall-shell',
           isPlayfield && 'playfield-shell',
+          isGarden && 'garden-court-shell',
         ),
       )}
       style={themeStyle(config.theme)}
     >
-      <HomepageShellStyles assembly={isAssembly} playfield={isPlayfield} />
+      <HomepageShellStyles
+        assembly={isAssembly}
+        playfield={isPlayfield}
+        garden={isGarden}
+      />
 
       <header
         className={cn(
@@ -63,9 +70,9 @@ export function SchoolAuthShell({
             'border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)]',
           isPlayfield &&
             'border-[var(--primary-dark)] bg-[var(--school-ink)]',
-          !isAssembly &&
-            !isPlayfield &&
-            'border-black/10 bg-white/95 backdrop-blur-md',
+          isGarden &&
+            'border-[var(--school-ink)]/12 bg-[var(--gc-linen,#F4EFE4)]/95 backdrop-blur-md',
+          !themed && 'border-black/10 bg-white/95 backdrop-blur-md',
         )}
       >
         <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -83,6 +90,10 @@ export function SchoolAuthShell({
             ) : isPlayfield ? (
               <div className="pf-mono rounded-sm border border-primary px-2.5 py-1.5 text-[12px] font-bold tracking-wide text-primary">
                 {initials}·EST
+              </div>
+            ) : isGarden ? (
+              <div className="gc-arch flex h-11 w-10 items-center justify-center bg-primary font-display text-sm font-semibold text-[var(--school-paper)]">
+                {initials}
               </div>
             ) : (
               <div
@@ -102,6 +113,7 @@ export function SchoolAuthShell({
                   'block truncate font-display text-lg leading-none tracking-tight sm:text-xl',
                   isAssembly && 'font-extrabold uppercase tracking-wide',
                   isPlayfield && 'text-[var(--school-paper)]',
+                  isGarden && 'text-[var(--school-ink)]',
                 )}
               >
                 {schoolName}
@@ -113,13 +125,17 @@ export function SchoolAuthShell({
                     ? 'ah-hand normal-case tracking-normal text-[var(--ah-muted,#4A4235)]'
                     : isPlayfield
                       ? 'uppercase tracking-[0.14em] text-[#9FB3B0]'
-                      : 'uppercase tracking-[0.16em] text-primary',
+                      : isGarden
+                        ? 'gc-label text-[var(--gc-clay,#C17A4A)]'
+                        : 'uppercase tracking-[0.16em] text-primary',
                 )}
               >
                 {tagline ||
                   (isPlayfield
                     ? 'Terminal campus'
-                    : 'Inspiring excellence every day')}
+                    : isGarden
+                      ? 'Walled courtyard'
+                      : 'Inspiring excellence every day')}
               </span>
             </div>
           </Link>
@@ -128,13 +144,14 @@ export function SchoolAuthShell({
             href="/"
             className={cn(
               'inline-flex h-10 items-center gap-2 border-2 px-4 text-sm font-semibold transition-colors',
-              soft || isAssembly || isPlayfield ? 'rounded-lg' : 'rounded-none',
+              soft || themed ? 'rounded-lg' : 'rounded-none',
               isAssembly &&
                 'border-[var(--school-ink)] bg-transparent text-[var(--school-ink)] hover:bg-[var(--school-ink)] hover:text-[var(--ah-cream,#FBF6E9)]',
               isPlayfield &&
                 'rounded-sm border border-primary bg-transparent text-[var(--school-paper)] hover:bg-primary hover:text-[var(--school-ink)]',
-              !isAssembly &&
-                !isPlayfield &&
+              isGarden &&
+                'rounded-full border border-[var(--school-ink)]/20 bg-transparent text-[var(--school-ink)] hover:border-primary hover:bg-primary hover:text-[var(--school-paper)]',
+              !themed &&
                 'border-primary/30 text-primary hover:bg-primary hover:text-white',
             )}
           >
@@ -161,8 +178,8 @@ export function SchoolAuthShell({
                   isAssembly && 'ah-margin-note',
                   isPlayfield &&
                     'pf-mono text-[12px] uppercase tracking-[0.16em] text-primary',
-                  !isAssembly &&
-                    !isPlayfield &&
+                  isGarden && 'gc-label text-[var(--gc-clay,#C17A4A)]',
+                  !themed &&
                     'text-[11px] font-semibold uppercase tracking-[0.18em] text-primary',
                 )}
               >
@@ -174,7 +191,9 @@ export function SchoolAuthShell({
                 'font-display text-[clamp(1.75rem,4vw,2.5rem)] font-extrabold leading-tight',
                 isPlayfield
                   ? 'font-semibold text-[var(--school-paper)]'
-                  : 'text-[var(--school-ink)]',
+                  : isGarden
+                    ? 'font-semibold text-[var(--school-ink)]'
+                    : 'text-[var(--school-ink)]',
               )}
             >
               {title}
@@ -185,7 +204,8 @@ export function SchoolAuthShell({
                   'mt-3 text-base leading-relaxed',
                   isAssembly && 'ah-prose mx-auto sm:mx-0',
                   isPlayfield && 'text-[#B9CBC8]',
-                  !isAssembly && !isPlayfield && 'text-[var(--school-ink)]/70',
+                  isGarden && 'text-[var(--school-ink)]/65',
+                  !themed && 'text-[var(--school-ink)]/70',
                 )}
               >
                 {description}
@@ -200,8 +220,9 @@ export function SchoolAuthShell({
                 'ah-stat-card rounded-md border-[var(--school-ink)] bg-[var(--ah-cream,#FBF6E9)]',
               isPlayfield &&
                 'pf-pass rounded-md border-transparent bg-[var(--school-paper)]',
-              !isAssembly &&
-                !isPlayfield &&
+              isGarden &&
+                'gc-label-card rounded-sm border-[var(--school-ink)]/14',
+              !themed &&
                 cn(
                   'border-[var(--school-ink)] bg-white',
                   soft
@@ -218,6 +239,7 @@ export function SchoolAuthShell({
               className={cn(
                 'mt-8 text-center',
                 isPlayfield && 'text-[#9FB3B0]',
+                isGarden && 'text-[var(--school-ink)]/55',
               )}
             >
               {footer}
@@ -234,15 +256,23 @@ export function SchoolAuthShell({
 export function authFieldClass(config: HomepageConfig) {
   const isAssembly = config.templateId === 'assembly-hall'
   const isPlayfield = config.templateId === 'playfield'
-  const soft = config.theme.radiusMode === 'soft' || isAssembly || isPlayfield
+  const isGarden = config.templateId === 'garden-court'
+  const soft =
+    config.theme.radiusMode === 'soft' ||
+    isAssembly ||
+    isPlayfield ||
+    isGarden
   return cn(
     'h-12 border-2 bg-white text-[var(--school-ink)] placeholder:text-[var(--school-ink)]/40 focus-visible:ring-2 focus-visible:ring-primary/25',
     soft ? 'rounded-lg' : 'rounded-none',
     isPlayfield && 'rounded-sm border-[var(--school-ink)]/20',
     isAssembly &&
       'border-[var(--school-ink)]/25 focus-visible:border-primary',
+    isGarden &&
+      'rounded-full border-[var(--school-ink)]/15 focus-visible:border-primary',
     !isAssembly &&
       !isPlayfield &&
+      !isGarden &&
       'border-black/15 focus-visible:border-primary',
   )
 }
@@ -250,7 +280,12 @@ export function authFieldClass(config: HomepageConfig) {
 export function authPrimaryButtonClass(config: HomepageConfig) {
   const isAssembly = config.templateId === 'assembly-hall'
   const isPlayfield = config.templateId === 'playfield'
-  const soft = config.theme.radiusMode === 'soft' || isAssembly || isPlayfield
+  const isGarden = config.templateId === 'garden-court'
+  const soft =
+    config.theme.radiusMode === 'soft' ||
+    isAssembly ||
+    isPlayfield ||
+    isGarden
   return cn(
     'h-12 w-full border-2 font-display text-sm font-bold shadow-none transition-[background-color,border-color,transform] active:scale-[0.98] disabled:opacity-50',
     soft ? 'rounded-lg' : 'rounded-none',
@@ -258,8 +293,11 @@ export function authPrimaryButtonClass(config: HomepageConfig) {
       'border-[var(--school-ink)] bg-[var(--school-ink)] text-[var(--ah-cream,#FBF6E9)] hover:border-primary hover:bg-primary',
     isPlayfield &&
       'rounded-sm border-primary bg-primary uppercase tracking-wide text-[var(--school-ink)] hover:bg-[var(--primary-light)]',
+    isGarden &&
+      'rounded-full border-0 bg-primary font-semibold text-[var(--school-paper)] hover:bg-[var(--primary-dark)]',
     !isAssembly &&
       !isPlayfield &&
+      !isGarden &&
       'border-primary bg-primary text-white hover:border-primary-dark hover:bg-primary-dark',
   )
 }
@@ -267,9 +305,11 @@ export function authPrimaryButtonClass(config: HomepageConfig) {
 export function authLabelClass(config: HomepageConfig) {
   const isAssembly = config.templateId === 'assembly-hall'
   const isPlayfield = config.templateId === 'playfield'
+  const isGarden = config.templateId === 'garden-court'
   return cn(
     'text-sm font-semibold text-[var(--school-ink)]',
     isAssembly && 'font-display tracking-wide',
     isPlayfield && 'pf-mono text-[11px] uppercase tracking-wide',
+    isGarden && 'gc-label text-[var(--gc-clay,#C17A4A)]',
   )
 }

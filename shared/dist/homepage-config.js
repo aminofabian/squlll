@@ -43,8 +43,8 @@ exports.HOMEPAGE_TEMPLATES = [
     {
         id: 'garden-court',
         name: 'Garden Court',
-        tagline: 'Airy botanical, soft open columns',
-        mood: 'Gentle',
+        tagline: 'Walled conservatory, herbarium labels, morning light',
+        mood: 'Botanical',
     },
     {
         id: 'crest-motto',
@@ -561,12 +561,12 @@ exports.HOMEPAGE_TEMPLATE_THEMES = {
         radiusMode: 'soft',
     },
     'garden-court': {
-        primary: '#65a30d',
-        primaryDark: '#4d7c0f',
-        primaryLight: '#84cc16',
-        accent: '#ecfccb',
-        ink: '#365314',
-        paper: '#f7fee7',
+        primary: '#5F7D5A',
+        primaryDark: '#3F553C',
+        primaryLight: '#7D9A78',
+        accent: '#C17A4A',
+        ink: '#243028',
+        paper: '#F4EFE4',
         radiusMode: 'soft',
     },
     'crest-motto': {

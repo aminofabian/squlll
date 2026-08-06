@@ -64,10 +64,13 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
     cta: 'checkin',
   },
   'garden-court': {
-    hero: 'dawn',
-    stats: 'band',
-    offerings: 'open',
-    cta: 'primary',
+    nav: 'cloister',
+    hero: 'courtyard',
+    stats: 'planters',
+    offerings: 'specimens',
+    gallery: 'greenhouse',
+    testimonials: 'bench',
+    cta: 'gate',
   },
   'crest-motto': {
     nav: 'crest',
@@ -113,6 +116,7 @@ const TEMPLATE_VARIANTS: Record<HomepageTemplateId, VariantMap> = {
 const SHELL_CLASS: Partial<Record<HomepageTemplateId, string>> = {
   'assembly-hall': 'assembly-hall-shell bg-[var(--school-paper)]',
   playfield: 'playfield-shell bg-[var(--school-paper)]',
+  'garden-court': 'garden-court-shell bg-[var(--school-paper)]',
   'night-lights': 'bg-[#070f0c]',
 }
 
@@ -138,6 +142,7 @@ function Shell({
       <HomepageShellStyles
         assembly={config.templateId === 'assembly-hall'}
         playfield={config.templateId === 'playfield'}
+        garden={config.templateId === 'garden-court'}
       />
       {children}
     </div>

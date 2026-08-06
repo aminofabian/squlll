@@ -111,9 +111,11 @@ export function shellClass(config: HomepageConfig, extra?: string) {
 export function HomepageShellStyles({
   assembly = false,
   playfield = false,
+  garden = false,
 }: {
   assembly?: boolean
   playfield?: boolean
+  garden?: boolean
 }) {
   return (
     <>
@@ -141,6 +143,20 @@ export function HomepageShellStyles({
           />
           <link
             href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Space+Mono:wght@400;700&family=Special+Elite&family=Work+Sans:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+          />
+        </>
+      )}
+      {garden && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
             rel="stylesheet"
           />
         </>
@@ -494,6 +510,132 @@ export function HomepageShellStyles({
           border-color: rgba(14, 46, 51, 0.12) !important;
         }
 
+        /* ---- Garden Court / walled conservatory shell ---- */
+        .garden-court-shell {
+          --gc-linen: #F4EFE4;
+          --gc-linen-2: #EAE3D4;
+          --gc-moss: #5F7D5A;
+          --gc-clay: #C17A4A;
+          --gc-stone: #8B8578;
+          --gc-shade: rgba(36, 48, 40, 0.14);
+          --gc-ease: cubic-bezier(0.16, 1, 0.3, 1);
+          --font-display: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
+          font-family: 'Karla', system-ui, sans-serif;
+          color: var(--school-ink);
+          background:
+            radial-gradient(ellipse 90% 60% at 100% 0%, rgba(95,125,90,0.08), transparent 50%),
+            radial-gradient(ellipse 70% 50% at 0% 100%, rgba(193,122,74,0.07), transparent 45%),
+            var(--school-paper);
+          font-size: 1.05rem;
+          line-height: 1.65;
+        }
+        .garden-court-shell .font-display,
+        .garden-court-shell h1,
+        .garden-court-shell h2,
+        .garden-court-shell h3 {
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          letter-spacing: -0.02em;
+          font-weight: 600;
+          text-wrap: balance;
+        }
+        .garden-court-shell .gc-label {
+          font-family: 'Karla', sans-serif;
+          font-size: 0.72rem;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--gc-clay);
+        }
+        .garden-court-shell .gc-italic {
+          font-family: 'Cormorant Garamond', Georgia, serif;
+          font-style: italic;
+          font-weight: 500;
+        }
+        .garden-court-shell a:focus-visible,
+        .garden-court-shell button:focus-visible {
+          outline: 2px solid var(--gc-moss);
+          outline-offset: 3px;
+        }
+        .garden-court-shell .gc-panes {
+          background-image:
+            linear-gradient(to right, rgba(244,239,228,0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(244,239,228,0.12) 1px, transparent 1px);
+          background-size: 20% 33.33%;
+        }
+        .garden-court-shell .gc-arch {
+          border-radius: 999px 999px 12px 12px / 60% 60% 12px 12px;
+        }
+        .garden-court-shell .gc-label-card {
+          animation: pf-pass-settle 0.9s var(--gc-ease) 0.15s both;
+          box-shadow:
+            0 1px 0 rgba(255,255,255,0.5) inset,
+            8px 12px 0 var(--gc-shade),
+            14px 20px 36px rgba(36,48,40,0.12);
+          background:
+            linear-gradient(180deg, #FBF8F1 0%, var(--gc-linen) 100%);
+          border: 1px solid rgba(36,48,40,0.14);
+        }
+        .garden-court-shell .gc-pin {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, #E8C4A8, var(--gc-clay) 60%, #8A4E2E);
+          box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+        }
+        .garden-court-shell .gc-planter {
+          background: linear-gradient(165deg, #D4895C 0%, var(--gc-clay) 45%, #A35F38 100%);
+          border-radius: 10px 10px 42% 42% / 10px 10px 28% 28%;
+          box-shadow:
+            inset 0 8px 16px rgba(255,255,255,0.18),
+            inset 0 -10px 18px rgba(0,0,0,0.18),
+            6px 10px 24px var(--gc-shade);
+          transition: transform 0.4s var(--gc-ease);
+        }
+        .garden-court-shell .gc-planter:hover {
+          transform: translateY(-6px);
+        }
+        .garden-court-shell .gc-specimen {
+          background: #FBF8F1;
+          border: 1px solid rgba(36,48,40,0.12);
+          box-shadow: 4px 6px 0 var(--gc-shade);
+          transition: transform 0.35s var(--gc-ease), box-shadow 0.35s var(--gc-ease);
+        }
+        .garden-court-shell .gc-specimen:hover {
+          transform: translateY(-4px) rotate(-0.4deg);
+          box-shadow: 6px 12px 0 var(--gc-shade);
+        }
+        .garden-court-shell .gc-greenhouse-frame {
+          background: linear-gradient(180deg, #E8E2D4, #D9D1C0);
+          padding: 8px;
+          box-shadow:
+            inset 0 0 0 1px rgba(36,48,40,0.15),
+            6px 10px 28px var(--gc-shade);
+        }
+        .garden-court-shell .gc-greenhouse-frame img {
+          outline: 1px solid rgba(36,48,40,0.1);
+        }
+        .garden-court-shell .gc-bench {
+          background: linear-gradient(180deg, #EFE8DA, #E2DAC8);
+          border: 1px solid rgba(36,48,40,0.12);
+          box-shadow: 0 8px 28px var(--gc-shade);
+        }
+        .garden-court-shell footer {
+          background:
+            radial-gradient(ellipse 60% 50% at 80% 0%, rgba(95,125,90,0.2), transparent 50%),
+            var(--school-ink) !important;
+        }
+        .garden-court-shell footer h3 {
+          color: #B8CDB4 !important;
+          font-family: 'Karla', sans-serif !important;
+          letter-spacing: 0.14em !important;
+          text-transform: uppercase;
+          font-size: 0.72rem !important;
+        }
+        .garden-court-shell section.border-y {
+          background: var(--gc-linen) !important;
+          border-color: rgba(36,48,40,0.1) !important;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .school-hero-copy, .school-hero-media, .school-accent-line { animation: none !important; }
           .assembly-hall-shell .ah-ticker-track,
@@ -507,6 +649,9 @@ export function HomepageShellStyles({
           .playfield-shell .pf-flap.flip { animation: none !important; }
           .playfield-shell .pf-ticket:hover,
           .playfield-shell .pf-pass:hover { transform: none; }
+          .garden-court-shell .gc-label-card { animation: none !important; }
+          .garden-court-shell .gc-planter:hover,
+          .garden-court-shell .gc-specimen:hover { transform: none; }
         }
       `,
         }}

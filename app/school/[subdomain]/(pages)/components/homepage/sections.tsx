@@ -60,7 +60,14 @@ export function HomepageNav({
   const links = slots.links || []
   const isNotebook = variant === 'notebook'
   const isTerminal = variant === 'terminal'
-  const solid = scrolled || open || variant === 'solid' || isNotebook || isTerminal
+  const isCloister = variant === 'cloister'
+  const solid =
+    scrolled ||
+    open ||
+    variant === 'solid' ||
+    isNotebook ||
+    isTerminal ||
+    isCloister
   const logoUrl = config.logoUrl || runtime.logoUrl
   const initials = runtime.schoolName
     .split(' ')
@@ -68,6 +75,103 @@ export function HomepageNav({
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  if (isCloister) {
+    return (
+      <nav
+        className={cn(
+          'inset-x-0 top-0 z-50 border-b border-[var(--school-ink)]/12 bg-[var(--gc-linen,#F4EFE4)]/95 backdrop-blur-md',
+          runtime.preview ? 'absolute' : 'fixed',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-10 w-10 object-contain sm:h-11 sm:w-11"
+              />
+            ) : (
+              <div className="gc-arch flex h-11 w-10 items-center justify-center bg-primary font-display text-sm font-semibold text-[var(--school-paper)]">
+                {initials}
+              </div>
+            )}
+            <div className="min-w-0">
+              <span className="block truncate font-display text-xl leading-none tracking-tight text-[var(--school-ink)] sm:text-[1.35rem]">
+                {runtime.schoolName}
+              </span>
+              {slots.showTagline !== false && (
+                <span className="gc-label mt-1.5 block truncate text-[var(--gc-clay,#C17A4A)]">
+                  {runtime.tagline || 'Walled courtyard'}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          <div className="hidden items-center gap-1 lg:flex">
+            {links.map((link) => (
+              <Link
+                key={link.href + link.label}
+                href={link.href}
+                className="px-3.5 py-2 text-[0.9rem] font-medium text-[var(--school-ink)]/75 transition-colors hover:text-primary"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Button
+              asChild
+              variant="outline"
+              className="h-10 rounded-full border border-[var(--school-ink)]/20 bg-transparent px-5 text-sm font-semibold text-[var(--school-ink)] shadow-none hover:border-primary hover:bg-primary hover:text-[var(--school-paper)]"
+            >
+              <Link href="/login">
+                <LogIn className="mr-2 h-3.5 w-3.5" />
+                {slots.portalLabel || 'Portal'}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="h-10 rounded-full border-0 bg-[var(--school-accent)] px-5 text-sm font-semibold text-[var(--school-paper)] shadow-none hover:bg-[var(--primary-dark)]"
+            >
+              <Link href="/apply">
+                {slots.applyLabel || 'Visit the court'}
+                <ArrowRight className="ml-2 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--school-ink)]/20 text-[var(--school-ink)] lg:hidden"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-[var(--school-ink)]/10 bg-[var(--gc-linen,#F4EFE4)] lg:hidden">
+            <div className="space-y-1 px-4 py-4">
+              {links.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block px-2 py-3 text-sm font-medium text-[var(--school-ink)] hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </nav>
+    )
+  }
 
   if (isTerminal) {
     return (
@@ -676,6 +780,150 @@ export function HomepageHero({
     )
   }
 
+  if (variant === 'courtyard') {
+    const stats = getSection<{ items?: HomepageStatItem[] }>(config, 'stats')
+    const firstStat = stats?.slots.items?.[0]
+    const headline = slots.headline || runtime.schoolName
+    const parts = headline.trim().split(/\s+/)
+    const accent =
+      parts.length > 1 ? parts[parts.length - 1] : null
+    const lead =
+      accent && parts.length > 1
+        ? parts.slice(0, -1).join(' ')
+        : headline
+    const overlay = Math.min(
+      0.8,
+      Math.max(0.35, Number(slots.overlayStrength ?? 0.5)),
+    )
+
+    return (
+      <section className="relative min-h-[min(100svh,900px)] overflow-hidden bg-[var(--school-ink)]">
+        <div className="absolute inset-0">
+          <img
+            src={img}
+            alt=""
+            aria-hidden
+            fetchPriority="high"
+            className={cn(
+              'school-hero-media h-full w-full scale-105 object-cover object-[50%_35%]',
+              ready ? '' : 'opacity-0',
+            )}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(115deg, rgba(36,48,40,${0.88 * overlay + 0.1}) 0%, rgba(36,48,40,${0.55 * overlay}) 48%, rgba(95,125,90,${0.28 * overlay}) 100%)`,
+            }}
+          />
+          <div
+            className="gc-panes pointer-events-none absolute inset-0 opacity-40 mix-blend-soft-light"
+            aria-hidden
+          />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--school-ink)]/70 to-transparent" />
+        </div>
+
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-[calc(var(--school-nav-h)+3rem)] sm:gap-14 sm:px-6 sm:pb-24 sm:pt-[calc(var(--school-nav-h)+4rem)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-8">
+          <div
+            className={cn(
+              'school-hero-copy max-w-xl',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            {slots.eyebrow && (
+              <p className="gc-label mb-5 text-[var(--school-accent)]">
+                {slots.eyebrow}
+              </p>
+            )}
+            <h1 className="font-display text-[clamp(2.75rem,5.5vw,4.5rem)] font-semibold leading-[1.02] tracking-[-0.02em] text-[var(--school-paper)]">
+              {lead}
+              {accent ? (
+                <>
+                  {' '}
+                  <em className="gc-italic font-medium text-[var(--school-accent)]">
+                    {accent}
+                  </em>
+                </>
+              ) : null}
+            </h1>
+            <p className="mt-6 max-w-[38ch] text-[1.08rem] leading-[1.7] text-[#D8E0D4]">
+              {slots.subcopy}
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-5">
+              {slots.primaryCta && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 rounded-full border-0 bg-[var(--school-accent)] px-7 text-sm font-semibold text-[var(--school-paper)] shadow-none transition-[background-color,transform] hover:bg-[var(--primary-light)] active:scale-[0.98]"
+                >
+                  <Link href={slots.primaryCta.href}>
+                    {slots.primaryCta.label}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
+              {slots.secondaryCta && (
+                <Link
+                  href={slots.secondaryCta.href}
+                  className="border-b border-[var(--school-paper)]/50 pb-0.5 text-sm font-semibold text-[var(--school-paper)] transition-colors hover:border-[var(--school-accent)] hover:text-[var(--school-accent)]"
+                >
+                  {slots.secondaryCta.label} →
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              'relative mx-auto w-full max-w-[22rem] lg:mx-0 lg:justify-self-end',
+              ready ? '' : 'opacity-0',
+            )}
+          >
+            <div className="gc-label-card relative rounded-sm px-5 pb-6 pt-7 sm:px-6">
+              <span className="gc-pin absolute left-5 top-3" aria-hidden />
+              <span className="gc-pin absolute right-5 top-3" aria-hidden />
+              <p className="gc-label mb-3 text-center text-[var(--gc-clay,#C17A4A)]">
+                Herbarium · Specimen
+              </p>
+              <div className="gc-arch mx-auto aspect-[4/5] max-w-[11.5rem] overflow-hidden bg-[var(--school-ink)]/5">
+                <img
+                  src={img}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  fetchPriority="high"
+                />
+              </div>
+              <h3 className="mt-5 text-center font-display text-[1.45rem] leading-tight text-[var(--school-ink)]">
+                {runtime.schoolName}
+              </h3>
+              {firstStat ? (
+                <p className="mt-2 text-center">
+                  <span className="font-display text-3xl font-semibold text-primary">
+                    {firstStat.value}
+                  </span>
+                  <span className="mt-1 block text-[0.85rem] text-[var(--school-ink)]/65">
+                    {firstStat.label}
+                  </span>
+                </p>
+              ) : (
+                <p className="gc-italic mt-2 text-center text-[1.05rem] text-[var(--school-ink)]/70">
+                  Cultivated minds, open doors
+                </p>
+              )}
+              {slots.primaryCta && (
+                <Link
+                  href={slots.primaryCta.href}
+                  className="mt-5 block w-full rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-[var(--school-paper)] transition-colors hover:bg-[var(--primary-dark)]"
+                >
+                  {slots.primaryCta.label}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   if (variant === 'crest') {
     return (
       <section className="relative bg-[var(--school-paper)] pt-[var(--school-nav-h)]">
@@ -977,6 +1225,44 @@ export function HomepageStats({
     )
   }
 
+  if (variant === 'planters') {
+    return (
+      <section className="bg-[var(--gc-linen-2,#EAE3D4)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <p className="gc-label text-[var(--gc-clay,#C17A4A)]">
+              Grown this season
+            </p>
+            <h2 className="mt-3 font-display text-[clamp(1.85rem,3.5vw,2.75rem)] text-[var(--school-ink)]">
+              From the courtyard beds.
+            </h2>
+          </Reveal>
+          <div className="mt-14 grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-10">
+            {items.map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 70}>
+                <div className="flex flex-col items-center text-center">
+                  <div className="gc-planter flex min-h-[7.5rem] w-full max-w-[9.5rem] flex-col items-center justify-center px-3 pb-5 pt-4 text-[var(--school-paper)]">
+                    <p className="font-display text-[clamp(1.85rem,3vw,2.4rem)] font-semibold leading-none">
+                      {stat.value}
+                    </p>
+                  </div>
+                  <p className="mt-4 max-w-[12ch] text-[0.9rem] font-medium leading-snug text-[var(--school-ink)]">
+                    {stat.label}
+                  </p>
+                  {stat.hint && (
+                    <p className="gc-italic mt-1 text-[0.85rem] text-[var(--school-ink)]/55">
+                      {stat.hint}
+                    </p>
+                  )}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-b border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-black/10 lg:grid-cols-4 lg:divide-y-0">
@@ -1122,6 +1408,60 @@ export function HomepageOfferings({
                 >
                   {item.ctaLabel} →
                 </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'specimens') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-14 max-w-xl">
+              {slots.eyebrow && (
+                <p className="gc-label mb-2 text-[var(--gc-clay,#C17A4A)]">
+                  {slots.eyebrow}
+                </p>
+              )}
+              <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.75rem)] text-[var(--school-ink)]">
+                {slots.headline}
+              </h2>
+              <p className="mt-4 max-w-xl text-[0.98rem] leading-relaxed text-[var(--school-ink)]/65">
+                {slots.subcopy}
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((item, index) => (
+              <Reveal key={item.title} delay={index * 70}>
+                <div className="gc-specimen group relative flex h-full flex-col p-5 sm:p-6">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <span className="gc-label text-[var(--school-ink)]/45">
+                      GC–{String(index + 1).padStart(2, '0')}
+                    </span>
+                    <span
+                      className="mt-0.5 inline-block h-2.5 w-2.5 rounded-full bg-primary"
+                      aria-hidden
+                    />
+                  </div>
+                  <h3 className="font-display text-[1.35rem] leading-snug text-[var(--school-ink)]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-[0.92rem] leading-relaxed text-[var(--school-ink)]/65">
+                    {item.body}
+                  </p>
+                  <Link
+                    href={item.href}
+                    className="mt-5 inline-flex items-center text-sm font-semibold text-[var(--gc-clay,#C17A4A)] transition-colors hover:text-primary"
+                  >
+                    {item.ctaLabel}
+                    <ArrowRight className="ml-1.5 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
               </Reveal>
             ))}
           </div>
@@ -1438,6 +1778,55 @@ export function HomepageGallery({
     )
   }
 
+  if (variant === 'greenhouse') {
+    return (
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="gc-label mb-2 text-[var(--gc-clay,#C17A4A)]">
+                {data.slots.eyebrow}
+              </p>
+            )}
+            <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.75rem)] text-[var(--school-ink)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {images.slice(0, 8).map((image, i) => (
+              <Reveal key={image.url + i} delay={i * 60}>
+                <figure className="gc-greenhouse-frame">
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[var(--school-ink)]/5">
+                    <img
+                      src={image.url}
+                      alt={image.caption || ''}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                    <div
+                      className="gc-panes pointer-events-none absolute inset-0 opacity-25"
+                      aria-hidden
+                    />
+                  </div>
+                  {image.caption && (
+                    <figcaption className="mt-3 px-1">
+                      <span className="gc-label text-[var(--school-ink)]/40">
+                        Pane {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <p className="gc-italic mt-1 text-[1.05rem] text-[var(--school-ink)]">
+                        {image.caption}
+                      </p>
+                    </figcaption>
+                  )}
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1588,6 +1977,66 @@ export function HomepageTestimonials({
     )
   }
 
+  if (variant === 'bench') {
+    return (
+      <section className="bg-primary/10 py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            {data.slots.eyebrow && (
+              <p className="gc-label mb-2 text-[var(--gc-clay,#C17A4A)]">
+                {data.slots.eyebrow}
+              </p>
+            )}
+            <h2 className="font-display text-[clamp(1.85rem,3.5vw,2.75rem)] text-[var(--school-ink)]">
+              {data.slots.headline}
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {items.map((item, i) => (
+              <Reveal key={item.name + i} delay={i * 70}>
+                <blockquote className="gc-bench relative flex h-full flex-col rounded-2xl px-6 pb-7 pt-8">
+                  <span
+                    className="absolute left-6 top-0 h-1.5 w-12 rounded-b-full bg-[var(--school-accent)]"
+                    aria-hidden
+                  />
+                  <p className="gc-italic flex-1 text-[1.15rem] leading-relaxed text-[var(--school-ink)]">
+                    “{item.quote}”
+                  </p>
+                  <footer className="mt-6 flex items-center gap-3 border-t border-[var(--school-ink)]/10 pt-4">
+                    {item.photoUrl ? (
+                      <img
+                        src={item.photoUrl}
+                        alt=""
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="gc-arch flex h-10 w-9 items-center justify-center bg-primary font-display text-xs font-semibold text-[var(--school-paper)]">
+                        {item.name
+                          .split(' ')
+                          .map((w) => w[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--school-ink)]">
+                        {item.name}
+                      </p>
+                      <p className="text-[0.8rem] text-[var(--school-ink)]/55">
+                        {item.role}
+                      </p>
+                    </div>
+                  </footer>
+                </blockquote>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="border-y border-black/10 bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1720,6 +2169,48 @@ export function HomepageCtaBand({
                 asChild
                 variant="outline"
                 className="h-11 rounded-sm border border-primary bg-transparent px-5 text-[12px] font-bold uppercase tracking-wide text-[var(--school-paper)] shadow-none hover:bg-primary hover:text-[var(--school-ink)]"
+              >
+                <Link href={slots.secondaryCta.href}>
+                  {slots.secondaryCta.label}
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'gate') {
+    return (
+      <section className="sticky bottom-0 z-40 border-t border-[var(--school-ink)]/12 bg-[var(--gc-linen,#F4EFE4)]/95 py-3.5 shadow-[0_-10px_32px_rgba(36,48,40,0.1)] backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <div className="min-w-0">
+            <p className="font-display text-lg leading-tight text-[var(--school-ink)] sm:text-xl">
+              {slots.headline}
+            </p>
+            <p className="mt-0.5 max-w-xl text-sm leading-snug text-[var(--school-ink)]/60">
+              {slots.body?.replace(/\{schoolName\}/g, runtime.schoolName) ||
+                slots.body}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {slots.primaryCta && (
+              <Button
+                asChild
+                className="h-11 rounded-full border-0 bg-primary px-6 text-sm font-semibold text-[var(--school-paper)] shadow-none hover:bg-[var(--primary-dark)]"
+              >
+                <Link href={slots.primaryCta.href}>
+                  {slots.primaryCta.label}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {slots.secondaryCta && (
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-full border border-[var(--school-ink)]/20 bg-transparent px-5 text-sm font-semibold text-[var(--school-ink)] shadow-none hover:border-[var(--school-accent)] hover:bg-[var(--school-accent)] hover:text-[var(--school-paper)]"
               >
                 <Link href={slots.secondaryCta.href}>
                   {slots.secondaryCta.label}
