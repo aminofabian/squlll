@@ -498,7 +498,7 @@ function ApplyShell({
 
       <main
         className={cn(
-          'relative flex flex-1',
+          'relative flex flex-1 flex-col',
           isAssembly && 'ah-ruled',
           isPlayfield && 'pf-hero',
         )}
