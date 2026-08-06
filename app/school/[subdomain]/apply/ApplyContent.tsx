@@ -1,22 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { AnimatePresence, motion } from 'framer-motion'
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+} from 'framer-motion'
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
+  Building2,
   Check,
-  CheckCircle2,
-  Compass,
-  Feather,
-  Heart,
-  Music,
-  Palette,
-  Sparkles,
-  Trophy,
-  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +20,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import type { HomepageConfig } from '@/lib/types/homepage-config'
 import {
-  SchoolAuthShell,
+  HomepageShellStyles,
+  shellClass,
+  themeStyle,
+} from '../(pages)/components/homepage/shared'
+import {
   authFieldClass,
   authLabelClass,
   authPrimaryButtonClass,
@@ -33,12 +32,37 @@ import {
 
 type StepId = 'student' | 'pathway' | 'guardian' | 'story' | 'review'
 
-const STEPS: { id: StepId; label: string; prompt: string }[] = [
-  { id: 'student', label: 'Learner', prompt: 'Who’s joining us?' },
-  { id: 'pathway', label: 'Pathway', prompt: 'Where are they headed?' },
-  { id: 'guardian', label: 'Family', prompt: 'Who walks with them?' },
-  { id: 'story', label: 'Story', prompt: 'What lights them up?' },
-  { id: 'review', label: 'Review', prompt: 'Ready to send?' },
+const STEPS: { id: StepId; label: string; prompt: string; hint: string }[] = [
+  {
+    id: 'student',
+    label: 'Learner',
+    prompt: 'Who’s joining us?',
+    hint: 'A few facts so we can place them well.',
+  },
+  {
+    id: 'pathway',
+    label: 'Pathway',
+    prompt: 'Where are they headed?',
+    hint: 'Choose the programme and when you’d like to begin.',
+  },
+  {
+    id: 'guardian',
+    label: 'Family',
+    prompt: 'Who walks with them?',
+    hint: 'Admissions will write to this person.',
+  },
+  {
+    id: 'story',
+    label: 'Story',
+    prompt: 'What lights them up?',
+    hint: 'Optional, but it helps us know them.',
+  },
+  {
+    id: 'review',
+    label: 'Send',
+    prompt: 'Does this look right?',
+    hint: 'One last glance before it reaches admissions.',
+  },
 ]
 
 const PROGRAMMES = [
@@ -65,29 +89,23 @@ const PROGRAMMES = [
 ]
 
 const START_TERMS = [
+  { id: 'sep-2026', label: 'September 2026' },
   { id: 'jan-2027', label: 'January 2027' },
   { id: 'apr-2027', label: 'April 2027' },
-  { id: 'sep-2026', label: 'September 2026' },
   { id: 'sep-2027', label: 'September 2027' },
 ]
 
-const RELATIONSHIPS = [
-  'Mother',
-  'Father',
-  'Guardian',
-  'Grandparent',
-  'Other',
-]
+const RELATIONSHIPS = ['Mother', 'Father', 'Guardian', 'Grandparent', 'Other']
 
 const INTERESTS = [
-  { id: 'science', label: 'Science', icon: Compass },
-  { id: 'arts', label: 'Arts', icon: Palette },
-  { id: 'music', label: 'Music', icon: Music },
-  { id: 'sport', label: 'Sport', icon: Trophy },
-  { id: 'reading', label: 'Reading', icon: BookOpen },
-  { id: 'writing', label: 'Writing', icon: Feather },
-  { id: 'service', label: 'Service', icon: Heart },
-  { id: 'leadership', label: 'Leadership', icon: Users },
+  { id: 'science', label: 'Science' },
+  { id: 'arts', label: 'Arts' },
+  { id: 'music', label: 'Music' },
+  { id: 'sport', label: 'Sport' },
+  { id: 'reading', label: 'Reading' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'service', label: 'Service' },
+  { id: 'leadership', label: 'Leadership' },
 ]
 
 type FormState = {
@@ -124,67 +142,58 @@ const emptyForm: FormState = {
   notes: '',
 }
 
-function StepRail({
-  stepIndex,
-  config,
+const easeOut = [0.16, 1, 0.3, 1] as const
+
+function useTemplateFlags(config: HomepageConfig) {
+  const id = config.templateId
+  return {
+    isAssembly: id === 'assembly-hall',
+    isPlayfield: id === 'playfield',
+    isGarden: id === 'garden-court',
+    isStory: id === 'story-scroll',
+    isHorizon: id === 'horizon-board',
+    soft:
+      config.theme.radiusMode === 'soft' ||
+      [
+        'assembly-hall',
+        'playfield',
+        'garden-court',
+        'story-scroll',
+        'horizon-board',
+      ].includes(id),
+  }
+}
+
+function Chip({
+  selected,
+  onClick,
+  children,
+  soft,
 }: {
-  stepIndex: number
-  config: HomepageConfig
+  selected: boolean
+  onClick: () => void
+  children: ReactNode
+  soft: boolean
 }) {
-  const soft = config.theme.radiusMode === 'soft'
   return (
-    <ol className="mt-8 flex items-center gap-1 sm:gap-2" aria-label="Progress">
-      {STEPS.map((step, i) => {
-        const done = i < stepIndex
-        const current = i === stepIndex
-        return (
-          <li key={step.id} className="flex min-w-0 flex-1 flex-col gap-2">
-            <div className="flex items-center gap-1 sm:gap-2">
-              <span
-                className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center border-2 text-[11px] font-bold transition-colors sm:h-8 sm:w-8 sm:text-xs',
-                  soft ? 'rounded-full' : 'rounded-none',
-                  done &&
-                    'border-primary bg-primary text-white',
-                  current &&
-                    'border-primary bg-primary/10 text-primary',
-                  !done &&
-                    !current &&
-                    'border-[var(--school-ink)]/15 text-[var(--school-ink)]/40',
-                )}
-              >
-                {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
-              </span>
-              {i < STEPS.length - 1 && (
-                <span
-                  className={cn(
-                    'h-0.5 flex-1',
-                    i < stepIndex ? 'bg-primary' : 'bg-[var(--school-ink)]/10',
-                  )}
-                  aria-hidden
-                />
-              )}
-            </div>
-            <span
-              className={cn(
-                'hidden truncate text-[10px] font-semibold uppercase tracking-[0.12em] sm:block',
-                current
-                  ? 'text-primary'
-                  : done
-                    ? 'text-[var(--school-ink)]/55'
-                    : 'text-[var(--school-ink)]/30',
-              )}
-            >
-              {step.label}
-            </span>
-          </li>
-        )
-      })}
-    </ol>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={cn(
+        'min-h-11 border px-3.5 text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98]',
+        soft ? 'rounded-full' : 'rounded-sm',
+        selected
+          ? 'border-primary bg-primary text-white'
+          : 'border-[var(--school-ink)]/18 bg-transparent text-[var(--school-ink)]/75 hover:border-primary/45 hover:text-[var(--school-ink)]',
+      )}
+    >
+      {children}
+    </button>
   )
 }
 
-function ChoiceCard({
+function SelectRow({
   selected,
   onClick,
   title,
@@ -201,38 +210,392 @@ function ChoiceCard({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={cn(
-        'border-2 p-4 text-left transition-[border-color,background-color,transform] active:scale-[0.99]',
-        soft ? 'rounded-xl' : 'rounded-none',
-        selected
-          ? 'border-primary bg-primary/8 shadow-[3px_3px_0_rgba(0,0,0,0.06)]'
-          : 'border-[var(--school-ink)]/12 bg-white/60 hover:border-primary/40',
+        'group flex w-full items-start gap-4 border-b border-[var(--school-ink)]/10 px-1 py-4 text-left transition-colors last:border-b-0',
+        selected ? 'bg-primary/[0.04]' : 'hover:bg-[var(--school-ink)]/[0.02]',
+        soft && selected && 'rounded-lg',
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-display text-base font-bold text-[var(--school-ink)]">
-            {title}
-          </p>
-          {blurb && (
-            <p className="mt-1 text-sm leading-snug text-[var(--school-ink)]/55">
-              {blurb}
-            </p>
-          )}
-        </div>
-        <span
-          className={cn(
-            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2',
-            soft ? 'rounded-full' : 'rounded-none',
-            selected
-              ? 'border-primary bg-primary text-white'
-              : 'border-[var(--school-ink)]/20',
-          )}
-        >
-          {selected && <Check className="h-3 w-3" />}
+      <span
+        className={cn(
+          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border transition-colors',
+          soft ? 'rounded-full' : 'rounded-[3px]',
+          selected
+            ? 'border-primary bg-primary text-white'
+            : 'border-[var(--school-ink)]/25 text-transparent group-hover:border-primary/50',
+        )}
+      >
+        <Check className="h-3 w-3" strokeWidth={2.5} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-[1.05rem] font-bold tracking-[-0.02em] text-[var(--school-ink)]">
+          {title}
+        </span>
+        {blurb && (
+          <span className="mt-0.5 block text-sm leading-snug text-[var(--school-ink)]/55">
+            {blurb}
+          </span>
+        )}
+      </span>
+    </button>
+  )
+}
+
+function JourneyRail({
+  stepIndex,
+  soft,
+  reduceMotion,
+}: {
+  stepIndex: number
+  soft: boolean
+  reduceMotion: boolean | null
+}) {
+  const progress = stepIndex / (STEPS.length - 1)
+
+  return (
+    <nav aria-label="Application steps" className="hidden lg:block">
+      <ol className="relative space-y-0">
+        <div
+          className="absolute bottom-3 left-[11px] top-3 w-px bg-[var(--school-ink)]/12"
+          aria-hidden
+        />
+        <motion.div
+          className="absolute left-[11px] top-3 w-px origin-top bg-primary"
+          aria-hidden
+          style={{ height: 'calc(100% - 1.5rem)' }}
+          initial={false}
+          animate={{ scaleY: progress }}
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : { duration: 0.45, ease: easeOut }
+          }
+        />
+        {STEPS.map((step, i) => {
+          const done = i < stepIndex
+          const current = i === stepIndex
+          return (
+            <li key={step.id} className="relative flex gap-4 py-3 first:pt-0 last:pb-0">
+              <span
+                className={cn(
+                  'relative z-[1] flex h-6 w-6 shrink-0 items-center justify-center border text-[10px] font-bold transition-colors',
+                  soft ? 'rounded-full' : 'rounded-sm',
+                  done && 'border-primary bg-primary text-white',
+                  current &&
+                    'border-primary bg-primary text-white ring-4 ring-primary/18',
+                  !done &&
+                    !current &&
+                    'border-[var(--school-ink)]/20 bg-[var(--school-paper)] text-[var(--school-ink)]/35',
+                )}
+              >
+                {done ? <Check className="h-3 w-3" strokeWidth={2.5} /> : i + 1}
+              </span>
+              <div className="min-w-0 pt-0.5">
+                <p
+                  className={cn(
+                    'text-[13px] font-semibold tracking-[-0.01em]',
+                    current
+                      ? 'text-[var(--school-ink)]'
+                      : done
+                        ? 'text-[var(--school-ink)]/55'
+                        : 'text-[var(--school-ink)]/35',
+                  )}
+                >
+                  {step.label}
+                </p>
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
+
+function MobileProgress({
+  stepIndex,
+  soft,
+  reduceMotion,
+}: {
+  stepIndex: number
+  soft: boolean
+  reduceMotion: boolean | null
+}) {
+  return (
+    <div className="lg:hidden" aria-label="Progress">
+      <div className="mb-2 flex items-center justify-between gap-3 text-[12px]">
+        <span className="font-semibold text-[var(--school-ink)]">
+          {STEPS[stepIndex].label}
+        </span>
+        <span className="tabular-nums text-[var(--school-ink)]/45">
+          {stepIndex + 1} / {STEPS.length}
         </span>
       </div>
-    </button>
+      <div
+        className={cn(
+          'h-1 overflow-hidden bg-[var(--school-ink)]/10',
+          soft ? 'rounded-full' : 'rounded-none',
+        )}
+      >
+        <motion.div
+          className="h-full bg-primary"
+          initial={false}
+          animate={{ width: `${((stepIndex + 1) / STEPS.length) * 100}%` }}
+          transition={
+            reduceMotion ? { duration: 0 } : { duration: 0.4, ease: easeOut }
+          }
+        />
+      </div>
+    </div>
+  )
+}
+
+function ApplyShell({
+  config,
+  schoolName,
+  logoUrl,
+  tagline,
+  stepIndex,
+  title,
+  description,
+  children,
+  footer,
+  success = false,
+}: {
+  config: HomepageConfig
+  schoolName: string
+  logoUrl?: string
+  tagline?: string
+  stepIndex: number
+  title: string
+  description?: string
+  children: ReactNode
+  footer?: ReactNode
+  success?: boolean
+}) {
+  const reduceMotion = useReducedMotion()
+  const {
+    isAssembly,
+    isPlayfield,
+    isGarden,
+    isStory,
+    isHorizon,
+    soft,
+  } = useTemplateFlags(config)
+  const themed = isAssembly || isPlayfield || isGarden || isStory || isHorizon
+  const initials = schoolName
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
+  return (
+    <div
+      className={shellClass(
+        config,
+        cn(
+          'flex min-h-screen flex-col',
+          isAssembly && 'assembly-hall-shell',
+          isPlayfield && 'playfield-shell',
+          isGarden && 'garden-court-shell',
+          isStory && 'story-scroll-shell',
+          isHorizon && 'horizon-board-shell',
+        ),
+      )}
+      style={themeStyle(config.theme)}
+    >
+      <HomepageShellStyles
+        assembly={isAssembly}
+        playfield={isPlayfield}
+        garden={isGarden}
+        story={isStory}
+        horizon={isHorizon}
+      />
+
+      <header
+        className={cn(
+          'sticky top-0 z-40 border-b',
+          isAssembly &&
+            'border-[var(--school-ink)]/15 bg-[var(--ah-cream,#FBF6E9)]/95 backdrop-blur-md',
+          isPlayfield &&
+            'border-[var(--primary-dark)] bg-[var(--school-ink)]',
+          isGarden &&
+            'border-[var(--school-ink)]/10 bg-[var(--gc-linen,#F4EFE4)]/95 backdrop-blur-md',
+          isStory &&
+            'border-primary/20 bg-[var(--ss-sage,#EEF0E2)]/95 backdrop-blur-md',
+          isHorizon &&
+            'border-[var(--school-ink)]/12 bg-[var(--hb-cream,#F4ECD8)]/95 backdrop-blur-md',
+          !themed &&
+            'border-[var(--school-ink)]/8 bg-[var(--school-paper)]/90 backdrop-blur-md',
+        )}
+      >
+        <div className="mx-auto flex h-[var(--school-nav-h)] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-10 w-10 object-contain sm:h-11 sm:w-11"
+              />
+            ) : (
+              <div
+                className={cn(
+                  'flex h-10 w-10 items-center justify-center sm:h-11 sm:w-11',
+                  soft ? 'rounded-xl' : 'rounded-none',
+                  isPlayfield
+                    ? 'border border-primary bg-transparent text-primary'
+                    : 'bg-primary text-white',
+                )}
+              >
+                {isPlayfield ? (
+                  <span className="text-[11px] font-bold tracking-wide">
+                    {initials}
+                  </span>
+                ) : (
+                  <Building2 className="h-5 w-5" />
+                )}
+              </div>
+            )}
+            <div className="min-w-0">
+              <span
+                className={cn(
+                  'block truncate font-display text-lg leading-none tracking-[-0.02em] sm:text-xl',
+                  isPlayfield && 'text-[var(--school-paper)]',
+                )}
+              >
+                {schoolName}
+              </span>
+              <span
+                className={cn(
+                  'mt-1 block truncate text-[11px]',
+                  isPlayfield
+                    ? 'text-[#9FB3B0]'
+                    : 'text-[var(--school-ink)]/45',
+                )}
+              >
+                {tagline || 'Application for admission'}
+              </span>
+            </div>
+          </Link>
+
+          <Link
+            href="/"
+            className={cn(
+              'inline-flex h-10 items-center gap-2 border px-3.5 text-sm font-semibold transition-colors',
+              soft ? 'rounded-lg' : 'rounded-sm',
+              isPlayfield
+                ? 'border-primary/40 text-[var(--school-paper)] hover:bg-primary hover:text-[var(--school-ink)]'
+                : 'border-[var(--school-ink)]/15 text-[var(--school-ink)]/80 hover:border-primary hover:text-primary',
+            )}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Home</span>
+          </Link>
+        </div>
+      </header>
+
+      <main
+        className={cn(
+          'relative flex flex-1',
+          isAssembly && 'ah-ruled',
+          isPlayfield && 'pf-hero',
+        )}
+      >
+        <div className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)] lg:gap-14 lg:px-8 lg:py-12">
+          <aside className="flex flex-col justify-between gap-8 lg:sticky lg:top-[calc(var(--school-nav-h)+1.5rem)] lg:max-h-[calc(100vh-var(--school-nav-h)-3rem)] lg:self-start">
+            <div>
+              {!success && (
+                <MobileProgress
+                  stepIndex={stepIndex}
+                  soft={soft}
+                  reduceMotion={reduceMotion}
+                />
+              )}
+              <h1
+                className={cn(
+                  'mt-5 font-display text-[clamp(1.75rem,4vw,2.55rem)] font-extrabold leading-[1.08] tracking-[-0.03em] lg:mt-0',
+                  isPlayfield
+                    ? 'font-semibold text-[var(--school-paper)]'
+                    : 'text-[var(--school-ink)]',
+                  isStory && 'ss-italic',
+                  isHorizon && 'hb-italic',
+                )}
+              >
+                {title}
+              </h1>
+              {description && (
+                <p
+                  className={cn(
+                    'mt-3 max-w-[36ch] text-base leading-relaxed',
+                    isPlayfield
+                      ? 'text-[#B9CBC8]'
+                      : 'text-[var(--school-ink)]/60',
+                  )}
+                >
+                  {description}
+                </p>
+              )}
+              {!success && (
+                <div className="mt-8">
+                  <JourneyRail
+                    stepIndex={stepIndex}
+                    soft={soft}
+                    reduceMotion={reduceMotion}
+                  />
+                </div>
+              )}
+            </div>
+            {footer && (
+              <div
+                className={cn(
+                  'mt-auto hidden text-sm lg:block',
+                  isPlayfield
+                    ? 'text-[#9FB3B0]'
+                    : 'text-[var(--school-ink)]/45',
+                )}
+              >
+                {footer}
+              </div>
+            )}
+          </aside>
+
+          <section
+            className={cn(
+              'flex min-h-0 min-w-0 flex-col border bg-[color-mix(in_srgb,var(--school-paper)_88%,white)]',
+              soft ? 'rounded-2xl' : 'rounded-none',
+              isAssembly &&
+                'border-[var(--school-ink)]/20 bg-[var(--ah-cream,#FBF6E9)]',
+              isPlayfield &&
+                'rounded-md border-transparent bg-[var(--school-paper)]',
+              isGarden && 'border-[var(--school-ink)]/12',
+              isStory &&
+                'border-[var(--ss-moss-3,#1F3226)]/20 bg-[var(--ss-sage,#EEF0E2)]',
+              isHorizon && 'border-[var(--school-ink)]/12 bg-white',
+              !themed &&
+                'border-[var(--school-ink)]/10 shadow-[0_18px_50px_-28px_rgba(10,31,26,0.35)]',
+            )}
+          >
+            <div className="flex flex-1 flex-col p-5 sm:p-7 lg:p-8">{children}</div>
+          </section>
+
+          {footer && (
+            <div
+              className={cn(
+                'text-center text-sm lg:hidden',
+                isPlayfield
+                  ? 'text-[#9FB3B0]'
+                  : 'text-[var(--school-ink)]/45',
+              )}
+            >
+              {footer}
+            </div>
+          )}
+        </div>
+        {isAssembly && <div className="ah-tear mt-auto" aria-hidden />}
+      </main>
+    </div>
   )
 }
 
@@ -249,16 +612,8 @@ export default function ApplyContent({
   logoUrl?: string
   tagline?: string
 }) {
-  const soft =
-    config.theme.radiusMode === 'soft' ||
-    [
-      'assembly-hall',
-      'playfield',
-      'garden-court',
-      'story-scroll',
-      'horizon-board',
-    ].includes(config.templateId)
-
+  const reduceMotion = useReducedMotion()
+  const { soft } = useTemplateFlags(config)
   const [stepIndex, setStepIndex] = useState(0)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [fieldError, setFieldError] = useState('')
@@ -272,11 +627,13 @@ export default function ApplyContent({
   const primaryBtn = authPrimaryButtonClass(config)
 
   const programmeLabel = useMemo(
-    () => PROGRAMMES.find((p) => p.id === form.programme)?.title ?? form.programme,
+    () =>
+      PROGRAMMES.find((p) => p.id === form.programme)?.title ?? form.programme,
     [form.programme],
   )
   const termLabel = useMemo(
-    () => START_TERMS.find((t) => t.id === form.startTerm)?.label ?? form.startTerm,
+    () =>
+      START_TERMS.find((t) => t.id === form.startTerm)?.label ?? form.startTerm,
     [form.startTerm],
   )
 
@@ -299,7 +656,7 @@ export default function ApplyContent({
     setFieldError('')
     if (step.id === 'student') {
       if (!form.studentFirstName.trim() || !form.studentLastName.trim()) {
-        setFieldError('Please share the learner’s first and last name.')
+        setFieldError('Add the learner’s first and last name to continue.')
         return false
       }
       if (!form.dateOfBirth) {
@@ -309,29 +666,32 @@ export default function ApplyContent({
     }
     if (step.id === 'pathway') {
       if (!form.programme) {
-        setFieldError('Pick a pathway to continue.')
+        setFieldError('Choose a programme pathway to continue.')
         return false
       }
       if (!form.startTerm) {
-        setFieldError('When would you like them to start?')
+        setFieldError('Pick a preferred start term.')
         return false
       }
     }
     if (step.id === 'guardian') {
       if (!form.guardianName.trim()) {
-        setFieldError('We need a parent or guardian name.')
+        setFieldError('Add a parent or guardian name.')
         return false
       }
       if (!form.relationship) {
-        setFieldError('How are you related to the learner?')
+        setFieldError('Tell us how you’re related to the learner.')
         return false
       }
-      if (!form.guardianEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.guardianEmail)) {
-        setFieldError('A valid email is how admissions will reach you.')
+      if (
+        !form.guardianEmail.trim() ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.guardianEmail)
+      ) {
+        setFieldError('Use a valid email — admissions will reply there.')
         return false
       }
       if (!form.guardianPhone.trim() || form.guardianPhone.trim().length < 7) {
-        setFieldError('Please add a phone number we can call.')
+        setFieldError('Add a phone number we can reach you on.')
         return false
       }
     }
@@ -345,6 +705,7 @@ export default function ApplyContent({
 
   const back = () => {
     setFieldError('')
+    setSubmitError('')
     setStepIndex((i) => Math.max(i - 1, 0))
   }
 
@@ -381,7 +742,9 @@ export default function ApplyContent({
       setReference(data.reference)
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : 'Something went wrong. Try again.',
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Try again in a moment.',
       )
     } finally {
       setIsLoading(false)
@@ -390,48 +753,51 @@ export default function ApplyContent({
 
   if (reference) {
     return (
-      <SchoolAuthShell
+      <ApplyShell
         config={config}
         schoolName={schoolName}
         logoUrl={logoUrl}
         tagline={tagline}
-        eyebrow="Application received"
+        stepIndex={STEPS.length - 1}
         title="You’re on the list"
-        description={`We’ve logged ${form.studentFirstName || 'your learner'}’s application for ${schoolName}. Keep your reference handy.`}
-        wide
+        description={`We’ve received ${form.studentFirstName || 'your learner'}’s application for ${schoolName}. Keep this reference — admissions will use it when they write back.`}
+        success
         footer={
-          <Link
-            href="/"
-            className="text-sm font-semibold text-primary hover:underline"
-          >
+          <Link href="/" className="font-semibold text-primary hover:underline">
             ← Back to home
           </Link>
         }
       >
-        <div className="space-y-6 text-center sm:text-left">
+        <motion.div
+          initial={reduceMotion ? false : { opacity: 0, y: 12, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.55, ease: easeOut }}
+          className="space-y-8"
+        >
           <div
             className={cn(
-              'mx-auto flex h-14 w-14 items-center justify-center border-2 border-primary bg-primary/10 text-primary sm:mx-0',
+              'relative overflow-hidden border border-primary/25 bg-primary/[0.06] px-6 py-8 text-center sm:px-8',
               soft ? 'rounded-2xl' : 'rounded-none',
             )}
           >
-            <CheckCircle2 className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-              Reference
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Your reference
             </p>
-            <p className="mt-1 font-display text-2xl font-extrabold tracking-tight text-[var(--school-ink)]">
+            <p className="mt-3 font-display text-[clamp(1.75rem,5vw,2.35rem)] font-extrabold tracking-[-0.03em] text-[var(--school-ink)]">
               {reference}
             </p>
+            <div
+              className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rotate-12 rounded-full border-2 border-primary/20"
+              aria-hidden
+            />
           </div>
-          <p className="text-sm leading-relaxed text-[var(--school-ink)]/65">
-            Admissions will email <strong>{form.guardianEmail}</strong> within a
-            few school days with next steps — campus visit, documents, or a
-            short conversation.
+
+          <p className="text-[0.95rem] leading-relaxed text-[var(--school-ink)]/65">
+            Expect a note at <span className="font-semibold text-[var(--school-ink)]">{form.guardianEmail}</span> within a few school days — visit details, documents, or a short conversation.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild className={primaryBtn}>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild className={cn(primaryBtn, 'sm:max-w-[220px]')}>
               <Link href="/">
                 Return home
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -439,41 +805,39 @@ export default function ApplyContent({
             </Button>
             <Button
               type="button"
-              variant="outline"
-              className={cn(
-                'h-12 border-2 font-semibold',
-                soft ? 'rounded-lg' : 'rounded-none',
-              )}
+              variant="ghost"
+              className="h-12 font-semibold text-[var(--school-ink)]/65"
               onClick={() => {
                 setReference(null)
                 setForm(emptyForm)
                 setStepIndex(0)
               }}
             >
-              Start another application
+              Apply for another learner
             </Button>
           </div>
-        </div>
-      </SchoolAuthShell>
+        </motion.div>
+      </ApplyShell>
     )
   }
 
   return (
-    <SchoolAuthShell
+    <ApplyShell
       config={config}
       schoolName={schoolName}
       logoUrl={logoUrl}
       tagline={tagline}
-      eyebrow="Admissions"
+      stepIndex={stepIndex}
       title={step.prompt}
-      description={`A short application for ${schoolName} — five gentle steps, no account needed.`}
-      wide
-      headerExtra={<StepRail stepIndex={stepIndex} config={config} />}
+      description={step.hint}
       footer={
-        <p className="text-xs text-[var(--school-ink)]/50">
+        <p>
           Already enrolled?{' '}
-          <Link href="/login" className="font-semibold text-primary hover:underline">
-            Sign in to the portal
+          <Link
+            href="/login"
+            className="font-semibold text-primary hover:underline"
+          >
+            Sign in
           </Link>
         </p>
       }
@@ -481,25 +845,30 @@ export default function ApplyContent({
       <AnimatePresence mode="wait">
         <motion.div
           key={step.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="space-y-5"
+          initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, x: -12 }}
+          transition={{ duration: 0.28, ease: easeOut }}
+          className="flex flex-col space-y-5"
         >
-          {fieldError && (
-            <div className="border-2 border-amber-500/35 bg-amber-50 p-3.5 text-sm font-medium text-amber-950">
-              {fieldError}
-            </div>
-          )}
-          {submitError && (
-            <div className="border-2 border-red-500/30 bg-red-50 p-3.5 text-sm font-medium text-red-800">
-              {submitError}
+          {(fieldError || submitError) && (
+            <div
+              role="alert"
+              className={cn(
+                'border px-4 py-3 text-sm font-medium',
+                soft ? 'rounded-xl' : 'rounded-sm',
+                submitError
+                  ? 'border-red-500/25 bg-red-50 text-red-900'
+                  : 'border-amber-500/30 bg-amber-50 text-amber-950',
+              )}
+            >
+              {submitError || fieldError}
             </div>
           )}
 
+          <div className="flex-1 space-y-5">
           {step.id === 'student' && (
-            <>
+            <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className={label}>
@@ -536,13 +905,18 @@ export default function ApplyContent({
                 <Input
                   id="dob"
                   type="date"
-                  className={field}
+                  className={cn(field, 'max-w-xs')}
                   value={form.dateOfBirth}
                   onChange={(e) => set('dateOfBirth', e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <p className={label}>Gender (optional)</p>
+              <div className="space-y-3">
+                <p className={label}>
+                  Gender{' '}
+                  <span className="font-normal text-[var(--school-ink)]/40">
+                    optional
+                  </span>
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {(
                     [
@@ -552,33 +926,27 @@ export default function ApplyContent({
                       ['prefer-not', 'Prefer not to say'],
                     ] as const
                   ).map(([value, text]) => (
-                    <button
+                    <Chip
                       key={value}
-                      type="button"
+                      selected={form.gender === value}
                       onClick={() => set('gender', value)}
-                      className={cn(
-                        'border-2 px-3.5 py-2 text-sm font-semibold transition-colors',
-                        soft ? 'rounded-full' : 'rounded-none',
-                        form.gender === value
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-[var(--school-ink)]/15 text-[var(--school-ink)]/70 hover:border-primary/40',
-                      )}
+                      soft={soft}
                     >
                       {text}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {step.id === 'pathway' && (
-            <>
-              <div className="space-y-2">
-                <p className={label}>Programme</p>
-                <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-7">
+              <div>
+                <p className={cn(label, 'mb-1')}>Programme</p>
+                <div className="divide-y-0">
                   {PROGRAMMES.map((p) => (
-                    <ChoiceCard
+                    <SelectRow
                       key={p.id}
                       title={p.title}
                       blurb={p.blurb}
@@ -589,23 +957,27 @@ export default function ApplyContent({
                   ))}
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className={label}>Preferred start</p>
-                <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <p className={cn(label, 'mb-3')}>Preferred start</p>
+                <div className="flex flex-wrap gap-2">
                   {START_TERMS.map((t) => (
-                    <ChoiceCard
+                    <Chip
                       key={t.id}
-                      title={t.label}
                       selected={form.startTerm === t.id}
                       onClick={() => set('startTerm', t.id)}
                       soft={soft}
-                    />
+                    >
+                      {t.label}
+                    </Chip>
                   ))}
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currentSchool" className={label}>
-                  Current school <span className="font-normal opacity-50">(optional)</span>
+                  Current school{' '}
+                  <span className="font-normal text-[var(--school-ink)]/40">
+                    optional
+                  </span>
                 </Label>
                 <Input
                   id="currentSchool"
@@ -615,11 +987,11 @@ export default function ApplyContent({
                   placeholder="Where are they learning now?"
                 />
               </div>
-            </>
+            </div>
           )}
 
           {step.id === 'guardian' && (
-            <>
+            <div className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="guardianName" className={label}>
                   Parent / guardian name
@@ -634,24 +1006,18 @@ export default function ApplyContent({
                   autoFocus
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className={label}>Relationship</p>
                 <div className="flex flex-wrap gap-2">
                   {RELATIONSHIPS.map((r) => (
-                    <button
+                    <Chip
                       key={r}
-                      type="button"
+                      selected={form.relationship === r}
                       onClick={() => set('relationship', r)}
-                      className={cn(
-                        'border-2 px-3.5 py-2 text-sm font-semibold transition-colors',
-                        soft ? 'rounded-full' : 'rounded-none',
-                        form.relationship === r
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-[var(--school-ink)]/15 text-[var(--school-ink)]/70 hover:border-primary/40',
-                      )}
+                      soft={soft}
                     >
                       {r}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
               </div>
@@ -685,36 +1051,29 @@ export default function ApplyContent({
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {step.id === 'story' && (
-            <>
-              <div className="space-y-2">
+            <div className="space-y-5">
+              <div className="space-y-3">
                 <p className={label}>
-                  Interests <span className="font-normal opacity-50">(up to 5)</span>
+                  Interests{' '}
+                  <span className="font-normal text-[var(--school-ink)]/40">
+                    up to 5
+                  </span>
                 </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {INTERESTS.map(({ id, label: interestLabel, icon: Icon }) => {
-                    const on = form.interests.includes(id)
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => toggleInterest(id)}
-                        className={cn(
-                          'flex flex-col items-center gap-2 border-2 px-2 py-3 text-center transition-colors',
-                          soft ? 'rounded-xl' : 'rounded-none',
-                          on
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-[var(--school-ink)]/12 text-[var(--school-ink)]/65 hover:border-primary/35',
-                        )}
-                      >
-                        <Icon className="h-4 w-4" />
-                        <span className="text-xs font-semibold">{interestLabel}</span>
-                      </button>
-                    )
-                  })}
+                <div className="flex flex-wrap gap-2">
+                  {INTERESTS.map(({ id, label: interestLabel }) => (
+                    <Chip
+                      key={id}
+                      selected={form.interests.includes(id)}
+                      onClick={() => toggleInterest(id)}
+                      soft={soft}
+                    >
+                      {interestLabel}
+                    </Chip>
+                  ))}
                 </div>
               </div>
               <div className="space-y-2">
@@ -723,7 +1082,7 @@ export default function ApplyContent({
                 </Label>
                 <Textarea
                   id="whyUs"
-                  className={cn(field, 'min-h-[100px] py-3')}
+                  className={cn(field, 'min-h-[100px] py-3 leading-relaxed')}
                   value={form.whyUs}
                   onChange={(e) => set('whyUs', e.target.value)}
                   placeholder="A sentence or two is plenty — what drew you here?"
@@ -733,98 +1092,92 @@ export default function ApplyContent({
               <div className="space-y-2">
                 <Label htmlFor="notes" className={label}>
                   Anything else?{' '}
-                  <span className="font-normal opacity-50">(optional)</span>
+                  <span className="font-normal text-[var(--school-ink)]/40">
+                    optional
+                  </span>
                 </Label>
                 <Textarea
                   id="notes"
-                  className={cn(field, 'min-h-[80px] py-3')}
+                  className={cn(field, 'min-h-[80px] py-3 leading-relaxed')}
                   value={form.notes}
                   onChange={(e) => set('notes', e.target.value)}
                   placeholder="Learning support, siblings already here, questions…"
                   maxLength={1200}
                 />
               </div>
-            </>
-          )}
-
-          {step.id === 'review' && (
-            <div className="space-y-4">
-              <div
-                className={cn(
-                  'border-2 border-[var(--school-ink)]/10 bg-[var(--school-paper,#f3f7f5)]/80 p-4',
-                  soft ? 'rounded-xl' : 'rounded-none',
-                )}
-              >
-                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Snapshot
-                </p>
-                <dl className="mt-4 space-y-3 text-sm">
-                  <div className="flex justify-between gap-4 border-b border-[var(--school-ink)]/8 pb-2">
-                    <dt className="text-[var(--school-ink)]/50">Learner</dt>
-                    <dd className="font-semibold text-[var(--school-ink)]">
-                      {form.studentFirstName} {form.studentLastName}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4 border-b border-[var(--school-ink)]/8 pb-2">
-                    <dt className="text-[var(--school-ink)]/50">Born</dt>
-                    <dd className="font-semibold text-[var(--school-ink)]">
-                      {form.dateOfBirth || '—'}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4 border-b border-[var(--school-ink)]/8 pb-2">
-                    <dt className="text-[var(--school-ink)]/50">Pathway</dt>
-                    <dd className="text-right font-semibold text-[var(--school-ink)]">
-                      {programmeLabel}
-                      <span className="mt-0.5 block text-xs font-normal text-[var(--school-ink)]/50">
-                        {termLabel}
-                      </span>
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4 border-b border-[var(--school-ink)]/8 pb-2">
-                    <dt className="text-[var(--school-ink)]/50">Family</dt>
-                    <dd className="text-right font-semibold text-[var(--school-ink)]">
-                      {form.guardianName}
-                      <span className="mt-0.5 block text-xs font-normal text-[var(--school-ink)]/50">
-                        {form.relationship} · {form.guardianEmail}
-                      </span>
-                    </dd>
-                  </div>
-                  {form.interests.length > 0 && (
-                    <div className="flex justify-between gap-4">
-                      <dt className="text-[var(--school-ink)]/50">Interests</dt>
-                      <dd className="text-right font-semibold text-[var(--school-ink)]">
-                        {form.interests
-                          .map(
-                            (id) =>
-                              INTERESTS.find((i) => i.id === id)?.label ?? id,
-                          )
-                          .join(', ')}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-              <p className="text-sm leading-relaxed text-[var(--school-ink)]/60">
-                Submitting sends this to admissions. You’ll get a reference
-                number to keep — no payment is taken here.
-              </p>
             </div>
           )}
 
-          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+          {step.id === 'review' && (
+            <div className="space-y-5">
+              <dl className="space-y-0">
+                {(
+                  [
+                    [
+                      'Learner',
+                      `${form.studentFirstName} ${form.studentLastName}`.trim(),
+                    ],
+                    ['Born', form.dateOfBirth || '—'],
+                    ['Pathway', programmeLabel],
+                    ['Start', termLabel],
+                    [
+                      'Family',
+                      `${form.guardianName}${form.relationship ? ` · ${form.relationship}` : ''}`,
+                    ],
+                    ['Email', form.guardianEmail],
+                    ['Phone', form.guardianPhone],
+                    form.interests.length
+                      ? [
+                          'Interests',
+                          form.interests
+                            .map(
+                              (id) =>
+                                INTERESTS.find((i) => i.id === id)?.label ?? id,
+                            )
+                            .join(', '),
+                        ]
+                      : null,
+                  ] as Array<[string, string] | null>
+                )
+                  .filter(Boolean)
+                  .map((row) => {
+                    const [k, v] = row as [string, string]
+                    return (
+                      <div
+                        key={k}
+                        className="flex items-baseline justify-between gap-6 border-b border-[var(--school-ink)]/8 py-3"
+                      >
+                        <dt className="shrink-0 text-[13px] text-[var(--school-ink)]/45">
+                          {k}
+                        </dt>
+                        <dd className="text-right text-[0.95rem] font-semibold tracking-[-0.01em] text-[var(--school-ink)]">
+                          {v}
+                        </dd>
+                      </div>
+                    )
+                  })}
+              </dl>
+              <p className="text-sm leading-relaxed text-[var(--school-ink)]/55">
+                Submitting sends this to admissions. You’ll get a reference
+                number — no payment is taken here.
+              </p>
+            </div>
+          )}
+          </div>
+
+          <div className="mt-auto flex flex-col-reverse gap-3 border-t border-[var(--school-ink)]/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
             {stepIndex > 0 ? (
               <Button
                 type="button"
                 variant="ghost"
                 onClick={back}
-                className="h-11 font-semibold text-[var(--school-ink)]/70"
+                className="h-11 justify-start px-2 font-semibold text-[var(--school-ink)]/55 hover:text-[var(--school-ink)]"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
               </Button>
             ) : (
-              <span />
+              <span className="hidden sm:block" />
             )}
 
             {step.id === 'review' ? (
@@ -832,7 +1185,7 @@ export default function ApplyContent({
                 type="button"
                 disabled={isLoading}
                 onClick={submit}
-                className={cn(primaryBtn, 'sm:max-w-xs')}
+                className={cn(primaryBtn, 'sm:w-auto sm:min-w-[200px] sm:px-8')}
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
@@ -850,7 +1203,7 @@ export default function ApplyContent({
               <Button
                 type="button"
                 onClick={next}
-                className={cn(primaryBtn, 'sm:max-w-xs')}
+                className={cn(primaryBtn, 'sm:w-auto sm:min-w-[160px] sm:px-8')}
               >
                 <span className="flex items-center gap-2">
                   Continue
@@ -861,6 +1214,6 @@ export default function ApplyContent({
           </div>
         </motion.div>
       </AnimatePresence>
-    </SchoolAuthShell>
+    </ApplyShell>
   )
 }
