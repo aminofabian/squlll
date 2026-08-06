@@ -2873,9 +2873,12 @@ export function HomepagePrograms({
   if (!data) return null
   const { slots } = data
   const programLevels = levels ?? schoolConfig?.selectedLevels ?? []
+  const soft = config.theme.radiusMode === 'soft'
+  const radius = soft ? 'rounded-xl' : 'rounded-none'
+  const chipRadius = soft ? 'rounded-full' : 'rounded-sm'
 
   return (
-    <section className="border-y border-black/10 bg-white py-20 sm:py-24">
+    <section className="border-y border-black/10 bg-[var(--school-paper)] py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -2886,13 +2889,16 @@ export function HomepagePrograms({
               <h2 className="mt-3 font-display text-4xl tracking-tight text-[var(--school-ink)] sm:text-5xl">
                 {slots.headline}
               </h2>
-              <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+              <p className="mt-4 text-base leading-relaxed text-[var(--school-ink)]/65 sm:text-lg">
                 {slots.subcopy}
               </p>
             </div>
             <Button
               asChild
-              className="h-11 w-fit rounded-none bg-primary px-6 text-sm font-semibold text-white shadow-none hover:bg-primary-dark"
+              className={cn(
+                'h-11 w-fit bg-primary px-6 text-sm font-semibold text-white shadow-none hover:bg-primary-dark',
+                soft ? 'rounded-full' : 'rounded-none',
+              )}
             >
               <Link href={slots.href || '/programs'}>
                 {slots.ctaLabel || 'View all programs'}
@@ -2903,7 +2909,7 @@ export function HomepagePrograms({
         </Reveal>
 
         {programLevels.length > 0 ? (
-          <div className="mt-12 space-y-4">
+          <div className="mt-12 space-y-5">
             {programLevels.map((level, index) => {
               const grades = level.gradeLevels || []
               const subjects =
@@ -2913,68 +2919,139 @@ export function HomepagePrograms({
 
               return (
                 <Reveal key={level.id} delay={index * 60}>
-                  <div className="border border-black/10 bg-[var(--school-paper)] p-6 sm:p-8">
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-xs font-semibold tabular-nums text-primary">
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                      <h3 className="font-display text-2xl tracking-tight text-[var(--school-ink)] sm:text-3xl">
-                        {level.name}
-                      </h3>
+                  <article
+                    className={cn(
+                      'school-program-card overflow-hidden border border-[var(--school-ink)]/10 bg-white',
+                      radius,
+                    )}
+                  >
+                    <div className="flex flex-col gap-4 border-b border-[var(--school-ink)]/8 px-6 py-6 sm:flex-row sm:items-start sm:justify-between sm:px-8 sm:py-7">
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-3">
+                          <span className="font-display text-sm tabular-nums text-primary/70">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <h3 className="font-display text-2xl tracking-tight text-[var(--school-ink)] sm:text-[1.85rem]">
+                            {level.name}
+                          </h3>
+                        </div>
+                        {level.description && (
+                          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--school-ink)]/60">
+                            {level.description}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        {grades.length > 0 && (
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1.5 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-primary',
+                              chipRadius,
+                            )}
+                          >
+                            {grades.length}{' '}
+                            {grades.length === 1 ? 'grade' : 'grades'}
+                          </span>
+                        )}
+                        {subjects.length > 0 && (
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1.5 bg-[var(--school-ink)]/6 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--school-ink)]/70',
+                              chipRadius,
+                            )}
+                          >
+                            {subjects.length}{' '}
+                            {subjects.length === 1 ? 'subject' : 'subjects'}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {level.description && (
-                      <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                        {level.description}
-                      </p>
-                    )}
 
-                    {grades.length > 0 && (
-                      <div className="mt-5">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Grades
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {grades.map((grade) => (
+                    <div
+                      className={cn(
+                        'grid gap-0',
+                        grades.length > 0 &&
+                          subjects.length > 0 &&
+                          'lg:grid-cols-2',
+                      )}
+                    >
+                      {grades.length > 0 && (
+                        <div
+                          className={cn(
+                            'px-6 py-6 sm:px-8',
+                            subjects.length > 0 &&
+                              'border-b border-[var(--school-ink)]/8 lg:border-b-0 lg:border-r',
+                          )}
+                        >
+                          <div className="mb-3 flex items-center gap-2">
                             <span
-                              key={grade.id}
-                              className="border border-primary/20 bg-white px-2.5 py-1 text-xs font-medium text-primary"
-                            >
-                              {grade.name}
-                            </span>
-                          ))}
+                              className="h-1.5 w-1.5 rounded-full bg-primary"
+                              aria-hidden
+                            />
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                              Grades
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {grades.map((grade) => (
+                              <span
+                                key={grade.id}
+                                className={cn(
+                                  'school-program-grade inline-flex items-center border border-primary/25 bg-primary/[0.06] px-3 py-1.5 text-sm font-semibold text-primary',
+                                  chipRadius,
+                                )}
+                              >
+                                {grade.name}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {subjects.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          Subjects
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {subjects.map((subject) => (
+                      {subjects.length > 0 && (
+                        <div className="bg-[var(--school-paper)]/60 px-6 py-6 sm:px-8">
+                          <div className="mb-3 flex items-center gap-2">
                             <span
-                              key={subject.id}
-                              className="border border-black/10 bg-white px-2.5 py-1 text-xs font-medium text-[var(--school-ink)]"
-                            >
-                              {subject.name}
-                            </span>
-                          ))}
+                              className="h-1.5 w-1.5 rounded-full bg-[var(--school-ink)]/45"
+                              aria-hidden
+                            />
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--school-ink)]/55">
+                              Subjects
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {subjects.map((subject) => (
+                              <span
+                                key={subject.id}
+                                className={cn(
+                                  'school-program-subject inline-flex items-center border border-[var(--school-ink)]/10 bg-white px-2.5 py-1 text-[12.5px] font-medium text-[var(--school-ink)]/85',
+                                  chipRadius,
+                                )}
+                              >
+                                {subject.name}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  </article>
                 </Reveal>
               )
             })}
           </div>
         ) : (
           <Reveal>
-            <div className="mt-12 border border-dashed border-black/15 bg-[var(--school-paper)] px-6 py-14 text-center">
+            <div
+              className={cn(
+                'mt-12 border border-dashed border-[var(--school-ink)]/15 bg-white px-6 py-14 text-center',
+                radius,
+              )}
+            >
               <p className="font-display text-2xl text-[var(--school-ink)]">
                 Programs coming soon
               </p>
-              <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+              <p className="mx-auto mt-2 max-w-md text-sm text-[var(--school-ink)]/60">
                 Ask admissions about our current pathways and intake.
               </p>
             </div>

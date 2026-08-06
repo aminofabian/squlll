@@ -284,6 +284,32 @@ export function HomepageShellStyles({
           transform-origin: left;
           animation: school-line-draw 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
         }
+        .school-program-card {
+          box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .school-program-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 32px rgba(0,0,0,0.07);
+        }
+        .school-program-grade {
+          transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .school-program-grade:hover {
+          background-color: color-mix(in srgb, var(--primary) 14%, white);
+          border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+        }
+        .school-program-subject {
+          transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        .school-program-subject:hover {
+          border-color: color-mix(in srgb, var(--school-ink) 22%, transparent);
+          color: var(--school-ink);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .school-program-card,
+          .school-program-card:hover { transition: none; transform: none; }
+        }
 
         /* ---- Assembly Hall / ruled-notebook shell ---- */
         .assembly-hall-shell {
