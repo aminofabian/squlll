@@ -30,6 +30,10 @@ import { SchoolConfiguration } from '@/lib/types/school-config'
 import { cn } from '@/lib/utils'
 import { SchoolHomepageFeeDownloads } from '../SchoolHomepageFeeDownloads'
 import { HomepageRuntime, Reveal, SectionIcon } from './shared'
+import {
+  HomepageNavAuthActions,
+  HomepageNavAuthMobile,
+} from './HomepageNavAuthActions'
 
 export function HomepageNav({
   config,
@@ -118,25 +122,13 @@ export function HomepageNav({
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-none border-[var(--fo-ink)]/30 px-4 text-sm font-semibold text-[var(--fo-ink)] shadow-none hover:border-[var(--fo-ink)] hover:bg-[var(--fo-ink)] hover:text-[var(--fo-cream)]"
-            >
-              <Link href="/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                {slots.portalLabel || 'Portal'}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-10 rounded-none bg-[var(--fo-ink)] px-5 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-vermilion)]"
-            >
-              <Link href="/apply">
-                {slots.applyLabel || 'Apply now'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Portal'}
+              applyLabel={slots.applyLabel || 'Apply now'}
+              greetingClassName="text-[var(--fo-ink)]"
+              portalClassName="h-10 rounded-none border-[var(--fo-ink)]/30 px-4 text-sm font-semibold text-[var(--fo-ink)] shadow-none hover:border-[var(--fo-ink)] hover:bg-[var(--fo-ink)] hover:text-[var(--fo-cream)]"
+              applyClassName="h-10 rounded-none bg-[var(--fo-ink)] px-5 text-sm font-semibold text-[var(--fo-cream)] shadow-none hover:bg-[var(--fo-vermilion)]"
+            />
           </div>
 
           <button
@@ -162,6 +154,13 @@ export function HomepageNav({
                   {link.label}
                 </Link>
               ))}
+              <HomepageNavAuthMobile
+                portalLabel={slots.portalLabel || 'Portal'}
+                applyLabel={slots.applyLabel || 'Apply now'}
+                onNavigate={() => setOpen(false)}
+                linkClassName="font-display text-xl text-[var(--fo-ink)] hover:text-[var(--fo-vermilion)]"
+                primaryClassName="font-display text-xl text-[var(--fo-vermilion)]"
+              />
             </div>
           </div>
         )}
@@ -215,25 +214,13 @@ export function HomepageNav({
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-full border-white/20 px-4 text-sm font-medium text-white shadow-none hover:border-[var(--nl-neon)] hover:text-[var(--nl-neon)]"
-            >
-              <Link href="/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                {slots.portalLabel || 'Portal'}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-10 rounded-full bg-[var(--nl-neon)] px-5 text-sm font-bold text-[var(--nl-ink)] shadow-[0_0_18px_rgba(79,227,201,0.35)] hover:bg-white"
-            >
-              <Link href="/apply">
-                {slots.applyLabel || 'Apply now'}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Portal'}
+              applyLabel={slots.applyLabel || 'Apply now'}
+              greetingClassName="text-white"
+              portalClassName="h-10 rounded-full border-white/20 px-4 text-sm font-medium text-white shadow-none hover:border-[var(--nl-neon)] hover:text-[var(--nl-neon)]"
+              applyClassName="h-10 rounded-full bg-[var(--nl-neon)] px-5 text-sm font-bold text-[var(--nl-ink)] shadow-[0_0_18px_rgba(79,227,201,0.35)] hover:bg-white"
+            />
           </div>
 
           <button
@@ -312,25 +299,12 @@ export function HomepageNav({
           </div>
 
           <div className="hidden items-center gap-2.5 lg:flex">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-[3px] border-[1.5px] border-[var(--school-ink)] bg-transparent px-4 text-[13.5px] font-bold text-[var(--school-ink)] shadow-none hover:bg-[var(--school-ink)] hover:text-[var(--hb-cream,#F4ECD8)]"
-            >
-              <Link href="/login">
-                <LogIn className="mr-2 h-3.5 w-3.5" />
-                {slots.portalLabel || 'Portal'}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-10 rounded-[3px] border-[1.5px] border-primary bg-primary px-4 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--primary-dark)]"
-            >
-              <Link href="/apply">
-                {slots.applyLabel || 'Apply'}
-                <ArrowRight className="ml-2 h-3.5 w-3.5" />
-              </Link>
-            </Button>
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Portal'}
+              applyLabel={slots.applyLabel || 'Apply'}
+              portalClassName="h-10 rounded-[3px] border-[1.5px] border-[var(--school-ink)] bg-transparent px-4 text-[13.5px] font-bold text-[var(--school-ink)] shadow-none hover:bg-[var(--school-ink)] hover:text-[var(--hb-cream,#F4ECD8)]"
+              applyClassName="h-10 rounded-[3px] border-[1.5px] border-primary bg-primary px-4 text-[13.5px] font-bold text-[var(--hb-cream,#F4ECD8)] shadow-none hover:bg-[var(--primary-dark)]"
+            />
           </div>
 
           <button
@@ -436,25 +410,12 @@ export function HomepageNav({
           </div>
 
           <div className="hidden items-center gap-2.5 lg:flex">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-full border-[1.5px] border-primary bg-transparent px-4 text-[13.5px] font-bold text-primary shadow-none hover:bg-primary hover:text-[var(--ss-sage,#EEF0E2)]"
-            >
-              <Link href="/login">
-                <LogIn className="mr-2 h-3.5 w-3.5" />
-                {slots.portalLabel || 'Visit'}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-10 rounded-full border-[1.5px] border-[var(--ss-terra,#C1652E)] bg-[var(--ss-terra,#C1652E)] px-4 text-[13.5px] font-bold text-white shadow-none hover:bg-[#A6541F]"
-            >
-              <Link href="/apply">
-                {slots.applyLabel || 'Enrol this season'}
-                <ArrowRight className="ml-2 h-3.5 w-3.5" />
-              </Link>
-            </Button>
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Visit'}
+              applyLabel={slots.applyLabel || 'Enrol this season'}
+              portalClassName="h-10 rounded-full border-[1.5px] border-primary bg-transparent px-4 text-[13.5px] font-bold text-primary shadow-none hover:bg-primary hover:text-[var(--ss-sage,#EEF0E2)]"
+              applyClassName="h-10 rounded-full border-[1.5px] border-[var(--ss-terra,#C1652E)] bg-[var(--ss-terra,#C1652E)] px-4 text-[13.5px] font-bold text-white shadow-none hover:bg-[#A6541F]"
+            />
           </div>
 
           <button
@@ -533,25 +494,12 @@ export function HomepageNav({
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-full border border-[var(--school-ink)]/20 bg-transparent px-5 text-sm font-semibold text-[var(--school-ink)] shadow-none hover:border-primary hover:bg-primary hover:text-[var(--school-paper)]"
-            >
-              <Link href="/login">
-                <LogIn className="mr-2 h-3.5 w-3.5" />
-                {slots.portalLabel || 'Portal'}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-10 rounded-full border-0 bg-[var(--school-accent)] px-5 text-sm font-semibold text-[var(--school-paper)] shadow-none hover:bg-[var(--primary-dark)]"
-            >
-              <Link href="/apply">
-                {slots.applyLabel || 'Visit the court'}
-                <ArrowRight className="ml-2 h-3.5 w-3.5" />
-              </Link>
-            </Button>
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Portal'}
+              applyLabel={slots.applyLabel || 'Visit the court'}
+              portalClassName="h-10 rounded-full border border-[var(--school-ink)]/20 bg-transparent px-5 text-sm font-semibold text-[var(--school-ink)] shadow-none hover:border-primary hover:bg-primary hover:text-[var(--school-paper)]"
+              applyClassName="h-10 rounded-full border-0 bg-[var(--school-accent)] px-5 text-sm font-semibold text-[var(--school-paper)] shadow-none hover:bg-[var(--primary-dark)]"
+            />
           </div>
 
           <button
@@ -633,25 +581,13 @@ export function HomepageNav({
           </div>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <Button
-              asChild
-              variant="outline"
-              className="h-10 rounded-sm border border-primary bg-transparent px-4 text-[11px] font-bold uppercase tracking-wide text-[var(--school-paper)] shadow-none hover:bg-primary hover:text-[var(--school-ink)]"
-            >
-              <Link href="/login">
-                <LogIn className="mr-2 h-3.5 w-3.5" />
-                {slots.portalLabel || 'Check-in'}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="h-10 rounded-sm border border-primary bg-primary px-5 text-[11px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none hover:bg-[var(--primary-light)]"
-            >
-              <Link href="/apply">
-                {slots.applyLabel || 'Reserve a seat'}
-                <ArrowRight className="ml-2 h-3.5 w-3.5" />
-              </Link>
-            </Button>
+            <HomepageNavAuthActions
+              portalLabel={slots.portalLabel || 'Check-in'}
+              applyLabel={slots.applyLabel || 'Reserve a seat'}
+              greetingClassName="text-[var(--school-paper)]"
+              portalClassName="h-10 rounded-sm border border-primary bg-transparent px-4 text-[11px] font-bold uppercase tracking-wide text-[var(--school-paper)] shadow-none hover:bg-primary hover:text-[var(--school-ink)]"
+              applyClassName="h-10 rounded-sm border border-primary bg-primary px-5 text-[11px] font-bold uppercase tracking-wide text-[var(--school-ink)] shadow-none hover:bg-[var(--primary-light)]"
+            />
           </div>
 
           <button
@@ -782,10 +718,15 @@ export function HomepageNav({
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Button
-            asChild
-            variant="outline"
-            className={cn(
+          <HomepageNavAuthActions
+            portalLabel={slots.portalLabel || 'Portal'}
+            applyLabel={slots.applyLabel || 'Apply now'}
+            greetingClassName={
+              solid || variant === 'crest' || isNotebook
+                ? 'text-[var(--school-ink)]'
+                : 'text-white'
+            }
+            portalClassName={cn(
               'h-10 px-4 text-sm font-semibold shadow-none',
               isNotebook
                 ? 'rounded-lg border-2 border-[var(--school-ink)] bg-transparent text-[var(--school-ink)] hover:bg-[var(--school-ink)] hover:text-[var(--ah-cream,#FBF6E9)]'
@@ -795,26 +736,13 @@ export function HomepageNav({
                   ? 'border-primary/30 text-primary hover:bg-primary hover:text-white'
                   : 'border-white/40 bg-white/10 text-white hover:bg-white hover:text-[var(--school-ink)]'),
             )}
-          >
-            <Link href="/login">
-              <LogIn className="mr-2 h-4 w-4" />
-              {slots.portalLabel || 'Portal'}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            className={cn(
+            applyClassName={cn(
               'h-10 px-5 text-sm font-semibold text-white shadow-none',
               isNotebook
                 ? 'rounded-lg border-2 border-[var(--school-ink)] bg-[var(--school-ink)] hover:border-primary hover:bg-primary'
                 : 'rounded-none bg-primary hover:bg-primary-dark',
             )}
-          >
-            <Link href="/apply">
-              {slots.applyLabel || 'Apply now'}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          />
         </div>
 
         <button
@@ -851,6 +779,13 @@ export function HomepageNav({
                 {link.label}
               </Link>
             ))}
+            <HomepageNavAuthMobile
+              portalLabel={slots.portalLabel || 'Portal'}
+              applyLabel={slots.applyLabel || 'Apply now'}
+              onNavigate={() => setOpen(false)}
+              linkClassName="text-slate-700 hover:text-primary"
+              primaryClassName="text-primary"
+            />
           </div>
         </div>
       )}
