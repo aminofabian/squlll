@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
+const GRAPHQL_ENDPOINT =
+  process.env.GRAPHQL_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'http://localhost:3001/graphql'
+
 const applySchema = z.object({
   subdomain: z.string().min(1),
   studentFirstName: z.string().min(1).max(80),
@@ -19,12 +24,15 @@ const applySchema = z.object({
   notes: z.string().max(1200).optional(),
 })
 
-function makeReference(subdomain: string) {
-  const year = new Date().getFullYear()
-  const slug = subdomain.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase()
-  return `APP-${year}-${slug}${rand}`
-}
+const SUBMIT_MUTATION = `
+  mutation SubmitAdmissionApplication($input: SubmitAdmissionApplicationInput!) {
+    submitAdmissionApplication(input: $input) {
+      ok
+      reference
+      message
+    }
+  }
+`
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,23 +50,52 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
-    const reference = makeReference(data.subdomain)
 
-    // Persist later (admissions inbox / CRM). For now acknowledge + log.
-    console.info('[school-apply]', {
-      reference,
-      subdomain: data.subdomain,
-      student: `${data.studentFirstName} ${data.studentLastName}`,
-      programme: data.programme,
-      guardianEmail: data.guardianEmail,
+    const response = await fetch(GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: SUBMIT_MUTATION,
+        variables: {
+          input: {
+            subdomain: data.subdomain,
+            studentFirstName: data.studentFirstName,
+            studentLastName: data.studentLastName,
+            dateOfBirth: data.dateOfBirth,
+            gender: data.gender,
+            programme: data.programme,
+            startTerm: data.startTerm,
+            currentSchool: data.currentSchool,
+            guardianName: data.guardianName,
+            relationship: data.relationship,
+            guardianEmail: data.guardianEmail,
+            guardianPhone: data.guardianPhone,
+            interests: data.interests,
+            whyUs: data.whyUs,
+            notes: data.notes,
+          },
+        },
+      }),
     })
 
-    return NextResponse.json({
-      ok: true,
-      reference,
-      message:
-        'Your application is in. Admissions will review it and reach out shortly.',
-    })
+    const result = await response.json()
+
+    if (result.errors?.length) {
+      return NextResponse.json(
+        { error: result.errors[0].message || 'Could not submit application' },
+        { status: 400 },
+      )
+    }
+
+    const payload = result.data?.submitAdmissionApplication
+    if (!payload?.ok) {
+      return NextResponse.json(
+        { error: 'Could not submit application' },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json(payload)
   } catch {
     return NextResponse.json(
       { error: 'Something went wrong submitting your application.' },

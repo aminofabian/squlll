@@ -46,6 +46,7 @@ export function getSchoolPageTitle(pathname: string): string {
     reports: "Reports",
     analytics: "Analytics",
     applications: "Applications",
+    admissions: "Admissions",
     enrollment: "Enrollment",
     communication: "Communication",
     settings: "Settings",

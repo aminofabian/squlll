@@ -27,7 +27,9 @@ export function useGraphQLErrorHandler() {
             path === '' ||
             path.startsWith('/about') ||
             path.startsWith('/programs') ||
-            path.startsWith('/admissions') ||
+            path === '/admissions' ||
+            (path.startsWith('/admissions/') &&
+              !path.includes('/admissions/applications')) ||
             path.startsWith('/contact') ||
             path.startsWith('/apply') ||
             path.startsWith('/visit') ||
