@@ -74,8 +74,6 @@ const LIST_QUERY = gql`
       whyUs
       notes
       adminNotes
-      enrolledStudentId
-      admissionNumber
       createdAt
       updatedAt
     }
