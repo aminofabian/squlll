@@ -285,30 +285,45 @@ export function HomepageShellStyles({
           animation: school-line-draw 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
         }
         .school-program-card {
-          box-shadow: 0 1px 0 rgba(0,0,0,0.03);
-          transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow:
+            6px 10px 0 color-mix(in srgb, var(--school-ink) 8%, transparent),
+            0 18px 36px color-mix(in srgb, var(--school-ink) 10%, transparent);
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .school-program-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 14px 32px rgba(0,0,0,0.07);
+          transform: translateY(-3px);
+          box-shadow:
+            8px 14px 0 color-mix(in srgb, var(--school-ink) 10%, transparent),
+            0 24px 44px color-mix(in srgb, var(--school-ink) 12%, transparent);
         }
         .school-program-grade {
-          transition: background-color 0.2s ease, border-color 0.2s ease;
+          transition: transform 0.2s ease, filter 0.2s ease;
         }
         .school-program-grade:hover {
-          background-color: color-mix(in srgb, var(--primary) 14%, white);
-          border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+          transform: translateY(-1px);
+          filter: brightness(1.06);
         }
         .school-program-subject {
-          transition: border-color 0.2s ease, color 0.2s ease;
+          transition: color 0.2s ease, padding-left 0.2s ease;
         }
         .school-program-subject:hover {
-          border-color: color-mix(in srgb, var(--school-ink) 22%, transparent);
           color: var(--school-ink);
+          padding-left: 0.35rem;
+        }
+        .school-home-sharp .school-program-card {
+          box-shadow:
+            6px 6px 0 color-mix(in srgb, var(--school-ink) 14%, transparent),
+            0 16px 28px color-mix(in srgb, var(--school-ink) 8%, transparent);
         }
         @media (prefers-reduced-motion: reduce) {
           .school-program-card,
-          .school-program-card:hover { transition: none; transform: none; }
+          .school-program-card:hover,
+          .school-program-grade:hover,
+          .school-program-subject:hover {
+            transition: none;
+            transform: none;
+            padding-left: 0;
+          }
         }
 
         /* ---- Assembly Hall / ruled-notebook shell ---- */
